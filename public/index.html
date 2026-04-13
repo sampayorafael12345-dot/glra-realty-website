@@ -2,305 +2,1294 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GLRA Realty | Premium Real Estate</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="google-site-verification" content="bJ4eP0NeX4ZDhUbfZ9-CfDvBLbDrh0TypI8B7wamYLQ" />
+
+<title>GLRA Realty | Find Your Dream Home in the Philippines</title>
+<meta name="title" content="GLRA Realty | Find Your Dream Home in the Philippines">
+<meta name="description" content="GLRA Realty - Licensed real estate agent in Metro Manila and Luzon. Helping homeowners sell and buyers find the right home. Free property valuation.">
+<meta name="keywords" content="real estate philippines, property for sale makati, real estate agent, GLRA Realty, buy home philippines">
+<meta name="author" content="GLRA Realty">
+<meta name="robots" content="index, follow">
+
+<!-- Icons / Logo -->
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/">
+<meta property="og:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
+<meta property="og:description" content="Licensed real estate agent helping you find your perfect home in the Philippines.">
+<meta property="og:image" content="https://glrarealty.com/logo.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="GLRA Realty | Find Your Dream Home">
+<meta name="twitter:description" content="Find your dream property with GLRA Realty.">
+<meta name="twitter:image" content="https://glrarealty.com/logo.png">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "GLRA Realty",
+  "url": "https://glrarealty.com",
+  "logo": "https://glrarealty.com/logo.png",
+  "telephone": "+639171774572",
+  "email": "glrarealty@gmail.com",
+  "description": "Licensed real estate agent serving Metro Manila and Luzon.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "17th Floor, 252 Senator Gil J. Puyat Avenue",
+    "addressLocality": "Makati City",
+    "addressRegion": "Metro Manila",
+    "addressCountry": "PH"
+  }
+}
+</script>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+
 <style>
+/* ============ CSS VARIABLES ============ */
 :root {
-  --gold: #c5a059;
-  --gold-dark: #a07e42;
-  --dark: #0f1113;
-  --light: #f7f7f7;
-  --gray: #666;
-  --shadow: 0 20px 35px -8px rgba(0,0,0,0.1);
+  --orange: #f97316;
+  --orange-dark: #ea580c;
+  --orange-light: #ffedd5;
+  --dark: #1a1a2e;
+  --dark-gray: #16213e;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --white: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --text-color: #1a1a2e;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
+  --transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  --dark: #e0e0e0;
+  --dark-gray: #c0c0c0;
+  --gray: #a0a0a0;
+  --gray-light: #1a1a2a;
+  --white: #0f0f1a;
+  --card-bg: #1a1a2a;
+  --border-color: #2a2a3a;
+  --text-color: #e0e0e0;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html { scroll-behavior: smooth; }
+
 body {
   font-family: 'Inter', sans-serif;
-  color: var(--dark);
-  background: white;
+  color: var(--text-color);
+  background: var(--white);
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Loading Animation */
-.loader {
-  display: inline-block;
-  width: 40px;
-  height: 40px;
-  border: 3px solid #eee;
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Navbar */
+/* Navigation */
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 5%;
-  background: white;
-  position: sticky;
-  top: 0;
+  padding: 15px 5%;
+  background: transparent;
+  transition: var(--transition);
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  background: linear-gradient(135deg, var(--dark) 0%, var(--gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.navbar.scrolled {
+  background: var(--white);
+  padding: 10px 5%;
+  box-shadow: var(--shadow-sm);
 }
 
-.contact-btn {
-  font-size: 13px;
-  font-weight: 500;
-  border: 2px solid var(--gold);
-  padding: 8px 20px;
-  text-decoration: none;
-  color: var(--gold);
-  transition: all 0.3s ease;
-  border-radius: 4px;
-}
+.logo img { height: 55px; width: auto; display: block; }
 
-.contact-btn:hover {
-  background: var(--gold);
-  color: white;
-}
-
-/* Hero */
-.hero {
-  height: 65vh;
-  min-height: 500px;
-  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.5)), url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d") center/cover;
+.nav-links {
   display: flex;
+  gap: 30px;
   align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--white);
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.navbar.scrolled .nav-links a { color: var(--text-color); }
+.nav-links a:hover { color: var(--orange); }
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: var(--white) !important;
+}
+
+.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
+.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+
+.mobile-menu-btn {
+  display: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--white);
+  z-index: 1001;
+}
+
+.navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
+
+/* Mobile Overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--dark);
+  z-index: 2000;
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+}
+
+.mobile-overlay.active { left: 0; }
+.mobile-overlay .close-menu {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  font-size: 28px;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.mobile-overlay-links {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
   text-align: center;
 }
 
-.hero h1 {
+.mobile-overlay-links a {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: 500;
   font-family: 'Playfair Display', serif;
-  font-size: 80px;
-  color: white;
-  letter-spacing: 12px;
+  cursor: pointer;
+}
+
+.mobile-overlay-links a:hover { color: var(--orange); }
+
+/* Hero Slider */
+.hero-slider {
+  height: 85vh;
+  min-height: 600px;
+  position: relative;
+}
+
+.swiper-slide {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.swiper-slide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 100%);
+}
+
+.slide-content {
+  position: absolute;
+  bottom: 20%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--white);
+}
+
+.slide-content h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin-bottom: 15px;
+}
+
+.slide-content p {
+  font-size: 18px;
+  letter-spacing: 3px;
+  opacity: 0.9;
 }
 
 .hero-line {
-  width: 100px;
-  height: 3px;
-  background: var(--gold);
-  margin: 20px auto;
-}
-
-.hero p {
-  color: white;
-  letter-spacing: 8px;
-  font-size: 18px;
+  width: 60px;
+  height: 2px;
+  background: var(--orange);
+  margin: 15px auto;
 }
 
 /* Search Bar */
-.search-bar {
-  background: var(--dark);
-  padding: 30px 5%;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr) auto auto;
-  gap: 15px;
-  align-items: end;
+.search-float {
   position: relative;
-  top: -30px;
-  margin-bottom: -30px;
-  border-radius: 8px;
-  max-width: 1300px;
-  margin-left: auto;
-  margin-right: auto;
-  box-shadow: var(--shadow);
+  z-index: 10;
+  margin-top: -40px;
+  margin-bottom: 40px;
+  padding: 0 5%;
 }
 
-.search-group {
+.search-card {
+  background: #1a1a2e;
+  border-radius: 20px;
+  padding: 20px 25px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .search-card {
+  background: #1a1a2a;
+}
+
+.compact-search-row {
   display: flex;
-  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.location-field {
+  flex: 2;
+  min-width: 180px;
+}
+
+.compact-search-actions {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.advanced-filter-btn {
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  padding: 0 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.advanced-filter-btn:hover {
+  background: var(--orange);
+  color: white;
+}
+
+.advanced-filter-btn.active {
+  background: var(--orange);
+  color: white;
+}
+
+.advanced-filter-btn.active i:last-child {
+  transform: rotate(180deg);
+}
+
+.advanced-filters {
+  display: none;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.advanced-filters.show {
+  display: block;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-row .search-field {
+  flex: 1;
+  min-width: 150px;
+}
+
+.reset-row {
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.reset-button-wrapper {
+  width: 100%;
+  text-align: center;
+}
+
+.reset-btn-full {
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
 }
 
-.search-group label {
-  color: var(--gold);
-  font-size: 11px;
+.reset-btn-full:hover {
+  background: var(--orange);
+  color: white;
+}
+
+.search-field {
+  background: var(--white);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: relative;
+}
+
+body.dark-mode .search-field {
+  background: #2a2a3a;
+}
+
+.search-field i {
+  color: var(--orange);
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.search-field input,
+.search-field .dropdown-selected {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.search-field input::placeholder {
+  color: #999;
+}
+
+body.dark-mode .search-field input::placeholder {
+  color: #888;
+}
+
+.search-field input:focus { outline: none; }
+
+.simple-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dropdown-selected span {
+  color: var(--text-color);
+}
+
+.dropdown-selected i {
+  color: var(--orange);
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.dropdown-selected.open i { transform: rotate(180deg); }
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 5px;
+}
+
+body.dark-mode .dropdown-list {
+  background: #2a2a3a;
+}
+
+.dropdown-list::-webkit-scrollbar { width: 8px; }
+.dropdown-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.dropdown-list::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 10px; }
+
+.dropdown-list.show { display: block; }
+
+.dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-color);
+}
+
+body.dark-mode .dropdown-item {
+  border-color: #3a3a4a;
+}
+
+.dropdown-item:hover { background: #f8f8f8; color: var(--orange); }
+body.dark-mode .dropdown-item:hover { background: #3a3a4a; }
+
+.dropdown-item.selected { background: rgba(249, 115, 22, 0.1); color: var(--orange); font-weight: 500; }
+
+.location-input { position: relative; width: 100%; }
+
+.location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+
+body.dark-mode .location-suggestions {
+  background: #2a2a3a;
+}
+
+.location-suggestions div {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  color: var(--text-color);
+}
+
+.location-suggestions div:hover { background: var(--gray-light); color: var(--orange); }
+
+.price-custom { position: relative; }
+
+.price-display {
+  padding: 12px 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.price-custom-inputs {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 15px;
+  margin-top: 8px;
+  min-width: 260px;
+  z-index: 100;
+  display: none;
+}
+
+body.dark-mode .price-custom-inputs {
+  background: #2a2a3a;
+}
+
+.price-custom-inputs.show { display: block; }
+
+.price-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.price-input-group input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+body.dark-mode .price-input-group input {
+  background: #1a1a2a;
+  border-color: #3a3a4a;
+}
+
+.price-input-group input:focus { outline: none; border-color: var(--orange); }
+
+.apply-price-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.apply-price-btn:hover { background: var(--orange-dark); }
+
+.quick-price-options {
+  margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.quick-price-options div {
+  font-size: 11px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+body.dark-mode .quick-price-options div {
+  color: #c0c0c0;
+}
+
+.price-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.price-chip {
+  font-size: 11px;
+  background: #f0f0f0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: #333;
+}
+
+body.dark-mode .price-chip {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a4a;
+}
+
+.price-chip:hover { background: var(--orange); color: white; }
+body.dark-mode .price-chip:hover { background: var(--orange); color: white; border-color: var(--orange); }
+
+.search-btn {
+  background: var(--orange);
+  color: var(--white);
+  border: none;
+  padding: 0 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+}
+
+.search-btn:hover { background: var(--orange-dark); }
+
+/* Stats Section */
+.stats-section {
+  padding: 50px 5% 40px;
+  background: var(--gray-light);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.stat-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--gray);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.search-bar select,
-.search-bar input {
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.price-range {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.price-values {
-  display: flex;
-  justify-content: space-between;
-  color: white;
-  font-size: 12px;
-}
-
-.price-sliders {
-  display: flex;
-  gap: 10px;
-}
-
-.price-sliders input {
-  flex: 1;
-  accent-color: var(--gold);
-}
-
-.search-btn, .reset-btn {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  height: 44px;
-  align-self: center;
-}
-
-.search-btn {
-  background: var(--gold);
-  color: white;
-}
-
-.reset-btn {
-  background: transparent;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-}
-
-/* Section */
+/* Sections */
 .section {
-  padding: 70px 5%;
+  padding: 50px 5%;
   max-width: 1400px;
-  margin: auto;
+  margin: 0 auto;
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 40px;
+  text-align: center;
+  margin-bottom: 35px;
 }
 
-.section h2 {
+.section-header h2 {
   font-family: 'Playfair Display', serif;
-  font-size: 36px;
-  position: relative;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
-.section h2:after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: var(--gold);
+.section-header .section-line {
+  width: 50px;
+  height: 2px;
+  background: var(--orange);
+  margin: 0 auto 12px;
 }
 
-.results-count {
+.section-header p {
   color: var(--gray);
   font-size: 14px;
 }
 
-/* Grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 30px;
+.view-all-wrapper {
+  text-align: center;
+  margin-top: 30px;
 }
 
-/* Property Card */
+.view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  background: transparent;
+  border: 2px solid var(--orange);
+  color: var(--orange);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 40px;
+  font-size: 13px;
+  transition: var(--transition);
+}
+
+.view-all-btn:hover { background: var(--orange); color: var(--white); }
+
+/* Property Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
 .prop-card {
-  border: 1px solid #eee;
-  cursor: pointer;
-  background: white;
-  transition: all 0.3s ease;
-  border-radius: 8px;
+  background: var(--card-bg);
+  border-radius: 16px;
   overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  position: relative;
 }
 
 .prop-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
 }
 
-.prop-card img {
+.prop-card-image {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+}
+
+.prop-card-image img {
   width: 100%;
-  height: 240px;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
 }
 
-.prop-info {
-  padding: 20px;
-}
+.prop-card:hover .prop-card-image img { transform: scale(1.05); }
 
-.prop-title {
-  font-size: 18px;
+.prop-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
   font-weight: 600;
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.badge-sale { background: #10b981; color: white; }
+.badge-lease { background: var(--orange); color: white; }
+
+.badge-featured {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--orange);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Action Buttons on Card */
+.card-actions {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.card-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+  border: none;
+  position: relative;
+  z-index: 11;
+}
+
+.card-action-btn:hover {
+  transform: scale(1.1);
+  background: var(--orange);
+}
+
+.card-action-btn.active {
+  background: var(--orange);
+  color: white;
+}
+
+.prop-info { padding: 16px; }
+.prop-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  line-height: 1.3;
 }
 
 .prop-location {
   color: var(--gray);
-  font-size: 13px;
-  margin-bottom: 10px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .prop-price {
-  color: var(--gold);
+  color: var(--orange);
   font-weight: 700;
-  font-size: 20px;
-  margin: 12px 0;
+  font-size: 18px;
+  margin: 8px 0;
 }
 
 .prop-specs {
-  border-top: 1px solid #eee;
-  padding-top: 12px;
   display: flex;
   justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* Description text - FIXED to preserve spaces and line breaks */
+.prop-description {
+  margin-top: 8px;
   font-size: 13px;
   color: var(--gray);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-/* Empty State */
-.empty-state {
+/* Modal description - FIXED */
+.modal-description {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Resources Section */
+.resources-section {
+  background: var(--gray-light);
+  padding: 60px 5%;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.resource-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 35px 25px;
   text-align: center;
-  padding: 60px;
-  background: var(--light);
-  border-radius: 8px;
-  color: var(--gray);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  display: block;
 }
 
-.empty-state i {
-  font-size: 48px;
+.resource-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--orange);
+}
+
+.resource-icon {
+  width: 70px;
+  height: 70px;
+  background: var(--orange-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.resource-icon i {
+  font-size: 32px;
+  color: var(--orange);
+}
+
+.resource-card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.resource-card p {
+  font-size: 14px;
+  color: var(--gray);
   margin-bottom: 20px;
-  color: var(--gold);
+}
+
+.resource-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: transparent;
+  border: 2px solid var(--orange);
+  color: var(--orange);
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: var(--transition);
+}
+
+.resource-card:hover .resource-btn {
+  background: var(--orange);
+  color: white;
+}
+
+/* Agent Spotlight */
+.agent-spotlight {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: var(--white);
+  padding: 60px 5%;
+}
+
+body.dark-mode .agent-spotlight {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+}
+
+.agent-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.agent-image {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.agent-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.agent-info h3 {
+  color: var(--orange);
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.agent-info h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  margin-bottom: 15px;
+}
+
+.agent-info p {
+  line-height: 1.6;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.agent-contact-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+  flex-wrap: wrap;
+}
+
+.agent-btn {
+  padding: 10px 20px;
+  border-radius: 40px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-btn-primary {
+  background: var(--orange);
+  color: var(--white);
+}
+
+.agent-btn-secondary {
+  border: 2px solid var(--orange);
+  color: var(--orange);
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 60px 5%;
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  text-align: center;
+  color: var(--white);
+}
+
+.cta-section h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.cta-section p {
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 30px;
+  background: var(--white);
+  color: var(--orange);
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 40px;
+  font-size: 14px;
+}
+
+/* Contact Form */
+.contact-form-section {
+  padding: 60px 5%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-form {
+  background: var(--card-bg);
+  padding: 35px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.contact-form:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--orange);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 13px;
+  transition: var(--transition);
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.form-input:focus { outline: none; border-color: var(--orange); }
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.submit-btn:hover { background: var(--orange-dark); }
+
+/* Footer */
+footer {
+  background: #1a1a2e;
+  color: #888;
+  padding: 45px 5% 20px;
+}
+
+body.dark-mode footer {
+  background: #0f0f1a;
+}
+
+.footer-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.footer-col h4 {
+  color: var(--orange);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.footer-col p, .footer-col ul li a {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #888;
+  text-decoration: none;
+}
+
+.social-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.social-links a {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-links a:hover { background: var(--orange); }
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 10px;
+}
+
+/* Email Signup Form in Footer */
+.email-signup {
+  margin-top: 15px;
+}
+
+.email-signup-input-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.email-signup-input-group input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #334155;
+  border-radius: 40px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 12px;
+}
+
+.email-signup-input-group input::placeholder {
+  color: #888;
+}
+
+.email-signup-input-group button {
+  padding: 10px 18px;
+  background: var(--orange);
+  border: none;
+  border-radius: 40px;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.email-signup-input-group button:hover {
+  background: var(--orange-dark);
+}
+
+/* Floating Buttons */
+.floating-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.floating-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.floating-btn:hover { transform: scale(1.05); }
+.btn-call { background: #25d366; color: white; }
+.btn-messenger { background: #0084ff; color: white; }
+.btn-whatsapp { background: #25d366; color: white; }
+.btn-viber { background: #7360f2; color: white; }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
+
+body.dark-mode .btn-darkmode {
+  background: #2a2a3a;
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background: var(--orange);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  z-index: 100;
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Modal */
@@ -317,307 +1306,619 @@ body {
 }
 
 .modal-body {
-  max-width: 1000px;
-  margin: 40px auto;
-  padding: 30px;
-  background: white;
-  border-radius: 12px;
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 25px;
+  background: var(--white);
+  border-radius: 20px;
 }
 
 .close {
   position: fixed;
   top: 20px;
-  right: 30px;
-  font-size: 48px;
+  right: 25px;
+  font-size: 40px;
   cursor: pointer;
   color: white;
-  transition: all 0.3s ease;
   z-index: 2001;
 }
 
-.close:hover {
-  color: var(--gold);
-  transform: rotate(90deg);
-}
+.close:hover { color: var(--orange); }
 
 .gallery-main {
   width: 100%;
-  height: 500px;
+  height: 320px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  border-radius: 14px;
+  margin-bottom: 15px;
 }
 
 .thumb-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .thumb-row img {
-  height: 80px;
-  width: 120px;
+  height: 60px;
+  width: 90px;
   object-fit: cover;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
   opacity: 0.7;
 }
 
-.thumb-row img:hover {
-  opacity: 1;
-}
+.thumb-row img:hover { opacity: 1; }
 
-/* Contact Section */
-.contact-wrap {
-  padding: 80px 5%;
-  background: var(--light);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 60px;
-}
-
-.contact-info h3 {
-  color: var(--gold);
-  letter-spacing: 2px;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.contact-info h2 {
-  font-size: 42px;
-  margin-bottom: 20px;
-}
-
-.contact-form {
-  background: white;
-  padding: 40px;
+.map-container iframe {
+  width: 100%;
+  height: 250px;
+  border: 0;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-}
-
-.form-input {
-  width: 100%;
-  padding: 14px 0;
-  border: none;
-  border-bottom: 2px solid #eee;
-  margin-bottom: 25px;
-  font-size: 15px;
-}
-
-.form-input:focus {
-  outline: none;
-  border-bottom-color: var(--gold);
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--dark);
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  border-radius: 4px;
-}
-
-.submit-btn:hover {
-  background: var(--gold);
 }
 
 /* Toast */
 .toast {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 20px;
+  right: 20px;
   background: var(--dark);
   color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
   z-index: 3000;
   animation: slideIn 0.3s ease;
+  font-size: 12px;
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-/* Footer */
-footer {
+.empty-state {
   text-align: center;
   padding: 40px;
-  background: var(--dark);
-  color: #666;
+  background: var(--gray-light);
+  border-radius: 14px;
 }
 
-/* Mobile */
-@media(max-width: 1024px) {
-  .search-bar {
-    grid-template-columns: repeat(2, 1fr);
-    top: 0;
-    margin-bottom: 0;
-    border-radius: 0;
+.empty-state i {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: var(--orange);
+}
+
+/* Loader */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loader.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-light);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mortgage Calculator Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  outline: none;
+}
+
+body.dark-mode input[type="range"] {
+  background: #3a3a4a;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--orange-dark);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  
+  .logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .logo img { height: 40px; }
+  
+  .hero-slider { height: 70vh; min-height: 500px; }
+  .slide-content h1 { font-size: 32px; letter-spacing: 2px; }
+  .slide-content p { font-size: 12px; letter-spacing: 2px; }
+  
+  .search-float { margin-top: -30px; margin-bottom: 30px; }
+  .search-card { padding: 15px; }
+  
+  .compact-search-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .location-field { width: 100%; }
+  .compact-search-actions { width: 100%; }
+  .search-btn, .advanced-filter-btn { flex: 1; justify-content: center; }
+  .filter-row { flex-direction: column; gap: 10px; }
+  .filter-row .search-field { width: 100%; }
+  
+  .stats-grid { grid-template-columns: 1fr; gap: 20px; }
+  .section-header h2 { font-size: 28px; }
+  .resources-grid { grid-template-columns: 1fr; gap: 20px; }
+  .agent-container { grid-template-columns: 1fr; gap: 30px; }
+  .agent-info h2 { font-size: 28px; }
+  .cta-section h2 { font-size: 28px; }
+  .gallery-main { height: 220px; }
+  .floating-buttons {
+    bottom: 20px;
+    right: 20px;
   }
 }
 
-@media(max-width: 768px) {
-  .hero h1 { font-size: 48px; letter-spacing: 6px; }
-  .hero p { letter-spacing: 4px; font-size: 14px; }
-  .search-bar { grid-template-columns: 1fr; }
-  .gallery-main { height: 300px; }
-  .contact-info h2 { font-size: 32px; }
+/* Desktop - advanced filters visible by default */
+@media (min-width: 769px) {
+  .advanced-filters {
+    display: block !important;
+  }
+  .advanced-filter-btn {
+    display: none;
+  }
 }
 </style>
 </head>
 <body>
 
-<div class="navbar">
-  <div class="logo">GLRA</div>
-  <a href="#contact" class="contact-btn">CONTACT</a>
+<!-- Loading Animation -->
+<div class="loader" id="loader">
+  <div class="loader-spinner"></div>
 </div>
 
-<section class="hero">
-  <div>
-    <h1>GLRA</h1>
-    <div class="hero-line"></div>
-    <p>REALTY GROUP</p>
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()">
+    <i class="fas fa-bars"></i>
   </div>
-</section>
+  <div class="logo">
+    <img src="/logo.png" alt="GLRA Realty" onerror="this.style.display='none'">
+  </div>
+  <div class="nav-links" id="navLinks">
+    <a onclick="scrollToTop()">HOME</a>
+    <a href="#featured">FEATURED</a>
+    <a href="#properties">PROPERTIES</a>
+    <a href="#agent">AGENT</a>
+    <a href="/calculator.html">CALCULATOR</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <a href="#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
 
-<div class="search-bar">
-  <div class="search-group">
-    <label><i class="fas fa-map-marker-alt"></i> Location</label>
-    <select id="city">
-      <option value="">All Cities</option>
-    </select>
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a onclick="scrollToTopAndClose()">HOME</a>
+    <a href="#featured" onclick="closeMobileMenu()">FEATURED</a>
+    <a href="#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="#agent" onclick="closeMobileMenu()">AGENT</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
+    <a href="#contact" onclick="closeMobileMenu()">CONTACT</a>
   </div>
-  
-  <div class="search-group">
-    <label><i class="fas fa-bed"></i> Bedrooms</label>
-    <select id="bedrooms">
-      <option value="">Any</option>
-      <option value="1">1+</option>
-      <option value="2">2+</option>
-      <option value="3">3+</option>
-      <option value="4">4+</option>
-      <option value="5">5+</option>
-    </select>
-  </div>
-  
-  <div class="search-group">
-    <label><i class="fas fa-bath"></i> Bathrooms</label>
-    <select id="baths">
-      <option value="">Any</option>
-      <option value="1">1+</option>
-      <option value="2">2+</option>
-      <option value="3">3+</option>
-      <option value="4">4+</option>
-    </select>
-  </div>
-  
-  <div class="search-group price-range">
-    <label><i class="fas fa-tag"></i> Price Range</label>
-    <div class="price-values">
-      <span id="minPriceLabel">₱1M</span>
-      <span id="maxPriceLabel">₱50M</span>
-    </div>
-    <div class="price-sliders">
-      <input type="range" id="minPrice" min="1000000" max="50000000" step="500000" value="1000000">
-      <input type="range" id="maxPrice" min="1000000" max="50000000" step="500000" value="50000000">
-    </div>
-  </div>
-  
-  <button class="search-btn" onclick="runSearch()"><i class="fas fa-search"></i> Search</button>
-  <button class="reset-btn" onclick="resetFilters()"><i class="fas fa-undo-alt"></i> Reset</button>
 </div>
 
-<section class="section">
+<!-- Hero Slider -->
+<div class="hero-slider swiper" id="heroSlider">
+  <div class="swiper-wrapper" id="heroSliderWrapper">
+    <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d')">
+      <div class="slide-content">
+        <h1>GLRA REALTY</h1>
+        <div class="hero-line"></div>
+        <p>PREMIUM REAL ESTATE</p>
+      </div>
+    </div>
+  </div>
+  <div class="swiper-pagination"></div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-float">
+  <div class="search-card">
+    <div class="compact-search-row">
+      <div class="search-field location-field">
+        <i class="fas fa-map-marker-alt"></i>
+        <div class="location-input">
+          <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="filterLocations(this.value)">
+          <div class="location-suggestions" id="locationSuggestions"></div>
+        </div>
+      </div>
+      
+      <div class="compact-search-actions">
+        <button class="search-btn" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
+        <button type="button" class="advanced-filter-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
+          <i class="fas fa-sliders-h"></i> Filter
+          <i class="fas fa-chevron-down" id="filterIcon"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="filter-row">
+        <div class="search-field">
+          <i class="fas fa-building"></i>
+          <div class="simple-dropdown" id="propertyTypeDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('propertyTypeDropdown')">
+              <span id="selectedPropertyType">Property Type</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="propertyTypeList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('propertyType', '', 'Property Type')">All Types</div>
+              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdown('propertyType', 'Condominium', 'Condominium')">Condominium</div>
+              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdown('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
+              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdown('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
+              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdown('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
+              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdown('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-field">
+          <i class="fas fa-bed"></i>
+          <div class="simple-dropdown" id="bedroomsDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('bedroomsDropdown')">
+              <span id="selectedBedrooms">Bedrooms</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="bedroomsList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('bedrooms', '', 'Bedrooms')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdown('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdown('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdown('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdown('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
+              <div class="dropdown-item" data-value="5" onclick="selectDropdown('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-field">
+          <i class="fas fa-bath"></i>
+          <div class="simple-dropdown" id="bathsDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('bathsDropdown')">
+              <span id="selectedBaths">Bathrooms</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="bathsList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('baths', '', 'Bathrooms')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdown('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdown('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdown('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdown('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-row">
+        <div class="search-field price-custom">
+          <i class="fas fa-tag"></i>
+          <div style="width:100%;" onclick="togglePriceDropdown()">
+            <div class="price-display" id="priceDisplay">Price Range</div>
+          </div>
+          <div class="price-custom-inputs" id="priceDropdown">
+            <div class="price-input-group">
+              <input type="number" id="customMinPrice" placeholder="Min ₱" value="">
+              <input type="number" id="customMaxPrice" placeholder="Max ₱" value="">
+            </div>
+            <button class="apply-price-btn" onclick="applyCustomPrice()">Apply</button>
+            <div class="quick-price-options">
+              <div>Quick Select:</div>
+              <div class="price-chips">
+                <span class="price-chip" onclick="setQuickPrice(0,5000000)">₱0-5M</span>
+                <span class="price-chip" onclick="setQuickPrice(5000000,10000000)">₱5M-10M</span>
+                <span class="price-chip" onclick="setQuickPrice(10000000,20000000)">₱10M-20M</span>
+                <span class="price-chip" onclick="setQuickPrice(20000000,50000000)">₱20M-50M</span>
+                <span class="price-chip" onclick="setQuickPrice(50000000,100000000)">₱50M-100M</span>
+                <span class="price-chip" onclick="setQuickPrice(100000000,500000000)">₱100M+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-row reset-row">
+        <div class="reset-button-wrapper">
+          <button class="reset-btn-full" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Section -->
+<div class="stats-section">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-number" id="statProperties">0</div>
+      <div class="stat-label">Properties Available</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">10+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">⭐ 5.0</div>
+      <div class="stat-label">Client Rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Properties -->
+<section class="section" id="featured">
   <div class="section-header">
     <h2>Featured Listings</h2>
+    <div class="section-line"></div>
+    <p>Discover our most exceptional properties</p>
   </div>
   <div id="featured-list" class="grid"></div>
+  <div class="view-all-wrapper">
+    <a href="/properties.html?category=all" class="view-all-btn">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
 </section>
 
+<!-- For Sale Section -->
+<section class="section" id="properties">
+  <div class="section-header">
+    <h2>Properties For Sale</h2>
+    <div class="section-line"></div>
+    <p>Find your perfect home from our exclusive listings</p>
+  </div>
+  <div id="sale-list" class="grid"></div>
+  <div class="view-all-wrapper">
+    <a href="/properties.html?category=FOR SALE" class="view-all-btn">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
+</section>
+
+<!-- For Lease Section -->
 <section class="section">
   <div class="section-header">
-    <h2>All Properties</h2>
-    <div class="results-count" id="resultsCount"></div>
+    <h2>Properties For Lease</h2>
+    <div class="section-line"></div>
+    <p>Flexible leasing options for your lifestyle</p>
   </div>
-  <div id="property-list" class="grid"></div>
+  <div id="lease-list" class="grid"></div>
+  <div class="view-all-wrapper">
+    <a href="/properties.html?category=FOR LEASE" class="view-all-btn">View All <i class="fas fa-arrow-right"></i></a>
+  </div>
 </section>
 
-<section class="contact-wrap" id="contact">
-  <div class="contact-info">
-    <h3>INQUIRE</h3>
-    <h2>Let's Find Your<br><i>Masterpiece</i></h2>
-    <p><i class="fas fa-phone-alt"></i> +63 (2) 8123 4567</p>
-    <p><i class="fas fa-envelope"></i> hello@glrarealty.com</p>
-    <p><i class="fas fa-clock"></i> Mon-Fri: 9AM - 6PM</p>
+<!-- Resources Section -->
+<section class="resources-section">
+  <div class="section-header">
+    <h2>Resources & Tools</h2>
+    <div class="section-line"></div>
+    <p>Helpful tools and guides for your property journey</p>
   </div>
-  
+  <div class="resources-grid">
+    <a href="/guide.html" class="resource-card">
+      <div class="resource-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <h3>Documentation Guide</h3>
+      <p>Complete guide to property documents in the Philippines. Know what you need before buying or selling.</p>
+      <span class="resource-btn">View Guide <i class="fas fa-arrow-right"></i></span>
+    </a>
+    <a href="/calculator.html" class="resource-card">
+      <div class="resource-icon">
+        <i class="fas fa-calculator"></i>
+      </div>
+      <h3>Transaction Calculator</h3>
+      <p>Calculate all taxes and fees for property transactions. Includes BIR Zonal Value and desired net proceed.</p>
+      <span class="resource-btn">Calculate Now <i class="fas fa-arrow-right"></i></span>
+    </a>
+  </div>
+</section>
+
+<!-- Agent Spotlight -->
+<section class="agent-spotlight" id="agent">
+  <div class="agent-container">
+    <div class="agent-image">
+      <img src="/agent-photo.jpg" alt="Catherine Sampayo" onerror="this.src='https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400'">
+    </div>
+    <div class="agent-info">
+      <h3>MEET YOUR AGENT</h3>
+      <h2>Catherine SB Sampayo</h2>
+      <p>Licensed Real Estate Agent helping homeowners sell and buyers find the right home with honest guidance from start to finish.</p>
+      <div class="agent-contact-buttons">
+        <a href="https://facebook.com/messages/t/glrarealty" class="agent-btn agent-btn-primary" target="_blank"><i class="fab fa-facebook-messenger"></i> Messenger</a>
+        <a href="tel:09171774572" class="agent-btn agent-btn-secondary"><i class="fas fa-phone-alt"></i> Call Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section" id="contact">
+  <h2>Ready to Find Your Dream Home?</h2>
+  <p>Let's start your journey to finding the perfect property today.</p>
+  <a href="#contact-form" class="cta-btn">Contact Us <i class="fas fa-arrow-right"></i></a>
+</section>
+
+<!-- Contact Form -->
+<section class="contact-form-section" id="contact-form">
+  <div class="section-header">
+    <h2>Get In Touch</h2>
+    <div class="section-line"></div>
+    <p>Have questions? We're here to help</p>
+  </div>
   <form class="contact-form" id="contactForm">
-    <input type="text" name="name" class="form-input" placeholder="Full Name" required>
-    <input type="email" name="email" class="form-input" placeholder="Email" required>
-    <input type="tel" name="phone" class="form-input" placeholder="Phone Number">
-    <textarea name="message" class="form-input" placeholder="Message" rows="4" required></textarea>
-    <button type="submit" class="submit-btn">Send Inquiry</button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <input type="text" name="name" class="form-input" placeholder="Full Name" required>
+      <input type="email" name="email" class="form-input" placeholder="Email" required>
+    </div>
+    <input type="tel" name="phone" class="form-input" placeholder="Phone Number" style="margin-top: 15px;">
+    <textarea name="message" class="form-input" placeholder="Message" rows="4" style="margin-top: 15px;"></textarea>
+    <button type="submit" class="submit-btn" style="margin-top: 15px;"><i class="fas fa-paper-plane"></i> Send Message</button>
   </form>
 </section>
 
+<!-- Footer -->
 <footer>
-  <p>© 2026 GLRA REALTY GROUP. All rights reserved.</p>
-  <p style="margin-top: 10px; font-size: 12px;">Your Trusted Partner in Real Estate</p>
+  <div class="footer-content">
+    <div class="footer-col">
+      <h4>GLRA REALTY</h4>
+      <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
+      <div class="social-links">
+        <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>QUICK LINKS</h4>
+      <ul>
+        <li><a href="/properties.html?category=FOR SALE">Properties For Sale</a></li>
+        <li><a href="/properties.html?category=FOR LEASE">Properties For Lease</a></li>
+        <li><a href="/guide.html">Documentation Guide</a></li>
+        <li><a href="/calculator.html">Transaction Calculator</a></li>
+        <li><a href="/zonal.html">Zonal Value Lookup</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>CONTACT</h4>
+      <p><i class="fas fa-phone-alt"></i> 0917 177 4572</p>
+      <p><i class="fab fa-instagram"></i> @glra_realty</p>
+      <p><i class="fas fa-envelope"></i> glrarealty@gmail.com</p>
+    </div>
+    <div class="footer-col">
+      <h4>LOCATION</h4>
+      <p><i class="fas fa-map-marker-alt"></i> 17th Floor, 252 Senator Gil J. Puyat Avenue<br>Makati City, Philippines 1200</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 GLRA REALTY GROUP. All rights reserved.</p>
+  </div>
 </footer>
 
+<!-- Floating Buttons -->
+<div class="floating-buttons">
+  <a href="tel:09171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://facebook.com/messages/t/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" target="_blank"><i class="fab fa-viber"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<!-- Back to Top -->
+<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+
+<!-- Email Modals -->
+<div id="emailModal" class="email-modal">
+  <div class="email-modal-content">
+    <span class="close-modal" onclick="closeEmailModal()">&times;</span>
+    <i class="fas fa-bell" style="font-size: 48px; color: var(--orange); margin-bottom: 15px;"></i>
+    <h3>Get Price Drop Alert</h3>
+    <p id="modalPropertyName">Enter your email to get notified when this property price drops</p>
+    <input type="email" id="modalEmail" placeholder="Your email address">
+    <input type="hidden" id="modalPropertyId">
+    <input type="hidden" id="modalPropertyTitle">
+    <input type="hidden" id="modalPropertyPrice">
+    <button onclick="submitPriceAlert()">Notify Me When Price Drops</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll only email you about this property when price changes.</p>
+  </div>
+</div>
+
+<div id="wishlistModal" class="email-modal">
+  <div class="email-modal-content">
+    <span class="close-modal" onclick="closeWishlistModal()">&times;</span>
+    <i class="fas fa-heart" style="font-size: 48px; color: var(--orange); margin-bottom: 15px;"></i>
+    <h3>Save to Wishlist</h3>
+    <p>Enter your email to save this property to your wishlist</p>
+    <input type="email" id="wishlistEmail" placeholder="Your email address">
+    <input type="hidden" id="wishlistPropertyId">
+    <input type="hidden" id="wishlistPropertyTitle">
+    <input type="hidden" id="wishlistPropertyPrice">
+    <input type="hidden" id="wishlistPropertyLocation">
+    <input type="hidden" id="wishlistPropertyImage">
+    <button onclick="submitWishlist()">Save to Wishlist</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">You can view all saved properties anytime.</p>
+  </div>
+</div>
+
+<!-- Main Modal -->
 <div id="modal">
   <span class="close" onclick="closeModal()">×</span>
   <div id="modal-content" class="modal-body"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
-const API_URL = '/api';
-let items = [];
-let galleryImages = [];
-let currentPropertyId = null;
-
-// DOM Elements
-const minSlider = document.getElementById("minPrice");
-const maxSlider = document.getElementById("maxPrice");
-const minPriceLabel = document.getElementById("minPriceLabel");
-const maxPriceLabel = document.getElementById("maxPriceLabel");
-
-function formatPrice(price) {
-  return '₱' + Number(price).toLocaleString();
+// ============ DARK MODE ============
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDarkMode);
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (isDarkMode) {
+    btn.innerHTML = '<i class="fas fa-sun"></i>';
+    btn.style.background = '#2a2a3a';
+    btn.style.color = '#f97316';
+  } else {
+    btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.style.background = '#1e1e2e';
+    btn.style.color = 'white';
+  }
 }
 
-function updatePriceLabels() {
-  const minVal = parseInt(minSlider.value);
-  const maxVal = parseInt(maxSlider.value);
-  minPriceLabel.innerText = '₱' + (minVal / 1000000).toFixed(0) + 'M';
-  maxPriceLabel.innerText = '₱' + (maxVal / 1000000).toFixed(0) + 'M';
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark-mode');
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-minSlider.oninput = function() {
-  if (parseInt(minSlider.value) > parseInt(maxSlider.value)) {
-    minSlider.value = maxSlider.value;
-  }
-  updatePriceLabels();
-};
-
-maxSlider.oninput = function() {
-  if (parseInt(maxSlider.value) < parseInt(minSlider.value)) {
-    maxSlider.value = minSlider.value;
-  }
-  updatePriceLabels();
-};
-
+// ============ TOAST ============
 function showToast(message, isError = false) {
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -627,134 +1928,599 @@ function showToast(message, isError = false) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-async function loadProperties() {
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ SEARCH FUNCTIONS (Updated - searches title AND location) ============
+function performSearch() {
+  const searchTerm = document.getElementById('locationInput').value.toLowerCase().trim();
+  const propertyType = window.selectedPropertyTypeValue || '';
+  const bedrooms = window.selectedBedroomsValue || '';
+  const baths = window.selectedBathsValue || '';
+  
+  let url = '/properties.html?';
+  const params = [];
+  if (searchTerm) params.push(`search=${encodeURIComponent(searchTerm)}`);
+  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
+  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
+  if (baths) params.push(`baths=${baths}`);
+  if (customMinPrice > 0) params.push(`minPrice=${customMinPrice}`);
+  if (customMaxPrice < 500000000) params.push(`maxPrice=${customMaxPrice}`);
+  
+  window.location.href = url + params.join('&');
+}
+
+function resetAllFilters() {
+  window.location.href = '/';
+}
+
+// ============ PRICE ALERT FUNCTIONS ============
+function openPriceAlertModal(propertyId, propertyTitle, propertyPrice) {
+  document.getElementById('modalPropertyId').value = propertyId;
+  document.getElementById('modalPropertyTitle').value = propertyTitle;
+  document.getElementById('modalPropertyPrice').value = propertyPrice;
+  document.getElementById('modalPropertyName').innerHTML = `Get notified when <strong>${escapeHtml(propertyTitle)}</strong> price drops`;
+  document.getElementById('emailModal').style.display = 'flex';
+}
+
+function closeEmailModal() {
+  document.getElementById('emailModal').style.display = 'none';
+}
+
+async function submitPriceAlert() {
+  const email = document.getElementById('modalEmail').value;
+  const propertyId = document.getElementById('modalPropertyId').value;
+  const propertyTitle = document.getElementById('modalPropertyTitle').value;
+  const propertyPrice = parseFloat(document.getElementById('modalPropertyPrice').value);
+  
+  if (!email) {
+    showToast('Please enter your email address', true);
+    return;
+  }
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+  btn.disabled = true;
+  
   try {
-    const response = await fetch(`${API_URL}/properties`);
-    items = await response.json();
-    populateFilters();
-    render(items);
+    const response = await fetch('/api/price-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      closeEmailModal();
+      document.getElementById('modalEmail').value = '';
+      showToast('✅ You will be notified when price drops!');
+    } else {
+      showToast('Failed to subscribe. Please try again.', true);
+    }
   } catch (error) {
-    console.error('Error:', error);
+    showToast('Network error. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ============ WISHLIST FUNCTIONS ============
+function openWishlistModal(propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage) {
+  document.getElementById('wishlistPropertyId').value = propertyId;
+  document.getElementById('wishlistPropertyTitle').value = propertyTitle;
+  document.getElementById('wishlistPropertyPrice').value = propertyPrice;
+  document.getElementById('wishlistPropertyLocation').value = propertyLocation;
+  document.getElementById('wishlistPropertyImage').value = propertyImage;
+  document.getElementById('wishlistModal').style.display = 'flex';
+}
+
+function closeWishlistModal() {
+  document.getElementById('wishlistModal').style.display = 'none';
+}
+
+async function submitWishlist() {
+  const email = document.getElementById('wishlistEmail').value;
+  const propertyId = document.getElementById('wishlistPropertyId').value;
+  const propertyTitle = document.getElementById('wishlistPropertyTitle').value;
+  const propertyPrice = parseFloat(document.getElementById('wishlistPropertyPrice').value);
+  const propertyLocation = document.getElementById('wishlistPropertyLocation').value;
+  const propertyImage = document.getElementById('wishlistPropertyImage').value;
+  
+  if (!email) {
+    showToast('Please enter your email address', true);
+    return;
+  }
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      closeWishlistModal();
+      document.getElementById('wishlistEmail').value = '';
+      showToast('❤️ Property saved to your wishlist!');
+    } else {
+      showToast('Failed to save. Please try again.', true);
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ============ MOBILE MENU ============
+function openMobileMenu() {
+  document.getElementById('mobileOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobileOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToTopAndClose() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  closeMobileMenu();
+}
+
+// Hide loader
+window.addEventListener('load', function() {
+  document.getElementById('loader').classList.add('hide');
+  setTimeout(() => {
+    document.getElementById('loader').style.display = 'none';
+  }, 500);
+});
+
+// Navbar scroll effect
+window.addEventListener('scroll', function() {
+  const navbar = document.getElementById('navbar');
+  const backToTop = document.getElementById('backToTop');
+  
+  if (window.scrollY > 50) {
+    navbar.classList.add('scrolled');
+    backToTop.classList.add('show');
+  } else {
+    navbar.classList.remove('scrolled');
+    backToTop.classList.remove('show');
+  }
+});
+
+// Load hero images
+async function loadHeroImages() {
+  try {
+    const response = await fetch('/api/hero-images');
+    const heroImages = await response.json();
+    const sliderWrapper = document.getElementById('heroSliderWrapper');
+    if (sliderWrapper && heroImages && heroImages.length > 0) {
+      sliderWrapper.innerHTML = '';
+      heroImages.forEach((image, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.style.backgroundImage = `url('${image.url}')`;
+        slide.style.backgroundSize = 'cover';
+        slide.style.backgroundPosition = 'center';
+        slide.innerHTML = `
+          <div class="slide-content">
+            <h1>${index === 0 ? 'GLRA REALTY' : 'PREMIUM PROPERTIES'}</h1>
+            <div class="hero-line"></div>
+            <p>${index === 0 ? 'PREMIUM REAL ESTATE' : 'FIND YOUR DREAM HOME'}</p>
+          </div>
+        `;
+        sliderWrapper.appendChild(slide);
+      });
+      if (window.heroSwiper) {
+        window.heroSwiper.update();
+      } else {
+        window.heroSwiper = new Swiper('.hero-slider', {
+          loop: true,
+          autoplay: { delay: 5000, disableOnInteraction: false },
+          pagination: { el: '.swiper-pagination', clickable: true },
+          effect: 'fade',
+          fadeEffect: { crossFade: true }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error loading hero images:', error);
+  }
+}
+
+// Location autocomplete (for suggestions)
+const locationSuggestions = [
+  "Makati City", "Taguig City", "Pasig City", "Quezon City", "Mandaluyong City",
+  "Manila City", "Parañaque City", "Pasay City", "Marikina City", "Muntinlupa City",
+  "Las Piñas City", "BGC", "Ortigas", "Alabang", "Tagaytay City", "Batangas City",
+  "Sta. Rosa", "Nuvali", "Cavite City", "Dasmariñas", "Imus", "Bacoor", "Antipolo City"
+];
+
+function filterLocations(value) {
+  const suggestionsDiv = document.getElementById('locationSuggestions');
+  if (!value.trim()) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  const filtered = locationSuggestions.filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
+  if (filtered.length > 0) {
+    suggestionsDiv.innerHTML = filtered.map(loc => `<div onclick="selectLocation('${loc}')">${loc}</div>`).join('');
+    suggestionsDiv.style.display = 'block';
+  } else {
+    suggestionsDiv.style.display = 'none';
+  }
+}
+
+function selectLocation(location) {
+  document.getElementById('locationInput').value = location;
+  document.getElementById('locationSuggestions').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.location-input')) {
+    document.getElementById('locationSuggestions').style.display = 'none';
+  }
+});
+
+// ============ DROPDOWN FUNCTIONS ============
+function toggleDropdown(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  const list = dropdown.querySelector('.dropdown-list');
+  const selected = dropdown.querySelector('.dropdown-selected');
+  
+  document.querySelectorAll('.dropdown-list').forEach(l => {
+    if (l !== list) l.classList.remove('show');
+  });
+  document.querySelectorAll('.dropdown-selected').forEach(s => {
+    if (s !== selected) s.classList.remove('open');
+  });
+  
+  list.classList.toggle('show');
+  selected.classList.toggle('open');
+}
+
+function selectDropdown(type, value, displayText) {
+  if (type === 'propertyType') {
+    document.getElementById('selectedPropertyType').innerText = displayText;
+    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedPropertyTypeValue = value;
+  } else if (type === 'bedrooms') {
+    document.getElementById('selectedBedrooms').innerText = displayText;
+    document.getElementById('bedroomsDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('bedroomsDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedBedroomsValue = value;
+  } else if (type === 'baths') {
+    document.getElementById('selectedBaths').innerText = displayText;
+    document.getElementById('bathsDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('bathsDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedBathsValue = value;
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.simple-dropdown')) {
+    document.querySelectorAll('.dropdown-list').forEach(list => list.classList.remove('show'));
+    document.querySelectorAll('.dropdown-selected').forEach(selected => selected.classList.remove('open'));
+  }
+});
+
+// ============ PRICE DROPDOWN ============
+let customMinPrice = 0;
+let customMaxPrice = 500000000;
+
+function togglePriceDropdown() {
+  const dropdown = document.getElementById('priceDropdown');
+  dropdown.classList.toggle('show');
+}
+
+function applyCustomPrice() {
+  const minVal = document.getElementById('customMinPrice').value;
+  const maxVal = document.getElementById('customMaxPrice').value;
+  customMinPrice = minVal ? parseInt(minVal) : 0;
+  customMaxPrice = maxVal ? parseInt(maxVal) : 500000000;
+  document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
+  document.getElementById('priceDropdown').classList.remove('show');
+}
+
+function setQuickPrice(min, max) {
+  customMinPrice = min;
+  customMaxPrice = max;
+  document.getElementById('customMinPrice').value = min;
+  document.getElementById('customMaxPrice').value = max;
+  document.getElementById('priceDisplay').innerHTML = `₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
+  document.getElementById('priceDropdown').classList.remove('show');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.price-custom')) {
+    document.getElementById('priceDropdown').classList.remove('show');
+  }
+});
+
+// ============ SHARE FUNCTIONS ============
+function shareProperty(platform, property) {
+  const propertyUrl = encodeURIComponent(`${window.location.origin}/properties.html?property=${property._id}`);
+  const title = encodeURIComponent(property.title);
+  const price = getDisplayPrice(property);
+  const text = encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);
+  
+  let shareUrl = '';
+  switch(platform) {
+    case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${propertyUrl}`; break;
+    case 'messenger': shareUrl = `https://www.facebook.com/dialog/send?link=${propertyUrl}&app_id=123456789&redirect_uri=${propertyUrl}`; break;
+    case 'email': shareUrl = `mailto:?subject=${title}&body=${text}%0A%0AView: ${propertyUrl}`; break;
+    case 'copy':
+      navigator.clipboard.writeText(`${window.location.origin}/properties.html?property=${property._id}`);
+      showToast('Link copied!');
+      return;
+  }
+  if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+// ============ PROPERTIES DATA ============
+let allProperties = [];
+let galleryImages = [];
+let currentProperty = null;
+
+function isForLease(prop) {
+  const type = (prop.listingType || '').toUpperCase();
+  return type === 'FOR LEASE' || type === 'SALE AND LEASE';
+}
+
+function getDisplayPrice(prop) {
+  if (isForLease(prop)) {
+    const rent = prop.monthlyRental || prop.price || 0;
+    return '₱' + Number(rent).toLocaleString() + '/mo';
+  } else {
+    return '₱' + Number(prop.price || 0).toLocaleString();
+  }
+}
+
+// Optimized property loading with caching
+let propertiesLoaded = false;
+let cachedProperties = null;
+
+async function loadProperties() {
+  // Return cached data if already loaded
+  if (cachedProperties) {
+    renderAllSections(cachedProperties);
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/properties');
+    const allProps = await response.json();
+    cachedProperties = allProps.filter(p => p.status === 'available');
+    renderAllSections(cachedProperties);
+  } catch (error) {
+    console.error(error);
     showToast('Failed to load properties', true);
   }
 }
 
-function populateFilters() {
-  const cities = [...new Set(items.map(p => p.location).filter(Boolean))];
-  const citySelect = document.getElementById("city");
-  citySelect.innerHTML = '<option value="">All Cities</option>';
-  cities.forEach(city => citySelect.add(new Option(city, city)));
+function renderAllSections(properties) {
+  document.getElementById('statProperties').innerText = properties.length;
+  
+  const featured = properties.filter(p => p.featured === true).slice(0, 6);
+  const forSale = properties.filter(p => p.listingType === 'FOR SALE').slice(0, 6);
+  const forLease = properties.filter(p => isForLease(p)).slice(0, 6);
+  
+  renderProperties(featured, 'featured-list');
+  renderProperties(forSale, 'sale-list');
+  renderProperties(forLease, 'lease-list');
+  
+  // Store for search
+  allProperties = properties;
 }
 
-function render(props) {
-  const featuredList = document.getElementById("featured-list");
-  const propertyList = document.getElementById("property-list");
-  const resultsCount = document.getElementById("resultsCount");
-  
-  if (!featuredList || !propertyList) return;
-  
-  featuredList.innerHTML = "";
-  propertyList.innerHTML = "";
-  
-  if (props.length === 0) {
-    const emptyHtml = '<div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div>';
-    featuredList.innerHTML = emptyHtml;
-    propertyList.innerHTML = emptyHtml;
-    if (resultsCount) resultsCount.textContent = '0 properties found';
+function renderProperties(properties, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+  if (properties.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div>';
     return;
   }
-  
-  const featured = props.filter(p => p.featured).slice(0, 3);
-  const rest = props.filter(p => !p.featured);
-  
-  featured.forEach(prop => featuredList.appendChild(createCard(prop)));
-  rest.forEach(prop => propertyList.appendChild(createCard(prop)));
-  
-  if (resultsCount) resultsCount.textContent = `${props.length} properties found`;
+  properties.forEach(prop => container.appendChild(createCard(prop)));
 }
 
 function createCard(prop) {
   const card = document.createElement('div');
   card.className = 'prop-card';
+  card.style.cursor = 'pointer';
   card.onclick = () => openDetail(prop._id);
   
+  const isSale = prop.listingType === 'FOR SALE';
+  const badge = isSale ? 'badge-sale' : 'badge-lease';
+  const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
+  const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
+  const displayPrice = getDisplayPrice(prop);
+  
+  // Truncate description for card view
+  const shortDesc = prop.description ? prop.description.substring(0, 80) + (prop.description.length > 80 ? '...' : '') : '';
+  
   card.innerHTML = `
-    <img src="${prop.mainImage || 'https://via.placeholder.com/400x300?text=No+Image'}" alt="${prop.title}" loading="lazy">
+    <div class="prop-card-image">
+      <span class="prop-badge ${badge}">${badgeText}</span>
+      ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
+      <img src="${prop.mainImage || 'https://via.placeholder.com/400x300'}" alt="${escapeHtml(prop.title)}" loading="lazy">
+      <div class="card-actions">
+        <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
+          <i class="far fa-heart"></i>
+        </button>
+        <button class="card-action-btn" onclick="event.stopPropagation(); openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" title="Notify me when price drops">
+          <i class="fas fa-bell"></i>
+        </button>
+      </div>
+    </div>
     <div class="prop-info">
-      <div class="prop-title">${prop.title}</div>
-      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${prop.location}</div>
-      <div class="prop-price">${formatPrice(prop.price)}</div>
+      <h3 class="prop-title">${escapeHtml(prop.title)}</h3>
+      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
+      <div class="prop-price">${displayPrice}</div>
       <div class="prop-specs">
         <span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>
-        <span><i class="fas fa-bath"></i> ${prop.bathrooms} Baths</span>
+        <span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>
         <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span>
+        ${parking}
       </div>
+      ${shortDesc ? `<div class="prop-description">${escapeHtml(shortDesc)}</div>` : ''}
     </div>
   `;
   return card;
 }
 
-function runSearch() {
-  const cityVal = document.getElementById("city").value;
-  const bedVal = parseInt(document.getElementById("bedrooms").value);
-  const bathVal = parseInt(document.getElementById("baths").value);
-  const minPriceVal = parseInt(minSlider.value);
-  const maxPriceVal = parseInt(maxSlider.value);
-  
-  const filtered = items.filter(prop => {
-    if (cityVal && prop.location !== cityVal) return false;
-    if (!isNaN(bedVal) && prop.bedrooms < bedVal) return false;
-    if (!isNaN(bathVal) && prop.bathrooms < bathVal) return false;
-    if (prop.price < minPriceVal || prop.price > maxPriceVal) return false;
-    return true;
-  });
-  
-  render(filtered);
-}
-
-function resetFilters() {
-  document.getElementById("city").value = "";
-  document.getElementById("bedrooms").value = "";
-  document.getElementById("baths").value = "";
-  minSlider.value = "1000000";
-  maxSlider.value = "50000000";
-  updatePriceLabels();
-  render(items);
-}
-
 function openDetail(id) {
-  const prop = items.find(x => x._id === id);
+  const prop = allProperties.find(x => x._id === id);
   if (!prop) return;
+  currentProperty = prop;
   
-  currentPropertyId = id;
   galleryImages = [prop.mainImage, ...(prop.gallery || [])];
-  
   let thumbs = '';
-  galleryImages.forEach((img, index) => {
-    thumbs += `<img src="${img}" onclick="changeImg(${index})">`;
-  });
+  galleryImages.forEach((img, i) => { thumbs += `<img src="${img}" onclick="changeImg(${i})">`; });
+  
+  const mapAddr = prop.mapLocation || prop.location;
+  const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(mapAddr + ", Philippines")}&output=embed`;
+  const isSale = prop.listingType === 'FOR SALE';
+  const badge = isSale ? 'badge-sale' : 'badge-lease';
+  const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
+  const displayPrice = getDisplayPrice(prop);
+  const propertyPrice = prop.price || 0;
   
   document.getElementById("modal-content").innerHTML = `
     <img id="mainImg" class="gallery-main" src="${galleryImages[0]}">
     <div class="thumb-row">${thumbs}</div>
     <div class="modal-details">
-      <h1>${prop.title}</h1>
-      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${prop.location}</div>
-      <div class="prop-price" style="font-size: 28px; margin: 20px 0;">${formatPrice(prop.price)}</div>
-      <div class="prop-specs" style="margin: 20px 0; justify-content: flex-start; gap: 30px;">
-        <span><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span>
-        <span><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>
-        <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="prop-badge ${badge}" style="display: inline-block;">${badgeText}</span>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 6px 12px; border-radius: 30px; font-size: 12px; cursor: pointer;"><i class="far fa-heart"></i> Save</button>
+          <button onclick="openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 6px 12px; border-radius: 30px; font-size: 12px; cursor: pointer;"><i class="fas fa-bell"></i> Notify</button>
+        </div>
       </div>
-      <p style="line-height: 1.8;">${prop.description || 'Contact us for more details about this property.'}</p>
-      <button onclick="closeModal(); document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });" style="margin-top: 30px; padding: 12px 30px; background: var(--gold); border: none; color: white; cursor: pointer; border-radius: 4px;">
-        Inquire About This Property
-      </button>
+      <h1 style="margin-top: 12px; font-size: 24px;">${escapeHtml(prop.title)}</h1>
+      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
+      <div class="prop-price" style="font-size: 28px; margin: 15px 0;">${displayPrice}</div>
+      
+      ${prop.listingType === 'FOR SALE' ? `
+      <div style="margin: 15px 0; padding: 15px; background: var(--gray-light); border-radius: 14px;">
+        <div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-calculator"></i> Monthly Amortization</div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Down Payment</label>
+            <input type="range" id="downPaymentPercent" min="10" max="30" step="5" value="20" oninput="updateDownPayment(this.value, ${propertyPrice})" style="width:100%">
+            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+              <span style="font-size:10px;">10%</span>
+              <span id="downPaymentValue" style="font-size:11px; color:var(--orange);">20%</span>
+              <span style="font-size:10px;">30%</span>
+            </div>
+          </div>
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Loan Term</label>
+            <select id="loanTermYears" onchange="calculateMortgage(${propertyPrice})" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+              <option value="5">5 yrs</option><option value="10">10 yrs</option>
+              <option value="15">15 yrs</option><option value="20" selected>20 yrs</option>
+              <option value="25">25 yrs</option><option value="30">30 yrs</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Interest Rate</label>
+            <select id="interestRate" onchange="calculateMortgage(${propertyPrice})" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+              <option value="6">6% - Promo</option><option value="6.5">6.5%</option>
+              <option value="7">7%</option><option value="7.5" selected>7.5% - Std</option>
+              <option value="8">8%</option><option value="8.5">8.5%</option>
+              <option value="9">9%</option><option value="10">10%</option>
+              <option value="11">11% - Pag-IBIG</option><option value="12">12%</option>
+            </select>
+          </div>
+        </div>
+        <div style="background:var(--dark); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; color:rgba(255,255,255,0.6);">Estimated Monthly Payment</div>
+          <div style="font-size:24px; font-weight:700; color:var(--orange);" id="mortgageResult">₱0<span style="font-size:12px;">/mo</span></div>
+        </div>
+        <div style="font-size:10px; color:var(--gray); text-align:center; margin-top:8px;">*Principal & interest only</div>
+      </div>
+      ` : ''}
+      
+      <div style="margin:15px 0; padding:12px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+        <div style="font-weight:600; margin-bottom:10px;"><i class="fas fa-share-alt"></i> Share</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="shareProperty('facebook', currentProperty)" style="background:#1877f2; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fab fa-facebook-f"></i> FB</button>
+          <button onclick="shareProperty('messenger', currentProperty)" style="background:#0084ff; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fab fa-facebook-messenger"></i> Msgr</button>
+          <button onclick="shareProperty('email', currentProperty)" style="background:#ea4335; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fas fa-envelope"></i> Email</button>
+          <button onclick="shareProperty('copy', currentProperty)" style="background:#6c757d; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fas fa-link"></i> Copy</button>
+        </div>
+      </div>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:15px; margin:15px 0; padding:12px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+        <span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>
+        <span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>
+        <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span>
+        ${prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : ''}
+        <span><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
+      </div>
+      
+      <!-- Description with preserved spaces and line breaks -->
+      <div class="modal-description" style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; margin: 15px 0;">
+        ${escapeHtml(prop.description || 'Contact us for more details.')}
+      </div>
+      
+      <div class="map-container"><iframe src="${mapEmbed}" allowfullscreen loading="lazy"></iframe></div>
+      <button onclick="closeModal(); document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });" style="margin-top:20px; padding:12px 25px; background:var(--orange); border:none; color:white; border-radius:40px; cursor:pointer; font-weight:600;">Inquire Now</button>
     </div>
   `;
-  
   document.getElementById("modal").style.display = "block";
   document.body.style.overflow = "hidden";
+  if (prop.listingType === 'FOR SALE') calculateMortgage(propertyPrice);
+}
+
+function calculateMortgage(propertyPrice) {
+  const downPaymentPercent = parseFloat(document.getElementById('downPaymentPercent')?.value) || 20;
+  const loanTermYears = parseFloat(document.getElementById('loanTermYears')?.value) || 20;
+  const interestRate = parseFloat(document.getElementById('interestRate')?.value) || 7.5;
+  
+  const downPayment = (propertyPrice * downPaymentPercent) / 100;
+  const loanAmount = propertyPrice - downPayment;
+  const monthlyRate = interestRate / 100 / 12;
+  const totalPayments = loanTermYears * 12;
+  
+  let monthlyPayment = 0;
+  if (monthlyRate > 0 && loanAmount > 0) {
+    monthlyPayment = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+  }
+  
+  const resultElement = document.getElementById('mortgageResult');
+  if (resultElement) {
+    resultElement.innerHTML = `₱${Math.round(monthlyPayment).toLocaleString()}<span style="font-size: 12px;">/mo</span>`;
+  }
+  
+  const downPaymentValue = document.getElementById('downPaymentValue');
+  if (downPaymentValue) downPaymentValue.innerText = downPaymentPercent + '%';
+}
+
+function updateDownPayment(value, propertyPrice) {
+  document.getElementById('downPaymentPercent').value = value;
+  document.getElementById('downPaymentValue').innerText = value + '%';
+  calculateMortgage(propertyPrice);
 }
 
 function changeImg(i) {
@@ -780,12 +2546,12 @@ document.getElementById("contactForm")?.addEventListener("submit", async functio
     email: this.querySelector('[name="email"]').value,
     phone: this.querySelector('[name="phone"]')?.value || '',
     message: this.querySelector('[name="message"]').value,
-    propertyId: currentPropertyId,
-    propertyTitle: currentPropertyId ? items.find(p => p._id === currentPropertyId)?.title : null
+    propertyId: currentProperty?._id || null,
+    propertyTitle: currentProperty?.title || null
   };
   
   try {
-    const response = await fetch(`${API_URL}/inquiries`, {
+    const response = await fetch('/api/inquiries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
@@ -794,12 +2560,12 @@ document.getElementById("contactForm")?.addEventListener("submit", async functio
     if (response.ok) {
       showToast('Thank you! We\'ll get back to you soon.');
       this.reset();
-      currentPropertyId = null;
     } else {
-      throw new Error('Failed');
+      showToast('Something went wrong. Please try again.', true);
     }
   } catch (error) {
-    showToast('Something went wrong. Please try again.', true);
+    console.error('Error:', error);
+    showToast('Network error. Please try again.', true);
   } finally {
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
@@ -812,8 +2578,14 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+// Initialize global variables
+window.selectedPropertyTypeValue = '';
+window.selectedBedroomsValue = '';
+window.selectedBathsValue = '';
+
+// Load hero images and properties
+loadHeroImages();
 loadProperties();
-updatePriceLabels();
 </script>
 </body>
 </html>
