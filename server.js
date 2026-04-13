@@ -1,10 +1,11 @@
+server.js
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
 const app = express();
 
 // Middleware
@@ -12,8 +13,23 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// Configure multer for memory storage
-const storage = multer.memoryStorage();
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'public/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for temporary file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({ 
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -49,6 +65,14 @@ const propertySchema = new mongoose.Schema({
   propertyType: { type: String, default: 'Condominium' },
   parking: { type: Number, default: 0 },
   mapLocation: { type: String, default: '' },
+  pricePerSqm: { type: String, default: '' },
+  commission: { type: Number, default: 0 },
+  fixedAmount: { type: Number, default: 0 },
+  totalCommission: { type: Number, default: 0 },
+  parkingPrice: { type: Number, default: 0 },
+  additionalParkingStatus: { type: String, default: '' },
+  developer: { type: String, default: '' },
+  notes: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   previousPrice: { type: Number, default: 0 },
   priceUpdatedAt: { type: Date, default: null }
@@ -67,8 +91,6 @@ const inquirySchema = new mongoose.Schema({
 const heroImageSchema = new mongoose.Schema({
   url: { type: String, required: true },
   order: { type: Number, default: 0 },
-  compressedSize: { type: Number, default: 0 },
-  originalSize: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -77,7 +99,9 @@ const subscriberSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   phone: { type: String, default: '' },
   source: { type: String, default: 'footer' },
-  preferences: { priceDrops: { type: Boolean, default: true } },
+  preferences: {
+    priceDrops: { type: Boolean, default: true }
+  },
   subscribedAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true }
 });
@@ -120,19 +144,6 @@ const PriceAlert = mongoose.model('PriceAlert', priceAlertSchema);
 const Wishlist = mongoose.model('Wishlist', wishlistSchema);
 const AlertLog = mongoose.model('AlertLog', alertLogSchema);
 
-// ============ COMPRESS IMAGE FUNCTION ============
-async function compressImage(buffer, originalSize, quality = 80) {
-  try {
-    const compressedBuffer = await sharp(buffer)
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: quality, progressive: true })
-      .toBuffer();
-    return { buffer: compressedBuffer, size: compressedBuffer.length, mimeType: 'image/jpeg' };
-  } catch (error) {
-    return { buffer: buffer, size: originalSize, mimeType: 'image/jpeg' };
-  }
-}
-
 // ============ CONNECT TO MONGODB ============
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 30000,
@@ -147,6 +158,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // ============ PUBLIC ROUTES ============
+
 app.get('/api/properties', async (req, res) => {
   try {
     const properties = await Property.find({ status: 'available' }).sort({ createdAt: -1 });
@@ -184,28 +196,43 @@ app.get('/api/health', async (req, res) => {
     mongodb: states[dbState] || 'unknown',
     heroImages: await HeroImage.countDocuments(),
     properties: await Property.countDocuments(),
-    subscribers: await Subscriber.countDocuments({ isActive: true }),
+    subscribers: await Subscriber.countDocuments(),
     timestamp: new Date().toISOString()
   });
 });
 
 // ============ SUBSCRIPTION ROUTES ============
+
 app.post('/api/subscribe', async (req, res) => {
   try {
     const { email, name, source } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email is required' });
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
     
     let existing = await Subscriber.findOne({ email });
+    let isNew = false;
+    
     if (existing) {
       if (name) existing.name = name;
       if (source) existing.source = source;
       existing.isActive = true;
       await existing.save();
     } else {
-      await Subscriber.create({ email, name: name || '', source: source || 'footer', preferences: { priceDrops: true } });
+      await Subscriber.create({ 
+        email, 
+        name: name || '', 
+        source: source || 'footer',
+        preferences: { priceDrops: true }
+      });
+      isNew = true;
     }
-    res.json({ success: true, message: existing ? 'Subscription updated!' : 'Subscribed successfully!' });
+    
+    console.log(`📧 ${isNew ? 'New' : 'Updated'} subscriber:`, email);
+    res.json({ success: true, message: isNew ? 'Subscribed successfully!' : 'Subscription updated!', isNew });
   } catch (err) {
+    console.error('Subscribe error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -221,20 +248,32 @@ app.post('/api/unsubscribe', async (req, res) => {
 });
 
 // ============ PRICE ALERT ROUTES ============
+
 app.post('/api/price-alert', async (req, res) => {
   try {
     const { email, propertyId, propertyTitle, propertyPrice } = req.body;
-    if (!email || !propertyId) return res.status(400).json({ error: 'Email and property ID required' });
+    
+    if (!email || !propertyId) {
+      return res.status(400).json({ error: 'Email and property ID required' });
+    }
     
     const existing = await PriceAlert.findOne({ email, propertyId });
-    if (existing) return res.json({ success: true, message: 'Already subscribed' });
+    if (existing) {
+      return res.json({ success: true, message: 'Already subscribed' });
+    }
     
     let subscriber = await Subscriber.findOne({ email });
-    if (!subscriber) await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
+    if (!subscriber) {
+      await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
+    }
     
-    await PriceAlert.create({ email, propertyId, propertyTitle, propertyPrice });
+    const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice });
+    await alert.save();
+    
+    console.log(`🔔 Price alert set for ${email} on ${propertyTitle}`);
     res.json({ success: true, message: 'You will be notified when price drops!' });
   } catch (err) {
+    console.error('Price alert error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -250,20 +289,32 @@ app.get('/api/price-alert/check/:propertyId', async (req, res) => {
 });
 
 // ============ WISHLIST ROUTES ============
+
 app.post('/api/wishlist', async (req, res) => {
   try {
     const { email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage } = req.body;
-    if (!email || !propertyId) return res.status(400).json({ error: 'Email and property ID required' });
+    
+    if (!email || !propertyId) {
+      return res.status(400).json({ error: 'Email and property ID required' });
+    }
     
     let subscriber = await Subscriber.findOne({ email });
-    if (!subscriber) await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
+    if (!subscriber) {
+      await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
+    }
     
     const existing = await Wishlist.findOne({ email, propertyId });
-    if (existing) return res.json({ success: true, message: 'Already saved' });
+    if (existing) {
+      return res.json({ success: true, message: 'Already saved' });
+    }
     
-    await Wishlist.create({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage });
+    const wishlistItem = new Wishlist({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage });
+    await wishlistItem.save();
+    
+    console.log(`❤️ ${email} saved ${propertyTitle}`);
     res.json({ success: true, message: 'Property saved to wishlist!' });
   } catch (err) {
+    console.error('Wishlist error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -289,6 +340,7 @@ app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
 });
 
 // ============ ADMIN ROUTES ============
+
 app.post('/api/admin/login', (req, res) => {
   const { email, password } = req.body;
   if (email === 'admin@glrarealty.com' && password === 'admin123') {
@@ -307,7 +359,14 @@ app.get('/api/admin/stats', async (req, res) => {
     const subscribers = await Subscriber.countDocuments({ isActive: true });
     const activeAlerts = await PriceAlert.countDocuments({ isNotified: false });
     
-    res.json({ totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts });
+    res.json({ 
+      totalProperties, 
+      availableProperties, 
+      totalInquiries,
+      heroImages,
+      subscribers,
+      activeAlerts
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -365,6 +424,7 @@ app.post('/api/admin/properties', async (req, res) => {
     console.log('✅ Property added:', property.title);
     res.json(property);
   } catch (err) {
+    console.error('Error adding property:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -383,6 +443,7 @@ app.put('/api/admin/properties/:id', async (req, res) => {
     const property = await Property.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     res.json(property);
   } catch (err) {
+    console.error('Error updating property:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -434,19 +495,30 @@ app.post('/api/admin/properties/bulk', async (req, res) => {
 // ============ PROPERTY IMAGE UPLOAD ============
 app.post('/api/admin/upload-property-image', upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
     
-    const compressed = await compressImage(req.file.buffer, req.file.size, 75);
-    const base64Image = compressed.buffer.toString('base64');
-    const imageUrl = `data:${compressed.mimeType};base64,${base64Image}`;
+    const imagePath = req.file.path;
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+    const contentType = req.file.mimetype;
+    const imageUrl = `data:${contentType};base64,${base64Image}`;
     
-    res.json({ url: imageUrl, size: compressed.size });
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+    
+    console.log(`🖼️ Property image uploaded`);
+    res.json({ url: imageUrl, size: imageBuffer.length });
   } catch (err) {
+    console.error('Error uploading property image:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // ============ HERO IMAGES MANAGEMENT ============
+
 app.get('/api/admin/hero-images', async (req, res) => {
   try {
     const images = await HeroImage.find().sort({ order: 1 });
@@ -458,18 +530,28 @@ app.get('/api/admin/hero-images', async (req, res) => {
 
 app.post('/api/admin/hero-images/upload', upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
     
-    const compressed = await compressImage(req.file.buffer, req.file.size, 80);
-    const base64Image = compressed.buffer.toString('base64');
-    const imageUrl = `data:${compressed.mimeType};base64,${base64Image}`;
+    const imagePath = req.file.path;
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+    const contentType = req.file.mimetype;
+    const imageUrl = `data:${contentType};base64,${base64Image}`;
     
     const count = await HeroImage.countDocuments();
-    const newImage = new HeroImage({ url: imageUrl, order: count, compressedSize: compressed.size, originalSize: req.file.size });
+    const newImage = new HeroImage({ url: imageUrl, order: count });
     await newImage.save();
     
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+    
+    console.log(`🖼️ Hero image saved`);
     res.json(newImage);
   } catch (err) {
+    console.error('Error uploading hero image:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -515,6 +597,7 @@ app.delete('/api/admin/hero-images/:id', async (req, res) => {
 });
 
 // ============ SERVE FILES ============
+
 app.get('/sitemap.xml', (req, res) => {
   const sitemapPath = path.join(__dirname, 'sitemap.xml');
   if (fs.existsSync(sitemapPath)) {
@@ -534,7 +617,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   Website: https://glrarealty.com                            ║
   ║   Admin:   https://glrarealty.com/admin.html                 ║
   ║   MongoDB: Connected ✅                                       ║
-  ║   Images:  Compressed & stored in MongoDB                    ║
+  ║   Features: Properties | Inquiries | Wishlist | Alerts       ║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
 });
