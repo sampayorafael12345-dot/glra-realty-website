@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fix Lease Properties</title>
+<style>
+body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+button { padding: 10px 20px; background: #c5a059; color: white; border: none; cursor: pointer; margin: 10px 0; }
+pre { background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 12px; }
+.success { color: green; }
+.error { color: red; }
+</style>
+</head>
+<body>
+<h1>Fix Property Listings</h1>
+<p>This tool will check all properties and fix their listing types.</p>
+
+<button onclick="runFix()">Check and Fix Properties</button>
+
+<div id="result"></div>
+
+<script>
+async function runFix() {
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = '<p>Loading properties...</p>';
+  
+  try {
+    // Get all properties
+    const response = await fetch('/api/properties');
+    const properties = await response.json();
+    
+    resultDiv.innerHTML = `<p>Found ${properties.length} properties.</p><p>Checking...</p>`;
+    
+    let fixed = 0;
+    let forSaleCount = 0;
+    let forLeaseCount = 0;
+    
+    for (const prop of properties) {
+      let needsUpdate = false;
+      let newType = prop.listingType;
+      
+      // Check if this property should be FOR LEASE based on price or title
+      const title = prop.title.toLowerCase();
+      const price = prop.price;
+      
+      // Properties that should be FOR LEASE (monthly rentals under 1M)
+      if (price < 1000000 && price > 0 && prop.listingType !== 'FOR LEASE') {
+        newType = 'FOR LEASE';
+        needsUpdate = true;
+      }
+      
+      // Check title for lease indicators
+      if (title.includes('lease') || title.includes('rent') || title.includes('monthly')) {
+        if (prop.listingType !== 'FOR LEASE') {
+          newType = 'FOR LEASE';
+          needsUpdate = true;
+        }
+      }
+      
+      if (needsUpdate) {
+        try {
+          const updateResponse = await fetch(`/api/admin/properties/${prop._id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...prop,
+              listingType: newType
+            })
+          });
+          if (updateResponse.ok) {
+            fixed++;
+            resultDiv.innerHTML += `<div class="success">✅ Fixed: ${prop.title} → ${newType}</div>`;
+          }
+        } catch(e) {
+          resultDiv.innerHTML += `<div class="error">❌ Error fixing: ${prop.title}</div>`;
+        }
+      }
+      
+      if (prop.listingType === 'FOR SALE') forSaleCount++;
+      else forLeaseCount++;
+    }
+    
+    resultDiv.innerHTML += `<hr><p><strong>Summary:</strong></p>`;
+    resultDiv.innerHTML += `<p>Total properties: ${properties.length}</p>`;
+    resultDiv.innerHTML += `<p>FOR SALE: ${forSaleCount}</p>`;
+    resultDiv.innerHTML += `<p>FOR LEASE: ${forLeaseCount}</p>`;
+    resultDiv.innerHTML += `<p>Fixed: ${fixed} properties</p>`;
+    
+    if (fixed > 0) {
+      resultDiv.innerHTML += `<p style="color: green; font-weight: bold;">✅ Fix complete! Refresh your properties page.</p>`;
+    }
+  } catch (error) {
+    resultDiv.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+  }
+}
+</script>
+</body>
+</html>
