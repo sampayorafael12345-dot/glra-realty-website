@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Browse Properties | GLRA Realty</title>
+<meta name="description" content="Browse our exclusive collection of premium properties for sale and lease in Metro Manila and Luzon. Save favorites and get price drop alerts.">
+<meta name="keywords" content="properties for sale, properties for lease, real estate philippines, GLRA Realty, price alert">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+
+<!-- Open Graph -->
+<meta property="og:title" content="GLRA Realty | Browse Properties Philippines">
+<meta property="og:description" content="Find your dream home with GLRA Realty - Licensed real estate agent in Metro Manila and Luzon.">
+<meta property="og:image" content="https://glrarealty.com/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/properties.html">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+/* ============ CSS VARIABLES ============ */
+:root {
+  --orange: #f97316;
+  --orange-dark: #ea580c;
+  --orange-light: #ffedd5;
+  --dark: #1a1a2e;
+  --dark-gray: #16213e;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --white: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --text-color: #1a1a2e;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
+  --transition: all 0.3s ease;
+  --success: #10b981;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+body.dark-mode {
+  --dark: #e0e0e0;
+  --dark-gray: #c0c0c0;
+  --gray: #a0a0a0;
+  --gray-light: #1a1a2a;
+  --white: #0f0f1a;
+  --card-bg: #1a1a2a;
+  --border-color: #2a2a3a;
+  --text-color: #e0e0e0;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color);
+  background: var(--white);
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--gray-light); }
+::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 4px; }
+
+/* Navigation */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 5%;
+  background: transparent;
+  transition: var(--transition);
+  z-index: 1000;
+}
+
+.navbar.scrolled {
+  background: var(--white);
+  padding: 10px 5%;
+  box-shadow: var(--shadow-sm);
+}
+
+.logo img { height: 55px; width: auto; display: block; }
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--white);
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.navbar.scrolled .nav-links a { color: var(--text-color); }
+.nav-links a:hover { color: var(--orange); }
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: var(--white) !important;
+}
+
+.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
+.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+
+.mobile-menu-btn {
+  display: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--white);
+  z-index: 1001;
+}
+
+.navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
+
+/* Mobile Overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--dark);
+  z-index: 2000;
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile-overlay.active { left: 0; }
+.mobile-overlay .close-menu {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  font-size: 28px;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.mobile-overlay-links {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  text-align: center;
+}
+
+.mobile-overlay-links a {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: 500;
+  font-family: 'Playfair Display', serif;
+  cursor: pointer;
+}
+
+.mobile-overlay-links a:hover { color: var(--orange); }
+
+/* Page Hero */
+.page-hero {
+  height: 40vh;
+  min-height: 300px;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--dark-gray) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.page-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  color: var(--white);
+  margin-bottom: 15px;
+}
+
+.page-hero p {
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+}
+
+.hero-line {
+  width: 60px;
+  height: 2px;
+  background: var(--orange);
+  margin: 15px auto 0;
+}
+
+/* Search Bar */
+.search-float {
+  position: relative;
+  z-index: 10;
+  margin-top: -40px;
+  margin-bottom: 40px;
+  padding: 0 5%;
+}
+
+.search-card {
+  background: var(--dark);
+  border-radius: 20px;
+  padding: 20px 25px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .search-card {
+  background: var(--card-bg);
+}
+
+.compact-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.location-field {
+  flex: 2;
+  min-width: 180px;
+}
+
+.compact-search-actions {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.advanced-filter-btn {
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  padding: 0 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.advanced-filter-btn:hover {
+  background: var(--orange);
+  color: white;
+}
+
+.advanced-filter-btn.active {
+  background: var(--orange);
+  color: white;
+}
+
+.advanced-filter-btn.active i:last-child {
+  transform: rotate(180deg);
+}
+
+.advanced-filters {
+  display: none;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.advanced-filters.show {
+  display: block;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-row .search-field {
+  flex: 1;
+  min-width: 150px;
+}
+
+.reset-row {
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.reset-button-wrapper {
+  width: 100%;
+  text-align: center;
+}
+
+.reset-btn-full {
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reset-btn-full:hover {
+  background: var(--orange);
+  color: white;
+}
+
+.search-field {
+  background: var(--white);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: relative;
+}
+
+body.dark-mode .search-field {
+  background: #2a2a3a;
+}
+
+.search-field i {
+  color: var(--orange);
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.search-field input,
+.search-field .dropdown-selected {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.search-field input::placeholder {
+  color: #999;
+}
+
+body.dark-mode .search-field input::placeholder {
+  color: #888;
+}
+
+.search-field input:focus { outline: none; }
+
+.simple-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dropdown-selected span {
+  color: var(--text-color);
+}
+
+.dropdown-selected i {
+  color: var(--orange);
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.dropdown-selected.open i { transform: rotate(180deg); }
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 5px;
+}
+
+body.dark-mode .dropdown-list {
+  background: #2a2a3a;
+}
+
+.dropdown-list::-webkit-scrollbar { width: 8px; }
+.dropdown-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.dropdown-list::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 10px; }
+
+.dropdown-list.show { display: block; }
+
+.dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-color);
+}
+
+body.dark-mode .dropdown-item {
+  border-color: #3a3a4a;
+}
+
+.dropdown-item:hover { background: #f8f8f8; color: var(--orange); }
+body.dark-mode .dropdown-item:hover { background: #3a3a4a; }
+
+.dropdown-item.selected { background: rgba(249, 115, 22, 0.1); color: var(--orange); font-weight: 500; }
+
+.location-input { position: relative; width: 100%; }
+
+.location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+
+body.dark-mode .location-suggestions {
+  background: #2a2a3a;
+}
+
+.location-suggestions div {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  color: var(--text-color);
+}
+
+.location-suggestions div:hover { background: var(--gray-light); color: var(--orange); }
+
+.price-custom { position: relative; }
+
+.price-display {
+  padding: 12px 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.price-custom-inputs {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 15px;
+  margin-top: 8px;
+  min-width: 260px;
+  z-index: 100;
+  display: none;
+}
+
+body.dark-mode .price-custom-inputs {
+  background: #2a2a3a;
+}
+
+.price-custom-inputs.show { display: block; }
+
+.price-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.price-input-group input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+body.dark-mode .price-input-group input {
+  background: #1a1a2a;
+  border-color: #3a3a4a;
+}
+
+.price-input-group input:focus { outline: none; border-color: var(--orange); }
+
+.apply-price-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.apply-price-btn:hover { background: var(--orange-dark); }
+
+.quick-price-options {
+  margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.quick-price-options div {
+  font-size: 11px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+body.dark-mode .quick-price-options div {
+  color: #c0c0c0;
+}
+
+.price-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.price-chip {
+  font-size: 11px;
+  background: #f0f0f0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: #333;
+}
+
+body.dark-mode .price-chip {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a4a;
+}
+
+.price-chip:hover { background: var(--orange); color: white; }
+body.dark-mode .price-chip:hover { background: var(--orange); color: white; border-color: var(--orange); }
+
+.search-btn {
+  background: var(--orange);
+  color: var(--white);
+  border: none;
+  padding: 0 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+}
+
+.search-btn:hover { background: var(--orange-dark); }
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px auto 30px;
+  flex-wrap: wrap;
+  max-width: 1300px;
+  padding: 0 5%;
+}
+
+.tab-btn {
+  padding: 10px 28px;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.dark-mode .tab-btn {
+  border-color: #3a3a4a;
+}
+
+.tab-btn:hover { background: var(--orange); color: var(--white); border-color: var(--orange); transform: translateY(-2px); }
+.tab-btn.active { background: var(--orange); color: var(--white); border-color: var(--orange); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); }
+
+/* Section */
+.section {
+  padding: 40px 5% 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.section-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-color);
+  position: relative;
+  display: inline-block;
+}
+
+.section-header h2:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background: var(--orange);
+}
+
+.results-count {
+  color: var(--gray);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Property Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.prop-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  position: relative;
+  cursor: pointer;
+}
+
+.prop-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
+}
+
+.prop-card-image {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+}
+
+.prop-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.prop-card:hover .prop-card-image img { transform: scale(1.05); }
+
+.prop-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.badge-sale { background: #10b981; color: white; }
+.badge-lease { background: var(--orange); color: white; }
+
+.badge-featured {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--orange);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Action Buttons on Card */
+.card-actions {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.card-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+  border: none;
+  position: relative;
+  z-index: 11;
+}
+
+.card-action-btn:hover {
+  transform: scale(1.1);
+  background: var(--orange);
+}
+
+.card-action-btn.active {
+  background: var(--orange);
+  color: white;
+}
+
+.prop-info { padding: 16px; }
+.prop-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  line-height: 1.3;
+  color: var(--text-color);
+}
+
+.prop-location {
+  color: var(--gray);
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.prop-location i { color: var(--orange); font-size: 12px; }
+
+.prop-price {
+  color: var(--orange);
+  font-weight: 700;
+  font-size: 18px;
+  margin: 8px 0;
+}
+
+.prop-specs {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--gray);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 50px;
+  background: var(--gray-light);
+  border-radius: 14px;
+  color: var(--gray);
+}
+
+.empty-state i {
+  font-size: 40px;
+  margin-bottom: 15px;
+  color: var(--orange);
+}
+
+/* Email Modal */
+.email-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-modal-content {
+  background: var(--white);
+  max-width: 400px;
+  width: 90%;
+  padding: 30px;
+  border-radius: 24px;
+  text-align: center;
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.email-modal-content h3 {
+  font-size: 24px;
+  color: var(--orange);
+  margin-bottom: 10px;
+}
+
+.email-modal-content p {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 20px;
+}
+
+.email-modal-content input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.email-modal-content input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.email-modal-content button {
+  width: 100%;
+  padding: 14px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.email-modal-content button:hover {
+  background: var(--orange-dark);
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--gray);
+}
+
+.close-modal:hover {
+  color: var(--danger);
+}
+
+/* Footer */
+footer {
+  background: #1a1a2e;
+  color: #888;
+  padding: 45px 5% 20px;
+  margin-top: 30px;
+}
+
+body.dark-mode footer {
+  background: #0f0f1a;
+}
+
+.footer-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.footer-col h4 {
+  color: var(--orange);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.footer-col p, .footer-col ul li a {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #888;
+  text-decoration: none;
+}
+
+.social-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.social-links a {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-links a:hover { background: var(--orange); }
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 10px;
+}
+
+/* Floating Buttons */
+.floating-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.floating-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.floating-btn:hover { transform: scale(1.05); }
+.btn-call { background: #25d366; color: white; }
+.btn-messenger { background: #0084ff; color: white; }
+.btn-whatsapp { background: #25d366; color: white; }
+.btn-viber { background: #7360f2; color: white; }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
+
+body.dark-mode .btn-darkmode {
+  background: #2a2a3a;
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--dark);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  z-index: 3000;
+  animation: slideIn 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Modal */
+#modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  z-index: 2000;
+  overflow-y: auto;
+}
+
+.modal-body {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 25px;
+  background: var(--white);
+  border-radius: 20px;
+}
+
+.close {
+  position: fixed;
+  top: 20px;
+  right: 25px;
+  font-size: 40px;
+  cursor: pointer;
+  color: white;
+  z-index: 2001;
+}
+
+.close:hover { color: var(--orange); }
+
+.gallery-main {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 15px;
+}
+
+.thumb-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.thumb-row img {
+  height: 60px;
+  width: 90px;
+  object-fit: cover;
+  cursor: pointer;
+  border-radius: 8px;
+  opacity: 0.7;
+}
+
+.thumb-row img:hover { opacity: 1; }
+
+.map-container { margin-top: 20px; border-radius: 12px; overflow: hidden; }
+.map-container iframe { width: 100%; height: 250px; border: 0; }
+
+/* Mortgage Calculator Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  outline: none;
+}
+
+body.dark-mode input[type="range"] {
+  background: #3a3a4a;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--orange-dark);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  
+  .logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .logo img { height: 40px; }
+  
+  .page-hero h1 { font-size: 32px; }
+  
+  .search-float { margin-top: -30px; margin-bottom: 30px; }
+  .search-card { padding: 15px; }
+  
+  .compact-search-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .location-field { width: 100%; }
+  .compact-search-actions { width: 100%; }
+  .search-btn, .advanced-filter-btn { flex: 1; justify-content: center; }
+  .filter-row { flex-direction: column; gap: 10px; }
+  .filter-row .search-field { width: 100%; }
+  
+  .category-tabs { gap: 10px; }
+  .tab-btn { padding: 8px 20px; font-size: 13px; }
+  
+  .section-header h2 { font-size: 28px; }
+  .gallery-main { height: 220px; }
+  .grid { grid-template-columns: 1fr; }
+  .floating-buttons {
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .advanced-filters {
+    display: block !important;
+  }
+  .advanced-filter-btn {
+    display: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()">
+    <i class="fas fa-bars"></i>
+  </div>
+  <div class="logo">
+    <img src="/logo.png" alt="GLRA Realty">
+  </div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/#featured">FEATURED</a>
+    <a href="/#properties">PROPERTIES</a>
+    <a href="/#agent">AGENT</a>
+    <a href="/calculator.html">CALCULATOR</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">HOME</a>
+    <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
+    <a href="/#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
+    <a href="/#contact" onclick="closeMobileMenu()">CONTACT</a>
+  </div>
+</div>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div>
+    <h1>Browse Properties</h1>
+    <div class="hero-line"></div>
+    <p>Find your dream home from our exclusive listings</p>
+  </div>
+</section>
+
+<!-- Search Bar -->
+<div class="search-float">
+  <div class="search-card">
+    <div class="compact-search-row">
+      <div class="search-field location-field">
+        <i class="fas fa-map-marker-alt"></i>
+        <div class="location-input">
+          <input type="text" id="locationInput" placeholder="Location" autocomplete="off" oninput="filterLocations(this.value)">
+          <div class="location-suggestions" id="locationSuggestions"></div>
+        </div>
+      </div>
+      
+      <div class="compact-search-actions">
+        <button class="search-btn" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
+        <button type="button" class="advanced-filter-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
+          <i class="fas fa-sliders-h"></i> Filter
+          <i class="fas fa-chevron-down" id="filterIcon"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="filter-row">
+        <div class="search-field">
+          <i class="fas fa-building"></i>
+          <div class="simple-dropdown" id="propertyTypeDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('propertyTypeDropdown')">
+              <span id="selectedPropertyType">Property Type</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="propertyTypeList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('propertyType', '', 'Property Type')">All Types</div>
+              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdown('propertyType', 'Condominium', 'Condominium')">Condominium</div>
+              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdown('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
+              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdown('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
+              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdown('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
+              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdown('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-field">
+          <i class="fas fa-bed"></i>
+          <div class="simple-dropdown" id="bedroomsDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('bedroomsDropdown')">
+              <span id="selectedBedrooms">Bedrooms</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="bedroomsList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('bedrooms', '', 'Bedrooms')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdown('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdown('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdown('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdown('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
+              <div class="dropdown-item" data-value="5" onclick="selectDropdown('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-field">
+          <i class="fas fa-bath"></i>
+          <div class="simple-dropdown" id="bathsDropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('bathsDropdown')">
+              <span id="selectedBaths">Bathrooms</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-list" id="bathsList">
+              <div class="dropdown-item" data-value="" onclick="selectDropdown('baths', '', 'Bathrooms')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdown('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdown('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdown('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdown('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-row">
+        <div class="search-field price-custom">
+          <i class="fas fa-tag"></i>
+          <div style="width:100%;" onclick="togglePriceDropdown()">
+            <div class="price-display" id="priceDisplay">Price Range</div>
+          </div>
+          <div class="price-custom-inputs" id="priceDropdown">
+            <div class="price-input-group">
+              <input type="number" id="customMinPrice" placeholder="Min ₱" value="">
+              <input type="number" id="customMaxPrice" placeholder="Max ₱" value="">
+            </div>
+            <button class="apply-price-btn" onclick="applyCustomPrice()">Apply</button>
+            <div class="quick-price-options">
+              <div>Quick Select:</div>
+              <div class="price-chips">
+                <span class="price-chip" onclick="setQuickPrice(0,5000000)">₱0-5M</span>
+                <span class="price-chip" onclick="setQuickPrice(5000000,10000000)">₱5M-10M</span>
+                <span class="price-chip" onclick="setQuickPrice(10000000,20000000)">₱10M-20M</span>
+                <span class="price-chip" onclick="setQuickPrice(20000000,50000000)">₱20M-50M</span>
+                <span class="price-chip" onclick="setQuickPrice(50000000,100000000)">₱50M-100M</span>
+                <span class="price-chip" onclick="setQuickPrice(100000000,500000000)">₱100M+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-row reset-row">
+        <div class="reset-button-wrapper">
+          <button class="reset-btn-full" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Category Tabs -->
+<div class="category-tabs">
+  <button class="tab-btn active" data-category="all"><i class="fas fa-th-large"></i> All Properties</button>
+  <button class="tab-btn" data-category="FOR SALE"><i class="fas fa-tag"></i> For Sale</button>
+  <button class="tab-btn" data-category="FOR LEASE"><i class="fas fa-file-signature"></i> For Lease</button>
+</div>
+
+<!-- Properties Section -->
+<section class="section">
+  <div class="section-header">
+    <h2 id="sectionTitle">All Properties</h2>
+    <div class="results-count" id="resultsCount"></div>
+  </div>
+  <div id="property-list" class="grid"></div>
+</section>
+
+<!-- Email Modal for Notify Me -->
+<div id="emailModal" class="email-modal">
+  <div class="email-modal-content">
+    <span class="close-modal" onclick="closeEmailModal()">&times;</span>
+    <i class="fas fa-bell" style="font-size: 48px; color: var(--orange); margin-bottom: 15px;"></i>
+    <h3>Get Price Drop Alert</h3>
+    <p id="modalPropertyName">Enter your email to get notified when this property price drops</p>
+    <input type="email" id="modalEmail" placeholder="Your email address">
+    <input type="hidden" id="modalPropertyId">
+    <input type="hidden" id="modalPropertyTitle">
+    <input type="hidden" id="modalPropertyPrice">
+    <button onclick="submitPriceAlert()">Notify Me When Price Drops</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll only email you about this property when price changes.</p>
+  </div>
+</div>
+
+<!-- Email Modal for Wishlist -->
+<div id="wishlistModal" class="email-modal">
+  <div class="email-modal-content">
+    <span class="close-modal" onclick="closeWishlistModal()">&times;</span>
+    <i class="fas fa-heart" style="font-size: 48px; color: var(--orange); margin-bottom: 15px;"></i>
+    <h3>Save to Wishlist</h3>
+    <p>Enter your email to save this property to your wishlist</p>
+    <input type="email" id="wishlistEmail" placeholder="Your email address">
+    <input type="hidden" id="wishlistPropertyId">
+    <input type="hidden" id="wishlistPropertyTitle">
+    <input type="hidden" id="wishlistPropertyPrice">
+    <input type="hidden" id="wishlistPropertyLocation">
+    <input type="hidden" id="wishlistPropertyImage">
+    <button onclick="submitWishlist()">Save to Wishlist</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">You can view all saved properties anytime.</p>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal">
+  <span class="close" onclick="closeModal()">×</span>
+  <div id="modal-content" class="modal-body"></div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-content">
+    <div class="footer-col">
+      <h4>GLRA REALTY</h4>
+      <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
+      <div class="social-links">
+        <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>QUICK LINKS</h4>
+      <ul>
+        <li><a href="/properties.html?category=FOR SALE">Properties For Sale</a></li>
+        <li><a href="/properties.html?category=FOR LEASE">Properties For Lease</a></li>
+        <li><a href="/guide.html">Documentation Guide</a></li>
+        <li><a href="/calculator.html">Transaction Calculator</a></li>
+        <li><a href="/zonal.html">Zonal Value Lookup</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>CONTACT</h4>
+      <p><i class="fas fa-phone-alt"></i> 0917 177 4572</p>
+      <p><i class="fab fa-instagram"></i> @glra_realty</p>
+      <p><i class="fas fa-envelope"></i> glrarealty@gmail.com</p>
+    </div>
+    <div class="footer-col">
+      <h4>LOCATION</h4>
+      <p><i class="fas fa-map-marker-alt"></i> 17th Floor, 252 Senator Gil J. Puyat Avenue<br>Makati City, Philippines 1200</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 GLRA REALTY GROUP. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- Floating Buttons -->
+<div class="floating-buttons">
+  <a href="tel:09171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://facebook.com/messages/t/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" target="_blank"><i class="fab fa-viber"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<script>
+// ============ DARK MODE ============
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDarkMode);
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (isDarkMode) {
+    btn.innerHTML = '<i class="fas fa-sun"></i>';
+    btn.style.background = '#2a2a3a';
+    btn.style.color = '#f97316';
+  } else {
+    btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.style.background = '#1e1e2e';
+    btn.style.color = 'white';
+  }
+}
+
+// Load dark mode preference
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark-mode');
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-sun"></i>';
+  }
+}
+
+// ============ ADVANCED FILTER ============
+function toggleAdvancedFilter() {
+  const filters = document.getElementById('advancedFilters');
+  const btn = document.getElementById('advancedFilterBtn');
+  const icon = document.getElementById('filterIcon');
+  
+  if (!filters || !btn) return;
+  
+  filters.classList.toggle('show');
+  btn.classList.toggle('active');
+  
+  if (icon) {
+    if (filters.classList.contains('show')) {
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+}
+
+// ============ PRICE ALERT FUNCTIONS ============
+let currentAlertProperty = null;
+
+function openPriceAlertModal(propertyId, propertyTitle, propertyPrice) {
+  currentAlertProperty = { id: propertyId, title: propertyTitle, price: propertyPrice };
+  document.getElementById('modalPropertyId').value = propertyId;
+  document.getElementById('modalPropertyTitle').value = propertyTitle;
+  document.getElementById('modalPropertyPrice').value = propertyPrice;
+  document.getElementById('modalPropertyName').innerHTML = `Get notified when <strong>${escapeHtml(propertyTitle)}</strong> price drops`;
+  document.getElementById('emailModal').style.display = 'flex';
+}
+
+function closeEmailModal() {
+  document.getElementById('emailModal').style.display = 'none';
+}
+
+async function submitPriceAlert() {
+  const email = document.getElementById('modalEmail').value;
+  const propertyId = document.getElementById('modalPropertyId').value;
+  const propertyTitle = document.getElementById('modalPropertyTitle').value;
+  const propertyPrice = parseFloat(document.getElementById('modalPropertyPrice').value);
+  
+  if (!email) {
+    showToast('Please enter your email address', true);
+    return;
+  }
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/price-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      closeEmailModal();
+      document.getElementById('modalEmail').value = '';
+      showToast('✅ You will be notified when price drops!');
+    } else {
+      showToast('Failed to subscribe. Please try again.', true);
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ============ WISHLIST FUNCTIONS ============
+let currentWishlistProperty = null;
+
+function openWishlistModal(propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage) {
+  currentWishlistProperty = { id: propertyId, title: propertyTitle, price: propertyPrice, location: propertyLocation, image: propertyImage };
+  document.getElementById('wishlistPropertyId').value = propertyId;
+  document.getElementById('wishlistPropertyTitle').value = propertyTitle;
+  document.getElementById('wishlistPropertyPrice').value = propertyPrice;
+  document.getElementById('wishlistPropertyLocation').value = propertyLocation;
+  document.getElementById('wishlistPropertyImage').value = propertyImage;
+  document.getElementById('wishlistModal').style.display = 'flex';
+}
+
+function closeWishlistModal() {
+  document.getElementById('wishlistModal').style.display = 'none';
+}
+
+async function submitWishlist() {
+  const email = document.getElementById('wishlistEmail').value;
+  const propertyId = document.getElementById('wishlistPropertyId').value;
+  const propertyTitle = document.getElementById('wishlistPropertyTitle').value;
+  const propertyPrice = parseFloat(document.getElementById('wishlistPropertyPrice').value);
+  const propertyLocation = document.getElementById('wishlistPropertyLocation').value;
+  const propertyImage = document.getElementById('wishlistPropertyImage').value;
+  
+  if (!email) {
+    showToast('Please enter your email address', true);
+    return;
+  }
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      closeWishlistModal();
+      document.getElementById('wishlistEmail').value = '';
+      showToast('❤️ Property saved to your wishlist!');
+    } else {
+      showToast('Failed to save. Please try again.', true);
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ============ TOAST ============
+function showToast(message, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.background = isError ? '#dc3545' : '#28a745';
+  toast.innerHTML = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ============ MOBILE MENU ============
+function openMobileMenu() {
+  document.getElementById('mobileOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobileOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ============ NAVBAR SCROLL ============
+window.addEventListener('scroll', function() {
+  const navbar = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+});
+
+// ============ LOCATION AUTOCOMPLETE ============
+const locationSuggestions = [
+  "Makati City", "Taguig City", "Pasig City", "Quezon City", "Mandaluyong City",
+  "Manila City", "Parañaque City", "Pasay City", "Marikina City", "Muntinlupa City",
+  "Las Piñas City", "BGC", "Ortigas", "Alabang", "Tagaytay City", "Batangas City",
+  "Sta. Rosa", "Nuvali", "Cavite City", "Dasmariñas", "Imus", "Bacoor", "Antipolo City"
+];
+
+function filterLocations(value) {
+  const suggestionsDiv = document.getElementById('locationSuggestions');
+  if (!value.trim()) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  const filtered = locationSuggestions.filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
+  if (filtered.length > 0) {
+    suggestionsDiv.innerHTML = filtered.map(loc => `<div onclick="selectLocation('${loc}')">${loc}</div>`).join('');
+    suggestionsDiv.style.display = 'block';
+  } else {
+    suggestionsDiv.style.display = 'none';
+  }
+}
+
+function selectLocation(location) {
+  document.getElementById('locationInput').value = location;
+  document.getElementById('locationSuggestions').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.location-input')) {
+    document.getElementById('locationSuggestions').style.display = 'none';
+  }
+});
+
+// ============ DROPDOWN FUNCTIONS ============
+function toggleDropdown(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  const list = dropdown.querySelector('.dropdown-list');
+  const selected = dropdown.querySelector('.dropdown-selected');
+  
+  document.querySelectorAll('.dropdown-list').forEach(l => {
+    if (l !== list) l.classList.remove('show');
+  });
+  document.querySelectorAll('.dropdown-selected').forEach(s => {
+    if (s !== selected) s.classList.remove('open');
+  });
+  
+  list.classList.toggle('show');
+  selected.classList.toggle('open');
+}
+
+function selectDropdown(type, value, displayText) {
+  if (type === 'propertyType') {
+    document.getElementById('selectedPropertyType').innerText = displayText;
+    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedPropertyTypeValue = value;
+  } else if (type === 'bedrooms') {
+    document.getElementById('selectedBedrooms').innerText = displayText;
+    document.getElementById('bedroomsDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('bedroomsDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedBedroomsValue = value;
+  } else if (type === 'baths') {
+    document.getElementById('selectedBaths').innerText = displayText;
+    document.getElementById('bathsDropdown').querySelector('.dropdown-list').classList.remove('show');
+    document.getElementById('bathsDropdown').querySelector('.dropdown-selected').classList.remove('open');
+    window.selectedBathsValue = value;
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.simple-dropdown')) {
+    document.querySelectorAll('.dropdown-list').forEach(list => list.classList.remove('show'));
+    document.querySelectorAll('.dropdown-selected').forEach(selected => selected.classList.remove('open'));
+  }
+});
+
+// ============ PRICE DROPDOWN ============
+let customMinPrice = 0;
+let customMaxPrice = 500000000;
+
+function togglePriceDropdown() {
+  const dropdown = document.getElementById('priceDropdown');
+  dropdown.classList.toggle('show');
+}
+
+function applyCustomPrice() {
+  const minVal = document.getElementById('customMinPrice').value;
+  const maxVal = document.getElementById('customMaxPrice').value;
+  customMinPrice = minVal ? parseInt(minVal) : 0;
+  customMaxPrice = maxVal ? parseInt(maxVal) : 500000000;
+  document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
+  document.getElementById('priceDropdown').classList.remove('show');
+}
+
+function setQuickPrice(min, max) {
+  customMinPrice = min;
+  customMaxPrice = max;
+  document.getElementById('customMinPrice').value = min;
+  document.getElementById('customMaxPrice').value = max;
+  document.getElementById('priceDisplay').innerHTML = `₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
+  document.getElementById('priceDropdown').classList.remove('show');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.price-custom')) {
+    document.getElementById('priceDropdown').classList.remove('show');
+  }
+});
+
+// ============ SEARCH FUNCTIONS ============
+function performSearch() {
+  const location = document.getElementById('locationInput').value;
+  const propertyType = window.selectedPropertyTypeValue || '';
+  const bedrooms = window.selectedBedroomsValue || '';
+  const baths = window.selectedBathsValue || '';
+  
+  let url = '/properties.html?';
+  const params = [];
+  if (location) params.push(`city=${encodeURIComponent(location)}`);
+  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
+  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
+  if (baths) params.push(`baths=${baths}`);
+  if (customMinPrice > 0) params.push(`minPrice=${customMinPrice}`);
+  if (customMaxPrice < 500000000) params.push(`maxPrice=${customMaxPrice}`);
+  
+  window.location.href = url + params.join('&');
+}
+
+function resetAllFilters() {
+  window.location.href = '/properties.html';
+}
+
+// ============ SHARE FUNCTIONS ============
+function shareProperty(platform, property) {
+  const propertyUrl = encodeURIComponent(`${window.location.origin}/properties.html?property=${property._id}`);
+  const title = encodeURIComponent(property.title);
+  const price = getDisplayPrice(property);
+  const text = encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);
+  
+  let shareUrl = '';
+  switch(platform) {
+    case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${propertyUrl}`; break;
+    case 'messenger': shareUrl = `https://www.facebook.com/dialog/send?link=${propertyUrl}&app_id=123456789&redirect_uri=${propertyUrl}`; break;
+    case 'email': shareUrl = `mailto:?subject=${title}&body=${text}%0A%0AView: ${propertyUrl}`; break;
+    case 'copy':
+      navigator.clipboard.writeText(`${window.location.origin}/properties.html?property=${property._id}`);
+      showToast('Link copied!');
+      return;
+  }
+  if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+// ============ PROPERTIES DATA ============
+let allProperties = [];
+let galleryImages = [];
+let currentProperty = null;
+
+function isForLease(prop) {
+  const type = (prop.listingType || '').toUpperCase();
+  return type === 'FOR LEASE' || type === 'SALE AND LEASE';
+}
+
+function getDisplayPrice(prop) {
+  if (isForLease(prop)) {
+    const rent = prop.monthlyRental || prop.price || 0;
+    return '₱' + Number(rent).toLocaleString() + '/mo';
+  } else {
+    return '₱' + Number(prop.price || 0).toLocaleString();
+  }
+}
+
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+async function loadProperties() {
+  try {
+    const response = await fetch('/api/properties');
+    allProperties = await response.json();
+    allProperties = allProperties.filter(p => p.status === 'available');
+    
+    const categoryParam = getUrlParameter('category');
+    let currentCategory = 'all';
+    
+    if (categoryParam === 'FOR SALE') {
+      currentCategory = 'FOR SALE';
+    } else if (categoryParam === 'FOR LEASE') {
+      currentCategory = 'FOR LEASE';
+    }
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.category === currentCategory) {
+        btn.classList.add('active');
+      }
+    });
+    
+    const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
+    document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
+    
+    const searchCity = getUrlParameter('city');
+    const searchPropertyType = getUrlParameter('propertyType');
+    const searchBedrooms = getUrlParameter('bedrooms');
+    const searchBaths = getUrlParameter('baths');
+    const searchMinPrice = getUrlParameter('minPrice');
+    const searchMaxPrice = getUrlParameter('maxPrice');
+    
+    if (searchCity) document.getElementById('locationInput').value = searchCity;
+    if (searchPropertyType) selectDropdown('propertyType', searchPropertyType, searchPropertyType);
+    if (searchBedrooms) selectDropdown('bedrooms', searchBedrooms, searchBedrooms + '+ Bedrooms');
+    if (searchBaths) selectDropdown('baths', searchBaths, searchBaths + '+ Bathrooms');
+    if (searchMinPrice) customMinPrice = parseInt(searchMinPrice);
+    if (searchMaxPrice) customMaxPrice = parseInt(searchMaxPrice);
+    if (customMinPrice > 0 || customMaxPrice < 500000000) {
+      document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
+    }
+    
+    applyFilters(currentCategory);
+  } catch (error) { console.error(error); }
+}
+
+function applyFilters(currentCategory) {
+  const location = document.getElementById('locationInput').value;
+  const propertyType = window.selectedPropertyTypeValue || '';
+  const bedrooms = window.selectedBedroomsValue || '';
+  const baths = window.selectedBathsValue || '';
+  
+  let filtered = [...allProperties];
+  
+  filtered = filtered.filter(prop => {
+    if (location && !prop.location.toLowerCase().includes(location.toLowerCase())) return false;
+    if (propertyType && prop.propertyType !== propertyType) return false;
+    if (bedrooms && prop.bedrooms < parseInt(bedrooms)) return false;
+    if (baths && prop.bathrooms < parseInt(baths)) return false;
+    
+    let priceToCheck = 0;
+    if (isForLease(prop)) {
+      priceToCheck = prop.monthlyRental || prop.price || 0;
+    } else {
+      priceToCheck = prop.price || 0;
+    }
+    if (priceToCheck < customMinPrice || priceToCheck > customMaxPrice) return false;
+    
+    return true;
+  });
+  
+  if (currentCategory === 'FOR SALE') {
+    filtered = filtered.filter(p => p.listingType === 'FOR SALE');
+  } else if (currentCategory === 'FOR LEASE') {
+    filtered = filtered.filter(p => isForLease(p));
+  }
+  
+  renderProperties(filtered);
+  document.getElementById('resultsCount').innerHTML = `${filtered.length} properties found`;
+}
+
+function renderProperties(properties) {
+  const container = document.getElementById('property-list');
+  if (!container) return;
+  container.innerHTML = "";
+  if (properties.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div>';
+    return;
+  }
+  properties.forEach(prop => container.appendChild(createCard(prop)));
+}
+
+function createCard(prop) {
+  const card = document.createElement('div');
+  card.className = 'prop-card';
+  card.style.cursor = 'pointer';
+  card.onclick = () => openDetail(prop._id);
+  
+  const isSale = prop.listingType === 'FOR SALE';
+  const badge = isSale ? 'badge-sale' : 'badge-lease';
+  const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
+  const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
+  const displayPrice = getDisplayPrice(prop);
+  
+  card.innerHTML = `
+    <div class="prop-card-image">
+      <span class="prop-badge ${badge}">${badgeText}</span>
+      ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
+      <img src="${prop.mainImage || 'https://via.placeholder.com/400x300'}" alt="${escapeHtml(prop.title)}" loading="lazy">
+      <div class="card-actions">
+        <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
+          <i class="far fa-heart"></i>
+        </button>
+        <button class="card-action-btn" onclick="event.stopPropagation(); openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" title="Notify me when price drops">
+          <i class="fas fa-bell"></i>
+        </button>
+      </div>
+    </div>
+    <div class="prop-info">
+      <h3 class="prop-title">${escapeHtml(prop.title)}</h3>
+      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
+      <div class="prop-price">${displayPrice}</div>
+      <div class="prop-specs">
+        <span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>
+        <span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>
+        <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span>
+        ${parking}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const currentCategory = this.dataset.category;
+    
+    const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
+    document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
+    
+    applyFilters(currentCategory);
+    
+    const url = new URL(window.location.href);
+    if (currentCategory === 'all') {
+      url.searchParams.delete('category');
+    } else {
+      url.searchParams.set('category', currentCategory);
+    }
+    window.history.pushState({}, '', url);
+  });
+});
+
+function openDetail(id) {
+  const prop = allProperties.find(x => x._id === id);
+  if (!prop) return;
+  currentProperty = prop;
+  
+  galleryImages = [prop.mainImage, ...(prop.gallery || [])];
+  let thumbs = '';
+  galleryImages.forEach((img, i) => { thumbs += `<img src="${img}" onclick="changeImg(${i})">`; });
+  
+  const mapAddr = prop.mapLocation || prop.location;
+  const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(mapAddr + ", Philippines")}&output=embed`;
+  const isSale = prop.listingType === 'FOR SALE';
+  const badge = isSale ? 'badge-sale' : 'badge-lease';
+  const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
+  const displayPrice = getDisplayPrice(prop);
+  const propertyPrice = prop.price || 0;
+  
+  document.getElementById("modal-content").innerHTML = `
+    <img id="mainImg" class="gallery-main" src="${galleryImages[0]}">
+    <div class="thumb-row">${thumbs}</div>
+    <div class="modal-details">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="prop-badge ${badge}" style="display: inline-block;">${badgeText}</span>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 6px 12px; border-radius: 30px; font-size: 12px; cursor: pointer;"><i class="far fa-heart"></i> Save</button>
+          <button onclick="openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 6px 12px; border-radius: 30px; font-size: 12px; cursor: pointer;"><i class="fas fa-bell"></i> Notify</button>
+        </div>
+      </div>
+      <h1 style="margin-top: 12px; font-size: 24px;">${escapeHtml(prop.title)}</h1>
+      <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
+      <div class="prop-price" style="font-size: 28px; margin: 15px 0;">${displayPrice}</div>
+      
+      ${prop.listingType === 'FOR SALE' ? `
+      <div style="margin: 15px 0; padding: 15px; background: var(--gray-light); border-radius: 14px;">
+        <div style="font-weight:700; margin-bottom:12px;"><i class="fas fa-calculator"></i> Monthly Amortization</div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Down Payment</label>
+            <input type="range" id="downPaymentPercent" min="10" max="30" step="5" value="20" oninput="updateDownPayment(this.value, ${propertyPrice})" style="width:100%">
+            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+              <span style="font-size:10px;">10%</span>
+              <span id="downPaymentValue" style="font-size:11px; color:var(--orange);">20%</span>
+              <span style="font-size:10px;">30%</span>
+            </div>
+          </div>
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Loan Term</label>
+            <select id="loanTermYears" onchange="calculateMortgage(${propertyPrice})" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+              <option value="5">5 yrs</option><option value="10">10 yrs</option>
+              <option value="15">15 yrs</option><option value="20" selected>20 yrs</option>
+              <option value="25">25 yrs</option><option value="30">30 yrs</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:100px;">
+            <label style="font-size:10px; color:var(--gray);">Interest Rate</label>
+            <select id="interestRate" onchange="calculateMortgage(${propertyPrice})" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+              <option value="6">6% - Promo</option><option value="6.5">6.5%</option>
+              <option value="7">7%</option><option value="7.5" selected>7.5% - Std</option>
+              <option value="8">8%</option><option value="8.5">8.5%</option>
+              <option value="9">9%</option><option value="10">10%</option>
+              <option value="11">11% - Pag-IBIG</option><option value="12">12%</option>
+            </select>
+          </div>
+        </div>
+        <div style="background:var(--dark); padding:12px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; color:rgba(255,255,255,0.6);">Estimated Monthly Payment</div>
+          <div style="font-size:24px; font-weight:700; color:var(--orange);" id="mortgageResult">₱0<span style="font-size:12px;">/mo</span></div>
+        </div>
+        <div style="font-size:10px; color:var(--gray); text-align:center; margin-top:8px;">*Principal & interest only</div>
+      </div>
+      ` : ''}
+      
+      <div style="margin:15px 0; padding:12px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+        <div style="font-weight:600; margin-bottom:10px;"><i class="fas fa-share-alt"></i> Share</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="shareProperty('facebook', currentProperty)" style="background:#1877f2; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fab fa-facebook-f"></i> FB</button>
+          <button onclick="shareProperty('messenger', currentProperty)" style="background:#0084ff; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fab fa-facebook-messenger"></i> Msgr</button>
+          <button onclick="shareProperty('email', currentProperty)" style="background:#ea4335; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fas fa-envelope"></i> Email</button>
+          <button onclick="shareProperty('copy', currentProperty)" style="background:#6c757d; color:white; border:none; padding:6px 12px; border-radius:30px; font-size:11px; cursor:pointer;"><i class="fas fa-link"></i> Copy</button>
+        </div>
+      </div>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:15px; margin:15px 0; padding:12px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+        <span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>
+        <span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>
+        <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span>
+        ${prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : ''}
+        <span><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
+      </div>
+      <p style="line-height:1.6; color:#666; font-size:14px;">${escapeHtml(prop.description || 'Contact us for more details.')}</p>
+      <div class="map-container"><iframe src="${mapEmbed}" allowfullscreen loading="lazy"></iframe></div>
+      <button onclick="closeModal();" style="margin-top:20px; padding:12px 25px; background:var(--orange); border:none; color:white; border-radius:40px; cursor:pointer; font-weight:600;">Close</button>
+    </div>
+  `;
+  document.getElementById("modal").style.display = "block";
+  document.body.style.overflow = "hidden";
+  if (prop.listingType === 'FOR SALE') calculateMortgage(propertyPrice);
+}
+
+function calculateMortgage(propertyPrice) {
+  const downPaymentPercent = parseFloat(document.getElementById('downPaymentPercent')?.value) || 20;
+  const loanTermYears = parseFloat(document.getElementById('loanTermYears')?.value) || 20;
+  const interestRate = parseFloat(document.getElementById('interestRate')?.value) || 7.5;
+  
+  const downPayment = (propertyPrice * downPaymentPercent) / 100;
+  const loanAmount = propertyPrice - downPayment;
+  const monthlyRate = interestRate / 100 / 12;
+  const totalPayments = loanTermYears * 12;
+  
+  let monthlyPayment = 0;
+  if (monthlyRate > 0 && loanAmount > 0) {
+    monthlyPayment = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+  }
+  
+  const resultElement = document.getElementById('mortgageResult');
+  if (resultElement) {
+    resultElement.innerHTML = `₱${Math.round(monthlyPayment).toLocaleString()}<span style="font-size: 12px;">/mo</span>`;
+  }
+  
+  const downPaymentValue = document.getElementById('downPaymentValue');
+  if (downPaymentValue) downPaymentValue.innerText = downPaymentPercent + '%';
+}
+
+function updateDownPayment(value, propertyPrice) {
+  document.getElementById('downPaymentPercent').value = value;
+  document.getElementById('downPaymentValue').innerText = value + '%';
+  calculateMortgage(propertyPrice);
+}
+
+function changeImg(i) {
+  const mainImg = document.getElementById("mainImg");
+  if (mainImg && galleryImages[i]) mainImg.src = galleryImages[i];
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+  document.body.style.overflow = "auto";
+}
+
+window.selectedPropertyTypeValue = '';
+window.selectedBedroomsValue = '';
+window.selectedBathsValue = '';
+
+loadProperties();
+</script>
+</body>
+</html>
