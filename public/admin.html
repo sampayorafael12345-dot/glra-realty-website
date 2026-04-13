@@ -152,12 +152,39 @@ body {
   align-items: center;
 }
 
+/* Dark mode button - SQUARE/RECTANGLE shape, beside logout */
+.darkmode-btn-header {
+  background: #1e1e2e;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.dark-mode .darkmode-btn-header {
+  background: #2a2a3a;
+  color: var(--orange);
+}
+
+.darkmode-btn-header:hover {
+  transform: translateY(-2px);
+  background: var(--orange);
+  color: white;
+}
+
 .logout-btn {
   background: var(--danger);
   color: white;
   border: none;
   padding: 10px 24px;
-  border-radius: 40px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -1011,40 +1038,6 @@ button.danger:hover:not(:disabled) {
   color: var(--orange);
 }
 
-/* Floating Buttons for Dark Mode */
-.floating-buttons {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 100;
-}
-
-.floating-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-  cursor: pointer;
-  border: none;
-}
-
-.floating-btn:hover { transform: scale(1.05); }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
-
-body.dark-mode .btn-darkmode {
-  background: #2a2a3a;
-  color: var(--orange);
-  border-color: var(--orange);
-}
-
 /* Mobile */
 @media (max-width: 768px) {
   .container {
@@ -1080,6 +1073,11 @@ body.dark-mode .btn-darkmode {
     right: 20px;
     bottom: 20px;
   }
+  
+  .header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>
 </head>
@@ -1098,10 +1096,13 @@ body.dark-mode .btn-darkmode {
 <!-- Dashboard -->
 <div class="dashboard" id="dashboard">
   <div class="container">
-    <!-- Header -->
+    <!-- Header with Dark Mode button beside logout -->
     <div class="header">
       <h1><i class="fas fa-building"></i> GLRA Realty Admin</h1>
       <div class="header-right">
+        <button class="darkmode-btn-header" id="headerDarkModeToggle" onclick="toggleDarkMode()">
+          <i class="fas fa-moon"></i> Dark Mode
+        </button>
         <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
     </div>
@@ -1154,7 +1155,7 @@ body.dark-mode .btn-darkmode {
       <div class="property-list" id="propertyList"></div>
     </div>
     
-    <!-- Add Property Tab (FIXED IMAGE UPLOAD) -->
+    <!-- Add Property Tab -->
     <div id="addTab" class="tab-content">
       <div class="property-form">
         <h3><i class="fas fa-plus-circle"></i> Add New Property</h3>
@@ -1251,7 +1252,7 @@ body.dark-mode .btn-darkmode {
             <small>Use spaces and line breaks for proper formatting on the website.</small>
           </div>
           
-          <!-- Main Image Upload - FIXED -->
+          <!-- Main Image Upload -->
           <div class="form-group">
             <label>Main Image (1:1 Square)</label>
             <button type="button" class="image-upload-btn" id="uploadMainImageBtn">
@@ -1263,7 +1264,7 @@ body.dark-mode .btn-darkmode {
             <small>Upload JPG, PNG, or WEBP.</small>
           </div>
           
-          <!-- Gallery Images Upload - FIXED (MAX 25, proper limit handling) -->
+          <!-- Gallery Images Upload -->
           <div class="form-group">
             <label>Gallery Images (Max 25)</label>
             <button type="button" class="image-upload-btn" id="uploadGalleryBtn">
@@ -1371,7 +1372,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
-<!-- Edit Modal (FIXED IMAGE HANDLING) -->
+<!-- Edit Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="modal-close" onclick="closeEditModal()">&times;</span>
@@ -1403,7 +1404,7 @@ body.dark-mode .btn-darkmode {
       </div>
       <div class="form-group"><label>Description</label><textarea id="editDescription" rows="4"></textarea></div>
       
-      <!-- Edit Main Image - FIXED -->
+      <!-- Edit Main Image -->
       <div class="form-group">
         <label>Main Image</label>
         <div id="editCurrentMainImage" style="margin-bottom: 10px;"></div>
@@ -1415,7 +1416,7 @@ body.dark-mode .btn-darkmode {
         <div id="editMainImagePreview" class="image-preview" style="display: none;"></div>
       </div>
       
-      <!-- Edit Gallery Images - FIXED -->
+      <!-- Edit Gallery Images -->
       <div class="form-group">
         <label>Gallery Images</label>
         <div id="editCurrentGallery" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
@@ -1439,35 +1440,50 @@ body.dark-mode .btn-darkmode {
 <!-- Progress Stack -->
 <div id="progressStack" class="progress-stack"></div>
 
-<!-- Floating Dark Mode Button -->
-<div class="floating-buttons">
-  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
-    <i class="fas fa-moon"></i>
-  </button>
-</div>
-
 <script>
 // ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   const isDarkMode = document.body.classList.contains('dark-mode');
   localStorage.setItem('darkMode', isDarkMode);
-  const btn = document.getElementById('floatingDarkModeToggle');
+  
+  // Update both buttons
+  const floatingBtn = document.getElementById('floatingDarkModeToggle');
+  const headerBtn = document.getElementById('headerDarkModeToggle');
+  
   if (isDarkMode) {
-    btn.innerHTML = '<i class="fas fa-sun"></i>';
-    btn.style.background = '#2a2a3a';
-    btn.style.color = '#f97316';
+    if (floatingBtn) {
+      floatingBtn.innerHTML = '<i class="fas fa-sun"></i>';
+      floatingBtn.style.background = '#2a2a3a';
+      floatingBtn.style.color = '#f97316';
+    }
+    if (headerBtn) {
+      headerBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+      headerBtn.style.background = '#2a2a3a';
+      headerBtn.style.color = '#f97316';
+    }
   } else {
-    btn.innerHTML = '<i class="fas fa-moon"></i>';
-    btn.style.background = '#1e1e2e';
-    btn.style.color = 'white';
+    if (floatingBtn) {
+      floatingBtn.innerHTML = '<i class="fas fa-moon"></i>';
+      floatingBtn.style.background = '#1e1e2e';
+      floatingBtn.style.color = 'white';
+    }
+    if (headerBtn) {
+      headerBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+      headerBtn.style.background = '#1e1e2e';
+      headerBtn.style.color = 'white';
+    }
   }
 }
 
 if (localStorage.getItem('darkMode') === 'true') {
   document.body.classList.add('dark-mode');
-  const btn = document.getElementById('floatingDarkModeToggle');
-  if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
+  const headerBtn = document.getElementById('headerDarkModeToggle');
+  if (headerBtn) {
+    headerBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+    headerBtn.style.background = '#2a2a3a';
+    headerBtn.style.color = '#f97316';
+  }
 }
 
 // ============ PROGRESS BARS ============
@@ -1606,7 +1622,7 @@ function escapeHtml(str) {
   });
 }
 
-// ============ IMAGE UPLOAD FUNCTIONS (FIXED) ============
+// ============ IMAGE UPLOAD FUNCTIONS ============
 async function uploadImage(file, type = 'hero', progressId = null) {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -1660,7 +1676,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ============ PROPERTY IMAGE UPLOAD - FIXED ============
+// ============ PROPERTY IMAGE UPLOAD ============
 let currentMainImageUrl = '';
 let currentGalleryUrls = [];
 const MAX_GALLERY_IMAGES = 25;
@@ -1692,7 +1708,7 @@ document.getElementById('mainImageFile')?.addEventListener('change', async funct
   }
 });
 
-// Gallery Images Upload - FIXED
+// Gallery Images Upload
 document.getElementById('uploadGalleryBtn')?.addEventListener('click', () => document.getElementById('galleryFiles').click());
 
 function updateGalleryDisplay() {
@@ -1716,7 +1732,6 @@ function removeGalleryImage(index) {
 document.getElementById('galleryFiles')?.addEventListener('change', async function(e) {
   let files = Array.from(e.target.files);
   
-  // Check limit
   if (currentGalleryUrls.length + files.length > MAX_GALLERY_IMAGES) {
     showToast(`You can only upload up to ${MAX_GALLERY_IMAGES} gallery images. You have ${currentGalleryUrls.length} already.`, true);
     this.value = '';
@@ -1935,7 +1950,7 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add('active');
 }
 
-// Add Property Submit - FIXED (images now save on first attempt)
+// Add Property Submit - FIXED with better error handling
 document.getElementById('propertyForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submitPropertyBtn');
@@ -1955,8 +1970,8 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
     description: fd.get('description'),
     featured: fd.get('featured') === 'true', 
     status: fd.get('status'),
-    mainImage: currentMainImageUrl,  // FIXED: uses current state
-    gallery: currentGalleryUrls,      // FIXED: uses current state
+    mainImage: currentMainImageUrl,
+    gallery: currentGalleryUrls,
     mapLocation: fd.get('mapLocation') || '', 
     listingType: fd.get('listingType'),
     propertyType: fd.get('propertyType'), 
@@ -1971,10 +1986,18 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify(prop) 
     });
+    
+    let responseText = await res.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch(e) {
+      responseData = { error: responseText.substring(0, 200) };
+    }
+    
     if (res.ok) {
       updateProgressBar(progressId, 100, 'Complete!');
       showToast('✅ Property added successfully! 🎉');
-      // Reset form state
       this.reset();
       currentMainImageUrl = '';
       currentGalleryUrls = [];
@@ -1988,12 +2011,17 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
       document.querySelectorAll('.tab')[1].classList.remove('active');
     } else {
       updateProgressBar(progressId, 100, 'Failed!');
-      const error = await res.json();
-      showToast('❌ Error adding property: ' + (error.error || 'Unknown error'), true);
+      console.error('Server error:', responseData);
+      let errorMsg = responseData.error || responseData.message || 'Unknown error';
+      if (errorMsg.includes('413') || errorMsg.includes('payload')) {
+        errorMsg = 'Image payload too large. Try fewer or smaller images.';
+      }
+      showToast('❌ Error: ' + errorMsg, true);
     }
   } catch(e) { 
     updateProgressBar(progressId, 100, 'Failed!');
-    showToast('❌ Network error', true);
+    console.error('Network error:', e);
+    showToast('❌ Network error: ' + e.message, true);
   } finally { 
     submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Property'; 
     submitBtn.disabled = false;
@@ -2112,7 +2140,7 @@ function renderAlerts() {
   `).join('');
 }
 
-// Edit Property - FIXED (images save correctly)
+// Edit Property
 let editMainImageUrl = '';
 let editNewGalleryUrls = [];
 let editExistingGalleryUrls = [];
@@ -2182,7 +2210,6 @@ document.getElementById('editGalleryFiles')?.addEventListener('change', async fu
   const files = Array.from(e.target.files);
   if (files.length === 0) return;
   
-  // Check limit
   const totalExisting = editExistingGalleryUrls.length + editNewGalleryUrls.length;
   if (totalExisting + files.length > MAX_GALLERY_IMAGES) {
     showToast(`You can only have up to ${MAX_GALLERY_IMAGES} gallery images total.`, true);
