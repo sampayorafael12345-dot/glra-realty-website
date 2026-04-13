@@ -1154,7 +1154,7 @@ body.dark-mode .btn-darkmode {
       <div class="property-list" id="propertyList"></div>
     </div>
     
-    <!-- Add Property Tab (UPDATED: Removed Admin-Only, Gallery max 25) -->
+    <!-- Add Property Tab (FIXED IMAGE UPLOAD) -->
     <div id="addTab" class="tab-content">
       <div class="property-form">
         <h3><i class="fas fa-plus-circle"></i> Add New Property</h3>
@@ -1251,7 +1251,7 @@ body.dark-mode .btn-darkmode {
             <small>Use spaces and line breaks for proper formatting on the website.</small>
           </div>
           
-          <!-- Main Image Upload -->
+          <!-- Main Image Upload - FIXED -->
           <div class="form-group">
             <label>Main Image (1:1 Square)</label>
             <button type="button" class="image-upload-btn" id="uploadMainImageBtn">
@@ -1260,10 +1260,10 @@ body.dark-mode .btn-darkmode {
             <input type="file" id="mainImageFile" accept="image/*" style="display: none;">
             <input type="hidden" name="mainImage" id="mainImageUrl">
             <div id="mainImagePreview" class="image-preview" style="display: none;"></div>
-            <small>Upload JPG, PNG, or WEBP. Will be compressed and displayed as 1:1 square.</small>
+            <small>Upload JPG, PNG, or WEBP.</small>
           </div>
           
-          <!-- Gallery Images Upload (MAX 25) -->
+          <!-- Gallery Images Upload - FIXED (MAX 25, proper limit handling) -->
           <div class="form-group">
             <label>Gallery Images (Max 25)</label>
             <button type="button" class="image-upload-btn" id="uploadGalleryBtn">
@@ -1272,7 +1272,7 @@ body.dark-mode .btn-darkmode {
             <input type="file" id="galleryFiles" accept="image/*" multiple style="display: none;">
             <input type="hidden" name="gallery" id="galleryUrls">
             <div id="galleryPreview" class="gallery-preview"></div>
-            <small>Upload up to 25 images. Will be compressed and displayed as 1:1 squares.</small>
+            <small id="galleryCountDisplay">0 / 25 images uploaded</small>
           </div>
           
           <div class="form-group">
@@ -1359,7 +1359,7 @@ body.dark-mode .btn-darkmode {
         <div class="upload-area" id="heroUploadArea">
           <i class="fas fa-cloud-upload-alt"></i>
           <p>Click to upload hero image</p>
-          <small>JPG, PNG, or WEBP. Max 10MB. Will be compressed automatically.</small>
+          <small>JPG, PNG, or WEBP. Max 10MB.</small>
           <input type="file" id="heroImageInput" class="upload-input" accept="image/jpeg,image/png,image/webp">
         </div>
         
@@ -1371,7 +1371,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
-<!-- Edit Modal (UPDATED: Removed Admin-Only) -->
+<!-- Edit Modal (FIXED IMAGE HANDLING) -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="modal-close" onclick="closeEditModal()">&times;</span>
@@ -1403,7 +1403,7 @@ body.dark-mode .btn-darkmode {
       </div>
       <div class="form-group"><label>Description</label><textarea id="editDescription" rows="4"></textarea></div>
       
-      <!-- Edit Main Image -->
+      <!-- Edit Main Image - FIXED -->
       <div class="form-group">
         <label>Main Image</label>
         <div id="editCurrentMainImage" style="margin-bottom: 10px;"></div>
@@ -1413,10 +1413,9 @@ body.dark-mode .btn-darkmode {
         <input type="file" id="editMainImageFile" accept="image/*" style="display: none;">
         <input type="hidden" id="editMainImageUrl">
         <div id="editMainImagePreview" class="image-preview" style="display: none;"></div>
-        <small>Upload a new image to replace the current one. Will be compressed automatically.</small>
       </div>
       
-      <!-- Edit Gallery Images -->
+      <!-- Edit Gallery Images - FIXED -->
       <div class="form-group">
         <label>Gallery Images</label>
         <div id="editCurrentGallery" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
@@ -1426,7 +1425,7 @@ body.dark-mode .btn-darkmode {
         <input type="file" id="editGalleryFiles" accept="image/*" multiple style="display: none;">
         <input type="hidden" id="editGalleryUrls">
         <div id="editGalleryPreview" class="gallery-preview"></div>
-        <small>Upload additional gallery images. Max 25 total.</small>
+        <small id="editGalleryCountDisplay">0 / 25 total</small>
       </div>
       
       <div class="form-group"><label>Map Location</label><input type="text" id="editMapLocation"></div>
@@ -1607,7 +1606,7 @@ function escapeHtml(str) {
   });
 }
 
-// ============ IMAGE UPLOAD FUNCTIONS ============
+// ============ IMAGE UPLOAD FUNCTIONS (FIXED) ============
 async function uploadImage(file, type = 'hero', progressId = null) {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
@@ -1651,7 +1650,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const progressId = addProgressBar(file.name);
       try {
         await uploadImage(file, 'hero', progressId);
-        showToast('✅ Hero image uploaded and compressed!');
+        showToast('✅ Hero image uploaded!');
         loadHeroImages();
       } catch (error) {
         showToast('❌ Upload failed: ' + error.message, true);
@@ -1661,8 +1660,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// Property Image Uploads
+// ============ PROPERTY IMAGE UPLOAD - FIXED ============
 let currentMainImageUrl = '';
+let currentGalleryUrls = [];
+const MAX_GALLERY_IMAGES = 25;
+
+// Main Image Upload
 document.getElementById('uploadMainImageBtn')?.addEventListener('click', () => document.getElementById('mainImageFile').click());
 document.getElementById('mainImageFile')?.addEventListener('change', async function(e) {
   const file = e.target.files[0];
@@ -1679,7 +1682,7 @@ document.getElementById('mainImageFile')?.addEventListener('change', async funct
     const preview = document.getElementById('mainImagePreview');
     preview.style.display = 'block';
     preview.innerHTML = `<img src="${result.url}" alt="Preview" style="width: 100px; height: 100px; object-fit: cover;"><br><small>✅ Uploaded (${(result.size/1024).toFixed(1)}KB)</small>`;
-    showToast('✅ Main image uploaded and compressed!');
+    showToast('✅ Main image uploaded!');
   } catch (error) {
     showToast('❌ Upload failed: ' + error.message, true);
   } finally {
@@ -1689,16 +1692,34 @@ document.getElementById('mainImageFile')?.addEventListener('change', async funct
   }
 });
 
-let currentGalleryUrls = [];
-const MAX_GALLERY_IMAGES = 25;
-
+// Gallery Images Upload - FIXED
 document.getElementById('uploadGalleryBtn')?.addEventListener('click', () => document.getElementById('galleryFiles').click());
+
+function updateGalleryDisplay() {
+  const preview = document.getElementById('galleryPreview');
+  preview.innerHTML = currentGalleryUrls.map((url, idx) => `
+    <div class="gallery-preview-item">
+      <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
+      <div class="remove-img" onclick="removeGalleryImage(${idx})"><i class="fas fa-times"></i></div>
+    </div>
+  `).join('');
+  document.getElementById('galleryCountDisplay').innerHTML = `${currentGalleryUrls.length} / ${MAX_GALLERY_IMAGES} images uploaded`;
+  document.getElementById('galleryUrls').value = currentGalleryUrls.join(',');
+}
+
+function removeGalleryImage(index) {
+  currentGalleryUrls.splice(index, 1);
+  updateGalleryDisplay();
+  showToast(`Gallery image removed. (${currentGalleryUrls.length}/${MAX_GALLERY_IMAGES})`);
+}
+
 document.getElementById('galleryFiles')?.addEventListener('change', async function(e) {
   let files = Array.from(e.target.files);
   
   // Check limit
   if (currentGalleryUrls.length + files.length > MAX_GALLERY_IMAGES) {
     showToast(`You can only upload up to ${MAX_GALLERY_IMAGES} gallery images. You have ${currentGalleryUrls.length} already.`, true);
+    this.value = '';
     return;
   }
   
@@ -1706,8 +1727,8 @@ document.getElementById('galleryFiles')?.addEventListener('change', async functi
   const originalText = btn.innerHTML;
   btn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
   btn.disabled = true;
-  let uploaded = 0;
   
+  let uploaded = 0;
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const progressId = addProgressBar(file.name, files.length, i + 1);
@@ -1715,38 +1736,18 @@ document.getElementById('galleryFiles')?.addEventListener('change', async functi
       const result = await uploadImage(file, 'property', progressId);
       currentGalleryUrls.push(result.url);
       uploaded++;
+      updateGalleryDisplay();
     } catch (error) {
       showToast(`Failed: ${file.name}`, true);
     }
   }
   
-  document.getElementById('galleryUrls').value = currentGalleryUrls.join(',');
-  const preview = document.getElementById('galleryPreview');
-  preview.innerHTML = currentGalleryUrls.map((url, idx) => `
-    <div class="gallery-preview-item">
-      <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
-      <div class="remove-img" onclick="removeGalleryImage(${idx})"><i class="fas fa-times"></i></div>
-    </div>
-  `).join('');
-  
+  updateGalleryDisplay();
   showToast(`✅ ${uploaded} of ${files.length} gallery images uploaded! (${currentGalleryUrls.length}/${MAX_GALLERY_IMAGES})`);
   btn.innerHTML = originalText;
   btn.disabled = false;
   this.value = '';
 });
-
-function removeGalleryImage(index) {
-  currentGalleryUrls.splice(index, 1);
-  document.getElementById('galleryUrls').value = currentGalleryUrls.join(',');
-  const preview = document.getElementById('galleryPreview');
-  preview.innerHTML = currentGalleryUrls.map((url, idx) => `
-    <div class="gallery-preview-item">
-      <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
-      <div class="remove-img" onclick="removeGalleryImage(${idx})"><i class="fas fa-times"></i></div>
-    </div>
-  `).join('');
-  showToast(`Gallery image removed. (${currentGalleryUrls.length}/${MAX_GALLERY_IMAGES})`);
-}
 
 // ============ LOGIN & DASHBOARD ============
 async function login() {
@@ -1934,36 +1935,52 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add('active');
 }
 
-// Add Property Submit
+// Add Property Submit - FIXED (images now save on first attempt)
 document.getElementById('propertyForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submitPropertyBtn');
   submitBtn.innerHTML = '<span class="loading-spinner"></span> Adding...';
   submitBtn.disabled = true;
   const fd = new FormData(this);
-  const gallery = currentGalleryUrls.length ? currentGalleryUrls : (fd.get('gallery') ? fd.get('gallery').split(',').map(s=>s.trim()) : []);
+  
   const prop = {
-    title: fd.get('title'), location: fd.get('location'), price: parseFloat(fd.get('price')) || 0,
-    monthlyRental: parseFloat(fd.get('monthlyRental')) || 0, bedrooms: parseInt(fd.get('bedrooms')) || 0,
-    bathrooms: parseInt(fd.get('bathrooms')) || 0, sqm: parseFloat(fd.get('sqm')) || 0,
-    landArea: parseFloat(fd.get('landArea')) || 0, description: fd.get('description'),
-    featured: fd.get('featured') === 'true', status: fd.get('status'),
-    mainImage: currentMainImageUrl || fd.get('mainImage') || '', gallery: gallery,
-    mapLocation: fd.get('mapLocation') || '', listingType: fd.get('listingType'),
-    propertyType: fd.get('propertyType'), parking: parseInt(fd.get('parking')) || 0
+    title: fd.get('title'), 
+    location: fd.get('location'), 
+    price: parseFloat(fd.get('price')) || 0,
+    monthlyRental: parseFloat(fd.get('monthlyRental')) || 0, 
+    bedrooms: parseInt(fd.get('bedrooms')) || 0,
+    bathrooms: parseInt(fd.get('bathrooms')) || 0, 
+    sqm: parseFloat(fd.get('sqm')) || 0,
+    landArea: parseFloat(fd.get('landArea')) || 0, 
+    description: fd.get('description'),
+    featured: fd.get('featured') === 'true', 
+    status: fd.get('status'),
+    mainImage: currentMainImageUrl,  // FIXED: uses current state
+    gallery: currentGalleryUrls,      // FIXED: uses current state
+    mapLocation: fd.get('mapLocation') || '', 
+    listingType: fd.get('listingType'),
+    propertyType: fd.get('propertyType'), 
+    parking: parseInt(fd.get('parking')) || 0
   };
+  
   const progressId = addProgressBar('Saving property...');
   updateProgressBar(progressId, 50, 'Saving property...');
   try {
-    const res = await fetch('/api/admin/properties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(prop) });
+    const res = await fetch('/api/admin/properties', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(prop) 
+    });
     if (res.ok) {
       updateProgressBar(progressId, 100, 'Complete!');
       showToast('✅ Property added successfully! 🎉');
+      // Reset form state
       this.reset();
       currentMainImageUrl = '';
       currentGalleryUrls = [];
       document.getElementById('mainImagePreview').style.display = 'none';
       document.getElementById('galleryPreview').innerHTML = '';
+      document.getElementById('galleryCountDisplay').innerHTML = '0 / 25 images uploaded';
       loadAllProperties();
       loadStats();
       switchTab('properties');
@@ -2095,18 +2112,28 @@ function renderAlerts() {
   `).join('');
 }
 
-// Edit Property
+// Edit Property - FIXED (images save correctly)
 let editMainImageUrl = '';
-let editGalleryUrls = [];
+let editNewGalleryUrls = [];
 let editExistingGalleryUrls = [];
 
-function deleteCurrentMainImage() {
-  if (confirm('Remove the current main image?')) {
-    editMainImageUrl = '';
-    document.getElementById('editMainImageUrl').value = '';
-    document.getElementById('editCurrentMainImage').innerHTML = '<div style="background: var(--gray-light); padding: 10px; border-radius: 8px;"><strong>No main image set</strong></div>';
-    showToast('Main image removed. Click Save to apply changes.');
+function displayCurrentGalleryImages() {
+  const container = document.getElementById('editCurrentGallery');
+  if (!editExistingGalleryUrls.length) {
+    container.innerHTML = '<div style="width: 100%;"><strong>No gallery images</strong></div>';
+  } else {
+    container.innerHTML = `<div style="width: 100%; margin-bottom: 8px;"><strong>Current Gallery Images (${editExistingGalleryUrls.length}):</strong></div>` + 
+      editExistingGalleryUrls.map((url, idx) => `
+        <div style="position: relative; display: inline-block; margin: 5px;">
+          <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+          <div onclick="deleteCurrentGalleryImage(${idx})" style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;">
+            <i class="fas fa-times"></i>
+          </div>
+        </div>
+      `).join('');
   }
+  const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
 }
 
 function deleteCurrentGalleryImage(index) {
@@ -2114,23 +2141,6 @@ function deleteCurrentGalleryImage(index) {
     editExistingGalleryUrls.splice(index, 1);
     displayCurrentGalleryImages();
     showToast('Gallery image removed. Click Save to apply changes.');
-  }
-}
-
-function displayCurrentGalleryImages() {
-  const container = document.getElementById('editCurrentGallery');
-  if (editExistingGalleryUrls.length === 0) {
-    container.innerHTML = '<div style="width: 100%;"><strong>No gallery images</strong></div>';
-  } else {
-    container.innerHTML = `<div style="width: 100%; margin-bottom: 8px;"><strong>Current Gallery Images (${editExistingGalleryUrls.length}):</strong></div>` + 
-      editExistingGalleryUrls.map((url, idx) => `
-        <div class="current-image-item">
-          <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-          <div class="delete-current-img" onclick="deleteCurrentGalleryImage(${idx})">
-            <i class="fas fa-times"></i>
-          </div>
-        </div>
-      `).join('');
   }
 }
 
@@ -2153,9 +2163,8 @@ document.getElementById('editMainImageFile')?.addEventListener('change', async f
     const currentDiv = document.getElementById('editCurrentMainImage');
     currentDiv.innerHTML = `
       <div style="background: var(--gray-light); padding: 10px; border-radius: 8px;">
-        <strong>Current Main Image:</strong><br>
+        <strong>New Main Image (will replace on save):</strong><br>
         <img src="${result.url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 5px;">
-        <br><small style="color: var(--success);">✅ New image - will replace on save</small>
       </div>
     `;
     showToast('✅ New main image uploaded! Click Save to apply.');
@@ -2174,8 +2183,10 @@ document.getElementById('editGalleryFiles')?.addEventListener('change', async fu
   if (files.length === 0) return;
   
   // Check limit
-  if (editExistingGalleryUrls.length + editGalleryUrls.length + files.length > MAX_GALLERY_IMAGES) {
+  const totalExisting = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  if (totalExisting + files.length > MAX_GALLERY_IMAGES) {
     showToast(`You can only have up to ${MAX_GALLERY_IMAGES} gallery images total.`, true);
+    this.value = '';
     return;
   }
   
@@ -2183,38 +2194,39 @@ document.getElementById('editGalleryFiles')?.addEventListener('change', async fu
   const originalText = btn.innerHTML;
   btn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
   btn.disabled = true;
-  const newGalleryUrls = [];
+  
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const progressId = addProgressBar(file.name, files.length, i + 1);
     try {
       const result = await uploadImage(file, 'property', progressId);
-      newGalleryUrls.push(result.url);
+      editNewGalleryUrls.push(result.url);
+      const preview = document.getElementById('editGalleryPreview');
+      if (editNewGalleryUrls.length > 0) {
+        preview.innerHTML = editNewGalleryUrls.map((url, idx) => `
+          <div class="gallery-preview-item">
+            <img src="${url}" alt="New Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
+            <div class="remove-img" onclick="removeNewGalleryImage(${idx})"><i class="fas fa-times"></i></div>
+          </div>
+        `).join('');
+      }
+      const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+      document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
     } catch (error) {
       showToast(`Failed: ${file.name}`, true);
     }
   }
-  editGalleryUrls = [...editGalleryUrls, ...newGalleryUrls];
-  const preview = document.getElementById('editGalleryPreview');
-  if (editGalleryUrls.length > 0) {
-    preview.innerHTML = editGalleryUrls.map((url, idx) => `
-      <div class="gallery-preview-item">
-        <img src="${url}" alt="New Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
-        <div class="remove-img" onclick="removeNewGalleryImage(${idx})"><i class="fas fa-times"></i></div>
-      </div>
-    `).join('');
-  }
-  showToast(`✅ ${newGalleryUrls.length} new gallery images uploaded! Click Save to apply.`);
+  showToast(`✅ ${files.length} new gallery images uploaded! Click Save to apply.`);
   btn.innerHTML = originalText;
   btn.disabled = false;
   this.value = '';
 });
 
 function removeNewGalleryImage(index) {
-  editGalleryUrls.splice(index, 1);
+  editNewGalleryUrls.splice(index, 1);
   const preview = document.getElementById('editGalleryPreview');
-  if (editGalleryUrls.length > 0) {
-    preview.innerHTML = editGalleryUrls.map((url, idx) => `
+  if (editNewGalleryUrls.length > 0) {
+    preview.innerHTML = editNewGalleryUrls.map((url, idx) => `
       <div class="gallery-preview-item">
         <img src="${url}" alt="New Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
         <div class="remove-img" onclick="removeNewGalleryImage(${idx})"><i class="fas fa-times"></i></div>
@@ -2223,6 +2235,8 @@ function removeNewGalleryImage(index) {
   } else {
     preview.innerHTML = '';
   }
+  const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
 }
 
 async function editProperty(id) {
@@ -2246,7 +2260,7 @@ async function editProperty(id) {
     document.getElementById('editParking').value = prop.parking || 0;
     
     editMainImageUrl = '';
-    editGalleryUrls = [];
+    editNewGalleryUrls = [];
     editExistingGalleryUrls = [...(prop.gallery || [])];
     
     const currentMainDiv = document.getElementById('editCurrentMainImage');
@@ -2255,10 +2269,6 @@ async function editProperty(id) {
         <div style="background: var(--gray-light); padding: 10px; border-radius: 8px;">
           <strong>Current Main Image:</strong><br>
           <img src="${prop.mainImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 5px;">
-          <br>
-          <button type="button" class="delete-main-image-btn" onclick="deleteCurrentMainImage()">
-            <i class="fas fa-trash"></i> Remove Main Image
-          </button>
         </div>
       `;
     } else {
@@ -2279,26 +2289,29 @@ function closeEditModal() { document.getElementById('editModal').style.display =
 document.getElementById('editForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const id = document.getElementById('editId').value;
-  const allGalleryImages = [...editExistingGalleryUrls, ...editGalleryUrls];
+  const allGalleryImages = [...editExistingGalleryUrls, ...editNewGalleryUrls];
   let mainImage = editMainImageUrl;
-  if (!mainImage && document.getElementById('editMainImageUrl').value) {
-    const existingMain = document.getElementById('editMainImageUrl').value;
-    const currentMainDiv = document.getElementById('editCurrentMainImage');
-    if (currentMainDiv.innerHTML.includes('No main image')) {
-      mainImage = '';
-    } else {
-      mainImage = existingMain;
-    }
+  if (!mainImage) {
+    mainImage = document.getElementById('editMainImageUrl').value;
   }
   const property = {
-    title: document.getElementById('editTitle').value, location: document.getElementById('editLocation').value,
-    price: parseFloat(document.getElementById('editPrice').value) || 0, monthlyRental: parseFloat(document.getElementById('editMonthlyRental').value) || 0,
-    bedrooms: parseInt(document.getElementById('editBedrooms').value) || 0, bathrooms: parseInt(document.getElementById('editBathrooms').value) || 0,
-    sqm: parseFloat(document.getElementById('editSqm').value) || 0, landArea: parseFloat(document.getElementById('editLandArea').value) || 0,
-    description: document.getElementById('editDescription').value, featured: document.getElementById('editFeatured').value === 'true',
-    status: document.getElementById('editStatus').value, mainImage: mainImage, gallery: allGalleryImages,
-    mapLocation: document.getElementById('editMapLocation').value, listingType: document.getElementById('editListingType').value,
-    propertyType: document.getElementById('editPropertyType').value, parking: parseInt(document.getElementById('editParking').value) || 0
+    title: document.getElementById('editTitle').value, 
+    location: document.getElementById('editLocation').value,
+    price: parseFloat(document.getElementById('editPrice').value) || 0, 
+    monthlyRental: parseFloat(document.getElementById('editMonthlyRental').value) || 0,
+    bedrooms: parseInt(document.getElementById('editBedrooms').value) || 0, 
+    bathrooms: parseInt(document.getElementById('editBathrooms').value) || 0,
+    sqm: parseFloat(document.getElementById('editSqm').value) || 0, 
+    landArea: parseFloat(document.getElementById('editLandArea').value) || 0,
+    description: document.getElementById('editDescription').value, 
+    featured: document.getElementById('editFeatured').value === 'true',
+    status: document.getElementById('editStatus').value, 
+    mainImage: mainImage, 
+    gallery: allGalleryImages,
+    mapLocation: document.getElementById('editMapLocation').value, 
+    listingType: document.getElementById('editListingType').value,
+    propertyType: document.getElementById('editPropertyType').value, 
+    parking: parseInt(document.getElementById('editParking').value) || 0
   };
   const saveBtn = document.getElementById('saveEditBtn');
   saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
@@ -2345,7 +2358,6 @@ function displayHeroImages() {
       <div class="image-card-info">
         <div class="image-card-title">Hero Image ${idx+1}</div>
         <div class="image-card-order">Order: ${img.order + 1}</div>
-        ${img.compressedSize ? `<div style="font-size: 10px; color: var(--success); margin-bottom: 8px;">📦 ${(img.compressedSize/1024).toFixed(1)}KB</div>` : ''}
         <div class="image-card-actions">
           <button class="set-default-btn" onclick="setAsDefault('${img._id}')"><i class="fas fa-star"></i> First</button>
           <button class="danger" onclick="deleteHeroImage('${img._id}')"><i class="fas fa-trash"></i> Delete</button>
