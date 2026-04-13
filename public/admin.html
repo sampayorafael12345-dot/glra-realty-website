@@ -8,7 +8,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 :root {
   --orange: #f97316;
@@ -34,6 +38,9 @@ body.dark-mode {
   --gray-light: #1a1a2a;
   --white: #0f0f1a;
   --border-color: #2a2a3a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 8px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 body {
@@ -61,7 +68,13 @@ body {
   text-align: center;
 }
 
-.login-box h1 { margin-bottom: 30px; color: var(--orange); font-size: 32px; }
+.login-box h1 {
+  margin-bottom: 30px;
+  color: var(--orange);
+  font-size: 32px;
+  font-weight: 700;
+}
+
 .login-box input {
   width: 100%;
   padding: 14px 16px;
@@ -69,7 +82,15 @@ body {
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
 }
+
+.login-box input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
 .login-box button {
   width: 100%;
   padding: 14px;
@@ -79,10 +100,26 @@ body {
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
 }
 
-.dashboard { display: none; background: var(--gray-light); min-height: 100vh; }
-.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.login-box button:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
+.dashboard {
+  display: none;
+  background: var(--gray-light);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
 
 .header {
   background: var(--white);
@@ -97,8 +134,20 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.header h1 { color: var(--orange); font-size: 24px; display: flex; align-items: center; gap: 10px; }
-.header-right { display: flex; gap: 12px; align-items: center; }
+.header h1 {
+  color: var(--orange);
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 
 .darkmode-btn-header {
   background: #1e1e2e;
@@ -109,9 +158,21 @@ body {
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+body.dark-mode .darkmode-btn-header {
+  background: #2a2a3a;
+  color: var(--orange);
+}
+
+.darkmode-btn-header:hover {
+  transform: translateY(-2px);
+  background: var(--orange);
+  color: white;
 }
 
 .logout-btn {
@@ -121,7 +182,14 @@ body {
   padding: 10px 24px;
   border-radius: 10px;
   cursor: pointer;
+  font-size: 14px;
   font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
 }
 
 .stats {
@@ -138,10 +206,28 @@ body {
   text-align: center;
   box-shadow: var(--shadow-sm);
   border-bottom: 4px solid var(--orange);
+  transition: all 0.3s ease;
 }
 
-.stat-card .number { font-size: 42px; font-weight: 800; color: var(--orange); }
-.stat-card h3 { color: var(--gray); font-size: 13px; margin-bottom: 12px; }
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card h3 {
+  color: var(--gray);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-card .number {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--orange);
+}
 
 .status-summary {
   background: var(--white);
@@ -151,9 +237,18 @@ body {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
 }
 
-.status-badge { padding: 6px 14px; border-radius: 40px; font-size: 12px; font-weight: 600; }
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .status-available { background: var(--success); color: white; }
 .status-leased { background: #f59e0b; color: white; }
 .status-reserved { background: var(--info); color: white; }
@@ -174,16 +269,35 @@ body {
   cursor: pointer;
   border-radius: 40px;
   font-weight: 600;
+  font-size: 14px;
   transition: all 0.3s ease;
   color: var(--gray);
   box-shadow: var(--shadow-sm);
 }
 
-.tab.active { background: var(--orange); color: white; }
-.tab:hover { background: var(--orange); color: white; }
+.tab:hover {
+  background: var(--orange);
+  color: white;
+  transform: translateY(-2px);
+}
 
-.tab-content { display: none; background: var(--white); padding: 32px; border-radius: 24px; }
-.tab-content.active { display: block; }
+.tab.active {
+  background: var(--orange);
+  color: white;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.tab-content {
+  display: none;
+  background: var(--white);
+  padding: 32px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-content.active {
+  display: block;
+}
 
 .search-bar-admin {
   background: var(--gray-light);
@@ -193,13 +307,24 @@ body {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.search-bar-admin input, .search-bar-admin select {
+.search-bar-admin input,
+.search-bar-admin select {
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
   background: var(--white);
+  transition: all 0.3s ease;
+}
+
+.search-bar-admin input:focus,
+.search-bar-admin select:focus {
+  outline: none;
+  border-color: var(--orange);
 }
 
 .search-bar-admin button {
@@ -209,6 +334,23 @@ body {
   padding: 12px 24px;
   border-radius: 40px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.search-bar-admin button:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
+.search-bar-admin .clear-btn {
+  background: var(--gray);
+}
+
+.search-results {
+  font-size: 13px;
+  color: var(--gray);
+  margin-left: auto;
 }
 
 .bulk-actions {
@@ -222,7 +364,24 @@ body {
   align-items: center;
 }
 
-.property-list { display: flex; flex-direction: column; gap: 16px; }
+.bulk-actions button {
+  padding: 8px 20px;
+  font-size: 13px;
+  border-radius: 40px;
+}
+
+.select-all-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--orange);
+}
+
+.property-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .property-item {
   background: var(--white);
@@ -232,47 +391,192 @@ body {
   display: flex;
   align-items: center;
   gap: 20px;
+  transition: all 0.3s ease;
 }
 
-.property-checkbox { flex-shrink: 0; }
-.property-info { flex: 1; }
-.property-title { font-size: 18px; font-weight: 700; color: var(--orange); margin-bottom: 8px; }
-.property-details { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--gray); }
+.property-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
+}
+
+.property-checkbox {
+  flex-shrink: 0;
+}
+
+.property-checkbox input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--orange);
+}
+
+.property-info {
+  flex: 1;
+}
+
+.property-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.property-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.property-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.property-detail i {
+  color: var(--orange);
+  width: 14px;
+}
+
+.property-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 .property-actions button {
   padding: 8px 18px;
+  font-size: 13px;
   border-radius: 40px;
-  margin-left: 8px;
 }
 
-.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
-.form-group input, .form-group textarea, .form-group select {
+.property-form {
+  max-width: 100%;
+}
+
+.property-form h3 {
+  margin-bottom: 28px;
+  color: var(--orange);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
   background: var(--white);
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.form-group small {
+  display: block;
+  margin-top: 6px;
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
 }
 
 .image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--orange);
   color: white;
   padding: 12px 24px;
   border-radius: 40px;
   cursor: pointer;
-  border: none;
+  font-size: 14px;
   font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
 }
 
-.image-preview { margin-top: 12px; }
-.image-preview img { width: 100px; height: 100px; object-fit: cover; border-radius: 12px; }
+.image-upload-btn:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
 
-.gallery-preview { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
-.gallery-preview-item { position: relative; }
-.gallery-preview-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; border: 2px solid #e5e7eb; }
-.remove-img {
+.image-upload-btn:disabled {
+  background: var(--gray);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.image-preview {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--gray-light);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--success);
+}
+
+.image-preview img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.gallery-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.gallery-preview-item {
+  position: relative;
+  display: inline-block;
+}
+
+.gallery-preview-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+}
+
+.gallery-preview-item .remove-img {
   position: absolute;
   top: -8px;
   right: -8px;
@@ -284,8 +588,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gallery-preview-item .remove-img:hover {
+  transform: scale(1.1);
+}
+
+.image-manager h3 {
+  color: var(--orange);
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .upload-area {
@@ -296,21 +612,101 @@ body {
   margin-bottom: 28px;
   background: var(--gray-light);
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.upload-area i { font-size: 56px; color: var(--orange); margin-bottom: 16px; }
+.upload-area:hover {
+  border-color: var(--orange);
+  background: var(--orange-light);
+}
 
-.image-grid { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; }
+.upload-area i {
+  font-size: 56px;
+  color: var(--orange);
+  margin-bottom: 16px;
+}
+
+.upload-area p {
+  font-size: 14px;
+  color: var(--gray);
+}
+
+.upload-area small {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
 .image-card {
   background: var(--white);
   border-radius: 16px;
   overflow: hidden;
-  width: 240px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid #e5e7eb;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.image-card img { width: 100%; height: 170px; object-fit: cover; }
-.image-card-info { padding: 14px; }
+.image-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.image-card img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+}
+
+.image-card-info {
+  padding: 14px;
+}
+
+.image-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.image-card-order {
+  font-size: 11px;
+  color: var(--gray);
+  margin-bottom: 10px;
+}
+
+.image-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.image-card-actions button {
+  flex: 1;
+  padding: 8px;
+  font-size: 12px;
+  border-radius: 40px;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  font-size: 14px;
+}
 
 .import-area {
   background: var(--gray-light);
@@ -320,6 +716,17 @@ body {
   border: 2px dashed var(--orange);
 }
 
+.import-area h3 {
+  color: var(--orange);
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+.import-area input {
+  margin: 16px 0;
+  padding: 10px;
+}
+
 .import-btn {
   background: var(--orange);
   color: white;
@@ -327,7 +734,12 @@ body {
   padding: 10px 28px;
   border-radius: 40px;
   cursor: pointer;
+  font-weight: 600;
   margin: 5px;
+}
+
+.import-btn:hover {
+  background: var(--orange-dark);
 }
 
 .progress-stack {
@@ -335,6 +747,9 @@ body {
   bottom: 20px;
   right: 20px;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   max-width: 360px;
 }
 
@@ -343,13 +758,19 @@ body {
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  margin-bottom: 10px;
+  border: 1px solid #e5e7eb;
   animation: slideInRight 0.3s ease;
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(400px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .progress-header {
@@ -357,10 +778,13 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
   background: var(--white);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .progress-spinner {
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
   border: 2px solid #e5e7eb;
@@ -369,48 +793,133 @@ body {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
-.progress-info { flex: 1; }
-.progress-filename { font-size: 13px; font-weight: 500; }
-.progress-status { font-size: 11px; color: var(--gray); }
-.progress-percent { font-size: 13px; font-weight: 600; color: var(--orange); }
+.progress-info {
+  flex: 1;
+  min-width: 0;
+}
 
-.progress-bar-container { padding: 0 16px 14px 16px; }
-.progress-bar-bg { background: #e5e7eb; border-radius: 4px; height: 4px; overflow: hidden; }
-.progress-bar-fill { background: var(--orange); width: 0%; height: 100%; transition: width 0.3s ease; }
+.progress-filename {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.inquiry-list { display: flex; flex-direction: column; gap: 16px; }
-.inquiry-item {
-  border: 1px solid #e5e7eb;
-  padding: 20px;
-  border-radius: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+.progress-status {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.progress-percent {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--orange);
+  flex-shrink: 0;
+}
+
+.progress-close {
+  flex-shrink: 0;
+  color: var(--gray);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.progress-close:hover {
   background: var(--gray-light);
+  color: var(--danger);
 }
 
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--dark);
+.progress-bar-container {
+  padding: 0 16px 14px 16px;
+}
+
+.progress-bar-bg {
+  background: #e5e7eb;
+  border-radius: 4px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: var(--orange);
+  width: 0%;
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-stack-collapse-btn {
+  background: var(--white);
+  border: 1px solid #e5e7eb;
+  border-radius: 40px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-stack-collapse-btn:hover {
+  background: var(--orange);
   color: white;
-  padding: 12px 20px;
-  border-radius: 12px;
-  z-index: 1200;
-  animation: slideIn 0.3s ease;
+  border-color: var(--orange);
 }
 
-@keyframes slideIn {
-  from { transform: translateX(400px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+button {
+  background: var(--orange);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
-.empty-state { text-align: center; padding: 60px; color: var(--gray); }
-.empty-state i { font-size: 56px; margin-bottom: 16px; color: var(--orange); }
+button:hover:not(:disabled) {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  background: var(--gray);
+  cursor: not-allowed;
+  transform: none;
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button.danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
 
 .modal {
   display: none;
@@ -420,7 +929,7 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.5);
-  z-index: 2000;
+  z-index: 1100;
   overflow-y: auto;
 }
 
@@ -439,16 +948,114 @@ body {
   right: 24px;
   font-size: 28px;
   cursor: pointer;
+  color: var(--gray);
+  transition: all 0.3s ease;
 }
 
-button.danger { background: var(--danger); }
-button.danger:hover { background: #dc2626; }
+.modal-close:hover {
+  color: var(--danger);
+}
+
+.inquiry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inquiry-item {
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: var(--gray-light);
+}
+
+.inquiry-item h4 {
+  color: var(--orange);
+  margin-bottom: 8px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--dark);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  z-index: 1200;
+  animation: slideIn 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  color: var(--gray);
+}
+
+.empty-state i {
+  font-size: 56px;
+  margin-bottom: 16px;
+  color: var(--orange);
+}
 
 @media (max-width: 768px) {
-  .property-item { flex-direction: column; align-items: flex-start; }
-  .property-actions { width: 100%; justify-content: flex-end; }
-  .tabs { gap: 8px; }
-  .tab { padding: 8px 16px; font-size: 12px; }
+  .container {
+    padding: 16px;
+  }
+  
+  .tab {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+  
+  .tab-content {
+    padding: 20px;
+  }
+  
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .property-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .property-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .progress-stack {
+    max-width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>
 </head>
@@ -488,7 +1095,6 @@ button.danger:hover { background: #dc2626; }
       <button class="tab" onclick="switchTab('images')"><i class="fas fa-images"></i> Hero Images</button>
     </div>
     
-    <!-- Properties Tab -->
     <div id="propertiesTab" class="tab-content active">
       <div class="search-bar-admin">
         <input type="text" id="searchInput" placeholder="🔍 Search by title or location...">
@@ -514,13 +1120,13 @@ button.danger:hover { background: #dc2626; }
         <input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onclick="toggleSelectAll()">
         <label for="selectAllCheckbox" style="font-weight: 500;">Select All</label>
         <button class="danger" onclick="deleteSelected()"><i class="fas fa-trash"></i> Delete Selected</button>
-        <span id="selectedCount" style="margin-left: auto; font-size: 13px;">0 selected</span>
+        <button class="danger" onclick="deleteAllProperties()"><i class="fas fa-trash-alt"></i> Delete ALL</button>
+        <span id="selectedCount" style="margin-left: auto; font-size: 13px; color: var(--gray);">0 selected</span>
       </div>
       
       <div class="property-list" id="propertyList"></div>
     </div>
     
-    <!-- Add Property Tab -->
     <div id="addTab" class="tab-content">
       <div class="property-form">
         <h3><i class="fas fa-plus-circle"></i> Add New Property</h3>
@@ -560,11 +1166,11 @@ button.danger:hover { background: #dc2626; }
           <div class="form-row">
             <div class="form-group">
               <label>Price (₱) - For Sale</label>
-              <input type="number" name="price" value="0" placeholder="e.g., 25000000">
+              <input type="number" name="price" placeholder="e.g., 25000000">
             </div>
             <div class="form-group">
               <label>Monthly Rental (₱) - For Lease</label>
-              <input type="number" name="monthlyRental" value="0" placeholder="e.g., 30000">
+              <input type="number" name="monthlyRental" placeholder="e.g., 30000">
             </div>
           </div>
           
@@ -579,11 +1185,11 @@ button.danger:hover { background: #dc2626; }
             </div>
             <div class="form-group">
               <label>Floor Area (SQM)</label>
-              <input type="number" name="sqm" step="0.01" value="0">
+              <input type="number" name="sqm" step="0.01" value="0" placeholder="e.g., 125.50">
             </div>
             <div class="form-group">
               <label>Land Area (SQM)</label>
-              <input type="number" name="landArea" step="0.01" value="0">
+              <input type="number" name="landArea" step="0.01" value="0" placeholder="e.g., 250.75">
             </div>
           </div>
           
@@ -614,26 +1220,27 @@ button.danger:hover { background: #dc2626; }
           <div class="form-group">
             <label>Description</label>
             <textarea name="description" rows="4" placeholder="Describe the property..."></textarea>
+            <small>Use spaces and line breaks for proper formatting on the website.</small>
           </div>
           
-          <!-- Main Image Upload -->
           <div class="form-group">
             <label>Main Image</label>
             <button type="button" class="image-upload-btn" id="uploadMainImageBtn">
               <i class="fas fa-cloud-upload-alt"></i> Upload Main Image
             </button>
             <input type="file" id="mainImageFile" accept="image/*" style="display: none;">
+            <input type="hidden" name="mainImage" id="mainImageUrl">
             <div id="mainImagePreview" class="image-preview" style="display: none;"></div>
-            <small>Upload JPG, PNG, or WEBP. Will be compressed automatically.</small>
+            <small>Upload JPG, PNG, or WEBP.</small>
           </div>
           
-          <!-- Gallery Images Upload -->
           <div class="form-group">
             <label>Gallery Images (Max 25)</label>
             <button type="button" class="image-upload-btn" id="uploadGalleryBtn">
               <i class="fas fa-cloud-upload-alt"></i> Upload Gallery Images
             </button>
             <input type="file" id="galleryFiles" accept="image/*" multiple style="display: none;">
+            <input type="hidden" name="gallery" id="galleryUrls">
             <div id="galleryPreview" class="gallery-preview"></div>
             <small id="galleryCountDisplay">0 / 25 images uploaded</small>
           </div>
@@ -648,7 +1255,6 @@ button.danger:hover { background: #dc2626; }
       </div>
     </div>
     
-    <!-- Import Excel Tab -->
     <div id="importTab" class="tab-content">
       <div class="import-area">
         <h3><i class="fas fa-file-excel"></i> Import Properties from Excel</h3>
@@ -657,48 +1263,79 @@ button.danger:hover { background: #dc2626; }
         <br>
         <button type="button" class="import-btn" onclick="previewExcel()">Preview</button>
         <button type="button" class="import-btn" id="importBtn" onclick="startImport()" style="background: var(--success);">Import All</button>
-        <div id="importPreview" style="margin-top: 20px; text-align: left;"></div>
+        <div id="importPreview" class="import-preview" style="margin-top: 20px; text-align: left;"></div>
       </div>
     </div>
     
-    <!-- Inquiries Tab -->
     <div id="inquiriesTab" class="tab-content">
       <div class="inquiry-list" id="inquiryList"></div>
     </div>
     
-    <!-- Subscribers Tab -->
     <div id="subscribersTab" class="tab-content">
       <div class="search-bar-admin">
-        <input type="text" id="subscriberSearch" placeholder="🔍 Search by email..." oninput="filterSubscribers()">
-        <button onclick="exportSubscribersToCSV()" style="background: var(--success);"><i class="fas fa-download"></i> Export CSV</button>
+        <input type="text" id="subscriberSearch" placeholder="🔍 Search by email or name..." oninput="filterSubscribers()">
+        <button class="export-btn" onclick="exportSubscribersToCSV()" style="background: var(--success);"><i class="fas fa-download"></i> Export CSV</button>
       </div>
-      <div id="subscribersList"></div>
+      <div style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: var(--gray-light);">
+              <th style="padding: 12px; text-align: left;">Email</th>
+              <th style="padding: 12px; text-align: left;">Name</th>
+              <th style="padding: 12px; text-align: left;">Source</th>
+              <th style="padding: 12px; text-align: left;">Subscribed</th>
+              <th style="padding: 12px; text-align: left;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="subscribersList">
+            <tr><td colspan="5" class="empty-state">Loading subscribers...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     
-    <!-- Alerts Tab -->
     <div id="alertsTab" class="tab-content">
-      <div id="alertsList"></div>
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: var(--orange); margin-bottom: 10px;">Price Drop Alert Requests</h3>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: var(--gray-light);">
+              <th style="padding: 12px; text-align: left;">Email</th>
+              <th style="padding: 12px; text-align: left;">Property</th>
+              <th style="padding: 12px; text-align: left;">Price at Request</th>
+              <th style="padding: 12px; text-align: left;">Notified</th>
+              <th style="padding: 12px; text-align: left;">Requested</th>
+            </tr>
+          </thead>
+          <tbody id="alertsList">
+            <tr><td colspan="5" class="empty-state">Loading alerts...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     
-    <!-- Hero Images Tab -->
     <div id="imagesTab" class="tab-content">
       <div class="image-manager">
         <h3><i class="fas fa-images"></i> Hero Slider Images</h3>
-        <p>Manage the images shown in the homepage hero slider.</p>
+        <p style="margin-bottom: 20px; color: var(--gray);">Manage the images shown in the homepage hero slider. Drag to reorder.</p>
         
         <div class="upload-area" id="heroUploadArea">
           <i class="fas fa-cloud-upload-alt"></i>
           <p>Click to upload hero image</p>
-          <input type="file" id="heroImageInput" accept="image/*" style="display: none;">
+          <small>JPG, PNG, or WEBP. Max 10MB.</small>
+          <input type="file" id="heroImageInput" class="upload-input" accept="image/jpeg,image/png,image/webp">
         </div>
         
-        <div id="heroImagesGrid" class="image-grid"></div>
+        <div id="heroImagesGrid" class="image-grid">
+          <div class="empty-state" style="padding: 40px;">Loading images...</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Edit Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="modal-close" onclick="closeEditModal()">&times;</span>
@@ -710,8 +1347,8 @@ button.danger:hover { background: #dc2626; }
         <div class="form-group"><label>City</label><input type="text" id="editLocation"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Listing Type</label><select id="editListingType"><option>FOR SALE</option><option>FOR LEASE</option></select></div>
-        <div class="form-group"><label>Property Type</label><select id="editPropertyType"><option>Condominium</option><option>House and Lot</option><option>Commercial Lot</option></select></div>
+        <div class="form-group"><label>Listing Type</label><select id="editListingType"><option value="FOR SALE">FOR SALE</option><option value="FOR LEASE">FOR LEASE</option><option value="SALE AND LEASE">SALE AND LEASE</option></select></div>
+        <div class="form-group"><label>Property Type</label><select id="editPropertyType"><option value="Condominium">Condominium</option><option value="House and Lot">House and Lot</option><option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option><option value="Townhouse">Townhouse</option></select></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Price</label><input type="number" id="editPrice"></div>
@@ -726,13 +1363,37 @@ button.danger:hover { background: #dc2626; }
       <div class="form-row">
         <div class="form-group"><label>Parking</label><input type="number" id="editParking"></div>
         <div class="form-group"><label>Featured</label><select id="editFeatured"><option value="false">No</option><option value="true">Yes</option></select></div>
-        <div class="form-group"><label>Status</label><select id="editStatus"><option>available</option><option>leased</option><option>sold</option></select></div>
+        <div class="form-group"><label>Status</label><select id="editStatus"><option value="available">Available</option><option value="leased">Leased</option><option value="reserved">Reserved</option><option value="sold">Sold</option><option value="do not publish">Do Not Publish</option></select></div>
       </div>
       <div class="form-group"><label>Description</label><textarea id="editDescription" rows="4"></textarea></div>
+      
+      <div class="form-group">
+        <label>Main Image</label>
+        <div id="editCurrentMainImage" style="margin-bottom: 10px;"></div>
+        <button type="button" class="image-upload-btn" id="editUploadMainImageBtn">
+          <i class="fas fa-cloud-upload-alt"></i> Upload New Main Image
+        </button>
+        <input type="file" id="editMainImageFile" accept="image/*" style="display: none;">
+        <input type="hidden" id="editMainImageUrl">
+        <div id="editMainImagePreview" class="image-preview" style="display: none;"></div>
+      </div>
+      
+      <div class="form-group">
+        <label>Gallery Images</label>
+        <div id="editCurrentGallery" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
+        <button type="button" class="image-upload-btn" id="editUploadGalleryBtn">
+          <i class="fas fa-cloud-upload-alt"></i> Add More Gallery Images
+        </button>
+        <input type="file" id="editGalleryFiles" accept="image/*" multiple style="display: none;">
+        <input type="hidden" id="editGalleryUrls">
+        <div id="editGalleryPreview" class="gallery-preview"></div>
+        <small id="editGalleryCountDisplay">0 / 25 total</small>
+      </div>
+      
       <div class="form-group"><label>Map Location</label><input type="text" id="editMapLocation"></div>
       
       <button type="submit" id="saveEditBtn">Save Changes</button>
-      <button type="button" onclick="closeEditModal()" style="margin-left: 10px; background: var(--gray);">Cancel</button>
+      <button type="button" class="clear-btn" onclick="closeEditModal()" style="margin-left: 10px; background: var(--gray);">Cancel</button>
     </form>
   </div>
 </div>
@@ -743,18 +1404,168 @@ button.danger:hover { background: #dc2626; }
 // ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkMode', isDark);
-  const btn = document.getElementById('headerDarkModeToggle');
-  if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i> Light Mode' : '<i class="fas fa-moon"></i> Dark Mode';
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDarkMode);
+  
+  const floatingBtn = document.getElementById('floatingDarkModeToggle');
+  const headerBtn = document.getElementById('headerDarkModeToggle');
+  
+  if (isDarkMode) {
+    if (floatingBtn) {
+      floatingBtn.innerHTML = '<i class="fas fa-sun"></i>';
+      floatingBtn.style.background = '#2a2a3a';
+      floatingBtn.style.color = '#f97316';
+    }
+    if (headerBtn) {
+      headerBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+      headerBtn.style.background = '#2a2a3a';
+      headerBtn.style.color = '#f97316';
+    }
+  } else {
+    if (floatingBtn) {
+      floatingBtn.innerHTML = '<i class="fas fa-moon"></i>';
+      floatingBtn.style.background = '#1e1e2e';
+      floatingBtn.style.color = 'white';
+    }
+    if (headerBtn) {
+      headerBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+      headerBtn.style.background = '#1e1e2e';
+      headerBtn.style.color = 'white';
+    }
+  }
 }
-if (localStorage.getItem('darkMode') === 'true') toggleDarkMode();
 
-// ============ TOAST ============
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark-mode');
+  const headerBtn = document.getElementById('headerDarkModeToggle');
+  if (headerBtn) {
+    headerBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+    headerBtn.style.background = '#2a2a3a';
+    headerBtn.style.color = '#f97316';
+  }
+}
+
+// ============ PROGRESS BARS ============
+let activeProgressBars = [];
+let progressCounter = 0;
+
+function addProgressBar(filename, totalFiles = 1, currentFileIndex = 1) {
+  const id = 'progress_' + Date.now() + '_' + (progressCounter++);
+  const displayName = totalFiles > 1 ? `${filename} (${currentFileIndex}/${totalFiles})` : filename;
+  
+  const progressItem = document.createElement('div');
+  progressItem.className = 'progress-item';
+  progressItem.id = id;
+  progressItem.innerHTML = `
+    <div class="progress-header" onclick="toggleProgressBody('${id}')">
+      <div class="progress-spinner"></div>
+      <div class="progress-info">
+        <div class="progress-filename">${escapeHtml(displayName)}</div>
+        <div class="progress-status">Starting...</div>
+      </div>
+      <div class="progress-percent">0%</div>
+      <div class="progress-close" onclick="event.stopPropagation(); removeProgressBar('${id}')">
+        <i class="fas fa-times"></i>
+      </div>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('progressStack').appendChild(progressItem);
+  activeProgressBars.push(id);
+  updateCollapseAllButton();
+  return id;
+}
+
+function updateProgressBar(id, percent, message) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  
+  const fill = item.querySelector('.progress-bar-fill');
+  const text = item.querySelector('.progress-status');
+  const percentEl = item.querySelector('.progress-percent');
+  
+  if (fill) fill.style.width = percent + '%';
+  if (text) text.innerHTML = message;
+  if (percentEl) percentEl.innerHTML = percent + '%';
+  
+  if (percent >= 100) {
+    setTimeout(() => removeProgressBar(id), 2000);
+  }
+}
+
+function removeProgressBar(id) {
+  const item = document.getElementById(id);
+  if (item) {
+    item.style.animation = 'slideInRight 0.3s reverse';
+    setTimeout(() => {
+      if (item && item.parentNode) {
+        item.remove();
+        activeProgressBars = activeProgressBars.filter(barId => barId !== id);
+        updateCollapseAllButton();
+      }
+    }, 300);
+  }
+}
+
+function toggleProgressBody(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  const barContainer = item.querySelector('.progress-bar-container');
+  if (barContainer.style.display === 'none') {
+    barContainer.style.display = 'block';
+  } else {
+    barContainer.style.display = 'none';
+  }
+}
+
+function toggleAllProgressBars() {
+  const allHidden = document.querySelectorAll('.progress-bar-container[style*="display: none"]').length === activeProgressBars.length;
+  activeProgressBars.forEach(id => {
+    const item = document.getElementById(id);
+    if (!item) return;
+    const barContainer = item.querySelector('.progress-bar-container');
+    if (allHidden) {
+      barContainer.style.display = 'block';
+    } else {
+      barContainer.style.display = 'none';
+    }
+  });
+  const btn = document.getElementById('collapseAllBtn');
+  if (btn) {
+    if (allHidden) {
+      btn.innerHTML = '<i class="fas fa-compress-alt"></i> Collapse All';
+    } else {
+      btn.innerHTML = '<i class="fas fa-expand-alt"></i> Expand All';
+    }
+  }
+}
+
+function updateCollapseAllButton() {
+  let stack = document.getElementById('progressStack');
+  let existingBtn = document.getElementById('collapseAllBtn');
+  if (activeProgressBars.length > 1) {
+    if (!existingBtn) {
+      const btn = document.createElement('div');
+      btn.id = 'collapseAllBtn';
+      btn.className = 'progress-stack-collapse-btn';
+      btn.innerHTML = '<i class="fas fa-compress-alt"></i> Collapse All';
+      btn.onclick = toggleAllProgressBars;
+      stack.insertBefore(btn, stack.firstChild);
+    }
+  } else {
+    if (existingBtn) existingBtn.remove();
+  }
+}
+
 function showToast(message, isError = false) {
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.style.background = isError ? '#dc3545' : '#28a745';
+  toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
   toast.innerHTML = message;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
@@ -770,109 +1581,109 @@ function escapeHtml(str) {
   });
 }
 
-// ============ PROGRESS BARS ============
-let activeProgressBars = [];
-let progressCounter = 0;
-
-function addProgressBar(filename, totalFiles = 1, currentFileIndex = 1) {
-  const id = 'progress_' + Date.now() + '_' + (progressCounter++);
-  const displayName = totalFiles > 1 ? `${filename} (${currentFileIndex}/${totalFiles})` : filename;
-  
-  const progressItem = document.createElement('div');
-  progressItem.className = 'progress-item';
-  progressItem.id = id;
-  progressItem.innerHTML = `
-    <div class="progress-header">
-      <div class="progress-spinner"></div>
-      <div class="progress-info">
-        <div class="progress-filename">${escapeHtml(displayName)}</div>
-        <div class="progress-status">Uploading...</div>
-      </div>
-      <div class="progress-percent">0%</div>
-    </div>
-    <div class="progress-bar-container">
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" style="width: 0%"></div>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('progressStack').appendChild(progressItem);
-  activeProgressBars.push(id);
-  return id;
-}
-
-function updateProgressBar(id, percent, message) {
-  const item = document.getElementById(id);
-  if (!item) return;
-  const fill = item.querySelector('.progress-bar-fill');
-  const status = item.querySelector('.progress-status');
-  const percentEl = item.querySelector('.progress-percent');
-  if (fill) fill.style.width = percent + '%';
-  if (status) status.innerHTML = message;
-  if (percentEl) percentEl.innerHTML = percent + '%';
-  if (percent >= 100) setTimeout(() => item.remove(), 2000);
-}
-
-// ============ IMAGE COMPRESSION ============
-async function compressImage(file, maxWidth = 800, quality = 0.6) {
-  return new Promise((resolve) => {
+// ============ IMAGE COMPRESSION (FIXES THE ERROR) ============
+async function compressImage(file, maxWidth = 1200, quality = 0.7) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = (e) => {
+    reader.onload = (event) => {
       const img = new Image();
-      img.src = e.target.result;
+      img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if (w > maxWidth) { h = (h * maxWidth) / w; w = maxWidth; }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
         canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          const compressedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
         }, 'image/jpeg', quality);
       };
+      img.onerror = reject;
     };
+    reader.onerror = reject;
   });
 }
 
-// ============ IMAGE UPLOAD ============
+// ============ IMAGE UPLOAD WITH COMPRESSION ============
 async function uploadImage(file, type = 'hero', progressId = null) {
-  const compressed = await compressImage(file);
-  const formData = new FormData();
-  formData.append('image', compressed);
-  
-  const endpoint = type === 'hero' ? '/api/admin/hero-images/upload' : '/api/admin/upload-property-image';
-  const xhr = new XMLHttpRequest();
-  
-  return new Promise((resolve, reject) => {
-    xhr.upload.onprogress = (e) => {
-      if (progressId && e.lengthComputable) {
-        const percent = Math.round((e.loaded / e.total) * 100);
-        updateProgressBar(progressId, percent, `Uploading... ${percent}%`);
-      }
-    };
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        const response = JSON.parse(xhr.responseText);
-        if (progressId) updateProgressBar(progressId, 100, 'Complete!');
-        resolve(response);
-      } else {
-        reject(new Error('Upload failed'));
-      }
-    };
-    xhr.onerror = () => reject(new Error('Network error'));
-    xhr.open('POST', endpoint);
-    xhr.send(formData);
+  return new Promise(async (resolve, reject) => {
+    try {
+      const compressedFile = await compressImage(file, 1200, 0.7);
+      console.log(`Compressed: ${(file.size/1024).toFixed(1)}KB → ${(compressedFile.size/1024).toFixed(1)}KB`);
+      
+      const formData = new FormData();
+      formData.append('image', compressedFile);
+      const xhr = new XMLHttpRequest();
+      const endpoint = type === 'hero' ? '/api/admin/hero-images/upload' : '/api/admin/upload-property-image';
+      xhr.open('POST', endpoint, true);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && progressId) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          updateProgressBar(progressId, percent, `Uploading... ${percent}%`);
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          if (progressId) updateProgressBar(progressId, 100, 'Complete!');
+          resolve(response);
+        } else {
+          if (progressId) updateProgressBar(progressId, 100, 'Failed!');
+          reject(new Error('Upload failed'));
+        }
+      };
+      xhr.onerror = () => {
+        if (progressId) updateProgressBar(progressId, 100, 'Network Error!');
+        reject(new Error('Network error'));
+      };
+      xhr.send(formData);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
-// ============ PROPERTY IMAGE VARIABLES ============
+// Hero Image Upload
+document.addEventListener('DOMContentLoaded', function() {
+  const heroInput = document.getElementById('heroImageInput');
+  const heroArea = document.getElementById('heroUploadArea');
+  if (heroArea) heroArea.addEventListener('click', () => heroInput.click());
+  if (heroInput) {
+    heroInput.addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const progressId = addProgressBar(file.name);
+      try {
+        await uploadImage(file, 'hero', progressId);
+        showToast('✅ Hero image uploaded!');
+        loadHeroImages();
+      } catch (error) {
+        showToast('❌ Upload failed: ' + error.message, true);
+      }
+      heroInput.value = '';
+    });
+  }
+});
+
+// ============ PROPERTY IMAGE UPLOAD ============
 let currentMainImageUrl = '';
 let currentGalleryUrls = [];
 const MAX_GALLERY_IMAGES = 25;
 
-// Main Image Upload
 document.getElementById('uploadMainImageBtn')?.addEventListener('click', () => document.getElementById('mainImageFile').click());
 document.getElementById('mainImageFile')?.addEventListener('change', async function(e) {
   const file = e.target.files[0];
@@ -885,9 +1696,10 @@ document.getElementById('mainImageFile')?.addEventListener('change', async funct
   try {
     const result = await uploadImage(file, 'property', progressId);
     currentMainImageUrl = result.url;
+    document.getElementById('mainImageUrl').value = result.url;
     const preview = document.getElementById('mainImagePreview');
     preview.style.display = 'block';
-    preview.innerHTML = `<img src="${result.url}" alt="Preview"><br><small>✅ Uploaded</small>`;
+    preview.innerHTML = `<img src="${result.url}" alt="Preview" style="width: 100px; height: 100px; object-fit: cover;"><br><small>✅ Uploaded</small>`;
     showToast('✅ Main image uploaded!');
   } catch (error) {
     showToast('❌ Upload failed: ' + error.message, true);
@@ -898,22 +1710,22 @@ document.getElementById('mainImageFile')?.addEventListener('change', async funct
   }
 });
 
-// Gallery Upload
 function updateGalleryDisplay() {
   const preview = document.getElementById('galleryPreview');
   preview.innerHTML = currentGalleryUrls.map((url, idx) => `
     <div class="gallery-preview-item">
-      <img src="${url}">
+      <img src="${url}" alt="Gallery ${idx+1}" style="width: 80px; height: 80px; object-fit: cover;">
       <div class="remove-img" onclick="removeGalleryImage(${idx})"><i class="fas fa-times"></i></div>
     </div>
   `).join('');
   document.getElementById('galleryCountDisplay').innerHTML = `${currentGalleryUrls.length} / ${MAX_GALLERY_IMAGES} images uploaded`;
+  document.getElementById('galleryUrls').value = currentGalleryUrls.join(',');
 }
 
 function removeGalleryImage(index) {
   currentGalleryUrls.splice(index, 1);
   updateGalleryDisplay();
-  showToast(`Gallery image removed. (${currentGalleryUrls.length}/${MAX_GALLERY_IMAGES})`);
+  showToast(`Gallery image removed.`);
 }
 
 document.getElementById('uploadGalleryBtn')?.addEventListener('click', () => document.getElementById('galleryFiles').click());
@@ -921,7 +1733,7 @@ document.getElementById('galleryFiles')?.addEventListener('change', async functi
   let files = Array.from(e.target.files);
   
   if (currentGalleryUrls.length + files.length > MAX_GALLERY_IMAGES) {
-    showToast(`You can only upload up to ${MAX_GALLERY_IMAGES} gallery images.`, true);
+    showToast(`You can only upload up to ${MAX_GALLERY_IMAGES} gallery images. You have ${currentGalleryUrls.length} already.`, true);
     this.value = '';
     return;
   }
@@ -950,28 +1762,6 @@ document.getElementById('galleryFiles')?.addEventListener('change', async functi
   btn.innerHTML = originalText;
   btn.disabled = false;
   this.value = '';
-});
-
-// Hero Image Upload
-document.addEventListener('DOMContentLoaded', function() {
-  const heroInput = document.getElementById('heroImageInput');
-  const heroArea = document.getElementById('heroUploadArea');
-  if (heroArea) heroArea.addEventListener('click', () => heroInput.click());
-  if (heroInput) {
-    heroInput.addEventListener('change', async function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const progressId = addProgressBar(file.name);
-      try {
-        await uploadImage(file, 'hero', progressId);
-        showToast('✅ Hero image uploaded!');
-        loadHeroImages();
-      } catch (error) {
-        showToast('❌ Upload failed: ' + error.message, true);
-      }
-      heroInput.value = '';
-    });
-  }
 });
 
 // ============ LOGIN & DASHBOARD ============
@@ -1023,12 +1813,16 @@ async function loadStats() {
 
 let allProperties = [];
 let selectedProperties = new Set();
+let heroImages = [];
+let draggedIndex = null;
+let subscribers = [];
+let alerts = [];
 
 async function loadAllProperties() {
   try {
     const res = await fetch('/api/admin/all-properties');
     allProperties = await res.json();
-    displayProperties(allProperties);
+    showAllProperties();
     updateStatusSummary();
   } catch(e) { console.error(e); }
 }
@@ -1047,6 +1841,8 @@ function updateStatusSummary() {
     <span class="status-badge status-dnp">🚫 Do Not Publish: ${dnp}</span>
   `;
 }
+
+function showAllProperties() { displayProperties(allProperties); }
 
 function displayProperties(properties) {
   const container = document.getElementById('propertyList');
@@ -1072,11 +1868,12 @@ function displayProperties(properties) {
             <span class="status-badge ${statusClass}" style="font-size: 10px; padding: 3px 10px;">${p.status}</span>
           </div>
           <div class="property-details">
-            <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.location)}</span>
-            <span><i class="fas fa-tag"></i> ${priceDisplay}</span>
-            <span><i class="fas fa-bed"></i> ${p.bedrooms} BR</span>
-            <span><i class="fas fa-bath"></i> ${p.bathrooms} TB</span>
-            <span><i class="fas fa-ruler-combined"></i> ${p.sqm} SQM</span>
+            <span class="property-detail"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.location)}</span>
+            <span class="property-detail"><i class="fas fa-tag"></i> ${priceDisplay}</span>
+            <span class="property-detail"><i class="fas fa-bed"></i> ${p.bedrooms} BR</span>
+            <span class="property-detail"><i class="fas fa-bath"></i> ${p.bathrooms} TB</span>
+            <span class="property-detail"><i class="fas fa-ruler-combined"></i> ${p.sqm} SQM</span>
+            ${p.listingType ? `<span class="property-detail"><i class="fas fa-file-signature"></i> ${p.listingType}</span>` : ''}
           </div>
         </div>
         <div class="property-actions">
@@ -1111,9 +1908,18 @@ async function deleteSelected() {
   loadStats();
 }
 
+async function deleteAllProperties() {
+  if (!confirm(`⚠️ Delete ALL ${allProperties.length} properties? This cannot be undone.`)) return;
+  for (const prop of allProperties) { await fetch(`/api/admin/properties/${prop._id}`, { method: 'DELETE' }); }
+  showToast(`Deleted all properties`);
+  loadAllProperties();
+  loadStats();
+}
+
 async function deleteProperty(id) {
   if (!confirm('Delete this property?')) return;
   await fetch(`/api/admin/properties/${id}`, { method: 'DELETE' });
+  showToast('Property deleted');
   loadAllProperties();
   loadStats();
 }
@@ -1134,7 +1940,7 @@ function clearSearch() {
   document.getElementById('searchInput').value = '';
   document.getElementById('searchStatus').value = '';
   document.getElementById('searchListingType').value = '';
-  displayProperties(allProperties);
+  showAllProperties();
 }
 
 function switchTab(tabName) {
@@ -1144,7 +1950,7 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add('active');
 }
 
-// Add Property Submit
+// Add Property Submit - FIXED
 document.getElementById('propertyForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submitPropertyBtn');
@@ -1153,23 +1959,34 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
   const fd = new FormData(this);
   
   const prop = {
-    title: fd.get('title'), location: fd.get('location'),
-    price: parseFloat(fd.get('price')) || 0, monthlyRental: parseFloat(fd.get('monthlyRental')) || 0,
-    bedrooms: parseInt(fd.get('bedrooms')) || 0, bathrooms: parseInt(fd.get('bathrooms')) || 0,
-    sqm: parseFloat(fd.get('sqm')) || 0, landArea: parseFloat(fd.get('landArea')) || 0,
-    parking: parseInt(fd.get('parking')) || 0, description: fd.get('description'),
-    featured: fd.get('featured') === 'true', status: fd.get('status'),
-    listingType: fd.get('listingType'), propertyType: fd.get('propertyType'),
-    mapLocation: fd.get('mapLocation') || '',
-    mainImage: currentMainImageUrl, gallery: currentGalleryUrls
+    title: fd.get('title'), 
+    location: fd.get('location'), 
+    price: parseFloat(fd.get('price')) || 0,
+    monthlyRental: parseFloat(fd.get('monthlyRental')) || 0, 
+    bedrooms: parseInt(fd.get('bedrooms')) || 0,
+    bathrooms: parseInt(fd.get('bathrooms')) || 0, 
+    sqm: parseFloat(fd.get('sqm')) || 0,
+    landArea: parseFloat(fd.get('landArea')) || 0, 
+    description: fd.get('description'),
+    featured: fd.get('featured') === 'true', 
+    status: fd.get('status'),
+    mainImage: currentMainImageUrl,
+    gallery: currentGalleryUrls,
+    mapLocation: fd.get('mapLocation') || '', 
+    listingType: fd.get('listingType'),
+    propertyType: fd.get('propertyType'), 
+    parking: parseInt(fd.get('parking')) || 0
   };
   
   const progressId = addProgressBar('Saving property...');
   updateProgressBar(progressId, 50, 'Saving property...');
   try {
     const res = await fetch('/api/admin/properties', { 
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(prop) 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(prop) 
     });
+    
     if (res.ok) {
       updateProgressBar(progressId, 100, 'Complete!');
       showToast('✅ Property added successfully!');
@@ -1182,13 +1999,16 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
       loadAllProperties();
       loadStats();
       switchTab('properties');
+      document.querySelectorAll('.tab')[0].classList.add('active');
+      document.querySelectorAll('.tab')[1].classList.remove('active');
     } else {
       updateProgressBar(progressId, 100, 'Failed!');
-      showToast('❌ Error adding property', true);
+      const error = await res.json();
+      showToast('❌ Error: ' + (error.error || 'Unknown error'), true);
     }
   } catch(e) { 
     updateProgressBar(progressId, 100, 'Failed!');
-    showToast('❌ Network error', true);
+    showToast('❌ Network error: ' + e.message, true);
   } finally { 
     submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Property'; 
     submitBtn.disabled = false;
@@ -1205,13 +2025,13 @@ async function loadInquiries() {
     container.innerHTML = inquiries.map(i => `
       <div class="inquiry-item">
         <div>
-          <h4>${escapeHtml(i.name)}</h4>
-          <p>${escapeHtml(i.email)} | ${escapeHtml(i.phone || 'No phone')}</p>
-          <p><strong>${escapeHtml(i.propertyTitle || 'General Inquiry')}</strong></p>
-          <p>${escapeHtml((i.message || '').substring(0, 150))}</p>
-          <small>${new Date(i.createdAt).toLocaleString()}</small>
+          <h4><i class="fas fa-user"></i> ${escapeHtml(i.name)}</h4>
+          <p><i class="fas fa-envelope"></i> ${escapeHtml(i.email)} | <i class="fas fa-phone"></i> ${escapeHtml(i.phone || 'No phone')}</p>
+          <p><i class="fas fa-home"></i> ${escapeHtml(i.propertyTitle || 'General Inquiry')}</p>
+          <p><i class="fas fa-comment"></i> ${escapeHtml((i.message || '').substring(0, 150))}</p>
+          <p><i class="fas fa-calendar"></i> ${new Date(i.createdAt).toLocaleString()}</p>
         </div>
-        <button class="danger" onclick="deleteInquiry('${i._id}')">Delete</button>
+        <button class="danger" onclick="deleteInquiry('${i._id}')"><i class="fas fa-trash"></i> Delete</button>
       </div>
     `).join('');
   } catch(e) { console.error(e); }
@@ -1220,6 +2040,7 @@ async function loadInquiries() {
 async function deleteInquiry(id) {
   if (!confirm('Delete this inquiry?')) return;
   await fetch(`/api/admin/inquiries/${id}`, { method: 'DELETE' });
+  showToast('Inquiry deleted');
   loadInquiries();
   loadStats();
 }
@@ -1228,23 +2049,30 @@ async function deleteInquiry(id) {
 async function loadSubscribers() {
   try {
     const res = await fetch('/api/admin/subscribers');
-    const subs = await res.json();
-    window.subscribers = subs;
+    subscribers = await res.json();
     renderSubscribers();
   } catch(e) { console.error(e); }
 }
 
 function renderSubscribers() {
-  const searchTerm = document.getElementById('subscriberSearch')?.value.toLowerCase() || '';
-  let filtered = window.subscribers || [];
-  if (searchTerm) filtered = filtered.filter(s => s.email.toLowerCase().includes(searchTerm));
   const container = document.getElementById('subscribersList');
-  if (!filtered.length) { container.innerHTML = '<div class="empty-state">No subscribers found</div>'; return; }
+  const searchTerm = document.getElementById('subscriberSearch')?.value.toLowerCase() || '';
+  let filtered = subscribers;
+  if (searchTerm) {
+    filtered = subscribers.filter(s => s.email.toLowerCase().includes(searchTerm) || (s.name && s.name.toLowerCase().includes(searchTerm)));
+  }
+  if (!filtered.length) {
+    container.innerHTML = '<tr><td colspan="5" class="empty-state">No subscribers found</td></tr>';
+    return;
+  }
   container.innerHTML = filtered.map(s => `
-    <div class="property-item">
-      <div><strong>${escapeHtml(s.email)}</strong><br><small>${new Date(s.subscribedAt).toLocaleDateString()}</small></div>
-      <button class="danger" onclick="deleteSubscriber('${s._id}')">Delete</button>
-    </div>
+    <tr>
+      <td style="padding: 12px;">${escapeHtml(s.email)}</td>
+      <td style="padding: 12px;">${escapeHtml(s.name || '-')}</td>
+      <td style="padding: 12px;">${escapeHtml(s.source || 'footer')}</td>
+      <td style="padding: 12px;">${new Date(s.subscribedAt).toLocaleDateString()}</td>
+      <td style="padding: 12px;"><button class="danger" style="padding: 4px 12px; font-size: 11px;" onclick="deleteSubscriber('${s._id}')">Delete</button></td>
+    </tr>
   `).join('');
 }
 
@@ -1253,14 +2081,15 @@ function filterSubscribers() { renderSubscribers(); }
 async function deleteSubscriber(id) {
   if (!confirm('Delete this subscriber?')) return;
   await fetch(`/api/admin/subscribers/${id}`, { method: 'DELETE' });
+  showToast('Subscriber deleted');
   loadSubscribers();
   loadStats();
 }
 
 function exportSubscribersToCSV() {
-  let csv = "Email,Subscribed Date\n";
-  (window.subscribers || []).forEach(s => {
-    csv += `"${s.email}","${new Date(s.subscribedAt).toLocaleDateString()}"\n`;
+  let csv = "Email,Name,Source,Subscribed Date\n";
+  subscribers.forEach(s => {
+    csv += `"${s.email}","${s.name || ''}","${s.source || 'footer'}","${new Date(s.subscribedAt).toLocaleDateString()}"\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -1276,67 +2105,197 @@ function exportSubscribersToCSV() {
 async function loadAlerts() {
   try {
     const res = await fetch('/api/admin/price-alerts');
-    const alerts = await res.json();
-    const container = document.getElementById('alertsList');
-    if (!alerts.length) { container.innerHTML = '<div class="empty-state">No price alerts</div>'; return; }
-    container.innerHTML = alerts.map(a => `
-      <div class="property-item">
-        <div>
-          <strong>${escapeHtml(a.propertyTitle)}</strong><br>
-          ${escapeHtml(a.email)}<br>
-          ₱${(a.propertyPrice || 0).toLocaleString()}
-        </div>
-      </div>
-    `).join('');
+    alerts = await res.json();
+    renderAlerts();
   } catch(e) { console.error(e); }
 }
 
-// Hero Images
-async function loadHeroImages() {
-  try {
-    const res = await fetch('/api/admin/hero-images');
-    const images = await res.json();
-    const container = document.getElementById('heroImagesGrid');
-    if (!images.length) { container.innerHTML = '<div class="empty-state">No hero images</div>'; return; }
-    container.innerHTML = images.map(img => `
-      <div class="image-card">
-        <img src="${img.url}">
-        <div class="image-card-info">
-          <div>Order: ${img.order + 1}</div>
-          <button class="danger" onclick="deleteHeroImage('${img._id}')">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) { console.error(e); }
-}
-
-async function deleteHeroImage(id) {
-  if (!confirm('Delete this hero image?')) return;
-  await fetch(`/api/admin/hero-images/${id}`, { method: 'DELETE' });
-  loadHeroImages();
+function renderAlerts() {
+  const container = document.getElementById('alertsList');
+  if (!alerts.length) {
+    container.innerHTML = '<tr><td colspan="5" class="empty-state">No price alert requests</td></tr>';
+    return;
+  }
+  container.innerHTML = alerts.map(a => `
+    <tr>
+      <td style="padding: 12px;">${escapeHtml(a.email)}</td>
+      <td style="padding: 12px;">${escapeHtml(a.propertyTitle)}</td>
+      <td style="padding: 12px;">₱${(a.propertyPrice || 0).toLocaleString()}</td>
+      <td style="padding: 12px;">${a.isNotified ? 'Yes' : 'Pending'}</td>
+      <td style="padding: 12px;">${new Date(a.createdAt).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
 }
 
 // Edit Property
+let editMainImageUrl = '';
+let editNewGalleryUrls = [];
+let editExistingGalleryUrls = [];
+
+function displayCurrentGalleryImages() {
+  const container = document.getElementById('editCurrentGallery');
+  if (!editExistingGalleryUrls.length) {
+    container.innerHTML = '<div><strong>No gallery images</strong></div>';
+  } else {
+    container.innerHTML = `<div style="margin-bottom: 8px;"><strong>Current Gallery Images (${editExistingGalleryUrls.length}):</strong></div>` + 
+      editExistingGalleryUrls.map((url, idx) => `
+        <div style="position: relative; display: inline-block; margin: 5px;">
+          <img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+          <div onclick="deleteCurrentGalleryImage(${idx})" style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;">
+            <i class="fas fa-times"></i>
+          </div>
+        </div>
+      `).join('');
+  }
+  const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
+}
+
+function deleteCurrentGalleryImage(index) {
+  if (confirm('Remove this gallery image?')) {
+    editExistingGalleryUrls.splice(index, 1);
+    displayCurrentGalleryImages();
+    showToast('Gallery image removed. Click Save to apply changes.');
+  }
+}
+
+document.getElementById('editUploadMainImageBtn')?.addEventListener('click', () => document.getElementById('editMainImageFile').click());
+document.getElementById('editMainImageFile')?.addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('editUploadMainImageBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
+  btn.disabled = true;
+  const progressId = addProgressBar(file.name);
+  try {
+    const result = await uploadImage(file, 'property', progressId);
+    editMainImageUrl = result.url;
+    document.getElementById('editMainImageUrl').value = result.url;
+    const preview = document.getElementById('editMainImagePreview');
+    preview.style.display = 'block';
+    preview.innerHTML = `<img src="${result.url}" style="width: 100px; height: 100px; object-fit: cover;"><br><small>✅ New image uploaded</small>`;
+    const currentDiv = document.getElementById('editCurrentMainImage');
+    currentDiv.innerHTML = `
+      <div style="background: var(--gray-light); padding: 10px; border-radius: 8px;">
+        <strong>New Main Image (will replace on save):</strong><br>
+        <img src="${result.url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 5px;">
+      </div>
+    `;
+    showToast('✅ New main image uploaded! Click Save to apply.');
+  } catch (error) {
+    showToast('❌ Upload failed: ' + error.message, true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    this.value = '';
+  }
+});
+
+document.getElementById('editUploadGalleryBtn')?.addEventListener('click', () => document.getElementById('editGalleryFiles').click());
+document.getElementById('editGalleryFiles')?.addEventListener('change', async function(e) {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+  
+  const totalExisting = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  if (totalExisting + files.length > MAX_GALLERY_IMAGES) {
+    showToast(`You can only have up to ${MAX_GALLERY_IMAGES} gallery images total.`, true);
+    this.value = '';
+    return;
+  }
+  
+  const btn = document.getElementById('editUploadGalleryBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
+  btn.disabled = true;
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const progressId = addProgressBar(file.name, files.length, i + 1);
+    try {
+      const result = await uploadImage(file, 'property', progressId);
+      editNewGalleryUrls.push(result.url);
+      const preview = document.getElementById('editGalleryPreview');
+      if (editNewGalleryUrls.length > 0) {
+        preview.innerHTML = editNewGalleryUrls.map((url, idx) => `
+          <div class="gallery-preview-item">
+            <img src="${url}" style="width: 80px; height: 80px; object-fit: cover;">
+            <div class="remove-img" onclick="removeNewGalleryImage(${idx})"><i class="fas fa-times"></i></div>
+          </div>
+        `).join('');
+      }
+      const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+      document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
+    } catch (error) {
+      showToast(`Failed: ${file.name}`, true);
+    }
+  }
+  showToast(`✅ ${files.length} new gallery images uploaded! Click Save to apply.`);
+  btn.innerHTML = originalText;
+  btn.disabled = false;
+  this.value = '';
+});
+
+function removeNewGalleryImage(index) {
+  editNewGalleryUrls.splice(index, 1);
+  const preview = document.getElementById('editGalleryPreview');
+  if (editNewGalleryUrls.length > 0) {
+    preview.innerHTML = editNewGalleryUrls.map((url, idx) => `
+      <div class="gallery-preview-item">
+        <img src="${url}" style="width: 80px; height: 80px; object-fit: cover;">
+        <div class="remove-img" onclick="removeNewGalleryImage(${idx})"><i class="fas fa-times"></i></div>
+      </div>
+    `).join('');
+  } else {
+    preview.innerHTML = '';
+  }
+  const totalCount = editExistingGalleryUrls.length + editNewGalleryUrls.length;
+  document.getElementById('editGalleryCountDisplay').innerHTML = `${totalCount} / 25 total`;
+}
+
 async function editProperty(id) {
   const prop = allProperties.find(p => p._id === id);
-  if (!prop) return;
-  document.getElementById('editId').value = prop._id;
-  document.getElementById('editTitle').value = prop.title || '';
-  document.getElementById('editLocation').value = prop.location || '';
-  document.getElementById('editPrice').value = prop.price || 0;
-  document.getElementById('editMonthlyRental').value = prop.monthlyRental || 0;
-  document.getElementById('editBedrooms').value = prop.bedrooms || 0;
-  document.getElementById('editBathrooms').value = prop.bathrooms || 0;
-  document.getElementById('editSqm').value = prop.sqm || 0;
-  document.getElementById('editLandArea').value = prop.landArea || 0;
-  document.getElementById('editParking').value = prop.parking || 0;
-  document.getElementById('editDescription').value = prop.description || '';
-  document.getElementById('editMapLocation').value = prop.mapLocation || '';
-  document.getElementById('editListingType').value = prop.listingType || 'FOR SALE';
-  document.getElementById('editPropertyType').value = prop.propertyType || 'Condominium';
-  document.getElementById('editFeatured').value = prop.featured ? 'true' : 'false';
-  document.getElementById('editStatus').value = prop.status || 'available';
-  document.getElementById('editModal').style.display = 'block';
+  if (prop) {
+    document.getElementById('editId').value = prop._id;
+    document.getElementById('editTitle').value = prop.title || '';
+    document.getElementById('editLocation').value = prop.location || '';
+    document.getElementById('editPrice').value = prop.price || 0;
+    document.getElementById('editMonthlyRental').value = prop.monthlyRental || 0;
+    document.getElementById('editBedrooms').value = prop.bedrooms || 0;
+    document.getElementById('editBathrooms').value = prop.bathrooms || 0;
+    document.getElementById('editSqm').value = prop.sqm || 0;
+    document.getElementById('editLandArea').value = prop.landArea || 0;
+    document.getElementById('editDescription').value = prop.description || '';
+    document.getElementById('editFeatured').value = prop.featured ? 'true' : 'false';
+    document.getElementById('editStatus').value = prop.status || 'available';
+    document.getElementById('editMapLocation').value = prop.mapLocation || '';
+    document.getElementById('editListingType').value = prop.listingType || 'FOR SALE';
+    document.getElementById('editPropertyType').value = prop.propertyType || 'Condominium';
+    document.getElementById('editParking').value = prop.parking || 0;
+    
+    editMainImageUrl = '';
+    editNewGalleryUrls = [];
+    editExistingGalleryUrls = [...(prop.gallery || [])];
+    
+    const currentMainDiv = document.getElementById('editCurrentMainImage');
+    if (prop.mainImage) {
+      currentMainDiv.innerHTML = `
+        <div style="background: var(--gray-light); padding: 10px; border-radius: 8px;">
+          <strong>Current Main Image:</strong><br>
+          <img src="${prop.mainImage}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 5px;">
+        </div>
+      `;
+    } else {
+      currentMainDiv.innerHTML = '<div style="background: var(--gray-light); padding: 10px; border-radius: 8px;"><strong>No main image set</strong></div>';
+    }
+    
+    displayCurrentGalleryImages();
+    document.getElementById('editMainImageUrl').value = prop.mainImage || '';
+    document.getElementById('editGalleryUrls').value = (prop.gallery || []).join(',');
+    document.getElementById('editMainImagePreview').style.display = 'none';
+    document.getElementById('editGalleryPreview').innerHTML = '';
+    document.getElementById('editModal').style.display = 'block';
+  }
 }
 
 function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
@@ -1344,37 +2303,119 @@ function closeEditModal() { document.getElementById('editModal').style.display =
 document.getElementById('editForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const id = document.getElementById('editId').value;
+  const allGalleryImages = [...editExistingGalleryUrls, ...editNewGalleryUrls];
+  let mainImage = editMainImageUrl;
+  if (!mainImage) {
+    mainImage = document.getElementById('editMainImageUrl').value;
+  }
   const property = {
-    title: document.getElementById('editTitle').value,
+    title: document.getElementById('editTitle').value, 
     location: document.getElementById('editLocation').value,
-    price: parseFloat(document.getElementById('editPrice').value) || 0,
+    price: parseFloat(document.getElementById('editPrice').value) || 0, 
     monthlyRental: parseFloat(document.getElementById('editMonthlyRental').value) || 0,
-    bedrooms: parseInt(document.getElementById('editBedrooms').value) || 0,
+    bedrooms: parseInt(document.getElementById('editBedrooms').value) || 0, 
     bathrooms: parseInt(document.getElementById('editBathrooms').value) || 0,
-    sqm: parseFloat(document.getElementById('editSqm').value) || 0,
+    sqm: parseFloat(document.getElementById('editSqm').value) || 0, 
     landArea: parseFloat(document.getElementById('editLandArea').value) || 0,
-    parking: parseInt(document.getElementById('editParking').value) || 0,
-    description: document.getElementById('editDescription').value,
-    mapLocation: document.getElementById('editMapLocation').value,
-    listingType: document.getElementById('editListingType').value,
-    propertyType: document.getElementById('editPropertyType').value,
+    description: document.getElementById('editDescription').value, 
     featured: document.getElementById('editFeatured').value === 'true',
-    status: document.getElementById('editStatus').value
+    status: document.getElementById('editStatus').value, 
+    mainImage: mainImage, 
+    gallery: allGalleryImages,
+    mapLocation: document.getElementById('editMapLocation').value, 
+    listingType: document.getElementById('editListingType').value,
+    propertyType: document.getElementById('editPropertyType').value, 
+    parking: parseInt(document.getElementById('editParking').value) || 0
   };
   const saveBtn = document.getElementById('saveEditBtn');
   saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
   saveBtn.disabled = true;
+  const progressId = addProgressBar('Saving property changes...');
+  updateProgressBar(progressId, 50, 'Updating property...');
   try {
     const res = await fetch(`/api/admin/properties/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(property) });
     if (res.ok) {
-      showToast('✅ Property saved!');
+      updateProgressBar(progressId, 100, 'Complete!');
+      showToast('✅ Property saved successfully!');
       closeEditModal();
       loadAllProperties();
       loadStats();
-    } else showToast('❌ Error saving', true);
-  } catch(e) { showToast('❌ Network error', true); }
-  finally { saveBtn.innerHTML = 'Save Changes'; saveBtn.disabled = false; }
+    } else {
+      updateProgressBar(progressId, 100, 'Failed!');
+      showToast('❌ Error saving property', true);
+    }
+  } catch(e) {
+    updateProgressBar(progressId, 100, 'Failed!');
+    showToast('❌ Network error', true);
+  } finally {
+    saveBtn.innerHTML = 'Save Changes';
+    saveBtn.disabled = false;
+  }
 });
+
+// Hero Images
+async function loadHeroImages() {
+  try {
+    const res = await fetch('/api/admin/hero-images');
+    heroImages = await res.json();
+    displayHeroImages();
+  } catch(e) { console.error(e); }
+}
+
+function displayHeroImages() {
+  const grid = document.getElementById('heroImagesGrid');
+  if (!heroImages.length) { grid.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>No hero images yet. Click above to upload.</p></div>'; return; }
+  grid.innerHTML = heroImages.map((img, idx) => `
+    <div class="image-card" draggable="true" data-index="${idx}" data-id="${img._id}">
+      <div class="drag-handle" draggable="true"><i class="fas fa-grip-vertical"></i></div>
+      <img src="${img.url}" alt="Hero ${idx+1}">
+      <div class="image-card-info">
+        <div class="image-card-title">Hero Image ${idx+1}</div>
+        <div class="image-card-order">Order: ${img.order + 1}</div>
+        <div class="image-card-actions">
+          <button class="set-default-btn" onclick="setAsDefault('${img._id}')"><i class="fas fa-star"></i> First</button>
+          <button class="danger" onclick="deleteHeroImage('${img._id}')"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  addDragAndDropListeners();
+}
+
+function addDragAndDropListeners() {
+  const cards = document.querySelectorAll('.image-card');
+  cards.forEach(card => {
+    card.addEventListener('dragstart', e => { draggedIndex = parseInt(e.target.closest('.image-card').dataset.index); });
+    card.addEventListener('dragover', e => e.preventDefault());
+    card.addEventListener('drop', async e => {
+      e.preventDefault();
+      const targetCard = e.target.closest('.image-card');
+      if (!targetCard) return;
+      const targetIndex = parseInt(targetCard.dataset.index);
+      if (draggedIndex === targetIndex) return;
+      const draggedItem = heroImages[draggedIndex];
+      heroImages.splice(draggedIndex, 1);
+      heroImages.splice(targetIndex, 0, draggedItem);
+      heroImages.forEach((img, i) => img.order = i);
+      await fetch('/api/admin/hero-images/reorder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: heroImages }) });
+      loadHeroImages();
+      showToast('Order saved!');
+    });
+  });
+}
+
+async function setAsDefault(id) {
+  await fetch(`/api/admin/hero-images/${id}/default`, { method: 'PUT' });
+  showToast('Set as first slide!');
+  loadHeroImages();
+}
+
+async function deleteHeroImage(id) {
+  if (!confirm('Delete this hero image?')) return;
+  await fetch(`/api/admin/hero-images/${id}`, { method: 'DELETE' });
+  showToast('Image deleted');
+  loadHeroImages();
+}
 
 // Excel Import
 let excelData = [];
@@ -1393,12 +2434,14 @@ async function previewExcel() {
       sqm: parseFloat(row['Floor Area']) || 0, landArea: parseFloat(row['Land Area']) || 0,
       description: row['Caption'] || '', listingType: (row['Listing Type'] || 'FOR SALE').toUpperCase(),
       propertyType: row['Property Type'] || 'Condominium', parking: parseInt(row['P']) || 0,
-      status: 'available', mapLocation: row['MapLocation'] || '',
-      mainImage: '', gallery: []
+      status: ['available','leased','reserved','sold','do not publish'].includes(String(row['Status']||'').toLowerCase()) ? String(row['Status']).toLowerCase() : 'available',
+      mapLocation: row['MapLocation'] || '',
+      mainImage: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d', gallery: []
     })).filter(p => p.title);
     const previewDiv = document.getElementById('importPreview');
     previewDiv.innerHTML = `<p><strong>✅ ${excelData.length} properties found</strong></p>`;
-    previewDiv.innerHTML += excelData.slice(0, 5).map(p => `<div>📌 ${p.title} - ${p.listingType}</div>`).join('');
+    previewDiv.innerHTML += excelData.slice(0, 5).map(p => `<div style="padding: 8px; border-bottom: 1px solid #e5e7eb;">📌 ${p.title} - ${p.listingType}</div>`).join('');
+    if (excelData.length > 5) previewDiv.innerHTML += `<div style="padding: 8px; color: var(--gray);">... and ${excelData.length - 5} more</div>`;
     showToast(`Loaded ${excelData.length} properties`);
   };
   reader.readAsArrayBuffer(file);
@@ -1415,9 +2458,15 @@ async function startImport() {
     updateProgressBar(progressId, 50, 'Importing...');
     try {
       const res = await fetch('/api/admin/properties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(excelData[i]) });
-      if (res.ok) { success++; updateProgressBar(progressId, 100, 'Complete!'); }
-      else updateProgressBar(progressId, 100, 'Failed!');
-    } catch(e) { updateProgressBar(progressId, 100, 'Failed!'); }
+      if (res.ok) {
+        success++;
+        updateProgressBar(progressId, 100, 'Complete!');
+      } else {
+        updateProgressBar(progressId, 100, 'Failed!');
+      }
+    } catch(e) {
+      updateProgressBar(progressId, 100, 'Failed!');
+    }
   }
   showToast(`Imported ${success} of ${excelData.length} properties`);
   btn.disabled = false;
