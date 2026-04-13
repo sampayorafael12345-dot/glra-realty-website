@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Sales Closing Fees Calculator | GLRA Realty</title>
+<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates.">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
+<meta property="og:description" content="Complete property transaction calculator. Includes BIR Zonal Value lookup and Desired Net Proceed.">
+<meta property="og:image" content="https://glrarealty.com/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/calculator.html">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+/* ============ CSS VARIABLES ============ */
+:root {
+  --orange: #f97316;
+  --orange-dark: #ea580c;
+  --orange-light: #ffedd5;
+  --dark: #1a1a2e;
+  --dark-gray: #16213e;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --white: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --text-color: #1a1a2e;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
+  --transition: all 0.3s ease;
+  --success: #10b981;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+body.dark-mode {
+  --dark: #e0e0e0;
+  --dark-gray: #c0c0c0;
+  --gray: #a0a0a0;
+  --gray-light: #1a1a2a;
+  --white: #0f0f1a;
+  --card-bg: #1a1a2a;
+  --border-color: #2a2a3a;
+  --text-color: #e0e0e0;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+}
+
+/* Navigation */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 5%;
+  background: transparent;
+  transition: var(--transition);
+  z-index: 1000;
+}
+
+.navbar.scrolled {
+  background: var(--white);
+  padding: 10px 5%;
+  box-shadow: var(--shadow-sm);
+}
+
+.logo img { height: 55px; width: auto; display: block; }
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--white);
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.navbar.scrolled .nav-links a { color: var(--text-color); }
+.nav-links a:hover { color: var(--orange); }
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: var(--white) !important;
+}
+
+.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
+.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+
+.mobile-menu-btn {
+  display: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--white);
+  z-index: 1001;
+}
+
+.navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
+
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--dark);
+  z-index: 2000;
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mobile-overlay.active { left: 0; }
+.mobile-overlay .close-menu {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  font-size: 28px;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.mobile-overlay-links {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  text-align: center;
+}
+
+.mobile-overlay-links a {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: 500;
+  font-family: 'Playfair Display', serif;
+}
+
+/* Page Hero */
+.page-hero {
+  height: 25vh;
+  min-height: 220px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+body.dark-mode .page-hero {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+}
+
+.page-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+.page-hero p {
+  color: rgba(255,255,255,0.8);
+  font-size: 15px;
+}
+
+.hero-line {
+  width: 60px;
+  height: 2px;
+  background: var(--orange);
+  margin: 15px auto 0;
+}
+
+/* Calculator Container */
+.calculator-container {
+  max-width: 1400px;
+  margin: -50px auto 60px;
+  padding: 0 5%;
+  position: relative;
+  z-index: 10;
+}
+
+/* Input Cards */
+.inputs-wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.input-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+}
+
+.input-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.input-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--orange);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-card label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.input-card input,
+.input-card select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: var(--transition);
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.input-card input:focus,
+.input-card select:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+/* Zonal Row */
+.zonal-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.zonal-row input { flex: 2; }
+
+.zonal-row button {
+  flex: 1;
+  padding: 14px 16px;
+  background: var(--gray-light);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color);
+}
+
+.zonal-row button:hover {
+  border-color: var(--orange);
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+.zonal-hint {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.zonal-hint .tax-basis { color: var(--orange); font-weight: 600; }
+
+/* Radio Group */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.radio-option:hover {
+  border-color: var(--orange);
+  background: var(--orange-light);
+}
+
+.radio-option.selected {
+  border-color: var(--orange);
+  background: var(--orange-light);
+}
+
+.radio-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--orange);
+  margin: 0;
+}
+
+.radio-option span { font-size: 13px; color: var(--text-color); }
+.radio-option small { font-size: 11px; color: var(--gray); }
+
+/* Commission Buttons */
+.commission-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.comm-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--gray-light);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.comm-btn:hover {
+  border-color: var(--orange);
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+.comm-btn.active {
+  background: var(--orange);
+  color: white;
+  border-color: var(--orange);
+}
+
+/* Desired Proceed Card */
+.desired-proceed-card {
+  background: linear-gradient(135deg, var(--orange-light) 0%, var(--card-bg) 100%);
+  border: 2px solid var(--orange);
+}
+
+.desired-proceed-card h3 i { color: var(--orange); }
+
+.desired-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.desired-result .label { font-size: 12px; color: var(--gray); }
+.desired-result .value { font-size: 20px; font-weight: 800; color: var(--orange); }
+
+/* Summary Banner */
+.summary-banner {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  border-radius: 20px;
+  padding: 25px 30px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: var(--white);
+}
+
+.summary-item {
+  text-align: center;
+  flex: 1;
+}
+
+.summary-item h4 {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.summary-item .amount { font-size: 26px; font-weight: 800; }
+.summary-item .percent { font-size: 13px; opacity: 0.8; margin-top: 5px; }
+
+.summary-divider {
+  width: 1px;
+  height: 50px;
+  background: rgba(255,255,255,0.3);
+}
+
+/* Results Section */
+.results-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.result-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.result-header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 18px 24px;
+  color: var(--white);
+}
+
+body.dark-mode .result-header {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+}
+
+.result-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-body { padding: 24px; }
+
+.fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fee-row:last-child { border-bottom: none; }
+
+.fee-label { font-size: 14px; color: var(--gray); }
+.fee-value { font-size: 16px; font-weight: 700; color: var(--text-color); }
+.fee-value.highlight { color: var(--orange); font-size: 22px; }
+.fee-value.success { color: var(--success); }
+.fee-value.danger { color: var(--danger); }
+
+.fee-note { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+.total-row {
+  background: var(--gray-light);
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.total-row .fee-label { font-weight: 700; color: var(--text-color); }
+
+/* Rate Schedules */
+.schedules-wrapper {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.schedules-wrapper h3 {
+  font-size: 18px;
+  color: var(--orange);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.schedules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.schedule-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--orange);
+}
+
+.schedule-card table {
+  width: 100%;
+  font-size: 12px;
+}
+
+.schedule-card td {
+  padding: 8px 0;
+  color: var(--gray);
+}
+
+.schedule-card td:last-child {
+  text-align: right;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* Footer */
+footer {
+  background: #1a1a2e;
+  color: #888;
+  padding: 45px 5% 20px;
+  margin-top: 60px;
+}
+
+body.dark-mode footer {
+  background: #0f0f1a;
+}
+
+.footer-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.footer-col h4 {
+  color: var(--orange);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.footer-col p, .footer-col ul li a {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #888;
+  text-decoration: none;
+}
+
+.social-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.social-links a {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-links a:hover { background: var(--orange); }
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 10px;
+}
+
+/* Floating Buttons */
+.floating-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.floating-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.floating-btn:hover { transform: scale(1.05); }
+.btn-call { background: #25d366; color: white; }
+.btn-messenger { background: #0084ff; color: white; }
+.btn-whatsapp { background: #25d366; color: white; }
+.btn-viber { background: #7360f2; color: white; }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
+
+body.dark-mode .btn-darkmode {
+  background: #2a2a3a;
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--dark);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  z-index: 3000;
+  animation: slideIn 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.disclaimer {
+  background: #fff3e0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #856404;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+body.dark-mode .disclaimer {
+  background: #2a2a3a;
+  color: #c0a040;
+}
+
+.disclaimer i { color: var(--orange); font-size: 14px; }
+
+/* Mobile */
+@media (max-width: 900px) {
+  .inputs-wrapper { grid-template-columns: 1fr; gap: 15px; }
+  .results-wrapper { grid-template-columns: 1fr; gap: 20px; }
+  .summary-banner { flex-direction: column; text-align: center; }
+  .summary-divider { width: 80%; height: 1px; }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .logo { position: absolute; left: 50%; transform: translateX(-50%); }
+  .logo img { height: 40px; }
+  .page-hero h1 { font-size: 28px; }
+  .calculator-container { margin-top: -30px; }
+  .input-card { padding: 18px; }
+  .result-body { padding: 18px; }
+  .summary-item .amount { font-size: 22px; }
+  .commission-buttons { gap: 5px; }
+  .comm-btn { padding: 8px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()">
+    <i class="fas fa-bars"></i>
+  </div>
+  <div class="logo">
+    <img src="/logo.png" alt="GLRA Realty">
+  </div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/#featured">FEATURED</a>
+    <a href="/#properties">PROPERTIES</a>
+    <a href="/#agent">AGENT</a>
+    <a href="/calculator.html" style="color: var(--orange);">CALCULATOR</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">HOME</a>
+    <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
+    <a href="/#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
+    <a href="/#contact" onclick="closeMobileMenu()">CONTACT</a>
+  </div>
+</div>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div>
+    <h1>Sales Closing Fees Calculator</h1>
+    <div class="hero-line"></div>
+    <p>Complete property transaction calculator — includes BIR Zonal Value and Desired Net Proceed</p>
+  </div>
+</section>
+
+<div class="calculator-container">
+  
+  <!-- Summary Banner -->
+  <div class="summary-banner" id="summaryBanner">
+    <div class="summary-item">
+      <h4>NET PROCEED (SELLER)</h4>
+      <div class="amount" id="netProceedSummary">₱0</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <h4>TOTAL COSTS</h4>
+      <div class="amount" id="totalCostsSummary">₱0</div>
+      <div class="percent" id="totalPercentSummary">0% of price</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <h4>SELLER PAYS</h4>
+      <div class="amount" id="sellerPaysSummary">₱0</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <h4>BUYER PAYS</h4>
+      <div class="amount" id="buyerPaysSummary">₱0</div>
+    </div>
+  </div>
+
+  <!-- Input Cards -->
+  <div class="inputs-wrapper">
+    <!-- Card 1: Asset Type -->
+    <div class="input-card">
+      <h3><i class="fas fa-building"></i> Who is selling?</h3>
+      <div class="radio-group" id="assetTypeGroup">
+        <div class="radio-option selected" data-value="capital" onclick="selectAssetType('capital')">
+          <input type="radio" name="assetType" value="capital" checked> 
+          <span>🏠 Capital Asset <small>(Individual, never rented)</small><br><strong style="color:var(--orange);">→ CGT 6%</strong></span>
+        </div>
+        <div class="radio-option" data-value="ordinary" onclick="selectAssetType('ordinary')">
+          <input type="radio" name="assetType" value="ordinary"> 
+          <span>🏢 Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--orange);">→ VAT 12% + EWT 6%</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Property Value & Zonal Value (WITH INTEGRATION) -->
+    <div class="input-card">
+      <h3><i class="fas fa-tag"></i> Property Value</h3>
+      <label>Gross Selling Price</label>
+      <input type="number" id="propertyValue" value="0" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
+      
+      <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
+      <div class="zonal-row">
+        <input type="text" id="zonalLocation" placeholder="Enter city (e.g., Makati, Taguig, QC)" style="flex: 2;">
+        <button onclick="fetchZonalValue()"><i class="fas fa-search"></i> Get Zonal Value</button>
+        <button onclick="openZonalLookup()" style="flex: 0.7;"><i class="fas fa-external-link-alt"></i> BIR</button>
+      </div>
+      <input type="number" id="zonalValue" value="" step="10000" placeholder="Or enter zonal value manually" oninput="calculateAll()">
+      <div id="zonalValueDisplay" class="zonal-hint" style="margin-top: 5px;"></div>
+      <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
+        <span>Tax will be based on: <strong class="tax-basis" id="taxBasisValue">Selling Price</strong></span>
+        <span>If zonal value is higher</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Commission & Transfer Tax -->
+    <div class="input-card">
+      <h3><i class="fas fa-percent"></i> Rates</h3>
+      <label>Broker Commission</label>
+      <div class="commission-buttons" id="commissionButtons">
+        <button class="comm-btn" data-rate="0" onclick="setCommission(0)">0%</button>
+        <button class="comm-btn" data-rate="3" onclick="setCommission(3)">3%</button>
+        <button class="comm-btn" data-rate="4" onclick="setCommission(4)">4%</button>
+        <button class="comm-btn active" data-rate="5" onclick="setCommission(5)">5%</button>
+        <button class="comm-btn" data-rate="6" onclick="setCommission(6)">6%</button>
+        <button class="comm-btn" data-rate="7" onclick="setCommission(7)">7%</button>
+        <button class="comm-btn" data-rate="8" onclick="setCommission(8)">8%</button>
+      </div>
+      <input type="hidden" id="commissionRate" value="5">
+      
+      <label style="margin-top: 12px;">Local Transfer Tax</label>
+      <select id="transferTaxRate" oninput="calculateAll()">
+        <option value="0.5">0.5% - Makati City, Manila City, Municipalities (Outside MM)</option>
+        <option value="0.6">0.6% - Taguig City (BGC)</option>
+        <option value="0.75" selected>0.75% - Most Metro Manila Cities & Cities Outside MM</option>
+      </select>
+      <div class="input-hint" style="margin-top: 5px; font-size: 11px;">
+        <i class="fas fa-info-circle"></i> Based on higher of Selling Price or Zonal Value. Due within 60 days.
+      </div>
+    </div>
+  </div>
+
+  <!-- Desired Net Proceed Card -->
+  <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
+    <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
+    <label>How much do you want to receive?</label>
+    <input type="number" id="desiredNetProceed" value="" step="10000" placeholder="Enter desired net amount" oninput="calculateFromDesiredProceed()">
+    <div class="desired-result" id="desiredResult" style="display: none;">
+      <div class="label">Required Selling Price</div>
+      <div class="value" id="requiredSellingPrice">₱0</div>
+      <div class="label">To receive <span id="desiredAmountDisplay">₱0</span> after taxes and fees</div>
+    </div>
+    <div class="input-hint">Enter how much you want to net, and we'll calculate the selling price needed.</div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-wrapper">
+    <!-- Seller's Side -->
+    <div class="result-card">
+      <div class="result-header">
+        <h3><i class="fas fa-user-friends"></i> Seller's Taxes & Fees</h3>
+      </div>
+      <div class="result-body">
+        <div class="fee-row">
+          <span class="fee-label">Gross Selling Price</span>
+          <span class="fee-value" id="grossPrice">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">BIR Zonal Value</span>
+          <span class="fee-value" id="zonalValueDisplayCalc">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Tax Basis (Higher of SP or ZV)</span>
+          <span class="fee-value" id="taxBasis">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label" id="sellerTaxLabel">Capital Gains Tax (6%)</span>
+          <span class="fee-value" id="sellerTax">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Net Before Commission</span>
+          <span class="fee-value" id="netBeforeCommission">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%)</span>
+          <span class="fee-value" id="brokerCommission">₱0</span>
+        </div>
+        <div class="total-row">
+          <div class="fee-row">
+            <span class="fee-label"><strong>Estimated Net Proceed</strong></span>
+            <span class="fee-value highlight" id="netProceedDetail">₱0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buyer's Side -->
+    <div class="result-card">
+      <div class="result-header">
+        <h3><i class="fas fa-user-check"></i> Buyer's Taxes & Fees</h3>
+      </div>
+      <div class="result-body">
+        <div class="fee-row">
+          <span class="fee-label">Documentary Stamp Tax (1.5%)</span>
+          <span class="fee-value" id="dstTax">₱0</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Local Transfer Tax (<span id="transferRateDisplay">0.75</span>%)</span>
+          <span class="fee-value" id="transferTax">₱0</span>
+          <div class="fee-note">Varies by city</div>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Registration Fee (tiered)</span>
+          <span class="fee-value" id="registrationFee">₱0</span>
+          <div class="fee-note">LRA schedule</div>
+        </div>
+        <div class="fee-row">
+          <span class="fee-label">Notarial Fee (tiered)</span>
+          <span class="fee-value" id="notarialFee">₱0</span>
+          <div class="fee-note">Varies by notary</div>
+        </div>
+        <div class="total-row">
+          <div class="fee-row">
+            <span class="fee-label"><strong>Total Buyer's Costs</strong></span>
+            <span class="fee-value danger" id="buyerCostsTotal">₱0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rate Schedules -->
+  <div class="schedules-wrapper">
+    <h3><i class="fas fa-chart-line"></i> Rate Schedules & Reference (2026 Rates)</h3>
+    <div class="schedules-grid">
+      <div class="schedule-card">
+        <h4>Seller's Taxes (BIR)</h4>
+        <table>
+          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td> </tr>
+          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td> </tr>
+          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td> </tr>
+        </table>
+      </div>
+      <div class="schedule-card">
+        <h4>Buyer's Taxes</h4>
+        <table>
+          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td> </tr>
+          <tr><td>Local Transfer Tax</td><td>0.5% - 0.75% (by city)</td> </tr>
+        </table>
+      </div>
+      <div class="schedule-card">
+        <h4>Registration Fee (LRA)</h4>
+        <table>
+          <tr><td>Up to ₱500K</td><td>1.0%</td> </tr>
+          <tr><td>₱500K – ₱1M</td><td>₱5,000 + 0.8%</td> </tr>
+          <tr><td>₱1M – ₱2M</td><td>₱9,000 + 0.6%</td> </tr>
+          <tr><td>₱2M – ₱5M</td><td>₱15,000 + 0.4%</td> </tr>
+          <tr><td>₱5M – ₱10M</td><td>₱27,000 + 0.3%</td> </tr>
+          <tr><td>Above ₱10M</td><td>₱42,000 + 0.25%</td> </tr>
+        </table>
+      </div>
+      <div class="schedule-card">
+        <h4>Notarial Fee (Estimate)</h4>
+        <table>
+          <tr><td>Up to ₱2M</td><td>~1.0%</td> </tr>
+          <tr><td>₱2M – ₱10M</td><td>~0.5%</td> </tr>
+          <tr><td>Above ₱10M</td><td>~0.25%</td> </tr>
+        </table>
+      </div>
+    </div>
+    <div class="disclaimer">
+      <i class="fas fa-info-circle"></i>
+      <div><strong>Disclaimer:</strong> This calculator provides estimates only. Actual fees may vary based on specific circumstances, city ordinances, and current BIR regulations. Tax is based on the HIGHER of Selling Price or BIR Zonal Value.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-content">
+    <div class="footer-col">
+      <h4>GLRA REALTY</h4>
+      <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
+      <div class="social-links">
+        <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>QUICK LINKS</h4>
+      <ul>
+        <li><a href="/properties.html?category=FOR SALE">Properties For Sale</a></li>
+        <li><a href="/properties.html?category=FOR LEASE">Properties For Lease</a></li>
+        <li><a href="/guide.html">Documentation Guide</a></li>
+        <li><a href="/calculator.html">Transaction Calculator</a></li>
+        <li><a href="/zonal.html">Zonal Value Lookup</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>CONTACT</h4>
+      <p><i class="fas fa-phone-alt"></i> 0917 177 4572</p>
+      <p><i class="fab fa-instagram"></i> @glra_realty</p>
+      <p><i class="fas fa-envelope"></i> glrarealty@gmail.com</p>
+    </div>
+    <div class="footer-col">
+      <h4>LOCATION</h4>
+      <p><i class="fas fa-map-marker-alt"></i> 17th Floor, 252 Senator Gil J. Puyat Avenue<br>Makati City, Philippines 1200</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 GLRA REALTY GROUP. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- Floating Buttons -->
+<div class="floating-buttons">
+  <a href="tel:09171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://facebook.com/messages/t/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" target="_blank"><i class="fab fa-viber"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
+    <i class="fas fa-moon"></i>
+  </button>
+</div>
+
+<script>
+// ============ DARK MODE ============
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDarkMode);
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (isDarkMode) {
+    btn.innerHTML = '<i class="fas fa-sun"></i>';
+    btn.style.background = '#2a2a3a';
+    btn.style.color = '#f97316';
+  } else {
+    btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.style.background = '#1e1e2e';
+    btn.style.color = 'white';
+  }
+}
+
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark-mode');
+  const btn = document.getElementById('floatingDarkModeToggle');
+  if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
+}
+
+// ============ ZONAL VALUE DATABASE ============
+const zonalDatabaseForCalc = {
+  "makati": 150000,
+  "makati city": 150000,
+  "bgc": 180000,
+  "bonifacio global city": 180000,
+  "taguig": 100000,
+  "taguig city": 100000,
+  "quezon city": 60000,
+  "qc": 60000,
+  "pasig": 70000,
+  "pasig city": 70000,
+  "mandaluyong": 65000,
+  "manila": 60000,
+  "manila city": 60000,
+  "paranaque": 50000,
+  "pasay": 60000,
+  "muntinlupa": 65000,
+  "alabang": 80000,
+  "las pinas": 35000,
+  "marikina": 40000,
+  "san juan": 55000,
+  "caloocan": 30000,
+  "valenzuela": 25000,
+  "malabon": 22000,
+  "navotas": 20000,
+  "pateros": 27000,
+  "tagaytay": 45000,
+  "nuvali": 50000,
+  "sta rosa": 40000,
+  "binan": 35000,
+  "calamba": 30000,
+  "dasmariñas": 35000,
+  "imus": 32000,
+  "bacoor": 30000,
+  "antipolo": 35000,
+  "cainta": 32000,
+  "taytay": 28000,
+  "angeles": 35000,
+  "clark": 45000,
+  "subic": 40000,
+  "olongapo": 30000,
+  "baguio": 50000,
+  "la trinidad": 30000,
+  "vigan": 22000,
+  "lauag": 20000,
+  "dagupan": 22000,
+  "naga": 22000,
+  "legazpi": 22000,
+  "puerto princesa": 25000
+};
+
+function fetchZonalValue() {
+  let location = document.getElementById('zonalLocation').value.toLowerCase().trim();
+  if (!location) {
+    showToast('Please enter a city name', true);
+    return;
+  }
+  
+  let zonalPrice = null;
+  let matchedKey = null;
+  
+  for (const [key, value] of Object.entries(zonalDatabaseForCalc)) {
+    if (location.includes(key) || key.includes(location)) {
+      zonalPrice = value;
+      matchedKey = key;
+      break;
+    }
+  }
+  
+  if (zonalPrice) {
+    document.getElementById('zonalValue').value = zonalPrice;
+    document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${matchedKey} set to ₱${zonalPrice.toLocaleString()}/sqm.`;
+    calculateAll();
+  } else {
+    document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Exact zonal value not found. You can manually enter the amount or check the BIR website.`;
+  }
+}
+
+// ============ CALCULATOR FUNCTIONS ============
+let currentAssetType = 'capital';
+let currentCommission = 5;
+let isReversing = false;
+
+function selectAssetType(type) {
+  currentAssetType = type;
+  const options = document.querySelectorAll('.radio-option');
+  options.forEach(opt => {
+    opt.classList.remove('selected');
+    const radio = opt.querySelector('input');
+    if (radio.value === type) {
+      radio.checked = true;
+      opt.classList.add('selected');
+    }
+  });
+  calculateAll();
+}
+
+function setCommission(rate) {
+  currentCommission = rate;
+  document.getElementById('commissionRate').value = rate;
+  document.getElementById('commissionDisplay').innerHTML = rate;
+  const btns = document.querySelectorAll('.comm-btn');
+  btns.forEach(btn => {
+    btn.classList.remove('active');
+    if (parseInt(btn.dataset.rate) === rate) btn.classList.add('active');
+  });
+  if (!isReversing) calculateAll();
+}
+
+function getTaxBasis() {
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const zonalValue = parseFloat(document.getElementById('zonalValue').value) || 0;
+  return Math.max(sellingPrice, zonalValue);
+}
+
+function formatCurrency(amount) {
+  return '₱' + Math.round(amount).toLocaleString();
+}
+
+function calculateRegistrationFee(price) {
+  if (price <= 500000) return price * 0.01;
+  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
+  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
+  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
+  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
+  return 42000 + (price - 10000000) * 0.0025;
+}
+
+function calculateNotarialFee(price) {
+  if (price <= 2000000) return price * 0.01;
+  if (price <= 10000000) return price * 0.005;
+  return price * 0.0025;
+}
+
+function calculateAll() {
+  if (isReversing) return;
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const zonalValue = parseFloat(document.getElementById('zonalValue').value) || 0;
+  const taxBasis = getTaxBasis();
+  const commissionRate = currentCommission;
+  const transferTaxRate = parseFloat(document.getElementById('transferTaxRate').value) || 0.75;
+  
+  const taxBasisHint = document.getElementById('taxBasisValue');
+  if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
+  else taxBasisHint.innerHTML = 'Zonal Value (higher)';
+  
+  let sellerTax = 0, sellerTaxLabel = '';
+  if (currentAssetType === 'capital') {
+    sellerTax = taxBasis * 0.06;
+    sellerTaxLabel = 'Capital Gains Tax (6%)';
+  } else {
+    sellerTax = sellingPrice * 0.18;
+    sellerTaxLabel = 'VAT (12%) + EWT (6%)';
+  }
+  
+  const netBeforeCommission = sellingPrice - sellerTax;
+  const brokerCommission = sellingPrice * (commissionRate / 100);
+  const netProceed = netBeforeCommission - brokerCommission;
+  
+  const dstTax = taxBasis * 0.015;
+  const transferTax = taxBasis * (transferTaxRate / 100);
+  const registrationFee = calculateRegistrationFee(taxBasis);
+  const notarialFee = calculateNotarialFee(sellingPrice);
+  
+  const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
+  const totalSellerCosts = sellerTax + brokerCommission;
+  const totalCosts = totalSellerCosts + totalBuyerCosts;
+  const totalCostsPercent = sellingPrice > 0 ? (totalCosts / sellingPrice * 100).toFixed(1) : 0;
+  
+  document.getElementById('netProceedSummary').innerHTML = formatCurrency(netProceed);
+  document.getElementById('totalCostsSummary').innerHTML = formatCurrency(totalCosts);
+  document.getElementById('totalPercentSummary').innerHTML = `${totalCostsPercent}% of price`;
+  document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
+  document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
+  
+  document.getElementById('grossPrice').innerHTML = formatCurrency(sellingPrice);
+  document.getElementById('zonalValueDisplayCalc').innerHTML = formatCurrency(zonalValue);
+  document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
+  document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
+  document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
+  document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
+  document.getElementById('commissionDisplay').innerHTML = commissionRate;
+  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
+  document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
+  
+  document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
+  document.getElementById('transferRateDisplay').innerHTML = transferTaxRate;
+  document.getElementById('transferTax').innerHTML = formatCurrency(transferTax);
+  document.getElementById('registrationFee').innerHTML = formatCurrency(registrationFee);
+  document.getElementById('notarialFee').innerHTML = formatCurrency(notarialFee);
+  document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
+  
+  document.getElementById('desiredResult').style.display = 'none';
+  document.getElementById('desiredNetProceed').value = '';
+}
+
+function updateFromSellingPrice() {
+  isReversing = false;
+  calculateAll();
+}
+
+function calculateFromDesiredProceed() {
+  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
+  if (desiredNet <= 0) {
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  isReversing = true;
+  let low = desiredNet, high = desiredNet * 2;
+  let sellingPrice = desiredNet;
+  let iterations = 0;
+  while (iterations < 50) {
+    const taxBasis = Math.max(sellingPrice, parseFloat(document.getElementById('zonalValue').value) || 0);
+    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
+    const brokerCommission = sellingPrice * (currentCommission / 100);
+    const netProceed = sellingPrice - sellerTax - brokerCommission;
+    if (Math.abs(netProceed - desiredNet) < 100) break;
+    if (netProceed < desiredNet) {
+      low = sellingPrice;
+      sellingPrice = sellingPrice * 1.05;
+    } else {
+      high = sellingPrice;
+      sellingPrice = (low + high) / 2;
+    }
+    iterations++;
+  }
+  isReversing = false;
+  document.getElementById('propertyValue').value = Math.round(sellingPrice);
+  calculateAll();
+  document.getElementById('desiredResult').style.display = 'block';
+  document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
+  document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
+  isReversing = true;
+}
+
+function openZonalLookup() {
+  window.open('https://www.bir.gov.ph/index.php/zonal-value.html', '_blank');
+  showToast('Opening BIR Zonal Value lookup tool...');
+}
+
+function showToast(message, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.background = isError ? '#dc3545' : '#28a745';
+  toast.innerHTML = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Mobile menu
+function openMobileMenu() {
+  document.getElementById('mobileOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobileOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Navbar scroll
+window.addEventListener('scroll', function() {
+  const navbar = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  calculateAll();
+});
+</script>
+</body>
+</html>
