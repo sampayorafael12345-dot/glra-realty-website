@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Browse Properties | GLRA Realty</title>
 <meta name="description" content="Browse our exclusive collection of premium properties for sale and lease in Metro Manila and Luzon. Save favorites and get price drop alerts.">
-<meta name="keywords" content="properties for sale, properties for lease, real estate philippines, GLRA Realty, price alert, condo for sale, house and lot, BGC real estate, Makati property">
+<meta name="keywords" content="properties for sale, properties for lease, real estate philippines, GLRA Realty, price alert, condo for sale, house and lot">
 <meta name="author" content="GLRA Realty">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://glrarealty.com/properties.html">
@@ -26,29 +26,13 @@
 <meta name="twitter:description" content="Find your dream property with GLRA Realty.">
 <meta name="twitter:image" content="https://glrarealty.com/logo.png">
 
-<!-- Structured Data -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "name": "Properties for Sale and Lease",
-  "description": "Browse our exclusive collection of premium properties in Metro Manila and Luzon",
-  "url": "https://glrarealty.com/properties.html",
-  "publisher": {
-    "@type": "RealEstateAgent",
-    "name": "GLRA Realty"
-  }
-}
-</script>
-
-<!-- Preconnect for faster loading -->
+<!-- Preconnect -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 
 <!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
 /* ============ CSS VARIABLES ============ */
@@ -105,19 +89,24 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 4px; }
 
 /* Dark mode fixes */
+body.dark-mode .search-card,
 body.dark-mode .search-field,
 body.dark-mode .dropdown-list,
 body.dark-mode .price-custom-inputs,
 body.dark-mode .location-suggestions,
-body.dark-mode .email-modal-content {
-  background: #2a2a3a !important;
+body.dark-mode .email-modal-content,
+body.dark-mode .modal-body,
+body.dark-mode .modal-description,
+body.dark-mode .modal-mortgage {
+  background: #1a1a2a !important;
 }
 
-body.dark-mode .dropdown-item,
-body.dark-mode .location-suggestions div,
-body.dark-mode .price-chip {
-  color: var(--text-color) !important;
-  border-color: #3a3a4a !important;
+body.dark-mode .modal-mortgage-result .amount {
+  color: var(--orange) !important;
+}
+
+body.dark-mode .modal-mortgage-result .label {
+  color: rgba(255,255,255,0.6) !important;
 }
 
 body.dark-mode .tab-btn {
@@ -295,10 +284,6 @@ body.dark-mode .page-hero {
   box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
 }
 
-body.dark-mode .search-card {
-  background: #1a1a2a;
-}
-
 .compact-search-row {
   display: flex;
   gap: 10px;
@@ -345,10 +330,6 @@ body.dark-mode .search-card {
   color: white;
 }
 
-.advanced-filter-btn.active i:last-child {
-  transform: rotate(180deg);
-}
-
 .advanced-filters {
   display: none;
   margin-top: 15px;
@@ -375,11 +356,6 @@ body.dark-mode .search-card {
 .reset-row {
   justify-content: center;
   margin-top: 5px;
-}
-
-.reset-button-wrapper {
-  width: 100%;
-  text-align: center;
 }
 
 .reset-btn-full {
@@ -427,10 +403,6 @@ body.dark-mode .search-card {
   font-family: inherit;
   cursor: pointer;
   color: var(--text-color);
-}
-
-.search-field input::placeholder {
-  color: #999;
 }
 
 .search-field input:focus { outline: none; }
@@ -781,7 +753,10 @@ body.dark-mode .search-card {
   background: var(--orange);
 }
 
-.prop-info { padding: 16px; }
+.prop-info { 
+  padding: 16px; 
+}
+
 .prop-title {
   font-size: 16px;
   font-weight: 700;
@@ -802,22 +777,20 @@ body.dark-mode .search-card {
   gap: 5px;
 }
 
-.prop-location i { color: var(--orange); font-size: 11px; }
-
-.prop-price {
-  color: var(--orange);
-  font-weight: 700;
-  font-size: 18px;
-  margin: 8px 0;
+.prop-location i { 
+  color: var(--orange); 
+  font-size: 11px;
 }
 
+/* SPECS ABOVE PRICE in card */
 .prop-specs {
   display: flex;
   justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-color);
+  padding: 8px 0;
   font-size: 11px;
   color: var(--gray);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .prop-specs span {
@@ -829,6 +802,13 @@ body.dark-mode .search-card {
 .prop-specs i {
   color: var(--orange);
   font-size: 10px;
+}
+
+.prop-price {
+  color: var(--orange);
+  font-weight: 700;
+  font-size: 18px;
+  margin: 8px 0 0 0;
 }
 
 .empty-state {
@@ -845,7 +825,7 @@ body.dark-mode .search-card {
   color: var(--orange);
 }
 
-/* Modal - UPGRADED with 1:1 Square Images */
+/* Modal - UPGRADED */
 #modal {
   position: fixed;
   top: 0;
@@ -950,7 +930,39 @@ body.dark-mode .search-card {
   border-radius: 12px;
 }
 
-/* Mortgage Calculator in Modal */
+/* SPECS ABOVE PRICE in modal */
+.modal-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 15px 0 10px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-spec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.modal-spec i {
+  color: var(--orange);
+  width: 16px;
+}
+
+/* Price in modal */
+.modal-price {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--orange);
+  margin: 10px 0 15px 0;
+}
+
+/* Mortgage Calculator - FIXED DARK MODE & THINNER SLIDER */
 .modal-mortgage {
   margin: 15px 0;
   padding: 20px;
@@ -997,8 +1009,35 @@ body.dark-mode .search-card {
   font-size: 13px;
 }
 
+/* THINNER RANGE SLIDER */
+.modal-mortgage-control input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  outline: none;
+  padding: 0;
+}
+
+.modal-mortgage-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.modal-mortgage-control input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
 .modal-mortgage-result {
-  background: var(--dark);
+  background: #1a1a2e;
   padding: 15px;
   border-radius: 12px;
   text-align: center;
@@ -1012,6 +1051,19 @@ body.dark-mode .search-card {
 .modal-mortgage-result .amount {
   font-size: 28px;
   font-weight: 800;
+  color: var(--orange);
+}
+
+/* Dark mode mortgage result fix */
+body.dark-mode .modal-mortgage-result {
+  background: #0a0a14;
+}
+
+body.dark-mode .modal-mortgage-result .label {
+  color: rgba(255,255,255,0.5);
+}
+
+body.dark-mode .modal-mortgage-result .amount {
   color: var(--orange);
 }
 
@@ -1060,28 +1112,17 @@ body.dark-mode .search-card {
   filter: brightness(1.05);
 }
 
-/* Property Specs Row */
-.modal-specs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 15px 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+/* Map Container */
+.map-container {
+  margin-top: 20px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.modal-spec {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-color);
-}
-
-.modal-spec i {
-  color: var(--orange);
-  width: 16px;
+.map-container iframe {
+  width: 100%;
+  height: 250px;
+  border: 0;
 }
 
 /* Inquire Button */
@@ -1102,19 +1143,6 @@ body.dark-mode .search-card {
 .modal-inquire-btn:hover {
   background: var(--orange-dark);
   transform: translateY(-2px);
-}
-
-/* Map Container */
-.map-container {
-  margin-top: 20px;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.map-container iframe {
-  width: 100%;
-  height: 250px;
-  border: 0;
 }
 
 /* Email Modal */
@@ -1344,34 +1372,6 @@ body.dark-mode .btn-darkmode {
   }
 }
 
-/* Range Slider */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 5px;
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  background: var(--orange);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  background: var(--orange-dark);
-}
-
 /* Mobile */
 @media (max-width: 768px) {
   .nav-links { display: none; }
@@ -1410,6 +1410,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .floating-buttons { bottom: 20px; right: 20px; }
   .modal-body { margin: 15px; padding: 15px; }
   .modal-mortgage-controls { flex-direction: column; gap: 10px; }
+  .modal-price { font-size: 24px; }
+  .modal-specs { gap: 12px; }
   .footer-content { text-align: center; }
   .social-links { justify-content: center; }
 }
@@ -1438,7 +1440,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/#featured">FEATURED</a>
-    <a href="/#properties">PROPERTIES</a>
+    <a href="/properties.html">PROPERTIES</a>
     <a href="/#agent">AGENT</a>
     <a href="/calculator.html">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
@@ -1452,7 +1454,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   <div class="mobile-overlay-links">
     <a href="/" onclick="closeMobileMenu()">HOME</a>
     <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
-    <a href="/#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
     <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
     <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
@@ -2204,13 +2206,14 @@ function createCard(prop) {
     <div class="prop-info">
       <h3 class="prop-title">${escapeHtml(prop.title)}</h3>
       <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
-      <div class="prop-price">${displayPrice}</div>
       <div class="prop-specs">
         <span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>
         <span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>
         <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span>
+        <span><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
         ${parking}
       </div>
+      <div class="prop-price">${displayPrice}</div>
     </div>
   `;
   return card;
@@ -2254,7 +2257,17 @@ function openDetail(id) {
       
       <h1>${escapeHtml(prop.title)}</h1>
       <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
-      <div class="prop-price" style="font-size: 28px; margin: 15px 0;">${displayPrice}</div>
+      
+      <!-- SPECS ABOVE PRICE -->
+      <div class="modal-specs">
+        <span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span>
+        <span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>
+        <span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span>
+        <span class="modal-spec"><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
+        ${prop.parking > 0 ? `<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>` : ''}
+      </div>
+      
+      <div class="modal-price">${displayPrice}</div>
       
       ${prop.listingType === 'FOR SALE' ? `
       <div class="modal-mortgage">
@@ -2318,14 +2331,6 @@ function openDetail(id) {
         </div>
       </div>
       
-      <div class="modal-specs">
-        <span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span>
-        <span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>
-        <span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span>
-        ${prop.parking > 0 ? `<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>` : ''}
-        <span class="modal-spec"><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
-      </div>
-      
       <div class="modal-description">
         ${escapeHtml(prop.description || 'Contact us for more details about this property.')}
       </div>
@@ -2335,7 +2340,7 @@ function openDetail(id) {
       </div>
       
       <button class="modal-inquire-btn" onclick="closeModal();">
-        <i class="fas fa-paper-plane"></i> Close
+        <i class="fas fa-times"></i> Close
       </button>
     </div>
   `;
