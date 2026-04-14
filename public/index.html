@@ -6,9 +6,9 @@
 <meta name="google-site-verification" content="bJ4eP0NeX4ZDhUbfZ9-CfDvBLbDrh0TypI8B7wamYLQ" />
 
 <title>GLRA Realty | Find Your Dream Home in the Philippines</title>
-<meta name="title" content="GLRA Realty | Find Your Dream Home in the Philippines">
-<meta name="description" content="GLRA Realty - Licensed real estate agent in Metro Manila and Luzon. Helping homeowners sell and buyers find the right home. Free property valuation.">
-<meta name="keywords" content="real estate philippines, property for sale makati, real estate agent, GLRA Realty, buy home philippines">
+<meta name="title" content="GLRA Realty | Licensed Real Estate Agent Metro Manila & Luzon">
+<meta name="description" content="GLRA Realty - Your trusted licensed real estate agent in Metro Manila and Luzon. Browse thousands of properties for sale and lease. Free property valuation and consultation.">
+<meta name="keywords" content="real estate philippines, property for sale makati, real estate agent, GLRA Realty, buy home philippines, condo for sale, house and lot, property for lease, BGC real estate, Makati condo">
 <meta name="author" content="GLRA Realty">
 <meta name="robots" content="index, follow">
 
@@ -16,20 +16,20 @@
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
-<!-- Open Graph -->
+<!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/">
 <meta property="og:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
-<meta property="og:description" content="Licensed real estate agent helping you find your perfect home in the Philippines.">
+<meta property="og:description" content="Licensed real estate agent helping you find your perfect home in the Philippines. Browse properties for sale and lease in Metro Manila and Luzon.">
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="GLRA Realty | Find Your Dream Home">
-<meta name="twitter:description" content="Find your dream property with GLRA Realty.">
+<meta name="twitter:description" content="Find your dream property with GLRA Realty. Licensed real estate agent in Metro Manila and Luzon.">
 <meta name="twitter:image" content="https://glrarealty.com/logo.png">
 
-<!-- Structured Data -->
+<!-- Structured Data / Schema.org -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -46,6 +46,10 @@
     "addressLocality": "Makati City",
     "addressRegion": "Metro Manila",
     "addressCountry": "PH"
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": "Metro Manila"
   }
 }
 </script>
@@ -79,7 +83,7 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #1a1a2a;
+  --gray-light: #0f0f1a;
   --white: #0f0f1a;
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
@@ -101,6 +105,36 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* Dark mode fixes for agent section and footer */
+body.dark-mode .agent-spotlight,
+body.dark-mode .agent-spotlight *,
+body.dark-mode .agent-info h2,
+body.dark-mode .agent-info p,
+body.dark-mode .agent-info h3 {
+  color: var(--text-color) !important;
+}
+
+body.dark-mode .agent-btn-secondary {
+  color: var(--orange) !important;
+}
+
+body.dark-mode footer,
+body.dark-mode footer * {
+  color: #a0a0a0 !important;
+}
+
+body.dark-mode footer h4 {
+  color: var(--orange) !important;
+}
+
+body.dark-mode .footer-col ul li a {
+  color: #a0a0a0 !important;
+}
+
+body.dark-mode .footer-col ul li a:hover {
+  color: var(--orange) !important;
+}
+
 /* Navigation */
 .navbar {
   position: fixed;
@@ -120,6 +154,10 @@ body {
   background: var(--white);
   padding: 10px 5%;
   box-shadow: var(--shadow-sm);
+}
+
+body.dark-mode .navbar.scrolled {
+  background: #0f0f1a;
 }
 
 .logo img { height: 55px; width: auto; display: block; }
@@ -737,7 +775,7 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
 
 .view-all-btn:hover { background: var(--orange); color: var(--white); }
 
-/* Property Cards */
+/* Property Cards - IMPROVED with 1:1 Square Images */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -761,10 +799,13 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   border-color: var(--orange);
 }
 
+/* 1:1 Square Image Container */
 .prop-card-image {
   position: relative;
-  height: 210px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
+  background: var(--gray-light);
 }
 
 .prop-card-image img {
@@ -846,6 +887,7 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   font-weight: 700;
   margin-bottom: 5px;
   line-height: 1.3;
+  color: var(--text-color);
 }
 
 .prop-location {
@@ -856,6 +898,8 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   align-items: center;
   gap: 5px;
 }
+
+.prop-location i { color: var(--orange); font-size: 12px; }
 
 .prop-price {
   color: var(--orange);
@@ -873,7 +917,7 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   color: var(--gray);
 }
 
-/* Description text - FIXED to preserve spaces and line breaks */
+/* Description text - preserves spaces and line breaks */
 .prop-description {
   margin-top: 8px;
   font-size: 13px;
@@ -883,7 +927,7 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   word-wrap: break-word;
 }
 
-/* Modal description - FIXED */
+/* Modal description */
 .modal-description {
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -972,15 +1016,14 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   color: white;
 }
 
-/* Agent Spotlight */
+/* Agent Spotlight - FIXED DARK MODE */
 .agent-spotlight {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: var(--white);
   padding: 60px 5%;
 }
 
 body.dark-mode .agent-spotlight {
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
 .agent-container {
@@ -1014,12 +1057,21 @@ body.dark-mode .agent-spotlight {
   font-family: 'Playfair Display', serif;
   font-size: 34px;
   margin-bottom: 15px;
+  color: var(--white);
+}
+
+body.dark-mode .agent-info h2 {
+  color: var(--text-color);
 }
 
 .agent-info p {
   line-height: 1.6;
   font-size: 14px;
-  opacity: 0.9;
+  color: rgba(255,255,255,0.9);
+}
+
+body.dark-mode .agent-info p {
+  color: var(--text-color);
 }
 
 .agent-contact-buttons {
@@ -1130,7 +1182,7 @@ body.dark-mode .agent-spotlight {
 
 .submit-btn:hover { background: var(--orange-dark); }
 
-/* Footer */
+/* Footer - FIXED */
 footer {
   background: #1a1a2e;
   color: #888;
@@ -1138,7 +1190,7 @@ footer {
 }
 
 body.dark-mode footer {
-  background: #0f0f1a;
+  background: #0a0a14;
 }
 
 .footer-content {
@@ -1163,6 +1215,14 @@ body.dark-mode footer {
   text-decoration: none;
 }
 
+.footer-col ul {
+  list-style: none;
+}
+
+.footer-col ul li {
+  margin-bottom: 5px;
+}
+
 .social-links {
   display: flex;
   gap: 10px;
@@ -1177,9 +1237,10 @@ body.dark-mode footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: var(--transition);
 }
 
-.social-links a:hover { background: var(--orange); }
+.social-links a:hover { background: var(--orange); transform: translateY(-2px); }
 
 .footer-bottom {
   text-align: center;
@@ -1197,6 +1258,7 @@ body.dark-mode footer {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .email-signup-input-group input {
@@ -1207,6 +1269,7 @@ body.dark-mode footer {
   background: rgba(255,255,255,0.1);
   color: white;
   font-size: 12px;
+  min-width: 150px;
 }
 
 .email-signup-input-group input::placeholder {
@@ -1223,10 +1286,12 @@ body.dark-mode footer {
   font-size: 12px;
   cursor: pointer;
   transition: var(--transition);
+  white-space: nowrap;
 }
 
 .email-signup-input-group button:hover {
   background: var(--orange-dark);
+  transform: translateY(-2px);
 }
 
 /* Floating Buttons */
@@ -1402,6 +1467,7 @@ body.dark-mode .btn-darkmode {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  transition: opacity 0.3s ease;
 }
 
 .loader.hide {
@@ -1454,6 +1520,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: var(--orange-dark);
 }
 
+/* Lazy loading animation */
+.prop-card-image img {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.prop-card-image img.loaded {
+  opacity: 1;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .nav-links { display: none; }
@@ -1487,13 +1563,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .stats-grid { grid-template-columns: 1fr; gap: 20px; }
   .section-header h2 { font-size: 28px; }
   .resources-grid { grid-template-columns: 1fr; gap: 20px; }
-  .agent-container { grid-template-columns: 1fr; gap: 30px; }
+  .agent-container { grid-template-columns: 1fr; gap: 30px; text-align: center; }
   .agent-info h2 { font-size: 28px; }
+  .agent-contact-buttons { justify-content: center; }
   .cta-section h2 { font-size: 28px; }
   .gallery-main { height: 220px; }
   .floating-buttons {
     bottom: 20px;
     right: 20px;
+  }
+  .footer-content {
+    text-align: center;
+  }
+  .social-links {
+    justify-content: center;
   }
 }
 
@@ -1759,7 +1842,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 </section>
 
-<!-- Agent Spotlight -->
+<!-- Agent Spotlight - FIXED DARK MODE -->
 <section class="agent-spotlight" id="agent">
   <div class="agent-container">
     <div class="agent-image">
@@ -1802,7 +1885,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </form>
 </section>
 
-<!-- Footer -->
+<!-- Footer - FIXED -->
 <footer>
   <div class="footer-content">
     <div class="footer-col">
@@ -1935,7 +2018,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ============ SEARCH FUNCTIONS (Updated - searches title AND location) ============
+// ============ SEARCH FUNCTIONS ============
 function performSearch() {
   const searchTerm = document.getElementById('locationInput').value.toLowerCase().trim();
   const propertyType = window.selectedPropertyTypeValue || '';
@@ -2147,7 +2230,7 @@ async function loadHeroImages() {
   }
 }
 
-// Location autocomplete (for suggestions)
+// Location autocomplete
 const locationSuggestions = [
   "Makati City", "Taguig City", "Pasig City", "Quezon City", "Mandaluyong City",
   "Manila City", "Parañaque City", "Pasay City", "Marikina City", "Muntinlupa City",
@@ -2296,12 +2379,11 @@ function getDisplayPrice(prop) {
   }
 }
 
-// Optimized property loading with caching
+// Optimized property loading with caching and lazy loading
 let propertiesLoaded = false;
 let cachedProperties = null;
 
 async function loadProperties() {
-  // Return cached data if already loaded
   if (cachedProperties) {
     renderAllSections(cachedProperties);
     return;
@@ -2329,7 +2411,6 @@ function renderAllSections(properties) {
   renderProperties(forSale, 'sale-list');
   renderProperties(forLease, 'lease-list');
   
-  // Store for search
   allProperties = properties;
 }
 
@@ -2356,14 +2437,13 @@ function createCard(prop) {
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
   const displayPrice = getDisplayPrice(prop);
   
-  // Truncate description for card view
   const shortDesc = prop.description ? prop.description.substring(0, 80) + (prop.description.length > 80 ? '...' : '') : '';
   
   card.innerHTML = `
     <div class="prop-card-image">
       <span class="prop-badge ${badge}">${badgeText}</span>
       ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
-      <img src="${prop.mainImage || 'https://via.placeholder.com/400x300'}" alt="${escapeHtml(prop.title)}" loading="lazy">
+      <img src="${prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image'}" alt="${escapeHtml(prop.title)}" loading="lazy" onload="this.classList.add('loaded')">
       <div class="card-actions">
         <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
           <i class="far fa-heart"></i>
@@ -2479,7 +2559,6 @@ function openDetail(id) {
         <span><i class="fas fa-building"></i> ${prop.propertyType || 'Property'}</span>
       </div>
       
-      <!-- Description with preserved spaces and line breaks -->
       <div class="modal-description" style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; margin: 15px 0;">
         ${escapeHtml(prop.description || 'Contact us for more details.')}
       </div>
