@@ -4,27 +4,58 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>BIR Zonal Value Lookup | GLRA Realty</title>
-<meta name="description" content="Find BIR Zonal Values for properties in Luzon - Metro Manila, Calabarzon, Central Luzon, Bicol, Ilocos, Cordillera, and Cagayan Valley.">
-<meta name="keywords" content="zonal value, BIR zonal value, property tax philippines, Luzon zonal values, capital gains tax">
+<meta name="description" content="Find BIR Zonal Values for properties in Luzon - Metro Manila, Calabarzon, Central Luzon, Bicol, Ilocos, Cordillera, and Cagayan Valley. Calculate taxes based on zonal value.">
+<meta name="keywords" content="zonal value, BIR zonal value, property tax philippines, Luzon zonal values, capital gains tax, real property tax, BIR zonal value lookup">
+<meta name="author" content="GLRA Realty">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://glrarealty.com/zonal.html">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
 <!-- Open Graph -->
-<meta property="og:title" content="BIR Zonal Value Lookup | GLRA Realty">
-<meta property="og:description" content="Find BIR Zonal Values for properties across Luzon.">
-<meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/zonal.html">
+<meta property="og:title" content="BIR Zonal Value Lookup | GLRA Realty">
+<meta property="og:description" content="Find BIR Zonal Values for properties across Luzon. Calculate taxes based on zonal value.">
+<meta property="og:image" content="https://glrarealty.com/logo.png">
+<meta property="og:site_name" content="GLRA Realty">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="BIR Zonal Value Lookup | GLRA Realty">
+<meta name="twitter:description" content="Find BIR Zonal Values for properties across Luzon.">
+<meta name="twitter:image" content="https://glrarealty.com/logo.png">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BIR Zonal Value Lookup",
+  "description": "Look up BIR Zonal Values for properties in Luzon",
+  "applicationCategory": "Real Estate Tool",
+  "url": "https://glrarealty.com/zonal.html",
+  "creator": {
+    "@type": "RealEstateAgent",
+    "name": "GLRA Realty"
+  }
+}
+</script>
+
+<!-- Preconnect -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
+/* ============ CSS VARIABLES ============ */
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
-  --orange-light: #ffedd5;
+  --orange-light: #fff7ed;
   --dark: #1a1a2e;
   --dark-gray: #16213e;
   --gray: #6b7280;
@@ -34,7 +65,7 @@
   --border-color: #e5e7eb;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
   --transition: all 0.3s ease;
 }
@@ -43,13 +74,14 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #1a1a2a;
+  --gray-light: #0f0f1a;
   --white: #0f0f1a;
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
+  --orange-light: #2a1a0a;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.4);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
@@ -62,6 +94,34 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* Dark mode fixes */
+body.dark-mode .search-box,
+body.dark-mode .result-card,
+body.dark-mode .info-card,
+body.dark-mode .tax-calc,
+body.dark-mode .empty-state {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .suggestion-chip,
+body.dark-mode .region-btn {
+  background: var(--gray-light) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+body.dark-mode .suggestion-chip:hover,
+body.dark-mode .region-btn:hover {
+  background: var(--orange) !important;
+  color: white !important;
+}
+
+body.dark-mode .result-header {
+  background: linear-gradient(135deg, #0a0a14 0%, var(--orange) 100%);
+}
+
+/* Navigation */
 .navbar {
   position: fixed;
   top: 0;
@@ -82,6 +142,10 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+body.dark-mode .navbar.scrolled {
+  background: #0f0f1a;
+}
+
 .logo img { height: 55px; width: auto; display: block; }
 
 .nav-links {
@@ -97,6 +161,7 @@ body {
   transition: var(--transition);
   font-size: 14px;
   letter-spacing: 1px;
+  cursor: pointer;
 }
 
 .navbar.scrolled .nav-links a { color: var(--text-color); }
@@ -123,6 +188,7 @@ body {
 
 .navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
 
+/* Mobile Overlay */
 .mobile-overlay {
   position: fixed;
   top: 0;
@@ -161,8 +227,12 @@ body {
   font-size: 24px;
   font-weight: 500;
   font-family: 'Playfair Display', serif;
+  cursor: pointer;
 }
 
+.mobile-overlay-links a:hover { color: var(--orange); }
+
+/* Page Hero */
 .page-hero {
   height: 30vh;
   min-height: 250px;
@@ -175,7 +245,7 @@ body {
 }
 
 body.dark-mode .page-hero {
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
 .page-hero h1 {
@@ -197,6 +267,7 @@ body.dark-mode .page-hero {
   margin: 15px auto 0;
 }
 
+/* Search Container */
 .search-container {
   max-width: 800px;
   margin: -40px auto 30px;
@@ -268,44 +339,10 @@ body.dark-mode .page-hero {
   background: var(--orange);
   color: white;
   border-color: var(--orange);
+  transform: translateY(-2px);
 }
 
-.region-selector {
-  margin: 20px auto;
-  text-align: center;
-}
-
-.region-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.region-btn {
-  background: var(--gray-light);
-  border: 1px solid var(--border-color);
-  padding: 10px 20px;
-  border-radius: 40px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-color);
-}
-
-.region-btn:hover {
-  background: var(--orange);
-  color: white;
-  border-color: var(--orange);
-}
-
-.region-btn.active {
-  background: var(--orange);
-  color: white;
-  border-color: var(--orange);
-}
-
+/* Results Container */
 .results-container {
   max-width: 1200px;
   margin: 0 auto 60px;
@@ -319,6 +356,12 @@ body.dark-mode .page-hero {
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   margin-bottom: 30px;
+  transition: var(--transition);
+}
+
+.result-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .result-header {
@@ -492,7 +535,7 @@ footer {
 }
 
 body.dark-mode footer {
-  background: #0f0f1a;
+  background: #0a0a14;
 }
 
 .footer-content {
@@ -517,6 +560,14 @@ body.dark-mode footer {
   text-decoration: none;
 }
 
+.footer-col ul {
+  list-style: none;
+}
+
+.footer-col ul li {
+  margin-bottom: 5px;
+}
+
 .social-links {
   display: flex;
   gap: 10px;
@@ -531,9 +582,10 @@ body.dark-mode footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: var(--transition);
 }
 
-.social-links a:hover { background: var(--orange); }
+.social-links a:hover { background: var(--orange); transform: translateY(-2px); }
 
 .footer-bottom {
   text-align: center;
@@ -542,6 +594,7 @@ body.dark-mode footer {
   font-size: 10px;
 }
 
+/* Floating Buttons */
 .floating-buttons {
   position: fixed;
   bottom: 20px;
@@ -579,17 +632,43 @@ body.dark-mode .btn-darkmode {
   border-color: var(--orange);
 }
 
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background: var(--orange);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  z-index: 100;
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Toast */
 .toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
   background: var(--dark);
   color: white;
-  padding: 12px 20px;
-  border-radius: 12px;
+  padding: 10px 18px;
+  border-radius: 10px;
   z-index: 3000;
   animation: slideIn 0.3s ease;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 @keyframes slideIn {
@@ -597,6 +676,7 @@ body.dark-mode .btn-darkmode {
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* Mobile */
 @media (max-width: 768px) {
   .nav-links { display: none; }
   .mobile-menu-btn { display: block; }
@@ -639,11 +719,16 @@ body.dark-mode .btn-darkmode {
   .location-detail {
     font-size: 11px;
   }
+  
+  .footer-content { text-align: center; }
+  .social-links { justify-content: center; }
+  .floating-buttons { bottom: 20px; right: 20px; }
 }
 </style>
 </head>
 <body>
 
+<!-- Navigation -->
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()">
     <i class="fas fa-bars"></i>
@@ -654,7 +739,7 @@ body.dark-mode .btn-darkmode {
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/#featured">FEATURED</a>
-    <a href="/#properties">PROPERTIES</a>
+    <a href="/properties.html">PROPERTIES</a>
     <a href="/#agent">AGENT</a>
     <a href="/calculator.html">CALCULATOR</a>
     <a href="/zonal.html" style="color: var(--orange);">ZONAL VALUE</a>
@@ -667,7 +752,7 @@ body.dark-mode .btn-darkmode {
   <div class="mobile-overlay-links">
     <a href="/" onclick="closeMobileMenu()">HOME</a>
     <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
-    <a href="/#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
     <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
     <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
@@ -675,6 +760,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
+<!-- Page Hero -->
 <section class="page-hero">
   <div>
     <h1>BIR Zonal Value Lookup</h1>
@@ -683,6 +769,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </section>
 
+<!-- Search Container -->
 <div class="search-container">
   <div class="search-box">
     <input type="text" id="searchInput" placeholder="Search by city, province, or municipality..." onkeypress="handleKeyPress(event)">
@@ -709,6 +796,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
+<!-- Footer -->
 <footer>
   <div class="footer-content">
     <div class="footer-col">
@@ -746,6 +834,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </footer>
 
+<!-- Floating Buttons -->
 <div class="floating-buttons">
   <a href="tel:09171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
   <a href="https://facebook.com/messages/t/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
@@ -756,7 +845,11 @@ body.dark-mode .btn-darkmode {
   </button>
 </div>
 
+<!-- Back to Top -->
+<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+
 <script>
+// ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   const isDarkMode = document.body.classList.contains('dark-mode');
@@ -779,11 +872,8 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ COMPREHENSIVE LUZON ZONAL VALUE DATABASE ============
-// Organized by Region: Metro Manila, Calabarzon, Central Luzon, Ilocos, Cordillera, Cagayan Valley, Bicol
-
+// ============ ZONAL VALUE DATABASE ============
 const zonalDatabase = [
-  // ============ METRO MANILA (NCR) ============
   { location: "Makati City", region: "Metro Manila", avg: 150000, min: 80000, max: 300000, description: "Premier CBD, financial district, high-end residential" },
   { location: "BGC, Taguig", region: "Metro Manila", avg: 180000, min: 150000, max: 250000, description: "Bonifacio Global City, modern CBD" },
   { location: "Taguig City", region: "Metro Manila", avg: 100000, min: 50000, max: 220000, description: "Includes BGC, McKinley, and residential areas" },
@@ -799,108 +889,31 @@ const zonalDatabase = [
   { location: "San Juan City", region: "Metro Manila", avg: 55000, min: 40000, max: 100000, description: "Greenhills, residential-commercial" },
   { location: "Caloocan City", region: "Metro Manila", avg: 30000, min: 20000, max: 50000, description: "North and South Caloocan" },
   { location: "Valenzuela City", region: "Metro Manila", avg: 25000, min: 15000, max: 35000, description: "Industrial and residential" },
-  { location: "Malabon City", region: "Metro Manila", avg: 22000, min: 15000, max: 30000, description: "Fishing community, residential" },
-  { location: "Navotas City", region: "Metro Manila", avg: 20000, min: 15000, max: 28000, description: "Fishing port" },
-  { location: "Pateros", region: "Metro Manila", avg: 27000, min: 20000, max: 35000, description: "Duck raising capital" },
-  
-  // ============ CALABARZON (Region IV-A) ============
   { location: "Tagaytay City", region: "Calabarzon", avg: 45000, min: 25000, max: 80000, description: "Tourist destination, Taal view, cool climate" },
   { location: "Nuvali, Laguna", region: "Calabarzon", avg: 50000, min: 35000, max: 80000, description: "Ayala eco-city, Sta. Rosa" },
   { location: "Sta. Rosa, Laguna", region: "Calabarzon", avg: 40000, min: 25000, max: 70000, description: "Industrial parks, Nuvali, Enchanted Kingdom" },
   { location: "Biñan, Laguna", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Industrial, residential" },
   { location: "Calamba, Laguna", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Rizal's birthplace, industrial" },
-  { location: "Los Baños, Laguna", region: "Calabarzon", avg: 28000, min: 15000, max: 45000, description: "UPLB, hot springs, research" },
-  { location: "Cabuyao, Laguna", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Industrial zone" },
-  { location: "San Pedro, Laguna", region: "Calabarzon", avg: 32000, min: 20000, max: 55000, description: "South of Metro Manila" },
   { location: "Dasmariñas, Cavite", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Largest city in Cavite" },
   { location: "Imus, Cavite", region: "Calabarzon", avg: 32000, min: 20000, max: 55000, description: "Cavite provincial capital" },
   { location: "Bacoor, Cavite", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Gateway to Cavite" },
-  { location: "General Trias, Cavite", region: "Calabarzon", avg: 28000, min: 15000, max: 45000, description: "Industrial, residential" },
-  { location: "Silang, Cavite", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Cool climate, residential" },
-  { location: "Trece Martires, Cavite", region: "Calabarzon", avg: 25000, min: 15000, max: 40000, description: "City proper" },
   { location: "Antipolo, Rizal", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Hilltop city, Metro Manila suburb" },
   { location: "Cainta, Rizal", region: "Calabarzon", avg: 32000, min: 20000, max: 55000, description: "East of Metro Manila" },
-  { location: "Taytay, Rizal", region: "Calabarzon", avg: 28000, min: 15000, max: 45000, description: "Garments industry" },
-  { location: "Binangonan, Rizal", region: "Calabarzon", avg: 25000, min: 15000, max: 40000, description: "Lakeside town" },
-  { location: "Angono, Rizal", region: "Calabarzon", avg: 28000, min: 15000, max: 45000, description: "Art capital" },
-  { location: "Lucena City", region: "Calabarzon", avg: 25000, min: 15000, max: 40000, description: "Capital of Quezon Province" },
-  { location: "Tayabas, Quezon", region: "Calabarzon", avg: 20000, min: 12000, max: 35000, description: "Heritage city" },
-  { location: "Batangas City", region: "Calabarzon", avg: 25000, min: 15000, max: 40000, description: "Capital of Batangas, port city" },
-  { location: "Lipa City, Batangas", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Coffee capital, growing city" },
-  { location: "Nasugbu, Batangas", region: "Calabarzon", avg: 28000, min: 15000, max: 45000, description: "Beach resorts, Pico de Loro" },
-  { location: "Bauan, Batangas", region: "Calabarzon", avg: 22000, min: 12000, max: 35000, description: "Industrial, residential" },
-  { location: "San Pablo, Laguna", region: "Calabarzon", avg: 22000, min: 12000, max: 38000, description: "Seven lakes city" },
-  
-  // ============ CENTRAL LUZON (Region III) ============
   { location: "Clark Freeport, Pampanga", region: "Central Luzon", avg: 45000, min: 25000, max: 80000, description: "Former US base, now economic zone" },
   { location: "Angeles City, Pampanga", region: "Central Luzon", avg: 35000, min: 20000, max: 60000, description: "Adjacent to Clark, entertainment hub" },
   { location: "San Fernando, Pampanga", region: "Central Luzon", avg: 30000, min: 18000, max: 50000, description: "Capital of Pampanga" },
-  { location: "Mabalacat, Pampanga", region: "Central Luzon", avg: 28000, min: 15000, max: 45000, description: "Near Clark Freeport" },
   { location: "Subic Bay Freeport", region: "Central Luzon", avg: 40000, min: 25000, max: 70000, description: "Former US naval base, economic zone" },
   { location: "Olongapo City", region: "Central Luzon", avg: 30000, min: 18000, max: 50000, description: "Adjacent to Subic Bay" },
-  { location: "Tarlac City", region: "Central Luzon", avg: 25000, min: 15000, max: 40000, description: "Capital of Tarlac" },
-  { location: "Capas, Tarlac", region: "Central Luzon", avg: 22000, min: 12000, max: 38000, description: "New Clark City" },
-  { location: "Balanga, Bataan", region: "Central Luzon", avg: 25000, min: 15000, max: 40000, description: "Capital of Bataan" },
-  { location: "Mariveles, Bataan", region: "Central Luzon", avg: 28000, min: 15000, max: 45000, description: "Industrial zone, Bataan Freeport" },
-  { location: "Malolos, Bulacan", region: "Central Luzon", avg: 25000, min: 15000, max: 40000, description: "Capital of Bulacan" },
-  { location: "San Jose Del Monte, Bulacan", region: "Central Luzon", avg: 28000, min: 15000, max: 45000, description: "Large residential city" },
-  { location: "Meycauayan, Bulacan", region: "Central Luzon", avg: 30000, min: 18000, max: 50000, description: "Industrial, jewelry" },
-  { location: "Santa Maria, Bulacan", region: "Central Luzon", avg: 25000, min: 15000, max: 40000, description: "Residential" },
-  { location: "Cabanatuan, Nueva Ecija", region: "Central Luzon", avg: 22000, min: 12000, max: 38000, description: "Rice granary of the Philippines" },
-  { location: "Gapan, Nueva Ecija", region: "Central Luzon", avg: 18000, min: 10000, max: 30000, description: "Historic city" },
-  { location: "Palayan, Nueva Ecija", region: "Central Luzon", avg: 15000, min: 8000, max: 25000, description: "Capital of Nueva Ecija" },
-  
-  // ============ ILOCOS REGION (Region I) ============
-  { location: "San Fernando, La Union", region: "Ilocos", avg: 20000, min: 12000, max: 35000, description: "Capital, surfing, regional center" },
-  { location: "Bauang, La Union", region: "Ilocos", avg: 18000, min: 10000, max: 30000, description: "Beach resorts" },
-  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "UNESCO World Heritage Site" },
-  { location: "Candon, Ilocos Sur", region: "Ilocos", avg: 15000, min: 8000, max: 25000, description: "City proper" },
-  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000, min: 12000, max: 35000, description: "Capital of Ilocos Norte" },
-  { location: "Batac, Ilocos Norte", region: "Ilocos", avg: 18000, min: 10000, max: 30000, description: "Marcos hometown" },
-  { location: "Pagudpud, Ilocos Norte", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "Beach destination" },
-  { location: "Alaminos, Pangasinan", region: "Ilocos", avg: 18000, min: 10000, max: 30000, description: "Hundred Islands" },
-  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "Commercial center" },
-  { location: "Lingayen, Pangasinan", region: "Ilocos", avg: 18000, min: 10000, max: 30000, description: "Capital of Pangasinan" },
-  { location: "San Carlos, Pangasinan", region: "Ilocos", avg: 15000, min: 8000, max: 25000, description: "City proper" },
-  { location: "Urdaneta, Pangasinan", region: "Ilocos", avg: 15000, min: 8000, max: 25000, description: "City proper" },
-  
-  // ============ CORDILLERA ADMINISTRATIVE REGION (CAR) ============
   { location: "Baguio City", region: "Cordillera", avg: 50000, min: 30000, max: 90000, description: "Summer capital, highly urbanized" },
   { location: "La Trinidad, Benguet", region: "Cordillera", avg: 30000, min: 18000, max: 50000, description: "Strawberry fields, near Baguio" },
-  { location: "Itogon, Benguet", region: "Cordillera", avg: 20000, min: 12000, max: 35000, description: "Mining town" },
-  { location: "Bontoc, Mountain Province", region: "Cordillera", avg: 15000, min: 8000, max: 25000, description: "Capital of Mountain Province" },
-  { location: "Tabuk, Kalinga", region: "Cordillera", avg: 15000, min: 8000, max: 25000, description: "Capital of Kalinga" },
-  { location: "Banaue, Ifugao", region: "Cordillera", avg: 18000, min: 10000, max: 30000, description: "Rice Terraces" },
-  { location: "Lagawe, Ifugao", region: "Cordillera", avg: 12000, min: 7000, max: 20000, description: "Capital of Ifugao" },
-  
-  // ============ CAGAYAN VALLEY (Region II) ============
+  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "UNESCO World Heritage Site" },
+  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000, min: 12000, max: 35000, description: "Capital of Ilocos Norte" },
+  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "Commercial center" },
   { location: "Tuguegarao City", region: "Cagayan Valley", avg: 18000, min: 10000, max: 30000, description: "Capital of Cagayan Valley" },
-  { location: "Santiago City", region: "Cagayan Valley", avg: 16000, min: 9000, max: 28000, description: "Independent city" },
-  { location: "Cauayan, Isabela", region: "Cagayan Valley", avg: 15000, min: 8000, max: 25000, description: "Commercial center" },
-  { location: "Ilagan, Isabela", region: "Cagayan Valley", avg: 14000, min: 8000, max: 24000, description: "Capital of Isabela" },
-  { location: "Bayombong, Nueva Vizcaya", region: "Cagayan Valley", avg: 12000, min: 7000, max: 20000, description: "Capital of Nueva Vizcaya" },
-  { location: "Solano, Nueva Vizcaya", region: "Cagayan Valley", avg: 13000, min: 7000, max: 22000, description: "Commercial center" },
-  { location: "Basco, Batanes", region: "Cagayan Valley", avg: 18000, min: 10000, max: 30000, description: "Capital of Batanes" },
-  
-  // ============ BICOL REGION (Region V) ============
   { location: "Legazpi City", region: "Bicol", avg: 22000, min: 12000, max: 38000, description: "Capital of Albay, Mayon Volcano" },
-  { location: "Daraga, Albay", region: "Bicol", avg: 18000, min: 10000, max: 30000, description: "Near Legazpi, Cagsawa Ruins" },
-  { location: "Tabaco, Albay", region: "Bicol", avg: 15000, min: 8000, max: 25000, description: "City proper" },
-  { location: "Ligao, Albay", region: "Bicol", avg: 14000, min: 8000, max: 24000, description: "City proper" },
   { location: "Naga City", region: "Bicol", avg: 22000, min: 12000, max: 38000, description: "Commercial center of Bicol" },
-  { location: "Iriga City", region: "Bicol", avg: 16000, min: 9000, max: 28000, description: "City proper" },
-  { location: "Sorsogon City", region: "Bicol", avg: 16000, min: 9000, max: 28000, description: "Capital of Sorsogon" },
-  { location: "Masbate City", region: "Bicol", avg: 15000, min: 8000, max: 25000, description: "Capital of Masbate" },
-  { location: "Daet, Camarines Norte", region: "Bicol", avg: 16000, min: 9000, max: 28000, description: "Capital of Camarines Norte" },
-  { location: "Virac, Catanduanes", region: "Bicol", avg: 14000, min: 8000, max: 24000, description: "Capital of Catanduanes" },
-  
-  // ============ MIMAROPA (Region IV-B) ============
   { location: "Puerto Princesa", region: "Mimaropa", avg: 25000, min: 15000, max: 45000, description: "Capital of Palawan, Underground River" },
-  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000, min: 18000, max: 50000, description: "Tourist destination" },
-  { location: "Coron, Palawan", region: "Mimaropa", avg: 28000, min: 15000, max: 45000, description: "Tourist destination" },
-  { location: "Calapan, Oriental Mindoro", region: "Mimaropa", avg: 18000, min: 10000, max: 30000, description: "Capital of Oriental Mindoro" },
-  { location: "Odiongan, Romblon", region: "Mimaropa", avg: 12000, min: 7000, max: 20000, description: "Capital of Romblon" },
-  { location: "Boac, Marinduque", region: "Mimaropa", avg: 12000, min: 7000, max: 20000, description: "Capital of Marinduque" }
+  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000, min: 18000, max: 50000, description: "Tourist destination" }
 ];
 
 function searchZonalValue() {
@@ -979,7 +992,7 @@ function displayResults(searchTerm, results) {
             </div>
             <div class="tax-row" style="margin-top: 10px; padding-top: 10px; border-top: 2px solid var(--border-color);">
               <span class="tax-label"><strong>Total BIR Taxes</strong></span>
-              <span class="tax-value highlight">₱{(typicalCGT + typicalDST).toLocaleString()}</span>
+              <span class="tax-value highlight">₱${(typicalCGT + typicalDST).toLocaleString()}</span>
             </div>
           </div>
           
@@ -1065,10 +1078,14 @@ function closeMobileMenu() {
 
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
+  const backToTop = document.getElementById('backToTop');
+  
   if (window.scrollY > 50) {
     navbar.classList.add('scrolled');
+    backToTop.classList.add('show');
   } else {
     navbar.classList.remove('scrolled');
+    backToTop.classList.remove('show');
   }
 });
 </script>
