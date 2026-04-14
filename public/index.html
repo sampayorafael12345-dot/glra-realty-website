@@ -8,7 +8,7 @@
 <title>GLRA Realty | Find Your Dream Home in the Philippines</title>
 <meta name="title" content="GLRA Realty | Licensed Real Estate Agent Metro Manila & Luzon">
 <meta name="description" content="GLRA Realty - Your trusted licensed real estate agent in Metro Manila and Luzon. Browse thousands of properties for sale and lease. Free property valuation and consultation.">
-<meta name="keywords" content="real estate philippines, property for sale makati, real estate agent, GLRA Realty, buy home philippines, condo for sale, house and lot, property for lease, BGC real estate, Makati condo">
+<meta name="keywords" content="real estate philippines, property for sale makati, real estate agent, GLRA Realty, buy home philippines, condo for sale, house and lot, property for lease, BGC real estate">
 <meta name="author" content="GLRA Realty">
 <meta name="robots" content="index, follow">
 
@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
-<!-- Open Graph / Facebook -->
+<!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/">
 <meta property="og:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
@@ -29,7 +29,7 @@
 <meta name="twitter:description" content="Find your dream property with GLRA Realty. Licensed real estate agent in Metro Manila and Luzon.">
 <meta name="twitter:image" content="https://glrarealty.com/logo.png">
 
-<!-- Structured Data / Schema.org -->
+<!-- Structured Data -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -46,10 +46,6 @@
     "addressLocality": "Makati City",
     "addressRegion": "Metro Manila",
     "addressCountry": "PH"
-  },
-  "areaServed": {
-    "@type": "City",
-    "name": "Metro Manila"
   }
 }
 </script>
@@ -64,7 +60,7 @@
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
-  --orange-light: #ffedd5;
+  --orange-light: #fff7ed;
   --dark: #1a1a2e;
   --dark-gray: #16213e;
   --gray: #6b7280;
@@ -74,7 +70,7 @@
   --border-color: #e5e7eb;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
   --transition: all 0.3s ease;
 }
@@ -88,8 +84,9 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
+  --orange-light: #2a1a0a;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.4);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
@@ -105,7 +102,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Dark mode fixes for agent section and footer */
+/* Dark mode fixes */
 body.dark-mode .agent-spotlight,
 body.dark-mode .agent-spotlight *,
 body.dark-mode .agent-info h2,
@@ -133,6 +130,27 @@ body.dark-mode .footer-col ul li a {
 
 body.dark-mode .footer-col ul li a:hover {
   color: var(--orange) !important;
+}
+
+body.dark-mode .search-field {
+  background: #2a2a3a;
+}
+
+body.dark-mode .dropdown-list {
+  background: #2a2a3a;
+}
+
+body.dark-mode .dropdown-item {
+  color: var(--text-color);
+  border-color: #3a3a4a;
+}
+
+body.dark-mode .price-custom-inputs {
+  background: #2a2a3a;
+}
+
+body.dark-mode .location-suggestions {
+  background: #2a2a3a;
 }
 
 /* Navigation */
@@ -367,10 +385,6 @@ body.dark-mode .search-card {
   color: white;
 }
 
-.advanced-filter-btn.active i:last-child {
-  transform: rotate(180deg);
-}
-
 .advanced-filters {
   display: none;
   margin-top: 15px;
@@ -397,11 +411,6 @@ body.dark-mode .search-card {
 .reset-row {
   justify-content: center;
   margin-top: 5px;
-}
-
-.reset-button-wrapper {
-  width: 100%;
-  text-align: center;
 }
 
 .reset-btn-full {
@@ -433,10 +442,6 @@ body.dark-mode .search-card {
   position: relative;
 }
 
-body.dark-mode .search-field {
-  background: #2a2a3a;
-}
-
 .search-field i {
   color: var(--orange);
   font-size: 14px;
@@ -459,10 +464,6 @@ body.dark-mode .search-field {
   color: #999;
 }
 
-body.dark-mode .search-field input::placeholder {
-  color: #888;
-}
-
 .search-field input:focus { outline: none; }
 
 .simple-dropdown {
@@ -475,10 +476,6 @@ body.dark-mode .search-field input::placeholder {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-}
-
-.dropdown-selected span {
-  color: var(--text-color);
 }
 
 .dropdown-selected i {
@@ -504,14 +501,6 @@ body.dark-mode .search-field input::placeholder {
   margin-top: 5px;
 }
 
-body.dark-mode .dropdown-list {
-  background: #2a2a3a;
-}
-
-.dropdown-list::-webkit-scrollbar { width: 8px; }
-.dropdown-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-.dropdown-list::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 10px; }
-
 .dropdown-list.show { display: block; }
 
 .dropdown-item {
@@ -523,14 +512,7 @@ body.dark-mode .dropdown-list {
   color: var(--text-color);
 }
 
-body.dark-mode .dropdown-item {
-  border-color: #3a3a4a;
-}
-
 .dropdown-item:hover { background: #f8f8f8; color: var(--orange); }
-body.dark-mode .dropdown-item:hover { background: #3a3a4a; }
-
-.dropdown-item.selected { background: rgba(249, 115, 22, 0.1); color: var(--orange); font-weight: 500; }
 
 .location-input { position: relative; width: 100%; }
 
@@ -546,10 +528,6 @@ body.dark-mode .dropdown-item:hover { background: #3a3a4a; }
   overflow-y: auto;
   z-index: 100;
   display: none;
-}
-
-body.dark-mode .location-suggestions {
-  background: #2a2a3a;
 }
 
 .location-suggestions div {
@@ -589,10 +567,6 @@ body.dark-mode .location-suggestions {
   display: none;
 }
 
-body.dark-mode .price-custom-inputs {
-  background: #2a2a3a;
-}
-
 .price-custom-inputs.show { display: block; }
 
 .price-input-group {
@@ -609,11 +583,6 @@ body.dark-mode .price-custom-inputs {
   font-size: 13px;
   background: var(--white);
   color: var(--text-color);
-}
-
-body.dark-mode .price-input-group input {
-  background: #1a1a2a;
-  border-color: #3a3a4a;
 }
 
 .price-input-group input:focus { outline: none; border-color: var(--orange); }
@@ -638,16 +607,6 @@ body.dark-mode .price-input-group input {
   padding-top: 10px;
 }
 
-.quick-price-options div {
-  font-size: 11px;
-  color: var(--gray);
-  margin-bottom: 8px;
-}
-
-body.dark-mode .quick-price-options div {
-  color: #c0c0c0;
-}
-
 .price-chips {
   display: flex;
   flex-wrap: wrap;
@@ -665,14 +624,7 @@ body.dark-mode .quick-price-options div {
   color: #333;
 }
 
-body.dark-mode .price-chip {
-  background: #2a2a3a;
-  color: #e0e0e0;
-  border: 1px solid #3a3a4a;
-}
-
 .price-chip:hover { background: var(--orange); color: white; }
-body.dark-mode .price-chip:hover { background: var(--orange); color: white; border-color: var(--orange); }
 
 .search-btn {
   background: var(--orange);
@@ -775,7 +727,7 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
 
 .view-all-btn:hover { background: var(--orange); color: var(--white); }
 
-/* Property Cards - IMPROVED with 1:1 Square Images */
+/* Property Cards - MODERN DESIGN, 1:1 IMAGES, NO DESCRIPTION */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -790,7 +742,6 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   transition: var(--transition);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
-  position: relative;
 }
 
 .prop-card:hover {
@@ -821,12 +772,13 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   position: absolute;
   top: 12px;
   left: 12px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   z-index: 2;
+  letter-spacing: 0.5px;
 }
 
 .badge-sale { background: #10b981; color: white; }
@@ -838,17 +790,18 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   right: 12px;
   background: var(--orange);
   color: white;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 10px;
   font-weight: 600;
+  z-index: 2;
 }
 
 /* Action Buttons on Card */
 .card-actions {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 12px;
+  right: 12px;
   display: flex;
   gap: 8px;
   z-index: 10;
@@ -867,8 +820,6 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   transition: var(--transition);
   color: white;
   border: none;
-  position: relative;
-  z-index: 11;
 }
 
 .card-action-btn:hover {
@@ -876,18 +827,19 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   background: var(--orange);
 }
 
-.card-action-btn.active {
-  background: var(--orange);
-  color: white;
+.prop-info { 
+  padding: 16px; 
 }
 
-.prop-info { padding: 16px; }
 .prop-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 5px;
   line-height: 1.3;
   color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .prop-location {
@@ -899,7 +851,10 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   gap: 5px;
 }
 
-.prop-location i { color: var(--orange); font-size: 12px; }
+.prop-location i { 
+  color: var(--orange); 
+  font-size: 11px;
+}
 
 .prop-price {
   color: var(--orange);
@@ -917,23 +872,15 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   color: var(--gray);
 }
 
-/* Description text - preserves spaces and line breaks */
-.prop-description {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--gray);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+.prop-specs span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* Modal description */
-.modal-description {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.6;
-  font-size: 14px;
-  color: #666;
+.prop-specs i {
+  color: var(--orange);
+  font-size: 10px;
 }
 
 /* Resources Section */
@@ -1016,14 +963,10 @@ body.dark-mode .price-chip:hover { background: var(--orange); color: white; bord
   color: white;
 }
 
-/* Agent Spotlight - FIXED DARK MODE */
+/* Agent Spotlight */
 .agent-spotlight {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 60px 5%;
-}
-
-body.dark-mode .agent-spotlight {
-  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
 .agent-container {
@@ -1060,18 +1003,10 @@ body.dark-mode .agent-spotlight {
   color: var(--white);
 }
 
-body.dark-mode .agent-info h2 {
-  color: var(--text-color);
-}
-
 .agent-info p {
   line-height: 1.6;
   font-size: 14px;
   color: rgba(255,255,255,0.9);
-}
-
-body.dark-mode .agent-info p {
-  color: var(--text-color);
 }
 
 .agent-contact-buttons {
@@ -1182,15 +1117,11 @@ body.dark-mode .agent-info p {
 
 .submit-btn:hover { background: var(--orange-dark); }
 
-/* Footer - FIXED */
+/* Footer */
 footer {
   background: #1a1a2e;
   color: #888;
   padding: 45px 5% 20px;
-}
-
-body.dark-mode footer {
-  background: #0a0a14;
 }
 
 .footer-content {
@@ -1247,51 +1178,6 @@ body.dark-mode footer {
   padding-top: 20px;
   border-top: 1px solid rgba(255,255,255,0.1);
   font-size: 10px;
-}
-
-/* Email Signup Form in Footer */
-.email-signup {
-  margin-top: 15px;
-}
-
-.email-signup-input-group {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.email-signup-input-group input {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #334155;
-  border-radius: 40px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 12px;
-  min-width: 150px;
-}
-
-.email-signup-input-group input::placeholder {
-  color: #888;
-}
-
-.email-signup-input-group button {
-  padding: 10px 18px;
-  background: var(--orange);
-  border: none;
-  border-radius: 40px;
-  color: white;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.email-signup-input-group button:hover {
-  background: var(--orange-dark);
-  transform: translateY(-2px);
 }
 
 /* Floating Buttons */
@@ -1386,9 +1272,10 @@ body.dark-mode .btn-darkmode {
   cursor: pointer;
   color: white;
   z-index: 2001;
+  transition: var(--transition);
 }
 
-.close:hover { color: var(--orange); }
+.close:hover { color: var(--orange); transform: rotate(90deg); }
 
 .gallery-main {
   width: 100%;
@@ -1412,6 +1299,7 @@ body.dark-mode .btn-darkmode {
   cursor: pointer;
   border-radius: 8px;
   opacity: 0.7;
+  transition: var(--transition);
 }
 
 .thumb-row img:hover { opacity: 1; }
@@ -1499,10 +1387,6 @@ input[type="range"] {
   outline: none;
 }
 
-body.dark-mode input[type="range"] {
-  background: #3a3a4a;
-}
-
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -1520,14 +1404,98 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: var(--orange-dark);
 }
 
-/* Lazy loading animation */
-.prop-card-image img {
-  opacity: 0;
-  transition: opacity 0.3s ease;
+/* Email Modal */
+.email-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
 }
 
-.prop-card-image img.loaded {
-  opacity: 1;
+.email-modal-content {
+  background: var(--white);
+  max-width: 400px;
+  width: 90%;
+  padding: 30px;
+  border-radius: 24px;
+  text-align: center;
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.email-modal-content h3 {
+  font-size: 24px;
+  color: var(--orange);
+  margin-bottom: 10px;
+}
+
+.email-modal-content p {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 20px;
+}
+
+.email-modal-content input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.email-modal-content input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.email-modal-content button {
+  width: 100%;
+  padding: 14px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.email-modal-content button:hover {
+  background: var(--orange-dark);
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--gray);
+}
+
+.close-modal:hover {
+  color: var(--danger);
 }
 
 /* Mobile Responsive */
@@ -1568,16 +1536,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .agent-contact-buttons { justify-content: center; }
   .cta-section h2 { font-size: 28px; }
   .gallery-main { height: 220px; }
-  .floating-buttons {
-    bottom: 20px;
-    right: 20px;
-  }
-  .footer-content {
-    text-align: center;
-  }
-  .social-links {
-    justify-content: center;
-  }
+  .floating-buttons { bottom: 20px; right: 20px; }
+  .footer-content { text-align: center; }
+  .social-links { justify-content: center; }
+  .grid { grid-template-columns: 1fr; }
 }
 
 /* Desktop - advanced filters visible by default */
@@ -1604,9 +1566,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
     <i class="fas fa-bars"></i>
   </div>
   <div class="logo">
-    <img src="/logo.png" alt="GLRA Realty" onerror="this.style.display='none'">
+    <img src="/logo.png" alt="GLRA Realty">
   </div>
-  <div class="nav-links" id="navLinks">
+  <div class="nav-links">
     <a onclick="scrollToTop()">HOME</a>
     <a href="#featured">FEATURED</a>
     <a href="#properties">PROPERTIES</a>
@@ -1842,7 +1804,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </div>
 </section>
 
-<!-- Agent Spotlight - FIXED DARK MODE -->
+<!-- Agent Spotlight -->
 <section class="agent-spotlight" id="agent">
   <div class="agent-container">
     <div class="agent-image">
@@ -1885,7 +1847,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   </form>
 </section>
 
-<!-- Footer - FIXED -->
+<!-- Footer -->
 <footer>
   <div class="footer-content">
     <div class="footer-col">
@@ -1978,6 +1940,24 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
+// ============ ESC KEY TO CLOSE MODAL ============
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    // Close main modal
+    if (document.getElementById("modal").style.display === "block") {
+      closeModal();
+    }
+    // Close email modal
+    if (document.getElementById("emailModal").style.display === "flex") {
+      closeEmailModal();
+    }
+    // Close wishlist modal
+    if (document.getElementById("wishlistModal").style.display === "flex") {
+      closeWishlistModal();
+    }
+  }
+});
+
 // ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
@@ -2231,7 +2211,7 @@ async function loadHeroImages() {
 }
 
 // Location autocomplete
-const locationSuggestions = [
+const locationSuggestionsList = [
   "Makati City", "Taguig City", "Pasig City", "Quezon City", "Mandaluyong City",
   "Manila City", "Parañaque City", "Pasay City", "Marikina City", "Muntinlupa City",
   "Las Piñas City", "BGC", "Ortigas", "Alabang", "Tagaytay City", "Batangas City",
@@ -2244,7 +2224,7 @@ function filterLocations(value) {
     suggestionsDiv.style.display = 'none';
     return;
   }
-  const filtered = locationSuggestions.filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
+  const filtered = locationSuggestionsList.filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
   if (filtered.length > 0) {
     suggestionsDiv.innerHTML = filtered.map(loc => `<div onclick="selectLocation('${loc}')">${loc}</div>`).join('');
     suggestionsDiv.style.display = 'block';
@@ -2379,8 +2359,7 @@ function getDisplayPrice(prop) {
   }
 }
 
-// Optimized property loading with caching and lazy loading
-let propertiesLoaded = false;
+// Optimized property loading with caching
 let cachedProperties = null;
 
 async function loadProperties() {
@@ -2437,13 +2416,12 @@ function createCard(prop) {
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
   const displayPrice = getDisplayPrice(prop);
   
-  const shortDesc = prop.description ? prop.description.substring(0, 80) + (prop.description.length > 80 ? '...' : '') : '';
-  
+  // OLD CARD DESIGN - No description text
   card.innerHTML = `
     <div class="prop-card-image">
       <span class="prop-badge ${badge}">${badgeText}</span>
       ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
-      <img src="${prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image'}" alt="${escapeHtml(prop.title)}" loading="lazy" onload="this.classList.add('loaded')">
+      <img src="${prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image'}" alt="${escapeHtml(prop.title)}" loading="lazy">
       <div class="card-actions">
         <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
           <i class="far fa-heart"></i>
@@ -2463,7 +2441,6 @@ function createCard(prop) {
         <span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span>
         ${parking}
       </div>
-      ${shortDesc ? `<div class="prop-description">${escapeHtml(shortDesc)}</div>` : ''}
     </div>
   `;
   return card;
@@ -2648,12 +2625,6 @@ document.getElementById("contactForm")?.addEventListener("submit", async functio
   } finally {
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
-  }
-});
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById("modal").style.display === "block") {
-    closeModal();
   }
 });
 
