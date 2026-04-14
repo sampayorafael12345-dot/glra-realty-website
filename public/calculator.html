@@ -24,14 +24,14 @@
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
-  --orange-light: #ffedd5;
+  --orange-light: rgba(249, 115, 22, 0.15);
   --dark: #1a1a2e;
   --dark-gray: #16213e;
   --gray: #6b7280;
   --gray-light: #f3f4f6;
   --white: #ffffff;
   --card-bg: #ffffff;
-  --border-color: #e5e7eb;
+  --border-color: #e0e0e0;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
@@ -70,17 +70,25 @@ body.dark-mode {
   background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
-/* Dark mode specific text fixes */
+/* ============ ALL ELEMENTS HAVE BORDERS IN LIGHT MODE ============ */
+.input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
+.summary-banner, .radio-option, .comm-btn, .search-field, .zonal-search-input,
+.zonal-row button, select, input, .disclaimer {
+  border: 2px solid var(--border-color);
+}
+
+/* Dark mode specific - remove white backgrounds */
 body.dark-mode .input-card,
 body.dark-mode .result-card,
 body.dark-mode .schedules-wrapper,
-body.dark-mode .summary-banner,
 body.dark-mode .desired-proceed-card,
-body.dark-mode .info-card,
-body.dark-mode .tax-calc,
-body.dark-mode .disclaimer {
+body.dark-mode .radio-option,
+body.dark-mode .comm-btn,
+body.dark-mode .zonal-dropdown,
+body.dark-mode .price-custom-inputs,
+body.dark-mode .login-modal-content {
   background: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
+  border-color: #3a3a4a !important;
 }
 
 body.dark-mode .input-card h3,
@@ -101,15 +109,15 @@ body.dark-mode .zonal-hint span,
 body.dark-mode .input-hint,
 body.dark-mode .summary-item h4,
 body.dark-mode .summary-item .amount,
-body.dark-mode .summary-item .percent {
+body.dark-mode .summary-item .percent,
+body.dark-mode .radio-option span,
+body.dark-mode .radio-option small {
   color: var(--text-color) !important;
 }
 
 body.dark-mode input,
 body.dark-mode select,
-body.dark-mode .dropdown-list,
-body.dark-mode .price-custom-inputs,
-body.dark-mode .commission-buttons .comm-btn {
+body.dark-mode .zonal-search-input {
   background-color: #1a1a2a !important;
   color: var(--text-color) !important;
   border-color: #3a3a4a !important;
@@ -123,9 +131,9 @@ body.dark-mode .radio-option {
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode .radio-option span,
-body.dark-mode .radio-option small {
-  color: var(--text-color) !important;
+body.dark-mode .radio-option.selected {
+  background: var(--orange-light) !important;
+  border-color: var(--orange) !important;
 }
 
 body.dark-mode .dropdown-item {
@@ -135,6 +143,34 @@ body.dark-mode .dropdown-item {
 
 body.dark-mode .dropdown-item:hover {
   background: #2a2a3a !important;
+}
+
+body.dark-mode .summary-banner {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+}
+
+body.dark-mode .result-header {
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
+}
+
+body.dark-mode .disclaimer {
+  background: #2a2a3a !important;
+  color: #c0a040 !important;
+}
+
+body.dark-mode .disclaimer div {
+  color: #c0a040 !important;
+}
+
+/* Light mode borders - so nothing looks floating */
+.input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
+.radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
+select, input, .disclaimer {
+  border: 2px solid var(--border-color);
+}
+
+.input-card:hover, .result-card:hover {
+  border-color: var(--orange);
 }
 
 /* Navigation */
@@ -327,14 +363,14 @@ body.dark-mode .page-hero {
   background: var(--card-bg);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   transition: var(--transition);
-  border: 1px solid var(--border-color);
 }
 
 .input-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
+  border-color: var(--orange);
 }
 
 .input-card h3 {
@@ -514,6 +550,7 @@ body.dark-mode .zonal-dropdown-item {
   border-radius: 12px;
   cursor: pointer;
   transition: var(--transition);
+  background: var(--white);
 }
 
 .radio-option:hover {
@@ -573,7 +610,7 @@ body.dark-mode .zonal-dropdown-item {
 
 /* Desired Proceed Card */
 .desired-proceed-card {
-  background: linear-gradient(135deg, var(--orange-light) 0%, var(--card-bg) 100%);
+  background: var(--orange-light);
   border: 2px solid var(--orange);
 }
 
@@ -638,8 +675,7 @@ body.dark-mode .zonal-dropdown-item {
   background: var(--card-bg);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .result-header {
@@ -695,7 +731,6 @@ body.dark-mode .result-header {
   border-radius: 24px;
   padding: 25px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
 }
 
 .schedules-wrapper h3 {
@@ -738,8 +773,8 @@ body.dark-mode .result-header {
   color: var(--text-color);
 }
 
-/* Login Modal for Print */
-.login-modal {
+/* Email Modal for Print (no password) */
+.email-print-modal {
   display: none;
   position: fixed;
   top: 0;
@@ -752,7 +787,7 @@ body.dark-mode .result-header {
   justify-content: center;
 }
 
-.login-modal-content {
+.email-print-content {
   background: var(--white);
   max-width: 400px;
   width: 90%;
@@ -761,9 +796,10 @@ body.dark-mode .result-header {
   text-align: center;
   position: relative;
   animation: modalSlideIn 0.3s ease;
+  border: 2px solid var(--border-color);
 }
 
-body.dark-mode .login-modal-content {
+body.dark-mode .email-print-content {
   background: #1a1a2a;
 }
 
@@ -778,25 +814,25 @@ body.dark-mode .login-modal-content {
   }
 }
 
-.login-modal-content i {
+.email-print-content i {
   font-size: 48px;
   color: var(--orange);
   margin-bottom: 15px;
 }
 
-.login-modal-content h3 {
+.email-print-content h3 {
   font-size: 24px;
   color: var(--orange);
   margin-bottom: 10px;
 }
 
-.login-modal-content p {
+.email-print-content p {
   font-size: 14px;
   color: var(--gray);
   margin-bottom: 20px;
 }
 
-.login-modal-content input {
+.email-print-content input {
   width: 100%;
   padding: 14px;
   border: 2px solid var(--border-color);
@@ -808,12 +844,12 @@ body.dark-mode .login-modal-content {
   color: var(--text-color);
 }
 
-.login-modal-content input:focus {
+.email-print-content input:focus {
   outline: none;
   border-color: var(--orange);
 }
 
-.login-modal-content button {
+.email-print-content button {
   width: 100%;
   padding: 14px;
   background: var(--orange);
@@ -825,11 +861,11 @@ body.dark-mode .login-modal-content {
   transition: var(--transition);
 }
 
-.login-modal-content button:hover {
+.email-print-content button:hover {
   background: var(--orange-dark);
 }
 
-.close-modal {
+.close-print-modal {
   position: absolute;
   top: 15px;
   right: 20px;
@@ -838,7 +874,7 @@ body.dark-mode .login-modal-content {
   color: var(--gray);
 }
 
-.close-modal:hover {
+.close-print-modal:hover {
   color: var(--danger);
 }
 
@@ -976,18 +1012,20 @@ body.dark-mode .btn-darkmode {
   gap: 10px;
   align-items: center;
   margin-top: 20px;
+  border: 2px solid #e0c080;
 }
 
 body.dark-mode .disclaimer {
   background: #2a2a3a;
   color: #c0a040;
+  border-color: #5a4a2a;
 }
 
 .disclaimer i { color: var(--orange); font-size: 14px; }
 
 /* Print Styles */
 @media print {
-  .navbar, .floating-buttons, .print-button-wrapper, .login-modal, footer, .back-to-top, .mobile-menu-btn, .darkmode-btn-header {
+  .navbar, .floating-buttons, .print-button-wrapper, .email-print-modal, footer, .back-to-top, .mobile-menu-btn, .darkmode-btn-header {
     display: none !important;
   }
   
@@ -1020,6 +1058,7 @@ body.dark-mode .disclaimer {
   .input-card, .result-card, .schedules-wrapper {
     break-inside: avoid;
     page-break-inside: avoid;
+    border: 1px solid #ddd;
   }
 }
 
@@ -1091,9 +1130,9 @@ body.dark-mode .disclaimer {
   </div>
 </section>
 
-<!-- Print Button (Requires Login) -->
+<!-- Print Button (Email only) -->
 <div class="print-button-wrapper">
-  <button class="print-btn" onclick="checkLoginAndPrint()">
+  <button class="print-btn" onclick="showPrintEmailModal()">
     <i class="fas fa-print"></i> Save as PDF / Print Calculator
   </button>
 </div>
@@ -1141,7 +1180,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value (WITH SEARCHABLE DROPDOWN) -->
+    <!-- Card 2: Property Value & Zonal Value -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       <label>Gross Selling Price</label>
@@ -1286,35 +1325,35 @@ body.dark-mode .disclaimer {
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
         <table>
-          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
-          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
-          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
+          <tr><td>Capital Gains Tax</span><td>6% of tax basis</td></tr>
+          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</td></tr>
+          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <table>
-          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
-          <tr><td>Local Transfer Tax</td><td>0.5% - 0.75% (by city)</td></tr>
+        </table>
+          <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</td></tr>
+          <tr><td>Local Transfer Tax</span><td>0.5% - 0.75% (by city)</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Registration Fee (LRA)</h4>
         <table>
-          <tr><td>Up to ₱500K</td><td>1.0%</td></tr>
-          <tr><td>₱500K – ₱1M</td><td>₱5,000 + 0.8%</td></tr>
-          <tr><td>₱1M – ₱2M</td><td>₱9,000 + 0.6%</td></tr>
-          <tr><td>₱2M – ₱5M</td><td>₱15,000 + 0.4%</td></tr>
-          <tr><td>₱5M – ₱10M</td><td>₱27,000 + 0.3%</td></tr>
-          <tr><td>Above ₱10M</td><td>₱42,000 + 0.25%</td></tr>
+          <tr><td>Up to ₱500K</span><td>1.0%</td></tr>
+          <tr><td>₱500K – ₱1M</span><td>₱5,000 + 0.8%</td></tr>
+          <tr><td>₱1M – ₱2M</span><td>₱9,000 + 0.6%</td></tr>
+          <tr><td>₱2M – ₱5M</span><td>₱15,000 + 0.4%</td></tr>
+          <tr><td>₱5M – ₱10M</span><td>₱27,000 + 0.3%</td></tr>
+          <tr><td>Above ₱10M</span><td>₱42,000 + 0.25%</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Notarial Fee (Estimate)</h4>
-        <table>
-          <tr><td>Up to ₱2M</td><td>~1.0%</td></tr>
-          <tr><td>₱2M – ₱10M</td><td>~0.5%</td></tr>
-          <tr><td>Above ₱10M</td><td>~0.25%</td></tr>
+        </table>
+          <tr><td>Up to ₱2M</span><td>~1.0%</td></tr>
+          <tr><td>₱2M – ₱10M</span><td>~0.5%</td></tr>
+          <tr><td>Above ₱10M</span><td>~0.25%</td></tr>
         </table>
       </div>
     </div>
@@ -1325,17 +1364,16 @@ body.dark-mode .disclaimer {
   </div>
 </div>
 
-<!-- Login Modal for Print -->
-<div id="loginModal" class="login-modal">
-  <div class="login-modal-content">
-    <span class="close-modal" onclick="closeLoginModal()">&times;</span>
-    <i class="fas fa-lock"></i>
-    <h3>Login Required</h3>
-    <p>Please log in to access the print/download feature.</p>
-    <input type="email" id="printLoginEmail" placeholder="Email">
-    <input type="password" id="printLoginPassword" placeholder="Password">
-    <button onclick="loginAndPrint()">Login & Print</button>
-    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">Use your admin credentials to access this feature.</p>
+<!-- Email Modal for Print (Email only, no password) -->
+<div id="emailPrintModal" class="email-print-modal">
+  <div class="email-print-content">
+    <span class="close-print-modal" onclick="closeEmailPrintModal()">&times;</span>
+    <i class="fas fa-envelope"></i>
+    <h3>Enter Your Email</h3>
+    <p>Please enter your email address to download/print the calculator results.</p>
+    <input type="email" id="printEmail" placeholder="Your email address">
+    <button onclick="verifyEmailAndPrint()">Continue to Print</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll send a copy to your email for reference.</p>
   </div>
 </div>
 
@@ -1727,56 +1765,48 @@ function openZonalLookup() {
   showToast('Opening BIR Zonal Value lookup tool...');
 }
 
-// ============ PRINT FUNCTION WITH LOGIN ============
-function checkLoginAndPrint() {
-  // Check if user is already logged in (session storage)
-  const isLoggedIn = sessionStorage.getItem('calculatorLoggedIn');
-  if (isLoggedIn === 'true') {
-    window.print();
-  } else {
-    document.getElementById('loginModal').style.display = 'flex';
-  }
+// ============ PRINT FUNCTION WITH EMAIL ONLY ============
+function showPrintEmailModal() {
+  document.getElementById('emailPrintModal').style.display = 'flex';
 }
 
-function closeLoginModal() {
-  document.getElementById('loginModal').style.display = 'none';
-  document.getElementById('printLoginEmail').value = '';
-  document.getElementById('printLoginPassword').value = '';
+function closeEmailPrintModal() {
+  document.getElementById('emailPrintModal').style.display = 'none';
+  document.getElementById('printEmail').value = '';
 }
 
-async function loginAndPrint() {
-  const email = document.getElementById('printLoginEmail').value;
-  const password = document.getElementById('printLoginPassword').value;
+async function verifyEmailAndPrint() {
+  const email = document.getElementById('printEmail').value;
   
-  if (!email || !password) {
-    showToast('Please enter email and password', true);
+  if (!email || !email.includes('@')) {
+    showToast('Please enter a valid email address', true);
     return;
   }
   
   const btn = event.target;
   const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
   btn.disabled = true;
   
   try {
-    const response = await fetch('/api/admin/login', {
+    // Store email in session storage
+    sessionStorage.setItem('calculatorEmail', email);
+    
+    // Here you can optionally save the email to your subscribers list
+    await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, source: 'calculator_print' })
     });
     
-    if (response.ok) {
-      sessionStorage.setItem('calculatorLoggedIn', 'true');
-      closeLoginModal();
-      showToast('Login successful! Preparing print...');
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    } else {
-      showToast('Invalid credentials. Please use admin login.', true);
-    }
+    closeEmailPrintModal();
+    showToast('Thank you! Preparing print...');
+    
+    setTimeout(() => {
+      window.print();
+    }, 500);
   } catch (error) {
-    showToast('Login failed. Please try again.', true);
+    showToast('Something went wrong. Please try again.', true);
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
