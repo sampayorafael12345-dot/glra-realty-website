@@ -50,6 +50,45 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* Dark mode specific text fixes */
+body.dark-mode .stat-card h3,
+body.dark-mode .property-title,
+body.dark-mode .property-detail,
+body.dark-mode .fee-label,
+body.dark-mode .fee-value,
+body.dark-mode .tab,
+body.dark-mode .search-field input,
+body.dark-mode .search-field .dropdown-selected span,
+body.dark-mode .dropdown-item,
+body.dark-mode .form-group label,
+body.dark-mode .property-info,
+body.dark-mode .prop-title,
+body.dark-mode .prop-location,
+body.dark-mode .prop-specs {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .empty-state p,
+body.dark-mode .empty-state i,
+body.dark-mode .results-count,
+body.dark-mode .search-results {
+  color: #a0a0a0 !important;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+body.dark-mode .form-input {
+  background-color: #1a1a2a !important;
+  color: #e0e0e0 !important;
+  border-color: #3a3a4a !important;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #888 !important;
+}
+
 .login-container {
   display: flex;
   justify-content: center;
@@ -1017,6 +1056,58 @@ button.danger:hover:not(:disabled) {
   color: var(--orange);
 }
 
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 15px;
+  color: white;
+  font-size: 16px;
+}
+
+.loading-overlay.hidden {
+  display: none;
+}
+
+.loading-overlay .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Refresh notification */
+.refresh-notice {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: var(--orange);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 40px;
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -1400,7 +1491,41 @@ button.danger:hover:not(:disabled) {
 
 <div id="progressStack" class="progress-stack"></div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="spinner"></div>
+  <div>Saving property... Please wait</div>
+</div>
+
 <script>
+// ============ LOADING OVERLAY ============
+function showLoading(message = 'Saving property... Please wait') {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.querySelector('div:last-child').textContent = message;
+  overlay.classList.remove('hidden');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ============ REFRESH NOTIFICATION ============
+function showRefreshNotice() {
+  const existing = document.querySelector('.refresh-notice');
+  if (existing) existing.remove();
+  
+  const notice = document.createElement('div');
+  notice.className = 'refresh-notice';
+  notice.innerHTML = '<i class="fas fa-sync-alt"></i> Data saved! Click here to refresh';
+  notice.onclick = () => {
+    location.reload();
+  };
+  document.body.appendChild(notice);
+  setTimeout(() => {
+    if (notice && notice.parentNode) notice.remove();
+  }, 5000);
+}
+
 // ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
@@ -1581,7 +1706,7 @@ function escapeHtml(str) {
   });
 }
 
-// ============ IMAGE COMPRESSION (FIXES THE ERROR) ============
+// ============ IMAGE COMPRESSION ============
 async function compressImage(file, maxWidth = 1200, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1618,7 +1743,7 @@ async function compressImage(file, maxWidth = 1200, quality = 0.7) {
   });
 }
 
-// ============ IMAGE UPLOAD WITH COMPRESSION ============
+// ============ IMAGE UPLOAD ============
 async function uploadImage(file, type = 'hero', progressId = null) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1901,27 +2026,40 @@ function toggleSelectAll() {
 async function deleteSelected() {
   if (selectedProperties.size === 0) { showToast('No properties selected', true); return; }
   if (!confirm(`Delete ${selectedProperties.size} properties?`)) return;
-  for (const id of selectedProperties) { await fetch(`/api/admin/properties/${id}`, { method: 'DELETE' }); }
+  showLoading('Deleting properties...');
+  for (const id of selectedProperties) { 
+    await fetch(`/api/admin/properties/${id}`, { method: 'DELETE' }); 
+  }
+  hideLoading();
   showToast(`Deleted ${selectedProperties.size} properties`);
   selectedProperties.clear();
   loadAllProperties();
   loadStats();
+  showRefreshNotice();
 }
 
 async function deleteAllProperties() {
   if (!confirm(`⚠️ Delete ALL ${allProperties.length} properties? This cannot be undone.`)) return;
-  for (const prop of allProperties) { await fetch(`/api/admin/properties/${prop._id}`, { method: 'DELETE' }); }
+  showLoading('Deleting all properties...');
+  for (const prop of allProperties) { 
+    await fetch(`/api/admin/properties/${prop._id}`, { method: 'DELETE' }); 
+  }
+  hideLoading();
   showToast(`Deleted all properties`);
   loadAllProperties();
   loadStats();
+  showRefreshNotice();
 }
 
 async function deleteProperty(id) {
   if (!confirm('Delete this property?')) return;
+  showLoading('Deleting property...');
   await fetch(`/api/admin/properties/${id}`, { method: 'DELETE' });
+  hideLoading();
   showToast('Property deleted');
   loadAllProperties();
   loadStats();
+  showRefreshNotice();
 }
 
 function searchProperties() {
@@ -1950,12 +2088,14 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add('active');
 }
 
-// Add Property Submit - FIXED
+// Add Property Submit - FIXED with loading overlay and auto-refresh
 document.getElementById('propertyForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submitPropertyBtn');
   submitBtn.innerHTML = '<span class="loading-spinner"></span> Adding...';
   submitBtn.disabled = true;
+  showLoading('Adding property...');
+  
   const fd = new FormData(this);
   
   const prop = {
@@ -1998,6 +2138,8 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
       document.getElementById('galleryCountDisplay').innerHTML = '0 / 25 images uploaded';
       loadAllProperties();
       loadStats();
+      hideLoading();
+      showRefreshNotice();
       switchTab('properties');
       document.querySelectorAll('.tab')[0].classList.add('active');
       document.querySelectorAll('.tab')[1].classList.remove('active');
@@ -2005,10 +2147,12 @@ document.getElementById('propertyForm')?.addEventListener('submit', async functi
       updateProgressBar(progressId, 100, 'Failed!');
       const error = await res.json();
       showToast('❌ Error: ' + (error.error || 'Unknown error'), true);
+      hideLoading();
     }
   } catch(e) { 
     updateProgressBar(progressId, 100, 'Failed!');
     showToast('❌ Network error: ' + e.message, true);
+    hideLoading();
   } finally { 
     submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Property'; 
     submitBtn.disabled = false;
@@ -2330,6 +2474,7 @@ document.getElementById('editForm')?.addEventListener('submit', async function(e
   const saveBtn = document.getElementById('saveEditBtn');
   saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving...';
   saveBtn.disabled = true;
+  showLoading('Saving property changes...');
   const progressId = addProgressBar('Saving property changes...');
   updateProgressBar(progressId, 50, 'Updating property...');
   try {
@@ -2340,13 +2485,17 @@ document.getElementById('editForm')?.addEventListener('submit', async function(e
       closeEditModal();
       loadAllProperties();
       loadStats();
+      hideLoading();
+      showRefreshNotice();
     } else {
       updateProgressBar(progressId, 100, 'Failed!');
       showToast('❌ Error saving property', true);
+      hideLoading();
     }
   } catch(e) {
     updateProgressBar(progressId, 100, 'Failed!');
     showToast('❌ Network error', true);
+    hideLoading();
   } finally {
     saveBtn.innerHTML = 'Save Changes';
     saveBtn.disabled = false;
@@ -2436,7 +2585,7 @@ async function previewExcel() {
       propertyType: row['Property Type'] || 'Condominium', parking: parseInt(row['P']) || 0,
       status: ['available','leased','reserved','sold','do not publish'].includes(String(row['Status']||'').toLowerCase()) ? String(row['Status']).toLowerCase() : 'available',
       mapLocation: row['MapLocation'] || '',
-      mainImage: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d', gallery: []
+      mainImage: '', gallery: []
     })).filter(p => p.title);
     const previewDiv = document.getElementById('importPreview');
     previewDiv.innerHTML = `<p><strong>✅ ${excelData.length} properties found</strong></p>`;
@@ -2452,6 +2601,7 @@ async function startImport() {
   const btn = document.getElementById('importBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
+  showLoading('Importing properties...');
   let success = 0;
   for (let i = 0; i < excelData.length; i++) {
     const progressId = addProgressBar(excelData[i].title, excelData.length, i + 1);
@@ -2468,11 +2618,13 @@ async function startImport() {
       updateProgressBar(progressId, 100, 'Failed!');
     }
   }
+  hideLoading();
   showToast(`Imported ${success} of ${excelData.length} properties`);
   btn.disabled = false;
   btn.innerHTML = 'Import All';
   loadAllProperties();
   loadStats();
+  showRefreshNotice();
   excelData = [];
 }
 </script>
