@@ -4,7 +4,15 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 const app = express();
+
+// ============ CLOUDINARY CONFIGURATION ============
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dskocmib9',
+  api_key: process.env.CLOUDINARY_API_KEY || '593914479525749',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'knfdQ0hM_uQFBr-DtL6K1-yAlRk'
+});
 
 // Middleware - INCREASED LIMITS for image uploads
 app.use(cors());
@@ -492,32 +500,36 @@ app.post('/api/admin/properties/bulk', async (req, res) => {
   }
 });
 
-// ============ PROPERTY IMAGE UPLOAD ============
+// ============ PROPERTY IMAGE UPLOAD (UPDATED - Cloudinary) ============
 app.post('/api/admin/upload-property-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
     
-    const imagePath = req.file.path;
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const contentType = req.file.mimetype;
-    const imageUrl = `data:${contentType};base64,${base64Image}`;
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'glra_realty/properties',
+      transformation: [
+        { width: 1200, height: 800, crop: 'limit' },
+        { quality: 'auto' }
+      ]
+    });
     
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    // Delete the temporary file
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
     }
     
-    console.log(`🖼️ Property image uploaded, size: ${(imageBuffer.length / 1024).toFixed(1)}KB`);
-    res.json({ url: imageUrl, size: imageBuffer.length });
+    console.log(`🖼️ Property image uploaded to Cloudinary: ${result.secure_url}`);
+    res.json({ url: result.secure_url, size: result.bytes });
   } catch (err) {
     console.error('Error uploading property image:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ============ HERO IMAGES MANAGEMENT ============
+// ============ HERO IMAGES MANAGEMENT (UPDATED - Cloudinary) ============
 
 app.get('/api/admin/hero-images', async (req, res) => {
   try {
@@ -534,21 +546,25 @@ app.post('/api/admin/hero-images/upload', upload.single('image'), async (req, re
       return res.status(400).json({ error: 'No image file provided' });
     }
     
-    const imagePath = req.file.path;
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const contentType = req.file.mimetype;
-    const imageUrl = `data:${contentType};base64,${base64Image}`;
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'glra_realty/hero',
+      transformation: [
+        { width: 1920, height: 1080, crop: 'fill' },
+        { quality: 'auto' }
+      ]
+    });
     
-    const count = await HeroImage.countDocuments();
-    const newImage = new HeroImage({ url: imageUrl, order: count });
-    await newImage.save();
-    
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    // Delete the temporary file
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
     }
     
-    console.log(`🖼️ Hero image saved`);
+    const count = await HeroImage.countDocuments();
+    const newImage = new HeroImage({ url: result.secure_url, order: count });
+    await newImage.save();
+    
+    console.log(`🖼️ Hero image saved to Cloudinary: ${result.secure_url}`);
     res.json(newImage);
   } catch (err) {
     console.error('Error uploading hero image:', err);
@@ -617,6 +633,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   Website: https://glrarealty.com                            ║
   ║   Admin:   https://glrarealty.com/admin.html                 ║
   ║   MongoDB: Connected ✅                                       ║
+  ║   Cloudinary: Connected ✅                                    ║
   ║   Features: Properties | Inquiries | Wishlist | Alerts       ║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
