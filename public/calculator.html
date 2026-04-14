@@ -46,7 +46,7 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #1a1a2a;
+  --gray-light: #0f0f1a;
   --white: #0f0f1a;
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
@@ -67,7 +67,74 @@ body {
 }
 
 body.dark-mode {
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
+}
+
+/* Dark mode specific text fixes */
+body.dark-mode .input-card,
+body.dark-mode .result-card,
+body.dark-mode .schedules-wrapper,
+body.dark-mode .summary-banner,
+body.dark-mode .desired-proceed-card,
+body.dark-mode .info-card,
+body.dark-mode .tax-calc,
+body.dark-mode .disclaimer {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .input-card h3,
+body.dark-mode .input-card label,
+body.dark-mode .result-header h3,
+body.dark-mode .fee-label,
+body.dark-mode .fee-value,
+body.dark-mode .total-row .fee-label,
+body.dark-mode .schedule-card h4,
+body.dark-mode .schedule-card td,
+body.dark-mode .info-card h4,
+body.dark-mode .info-card p,
+body.dark-mode .tax-row .tax-label,
+body.dark-mode .tax-row .tax-value,
+body.dark-mode .disclaimer div,
+body.dark-mode .zonal-hint,
+body.dark-mode .zonal-hint span,
+body.dark-mode .input-hint,
+body.dark-mode .summary-item h4,
+body.dark-mode .summary-item .amount,
+body.dark-mode .summary-item .percent {
+  color: var(--text-color) !important;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode .dropdown-list,
+body.dark-mode .price-custom-inputs,
+body.dark-mode .commission-buttons .comm-btn {
+  background-color: #1a1a2a !important;
+  color: var(--text-color) !important;
+  border-color: #3a3a4a !important;
+}
+
+body.dark-mode input::placeholder {
+  color: #888 !important;
+}
+
+body.dark-mode .radio-option {
+  border-color: #3a3a4a !important;
+}
+
+body.dark-mode .radio-option span,
+body.dark-mode .radio-option small {
+  color: var(--text-color) !important;
+}
+
+body.dark-mode .dropdown-item {
+  color: var(--text-color) !important;
+  border-color: #3a3a4a !important;
+}
+
+body.dark-mode .dropdown-item:hover {
+  background: #2a2a3a !important;
 }
 
 /* Navigation */
@@ -89,6 +156,10 @@ body.dark-mode {
   background: var(--white);
   padding: 10px 5%;
   box-shadow: var(--shadow-sm);
+}
+
+body.dark-mode .navbar.scrolled {
+  background: #0f0f1a;
 }
 
 .logo img { height: 55px; width: auto; display: block; }
@@ -185,7 +256,7 @@ body.dark-mode {
 }
 
 body.dark-mode .page-hero {
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
 .page-hero h1 {
@@ -207,10 +278,38 @@ body.dark-mode .page-hero {
   margin: 15px auto 0;
 }
 
+/* Print Button */
+.print-button-wrapper {
+  text-align: center;
+  margin: 20px auto;
+  max-width: 1400px;
+  padding: 0 5%;
+}
+
+.print-btn {
+  background: var(--orange);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.print-btn:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
 /* Calculator Container */
 .calculator-container {
   max-width: 1400px;
-  margin: -50px auto 60px;
+  margin: 0 auto 60px;
   padding: 0 5%;
   position: relative;
   z-index: 10;
@@ -277,15 +376,93 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
-/* Zonal Row */
+/* Zonal Search Dropdown */
+.zonal-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.zonal-search-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.zonal-search-input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.zonal-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 2px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  box-shadow: var(--shadow-md);
+}
+
+body.dark-mode .zonal-dropdown {
+  background: #1a1a2a;
+  border-color: #3a3a4a;
+}
+
+.zonal-dropdown.show {
+  display: block;
+}
+
+.zonal-dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .zonal-dropdown-item {
+  border-color: #3a3a4a;
+  color: var(--text-color);
+}
+
+.zonal-dropdown-item:hover {
+  background: var(--gray-light);
+  color: var(--orange);
+}
+
+.zonal-dropdown-item .location-name {
+  font-weight: 600;
+}
+
+.zonal-dropdown-item .location-value {
+  font-size: 11px;
+  color: var(--gray);
+  float: right;
+}
+
 .zonal-row {
   display: flex;
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
-.zonal-row input { flex: 2; }
+.zonal-row .zonal-search-container {
+  flex: 2;
+  min-width: 150px;
+}
 
 .zonal-row button {
   flex: 1;
@@ -298,6 +475,7 @@ body.dark-mode .page-hero {
   transition: var(--transition);
   font-family: 'Inter', sans-serif;
   color: var(--text-color);
+  white-space: nowrap;
 }
 
 .zonal-row button:hover {
@@ -313,6 +491,8 @@ body.dark-mode .page-hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .zonal-hint .tax-basis { color: var(--orange); font-weight: 600; }
@@ -376,6 +556,7 @@ body.dark-mode .page-hero {
   font-family: 'Inter', sans-serif;
   text-align: center;
   color: var(--text-color);
+  min-width: 50px;
 }
 
 .comm-btn:hover {
@@ -468,7 +649,7 @@ body.dark-mode .page-hero {
 }
 
 body.dark-mode .result-header {
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2a 100%);
+  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
 .result-header h3 {
@@ -557,6 +738,110 @@ body.dark-mode .result-header {
   color: var(--text-color);
 }
 
+/* Login Modal for Print */
+.login-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 4000;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal-content {
+  background: var(--white);
+  max-width: 400px;
+  width: 90%;
+  padding: 35px;
+  border-radius: 24px;
+  text-align: center;
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+body.dark-mode .login-modal-content {
+  background: #1a1a2a;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.login-modal-content i {
+  font-size: 48px;
+  color: var(--orange);
+  margin-bottom: 15px;
+}
+
+.login-modal-content h3 {
+  font-size: 24px;
+  color: var(--orange);
+  margin-bottom: 10px;
+}
+
+.login-modal-content p {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 20px;
+}
+
+.login-modal-content input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.login-modal-content input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.login-modal-content button {
+  width: 100%;
+  padding: 14px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.login-modal-content button:hover {
+  background: var(--orange-dark);
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--gray);
+}
+
+.close-modal:hover {
+  color: var(--danger);
+}
+
 /* Footer */
 footer {
   background: #1a1a2e;
@@ -566,7 +851,7 @@ footer {
 }
 
 body.dark-mode footer {
-  background: #0f0f1a;
+  background: #0a0a14;
 }
 
 .footer-content {
@@ -700,6 +985,44 @@ body.dark-mode .disclaimer {
 
 .disclaimer i { color: var(--orange); font-size: 14px; }
 
+/* Print Styles */
+@media print {
+  .navbar, .floating-buttons, .print-button-wrapper, .login-modal, footer, .back-to-top, .mobile-menu-btn, .darkmode-btn-header {
+    display: none !important;
+  }
+  
+  .page-hero {
+    background: #1a1a2e;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .summary-banner {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .result-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  body {
+    background: white;
+    padding: 0;
+  }
+  
+  .calculator-container {
+    margin: 0;
+    padding: 20px;
+  }
+  
+  .input-card, .result-card, .schedules-wrapper {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
 /* Mobile */
 @media (max-width: 900px) {
   .inputs-wrapper { grid-template-columns: 1fr; gap: 15px; }
@@ -720,6 +1043,8 @@ body.dark-mode .disclaimer {
   .summary-item .amount { font-size: 22px; }
   .commission-buttons { gap: 5px; }
   .comm-btn { padding: 8px; font-size: 12px; }
+  .zonal-row { flex-direction: column; }
+  .zonal-row button { width: 100%; }
 }
 </style>
 </head>
@@ -766,6 +1091,13 @@ body.dark-mode .disclaimer {
   </div>
 </section>
 
+<!-- Print Button (Requires Login) -->
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="checkLoginAndPrint()">
+    <i class="fas fa-print"></i> Save as PDF / Print Calculator
+  </button>
+</div>
+
 <div class="calculator-container">
   
   <!-- Summary Banner -->
@@ -809,17 +1141,19 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value (WITH INTEGRATION) -->
+    <!-- Card 2: Property Value & Zonal Value (WITH SEARCHABLE DROPDOWN) -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       <label>Gross Selling Price</label>
-      <input type="number" id="propertyValue" value="0" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
+      <input type="number" id="propertyValue" value="" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
       
       <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
       <div class="zonal-row">
-        <input type="text" id="zonalLocation" placeholder="Enter city (e.g., Makati, Taguig, QC)" style="flex: 2;">
-        <button onclick="fetchZonalValue()"><i class="fas fa-search"></i> Get Zonal Value</button>
-        <button onclick="openZonalLookup()" style="flex: 0.7;"><i class="fas fa-external-link-alt"></i> BIR</button>
+        <div class="zonal-search-container">
+          <input type="text" id="zonalSearchInput" class="zonal-search-input" placeholder="Search city (e.g., Makati, Taguig, QC)" autocomplete="off" oninput="filterZonalLocations(this.value)">
+          <div class="zonal-dropdown" id="zonalDropdown"></div>
+        </div>
+        <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
       <input type="number" id="zonalValue" value="" step="10000" placeholder="Or enter zonal value manually" oninput="calculateAll()">
       <div id="zonalValueDisplay" class="zonal-hint" style="margin-top: 5px;"></div>
@@ -952,35 +1286,35 @@ body.dark-mode .disclaimer {
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
         <table>
-          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td> </tr>
-          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td> </tr>
-          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td> </tr>
+          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
+          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
+          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
         <table>
-          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td> </tr>
-          <tr><td>Local Transfer Tax</td><td>0.5% - 0.75% (by city)</td> </tr>
+          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
+          <tr><td>Local Transfer Tax</td><td>0.5% - 0.75% (by city)</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Registration Fee (LRA)</h4>
         <table>
-          <tr><td>Up to ₱500K</td><td>1.0%</td> </tr>
-          <tr><td>₱500K – ₱1M</td><td>₱5,000 + 0.8%</td> </tr>
-          <tr><td>₱1M – ₱2M</td><td>₱9,000 + 0.6%</td> </tr>
-          <tr><td>₱2M – ₱5M</td><td>₱15,000 + 0.4%</td> </tr>
-          <tr><td>₱5M – ₱10M</td><td>₱27,000 + 0.3%</td> </tr>
-          <tr><td>Above ₱10M</td><td>₱42,000 + 0.25%</td> </tr>
+          <tr><td>Up to ₱500K</td><td>1.0%</td></tr>
+          <tr><td>₱500K – ₱1M</td><td>₱5,000 + 0.8%</td></tr>
+          <tr><td>₱1M – ₱2M</td><td>₱9,000 + 0.6%</td></tr>
+          <tr><td>₱2M – ₱5M</td><td>₱15,000 + 0.4%</td></tr>
+          <tr><td>₱5M – ₱10M</td><td>₱27,000 + 0.3%</td></tr>
+          <tr><td>Above ₱10M</td><td>₱42,000 + 0.25%</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Notarial Fee (Estimate)</h4>
         <table>
-          <tr><td>Up to ₱2M</td><td>~1.0%</td> </tr>
-          <tr><td>₱2M – ₱10M</td><td>~0.5%</td> </tr>
-          <tr><td>Above ₱10M</td><td>~0.25%</td> </tr>
+          <tr><td>Up to ₱2M</td><td>~1.0%</td></tr>
+          <tr><td>₱2M – ₱10M</td><td>~0.5%</td></tr>
+          <tr><td>Above ₱10M</td><td>~0.25%</td></tr>
         </table>
       </div>
     </div>
@@ -988,6 +1322,20 @@ body.dark-mode .disclaimer {
       <i class="fas fa-info-circle"></i>
       <div><strong>Disclaimer:</strong> This calculator provides estimates only. Actual fees may vary based on specific circumstances, city ordinances, and current BIR regulations. Tax is based on the HIGHER of Selling Price or BIR Zonal Value.</div>
     </div>
+  </div>
+</div>
+
+<!-- Login Modal for Print -->
+<div id="loginModal" class="login-modal">
+  <div class="login-modal-content">
+    <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+    <i class="fas fa-lock"></i>
+    <h3>Login Required</h3>
+    <p>Please log in to access the print/download feature.</p>
+    <input type="email" id="printLoginEmail" placeholder="Email">
+    <input type="password" id="printLoginPassword" placeholder="Password">
+    <button onclick="loginAndPrint()">Login & Print</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">Use your admin credentials to access this feature.</p>
   </div>
 </div>
 
@@ -1065,83 +1413,157 @@ if (localStorage.getItem('darkMode') === 'true') {
 }
 
 // ============ ZONAL VALUE DATABASE ============
-const zonalDatabaseForCalc = {
-  "makati": 150000,
-  "makati city": 150000,
-  "bgc": 180000,
-  "bonifacio global city": 180000,
-  "taguig": 100000,
-  "taguig city": 100000,
-  "quezon city": 60000,
-  "qc": 60000,
-  "pasig": 70000,
-  "pasig city": 70000,
-  "mandaluyong": 65000,
-  "manila": 60000,
-  "manila city": 60000,
-  "paranaque": 50000,
-  "pasay": 60000,
-  "muntinlupa": 65000,
-  "alabang": 80000,
-  "las pinas": 35000,
-  "marikina": 40000,
-  "san juan": 55000,
-  "caloocan": 30000,
-  "valenzuela": 25000,
-  "malabon": 22000,
-  "navotas": 20000,
-  "pateros": 27000,
-  "tagaytay": 45000,
-  "nuvali": 50000,
-  "sta rosa": 40000,
-  "binan": 35000,
-  "calamba": 30000,
-  "dasmariñas": 35000,
-  "imus": 32000,
-  "bacoor": 30000,
-  "antipolo": 35000,
-  "cainta": 32000,
-  "taytay": 28000,
-  "angeles": 35000,
-  "clark": 45000,
-  "subic": 40000,
-  "olongapo": 30000,
-  "baguio": 50000,
-  "la trinidad": 30000,
-  "vigan": 22000,
-  "lauag": 20000,
-  "dagupan": 22000,
-  "naga": 22000,
-  "legazpi": 22000,
-  "puerto princesa": 25000
-};
+const zonalDatabaseForCalc = [
+  { location: "Makati City", region: "Metro Manila", avg: 150000 },
+  { location: "BGC, Taguig", region: "Metro Manila", avg: 180000 },
+  { location: "Taguig City", region: "Metro Manila", avg: 100000 },
+  { location: "Quezon City", region: "Metro Manila", avg: 60000 },
+  { location: "Pasig City", region: "Metro Manila", avg: 70000 },
+  { location: "Mandaluyong City", region: "Metro Manila", avg: 65000 },
+  { location: "Manila City", region: "Metro Manila", avg: 60000 },
+  { location: "Parañaque City", region: "Metro Manila", avg: 50000 },
+  { location: "Pasay City", region: "Metro Manila", avg: 60000 },
+  { location: "Muntinlupa City", region: "Metro Manila", avg: 65000 },
+  { location: "Alabang", region: "Metro Manila", avg: 80000 },
+  { location: "Las Piñas City", region: "Metro Manila", avg: 35000 },
+  { location: "Marikina City", region: "Metro Manila", avg: 40000 },
+  { location: "San Juan City", region: "Metro Manila", avg: 55000 },
+  { location: "Caloocan City", region: "Metro Manila", avg: 30000 },
+  { location: "Valenzuela City", region: "Metro Manila", avg: 25000 },
+  { location: "Malabon City", region: "Metro Manila", avg: 22000 },
+  { location: "Navotas City", region: "Metro Manila", avg: 20000 },
+  { location: "Pateros", region: "Metro Manila", avg: 27000 },
+  { location: "Tagaytay City", region: "Calabarzon", avg: 45000 },
+  { location: "Nuvali, Laguna", region: "Calabarzon", avg: 50000 },
+  { location: "Sta. Rosa, Laguna", region: "Calabarzon", avg: 40000 },
+  { location: "Biñan, Laguna", region: "Calabarzon", avg: 35000 },
+  { location: "Calamba, Laguna", region: "Calabarzon", avg: 30000 },
+  { location: "Los Baños, Laguna", region: "Calabarzon", avg: 28000 },
+  { location: "Cabuyao, Laguna", region: "Calabarzon", avg: 30000 },
+  { location: "San Pedro, Laguna", region: "Calabarzon", avg: 32000 },
+  { location: "Dasmariñas, Cavite", region: "Calabarzon", avg: 35000 },
+  { location: "Imus, Cavite", region: "Calabarzon", avg: 32000 },
+  { location: "Bacoor, Cavite", region: "Calabarzon", avg: 30000 },
+  { location: "General Trias, Cavite", region: "Calabarzon", avg: 28000 },
+  { location: "Silang, Cavite", region: "Calabarzon", avg: 30000 },
+  { location: "Trece Martires, Cavite", region: "Calabarzon", avg: 25000 },
+  { location: "Antipolo, Rizal", region: "Calabarzon", avg: 35000 },
+  { location: "Cainta, Rizal", region: "Calabarzon", avg: 32000 },
+  { location: "Taytay, Rizal", region: "Calabarzon", avg: 28000 },
+  { location: "Binangonan, Rizal", region: "Calabarzon", avg: 25000 },
+  { location: "Angono, Rizal", region: "Calabarzon", avg: 28000 },
+  { location: "Lucena City", region: "Calabarzon", avg: 25000 },
+  { location: "Tayabas, Quezon", region: "Calabarzon", avg: 20000 },
+  { location: "Batangas City", region: "Calabarzon", avg: 25000 },
+  { location: "Lipa City, Batangas", region: "Calabarzon", avg: 30000 },
+  { location: "Nasugbu, Batangas", region: "Calabarzon", avg: 28000 },
+  { location: "Bauan, Batangas", region: "Calabarzon", avg: 22000 },
+  { location: "San Pablo, Laguna", region: "Calabarzon", avg: 22000 },
+  { location: "Clark Freeport, Pampanga", region: "Central Luzon", avg: 45000 },
+  { location: "Angeles City, Pampanga", region: "Central Luzon", avg: 35000 },
+  { location: "San Fernando, Pampanga", region: "Central Luzon", avg: 30000 },
+  { location: "Mabalacat, Pampanga", region: "Central Luzon", avg: 28000 },
+  { location: "Subic Bay Freeport", region: "Central Luzon", avg: 40000 },
+  { location: "Olongapo City", region: "Central Luzon", avg: 30000 },
+  { location: "Tarlac City", region: "Central Luzon", avg: 25000 },
+  { location: "Capas, Tarlac", region: "Central Luzon", avg: 22000 },
+  { location: "Balanga, Bataan", region: "Central Luzon", avg: 25000 },
+  { location: "Mariveles, Bataan", region: "Central Luzon", avg: 28000 },
+  { location: "Malolos, Bulacan", region: "Central Luzon", avg: 25000 },
+  { location: "San Jose Del Monte, Bulacan", region: "Central Luzon", avg: 28000 },
+  { location: "Meycauayan, Bulacan", region: "Central Luzon", avg: 30000 },
+  { location: "Santa Maria, Bulacan", region: "Central Luzon", avg: 25000 },
+  { location: "Cabanatuan, Nueva Ecija", region: "Central Luzon", avg: 22000 },
+  { location: "Gapan, Nueva Ecija", region: "Central Luzon", avg: 18000 },
+  { location: "Palayan, Nueva Ecija", region: "Central Luzon", avg: 15000 },
+  { location: "San Fernando, La Union", region: "Ilocos", avg: 20000 },
+  { location: "Bauang, La Union", region: "Ilocos", avg: 18000 },
+  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000 },
+  { location: "Candon, Ilocos Sur", region: "Ilocos", avg: 15000 },
+  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000 },
+  { location: "Batac, Ilocos Norte", region: "Ilocos", avg: 18000 },
+  { location: "Pagudpud, Ilocos Norte", region: "Ilocos", avg: 22000 },
+  { location: "Alaminos, Pangasinan", region: "Ilocos", avg: 18000 },
+  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000 },
+  { location: "Lingayen, Pangasinan", region: "Ilocos", avg: 18000 },
+  { location: "San Carlos, Pangasinan", region: "Ilocos", avg: 15000 },
+  { location: "Urdaneta, Pangasinan", region: "Ilocos", avg: 15000 },
+  { location: "Baguio City", region: "Cordillera", avg: 50000 },
+  { location: "La Trinidad, Benguet", region: "Cordillera", avg: 30000 },
+  { location: "Itogon, Benguet", region: "Cordillera", avg: 20000 },
+  { location: "Bontoc, Mountain Province", region: "Cordillera", avg: 15000 },
+  { location: "Tabuk, Kalinga", region: "Cordillera", avg: 15000 },
+  { location: "Banaue, Ifugao", region: "Cordillera", avg: 18000 },
+  { location: "Lagawe, Ifugao", region: "Cordillera", avg: 12000 },
+  { location: "Tuguegarao City", region: "Cagayan Valley", avg: 18000 },
+  { location: "Santiago City", region: "Cagayan Valley", avg: 16000 },
+  { location: "Cauayan, Isabela", region: "Cagayan Valley", avg: 15000 },
+  { location: "Ilagan, Isabela", region: "Cagayan Valley", avg: 14000 },
+  { location: "Bayombong, Nueva Vizcaya", region: "Cagayan Valley", avg: 12000 },
+  { location: "Solano, Nueva Vizcaya", region: "Cagayan Valley", avg: 13000 },
+  { location: "Basco, Batanes", region: "Cagayan Valley", avg: 18000 },
+  { location: "Legazpi City", region: "Bicol", avg: 22000 },
+  { location: "Daraga, Albay", region: "Bicol", avg: 18000 },
+  { location: "Tabaco, Albay", region: "Bicol", avg: 15000 },
+  { location: "Ligao, Albay", region: "Bicol", avg: 14000 },
+  { location: "Naga City", region: "Bicol", avg: 22000 },
+  { location: "Iriga City", region: "Bicol", avg: 16000 },
+  { location: "Sorsogon City", region: "Bicol", avg: 16000 },
+  { location: "Masbate City", region: "Bicol", avg: 15000 },
+  { location: "Daet, Camarines Norte", region: "Bicol", avg: 16000 },
+  { location: "Virac, Catanduanes", region: "Bicol", avg: 14000 },
+  { location: "Puerto Princesa", region: "Mimaropa", avg: 25000 },
+  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000 },
+  { location: "Coron, Palawan", region: "Mimaropa", avg: 28000 },
+  { location: "Calapan, Oriental Mindoro", region: "Mimaropa", avg: 18000 },
+  { location: "Odiongan, Romblon", region: "Mimaropa", avg: 12000 },
+  { location: "Boac, Marinduque", region: "Mimaropa", avg: 12000 }
+];
 
-function fetchZonalValue() {
-  let location = document.getElementById('zonalLocation').value.toLowerCase().trim();
-  if (!location) {
-    showToast('Please enter a city name', true);
+// ============ SEARCHABLE ZONAL DROPDOWN ============
+function filterZonalLocations(searchTerm) {
+  const dropdown = document.getElementById('zonalDropdown');
+  const searchInput = document.getElementById('zonalSearchInput');
+  
+  if (!searchTerm.trim()) {
+    dropdown.classList.remove('show');
     return;
   }
   
-  let zonalPrice = null;
-  let matchedKey = null;
+  const filtered = zonalDatabaseForCalc.filter(item => 
+    item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.region.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
-  for (const [key, value] of Object.entries(zonalDatabaseForCalc)) {
-    if (location.includes(key) || key.includes(location)) {
-      zonalPrice = value;
-      matchedKey = key;
-      break;
-    }
-  }
-  
-  if (zonalPrice) {
-    document.getElementById('zonalValue').value = zonalPrice;
-    document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${matchedKey} set to ₱${zonalPrice.toLocaleString()}/sqm.`;
-    calculateAll();
+  if (filtered.length > 0) {
+    dropdown.innerHTML = filtered.map(item => `
+      <div class="zonal-dropdown-item" onclick="selectZonalLocation('${item.location.replace(/'/g, "\\'")}', ${item.avg})">
+        <span class="location-name">${item.location}</span>
+        <span class="location-value">₱${item.avg.toLocaleString()}/sqm</span>
+        <div style="font-size: 10px; color: var(--gray);">${item.region}</div>
+      </div>
+    `).join('');
+    dropdown.classList.add('show');
   } else {
-    document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Exact zonal value not found. You can manually enter the amount or check the BIR website.`;
+    dropdown.innerHTML = '<div class="zonal-dropdown-item" style="color: var(--gray);">No locations found</div>';
+    dropdown.classList.add('show');
   }
 }
+
+function selectZonalLocation(location, value) {
+  document.getElementById('zonalSearchInput').value = location;
+  document.getElementById('zonalValue').value = value;
+  document.getElementById('zonalDropdown').classList.remove('show');
+  document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
+  calculateAll();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.zonal-search-container')) {
+    document.getElementById('zonalDropdown').classList.remove('show');
+  }
+});
 
 // ============ CALCULATOR FUNCTIONS ============
 let currentAssetType = 'capital';
@@ -1240,8 +1662,8 @@ function calculateAll() {
   document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
   document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
   
-  document.getElementById('grossPrice').innerHTML = formatCurrency(sellingPrice);
-  document.getElementById('zonalValueDisplayCalc').innerHTML = formatCurrency(zonalValue);
+  document.getElementById('grossPrice').innerHTML = sellingPrice > 0 ? formatCurrency(sellingPrice) : '₱0';
+  document.getElementById('zonalValueDisplayCalc').innerHTML = zonalValue > 0 ? formatCurrency(zonalValue) : '₱0';
   document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
   document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
   document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
@@ -1303,6 +1725,62 @@ function calculateFromDesiredProceed() {
 function openZonalLookup() {
   window.open('https://www.bir.gov.ph/index.php/zonal-value.html', '_blank');
   showToast('Opening BIR Zonal Value lookup tool...');
+}
+
+// ============ PRINT FUNCTION WITH LOGIN ============
+function checkLoginAndPrint() {
+  // Check if user is already logged in (session storage)
+  const isLoggedIn = sessionStorage.getItem('calculatorLoggedIn');
+  if (isLoggedIn === 'true') {
+    window.print();
+  } else {
+    document.getElementById('loginModal').style.display = 'flex';
+  }
+}
+
+function closeLoginModal() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('printLoginEmail').value = '';
+  document.getElementById('printLoginPassword').value = '';
+}
+
+async function loginAndPrint() {
+  const email = document.getElementById('printLoginEmail').value;
+  const password = document.getElementById('printLoginPassword').value;
+  
+  if (!email || !password) {
+    showToast('Please enter email and password', true);
+    return;
+  }
+  
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    if (response.ok) {
+      sessionStorage.setItem('calculatorLoggedIn', 'true');
+      closeLoginModal();
+      showToast('Login successful! Preparing print...');
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    } else {
+      showToast('Invalid credentials. Please use admin login.', true);
+    }
+  } catch (error) {
+    showToast('Login failed. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 }
 
 function showToast(message, isError = false) {
