@@ -4,9 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GLRA Realty - Admin Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta name="description" content="Admin dashboard for GLRA Realty - Manage properties, inquiries, subscribers, and hero images">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://glrarealty.com/admin.html">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+
+<!-- Preconnect for faster loading -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+
 <style>
 * {
   margin: 0;
@@ -35,7 +48,7 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #1a1a2a;
+  --gray-light: #0f0f1a;
   --white: #0f0f1a;
   --border-color: #2a2a3a;
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
@@ -89,12 +102,23 @@ body.dark-mode textarea::placeholder {
   color: #888 !important;
 }
 
+body.dark-mode .property-item {
+  background: #1a1a2a !important;
+  border-color: #3a3a4a !important;
+}
+
+body.dark-mode .bulk-actions,
+body.dark-mode .search-bar-admin {
+  background: #1a1a2a !important;
+}
+
+/* Login Container */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--dark) 0%, var(--orange) 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, var(--orange) 100%);
 }
 
 .login-box {
@@ -148,6 +172,7 @@ body.dark-mode textarea::placeholder {
   transform: translateY(-2px);
 }
 
+/* Dashboard */
 .dashboard {
   display: none;
   background: var(--gray-light);
@@ -160,6 +185,7 @@ body.dark-mode textarea::placeholder {
   padding: 24px;
 }
 
+/* Header */
 .header {
   background: var(--white);
   padding: 20px 28px;
@@ -231,6 +257,7 @@ body.dark-mode .darkmode-btn-header {
   transform: translateY(-2px);
 }
 
+/* Stats */
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -268,6 +295,7 @@ body.dark-mode .darkmode-btn-header {
   color: var(--orange);
 }
 
+/* Status Summary */
 .status-summary {
   background: var(--white);
   padding: 16px 24px;
@@ -294,6 +322,7 @@ body.dark-mode .darkmode-btn-header {
 .status-sold { background: var(--danger); color: white; }
 .status-dnp { background: var(--gray); color: white; }
 
+/* Tabs */
 .tabs {
   display: flex;
   gap: 12px;
@@ -338,6 +367,7 @@ body.dark-mode .darkmode-btn-header {
   display: block;
 }
 
+/* Search Bar Admin */
 .search-bar-admin {
   background: var(--gray-light);
   padding: 20px;
@@ -392,6 +422,7 @@ body.dark-mode .darkmode-btn-header {
   margin-left: auto;
 }
 
+/* Bulk Actions */
 .bulk-actions {
   background: var(--gray-light);
   padding: 16px 20px;
@@ -416,6 +447,7 @@ body.dark-mode .darkmode-btn-header {
   accent-color: var(--orange);
 }
 
+/* Property List */
 .property-list {
   display: flex;
   flex-direction: column;
@@ -496,6 +528,7 @@ body.dark-mode .darkmode-btn-header {
   border-radius: 40px;
 }
 
+/* Property Form */
 .property-form {
   max-width: 100%;
 }
@@ -552,6 +585,7 @@ body.dark-mode .darkmode-btn-header {
   gap: 20px;
 }
 
+/* Image Upload */
 .image-upload-btn {
   display: inline-flex;
   align-items: center;
@@ -636,6 +670,7 @@ body.dark-mode .darkmode-btn-header {
   transform: scale(1.1);
 }
 
+/* Hero Images */
 .image-manager h3 {
   color: var(--orange);
   margin-bottom: 12px;
@@ -747,6 +782,7 @@ body.dark-mode .darkmode-btn-header {
   font-size: 14px;
 }
 
+/* Import Area */
 .import-area {
   background: var(--gray-light);
   padding: 32px;
@@ -781,6 +817,7 @@ body.dark-mode .darkmode-btn-header {
   background: var(--orange-dark);
 }
 
+/* Progress Stack */
 .progress-stack {
   position: fixed;
   bottom: 20px;
@@ -896,27 +933,7 @@ body.dark-mode .darkmode-btn-header {
   border-radius: 4px;
 }
 
-.progress-stack-collapse-btn {
-  background: var(--white);
-  border: 1px solid #e5e7eb;
-  border-radius: 40px;
-  padding: 8px 16px;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.progress-stack-collapse-btn:hover {
-  background: var(--orange);
-  color: white;
-  border-color: var(--orange);
-}
-
+/* Buttons */
 button {
   background: var(--orange);
   color: white;
@@ -960,6 +977,7 @@ button.danger:hover:not(:disabled) {
   vertical-align: middle;
 }
 
+/* Modal */
 .modal {
   display: none;
   position: fixed;
@@ -995,6 +1013,7 @@ button.danger:hover:not(:disabled) {
   color: var(--danger);
 }
 
+/* Inquiry List */
 .inquiry-list {
   display: flex;
   flex-direction: column;
@@ -1018,6 +1037,7 @@ button.danger:hover:not(:disabled) {
   margin-bottom: 8px;
 }
 
+/* Toast */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -1087,7 +1107,7 @@ button.danger:hover:not(:disabled) {
   animation: spin 0.8s linear infinite;
 }
 
-/* Refresh notification */
+/* Refresh Notice */
 .refresh-notice {
   position: fixed;
   bottom: 80px;
@@ -1108,6 +1128,25 @@ button.danger:hover:not(:disabled) {
   50% { transform: translateY(-5px); }
 }
 
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  background: var(--gray-light);
+  font-weight: 600;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -1146,6 +1185,15 @@ button.danger:hover:not(:disabled) {
   .header-right {
     width: 100%;
     justify-content: flex-end;
+  }
+  
+  .data-table {
+    font-size: 12px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 8px;
   }
 }
 </style>
@@ -1368,14 +1416,14 @@ button.danger:hover:not(:disabled) {
         <button class="export-btn" onclick="exportSubscribersToCSV()" style="background: var(--success);"><i class="fas fa-download"></i> Export CSV</button>
       </div>
       <div style="overflow-x: auto;">
-        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <table class="data-table">
           <thead>
-            <tr style="background: var(--gray-light);">
-              <th style="padding: 12px; text-align: left;">Email</th>
-              <th style="padding: 12px; text-align: left;">Name</th>
-              <th style="padding: 12px; text-align: left;">Source</th>
-              <th style="padding: 12px; text-align: left;">Subscribed</th>
-              <th style="padding: 12px; text-align: left;">Actions</th>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Source</th>
+              <th>Subscribed</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="subscribersList">
@@ -1390,14 +1438,14 @@ button.danger:hover:not(:disabled) {
         <h3 style="color: var(--orange); margin-bottom: 10px;">Price Drop Alert Requests</h3>
       </div>
       <div style="overflow-x: auto;">
-        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <table class="data-table">
           <thead>
-            <tr style="background: var(--gray-light);">
-              <th style="padding: 12px; text-align: left;">Email</th>
-              <th style="padding: 12px; text-align: left;">Property</th>
-              <th style="padding: 12px; text-align: left;">Price at Request</th>
-              <th style="padding: 12px; text-align: left;">Notified</th>
-              <th style="padding: 12px; text-align: left;">Requested</th>
+            <tr>
+              <th>Email</th>
+              <th>Property</th>
+              <th>Price at Request</th>
+              <th>Notified</th>
+              <th>Requested</th>
             </tr>
           </thead>
           <tbody id="alertsList">
@@ -1490,8 +1538,6 @@ button.danger:hover:not(:disabled) {
 </div>
 
 <div id="progressStack" class="progress-stack"></div>
-
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="loading-overlay hidden">
   <div class="spinner"></div>
   <div>Saving property... Please wait</div>
@@ -1517,9 +1563,7 @@ function showRefreshNotice() {
   const notice = document.createElement('div');
   notice.className = 'refresh-notice';
   notice.innerHTML = '<i class="fas fa-sync-alt"></i> Data saved! Click here to refresh';
-  notice.onclick = () => {
-    location.reload();
-  };
+  notice.onclick = () => { location.reload(); };
   document.body.appendChild(notice);
   setTimeout(() => {
     if (notice && notice.parentNode) notice.remove();
@@ -1532,26 +1576,14 @@ function toggleDarkMode() {
   const isDarkMode = document.body.classList.contains('dark-mode');
   localStorage.setItem('darkMode', isDarkMode);
   
-  const floatingBtn = document.getElementById('floatingDarkModeToggle');
   const headerBtn = document.getElementById('headerDarkModeToggle');
-  
   if (isDarkMode) {
-    if (floatingBtn) {
-      floatingBtn.innerHTML = '<i class="fas fa-sun"></i>';
-      floatingBtn.style.background = '#2a2a3a';
-      floatingBtn.style.color = '#f97316';
-    }
     if (headerBtn) {
       headerBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
       headerBtn.style.background = '#2a2a3a';
       headerBtn.style.color = '#f97316';
     }
   } else {
-    if (floatingBtn) {
-      floatingBtn.innerHTML = '<i class="fas fa-moon"></i>';
-      floatingBtn.style.background = '#1e1e2e';
-      floatingBtn.style.color = 'white';
-    }
     if (headerBtn) {
       headerBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
       headerBtn.style.background = '#1e1e2e';
@@ -1748,7 +1780,6 @@ async function uploadImage(file, type = 'hero', progressId = null) {
   return new Promise(async (resolve, reject) => {
     try {
       const compressedFile = await compressImage(file, 1200, 0.7);
-      console.log(`Compressed: ${(file.size/1024).toFixed(1)}KB → ${(compressedFile.size/1024).toFixed(1)}KB`);
       
       const formData = new FormData();
       formData.append('image', compressedFile);
@@ -2088,7 +2119,7 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add('active');
 }
 
-// Add Property Submit - FIXED with loading overlay and auto-refresh
+// Add Property Submit
 document.getElementById('propertyForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   const submitBtn = document.getElementById('submitPropertyBtn');
