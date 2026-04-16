@@ -9,7 +9,7 @@ const { Resend } = require('resend');
 const app = express();
 
 // ============ RESEND EMAIL CONFIGURATION ============
-const resend = new Resend(process.env.RESEND_API_KEY || 're_U1R3jiPK_9PFLJQew2uqyQNSuGQeE19kF');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email sending function
 async function sendEmail(to, subject, htmlContent) {
