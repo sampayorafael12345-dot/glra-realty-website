@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Sales Closing Fees Calculator | GLRA Realty</title>
-<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates.">
+<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates based on city.">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
@@ -14,6 +14,10 @@
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/calculator.html">
+
+<!-- Preconnect -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -70,14 +74,7 @@ body.dark-mode {
   background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
-/* ============ ALL ELEMENTS HAVE BORDERS IN LIGHT MODE ============ */
-.input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
-.summary-banner, .radio-option, .comm-btn, .search-field, .zonal-search-input,
-.zonal-row button, select, input, .disclaimer {
-  border: 2px solid var(--border-color);
-}
-
-/* Dark mode specific - remove white backgrounds */
+/* Dark mode specific fixes */
 body.dark-mode .input-card,
 body.dark-mode .result-card,
 body.dark-mode .schedules-wrapper,
@@ -86,33 +83,9 @@ body.dark-mode .radio-option,
 body.dark-mode .comm-btn,
 body.dark-mode .zonal-dropdown,
 body.dark-mode .price-custom-inputs,
-body.dark-mode .login-modal-content {
+body.dark-mode .email-print-content {
   background: var(--card-bg) !important;
   border-color: #3a3a4a !important;
-}
-
-body.dark-mode .input-card h3,
-body.dark-mode .input-card label,
-body.dark-mode .result-header h3,
-body.dark-mode .fee-label,
-body.dark-mode .fee-value,
-body.dark-mode .total-row .fee-label,
-body.dark-mode .schedule-card h4,
-body.dark-mode .schedule-card td,
-body.dark-mode .info-card h4,
-body.dark-mode .info-card p,
-body.dark-mode .tax-row .tax-label,
-body.dark-mode .tax-row .tax-value,
-body.dark-mode .disclaimer div,
-body.dark-mode .zonal-hint,
-body.dark-mode .zonal-hint span,
-body.dark-mode .input-hint,
-body.dark-mode .summary-item h4,
-body.dark-mode .summary-item .amount,
-body.dark-mode .summary-item .percent,
-body.dark-mode .radio-option span,
-body.dark-mode .radio-option small {
-  color: var(--text-color) !important;
 }
 
 body.dark-mode input,
@@ -123,46 +96,12 @@ body.dark-mode .zonal-search-input {
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode input::placeholder {
-  color: #888 !important;
-}
-
-body.dark-mode .radio-option {
-  border-color: #3a3a4a !important;
-}
-
-body.dark-mode .radio-option.selected {
-  background: var(--orange-light) !important;
-  border-color: var(--orange) !important;
-}
-
 body.dark-mode .dropdown-item {
   color: var(--text-color) !important;
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode .dropdown-item:hover {
-  background: #2a2a3a !important;
-}
-
-body.dark-mode .summary-banner {
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
-}
-
-body.dark-mode .result-header {
-  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
-}
-
-body.dark-mode .disclaimer {
-  background: #2a2a3a !important;
-  color: #c0a040 !important;
-}
-
-body.dark-mode .disclaimer div {
-  color: #c0a040 !important;
-}
-
-/* Light mode borders - so nothing looks floating */
+/* All elements have borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
 select, input, .disclaimer {
@@ -773,7 +712,7 @@ body.dark-mode .result-header {
   color: var(--text-color);
 }
 
-/* Email Modal for Print (no password) */
+/* Email Modal for Print */
 .email-print-modal {
   display: none;
   position: fixed;
@@ -975,6 +914,31 @@ body.dark-mode .btn-darkmode {
   border-color: var(--orange);
 }
 
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background: var(--orange);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  z-index: 100;
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Toast */
 .toast {
   position: fixed;
@@ -1025,7 +989,7 @@ body.dark-mode .disclaimer {
 
 /* Print Styles */
 @media print {
-  .navbar, .floating-buttons, .print-button-wrapper, .email-print-modal, footer, .back-to-top, .mobile-menu-btn, .darkmode-btn-header {
+  .navbar, .floating-buttons, .print-button-wrapper, .email-print-modal, footer, .back-to-top, .mobile-menu-btn {
     display: none !important;
   }
   
@@ -1084,6 +1048,9 @@ body.dark-mode .disclaimer {
   .comm-btn { padding: 8px; font-size: 12px; }
   .zonal-row { flex-direction: column; }
   .zonal-row button { width: 100%; }
+  .floating-buttons { bottom: 20px; right: 20px; }
+  .footer-content { text-align: center; }
+  .social-links { justify-content: center; }
 }
 </style>
 </head>
@@ -1100,7 +1067,7 @@ body.dark-mode .disclaimer {
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/#featured">FEATURED</a>
-    <a href="/#properties">PROPERTIES</a>
+    <a href="/properties.html">PROPERTIES</a>
     <a href="/#agent">AGENT</a>
     <a href="/calculator.html" style="color: var(--orange);">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
@@ -1113,7 +1080,7 @@ body.dark-mode .disclaimer {
   <div class="mobile-overlay-links">
     <a href="/" onclick="closeMobileMenu()">HOME</a>
     <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
-    <a href="/#properties" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
     <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
     <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
@@ -1130,7 +1097,7 @@ body.dark-mode .disclaimer {
   </div>
 </section>
 
-<!-- Print Button (Email only) -->
+<!-- Print Button -->
 <div class="print-button-wrapper">
   <button class="print-btn" onclick="showPrintEmailModal()">
     <i class="fas fa-print"></i> Save as PDF / Print Calculator
@@ -1202,7 +1169,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Commission & Transfer Tax -->
+    <!-- Card 3: Commission & Transfer Tax - UPDATED with City Selection -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1217,14 +1184,45 @@ body.dark-mode .disclaimer {
       </div>
       <input type="hidden" id="commissionRate" value="5">
       
-      <label style="margin-top: 12px;">Local Transfer Tax</label>
-      <select id="transferTaxRate" oninput="calculateAll()">
-        <option value="0.5">0.5% - Makati City, Manila City, Municipalities (Outside MM)</option>
-        <option value="0.6">0.6% - Taguig City (BGC)</option>
-        <option value="0.75" selected>0.75% - Most Metro Manila Cities & Cities Outside MM</option>
+      <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
+      <select id="cityLocation" oninput="updateTransferTaxRate()">
+        <option value="">Select City / Municipality</option>
+        <optgroup label="Metro Manila (0.50% - Standard)">
+          <option value="0.50" data-location="Caloocan City">Caloocan City</option>
+          <option value="0.50" data-location="Las Piñas City">Las Piñas City</option>
+          <option value="0.50" data-location="Makati City">Makati City</option>
+          <option value="0.50" data-location="Malabon City">Malabon City</option>
+          <option value="0.50" data-location="Marikina City">Marikina City</option>
+          <option value="0.50" data-location="Muntinlupa City">Muntinlupa City</option>
+          <option value="0.50" data-location="Navotas City">Navotas City</option>
+          <option value="0.50" data-location="Pateros">Pateros</option>
+          <option value="0.50" data-location="Valenzuela City">Valenzuela City</option>
+        </optgroup>
+        <optgroup label="Metro Manila (0.60% - Special)">
+          <option value="0.60" data-location="Taguig City">Taguig City (BGC area)</option>
+        </optgroup>
+        <optgroup label="Metro Manila (0.75% - Higher)">
+          <option value="0.75" data-location="Mandaluyong City">Mandaluyong City</option>
+          <option value="0.75" data-location="Manila">Manila City</option>
+          <option value="0.75" data-location="Parañaque City">Parañaque City</option>
+          <option value="0.75" data-location="Pasay City">Pasay City</option>
+          <option value="0.75" data-location="Pasig City">Pasig City</option>
+          <option value="0.75" data-location="Quezon City">Quezon City</option>
+          <option value="0.75" data-location="San Juan City">San Juan City</option>
+        </optgroup>
+        <optgroup label="Outside Metro Manila">
+          <option value="0.50" data-location="Municipality">Municipalities (0.50%)</option>
+          <option value="0.75" data-location="City">Cities (0.75%)</option>
+        </optgroup>
       </select>
+      
+      <div id="transferTaxDisplay" class="zonal-hint" style="margin-top: 8px;">
+        <span>Local Transfer Tax Rate: <strong id="transferTaxRateValue" class="tax-basis">0.75%</strong></span>
+        <span id="transferTaxNote">Based on selected city</span>
+      </div>
+      
       <div class="input-hint" style="margin-top: 5px; font-size: 11px;">
-        <i class="fas fa-info-circle"></i> Based on higher of Selling Price or Zonal Value. Due within 60 days.
+        <i class="fas fa-info-circle"></i> Transfer tax is based on the higher of Selling Price or Zonal Value. Due within 60 days.
       </div>
     </div>
   </div>
@@ -1296,7 +1294,7 @@ body.dark-mode .disclaimer {
         <div class="fee-row">
           <span class="fee-label">Local Transfer Tax (<span id="transferRateDisplay">0.75</span>%)</span>
           <span class="fee-value" id="transferTax">₱0</span>
-          <div class="fee-note">Varies by city</div>
+          <div class="fee-note" id="transferTaxNoteDisplay">Based on selected city</div>
         </div>
         <div class="fee-row">
           <span class="fee-label">Registration Fee (tiered)</span>
@@ -1325,35 +1323,31 @@ body.dark-mode .disclaimer {
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
         <table>
-          <tr><td>Capital Gains Tax</span><td>6% of tax basis</td></tr>
-          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</td></tr>
-          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</td></tr>
+          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
+          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
+          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        </table>
-          <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</td></tr>
-          <tr><td>Local Transfer Tax</span><td>0.5% - 0.75% (by city)</td></tr>
-        </table>
-      </div>
-      <div class="schedule-card">
-        <h4>Registration Fee (LRA)</h4>
         <table>
-          <tr><td>Up to ₱500K</span><td>1.0%</td></tr>
-          <tr><td>₱500K – ₱1M</span><td>₱5,000 + 0.8%</td></tr>
-          <tr><td>₱1M – ₱2M</span><td>₱9,000 + 0.6%</td></tr>
-          <tr><td>₱2M – ₱5M</span><td>₱15,000 + 0.4%</td></tr>
-          <tr><td>₱5M – ₱10M</span><td>₱27,000 + 0.3%</td></tr>
-          <tr><td>Above ₱10M</span><td>₱42,000 + 0.25%</td></tr>
+          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
+          <tr><td>Local Transfer Tax</td><td>0.50% - 0.75% (by city)</td></tr>
         </table>
       </div>
       <div class="schedule-card">
-        <h4>Notarial Fee (Estimate)</h4>
+        <h4>Metro Manila Transfer Tax Rates</h4>
+        <table>
+          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</td><td>0.50%</td></tr>
+          <tr><td>Taguig City (BGC)</td><td>0.60%</td></tr>
+          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</td><td>0.75%</td></tr>
         </table>
-          <tr><td>Up to ₱2M</span><td>~1.0%</td></tr>
-          <tr><td>₱2M – ₱10M</span><td>~0.5%</td></tr>
-          <tr><td>Above ₱10M</span><td>~0.25%</td></tr>
+      </div>
+      <div class="schedule-card">
+        <h4>Outside Metro Manila</h4>
+        <table>
+          <tr><td>Municipalities</td><td>0.50%</td></tr>
+          <tr><td>Cities</td><td>0.75%</td></tr>
         </table>
       </div>
     </div>
@@ -1364,7 +1358,7 @@ body.dark-mode .disclaimer {
   </div>
 </div>
 
-<!-- Email Modal for Print (Email only, no password) -->
+<!-- Email Modal for Print -->
 <div id="emailPrintModal" class="email-print-modal">
   <div class="email-print-content">
     <span class="close-print-modal" onclick="closeEmailPrintModal()">&times;</span>
@@ -1425,6 +1419,9 @@ body.dark-mode .disclaimer {
     <i class="fas fa-moon"></i>
   </button>
 </div>
+
+<!-- Back to Top -->
+<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
 <script>
 // ============ DARK MODE ============
@@ -1603,6 +1600,35 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// ============ TRANSFER TAX RATE FUNCTIONS ============
+let currentTransferTaxRate = 0.75;
+let currentLocationName = '';
+
+function updateTransferTaxRate() {
+  const select = document.getElementById('cityLocation');
+  const selectedOption = select.options[select.selectedIndex];
+  
+  if (selectedOption && selectedOption.value) {
+    currentTransferTaxRate = parseFloat(selectedOption.value);
+    currentLocationName = selectedOption.textContent;
+    
+    // Update display
+    document.getElementById('transferTaxRateValue').innerHTML = currentTransferTaxRate + '%';
+    document.getElementById('transferRateDisplay').innerHTML = currentTransferTaxRate;
+    document.getElementById('transferTaxNote').innerHTML = `Based on ${currentLocationName}`;
+    document.getElementById('transferTaxNoteDisplay').innerHTML = `Based on ${currentLocationName}`;
+  } else {
+    currentTransferTaxRate = 0.75;
+    currentLocationName = 'Default';
+    document.getElementById('transferTaxRateValue').innerHTML = '0.75% (Default)';
+    document.getElementById('transferRateDisplay').innerHTML = '0.75';
+    document.getElementById('transferTaxNote').innerHTML = 'Please select a city';
+    document.getElementById('transferTaxNoteDisplay').innerHTML = 'Please select a city for accurate rate';
+  }
+  
+  calculateAll();
+}
+
 // ============ CALCULATOR FUNCTIONS ============
 let currentAssetType = 'capital';
 let currentCommission = 5;
@@ -1665,7 +1691,7 @@ function calculateAll() {
   const zonalValue = parseFloat(document.getElementById('zonalValue').value) || 0;
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
-  const transferTaxRate = parseFloat(document.getElementById('transferTaxRate').value) || 0.75;
+  const transferTaxRate = currentTransferTaxRate;
   
   const taxBasisHint = document.getElementById('taxBasisValue');
   if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
@@ -1765,7 +1791,7 @@ function openZonalLookup() {
   showToast('Opening BIR Zonal Value lookup tool...');
 }
 
-// ============ PRINT FUNCTION WITH EMAIL ONLY ============
+// ============ PRINT FUNCTION ============
 function showPrintEmailModal() {
   document.getElementById('emailPrintModal').style.display = 'flex';
 }
@@ -1789,10 +1815,8 @@ async function verifyEmailAndPrint() {
   btn.disabled = true;
   
   try {
-    // Store email in session storage
     sessionStorage.setItem('calculatorEmail', email);
     
-    // Here you can optionally save the email to your subscribers list
     await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1833,13 +1857,16 @@ function closeMobileMenu() {
   document.body.style.overflow = '';
 }
 
-// Navbar scroll
+// Navbar scroll and back to top
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
+  const backToTop = document.getElementById('backToTop');
   if (window.scrollY > 50) {
     navbar.classList.add('scrolled');
+    backToTop.classList.add('show');
   } else {
     navbar.classList.remove('scrolled');
+    backToTop.classList.remove('show');
   }
 });
 
