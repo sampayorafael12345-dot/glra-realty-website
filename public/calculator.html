@@ -9,11 +9,12 @@
 <link rel="apple-touch-icon" href="/logo.png">
 
 <!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/calculator.html">
 <meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
 <meta property="og:description" content="Complete property transaction calculator. Includes BIR Zonal Value lookup and Desired Net Proceed.">
 <meta property="og:image" content="https://glrarealty.com/logo.png">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://glrarealty.com/calculator.html">
+<meta property="og:site_name" content="GLRA Realty">
 
 <!-- Preconnect -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -83,7 +84,8 @@ body.dark-mode .radio-option,
 body.dark-mode .comm-btn,
 body.dark-mode .zonal-dropdown,
 body.dark-mode .price-custom-inputs,
-body.dark-mode .email-print-content {
+body.dark-mode .email-print-content,
+body.dark-mode .city-dropdown-list {
   background: var(--card-bg) !important;
   border-color: #3a3a4a !important;
 }
@@ -96,7 +98,8 @@ body.dark-mode .zonal-search-input {
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode .dropdown-item {
+body.dark-mode .dropdown-item,
+body.dark-mode .city-dropdown-item {
   color: var(--text-color) !important;
   border-color: #3a3a4a !important;
 }
@@ -330,8 +333,7 @@ body.dark-mode .page-hero {
   margin-bottom: 8px;
 }
 
-.input-card input,
-.input-card select {
+.input-card input {
   width: 100%;
   padding: 14px 16px;
   border: 2px solid var(--border-color);
@@ -344,11 +346,118 @@ body.dark-mode .page-hero {
   color: var(--text-color);
 }
 
-.input-card input:focus,
-.input-card select:focus {
+.input-card input:focus {
   outline: none;
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+/* Search Field (for dropdown) - Same as homepage */
+.search-field {
+  background: var(--white);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: relative;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+
+body.dark-mode .search-field {
+  background: #2a2a3a;
+}
+
+.search-field i {
+  color: var(--orange);
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.search-field .dropdown-selected {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-field .dropdown-selected span {
+  color: var(--text-color);
+}
+
+.search-field .dropdown-selected i {
+  color: var(--orange);
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.search-field .dropdown-selected.open i {
+  transform: rotate(180deg);
+}
+
+/* Dropdown List - Same as homepage */
+.dropdown-list, .city-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 5px;
+}
+
+.dropdown-list.show, .city-dropdown-list.show {
+  display: block;
+}
+
+.dropdown-item, .city-dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-color);
+}
+
+.dropdown-item:hover, .city-dropdown-item:hover {
+  background: #f8f8f8;
+  color: var(--orange);
+}
+
+.dropdown-item.selected, .city-dropdown-item.selected {
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--orange);
+  font-weight: 500;
+}
+
+/* Custom scrollbar */
+.dropdown-list::-webkit-scrollbar,
+.city-dropdown-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdown-list::-webkit-scrollbar-track,
+.city-dropdown-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb,
+.city-dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--orange);
+  border-radius: 10px;
 }
 
 /* Zonal Search Dropdown */
@@ -389,11 +498,6 @@ body.dark-mode .page-hero {
   box-shadow: var(--shadow-md);
 }
 
-body.dark-mode .zonal-dropdown {
-  background: #1a1a2a;
-  border-color: #3a3a4a;
-}
-
 .zonal-dropdown.show {
   display: block;
 }
@@ -404,11 +508,6 @@ body.dark-mode .zonal-dropdown {
   font-size: 13px;
   border-bottom: 1px solid #f0f0f0;
   transition: all 0.2s ease;
-}
-
-body.dark-mode .zonal-dropdown-item {
-  border-color: #3a3a4a;
-  color: var(--text-color);
 }
 
 .zonal-dropdown-item:hover {
@@ -1169,7 +1268,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Commission & Transfer Tax - UPDATED with City Selection -->
+    <!-- Card 3: Commission & Transfer Tax - IMPROVED DROPDOWN -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1185,40 +1284,43 @@ body.dark-mode .disclaimer {
       <input type="hidden" id="commissionRate" value="5">
       
       <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
-      <select id="cityLocation" oninput="updateTransferTaxRate()">
-        <option value="">Select City / Municipality</option>
-        <optgroup label="Metro Manila (0.50% - Standard)">
-          <option value="0.50" data-location="Caloocan City">Caloocan City</option>
-          <option value="0.50" data-location="Las Piñas City">Las Piñas City</option>
-          <option value="0.50" data-location="Makati City">Makati City</option>
-          <option value="0.50" data-location="Malabon City">Malabon City</option>
-          <option value="0.50" data-location="Marikina City">Marikina City</option>
-          <option value="0.50" data-location="Muntinlupa City">Muntinlupa City</option>
-          <option value="0.50" data-location="Navotas City">Navotas City</option>
-          <option value="0.50" data-location="Pateros">Pateros</option>
-          <option value="0.50" data-location="Valenzuela City">Valenzuela City</option>
-        </optgroup>
-        <optgroup label="Metro Manila (0.60% - Special)">
-          <option value="0.60" data-location="Taguig City">Taguig City (BGC area)</option>
-        </optgroup>
-        <optgroup label="Metro Manila (0.75% - Higher)">
-          <option value="0.75" data-location="Mandaluyong City">Mandaluyong City</option>
-          <option value="0.75" data-location="Manila">Manila City</option>
-          <option value="0.75" data-location="Parañaque City">Parañaque City</option>
-          <option value="0.75" data-location="Pasay City">Pasay City</option>
-          <option value="0.75" data-location="Pasig City">Pasig City</option>
-          <option value="0.75" data-location="Quezon City">Quezon City</option>
-          <option value="0.75" data-location="San Juan City">San Juan City</option>
-        </optgroup>
-        <optgroup label="Outside Metro Manila">
-          <option value="0.50" data-location="Municipality">Municipalities (0.50%)</option>
-          <option value="0.75" data-location="City">Cities (0.75%)</option>
-        </optgroup>
-      </select>
+      
+      <!-- Searchable dropdown like homepage -->
+      <div class="search-field" id="cityDropdown">
+        <i class="fas fa-map-marker-alt"></i>
+        <div class="dropdown-selected" onclick="toggleCityDropdown()">
+          <span id="selectedCity">Select City / Municipality</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="city-dropdown-list" id="cityList">
+          <div class="dropdown-item" data-rate="0.50" data-location="Caloocan City" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Las Piñas City" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Makati City" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Malabon City" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Marikina City" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Muntinlupa City" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Navotas City" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Pateros" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Valenzuela City" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
+          <div class="dropdown-item" data-rate="0.60" data-location="Taguig City (BGC)" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
+          <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Mandaluyong City" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Manila City" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Parañaque City" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Pasay City" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Pasig City" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="Quezon City" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="San Juan City" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
+          <div class="dropdown-item" data-rate="0.50" data-location="Municipality (Outside MM)" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="dropdown-item" data-rate="0.75" data-location="City (Outside MM)" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
+        </div>
+      </div>
       
       <div id="transferTaxDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Local Transfer Tax Rate: <strong id="transferTaxRateValue" class="tax-basis">0.75%</strong></span>
-        <span id="transferTaxNote">Based on selected city</span>
+        <span id="transferTaxNote">Select a city above</span>
       </div>
       
       <div class="input-hint" style="margin-top: 5px; font-size: 11px;">
@@ -1294,7 +1396,7 @@ body.dark-mode .disclaimer {
         <div class="fee-row">
           <span class="fee-label">Local Transfer Tax (<span id="transferRateDisplay">0.75</span>%)</span>
           <span class="fee-value" id="transferTax">₱0</span>
-          <div class="fee-note" id="transferTaxNoteDisplay">Based on selected city</div>
+          <div class="fee-note" id="transferTaxNoteDisplay">Select a city above</div>
         </div>
         <div class="fee-row">
           <span class="fee-label">Registration Fee (tiered)</span>
@@ -1323,31 +1425,31 @@ body.dark-mode .disclaimer {
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
         <table>
-          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
-          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
-          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
+          <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
+          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</span></tr>
+          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
         <table>
-          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
-          <tr><td>Local Transfer Tax</td><td>0.50% - 0.75% (by city)</td></tr>
+          <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
+          <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
         <table>
-          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</td><td>0.50%</td></tr>
-          <tr><td>Taguig City (BGC)</td><td>0.60%</td></tr>
-          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</td><td>0.75%</td></tr>
+          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
+          <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
+          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
         <table>
-          <tr><td>Municipalities</td><td>0.50%</td></tr>
-          <tr><td>Cities</td><td>0.75%</td></tr>
+          <tr><td>Municipalities</span><td>0.50%</span></tr>
+          <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
       </div>
     </div>
@@ -1446,6 +1548,53 @@ if (localStorage.getItem('darkMode') === 'true') {
   const btn = document.getElementById('floatingDarkModeToggle');
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
+
+// ============ CITY DROPDOWN FUNCTIONS ============
+let currentTransferTaxRate = 0.75;
+let currentLocationName = '';
+
+function toggleCityDropdown() {
+  const dropdown = document.getElementById('cityList');
+  const selected = document.querySelector('#cityDropdown .dropdown-selected');
+  
+  // Close other dropdowns
+  document.querySelectorAll('.city-dropdown-list').forEach(list => {
+    if (list !== dropdown) list.classList.remove('show');
+  });
+  document.querySelectorAll('#cityDropdown .dropdown-selected').forEach(s => {
+    if (s !== selected) s.classList.remove('open');
+  });
+  
+  dropdown.classList.toggle('show');
+  selected.classList.toggle('open');
+}
+
+function selectCity(cityName, rate) {
+  currentTransferTaxRate = rate;
+  currentLocationName = cityName;
+  
+  // Update display
+  document.getElementById('selectedCity').innerHTML = cityName;
+  document.getElementById('transferTaxRateValue').innerHTML = rate + '%';
+  document.getElementById('transferRateDisplay').innerHTML = rate;
+  document.getElementById('transferTaxNote').innerHTML = `Based on ${cityName}`;
+  document.getElementById('transferTaxNoteDisplay').innerHTML = `Based on ${cityName}`;
+  
+  // Close dropdown
+  document.getElementById('cityList').classList.remove('show');
+  document.querySelector('#cityDropdown .dropdown-selected').classList.remove('open');
+  
+  // Recalculate
+  calculateAll();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#cityDropdown')) {
+    document.getElementById('cityList').classList.remove('show');
+    document.querySelector('#cityDropdown .dropdown-selected')?.classList.remove('open');
+  }
+});
 
 // ============ ZONAL VALUE DATABASE ============
 const zonalDatabaseForCalc = [
@@ -1599,35 +1748,6 @@ document.addEventListener('click', function(e) {
     document.getElementById('zonalDropdown').classList.remove('show');
   }
 });
-
-// ============ TRANSFER TAX RATE FUNCTIONS ============
-let currentTransferTaxRate = 0.75;
-let currentLocationName = '';
-
-function updateTransferTaxRate() {
-  const select = document.getElementById('cityLocation');
-  const selectedOption = select.options[select.selectedIndex];
-  
-  if (selectedOption && selectedOption.value) {
-    currentTransferTaxRate = parseFloat(selectedOption.value);
-    currentLocationName = selectedOption.textContent;
-    
-    // Update display
-    document.getElementById('transferTaxRateValue').innerHTML = currentTransferTaxRate + '%';
-    document.getElementById('transferRateDisplay').innerHTML = currentTransferTaxRate;
-    document.getElementById('transferTaxNote').innerHTML = `Based on ${currentLocationName}`;
-    document.getElementById('transferTaxNoteDisplay').innerHTML = `Based on ${currentLocationName}`;
-  } else {
-    currentTransferTaxRate = 0.75;
-    currentLocationName = 'Default';
-    document.getElementById('transferTaxRateValue').innerHTML = '0.75% (Default)';
-    document.getElementById('transferRateDisplay').innerHTML = '0.75';
-    document.getElementById('transferTaxNote').innerHTML = 'Please select a city';
-    document.getElementById('transferTaxNoteDisplay').innerHTML = 'Please select a city for accurate rate';
-  }
-  
-  calculateAll();
-}
 
 // ============ CALCULATOR FUNCTIONS ============
 let currentAssetType = 'capital';
