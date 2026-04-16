@@ -75,7 +75,7 @@ body.dark-mode {
   background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
-/* Dark mode specific fixes */
+/* Dark mode fixes */
 body.dark-mode .input-card,
 body.dark-mode .result-card,
 body.dark-mode .schedules-wrapper,
@@ -83,7 +83,6 @@ body.dark-mode .desired-proceed-card,
 body.dark-mode .radio-option,
 body.dark-mode .comm-btn,
 body.dark-mode .zonal-dropdown,
-body.dark-mode .price-custom-inputs,
 body.dark-mode .email-print-content,
 body.dark-mode .city-dropdown-list {
   background: var(--card-bg) !important;
@@ -91,7 +90,6 @@ body.dark-mode .city-dropdown-list {
 }
 
 body.dark-mode input,
-body.dark-mode select,
 body.dark-mode .zonal-search-input {
   background-color: #1a1a2a !important;
   color: var(--text-color) !important;
@@ -104,10 +102,10 @@ body.dark-mode .city-dropdown-item {
   border-color: #3a3a4a !important;
 }
 
-/* All elements have borders */
+/* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
-select, input, .disclaimer {
+input, .disclaimer, .search-field {
   border: 2px solid var(--border-color);
 }
 
@@ -352,7 +350,7 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
-/* Search Field (for dropdown) - Same as homepage */
+/* Search Field for Dropdown */
 .search-field {
   background: var(--white);
   border-radius: 50px;
@@ -388,10 +386,6 @@ body.dark-mode .search-field {
   align-items: center;
 }
 
-.search-field .dropdown-selected span {
-  color: var(--text-color);
-}
-
 .search-field .dropdown-selected i {
   color: var(--orange);
   font-size: 12px;
@@ -402,8 +396,8 @@ body.dark-mode .search-field {
   transform: rotate(180deg);
 }
 
-/* Dropdown List - Same as homepage */
-.dropdown-list, .city-dropdown-list {
+/* Dropdown List */
+.city-dropdown-list {
   position: absolute;
   top: 100%;
   left: 0;
@@ -418,11 +412,11 @@ body.dark-mode .search-field {
   margin-top: 5px;
 }
 
-.dropdown-list.show, .city-dropdown-list.show {
+.city-dropdown-list.show {
   display: block;
 }
 
-.dropdown-item, .city-dropdown-item {
+.city-dropdown-item {
   padding: 12px 15px;
   cursor: pointer;
   font-size: 13px;
@@ -431,36 +425,12 @@ body.dark-mode .search-field {
   color: var(--text-color);
 }
 
-.dropdown-item:hover, .city-dropdown-item:hover {
+.city-dropdown-item:hover {
   background: #f8f8f8;
   color: var(--orange);
 }
 
-.dropdown-item.selected, .city-dropdown-item.selected {
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--orange);
-  font-weight: 500;
-}
-
-/* Custom scrollbar */
-.dropdown-list::-webkit-scrollbar,
-.city-dropdown-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.dropdown-list::-webkit-scrollbar-track,
-.city-dropdown-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.dropdown-list::-webkit-scrollbar-thumb,
-.city-dropdown-list::-webkit-scrollbar-thumb {
-  background: var(--orange);
-  border-radius: 10px;
-}
-
-/* Zonal Search Dropdown */
+/* Zonal Dropdown */
 .zonal-search-container {
   position: relative;
   width: 100%;
@@ -652,8 +622,6 @@ body.dark-mode .search-field {
   border: 2px solid var(--orange);
 }
 
-.desired-proceed-card h3 i { color: var(--orange); }
-
 .desired-result {
   margin-top: 12px;
   padding: 12px;
@@ -749,10 +717,6 @@ body.dark-mode .result-header {
 .fee-label { font-size: 14px; color: var(--gray); }
 .fee-value { font-size: 16px; font-weight: 700; color: var(--text-color); }
 .fee-value.highlight { color: var(--orange); font-size: 22px; }
-.fee-value.success { color: var(--success); }
-.fee-value.danger { color: var(--danger); }
-
-.fee-note { font-size: 11px; color: var(--gray); margin-top: 4px; }
 
 .total-row {
   background: var(--gray-light);
@@ -760,8 +724,6 @@ body.dark-mode .result-header {
   border-radius: 12px;
   margin-top: 10px;
 }
-
-.total-row .fee-label { font-weight: 700; color: var(--text-color); }
 
 /* Rate Schedules */
 .schedules-wrapper {
@@ -897,10 +859,6 @@ body.dark-mode .email-print-content {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-}
-
-.email-print-content button:hover {
-  background: var(--orange-dark);
 }
 
 .close-print-modal {
@@ -1092,18 +1050,7 @@ body.dark-mode .disclaimer {
     display: none !important;
   }
   
-  .page-hero {
-    background: #1a1a2e;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .summary-banner {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .result-header {
+  .page-hero, .summary-banner, .result-header {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -1250,7 +1197,7 @@ body.dark-mode .disclaimer {
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       <label>Gross Selling Price</label>
-      <input type="number" id="propertyValue" value="" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
+      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handlePriceInput(this)" value="">
       
       <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
       <div class="zonal-row">
@@ -1260,7 +1207,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="number" id="zonalValue" value="" step="10000" placeholder="Or enter zonal value manually" oninput="calculateAll()">
+      <input type="text" id="zonalValue" placeholder="Or enter zonal value manually" oninput="handleZonalInput(this)">
       <div id="zonalValueDisplay" class="zonal-hint" style="margin-top: 5px;"></div>
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
         <span>Tax will be based on: <strong class="tax-basis" id="taxBasisValue">Selling Price</strong></span>
@@ -1268,7 +1215,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Commission & Transfer Tax - IMPROVED DROPDOWN -->
+    <!-- Card 3: Commission & Transfer Tax -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1285,7 +1232,7 @@ body.dark-mode .disclaimer {
       
       <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
       
-      <!-- Searchable dropdown like homepage -->
+      <!-- Searchable dropdown -->
       <div class="search-field" id="cityDropdown">
         <i class="fas fa-map-marker-alt"></i>
         <div class="dropdown-selected" onclick="toggleCityDropdown()">
@@ -1293,34 +1240,33 @@ body.dark-mode .disclaimer {
           <i class="fas fa-chevron-down"></i>
         </div>
         <div class="city-dropdown-list" id="cityList">
-          <div class="dropdown-item" data-rate="0.50" data-location="Caloocan City" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Las Piñas City" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Makati City" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Malabon City" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Marikina City" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Muntinlupa City" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Navotas City" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Pateros" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Valenzuela City" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Caloocan City" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Las Piñas City" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Makati City" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Malabon City" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Marikina City" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Muntinlupa City" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Navotas City" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Pateros" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Valenzuela City" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="dropdown-item" data-rate="0.60" data-location="Taguig City (BGC)" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
+          <div class="city-dropdown-item" data-rate="0.60" data-location="Taguig City (BGC)" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Mandaluyong City" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Manila City" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Parañaque City" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Pasay City" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Pasig City" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="Quezon City" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="San Juan City" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Mandaluyong City" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Manila City" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Parañaque City" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasay City" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasig City" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="Quezon City" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="San Juan City" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="dropdown-item" data-rate="0.50" data-location="Municipality (Outside MM)" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="dropdown-item" data-rate="0.75" data-location="City (Outside MM)" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" data-rate="0.50" data-location="Municipality (Outside MM)" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" data-rate="0.75" data-location="City (Outside MM)" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
         </div>
       </div>
       
       <div id="transferTaxDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Local Transfer Tax Rate: <strong id="transferTaxRateValue" class="tax-basis">0.75%</strong></span>
-        <span id="transferTaxNote">Select a city above</span>
       </div>
       
       <div class="input-hint" style="margin-top: 5px; font-size: 11px;">
@@ -1329,11 +1275,11 @@ body.dark-mode .disclaimer {
     </div>
   </div>
 
-  <!-- Desired Net Proceed Card -->
+  <!-- Desired Net Proceed Card - FIXED -->
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="number" id="desiredNetProceed" value="" step="10000" placeholder="Enter desired net amount" oninput="calculateFromDesiredProceed()">
+    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1383,7 +1329,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Buyer's Side -->
+    <!-- Buyer's Side - NO HELPER TEXT -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-check"></i> Buyer's Taxes & Fees</h3>
@@ -1396,17 +1342,14 @@ body.dark-mode .disclaimer {
         <div class="fee-row">
           <span class="fee-label">Local Transfer Tax (<span id="transferRateDisplay">0.75</span>%)</span>
           <span class="fee-value" id="transferTax">₱0</span>
-          <div class="fee-note" id="transferTaxNoteDisplay">Select a city above</div>
         </div>
         <div class="fee-row">
           <span class="fee-label">Registration Fee (tiered)</span>
           <span class="fee-value" id="registrationFee">₱0</span>
-          <div class="fee-note">LRA schedule</div>
         </div>
         <div class="fee-row">
           <span class="fee-label">Notarial Fee (tiered)</span>
           <span class="fee-value" id="notarialFee">₱0</span>
-          <div class="fee-note">Varies by notary</div>
         </div>
         <div class="total-row">
           <div class="fee-row">
@@ -1432,7 +1375,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <table>
+        <tr>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
@@ -1447,7 +1390,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <table>
+        </table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1549,6 +1492,56 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
+// ============ COMMA FORMATTING FUNCTIONS ============
+function formatNumberWithCommas(num) {
+  if (num === '' || num === null || num === undefined) return '';
+  let number = num.toString().replace(/,/g, '');
+  if (isNaN(number) || number === '') return '';
+  return parseFloat(number).toLocaleString('en-US');
+}
+
+function parseCommaNumber(value) {
+  if (!value) return 0;
+  return parseFloat(value.toString().replace(/,/g, '')) || 0;
+}
+
+// Handle price input with commas
+function handlePriceInput(input) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+  } else {
+    input.value = formatNumberWithCommas(rawValue);
+  }
+  updateFromSellingPrice();
+}
+
+function handleZonalInput(input) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+  } else {
+    input.value = formatNumberWithCommas(rawValue);
+  }
+  calculateAll();
+}
+
+function handleDesiredInput(input) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  input.value = formatNumberWithCommas(rawValue);
+  calculateFromDesiredProceed();
+}
+
+function getRawNumberFromInput(inputId) {
+  const value = document.getElementById(inputId).value;
+  return parseCommaNumber(value);
+}
+
 // ============ CITY DROPDOWN FUNCTIONS ============
 let currentTransferTaxRate = 0.75;
 let currentLocationName = '';
@@ -1557,7 +1550,6 @@ function toggleCityDropdown() {
   const dropdown = document.getElementById('cityList');
   const selected = document.querySelector('#cityDropdown .dropdown-selected');
   
-  // Close other dropdowns
   document.querySelectorAll('.city-dropdown-list').forEach(list => {
     if (list !== dropdown) list.classList.remove('show');
   });
@@ -1573,22 +1565,16 @@ function selectCity(cityName, rate) {
   currentTransferTaxRate = rate;
   currentLocationName = cityName;
   
-  // Update display
   document.getElementById('selectedCity').innerHTML = cityName;
   document.getElementById('transferTaxRateValue').innerHTML = rate + '%';
   document.getElementById('transferRateDisplay').innerHTML = rate;
-  document.getElementById('transferTaxNote').innerHTML = `Based on ${cityName}`;
-  document.getElementById('transferTaxNoteDisplay').innerHTML = `Based on ${cityName}`;
   
-  // Close dropdown
   document.getElementById('cityList').classList.remove('show');
   document.querySelector('#cityDropdown .dropdown-selected').classList.remove('open');
   
-  // Recalculate
   calculateAll();
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#cityDropdown')) {
     document.getElementById('cityList').classList.remove('show');
@@ -1622,93 +1608,30 @@ const zonalDatabaseForCalc = [
   { location: "Sta. Rosa, Laguna", region: "Calabarzon", avg: 40000 },
   { location: "Biñan, Laguna", region: "Calabarzon", avg: 35000 },
   { location: "Calamba, Laguna", region: "Calabarzon", avg: 30000 },
-  { location: "Los Baños, Laguna", region: "Calabarzon", avg: 28000 },
-  { location: "Cabuyao, Laguna", region: "Calabarzon", avg: 30000 },
-  { location: "San Pedro, Laguna", region: "Calabarzon", avg: 32000 },
   { location: "Dasmariñas, Cavite", region: "Calabarzon", avg: 35000 },
   { location: "Imus, Cavite", region: "Calabarzon", avg: 32000 },
   { location: "Bacoor, Cavite", region: "Calabarzon", avg: 30000 },
-  { location: "General Trias, Cavite", region: "Calabarzon", avg: 28000 },
-  { location: "Silang, Cavite", region: "Calabarzon", avg: 30000 },
-  { location: "Trece Martires, Cavite", region: "Calabarzon", avg: 25000 },
   { location: "Antipolo, Rizal", region: "Calabarzon", avg: 35000 },
   { location: "Cainta, Rizal", region: "Calabarzon", avg: 32000 },
-  { location: "Taytay, Rizal", region: "Calabarzon", avg: 28000 },
-  { location: "Binangonan, Rizal", region: "Calabarzon", avg: 25000 },
-  { location: "Angono, Rizal", region: "Calabarzon", avg: 28000 },
-  { location: "Lucena City", region: "Calabarzon", avg: 25000 },
-  { location: "Tayabas, Quezon", region: "Calabarzon", avg: 20000 },
-  { location: "Batangas City", region: "Calabarzon", avg: 25000 },
-  { location: "Lipa City, Batangas", region: "Calabarzon", avg: 30000 },
-  { location: "Nasugbu, Batangas", region: "Calabarzon", avg: 28000 },
-  { location: "Bauan, Batangas", region: "Calabarzon", avg: 22000 },
-  { location: "San Pablo, Laguna", region: "Calabarzon", avg: 22000 },
   { location: "Clark Freeport, Pampanga", region: "Central Luzon", avg: 45000 },
   { location: "Angeles City, Pampanga", region: "Central Luzon", avg: 35000 },
   { location: "San Fernando, Pampanga", region: "Central Luzon", avg: 30000 },
-  { location: "Mabalacat, Pampanga", region: "Central Luzon", avg: 28000 },
   { location: "Subic Bay Freeport", region: "Central Luzon", avg: 40000 },
   { location: "Olongapo City", region: "Central Luzon", avg: 30000 },
-  { location: "Tarlac City", region: "Central Luzon", avg: 25000 },
-  { location: "Capas, Tarlac", region: "Central Luzon", avg: 22000 },
-  { location: "Balanga, Bataan", region: "Central Luzon", avg: 25000 },
-  { location: "Mariveles, Bataan", region: "Central Luzon", avg: 28000 },
-  { location: "Malolos, Bulacan", region: "Central Luzon", avg: 25000 },
-  { location: "San Jose Del Monte, Bulacan", region: "Central Luzon", avg: 28000 },
-  { location: "Meycauayan, Bulacan", region: "Central Luzon", avg: 30000 },
-  { location: "Santa Maria, Bulacan", region: "Central Luzon", avg: 25000 },
-  { location: "Cabanatuan, Nueva Ecija", region: "Central Luzon", avg: 22000 },
-  { location: "Gapan, Nueva Ecija", region: "Central Luzon", avg: 18000 },
-  { location: "Palayan, Nueva Ecija", region: "Central Luzon", avg: 15000 },
-  { location: "San Fernando, La Union", region: "Ilocos", avg: 20000 },
-  { location: "Bauang, La Union", region: "Ilocos", avg: 18000 },
-  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000 },
-  { location: "Candon, Ilocos Sur", region: "Ilocos", avg: 15000 },
-  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000 },
-  { location: "Batac, Ilocos Norte", region: "Ilocos", avg: 18000 },
-  { location: "Pagudpud, Ilocos Norte", region: "Ilocos", avg: 22000 },
-  { location: "Alaminos, Pangasinan", region: "Ilocos", avg: 18000 },
-  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000 },
-  { location: "Lingayen, Pangasinan", region: "Ilocos", avg: 18000 },
-  { location: "San Carlos, Pangasinan", region: "Ilocos", avg: 15000 },
-  { location: "Urdaneta, Pangasinan", region: "Ilocos", avg: 15000 },
   { location: "Baguio City", region: "Cordillera", avg: 50000 },
   { location: "La Trinidad, Benguet", region: "Cordillera", avg: 30000 },
-  { location: "Itogon, Benguet", region: "Cordillera", avg: 20000 },
-  { location: "Bontoc, Mountain Province", region: "Cordillera", avg: 15000 },
-  { location: "Tabuk, Kalinga", region: "Cordillera", avg: 15000 },
-  { location: "Banaue, Ifugao", region: "Cordillera", avg: 18000 },
-  { location: "Lagawe, Ifugao", region: "Cordillera", avg: 12000 },
+  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000 },
+  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000 },
+  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000 },
   { location: "Tuguegarao City", region: "Cagayan Valley", avg: 18000 },
-  { location: "Santiago City", region: "Cagayan Valley", avg: 16000 },
-  { location: "Cauayan, Isabela", region: "Cagayan Valley", avg: 15000 },
-  { location: "Ilagan, Isabela", region: "Cagayan Valley", avg: 14000 },
-  { location: "Bayombong, Nueva Vizcaya", region: "Cagayan Valley", avg: 12000 },
-  { location: "Solano, Nueva Vizcaya", region: "Cagayan Valley", avg: 13000 },
-  { location: "Basco, Batanes", region: "Cagayan Valley", avg: 18000 },
   { location: "Legazpi City", region: "Bicol", avg: 22000 },
-  { location: "Daraga, Albay", region: "Bicol", avg: 18000 },
-  { location: "Tabaco, Albay", region: "Bicol", avg: 15000 },
-  { location: "Ligao, Albay", region: "Bicol", avg: 14000 },
   { location: "Naga City", region: "Bicol", avg: 22000 },
-  { location: "Iriga City", region: "Bicol", avg: 16000 },
-  { location: "Sorsogon City", region: "Bicol", avg: 16000 },
-  { location: "Masbate City", region: "Bicol", avg: 15000 },
-  { location: "Daet, Camarines Norte", region: "Bicol", avg: 16000 },
-  { location: "Virac, Catanduanes", region: "Bicol", avg: 14000 },
   { location: "Puerto Princesa", region: "Mimaropa", avg: 25000 },
-  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000 },
-  { location: "Coron, Palawan", region: "Mimaropa", avg: 28000 },
-  { location: "Calapan, Oriental Mindoro", region: "Mimaropa", avg: 18000 },
-  { location: "Odiongan, Romblon", region: "Mimaropa", avg: 12000 },
-  { location: "Boac, Marinduque", region: "Mimaropa", avg: 12000 }
+  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000 }
 ];
 
-// ============ SEARCHABLE ZONAL DROPDOWN ============
 function filterZonalLocations(searchTerm) {
   const dropdown = document.getElementById('zonalDropdown');
-  const searchInput = document.getElementById('zonalSearchInput');
-  
   if (!searchTerm.trim()) {
     dropdown.classList.remove('show');
     return;
@@ -1736,13 +1659,12 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValue').value = value;
+  document.getElementById('zonalValue').value = formatNumberWithCommas(value);
   document.getElementById('zonalDropdown').classList.remove('show');
   document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
   calculateAll();
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.zonal-search-container')) {
     document.getElementById('zonalDropdown').classList.remove('show');
@@ -1781,8 +1703,8 @@ function setCommission(rate) {
 }
 
 function getTaxBasis() {
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
-  const zonalValue = parseFloat(document.getElementById('zonalValue').value) || 0;
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const zonalValue = parseCommaNumber(document.getElementById('zonalValue').value);
   return Math.max(sellingPrice, zonalValue);
 }
 
@@ -1807,8 +1729,8 @@ function calculateNotarialFee(price) {
 
 function calculateAll() {
   if (isReversing) return;
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
-  const zonalValue = parseFloat(document.getElementById('zonalValue').value) || 0;
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const zonalValue = parseCommaNumber(document.getElementById('zonalValue').value);
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
   const transferTaxRate = currentTransferTaxRate;
@@ -1862,9 +1784,6 @@ function calculateAll() {
   document.getElementById('registrationFee').innerHTML = formatCurrency(registrationFee);
   document.getElementById('notarialFee').innerHTML = formatCurrency(notarialFee);
   document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
-  
-  document.getElementById('desiredResult').style.display = 'none';
-  document.getElementById('desiredNetProceed').value = '';
 }
 
 function updateFromSellingPrice() {
@@ -1873,7 +1792,7 @@ function updateFromSellingPrice() {
 }
 
 function calculateFromDesiredProceed() {
-  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
+  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
@@ -1883,7 +1802,7 @@ function calculateFromDesiredProceed() {
   let sellingPrice = desiredNet;
   let iterations = 0;
   while (iterations < 50) {
-    const taxBasis = Math.max(sellingPrice, parseFloat(document.getElementById('zonalValue').value) || 0);
+    const taxBasis = Math.max(sellingPrice, parseCommaNumber(document.getElementById('zonalValue').value));
     let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
     const brokerCommission = sellingPrice * (currentCommission / 100);
     const netProceed = sellingPrice - sellerTax - brokerCommission;
@@ -1898,7 +1817,7 @@ function calculateFromDesiredProceed() {
     iterations++;
   }
   isReversing = false;
-  document.getElementById('propertyValue').value = Math.round(sellingPrice);
+  document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(sellingPrice));
   calculateAll();
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
@@ -1977,7 +1896,7 @@ function closeMobileMenu() {
   document.body.style.overflow = '';
 }
 
-// Navbar scroll and back to top
+// Navbar scroll
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
   const backToTop = document.getElementById('backToTop');
