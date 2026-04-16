@@ -14,8 +14,13 @@ const resend = new Resend(process.env.RESEND_API_KEY || 're_U1R3jiPK_9PFLJQew2uq
 // Email sending function
 async function sendEmail(to, subject, htmlContent) {
   try {
+    // Use verified domain if available, otherwise fallback to resend.dev
+    const fromEmail = process.env.RESEND_DOMAIN_VERIFIED === 'true' 
+      ? 'GLRA Realty <hello@glrarealty.com>' 
+      : 'GLRA Realty <onboarding@resend.dev>';
+    
     const { data, error } = await resend.emails.send({
-      from: 'GLRA Realty <onboarding@resend.dev>',
+      from: fromEmail,
       to: [to],
       subject: subject,
       html: htmlContent
@@ -298,7 +303,7 @@ app.post('/api/subscribe', async (req, res) => {
       });
       isNew = true;
       
-      // Send welcome email for new subscribers
+      // Send welcome email for new subscribers (only for non-print sources)
       if (source !== 'calculator_print') {
         const welcomeHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
