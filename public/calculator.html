@@ -1171,23 +1171,23 @@ body.dark-mode .disclaimer {
   <div class="summary-banner" id="summaryBanner">
     <div class="summary-item">
       <h4>NET PROCEED (SELLER)</h4>
-      <div class="amount" id="netProceedSummary">₱0</div>
+      <div class="amount" id="netProceedSummary">₱0.00</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <h4>TOTAL COSTS</h4>
-      <div class="amount" id="totalCostsSummary">₱0</div>
+      <div class="amount" id="totalCostsSummary">₱0.00</div>
       <div class="percent" id="totalPercentSummary">0% of price</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <h4>SELLER PAYS</h4>
-      <div class="amount" id="sellerPaysSummary">₱0</div>
+      <div class="amount" id="sellerPaysSummary">₱0.00</div>
     </div>
     <div class="summary-divider"></div>
     <div class="summary-item">
       <h4>BUYER PAYS</h4>
-      <div class="amount" id="buyerPaysSummary">₱0</div>
+      <div class="amount" id="buyerPaysSummary">₱0.00</div>
     </div>
   </div>
 
@@ -1213,10 +1213,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="text" id="areaSqm" placeholder="Enter area in square meters" onblur="formatAndUpdate(this, 'area')" oninput="updateValueOnly(this)">
+      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, 'area')">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="text" id="propertyValue" placeholder="Enter selling price" onblur="formatAndUpdate(this, 'price')" oninput="updateValueOnly(this)">
+      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, 'price')">
       
       <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
@@ -1226,10 +1226,10 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" onblur="formatAndUpdate(this, 'zonal')" oninput="updateValueOnly(this)">
+      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, 'zonal')">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
-        <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
+        <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0.00</strong></span>
         <span id="areaCalculationHint" style="font-size: 10px;"></span>
       </div>
       
@@ -1302,11 +1302,11 @@ body.dark-mode .disclaimer {
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" onblur="formatDesiredAndUpdate(this)" oninput="updateValueOnly(this)">
+    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
-      <div class="value" id="requiredSellingPrice">₱0</div>
-      <div class="label">To receive <span id="desiredAmountDisplay">₱0</span> after taxes and fees</div>
+      <div class="value" id="requiredSellingPrice">₱0.00</div>
+      <div class="label">To receive <span id="desiredAmountDisplay">₱0.00</span> after taxes and fees</div>
     </div>
     <div class="input-hint">Enter how much you want to net, and we'll calculate the selling price needed.</div>
   </div>
@@ -1321,32 +1321,32 @@ body.dark-mode .disclaimer {
       <div class="result-body">
         <div class="fee-row">
           <span class="fee-label">Gross Selling Price</span>
-          <span class="fee-value" id="grossPrice">₱0</span>
+          <span class="fee-value" id="grossPrice">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Total Zonal Value (Area × ZV/sqm)</span>
-          <span class="fee-value" id="totalZonalValueResult">₱0</span>
+          <span class="fee-value" id="totalZonalValueResult">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Tax Basis (Higher of SP or ZV)</span>
-          <span class="fee-value" id="taxBasis">₱0</span>
+          <span class="fee-value" id="taxBasis">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label" id="sellerTaxLabel">Capital Gains Tax (6%)</span>
-          <span class="fee-value" id="sellerTax">₱0</span>
+          <span class="fee-value" id="sellerTax">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Net Before Commission</span>
-          <span class="fee-value" id="netBeforeCommission">₱0</span>
+          <span class="fee-value" id="netBeforeCommission">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%)</span>
-          <span class="fee-value" id="brokerCommission">₱0</span>
+          <span class="fee-value" id="brokerCommission">₱0.00</span>
         </div>
         <div class="total-row">
           <div class="fee-row">
             <span class="fee-label"><strong>Estimated Net Proceed</strong></span>
-            <span class="fee-value highlight" id="netProceedDetail">₱0</span>
+            <span class="fee-value highlight" id="netProceedDetail">₱0.00</span>
           </div>
         </div>
       </div>
@@ -1360,24 +1360,24 @@ body.dark-mode .disclaimer {
       <div class="result-body">
         <div class="fee-row">
           <span class="fee-label">Documentary Stamp Tax (1.5%)</span>
-          <span class="fee-value" id="dstTax">₱0</span>
+          <span class="fee-value" id="dstTax">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Local Transfer Tax (<span id="transferRateDisplay">0.75</span>%)</span>
-          <span class="fee-value" id="transferTax">₱0</span>
+          <span class="fee-value" id="transferTax">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Registration Fee (tiered)</span>
-          <span class="fee-value" id="registrationFee">₱0</span>
+          <span class="fee-value" id="registrationFee">₱0.00</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Notarial Fee (tiered)</span>
-          <span class="fee-value" id="notarialFee">₱0</span>
+          <span class="fee-value" id="notarialFee">₱0.00</span>
         </div>
         <div class="total-row">
           <div class="fee-row">
             <span class="fee-label"><strong>Total Buyer's Costs</strong></span>
-            <span class="fee-value danger" id="buyerCostsTotal">₱0</span>
+            <span class="fee-value danger" id="buyerCostsTotal">₱0.00</span>
           </div>
         </div>
       </div>
@@ -1392,29 +1392,39 @@ body.dark-mode .disclaimer {
         <h4>Seller's Taxes (BIR)</h4>
         <table>
           <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
-          <tr><td>VAT (12%) + EWT (6%)</span><td>18% of selling price</span></tr>
+          <tr><td>VAT (12%) + EWT (6%)</span><td>18% of tax basis</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <table>
+        <tr>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
-        </tr>
+        </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        <tr>
-          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
-          <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
-          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
+        </table>
+          <tr>
+            
+Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
+          <tr>
+            
+Taguig City (BGC)</span><td>0.60%</span></tr>
+          <tr>
+            
+Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <table>
-          <tr><td>Municipalities</span><td>0.50%</span></tr>
-          <tr><td>Cities</span><td>0.75%</span></tr>
+        <tr>
+           hilabihan
+            
+Municipalities</span><td>0.50%</span></tr>
+          <tr>
+            
+Cities</span><td>0.75%</span></tr>
         </table>
       </div>
     </div>
@@ -1519,7 +1529,7 @@ function formatNumberWithCommas(num) {
   let number = num.toString().replace(/,/g, '');
   if (isNaN(number) || number === '') return '';
   let floatNum = parseFloat(number);
-  return floatNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return floatNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function parseCommaNumber(value) {
@@ -1527,84 +1537,77 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
-// Store raw values to preserve decimal entry
-let rawAreaValue = '';
-let rawPriceValue = '';
-let rawZonalValue = '';
-let rawDesiredValue = '';
-
-function updateValueOnly(input) {
-  // Just store the raw value without formatting while typing
-  if (input.id === 'areaSqm') rawAreaValue = input.value;
-  else if (input.id === 'propertyValue') rawPriceValue = input.value;
-  else if (input.id === 'zonalValuePerSqm') rawZonalValue = input.value;
-  else if (input.id === 'desiredNetProceed') rawDesiredValue = input.value;
-}
-
-function formatAndUpdate(input, type) {
+function handleNumberInput(input, type) {
+  // Remove existing commas
   let rawValue = input.value.replace(/,/g, '');
-  let num = parseFloat(rawValue);
-  if (!isNaN(num)) {
-    input.value = formatNumberWithCommas(num);
-    if (type === 'area') {
-      rawAreaValue = input.value;
-      updateTotalZonalValueDisplay();
-      calculateAll();
-    } else if (type === 'price') {
-      rawPriceValue = input.value;
-      updateTotalZonalValueDisplay();
-      updateFromSellingPrice();
-    } else if (type === 'zonal') {
-      rawZonalValue = input.value;
-      updateTotalZonalValueDisplay();
-      calculateAll();
-    }
-  } else if (rawValue === '') {
-    input.value = '';
-    if (type === 'area') {
-      rawAreaValue = '';
-      updateTotalZonalValueDisplay();
-      calculateAll();
-    } else if (type === 'price') {
-      rawPriceValue = '';
-      updateTotalZonalValueDisplay();
-      updateFromSellingPrice();
-    } else if (type === 'zonal') {
-      rawZonalValue = '';
-      updateTotalZonalValueDisplay();
-      calculateAll();
-    }
+  // Allow only numbers and decimal point
+  rawValue = rawValue.replace(/[^0-9.]/g, '');
+  // Prevent multiple decimal points
+  let parts = rawValue.split('.');
+  if (parts.length > 2) {
+    rawValue = parts[0] + '.' + parts.slice(1).join('');
+  }
+  input.value = rawValue;
+  
+  // Update calculations
+  if (type === 'area') {
+    updateTotalZonalValueDisplay();
+    calculateAll();
+  } else if (type === 'price') {
+    updateTotalZonalValueDisplay();
+    updateFromSellingPrice();
+  } else if (type === 'zonal') {
+    updateTotalZonalValueDisplay();
+    calculateAll();
   }
 }
 
-function formatDesiredAndUpdate(input) {
+function handleDesiredInput(input) {
   let rawValue = input.value.replace(/,/g, '');
-  let num = parseFloat(rawValue);
-  if (!isNaN(num)) {
-    input.value = formatNumberWithCommas(num);
-    rawDesiredValue = input.value;
-    calculateFromDesiredProceed();
-  } else if (rawValue === '') {
-    input.value = '';
-    rawDesiredValue = '';
+  rawValue = rawValue.replace(/[^0-9.]/g, '');
+  let parts = rawValue.split('.');
+  if (parts.length > 2) {
+    rawValue = parts[0] + '.' + parts.slice(1).join('');
+  }
+  input.value = rawValue;
+  
+  if (rawValue === '') {
     document.getElementById('desiredResult').style.display = 'none';
+    return;
   }
+  calculateFromDesiredProceed();
+}
+
+function formatAllDisplayedValues() {
+  // Format the display values with commas and 2 decimal places
+  const elements = ['grossPrice', 'totalZonalValueResult', 'taxBasis', 'sellerTax', 'netBeforeCommission', 'brokerCommission', 'netProceedDetail', 'dstTax', 'transferTax', 'registrationFee', 'notarialFee', 'buyerCostsTotal', 'netProceedSummary', 'totalCostsSummary', 'sellerPaysSummary', 'buyerPaysSummary'];
+  
+  elements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.textContent) {
+      let value = el.textContent.replace('₱', '').replace(/,/g, '');
+      let num = parseFloat(value);
+      if (!isNaN(num)) {
+        el.textContent = '₱' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    }
+  });
 }
 
 // ============ AREA & ZONAL FUNCTIONS ============
 function calculateTotalZonalValue() {
-  const area = parseCommaNumber(document.getElementById('areaSqm').value);
-  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
   return area * zonalPerSqm;
 }
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
-  const area = parseCommaNumber(document.getElementById('areaSqm').value);
-  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
   
-  document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
-  document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
+  document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
   if (area > 0 && zonalPerSqm > 0) {
     document.getElementById('areaCalculationHint').innerHTML = `${area.toLocaleString()} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
@@ -1737,7 +1740,7 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
+  document.getElementById('zonalValuePerSqm').value = value;
   document.getElementById('zonalDropdown').classList.remove('show');
   updateTotalZonalValueDisplay();
   calculateAll();
@@ -1780,13 +1783,13 @@ function setCommission(rate) {
 }
 
 function getTaxBasis() {
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
   const totalZv = calculateTotalZonalValue();
   return Math.max(sellingPrice, totalZv);
 }
 
 function formatCurrency(amount) {
-  return '₱' + amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return '₱' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function calculateRegistrationFee(price) {
@@ -1807,7 +1810,7 @@ function calculateNotarialFee(price) {
 function calculateAll() {
   if (isReversing) return;
   
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
   const totalZv = calculateTotalZonalValue();
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
@@ -1822,7 +1825,8 @@ function calculateAll() {
     sellerTax = taxBasis * 0.06;
     sellerTaxLabel = 'Capital Gains Tax (6%)';
   } else {
-    sellerTax = sellingPrice * 0.18;
+    // Ordinary Asset: VAT 12% + EWT 6% = 18% of TAX BASIS (higher value)
+    sellerTax = taxBasis * 0.18;
     sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
   }
   
@@ -1846,8 +1850,8 @@ function calculateAll() {
   document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
   document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
   
-  document.getElementById('grossPrice').innerHTML = sellingPrice > 0 ? formatCurrency(sellingPrice) : '₱0';
-  document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? formatCurrency(totalZv) : '₱0';
+  document.getElementById('grossPrice').innerHTML = formatCurrency(sellingPrice);
+  document.getElementById('totalZonalValueResult').innerHTML = formatCurrency(totalZv);
   document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
   document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
   document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
@@ -1865,7 +1869,7 @@ function calculateAll() {
 }
 
 function calculateFromDesiredProceed() {
-  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
+  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
