@@ -581,7 +581,7 @@ body.dark-mode .search-field {
 .radio-option span { font-size: 13px; color: var(--text-color); }
 .radio-option small { font-size: 11px; color: var(--gray); }
 
-/* Commission Buttons - 8% REMOVED */
+/* Commission Buttons */
 .commission-buttons {
   display: flex;
   gap: 8px;
@@ -1192,12 +1192,12 @@ body.dark-mode .disclaimer {
         </div>
         <div class="radio-option" data-value="ordinary" onclick="selectAssetType('ordinary')">
           <input type="radio" name="assetType" value="ordinary"> 
-          <span>🏢 Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--orange);">→ VAT 12% + EWT 6%</strong></span>
+          <span>🏢 Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--orange);">→ VAT 12% + EWT 6% (Total 18%)</strong></span>
         </div>
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value with AREA -->
+    <!-- Card 2: Property Value & Zonal Value -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
@@ -1252,28 +1252,28 @@ body.dark-mode .disclaimer {
           <i class="fas fa-chevron-down"></i>
         </div>
         <div class="city-dropdown-list" id="cityList">
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Caloocan City" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Las Piñas City" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Makati City" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Malabon City" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Marikina City" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Muntinlupa City" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Navotas City" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Pateros" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Valenzuela City" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.60" data-location="Taguig City (BGC)" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Mandaluyong City" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Manila City" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Parañaque City" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasay City" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasig City" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Quezon City" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="San Juan City" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Municipality (Outside MM)" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="City (Outside MM)" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
         </div>
       </div>
       
@@ -1302,7 +1302,7 @@ body.dark-mode .disclaimer {
 
   <!-- Results Section -->
   <div class="results-wrapper">
-    <!-- Seller's Side - AREA REMOVED -->
+    <!-- Seller's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-friends"></i> Seller's Taxes & Fees</h3>
@@ -1381,20 +1381,19 @@ body.dark-mode .disclaimer {
         <h4>Seller's Taxes (BIR)</h4>
         <table>
           <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
-          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</span></tr>
-          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</span></tr>
+          <tr><td>VAT (12%) + EWT (6%)</span><td>18% of selling price</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <tr>
+        </table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        <tr>
+        </table>
           <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
           <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
           <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
@@ -1402,7 +1401,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        </table>
+        <tr>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1503,16 +1502,20 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ COMMA FORMATTING FUNCTIONS ============
+// ============ COMMA FORMATTING FUNCTIONS (WITH DECIMALS) ============
 function formatNumberWithCommas(num) {
   if (num === '' || num === null || num === undefined) return '';
   let number = num.toString().replace(/,/g, '');
   if (isNaN(number) || number === '') return '';
-  return parseFloat(number).toLocaleString('en-US');
+  // Parse as float to handle decimals, then format with commas
+  let floatNum = parseFloat(number);
+  // Format with commas and keep up to 2 decimal places
+  return floatNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 function parseCommaNumber(value) {
   if (!value) return 0;
+  // Remove commas and parse as float (supports decimals)
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
@@ -1751,7 +1754,7 @@ function getTaxBasis() {
 }
 
 function formatCurrency(amount) {
-  return '₱' + Math.round(amount).toLocaleString();
+  return '₱' + amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 function calculateRegistrationFee(price) {
@@ -1787,8 +1790,9 @@ function calculateAll() {
     sellerTax = taxBasis * 0.06;
     sellerTaxLabel = 'Capital Gains Tax (6%)';
   } else {
+    // Ordinary Asset: VAT 12% + EWT 6% = 18% total
     sellerTax = sellingPrice * 0.18;
-    sellerTaxLabel = 'VAT (12%) + EWT (6%)';
+    sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
   }
   
   const netBeforeCommission = sellingPrice - sellerTax;
