@@ -962,14 +962,12 @@ body.dark-mode footer {
 .floating-btn:hover { transform: scale(1.05); }
 .btn-call { background: #25d366; color: white; }
 .btn-messenger { background: #0084ff; color: white; }
-.btn-whatsapp { background: #25d366; color: white; }
-.btn-viber { background: #7360f2; color: white; }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 .btn-instagram {
   background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
   color: white;
   border: none;
 }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 
 body.dark-mode .btn-darkmode {
   background: #2a2a3a;
@@ -1289,7 +1287,7 @@ body.dark-mode .disclaimer {
     </div>
   </div>
 
-  <!-- Desired Net Proceed Card -->
+  <!-- Desired Net Proceed Card - REVERSE CALCULATOR FIXED -->
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
@@ -1393,7 +1391,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        </table>
+        <table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
@@ -1533,6 +1531,7 @@ function handleNumberInput(input, callback) {
   if (callback) callback();
 }
 
+// Handle desired net proceed input (reverse calculator)
 function handleDesiredInput(input) {
   let rawValue = input.value.replace(/,/g, '');
   if (rawValue === '') {
@@ -1541,6 +1540,8 @@ function handleDesiredInput(input) {
     return;
   }
   input.value = formatNumberWithCommas(rawValue);
+  
+  // Call the reverse calculator function
   calculateFromDesiredProceed();
 }
 
@@ -1737,39 +1738,54 @@ function updateFromZonalPerSqm() {
   calculateAll();
 }
 
+// ============ REVERSE CALCULATOR (FIXED) ============
 function calculateFromDesiredProceed() {
   const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
   }
+  
   isReversing = true;
-  let low = desiredNet, high = desiredNet * 2;
+  
+  let low = desiredNet;
+  let high = desiredNet * 3; // Start with a reasonable upper bound
   let sellingPrice = desiredNet;
   let iterations = 0;
-  while (iterations < 50) {
+  let maxIterations = 100;
+  
+  while (iterations < maxIterations) {
     const totalZv = calculateTotalZonalValue();
     const taxBasis = Math.max(sellingPrice, totalZv);
     let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
     const brokerCommission = sellingPrice * (currentCommission / 100);
     const netProceed = sellingPrice - sellerTax - brokerCommission;
-    if (Math.abs(netProceed - desiredNet) < 100) break;
+    
+    if (Math.abs(netProceed - desiredNet) < 100) {
+      break;
+    }
+    
     if (netProceed < desiredNet) {
       low = sellingPrice;
-      sellingPrice = sellingPrice * 1.05;
+      sellingPrice = sellingPrice * 1.1;
     } else {
       high = sellingPrice;
       sellingPrice = (low + high) / 2;
     }
+    
     iterations++;
   }
-  isReversing = false;
+  
+  // Update the Gross Selling Price field with the calculated value
   document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(sellingPrice));
+  
+  isReversing = false;
   calculateAll();
+  
+  // Show the result
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
   document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
-  isReversing = true;
 }
 
 function selectAssetType(type) {
