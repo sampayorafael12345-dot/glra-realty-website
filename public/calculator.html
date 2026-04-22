@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Sales Closing Fees Calculator | GLRA Realty</title>
-<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates based on city.">
+<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup, suggested minimum selling price, and tax savings analysis.">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/calculator.html">
 <meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
-<meta property="og:description" content="Complete property transaction calculator. Includes BIR Zonal Value lookup and Desired Net Proceed.">
+<meta property="og:description" content="Complete property transaction calculator with BIR Zonal Value lookup and tax analysis.">
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:site_name" content="GLRA Realty">
 
@@ -44,6 +44,7 @@
   --transition: all 0.3s ease;
   --success: #10b981;
   --danger: #ef4444;
+  --warning: #f59e0b;
   --info: #3b82f6;
 }
 
@@ -84,7 +85,8 @@ body.dark-mode .radio-option,
 body.dark-mode .comm-btn,
 body.dark-mode .zonal-dropdown,
 body.dark-mode .email-print-content,
-body.dark-mode .city-dropdown-list {
+body.dark-mode .city-dropdown-list,
+body.dark-mode .warning-box {
   background: var(--card-bg) !important;
   border-color: #3a3a4a !important;
 }
@@ -105,12 +107,99 @@ body.dark-mode .city-dropdown-item {
 /* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
-input, .disclaimer, .search-field {
+input, .disclaimer, .search-field, .warning-box {
   border: 2px solid var(--border-color);
 }
 
 .input-card:hover, .result-card:hover {
   border-color: var(--orange);
+}
+
+/* Warning Box */
+.warning-box {
+  background: #fef3c7;
+  border-left: 4px solid var(--warning);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+body.dark-mode .warning-box {
+  background: #2a1a0a;
+  border-left-color: var(--warning);
+}
+
+.warning-box i {
+  color: var(--warning);
+  margin-right: 8px;
+}
+
+.warning-box .warning-text {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* Suggested Price Box */
+.suggested-box {
+  background: var(--orange-light);
+  border: 2px solid var(--orange);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.suggested-box .label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--orange);
+}
+
+.suggested-box .value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--orange);
+}
+
+.suggested-box button {
+  background: var(--orange);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.suggested-box button:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
+/* Tax Savings Box */
+.savings-box {
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid var(--success);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 10px 0;
+}
+
+.savings-box .label {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.savings-box .value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--success);
 }
 
 /* Navigation */
@@ -1143,7 +1232,7 @@ body.dark-mode .disclaimer {
   <div>
     <h1>Sales Closing Fees Calculator</h1>
     <div class="hero-line"></div>
-    <p>Complete property transaction calculator — includes BIR Zonal Value and Desired Net Proceed</p>
+    <p>Complete property transaction calculator — includes BIR Zonal Value, Suggested Minimum Price, and Tax Analysis</p>
   </div>
 </section>
 
@@ -1197,7 +1286,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value WITH AREA -->
+    <!-- Card 2: Property Value & Zonal Value with AREA -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
@@ -1220,6 +1309,22 @@ body.dark-mode .disclaimer {
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
         <span id="areaCalculationHint" style="font-size: 10px;"></span>
+      </div>
+      
+      <!-- NEW: Suggested Minimum Selling Price Box -->
+      <div id="suggestedBox" class="suggested-box">
+        <div>
+          <div class="label">💡 Suggested Minimum Selling Price</div>
+          <div class="value" id="suggestedPrice">₱0</div>
+        </div>
+        <button onclick="useSuggestedPrice()">Use Suggested Price</button>
+      </div>
+      
+      <!-- NEW: Warning Box if SP is below Zonal Value -->
+      <div id="warningBox" class="warning-box" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span class="warning-text">⚠️ Warning: Your Selling Price is below the Zonal Value!</span>
+        <div id="warningDetail" style="font-size: 12px; margin-top: 5px;"></div>
       </div>
       
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
@@ -1288,7 +1393,7 @@ body.dark-mode .disclaimer {
     </div>
   </div>
 
-  <!-- Desired Net Proceed Card - REVERSE CALCULATOR -->
+  <!-- Desired Net Proceed Card -->
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
@@ -1392,7 +1497,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <tr>
+        </table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
@@ -1407,7 +1512,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <tr>
+        </table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1521,10 +1626,7 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
-// ============ AREA FUNCTIONS (NEW) ============
-let currentArea = 0;
-let currentZonalPerSqm = 0;
-
+// ============ AREA & ZONAL FUNCTIONS ============
 function calculateTotalZonalValue() {
   const area = parseCommaNumber(document.getElementById('areaSqm').value);
   const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
@@ -1540,10 +1642,36 @@ function updateTotalZonalValueDisplay() {
   document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
   document.getElementById('displayArea').innerHTML = area > 0 ? area.toLocaleString() : '0';
   
+  // Update suggested price
+  const suggestedPrice = totalZv;
+  document.getElementById('suggestedPrice').innerHTML = '₱' + suggestedPrice.toLocaleString();
+  
+  // Show calculation hint
   if (area > 0 && zonalPerSqm > 0) {
     document.getElementById('areaCalculationHint').innerHTML = `${area.toLocaleString()} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
   } else {
     document.getElementById('areaCalculationHint').innerHTML = '';
+  }
+  
+  // Check if selling price is below zonal value and show warning
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  if (sellingPrice > 0 && totalZv > 0 && sellingPrice < totalZv) {
+    const extraTax = (totalZv - sellingPrice) * 0.06;
+    document.getElementById('warningBox').style.display = 'block';
+    document.getElementById('warningDetail').innerHTML = `Your Selling Price is ₱${(totalZv - sellingPrice).toLocaleString()} below the Zonal Value. You will pay an extra ₱${extraTax.toLocaleString()} in Capital Gains Tax.`;
+  } else {
+    document.getElementById('warningBox').style.display = 'none';
+  }
+}
+
+function useSuggestedPrice() {
+  const totalZv = calculateTotalZonalValue();
+  if (totalZv > 0) {
+    document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(totalZv));
+    updateFromSellingPrice();
+    showToast('✅ Suggested price applied!');
+  } else {
+    showToast('Please enter Area and Zonal Value first', true);
   }
 }
 
@@ -1569,7 +1697,6 @@ function handleZonalPerSqmInput(input) {
   calculateAll();
 }
 
-// ============ PRICE INPUT FUNCTIONS ============
 function handlePriceInput(input) {
   let rawValue = input.value.replace(/,/g, '');
   if (rawValue === '') {
@@ -1577,6 +1704,7 @@ function handlePriceInput(input) {
   } else {
     input.value = formatNumberWithCommas(rawValue);
   }
+  updateTotalZonalValueDisplay();
   updateFromSellingPrice();
 }
 
@@ -1713,7 +1841,6 @@ function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
   document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
   document.getElementById('zonalDropdown').classList.remove('show');
-  document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
   updateTotalZonalValueDisplay();
   calculateAll();
 }
