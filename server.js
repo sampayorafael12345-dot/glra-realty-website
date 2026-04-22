@@ -14,13 +14,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Email sending function
 async function sendEmail(to, subject, htmlContent) {
   try {
-    // Use verified domain if available, otherwise fallback to resend.dev
-    const fromEmail = process.env.RESEND_DOMAIN_VERIFIED === 'true' 
-      ? 'GLRA Realty <hello@glrarealty.com>' 
-      : 'GLRA Realty <onboarding@resend.dev>';
-    
     const { data, error } = await resend.emails.send({
-      from: fromEmail,
+      from: 'GLRA Realty <hello@glrarealty.com>',
       to: [to],
       subject: subject,
       html: htmlContent
@@ -303,7 +298,7 @@ app.post('/api/subscribe', async (req, res) => {
       });
       isNew = true;
       
-      // Send welcome email for new subscribers (only for non-print sources)
+      // Send welcome email for new subscribers
       if (source !== 'calculator_print') {
         const welcomeHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -343,6 +338,68 @@ app.post('/api/unsubscribe', async (req, res) => {
   }
 });
 
+// ============ WISHLIST ROUTES ============
+
+app.post('/api/wishlist', async (req, res) => {
+  try {
+    const { email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage } = req.body;
+    
+    if (!email || !propertyId) {
+      return res.status(400).json({ error: 'Email and property ID required' });
+    }
+    
+    // Check if already exists
+    const existing = await Wishlist.findOne({ email, propertyId });
+    if (existing) {
+      return res.json({ success: true, message: 'Already saved to wishlist' });
+    }
+    
+    // Create wishlist item
+    const wishlistItem = new Wishlist({
+      email,
+      propertyId,
+      propertyTitle,
+      propertyPrice,
+      propertyLocation,
+      propertyImage
+    });
+    
+    await wishlistItem.save();
+    
+    // Also add as subscriber if not exists
+    const existingSubscriber = await Subscriber.findOne({ email });
+    if (!existingSubscriber) {
+      await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
+    }
+    
+    console.log(`❤️ ${email} saved ${propertyTitle} to wishlist`);
+    res.json({ success: true, message: 'Property saved to wishlist!' });
+  } catch (err) {
+    console.error('Wishlist error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/wishlist/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const wishlist = await Wishlist.find({ email }).sort({ addedAt: -1 });
+    res.json(wishlist);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
+  try {
+    const { email, propertyId } = req.params;
+    await Wishlist.findOneAndDelete({ email, propertyId });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ PRICE ALERT ROUTES ============
 
 app.post('/api/price-alert', async (req, res) => {
@@ -353,18 +410,27 @@ app.post('/api/price-alert', async (req, res) => {
       return res.status(400).json({ error: 'Email and property ID required' });
     }
     
+    // Check if already subscribed
     const existing = await PriceAlert.findOne({ email, propertyId });
     if (existing) {
-      return res.json({ success: true, message: 'Already subscribed' });
+      return res.json({ success: true, message: 'Already subscribed to price alerts for this property' });
     }
     
-    let subscriber = await Subscriber.findOne({ email });
-    if (!subscriber) {
+    // Create price alert
+    const alert = new PriceAlert({
+      email,
+      propertyId,
+      propertyTitle,
+      propertyPrice
+    });
+    
+    await alert.save();
+    
+    // Also add as subscriber if not exists
+    const existingSubscriber = await Subscriber.findOne({ email });
+    if (!existingSubscriber) {
       await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
     }
-    
-    const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice });
-    await alert.save();
     
     // Send confirmation email
     const confirmationHtml = `
@@ -402,57 +468,6 @@ app.get('/api/price-alert/check/:propertyId', async (req, res) => {
   }
 });
 
-// ============ WISHLIST ROUTES ============
-
-app.post('/api/wishlist', async (req, res) => {
-  try {
-    const { email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage } = req.body;
-    
-    if (!email || !propertyId) {
-      return res.status(400).json({ error: 'Email and property ID required' });
-    }
-    
-    let subscriber = await Subscriber.findOne({ email });
-    if (!subscriber) {
-      await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
-    }
-    
-    const existing = await Wishlist.findOne({ email, propertyId });
-    if (existing) {
-      return res.json({ success: true, message: 'Already saved' });
-    }
-    
-    const wishlistItem = new Wishlist({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage });
-    await wishlistItem.save();
-    
-    console.log(`❤️ ${email} saved ${propertyTitle}`);
-    res.json({ success: true, message: 'Property saved to wishlist!' });
-  } catch (err) {
-    console.error('Wishlist error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/wishlist/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const wishlist = await Wishlist.find({ email }).sort({ addedAt: -1 });
-    res.json(wishlist);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
-  try {
-    const { email, propertyId } = req.params;
-    await Wishlist.findOneAndDelete({ email, propertyId });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ============ ADMIN ROUTES ============
 
 app.post('/api/admin/login', (req, res) => {
@@ -472,6 +487,7 @@ app.get('/api/admin/stats', async (req, res) => {
     const heroImages = await HeroImage.countDocuments();
     const subscribers = await Subscriber.countDocuments({ isActive: true });
     const activeAlerts = await PriceAlert.countDocuments({ isNotified: false });
+    const wishlistCount = await Wishlist.countDocuments();
     
     res.json({ 
       totalProperties, 
@@ -479,7 +495,8 @@ app.get('/api/admin/stats', async (req, res) => {
       totalInquiries,
       heroImages,
       subscribers,
-      activeAlerts
+      activeAlerts,
+      wishlistCount
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -499,6 +516,15 @@ app.get('/api/admin/price-alerts', async (req, res) => {
   try {
     const alerts = await PriceAlert.find().sort({ createdAt: -1 });
     res.json(alerts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/wishlist', async (req, res) => {
+  try {
+    const wishlist = await Wishlist.find().sort({ addedAt: -1 });
+    res.json(wishlist);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
