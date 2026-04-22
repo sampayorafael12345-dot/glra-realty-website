@@ -16,11 +16,16 @@
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:site_name" content="GLRA Realty">
 
+<!-- Preconnect -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
+/* ============ CSS VARIABLES ============ */
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
@@ -51,6 +56,9 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -88,8 +96,10 @@ body.dark-mode .zonal-search-input {
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode .result-header h3 {
-  color: var(--orange) !important;
+body.dark-mode .dropdown-item,
+body.dark-mode .city-dropdown-item {
+  color: var(--text-color) !important;
+  border-color: #3a3a4a !important;
 }
 
 /* Borders */
@@ -97,7 +107,6 @@ body.dark-mode .result-header h3 {
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
 input, .disclaimer, .search-field {
   border: 2px solid var(--border-color);
-  border-radius: 12px;
 }
 
 .input-card:hover, .result-card:hover {
@@ -341,7 +350,87 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
-/* Zonal Search */
+/* Search Field for Dropdown */
+.search-field {
+  background: var(--white);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: relative;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+
+body.dark-mode .search-field {
+  background: #2a2a3a;
+}
+
+.search-field i {
+  color: var(--orange);
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.search-field .dropdown-selected {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-field .dropdown-selected i {
+  color: var(--orange);
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.search-field .dropdown-selected.open i {
+  transform: rotate(180deg);
+}
+
+/* Dropdown List */
+.city-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 5px;
+}
+
+.city-dropdown-list.show {
+  display: block;
+}
+
+.city-dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-color);
+}
+
+.city-dropdown-item:hover {
+  background: #f8f8f8;
+  color: var(--orange);
+}
+
+/* Zonal Dropdown */
 .zonal-search-container {
   position: relative;
   width: 100%;
@@ -598,6 +687,7 @@ body.dark-mode .page-hero {
 .result-header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 18px 24px;
+  color: var(--white);
 }
 
 body.dark-mode .result-header {
@@ -610,7 +700,6 @@ body.dark-mode .result-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--orange);
 }
 
 .result-body { padding: 24px; }
@@ -872,11 +961,14 @@ body.dark-mode footer {
 .floating-btn:hover { transform: scale(1.05); }
 .btn-call { background: #25d366; color: white; }
 .btn-messenger { background: #0084ff; color: white; }
+.btn-whatsapp { background: #25d366; color: white; }
+.btn-viber { background: #7360f2; color: white; }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 .btn-instagram {
   background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
   color: white;
+  border: none;
 }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 
 body.dark-mode .btn-darkmode {
   background: #2a2a3a;
@@ -956,6 +1048,34 @@ body.dark-mode .disclaimer {
 }
 
 .disclaimer i { color: var(--orange); font-size: 14px; }
+
+/* Print Styles */
+@media print {
+  .navbar, .floating-buttons, .print-button-wrapper, .email-print-modal, footer, .back-to-top, .mobile-menu-btn {
+    display: none !important;
+  }
+  
+  .page-hero, .summary-banner, .result-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  body {
+    background: white;
+    padding: 0;
+  }
+  
+  .calculator-container {
+    margin: 0;
+    padding: 20px;
+  }
+  
+  .input-card, .result-card, .schedules-wrapper {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+}
 
 /* Mobile */
 @media (max-width: 900px) {
@@ -1078,7 +1198,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value with Area -->
+    <!-- Card 2: Property Value & Zonal Value with AREA -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
@@ -1088,7 +1208,7 @@ body.dark-mode .disclaimer {
       <label style="margin-top: 12px;">Gross Selling Price</label>
       <input type="number" id="propertyValue" value="" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
       
-      <label style="margin-top: 12px;">BIR Zonal Value per sqm</label>
+      <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
       <div class="zonal-row">
         <div class="zonal-search-container">
           <input type="text" id="zonalSearchInput" class="zonal-search-input" placeholder="Search city (e.g., Makati, Taguig, QC)" autocomplete="off" oninput="filterZonalLocations(this.value)">
@@ -1100,6 +1220,7 @@ body.dark-mode .disclaimer {
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
+        <span id="areaUsedHint" style="font-size: 10px;"></span>
       </div>
       
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
@@ -1108,7 +1229,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Rates -->
+    <!-- Card 3: Commission & Transfer Tax - WORKING VERSION -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1182,6 +1303,7 @@ body.dark-mode .disclaimer {
 
   <!-- Results Section -->
   <div class="results-wrapper">
+    <!-- Seller's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-friends"></i> Seller's Taxes & Fees</h3>
@@ -1224,6 +1346,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
+    <!-- Buyer's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-check"></i> Buyer's Taxes & Fees</h3>
@@ -1261,32 +1384,32 @@ body.dark-mode .disclaimer {
     <div class="schedules-grid">
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
-        <table>
-          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
-          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
-          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
+        </table>
+          <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
+          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</span></tr>
+          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
         <table>
-          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
-          <tr><td>Local Transfer Tax</td><td>0.50% - 0.75% (by city)</td></tr>
+          <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
+          <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        <table>
-          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</td><td>0.50%</td></tr>
-          <tr><td>Taguig City (BGC)</td><td>0.60%</td></tr>
-          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</td><td>0.75%</td></tr>
+        </table>
+          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
+          <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
+          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <table>
-          <tr><td>Municipalities</td><td>0.50%</td></tr>
-          <tr><td>Cities</td><td>0.75%</td></tr>
+        <tr>
+          <tr><td>Municipalities</span><td>0.50%</span></tr>
+          <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
       </div>
     </div>
@@ -1318,8 +1441,8 @@ body.dark-mode .disclaimer {
       <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
       <div class="social-links">
         <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://m.me/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
-        <a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a>
+        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -1351,7 +1474,7 @@ body.dark-mode .disclaimer {
 <!-- Floating Buttons -->
 <div class="floating-buttons">
   <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
-  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-f"></i></a>
   <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
     <i class="fas fa-moon"></i>
@@ -1449,10 +1572,18 @@ function calculateTotalZonalValue() {
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  
   document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString();
   document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString();
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
   document.getElementById('displayArea').innerHTML = area.toLocaleString();
+  
+  if (area > 0 && zonalPerSqm > 0) {
+    document.getElementById('areaUsedHint').innerHTML = `${area} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
+  } else {
+    document.getElementById('areaUsedHint').innerHTML = '';
+  }
 }
 
 function getTaxBasis() {
