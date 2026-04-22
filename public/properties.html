@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Browse Properties | GLRA Realty</title>
 <meta name="description" content="Browse our exclusive collection of premium properties for sale and lease in Metro Manila and Luzon. Save favorites and get price drop alerts.">
-<meta name="keywords" content="properties for sale, properties for lease, real estate philippines, GLRA Realty, price alert, condo for sale, house and lot">
+<meta name="keywords" content="properties for sale, properties for lease, real estate philippines, GLRA Realty, price alert">
 <meta name="author" content="GLRA Realty">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://glrarealty.com/properties.html">
@@ -26,16 +26,17 @@
 <meta name="twitter:description" content="Find your dream property with GLRA Realty.">
 <meta name="twitter:image" content="https://glrarealty.com/logo.png">
 
-<!-- Preconnect -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-/* ============ CSS VARIABLES ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
@@ -66,10 +67,6 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
-  --orange-light: #2a1a0a;
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-md: 0 10px 25px rgba(0,0,0,0.4);
-  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -95,18 +92,12 @@ body.dark-mode .dropdown-list,
 body.dark-mode .price-custom-inputs,
 body.dark-mode .location-suggestions,
 body.dark-mode .email-modal-content,
-body.dark-mode .modal-body,
-body.dark-mode .modal-description,
-body.dark-mode .modal-mortgage {
+body.dark-mode .modal-body {
   background: #1a1a2a !important;
 }
 
 body.dark-mode .modal-mortgage-result .amount {
   color: var(--orange) !important;
-}
-
-body.dark-mode .modal-mortgage-result .label {
-  color: rgba(255,255,255,0.6) !important;
 }
 
 body.dark-mode .tab-btn {
@@ -187,7 +178,6 @@ body.dark-mode .navbar.scrolled {
 
 .navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
 
-/* Mobile Overlay */
 .mobile-overlay {
   position: fixed;
   top: 0;
@@ -782,7 +772,6 @@ body.dark-mode .page-hero {
   font-size: 11px;
 }
 
-/* SPECS ABOVE PRICE in card */
 .prop-specs {
   display: flex;
   justify-content: space-between;
@@ -930,7 +919,7 @@ body.dark-mode .page-hero {
   border-radius: 12px;
 }
 
-/* SPECS ABOVE PRICE in modal */
+/* Specs above price */
 .modal-specs {
   display: flex;
   flex-wrap: wrap;
@@ -954,7 +943,6 @@ body.dark-mode .page-hero {
   width: 16px;
 }
 
-/* Price in modal */
 .modal-price {
   font-size: 28px;
   font-weight: 700;
@@ -962,7 +950,7 @@ body.dark-mode .page-hero {
   margin: 10px 0 15px 0;
 }
 
-/* Mortgage Calculator - FIXED DARK MODE & THINNER SLIDER */
+/* Mortgage Calculator */
 .modal-mortgage {
   margin: 15px 0;
   padding: 20px;
@@ -1009,7 +997,6 @@ body.dark-mode .page-hero {
   font-size: 13px;
 }
 
-/* THINNER RANGE SLIDER */
 .modal-mortgage-control input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -1032,10 +1019,6 @@ body.dark-mode .page-hero {
   border: none;
 }
 
-.modal-mortgage-control input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
 .modal-mortgage-result {
   background: #1a1a2e;
   padding: 15px;
@@ -1054,17 +1037,8 @@ body.dark-mode .page-hero {
   color: var(--orange);
 }
 
-/* Dark mode mortgage result fix */
 body.dark-mode .modal-mortgage-result {
   background: #0a0a14;
-}
-
-body.dark-mode .modal-mortgage-result .label {
-  color: rgba(255,255,255,0.5);
-}
-
-body.dark-mode .modal-mortgage-result .amount {
-  color: var(--orange);
 }
 
 /* Share Section */
@@ -1125,7 +1099,6 @@ body.dark-mode .modal-mortgage-result .amount {
   border: 0;
 }
 
-/* Inquire Button */
 .modal-inquire-btn {
   margin-top: 20px;
   padding: 14px 25px;
@@ -1273,14 +1246,6 @@ body.dark-mode footer {
   text-decoration: none;
 }
 
-.footer-col ul {
-  list-style: none;
-}
-
-.footer-col ul li {
-  margin-bottom: 5px;
-}
-
 .social-links {
   display: flex;
   gap: 10px;
@@ -1335,14 +1300,11 @@ body.dark-mode footer {
 .floating-btn:hover { transform: scale(1.05); }
 .btn-call { background: #25d366; color: white; }
 .btn-messenger { background: #0084ff; color: white; }
-.btn-whatsapp { background: #25d366; color: white; }
-.btn-viber { background: #7360f2; color: white; }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 .btn-instagram {
   background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
   color: white;
-  border: none;
 }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 
 body.dark-mode .btn-darkmode {
   background: #2a2a3a;
@@ -1421,7 +1383,6 @@ body.dark-mode .btn-darkmode {
   .social-links { justify-content: center; }
 }
 
-/* Desktop */
 @media (min-width: 769px) {
   .advanced-filters {
     display: block !important;
@@ -1653,8 +1614,8 @@ body.dark-mode .btn-darkmode {
       <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
       <div class="social-links">
         <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
-        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -1685,22 +1646,9 @@ body.dark-mode .btn-darkmode {
 
 <!-- Floating Buttons -->
 <div class="floating-buttons">
-  <!-- Phone -->
-  <a href="tel:+639171774572" class="floating-btn btn-call">
-    <i class="fas fa-phone-alt"></i>
-  </a>
-  
-  <!-- Facebook Page -->
-  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank">
-    <i class="fab fa-facebook-f"></i>
-  </a>
-  
-  <!-- Instagram -->
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank">
-    <i class="fab fa-instagram"></i>
-  </a>
-  
-  <!-- Dark Mode -->
+  <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
     <i class="fas fa-moon"></i>
   </button>
@@ -1710,15 +1658,9 @@ body.dark-mode .btn-darkmode {
 // ============ ESC KEY TO CLOSE MODALS ============
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    if (document.getElementById("modal").style.display === "block") {
-      closeModal();
-    }
-    if (document.getElementById("emailModal").style.display === "flex") {
-      closeEmailModal();
-    }
-    if (document.getElementById("wishlistModal").style.display === "flex") {
-      closeWishlistModal();
-    }
+    if (document.getElementById("modal").style.display === "block") closeModal();
+    if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
+    if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
   }
 });
 
@@ -1745,26 +1687,6 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ ADVANCED FILTER ============
-function toggleAdvancedFilter() {
-  const filters = document.getElementById('advancedFilters');
-  const btn = document.getElementById('advancedFilterBtn');
-  const icon = document.getElementById('filterIcon');
-  
-  if (!filters || !btn) return;
-  
-  filters.classList.toggle('show');
-  btn.classList.toggle('active');
-  
-  if (icon) {
-    if (filters.classList.contains('show')) {
-      icon.style.transform = 'rotate(180deg)';
-    } else {
-      icon.style.transform = 'rotate(0deg)';
-    }
-  }
-}
-
 // ============ TOAST ============
 function showToast(message, isError = false) {
   const toast = document.createElement('div');
@@ -1780,6 +1702,23 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ============ ADVANCED FILTER ============
+function toggleAdvancedFilter() {
+  const filters = document.getElementById('advancedFilters');
+  const btn = document.getElementById('advancedFilterBtn');
+  const icon = document.getElementById('filterIcon');
+  if (!filters || !btn) return;
+  filters.classList.toggle('show');
+  btn.classList.toggle('active');
+  if (icon) {
+    if (filters.classList.contains('show')) {
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
 }
 
 // ============ PRICE ALERT FUNCTIONS ============
@@ -1818,7 +1757,6 @@ async function submitPriceAlert() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice })
     });
-    
     const data = await response.json();
     if (data.success) {
       closeEmailModal();
@@ -1873,7 +1811,6 @@ async function submitWishlist() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage })
     });
-    
     const data = await response.json();
     if (data.success) {
       closeWishlistModal();
@@ -1949,14 +1886,8 @@ function toggleDropdown(dropdownId) {
   const dropdown = document.getElementById(dropdownId);
   const list = dropdown.querySelector('.dropdown-list');
   const selected = dropdown.querySelector('.dropdown-selected');
-  
-  document.querySelectorAll('.dropdown-list').forEach(l => {
-    if (l !== list) l.classList.remove('show');
-  });
-  document.querySelectorAll('.dropdown-selected').forEach(s => {
-    if (s !== selected) s.classList.remove('open');
-  });
-  
+  document.querySelectorAll('.dropdown-list').forEach(l => { if (l !== list) l.classList.remove('show'); });
+  document.querySelectorAll('.dropdown-selected').forEach(s => { if (s !== selected) s.classList.remove('open'); });
   list.classList.toggle('show');
   selected.classList.toggle('open');
 }
@@ -2026,7 +1957,6 @@ function performSearch() {
   const propertyType = window.selectedPropertyTypeValue || '';
   const bedrooms = window.selectedBedroomsValue || '';
   const baths = window.selectedBathsValue || '';
-  
   let url = '/properties.html?';
   const params = [];
   if (location) params.push(`city=${encodeURIComponent(location)}`);
@@ -2035,7 +1965,6 @@ function performSearch() {
   if (baths) params.push(`baths=${baths}`);
   if (customMinPrice > 0) params.push(`minPrice=${customMinPrice}`);
   if (customMaxPrice < 500000000) params.push(`maxPrice=${customMaxPrice}`);
-  
   window.location.href = url + params.join('&');
 }
 
@@ -2049,7 +1978,6 @@ function shareProperty(platform, property) {
   const title = encodeURIComponent(property.title);
   const price = getDisplayPrice(property);
   const text = encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);
-  
   let shareUrl = '';
   switch(platform) {
     case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${propertyUrl}`; break;
@@ -2087,7 +2015,6 @@ function getUrlParameter(name) {
   return urlParams.get(name);
 }
 
-// Optimized property loading with caching
 let cachedProperties = null;
 
 async function loadProperties() {
@@ -2095,7 +2022,6 @@ async function loadProperties() {
     applyCategoryFilter(cachedProperties);
     return;
   }
-  
   try {
     const response = await fetch('/api/properties');
     const allProps = await response.json();
@@ -2110,18 +2036,12 @@ async function loadProperties() {
 function applyCategoryFilter(properties) {
   const categoryParam = getUrlParameter('category');
   let currentCategory = 'all';
-  
-  if (categoryParam === 'FOR SALE') {
-    currentCategory = 'FOR SALE';
-  } else if (categoryParam === 'FOR LEASE') {
-    currentCategory = 'FOR LEASE';
-  }
+  if (categoryParam === 'FOR SALE') currentCategory = 'FOR SALE';
+  else if (categoryParam === 'FOR LEASE') currentCategory = 'FOR LEASE';
   
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
-    if (btn.dataset.category === currentCategory) {
-      btn.classList.add('active');
-    }
+    if (btn.dataset.category === currentCategory) btn.classList.add('active');
   });
   
   const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
@@ -2143,7 +2063,6 @@ function applyCategoryFilter(properties) {
   if (customMinPrice > 0 || customMaxPrice < 500000000) {
     document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
   }
-  
   applyFilters(currentCategory, properties);
 }
 
@@ -2152,32 +2071,20 @@ function applyFilters(currentCategory, properties) {
   const propertyType = window.selectedPropertyTypeValue || '';
   const bedrooms = window.selectedBedroomsValue || '';
   const baths = window.selectedBathsValue || '';
-  
   let filtered = [...properties];
-  
   filtered = filtered.filter(prop => {
     if (location && !prop.location.toLowerCase().includes(location.toLowerCase())) return false;
     if (propertyType && prop.propertyType !== propertyType) return false;
     if (bedrooms && prop.bedrooms < parseInt(bedrooms)) return false;
     if (baths && prop.bathrooms < parseInt(baths)) return false;
-    
     let priceToCheck = 0;
-    if (isForLease(prop)) {
-      priceToCheck = prop.monthlyRental || prop.price || 0;
-    } else {
-      priceToCheck = prop.price || 0;
-    }
+    if (isForLease(prop)) priceToCheck = prop.monthlyRental || prop.price || 0;
+    else priceToCheck = prop.price || 0;
     if (priceToCheck < customMinPrice || priceToCheck > customMaxPrice) return false;
-    
     return true;
   });
-  
-  if (currentCategory === 'FOR SALE') {
-    filtered = filtered.filter(p => p.listingType === 'FOR SALE');
-  } else if (currentCategory === 'FOR LEASE') {
-    filtered = filtered.filter(p => isForLease(p));
-  }
-  
+  if (currentCategory === 'FOR SALE') filtered = filtered.filter(p => p.listingType === 'FOR SALE');
+  else if (currentCategory === 'FOR LEASE') filtered = filtered.filter(p => isForLease(p));
   renderProperties(filtered);
   document.getElementById('resultsCount').innerHTML = `${filtered.length} properties found`;
   allProperties = filtered;
@@ -2263,10 +2170,10 @@ function openDetail(id) {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span class="prop-badge ${badge}" style="display: inline-block;">${badgeText}</span>
         <div style="display: flex; gap: 10px;">
-          <button onclick="openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 8px 14px; border-radius: 30px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
+          <button onclick="openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 8px 14px; border-radius: 30px; font-size: 12px; cursor: pointer;">
             <i class="far fa-heart"></i> Save
           </button>
-          <button onclick="openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 8px 14px; border-radius: 30px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
+          <button onclick="openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 8px 14px; border-radius: 30px; font-size: 12px; cursor: pointer;">
             <i class="fas fa-bell"></i> Notify
           </button>
         </div>
@@ -2275,7 +2182,6 @@ function openDetail(id) {
       <h1>${escapeHtml(prop.title)}</h1>
       <div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>
       
-      <!-- SPECS ABOVE PRICE -->
       <div class="modal-specs">
         <span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span>
         <span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>
@@ -2288,9 +2194,7 @@ function openDetail(id) {
       
       ${prop.listingType === 'FOR SALE' ? `
       <div class="modal-mortgage">
-        <div class="modal-mortgage-title">
-          <i class="fas fa-calculator"></i> Monthly Amortization
-        </div>
+        <div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization</div>
         <div class="modal-mortgage-controls">
           <div class="modal-mortgage-control">
             <label>Down Payment</label>
@@ -2337,9 +2241,7 @@ function openDetail(id) {
       ` : ''}
       
       <div class="modal-share">
-        <div class="modal-share-title">
-          <i class="fas fa-share-alt"></i> Share this property
-        </div>
+        <div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div>
         <div class="modal-share-buttons">
           <button onclick="shareProperty('facebook', currentProperty)" class="share-btn share-btn-fb"><i class="fab fa-facebook-f"></i> Facebook</button>
           <button onclick="shareProperty('messenger', currentProperty)" class="share-btn share-btn-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button>
@@ -2352,9 +2254,7 @@ function openDetail(id) {
         ${escapeHtml(prop.description || 'Contact us for more details about this property.')}
       </div>
       
-      <div class="map-container">
-        <iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Location map for ${escapeHtml(prop.title)}"></iframe>
-      </div>
+      <div class="map-container"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Location map for ${escapeHtml(prop.title)}"></iframe></div>
       
       <button class="modal-inquire-btn" onclick="closeModal();">
         <i class="fas fa-times"></i> Close
@@ -2370,22 +2270,18 @@ function calculateMortgage(propertyPrice) {
   const downPaymentPercent = parseFloat(document.getElementById('downPaymentPercent')?.value) || 20;
   const loanTermYears = parseFloat(document.getElementById('loanTermYears')?.value) || 20;
   const interestRate = parseFloat(document.getElementById('interestRate')?.value) || 7.5;
-  
   const downPayment = (propertyPrice * downPaymentPercent) / 100;
   const loanAmount = propertyPrice - downPayment;
   const monthlyRate = interestRate / 100 / 12;
   const totalPayments = loanTermYears * 12;
-  
   let monthlyPayment = 0;
   if (monthlyRate > 0 && loanAmount > 0) {
     monthlyPayment = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
   }
-  
   const resultElement = document.getElementById('mortgageResult');
   if (resultElement) {
     resultElement.innerHTML = `₱${Math.round(monthlyPayment).toLocaleString()}<span style="font-size: 14px;">/mo</span>`;
   }
-  
   const downPaymentValue = document.getElementById('downPaymentValue');
   if (downPaymentValue) downPaymentValue.innerText = downPaymentPercent + '%';
 }
@@ -2399,15 +2295,11 @@ function updateDownPayment(value, propertyPrice) {
 function changeImg(i) {
   const mainImg = document.getElementById("mainImg");
   const thumbImgs = document.querySelectorAll('.thumb-row img');
-  
   if (mainImg && galleryImages[i]) {
     mainImg.src = galleryImages[i];
     thumbImgs.forEach((img, idx) => {
-      if (idx === i) {
-        img.classList.add('active');
-      } else {
-        img.classList.remove('active');
-      }
+      if (idx === i) img.classList.add('active');
+      else img.classList.remove('active');
     });
   }
 }
@@ -2422,18 +2314,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     const currentCategory = this.dataset.category;
-    
     const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
     document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
-    
     applyFilters(currentCategory, cachedProperties);
-    
     const url = new URL(window.location.href);
-    if (currentCategory === 'all') {
-      url.searchParams.delete('category');
-    } else {
-      url.searchParams.set('category', currentCategory);
-    }
+    if (currentCategory === 'all') url.searchParams.delete('category');
+    else url.searchParams.set('category', currentCategory);
     window.history.pushState({}, '', url);
   });
 });
