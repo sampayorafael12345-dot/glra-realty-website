@@ -16,16 +16,11 @@
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:site_name" content="GLRA Realty">
 
-<!-- Preconnect -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-/* ============ CSS VARIABLES ============ */
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
@@ -56,9 +51,6 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.4);
-  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -96,10 +88,14 @@ body.dark-mode .zonal-search-input {
   border-color: #3a3a4a !important;
 }
 
-body.dark-mode .dropdown-item,
-body.dark-mode .city-dropdown-item {
+body.dark-mode .result-header h3 {
+  color: var(--orange) !important;
+}
+
+body.dark-mode .fee-label,
+body.dark-mode .fee-value,
+body.dark-mode .total-row .fee-label {
   color: var(--text-color) !important;
-  border-color: #3a3a4a !important;
 }
 
 /* Borders */
@@ -350,87 +346,7 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
-/* Search Field for Dropdown */
-.search-field {
-  background: var(--white);
-  border-radius: 50px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  position: relative;
-  border: 2px solid var(--border-color);
-  cursor: pointer;
-}
-
-body.dark-mode .search-field {
-  background: #2a2a3a;
-}
-
-.search-field i {
-  color: var(--orange);
-  font-size: 14px;
-  margin-right: 10px;
-}
-
-.search-field .dropdown-selected {
-  width: 100%;
-  padding: 12px 0;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  color: var(--text-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search-field .dropdown-selected i {
-  color: var(--orange);
-  font-size: 12px;
-  transition: transform 0.3s;
-}
-
-.search-field .dropdown-selected.open i {
-  transform: rotate(180deg);
-}
-
-/* Dropdown List */
-.city-dropdown-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-  display: none;
-  margin-top: 5px;
-}
-
-.city-dropdown-list.show {
-  display: block;
-}
-
-.city-dropdown-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f0f0f0;
-  color: var(--text-color);
-}
-
-.city-dropdown-item:hover {
-  background: #f8f8f8;
-  color: var(--orange);
-}
-
-/* Zonal Dropdown */
+/* Zonal Search */
 .zonal-search-container {
   position: relative;
   width: 100%;
@@ -687,7 +603,6 @@ body.dark-mode .search-field {
 .result-header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 18px 24px;
-  color: var(--white);
 }
 
 body.dark-mode .result-header {
@@ -700,6 +615,7 @@ body.dark-mode .result-header {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--orange);
 }
 
 .result-body { padding: 24px; }
@@ -961,14 +877,11 @@ body.dark-mode footer {
 .floating-btn:hover { transform: scale(1.05); }
 .btn-call { background: #25d366; color: white; }
 .btn-messenger { background: #0084ff; color: white; }
-.btn-whatsapp { background: #25d366; color: white; }
-.btn-viber { background: #7360f2; color: white; }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 .btn-instagram {
   background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
   color: white;
-  border: none;
 }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 
 body.dark-mode .btn-darkmode {
   background: #2a2a3a;
@@ -1048,34 +961,6 @@ body.dark-mode .disclaimer {
 }
 
 .disclaimer i { color: var(--orange); font-size: 14px; }
-
-/* Print Styles */
-@media print {
-  .navbar, .floating-buttons, .print-button-wrapper, .email-print-modal, footer, .back-to-top, .mobile-menu-btn {
-    display: none !important;
-  }
-  
-  .page-hero, .summary-banner, .result-header {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  body {
-    background: white;
-    padding: 0;
-  }
-  
-  .calculator-container {
-    margin: 0;
-    padding: 20px;
-  }
-  
-  .input-card, .result-card, .schedules-wrapper {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    border: 1px solid #ddd;
-  }
-}
 
 /* Mobile */
 @media (max-width: 900px) {
@@ -1198,13 +1083,17 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value -->
+    <!-- Card 2: Property Value & Zonal Value WITH AREA FIELD -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
-      <label>Gross Selling Price</label>
-      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handlePriceInput(this)" value="">
       
-      <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
+      <label>Area (sqm)</label>
+      <input type="number" id="areaSqm" value="" step="1" placeholder="Enter area in square meters" oninput="updateFromArea()">
+      
+      <label style="margin-top: 12px;">Gross Selling Price</label>
+      <input type="number" id="propertyValue" value="" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
+      
+      <label style="margin-top: 12px;">BIR Zonal Value per sqm</label>
       <div class="zonal-row">
         <div class="zonal-search-container">
           <input type="text" id="zonalSearchInput" class="zonal-search-input" placeholder="Search city (e.g., Makati, Taguig, QC)" autocomplete="off" oninput="filterZonalLocations(this.value)">
@@ -1212,11 +1101,16 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="text" id="zonalValue" placeholder="Or enter zonal value manually" oninput="handleZonalInput(this)">
-      <div id="zonalValueDisplay" class="zonal-hint" style="margin-top: 5px;"></div>
+      <input type="number" id="zonalValuePerSqm" value="" step="1000" placeholder="Or enter zonal value per sqm manually" oninput="updateFromZonalPerSqm()">
+      
+      <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
+        <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
+        <span id="areaUsedHint"></span>
+      </div>
+      
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
         <span>Tax will be based on: <strong class="tax-basis" id="taxBasisValue">Selling Price</strong></span>
-        <span>If zonal value is higher</span>
+        <span>(Higher of Selling Price or Total Zonal Value)</span>
       </div>
     </div>
 
@@ -1237,7 +1131,6 @@ body.dark-mode .disclaimer {
       
       <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
       
-      <!-- Searchable dropdown -->
       <div class="search-field" id="cityDropdown">
         <i class="fas fa-map-marker-alt"></i>
         <div class="dropdown-selected" onclick="toggleCityDropdown()">
@@ -1280,11 +1173,11 @@ body.dark-mode .disclaimer {
     </div>
   </div>
 
-  <!-- Desired Net Proceed Card - FIXED -->
+  <!-- Desired Net Proceed Card -->
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
+    <input type="number" id="desiredNetProceed" value="" step="10000" placeholder="Enter desired net amount" oninput="calculateFromDesiredProceed()">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1302,12 +1195,16 @@ body.dark-mode .disclaimer {
       </div>
       <div class="result-body">
         <div class="fee-row">
+          <span class="fee-label">Area (sqm)</span>
+          <span class="fee-value" id="displayArea">0</span>
+        </div>
+        <div class="fee-row">
           <span class="fee-label">Gross Selling Price</span>
           <span class="fee-value" id="grossPrice">₱0</span>
         </div>
         <div class="fee-row">
-          <span class="fee-label">BIR Zonal Value</span>
-          <span class="fee-value" id="zonalValueDisplayCalc">₱0</span>
+          <span class="fee-label">Total Zonal Value (Area × ZV/sqm)</span>
+          <span class="fee-value" id="totalZonalValueDisplay">₱0</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Tax Basis (Higher of SP or ZV)</span>
@@ -1334,7 +1231,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Buyer's Side - NO HELPER TEXT -->
+    <!-- Buyer's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-check"></i> Buyer's Taxes & Fees</h3>
@@ -1380,7 +1277,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <tr>
+        <table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
@@ -1395,7 +1292,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        </table>
+        <table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1403,7 +1300,7 @@ body.dark-mode .disclaimer {
     </div>
     <div class="disclaimer">
       <i class="fas fa-info-circle"></i>
-      <div><strong>Disclaimer:</strong> This calculator provides estimates only. Actual fees may vary based on specific circumstances, city ordinances, and current BIR regulations. Tax is based on the HIGHER of Selling Price or BIR Zonal Value.</div>
+      <div><strong>Disclaimer:</strong> This calculator provides estimates only. Actual fees may vary based on specific circumstances, city ordinances, and current BIR regulations. Tax is based on the HIGHER of Selling Price or Total Zonal Value.</div>
     </div>
   </div>
 </div>
@@ -1429,8 +1326,8 @@ body.dark-mode .disclaimer {
       <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
       <div class="social-links">
         <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
-        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -1461,22 +1358,9 @@ body.dark-mode .disclaimer {
 
 <!-- Floating Buttons -->
 <div class="floating-buttons">
-  <!-- Phone -->
-  <a href="tel:+639171774572" class="floating-btn btn-call">
-    <i class="fas fa-phone-alt"></i>
-  </a>
-  
-  <!-- Facebook Page -->
-  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank">
-    <i class="fab fa-facebook-f"></i>
-  </a>
-  
-  <!-- Instagram -->
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank">
-    <i class="fab fa-instagram"></i>
-  </a>
-  
-  <!-- Dark Mode -->
+  <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
     <i class="fas fa-moon"></i>
   </button>
@@ -1508,96 +1392,6 @@ if (localStorage.getItem('darkMode') === 'true') {
   const btn = document.getElementById('floatingDarkModeToggle');
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
-
-// ============ COMMA FORMATTING FUNCTIONS ============
-function formatNumberWithCommas(num) {
-  if (num === '' || num === null || num === undefined) return '';
-  let number = num.toString().replace(/,/g, '');
-  if (isNaN(number) || number === '') return '';
-  return parseFloat(number).toLocaleString('en-US');
-}
-
-function parseCommaNumber(value) {
-  if (!value) return 0;
-  return parseFloat(value.toString().replace(/,/g, '')) || 0;
-}
-
-// Handle price input with commas
-function handlePriceInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-  } else {
-    input.value = formatNumberWithCommas(rawValue);
-  }
-  updateFromSellingPrice();
-}
-
-function handleZonalInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-  } else {
-    input.value = formatNumberWithCommas(rawValue);
-  }
-  calculateAll();
-}
-
-function handleDesiredInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-    document.getElementById('desiredResult').style.display = 'none';
-    return;
-  }
-  input.value = formatNumberWithCommas(rawValue);
-  calculateFromDesiredProceed();
-}
-
-function getRawNumberFromInput(inputId) {
-  const value = document.getElementById(inputId).value;
-  return parseCommaNumber(value);
-}
-
-// ============ CITY DROPDOWN FUNCTIONS ============
-let currentTransferTaxRate = 0.75;
-let currentLocationName = '';
-
-function toggleCityDropdown() {
-  const dropdown = document.getElementById('cityList');
-  const selected = document.querySelector('#cityDropdown .dropdown-selected');
-  
-  document.querySelectorAll('.city-dropdown-list').forEach(list => {
-    if (list !== dropdown) list.classList.remove('show');
-  });
-  document.querySelectorAll('#cityDropdown .dropdown-selected').forEach(s => {
-    if (s !== selected) s.classList.remove('open');
-  });
-  
-  dropdown.classList.toggle('show');
-  selected.classList.toggle('open');
-}
-
-function selectCity(cityName, rate) {
-  currentTransferTaxRate = rate;
-  currentLocationName = cityName;
-  
-  document.getElementById('selectedCity').innerHTML = cityName;
-  document.getElementById('transferTaxRateValue').innerHTML = rate + '%';
-  document.getElementById('transferRateDisplay').innerHTML = rate;
-  
-  document.getElementById('cityList').classList.remove('show');
-  document.querySelector('#cityDropdown .dropdown-selected').classList.remove('open');
-  
-  calculateAll();
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#cityDropdown')) {
-    document.getElementById('cityList').classList.remove('show');
-    document.querySelector('#cityDropdown .dropdown-selected')?.classList.remove('open');
-  }
-});
 
 // ============ ZONAL VALUE DATABASE ============
 const zonalDatabaseForCalc = [
@@ -1647,51 +1441,187 @@ const zonalDatabaseForCalc = [
   { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000 }
 ];
 
-function filterZonalLocations(searchTerm) {
-  const dropdown = document.getElementById('zonalDropdown');
-  if (!searchTerm.trim()) {
-    dropdown.classList.remove('show');
-    return;
-  }
+// Variables
+let currentAssetType = 'capital';
+let currentCommission = 5;
+let currentTransferTaxRate = 0.75;
+let currentLocationName = '';
+let currentZonalValuePerSqm = 0;
+let currentArea = 0;
+let currentSellingPrice = 0;
+let isReversing = false;
+
+// ============ CALCULATION FUNCTIONS ============
+function calculateTotalZonalValue() {
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  return area * zonalPerSqm;
+}
+
+function updateTotalZonalValueDisplay() {
+  const totalZv = calculateTotalZonalValue();
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
   
-  const filtered = zonalDatabaseForCalc.filter(item => 
-    item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.region.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString();
+  document.getElementById('totalZonalValueDisplay').innerHTML = '₱' + totalZv.toLocaleString();
+  document.getElementById('displayArea').innerHTML = area.toLocaleString();
   
-  if (filtered.length > 0) {
-    dropdown.innerHTML = filtered.map(item => `
-      <div class="zonal-dropdown-item" onclick="selectZonalLocation('${item.location.replace(/'/g, "\\'")}', ${item.avg})">
-        <span class="location-name">${item.location}</span>
-        <span class="location-value">₱${item.avg.toLocaleString()}/sqm</span>
-        <div style="font-size: 10px; color: var(--gray);">${item.region}</div>
-      </div>
-    `).join('');
-    dropdown.classList.add('show');
+  if (area > 0 && zonalPerSqm > 0) {
+    document.getElementById('areaUsedHint').innerHTML = `${area} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
   } else {
-    dropdown.innerHTML = '<div class="zonal-dropdown-item" style="color: var(--gray);">No locations found</div>';
-    dropdown.classList.add('show');
+    document.getElementById('areaUsedHint').innerHTML = '';
   }
 }
 
-function selectZonalLocation(location, value) {
-  document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValue').value = formatNumberWithCommas(value);
-  document.getElementById('zonalDropdown').classList.remove('show');
-  document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
+function getTaxBasis() {
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const totalZv = calculateTotalZonalValue();
+  return Math.max(sellingPrice, totalZv);
+}
+
+function formatCurrency(amount) {
+  return '₱' + Math.round(amount).toLocaleString();
+}
+
+function calculateRegistrationFee(price) {
+  if (price <= 500000) return price * 0.01;
+  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
+  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
+  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
+  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
+  return 42000 + (price - 10000000) * 0.0025;
+}
+
+function calculateNotarialFee(price) {
+  if (price <= 2000000) return price * 0.01;
+  if (price <= 10000000) return price * 0.005;
+  return price * 0.0025;
+}
+
+function calculateAll() {
+  if (isReversing) return;
+  
+  currentArea = parseFloat(document.getElementById('areaSqm').value) || 0;
+  currentSellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const totalZv = calculateTotalZonalValue();
+  const taxBasis = getTaxBasis();
+  const commissionRate = currentCommission;
+  const transferTaxRate = currentTransferTaxRate;
+  
+  // Update displays
+  document.getElementById('grossPrice').innerHTML = currentSellingPrice > 0 ? formatCurrency(currentSellingPrice) : '₱0';
+  document.getElementById('totalZonalValueDisplay').innerHTML = totalZv > 0 ? formatCurrency(totalZv) : '₱0';
+  document.getElementById('displayArea').innerHTML = currentArea > 0 ? currentArea.toLocaleString() : '0';
+  
+  // Tax basis hint
+  const taxBasisHint = document.getElementById('taxBasisValue');
+  if (taxBasis === currentSellingPrice) taxBasisHint.innerHTML = 'Selling Price';
+  else taxBasisHint.innerHTML = 'Total Zonal Value (higher)';
+  
+  // Seller tax
+  let sellerTax = 0, sellerTaxLabel = '';
+  if (currentAssetType === 'capital') {
+    sellerTax = taxBasis * 0.06;
+    sellerTaxLabel = 'Capital Gains Tax (6%)';
+  } else {
+    sellerTax = currentSellingPrice * 0.18;
+    sellerTaxLabel = 'VAT (12%) + EWT (6%)';
+  }
+  
+  const netBeforeCommission = currentSellingPrice - sellerTax;
+  const brokerCommission = currentSellingPrice * (commissionRate / 100);
+  const netProceed = netBeforeCommission - brokerCommission;
+  
+  // Buyer taxes
+  const dstTax = taxBasis * 0.015;
+  const transferTax = taxBasis * (transferTaxRate / 100);
+  const registrationFee = calculateRegistrationFee(taxBasis);
+  const notarialFee = calculateNotarialFee(currentSellingPrice);
+  
+  const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
+  const totalSellerCosts = sellerTax + brokerCommission;
+  const totalCosts = totalSellerCosts + totalBuyerCosts;
+  const totalCostsPercent = currentSellingPrice > 0 ? (totalCosts / currentSellingPrice * 100).toFixed(1) : 0;
+  
+  // Update summary
+  document.getElementById('netProceedSummary').innerHTML = formatCurrency(netProceed);
+  document.getElementById('totalCostsSummary').innerHTML = formatCurrency(totalCosts);
+  document.getElementById('totalPercentSummary').innerHTML = `${totalCostsPercent}% of price`;
+  document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
+  document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
+  
+  // Update seller details
+  document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
+  document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
+  document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
+  document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
+  document.getElementById('commissionDisplay').innerHTML = commissionRate;
+  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
+  document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
+  
+  // Update buyer details
+  document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
+  document.getElementById('transferRateDisplay').innerHTML = transferTaxRate;
+  document.getElementById('transferTax').innerHTML = formatCurrency(transferTax);
+  document.getElementById('registrationFee').innerHTML = formatCurrency(registrationFee);
+  document.getElementById('notarialFee').innerHTML = formatCurrency(notarialFee);
+  document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
+  
+  // Hide desired result
+  document.getElementById('desiredResult').style.display = 'none';
+  document.getElementById('desiredNetProceed').value = '';
+}
+
+function updateFromArea() {
+  updateTotalZonalValueDisplay();
   calculateAll();
 }
 
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.zonal-search-container')) {
-    document.getElementById('zonalDropdown').classList.remove('show');
-  }
-});
+function updateFromSellingPrice() {
+  isReversing = false;
+  calculateAll();
+}
 
-// ============ CALCULATOR FUNCTIONS ============
-let currentAssetType = 'capital';
-let currentCommission = 5;
-let isReversing = false;
+function updateFromZonalPerSqm() {
+  updateTotalZonalValueDisplay();
+  calculateAll();
+}
+
+function calculateFromDesiredProceed() {
+  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
+  if (desiredNet <= 0) {
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  isReversing = true;
+  let low = desiredNet, high = desiredNet * 2;
+  let sellingPrice = desiredNet;
+  let iterations = 0;
+  while (iterations < 50) {
+    const totalZv = calculateTotalZonalValue();
+    const taxBasis = Math.max(sellingPrice, totalZv);
+    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
+    const brokerCommission = sellingPrice * (currentCommission / 100);
+    const netProceed = sellingPrice - sellerTax - brokerCommission;
+    if (Math.abs(netProceed - desiredNet) < 100) break;
+    if (netProceed < desiredNet) {
+      low = sellingPrice;
+      sellingPrice = sellingPrice * 1.05;
+    } else {
+      high = sellingPrice;
+      sellingPrice = (low + high) / 2;
+    }
+    iterations++;
+  }
+  isReversing = false;
+  document.getElementById('propertyValue').value = Math.round(sellingPrice);
+  calculateAll();
+  document.getElementById('desiredResult').style.display = 'block';
+  document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
+  document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
+  isReversing = true;
+}
 
 function selectAssetType(type) {
   currentAssetType = type;
@@ -1716,130 +1646,71 @@ function setCommission(rate) {
     btn.classList.remove('active');
     if (parseInt(btn.dataset.rate) === rate) btn.classList.add('active');
   });
-  if (!isReversing) calculateAll();
-}
-
-function getTaxBasis() {
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
-  const zonalValue = parseCommaNumber(document.getElementById('zonalValue').value);
-  return Math.max(sellingPrice, zonalValue);
-}
-
-function formatCurrency(amount) {
-  return '₱' + Math.round(amount).toLocaleString();
-}
-
-function calculateRegistrationFee(price) {
-  if (price <= 500000) return price * 0.01;
-  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
-  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
-  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
-  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
-  return 42000 + (price - 10000000) * 0.0025;
-}
-
-function calculateNotarialFee(price) {
-  if (price <= 2000000) return price * 0.01;
-  if (price <= 10000000) return price * 0.005;
-  return price * 0.0025;
-}
-
-function calculateAll() {
-  if (isReversing) return;
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
-  const zonalValue = parseCommaNumber(document.getElementById('zonalValue').value);
-  const taxBasis = getTaxBasis();
-  const commissionRate = currentCommission;
-  const transferTaxRate = currentTransferTaxRate;
-  
-  const taxBasisHint = document.getElementById('taxBasisValue');
-  if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
-  else taxBasisHint.innerHTML = 'Zonal Value (higher)';
-  
-  let sellerTax = 0, sellerTaxLabel = '';
-  if (currentAssetType === 'capital') {
-    sellerTax = taxBasis * 0.06;
-    sellerTaxLabel = 'Capital Gains Tax (6%)';
-  } else {
-    sellerTax = sellingPrice * 0.18;
-    sellerTaxLabel = 'VAT (12%) + EWT (6%)';
-  }
-  
-  const netBeforeCommission = sellingPrice - sellerTax;
-  const brokerCommission = sellingPrice * (commissionRate / 100);
-  const netProceed = netBeforeCommission - brokerCommission;
-  
-  const dstTax = taxBasis * 0.015;
-  const transferTax = taxBasis * (transferTaxRate / 100);
-  const registrationFee = calculateRegistrationFee(taxBasis);
-  const notarialFee = calculateNotarialFee(sellingPrice);
-  
-  const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
-  const totalSellerCosts = sellerTax + brokerCommission;
-  const totalCosts = totalSellerCosts + totalBuyerCosts;
-  const totalCostsPercent = sellingPrice > 0 ? (totalCosts / sellingPrice * 100).toFixed(1) : 0;
-  
-  document.getElementById('netProceedSummary').innerHTML = formatCurrency(netProceed);
-  document.getElementById('totalCostsSummary').innerHTML = formatCurrency(totalCosts);
-  document.getElementById('totalPercentSummary').innerHTML = `${totalCostsPercent}% of price`;
-  document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
-  document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
-  
-  document.getElementById('grossPrice').innerHTML = sellingPrice > 0 ? formatCurrency(sellingPrice) : '₱0';
-  document.getElementById('zonalValueDisplayCalc').innerHTML = zonalValue > 0 ? formatCurrency(zonalValue) : '₱0';
-  document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
-  document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
-  document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
-  document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
-  document.getElementById('commissionDisplay').innerHTML = commissionRate;
-  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
-  document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
-  
-  document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
-  document.getElementById('transferRateDisplay').innerHTML = transferTaxRate;
-  document.getElementById('transferTax').innerHTML = formatCurrency(transferTax);
-  document.getElementById('registrationFee').innerHTML = formatCurrency(registrationFee);
-  document.getElementById('notarialFee').innerHTML = formatCurrency(notarialFee);
-  document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
-}
-
-function updateFromSellingPrice() {
-  isReversing = false;
   calculateAll();
 }
 
-function calculateFromDesiredProceed() {
-  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
-  if (desiredNet <= 0) {
-    document.getElementById('desiredResult').style.display = 'none';
+// ============ CITY DROPDOWN FUNCTIONS ============
+function toggleCityDropdown() {
+  const dropdown = document.getElementById('cityList');
+  const selected = document.querySelector('#cityDropdown .dropdown-selected');
+  dropdown.classList.toggle('show');
+  selected.classList.toggle('open');
+}
+
+function selectCity(cityName, rate) {
+  currentTransferTaxRate = rate;
+  currentLocationName = cityName;
+  document.getElementById('selectedCity').innerHTML = cityName;
+  document.getElementById('transferTaxRateValue').innerHTML = rate + '%';
+  document.getElementById('transferRateDisplay').innerHTML = rate;
+  document.getElementById('cityList').classList.remove('show');
+  document.querySelector('#cityDropdown .dropdown-selected').classList.remove('open');
+  calculateAll();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#cityDropdown')) {
+    document.getElementById('cityList').classList.remove('show');
+    document.querySelector('#cityDropdown .dropdown-selected')?.classList.remove('open');
+  }
+  if (!e.target.closest('.zonal-search-container')) {
+    document.getElementById('zonalDropdown').classList.remove('show');
+  }
+});
+
+// ============ ZONAL SEARCH FUNCTIONS ============
+function filterZonalLocations(searchTerm) {
+  const dropdown = document.getElementById('zonalDropdown');
+  if (!searchTerm.trim()) {
+    dropdown.classList.remove('show');
     return;
   }
-  isReversing = true;
-  let low = desiredNet, high = desiredNet * 2;
-  let sellingPrice = desiredNet;
-  let iterations = 0;
-  while (iterations < 50) {
-    const taxBasis = Math.max(sellingPrice, parseCommaNumber(document.getElementById('zonalValue').value));
-    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
-    const brokerCommission = sellingPrice * (currentCommission / 100);
-    const netProceed = sellingPrice - sellerTax - brokerCommission;
-    if (Math.abs(netProceed - desiredNet) < 100) break;
-    if (netProceed < desiredNet) {
-      low = sellingPrice;
-      sellingPrice = sellingPrice * 1.05;
-    } else {
-      high = sellingPrice;
-      sellingPrice = (low + high) / 2;
-    }
-    iterations++;
+  const filtered = zonalDatabaseForCalc.filter(item => 
+    item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.region.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  if (filtered.length > 0) {
+    dropdown.innerHTML = filtered.map(item => `
+      <div class="zonal-dropdown-item" onclick="selectZonalLocation('${item.location.replace(/'/g, "\\'")}', ${item.avg})">
+        <span class="location-name">${item.location}</span>
+        <span class="location-value">₱${item.avg.toLocaleString()}/sqm</span>
+        <div style="font-size: 10px; color: var(--gray);">${item.region}</div>
+      </div>
+    `).join('');
+    dropdown.classList.add('show');
+  } else {
+    dropdown.innerHTML = '<div class="zonal-dropdown-item" style="color: var(--gray);">No locations found</div>';
+    dropdown.classList.add('show');
   }
-  isReversing = false;
-  document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(sellingPrice));
+}
+
+function selectZonalLocation(location, value) {
+  document.getElementById('zonalSearchInput').value = location;
+  document.getElementById('zonalValuePerSqm').value = value;
+  document.getElementById('zonalDropdown').classList.remove('show');
+  document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
+  updateTotalZonalValueDisplay();
   calculateAll();
-  document.getElementById('desiredResult').style.display = 'block';
-  document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
-  document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
-  isReversing = true;
 }
 
 function openZonalLookup() {
@@ -1859,32 +1730,24 @@ function closeEmailPrintModal() {
 
 async function verifyEmailAndPrint() {
   const email = document.getElementById('printEmail').value;
-  
   if (!email || !email.includes('@')) {
     showToast('Please enter a valid email address', true);
     return;
   }
-  
   const btn = event.target;
   const originalText = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
   btn.disabled = true;
-  
   try {
     sessionStorage.setItem('calculatorEmail', email);
-    
     await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, source: 'calculator_print' })
     });
-    
     closeEmailPrintModal();
     showToast('Thank you! Preparing print...');
-    
-    setTimeout(() => {
-      window.print();
-    }, 500);
+    setTimeout(() => { window.print(); }, 500);
   } catch (error) {
     showToast('Something went wrong. Please try again.', true);
   } finally {
