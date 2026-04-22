@@ -102,7 +102,6 @@ body.dark-mode .city-dropdown-item {
   border-color: #3a3a4a !important;
 }
 
-/* Dark mode selected button highlight */
 body.dark-mode .comm-btn.active {
   background: var(--orange) !important;
   color: white !important;
@@ -1214,10 +1213,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, updateFromArea)">
+      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, 'area')">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, updateFromSellingPrice)">
+      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, 'price')">
       
       <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
@@ -1227,7 +1226,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, updateFromZonalPerSqm)">
+      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, 'zonal')">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
@@ -1398,7 +1397,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <tr>
+        <table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
@@ -1502,7 +1501,7 @@ function toggleDarkMode() {
     btn.style.background = '#2a2a3a';
     btn.style.color = '#f97316';
   } else {
-    btn.innerHTML = '<i class="fas fa-moon</i>';
+    btn.innerHTML = '<i class="fas fa-moon"></i>';
     btn.style.background = '#1e1e2e';
     btn.style.color = 'white';
   }
@@ -1514,7 +1513,7 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ NUMBER FORMATTING FUNCTIONS (WITH DECIMALS AND COMMAS) ============
+// ============ NUMBER FORMATTING FUNCTIONS ============
 function formatNumberWithCommas(num) {
   if (num === '' || num === null || num === undefined) return '';
   let number = num.toString().replace(/,/g, '');
@@ -1528,30 +1527,36 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
-// Handle all number inputs with commas and decimals
-function handleNumberInput(input, callback) {
+function handleNumberInput(input, type) {
   let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
+  let num = parseFloat(rawValue);
+  if (!isNaN(num)) {
+    input.value = formatNumberWithCommas(num);
+  } else if (rawValue === '') {
     input.value = '';
-  } else {
-    let num = parseFloat(rawValue);
-    if (!isNaN(num)) {
-      input.value = formatNumberWithCommas(num);
-    }
   }
-  if (callback) callback();
+  
+  if (type === 'area') {
+    updateTotalZonalValueDisplay();
+    calculateAll();
+  } else if (type === 'price') {
+    updateTotalZonalValueDisplay();
+    updateFromSellingPrice();
+  } else if (type === 'zonal') {
+    updateTotalZonalValueDisplay();
+    calculateAll();
+  }
 }
 
 function handleDesiredInput(input) {
   let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-    document.getElementById('desiredResult').style.display = 'none';
-    return;
-  }
   let num = parseFloat(rawValue);
   if (!isNaN(num)) {
     input.value = formatNumberWithCommas(num);
+  } else if (rawValue === '') {
+    input.value = '';
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
   }
   calculateFromDesiredProceed();
 }
@@ -1578,18 +1583,7 @@ function updateTotalZonalValueDisplay() {
   }
 }
 
-function updateFromArea() {
-  updateTotalZonalValueDisplay();
-  calculateAll();
-}
-
-function updateFromZonalPerSqm() {
-  updateTotalZonalValueDisplay();
-  calculateAll();
-}
-
 function updateFromSellingPrice() {
-  updateTotalZonalValueDisplay();
   calculateAll();
 }
 
