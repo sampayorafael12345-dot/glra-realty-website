@@ -15,7 +15,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 async function sendEmail(to, subject, htmlContent) {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'GLRA Realty <hello@glrarealty.com>',  // ✅ Updated to your domain
+      from: 'GLRA Realty <hello@glrarealty.com>',
       to: [to],
       subject: subject,
       html: htmlContent
@@ -338,7 +338,7 @@ app.post('/api/unsubscribe', async (req, res) => {
   }
 });
 
-// ============ WISHLIST ROUTES ============
+// ============ WISHLIST ROUTES (WITH EMAIL) ============
 
 app.post('/api/wishlist', async (req, res) => {
   try {
@@ -372,6 +372,26 @@ app.post('/api/wishlist', async (req, res) => {
       await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
     }
     
+    // Send confirmation email
+    const wishlistEmailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #f97316;">GLRA Realty</h1>
+        </div>
+        <h2>❤️ Property Saved to Your Wishlist!</h2>
+        <p>You have successfully saved the following property to your wishlist:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>${propertyTitle}</strong></p>
+          <p>📍 ${propertyLocation}</p>
+          <p>💰 ₱${propertyPrice.toLocaleString()}</p>
+        </div>
+        <p>You can view all your saved properties anytime.</p>
+        <a href="https://glrarealty.com/properties.html" style="background: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Browse More Properties</a>
+        <p style="margin-top: 20px;">Best regards,<br><strong>GLRA Realty Team</strong></p>
+      </div>
+    `;
+    await sendEmail(email, `❤️ Saved to Wishlist: ${propertyTitle}`, wishlistEmailHtml);
+    
     console.log(`❤️ ${email} saved ${propertyTitle} to wishlist`);
     res.json({ success: true, message: 'Property saved to wishlist!' });
   } catch (err) {
@@ -400,7 +420,7 @@ app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
   }
 });
 
-// ============ PRICE ALERT ROUTES ============
+// ============ PRICE ALERT ROUTES (WITH EMAIL) ============
 
 app.post('/api/price-alert', async (req, res) => {
   try {
@@ -438,17 +458,17 @@ app.post('/api/price-alert', async (req, res) => {
         <div style="text-align: center; margin-bottom: 20px;">
           <h1 style="color: #f97316;">GLRA Realty</h1>
         </div>
-        <h2>Price Drop Alert Set!</h2>
+        <h2>🔔 Price Drop Alert Set!</h2>
         <p>You will be notified when the price drops for:</p>
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p><strong>${propertyTitle}</strong></p>
-          <p>Current Price: ₱${propertyPrice.toLocaleString()}</p>
+          <p>💰 Current Price: ₱${propertyPrice.toLocaleString()}</p>
         </div>
         <p>We'll email you immediately when the price changes.</p>
         <p>Best regards,<br><strong>GLRA Realty Team</strong></p>
       </div>
     `;
-    await sendEmail(email, `Price Alert Set for ${propertyTitle}`, confirmationHtml);
+    await sendEmail(email, `🔔 Price Alert Set for ${propertyTitle}`, confirmationHtml);
     
     console.log(`🔔 Price alert set for ${email} on ${propertyTitle}`);
     res.json({ success: true, message: 'You will be notified when price drops!' });
