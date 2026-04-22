@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Sales Closing Fees Calculator | GLRA Realty</title>
-<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup, suggested minimum selling price, and tax savings analysis.">
+<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates based on city.">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/calculator.html">
 <meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
-<meta property="og:description" content="Complete property transaction calculator with BIR Zonal Value lookup and tax analysis.">
+<meta property="og:description" content="Complete property transaction calculator. Includes BIR Zonal Value lookup and Desired Net Proceed.">
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:site_name" content="GLRA Realty">
 
@@ -44,7 +44,6 @@
   --transition: all 0.3s ease;
   --success: #10b981;
   --danger: #ef4444;
-  --warning: #f59e0b;
   --info: #3b82f6;
 }
 
@@ -85,8 +84,7 @@ body.dark-mode .radio-option,
 body.dark-mode .comm-btn,
 body.dark-mode .zonal-dropdown,
 body.dark-mode .email-print-content,
-body.dark-mode .city-dropdown-list,
-body.dark-mode .warning-box {
+body.dark-mode .city-dropdown-list {
   background: var(--card-bg) !important;
   border-color: #3a3a4a !important;
 }
@@ -107,99 +105,12 @@ body.dark-mode .city-dropdown-item {
 /* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
-input, .disclaimer, .search-field, .warning-box {
+input, .disclaimer, .search-field {
   border: 2px solid var(--border-color);
 }
 
 .input-card:hover, .result-card:hover {
   border-color: var(--orange);
-}
-
-/* Warning Box */
-.warning-box {
-  background: #fef3c7;
-  border-left: 4px solid var(--warning);
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin: 10px 0;
-}
-
-body.dark-mode .warning-box {
-  background: #2a1a0a;
-  border-left-color: var(--warning);
-}
-
-.warning-box i {
-  color: var(--warning);
-  margin-right: 8px;
-}
-
-.warning-box .warning-text {
-  color: var(--warning);
-  font-weight: 600;
-}
-
-/* Suggested Price Box */
-.suggested-box {
-  background: var(--orange-light);
-  border: 2px solid var(--orange);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin: 10px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.suggested-box .label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--orange);
-}
-
-.suggested-box .value {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--orange);
-}
-
-.suggested-box button {
-  background: var(--orange);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 40px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.suggested-box button:hover {
-  background: var(--orange-dark);
-  transform: translateY(-2px);
-}
-
-/* Tax Savings Box */
-.savings-box {
-  background: rgba(16, 185, 129, 0.1);
-  border: 2px solid var(--success);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin: 10px 0;
-}
-
-.savings-box .label {
-  font-size: 12px;
-  color: var(--gray);
-}
-
-.savings-box .value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--success);
 }
 
 /* Navigation */
@@ -670,7 +581,7 @@ body.dark-mode .search-field {
 .radio-option span { font-size: 13px; color: var(--text-color); }
 .radio-option small { font-size: 11px; color: var(--gray); }
 
-/* Commission Buttons */
+/* Commission Buttons - 8% REMOVED */
 .commission-buttons {
   display: flex;
   gap: 8px;
@@ -1232,7 +1143,7 @@ body.dark-mode .disclaimer {
   <div>
     <h1>Sales Closing Fees Calculator</h1>
     <div class="hero-line"></div>
-    <p>Complete property transaction calculator — includes BIR Zonal Value, Suggested Minimum Price, and Tax Analysis</p>
+    <p>Complete property transaction calculator — includes BIR Zonal Value and Desired Net Proceed</p>
   </div>
 </section>
 
@@ -1311,22 +1222,6 @@ body.dark-mode .disclaimer {
         <span id="areaCalculationHint" style="font-size: 10px;"></span>
       </div>
       
-      <!-- NEW: Suggested Minimum Selling Price Box -->
-      <div id="suggestedBox" class="suggested-box">
-        <div>
-          <div class="label">💡 Suggested Minimum Selling Price</div>
-          <div class="value" id="suggestedPrice">₱0</div>
-        </div>
-        <button onclick="useSuggestedPrice()">Use Suggested Price</button>
-      </div>
-      
-      <!-- NEW: Warning Box if SP is below Zonal Value -->
-      <div id="warningBox" class="warning-box" style="display: none;">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span class="warning-text">⚠️ Warning: Your Selling Price is below the Zonal Value!</span>
-        <div id="warningDetail" style="font-size: 12px; margin-top: 5px;"></div>
-      </div>
-      
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
         <span>Tax will be based on: <strong class="tax-basis" id="taxBasisValue">Selling Price</strong></span>
         <span>(Higher of Selling Price or Total Zonal Value)</span>
@@ -1344,7 +1239,6 @@ body.dark-mode .disclaimer {
         <button class="comm-btn active" data-rate="5" onclick="setCommission(5)">5%</button>
         <button class="comm-btn" data-rate="6" onclick="setCommission(6)">6%</button>
         <button class="comm-btn" data-rate="7" onclick="setCommission(7)">7%</button>
-        <button class="comm-btn" data-rate="8" onclick="setCommission(8)">8%</button>
       </div>
       <input type="hidden" id="commissionRate" value="5">
       
@@ -1408,16 +1302,12 @@ body.dark-mode .disclaimer {
 
   <!-- Results Section -->
   <div class="results-wrapper">
-    <!-- Seller's Side -->
+    <!-- Seller's Side - AREA REMOVED -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-friends"></i> Seller's Taxes & Fees</h3>
       </div>
       <div class="result-body">
-        <div class="fee-row">
-          <span class="fee-label">Area (sqm)</span>
-          <span class="fee-value" id="displayArea">0</span>
-        </div>
         <div class="fee-row">
           <span class="fee-label">Gross Selling Price</span>
           <span class="fee-value" id="grossPrice">₱0</span>
@@ -1497,14 +1387,14 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        </table>
+        <tr>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        </table>
+        <tr>
           <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
           <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
           <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
@@ -1640,38 +1530,11 @@ function updateTotalZonalValueDisplay() {
   
   document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
   document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
-  document.getElementById('displayArea').innerHTML = area > 0 ? area.toLocaleString() : '0';
   
-  // Update suggested price
-  const suggestedPrice = totalZv;
-  document.getElementById('suggestedPrice').innerHTML = '₱' + suggestedPrice.toLocaleString();
-  
-  // Show calculation hint
   if (area > 0 && zonalPerSqm > 0) {
     document.getElementById('areaCalculationHint').innerHTML = `${area.toLocaleString()} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
   } else {
     document.getElementById('areaCalculationHint').innerHTML = '';
-  }
-  
-  // Check if selling price is below zonal value and show warning
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
-  if (sellingPrice > 0 && totalZv > 0 && sellingPrice < totalZv) {
-    const extraTax = (totalZv - sellingPrice) * 0.06;
-    document.getElementById('warningBox').style.display = 'block';
-    document.getElementById('warningDetail').innerHTML = `Your Selling Price is ₱${(totalZv - sellingPrice).toLocaleString()} below the Zonal Value. You will pay an extra ₱${extraTax.toLocaleString()} in Capital Gains Tax.`;
-  } else {
-    document.getElementById('warningBox').style.display = 'none';
-  }
-}
-
-function useSuggestedPrice() {
-  const totalZv = calculateTotalZonalValue();
-  if (totalZv > 0) {
-    document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(totalZv));
-    updateFromSellingPrice();
-    showToast('✅ Suggested price applied!');
-  } else {
-    showToast('Please enter Area and Zonal Value first', true);
   }
 }
 
@@ -1949,6 +1812,7 @@ function calculateAll() {
   document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
   
   document.getElementById('grossPrice').innerHTML = sellingPrice > 0 ? formatCurrency(sellingPrice) : '₱0';
+  document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? formatCurrency(totalZv) : '₱0';
   document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
   document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
   document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
