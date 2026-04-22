@@ -1213,10 +1213,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, 'area')">
+      <input type="text" id="areaSqm" placeholder="Enter area in square meters" onblur="formatAndUpdate(this, 'area')" oninput="updateValueOnly(this)">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, 'price')">
+      <input type="text" id="propertyValue" placeholder="Enter selling price" onblur="formatAndUpdate(this, 'price')" oninput="updateValueOnly(this)">
       
       <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
@@ -1226,7 +1226,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, 'zonal')">
+      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" onblur="formatAndUpdate(this, 'zonal')" oninput="updateValueOnly(this)">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
@@ -1302,7 +1302,7 @@ body.dark-mode .disclaimer {
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
+    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" onblur="formatDesiredAndUpdate(this)" oninput="updateValueOnly(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1400,11 +1400,11 @@ body.dark-mode .disclaimer {
         <table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
-        </table>
+        </tr>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        <table>
+        <tr>
           <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
           <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
           <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
@@ -1412,7 +1412,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        </table>
+        <table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1527,38 +1527,68 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
-function handleNumberInput(input, type) {
+// Store raw values to preserve decimal entry
+let rawAreaValue = '';
+let rawPriceValue = '';
+let rawZonalValue = '';
+let rawDesiredValue = '';
+
+function updateValueOnly(input) {
+  // Just store the raw value without formatting while typing
+  if (input.id === 'areaSqm') rawAreaValue = input.value;
+  else if (input.id === 'propertyValue') rawPriceValue = input.value;
+  else if (input.id === 'zonalValuePerSqm') rawZonalValue = input.value;
+  else if (input.id === 'desiredNetProceed') rawDesiredValue = input.value;
+}
+
+function formatAndUpdate(input, type) {
   let rawValue = input.value.replace(/,/g, '');
   let num = parseFloat(rawValue);
   if (!isNaN(num)) {
     input.value = formatNumberWithCommas(num);
+    if (type === 'area') {
+      rawAreaValue = input.value;
+      updateTotalZonalValueDisplay();
+      calculateAll();
+    } else if (type === 'price') {
+      rawPriceValue = input.value;
+      updateTotalZonalValueDisplay();
+      updateFromSellingPrice();
+    } else if (type === 'zonal') {
+      rawZonalValue = input.value;
+      updateTotalZonalValueDisplay();
+      calculateAll();
+    }
   } else if (rawValue === '') {
     input.value = '';
-  }
-  
-  if (type === 'area') {
-    updateTotalZonalValueDisplay();
-    calculateAll();
-  } else if (type === 'price') {
-    updateTotalZonalValueDisplay();
-    updateFromSellingPrice();
-  } else if (type === 'zonal') {
-    updateTotalZonalValueDisplay();
-    calculateAll();
+    if (type === 'area') {
+      rawAreaValue = '';
+      updateTotalZonalValueDisplay();
+      calculateAll();
+    } else if (type === 'price') {
+      rawPriceValue = '';
+      updateTotalZonalValueDisplay();
+      updateFromSellingPrice();
+    } else if (type === 'zonal') {
+      rawZonalValue = '';
+      updateTotalZonalValueDisplay();
+      calculateAll();
+    }
   }
 }
 
-function handleDesiredInput(input) {
+function formatDesiredAndUpdate(input) {
   let rawValue = input.value.replace(/,/g, '');
   let num = parseFloat(rawValue);
   if (!isNaN(num)) {
     input.value = formatNumberWithCommas(num);
+    rawDesiredValue = input.value;
+    calculateFromDesiredProceed();
   } else if (rawValue === '') {
     input.value = '';
+    rawDesiredValue = '';
     document.getElementById('desiredResult').style.display = 'none';
-    return;
   }
-  calculateFromDesiredProceed();
 }
 
 // ============ AREA & ZONAL FUNCTIONS ============
