@@ -92,17 +92,12 @@ body.dark-mode .result-header h3 {
   color: var(--orange) !important;
 }
 
-body.dark-mode .fee-label,
-body.dark-mode .fee-value,
-body.dark-mode .total-row .fee-label {
-  color: var(--text-color) !important;
-}
-
 /* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
 input, .disclaimer, .search-field {
   border: 2px solid var(--border-color);
+  border-radius: 12px;
 }
 
 .input-card:hover, .result-card:hover {
@@ -1083,7 +1078,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 2: Property Value & Zonal Value WITH AREA FIELD -->
+    <!-- Card 2: Property Value with Area -->
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
@@ -1105,7 +1100,6 @@ body.dark-mode .disclaimer {
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
-        <span id="areaUsedHint"></span>
       </div>
       
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
@@ -1114,7 +1108,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Commission & Transfer Tax -->
+    <!-- Card 3: Rates -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1138,28 +1132,28 @@ body.dark-mode .disclaimer {
           <i class="fas fa-chevron-down"></i>
         </div>
         <div class="city-dropdown-list" id="cityList">
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Caloocan City" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Las Piñas City" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Makati City" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Malabon City" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Marikina City" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Muntinlupa City" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Navotas City" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Pateros" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Valenzuela City" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Caloocan City', 0.50)">Caloocan City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Las Piñas City', 0.50)">Las Piñas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Makati City', 0.50)">Makati City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Malabon City', 0.50)">Malabon City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Marikina City', 0.50)">Marikina City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Muntinlupa City', 0.50)">Muntinlupa City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Navotas City', 0.50)">Navotas City <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pateros', 0.50)">Pateros <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Valenzuela City', 0.50)">Valenzuela City <span style="float: right; color: var(--orange);">0.50%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.60" data-location="Taguig City (BGC)" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Taguig City (BGC)', 0.60)">Taguig City (BGC) <span style="float: right; color: var(--orange);">0.60%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Mandaluyong City" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Manila City" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Parañaque City" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasay City" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Pasig City" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="Quezon City" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="San Juan City" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Mandaluyong City', 0.75)">Mandaluyong City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Manila City', 0.75)">Manila City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Parañaque City', 0.75)">Parañaque City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pasay City', 0.75)">Pasay City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Pasig City', 0.75)">Pasig City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Quezon City', 0.75)">Quezon City <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('San Juan City', 0.75)">San Juan City <span style="float: right; color: var(--orange);">0.75%</span></div>
           <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
-          <div class="city-dropdown-item" data-rate="0.50" data-location="Municipality (Outside MM)" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
-          <div class="city-dropdown-item" data-rate="0.75" data-location="City (Outside MM)" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('Municipality (Outside MM)', 0.50)">🏘️ Municipalities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.50%</span></div>
+          <div class="city-dropdown-item" onclick="selectCity('City (Outside MM)', 0.75)">🏙️ Cities (Outside Metro Manila) <span style="float: right; color: var(--orange);">0.75%</span></div>
         </div>
       </div>
       
@@ -1188,7 +1182,6 @@ body.dark-mode .disclaimer {
 
   <!-- Results Section -->
   <div class="results-wrapper">
-    <!-- Seller's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-friends"></i> Seller's Taxes & Fees</h3>
@@ -1204,7 +1197,7 @@ body.dark-mode .disclaimer {
         </div>
         <div class="fee-row">
           <span class="fee-label">Total Zonal Value (Area × ZV/sqm)</span>
-          <span class="fee-value" id="totalZonalValueDisplay">₱0</span>
+          <span class="fee-value" id="totalZonalValueResult">₱0</span>
         </div>
         <div class="fee-row">
           <span class="fee-label">Tax Basis (Higher of SP or ZV)</span>
@@ -1231,7 +1224,6 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Buyer's Side -->
     <div class="result-card">
       <div class="result-header">
         <h3><i class="fas fa-user-check"></i> Buyer's Taxes & Fees</h3>
@@ -1270,31 +1262,31 @@ body.dark-mode .disclaimer {
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
         <table>
-          <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
-          <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</span></tr>
-          <tr><td>Expanded Withholding Tax</span><td>6% of selling price</span></tr>
+          <tr><td>Capital Gains Tax</td><td>6% of tax basis</td></tr>
+          <tr><td>VAT (Ordinary Asset)</td><td>12% of gross selling price</td></tr>
+          <tr><td>Expanded Withholding Tax</td><td>6% of selling price</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
         <table>
-          <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
-          <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
+          <tr><td>Documentary Stamp Tax</td><td>1.5% of tax basis</td></tr>
+          <tr><td>Local Transfer Tax</td><td>0.50% - 0.75% (by city)</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
         <table>
-          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
-          <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
-          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
+          <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</td><td>0.50%</td></tr>
+          <tr><td>Taguig City (BGC)</td><td>0.60%</td></tr>
+          <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</td><td>0.75%</td></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
         <table>
-          <tr><td>Municipalities</span><td>0.50%</span></tr>
-          <tr><td>Cities</span><td>0.75%</span></tr>
+          <tr><td>Municipalities</td><td>0.50%</td></tr>
+          <tr><td>Cities</td><td>0.75%</td></tr>
         </table>
       </div>
     </div>
@@ -1446,9 +1438,6 @@ let currentAssetType = 'capital';
 let currentCommission = 5;
 let currentTransferTaxRate = 0.75;
 let currentLocationName = '';
-let currentZonalValuePerSqm = 0;
-let currentArea = 0;
-let currentSellingPrice = 0;
 let isReversing = false;
 
 // ============ CALCULATION FUNCTIONS ============
@@ -1460,18 +1449,10 @@ function calculateTotalZonalValue() {
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
-  
   document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString();
-  document.getElementById('totalZonalValueDisplay').innerHTML = '₱' + totalZv.toLocaleString();
+  document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString();
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
   document.getElementById('displayArea').innerHTML = area.toLocaleString();
-  
-  if (area > 0 && zonalPerSqm > 0) {
-    document.getElementById('areaUsedHint').innerHTML = `${area} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
-  } else {
-    document.getElementById('areaUsedHint').innerHTML = '';
-  }
 }
 
 function getTaxBasis() {
@@ -1502,21 +1483,22 @@ function calculateNotarialFee(price) {
 function calculateAll() {
   if (isReversing) return;
   
-  currentArea = parseFloat(document.getElementById('areaSqm').value) || 0;
-  currentSellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
   const totalZv = calculateTotalZonalValue();
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
   const transferTaxRate = currentTransferTaxRate;
   
   // Update displays
-  document.getElementById('grossPrice').innerHTML = currentSellingPrice > 0 ? formatCurrency(currentSellingPrice) : '₱0';
-  document.getElementById('totalZonalValueDisplay').innerHTML = totalZv > 0 ? formatCurrency(totalZv) : '₱0';
-  document.getElementById('displayArea').innerHTML = currentArea > 0 ? currentArea.toLocaleString() : '0';
+  document.getElementById('grossPrice').innerHTML = sellingPrice > 0 ? formatCurrency(sellingPrice) : '₱0';
+  document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? formatCurrency(totalZv) : '₱0';
+  document.getElementById('displayArea').innerHTML = area > 0 ? area.toLocaleString() : '0';
+  document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
   
   // Tax basis hint
   const taxBasisHint = document.getElementById('taxBasisValue');
-  if (taxBasis === currentSellingPrice) taxBasisHint.innerHTML = 'Selling Price';
+  if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
   else taxBasisHint.innerHTML = 'Total Zonal Value (higher)';
   
   // Seller tax
@@ -1525,24 +1507,24 @@ function calculateAll() {
     sellerTax = taxBasis * 0.06;
     sellerTaxLabel = 'Capital Gains Tax (6%)';
   } else {
-    sellerTax = currentSellingPrice * 0.18;
+    sellerTax = sellingPrice * 0.18;
     sellerTaxLabel = 'VAT (12%) + EWT (6%)';
   }
   
-  const netBeforeCommission = currentSellingPrice - sellerTax;
-  const brokerCommission = currentSellingPrice * (commissionRate / 100);
+  const netBeforeCommission = sellingPrice - sellerTax;
+  const brokerCommission = sellingPrice * (commissionRate / 100);
   const netProceed = netBeforeCommission - brokerCommission;
   
   // Buyer taxes
   const dstTax = taxBasis * 0.015;
   const transferTax = taxBasis * (transferTaxRate / 100);
   const registrationFee = calculateRegistrationFee(taxBasis);
-  const notarialFee = calculateNotarialFee(currentSellingPrice);
+  const notarialFee = calculateNotarialFee(sellingPrice);
   
   const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
   const totalSellerCosts = sellerTax + brokerCommission;
   const totalCosts = totalSellerCosts + totalBuyerCosts;
-  const totalCostsPercent = currentSellingPrice > 0 ? (totalCosts / currentSellingPrice * 100).toFixed(1) : 0;
+  const totalCostsPercent = sellingPrice > 0 ? (totalCosts / sellingPrice * 100).toFixed(1) : 0;
   
   // Update summary
   document.getElementById('netProceedSummary').innerHTML = formatCurrency(netProceed);
@@ -1708,7 +1690,6 @@ function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
   document.getElementById('zonalValuePerSqm').value = value;
   document.getElementById('zonalDropdown').classList.remove('show');
-  document.getElementById('zonalValueDisplay').innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Zonal value for ${location} set to ₱${value.toLocaleString()}/sqm.`;
   updateTotalZonalValueDisplay();
   calculateAll();
 }
