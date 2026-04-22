@@ -102,6 +102,23 @@ body.dark-mode .city-dropdown-item {
   border-color: #3a3a4a !important;
 }
 
+/* Dark mode selected button highlight */
+body.dark-mode .comm-btn.active {
+  background: var(--orange) !important;
+  color: white !important;
+  border-color: var(--orange) !important;
+}
+
+body.dark-mode .radio-option.selected {
+  background: var(--orange-light) !important;
+  border-color: var(--orange) !important;
+}
+
+body.dark-mode .radio-option.selected span,
+body.dark-mode .radio-option.selected small {
+  color: var(--text-color) !important;
+}
+
 /* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
@@ -1202,10 +1219,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleAreaInput(this)">
+      <input type="number" id="areaSqm" step="any" placeholder="Enter area in square meters" oninput="handleAreaInput(this)">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handlePriceInput(this)">
+      <input type="number" id="propertyValue" step="any" placeholder="Enter selling price" oninput="handlePriceInput(this)">
       
       <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
@@ -1215,7 +1232,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleZonalPerSqmInput(this)">
+      <input type="number" id="zonalValuePerSqm" step="any" placeholder="Or enter zonal value per sqm manually" oninput="handleZonalPerSqmInput(this)">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
@@ -1291,7 +1308,7 @@ body.dark-mode .disclaimer {
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
+    <input type="number" id="desiredNetProceed" step="any" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1386,14 +1403,14 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        </table>
+        <tr>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        </table>
+        <table>
           <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
           <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
           <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
@@ -1401,7 +1418,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <tr>
+        </table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1502,34 +1519,31 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ COMMA FORMATTING FUNCTIONS (WITH DECIMALS) ============
+// ============ NUMBER FORMATTING FUNCTIONS (WITH DECIMALS) ============
 function formatNumberWithCommas(num) {
   if (num === '' || num === null || num === undefined) return '';
   let number = num.toString().replace(/,/g, '');
   if (isNaN(number) || number === '') return '';
-  // Parse as float to handle decimals, then format with commas
   let floatNum = parseFloat(number);
-  // Format with commas and keep up to 2 decimal places
   return floatNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 function parseCommaNumber(value) {
   if (!value) return 0;
-  // Remove commas and parse as float (supports decimals)
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
 // ============ AREA & ZONAL FUNCTIONS ============
 function calculateTotalZonalValue() {
-  const area = parseCommaNumber(document.getElementById('areaSqm').value);
-  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
   return area * zonalPerSqm;
 }
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
-  const area = parseCommaNumber(document.getElementById('areaSqm').value);
-  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
+  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
+  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
   
   document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
   document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
@@ -1542,46 +1556,26 @@ function updateTotalZonalValueDisplay() {
 }
 
 function handleAreaInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-  } else {
-    input.value = formatNumberWithCommas(rawValue);
-  }
   updateTotalZonalValueDisplay();
   calculateAll();
 }
 
 function handleZonalPerSqmInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-  } else {
-    input.value = formatNumberWithCommas(rawValue);
-  }
   updateTotalZonalValueDisplay();
   calculateAll();
 }
 
 function handlePriceInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  if (rawValue === '') {
-    input.value = '';
-  } else {
-    input.value = formatNumberWithCommas(rawValue);
-  }
   updateTotalZonalValueDisplay();
   updateFromSellingPrice();
 }
 
 function handleDesiredInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
+  let rawValue = input.value;
   if (rawValue === '') {
-    input.value = '';
     document.getElementById('desiredResult').style.display = 'none';
     return;
   }
-  input.value = formatNumberWithCommas(rawValue);
   calculateFromDesiredProceed();
 }
 
@@ -1705,7 +1699,7 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
+  document.getElementById('zonalValuePerSqm').value = value;
   document.getElementById('zonalDropdown').classList.remove('show');
   updateTotalZonalValueDisplay();
   calculateAll();
@@ -1748,7 +1742,7 @@ function setCommission(rate) {
 }
 
 function getTaxBasis() {
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
   const totalZv = calculateTotalZonalValue();
   return Math.max(sellingPrice, totalZv);
 }
@@ -1775,7 +1769,7 @@ function calculateNotarialFee(price) {
 function calculateAll() {
   if (isReversing) return;
   
-  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
+  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
   const totalZv = calculateTotalZonalValue();
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
@@ -1839,7 +1833,7 @@ function updateFromSellingPrice() {
 }
 
 function calculateFromDesiredProceed() {
-  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
+  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
@@ -1865,7 +1859,7 @@ function calculateFromDesiredProceed() {
     iterations++;
   }
   isReversing = false;
-  document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(sellingPrice));
+  document.getElementById('propertyValue').value = sellingPrice;
   calculateAll();
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
