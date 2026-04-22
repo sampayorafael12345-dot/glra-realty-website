@@ -331,7 +331,8 @@ body.dark-mode .page-hero {
   margin-bottom: 8px;
 }
 
-.input-card input {
+/* Number inputs with comma formatting */
+.number-input {
   width: 100%;
   padding: 14px 16px;
   border: 2px solid var(--border-color);
@@ -344,7 +345,7 @@ body.dark-mode .page-hero {
   color: var(--text-color);
 }
 
-.input-card input:focus {
+.number-input:focus {
   outline: none;
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
@@ -687,7 +688,6 @@ body.dark-mode .search-field {
 .result-header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 18px 24px;
-  color: var(--white);
 }
 
 body.dark-mode .result-header {
@@ -700,6 +700,7 @@ body.dark-mode .result-header {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--orange);
 }
 
 .result-body { padding: 24px; }
@@ -1203,10 +1204,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="number" id="areaSqm" value="" step="1" placeholder="Enter area in square meters" oninput="updateFromArea()">
+      <input type="text" id="areaSqm" class="number-input" placeholder="Enter area in square meters" oninput="handleNumberInput(this, updateFromArea)">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="number" id="propertyValue" value="" step="10000" placeholder="Enter selling price" oninput="updateFromSellingPrice()">
+      <input type="text" id="propertyValue" class="number-input" placeholder="Enter selling price" oninput="handleNumberInput(this, updateFromSellingPrice)">
       
       <label style="margin-top: 12px;">BIR Zonal Value Lookup</label>
       <div class="zonal-row">
@@ -1216,7 +1217,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="number" id="zonalValuePerSqm" value="" step="1000" placeholder="Or enter zonal value per sqm manually" oninput="updateFromZonalPerSqm()">
+      <input type="text" id="zonalValuePerSqm" class="number-input" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, updateFromZonalPerSqm)">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
@@ -1229,7 +1230,7 @@ body.dark-mode .disclaimer {
       </div>
     </div>
 
-    <!-- Card 3: Commission & Transfer Tax - WORKING VERSION -->
+    <!-- Card 3: Commission & Transfer Tax -->
     <div class="input-card">
       <h3><i class="fas fa-percent"></i> Rates</h3>
       <label>Broker Commission</label>
@@ -1292,7 +1293,7 @@ body.dark-mode .disclaimer {
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="number" id="desiredNetProceed" value="" step="10000" placeholder="Enter desired net amount" oninput="calculateFromDesiredProceed()">
+    <input type="text" id="desiredNetProceed" class="number-input" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1384,7 +1385,7 @@ body.dark-mode .disclaimer {
     <div class="schedules-grid">
       <div class="schedule-card">
         <h4>Seller's Taxes (BIR)</h4>
-        </table>
+        <table>
           <tr><td>Capital Gains Tax</span><td>6% of tax basis</span></tr>
           <tr><td>VAT (Ordinary Asset)</span><td>12% of gross selling price</span></tr>
           <tr><td>Expanded Withholding Tax</span><td>6% of selling price</span></tr>
@@ -1392,14 +1393,14 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Buyer's Taxes</h4>
-        <table>
+        </table>
           <tr><td>Documentary Stamp Tax</span><td>1.5% of tax basis</span></tr>
           <tr><td>Local Transfer Tax</span><td>0.50% - 0.75% (by city)</span></tr>
         </table>
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        </table>
+        <table>
           <tr><td>Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
           <tr><td>Taguig City (BGC)</span><td>0.60%</span></tr>
           <tr><td>Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0.75%</span></tr>
@@ -1407,7 +1408,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <tr>
+        <table>
           <tr><td>Municipalities</span><td>0.50%</span></tr>
           <tr><td>Cities</span><td>0.75%</span></tr>
         </table>
@@ -1508,6 +1509,41 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
+// ============ COMMA FORMATTING FUNCTIONS ============
+function formatNumberWithCommas(num) {
+  if (num === '' || num === null || num === undefined) return '';
+  let number = num.toString().replace(/,/g, '');
+  if (isNaN(number) || number === '') return '';
+  return parseFloat(number).toLocaleString('en-US');
+}
+
+function parseCommaNumber(value) {
+  if (!value) return 0;
+  return parseFloat(value.toString().replace(/,/g, '')) || 0;
+}
+
+// Handle number inputs with commas
+function handleNumberInput(input, callback) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+  } else {
+    input.value = formatNumberWithCommas(rawValue);
+  }
+  if (callback) callback();
+}
+
+function handleDesiredInput(input) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  input.value = formatNumberWithCommas(rawValue);
+  calculateFromDesiredProceed();
+}
+
 // ============ ZONAL VALUE DATABASE ============
 const zonalDatabaseForCalc = [
   { location: "Makati City", region: "Metro Manila", avg: 150000 },
@@ -1565,29 +1601,29 @@ let isReversing = false;
 
 // ============ CALCULATION FUNCTIONS ============
 function calculateTotalZonalValue() {
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  const area = parseCommaNumber(document.getElementById('areaSqm').value);
+  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
   return area * zonalPerSqm;
 }
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  const area = parseCommaNumber(document.getElementById('areaSqm').value);
+  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
   
-  document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString();
-  document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString();
-  document.getElementById('displayArea').innerHTML = area.toLocaleString();
+  document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
+  document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
+  document.getElementById('displayArea').innerHTML = area > 0 ? area.toLocaleString() : '0';
   
   if (area > 0 && zonalPerSqm > 0) {
-    document.getElementById('areaUsedHint').innerHTML = `${area} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
+    document.getElementById('areaUsedHint').innerHTML = `${area.toLocaleString()} sqm × ₱${zonalPerSqm.toLocaleString()} = ₱${totalZv.toLocaleString()}`;
   } else {
     document.getElementById('areaUsedHint').innerHTML = '';
   }
 }
 
 function getTaxBasis() {
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
   const totalZv = calculateTotalZonalValue();
   return Math.max(sellingPrice, totalZv);
 }
@@ -1614,8 +1650,8 @@ function calculateNotarialFee(price) {
 function calculateAll() {
   if (isReversing) return;
   
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const area = parseCommaNumber(document.getElementById('areaSqm').value);
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
   const totalZv = calculateTotalZonalValue();
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
@@ -1702,7 +1738,7 @@ function updateFromZonalPerSqm() {
 }
 
 function calculateFromDesiredProceed() {
-  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
+  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
@@ -1728,7 +1764,7 @@ function calculateFromDesiredProceed() {
     iterations++;
   }
   isReversing = false;
-  document.getElementById('propertyValue').value = Math.round(sellingPrice);
+  document.getElementById('propertyValue').value = formatNumberWithCommas(Math.round(sellingPrice));
   calculateAll();
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
@@ -1819,7 +1855,7 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValuePerSqm').value = value;
+  document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
   document.getElementById('zonalDropdown').classList.remove('show');
   updateTotalZonalValueDisplay();
   calculateAll();
