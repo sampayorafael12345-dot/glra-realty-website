@@ -114,11 +114,6 @@ body.dark-mode .radio-option.selected {
   border-color: var(--orange) !important;
 }
 
-body.dark-mode .radio-option.selected span,
-body.dark-mode .radio-option.selected small {
-  color: var(--text-color) !important;
-}
-
 /* Borders */
 .input-card, .result-card, .schedules-wrapper, .desired-proceed-card,
 .radio-option, .comm-btn, .zonal-search-input, .zonal-row button,
@@ -1219,10 +1214,10 @@ body.dark-mode .disclaimer {
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
       <label>Area (sqm)</label>
-      <input type="number" id="areaSqm" step="any" placeholder="Enter area in square meters" oninput="handleAreaInput(this)">
+      <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, updateFromArea)">
       
       <label style="margin-top: 12px;">Gross Selling Price</label>
-      <input type="number" id="propertyValue" step="any" placeholder="Enter selling price" oninput="handlePriceInput(this)">
+      <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, updateFromSellingPrice)">
       
       <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
@@ -1232,7 +1227,7 @@ body.dark-mode .disclaimer {
         </div>
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
-      <input type="number" id="zonalValuePerSqm" step="any" placeholder="Or enter zonal value per sqm manually" oninput="handleZonalPerSqmInput(this)">
+      <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, updateFromZonalPerSqm)">
       
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
         <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
@@ -1308,7 +1303,7 @@ body.dark-mode .disclaimer {
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
     <label>How much do you want to receive?</label>
-    <input type="number" id="desiredNetProceed" step="any" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
+    <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
       <div class="value" id="requiredSellingPrice">₱0</div>
@@ -1507,7 +1502,7 @@ function toggleDarkMode() {
     btn.style.background = '#2a2a3a';
     btn.style.color = '#f97316';
   } else {
-    btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.innerHTML = '<i class="fas fa-moon</i>';
     btn.style.background = '#1e1e2e';
     btn.style.color = 'white';
   }
@@ -1519,7 +1514,7 @@ if (localStorage.getItem('darkMode') === 'true') {
   if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// ============ NUMBER FORMATTING FUNCTIONS (WITH DECIMALS) ============
+// ============ NUMBER FORMATTING FUNCTIONS (WITH DECIMALS AND COMMAS) ============
 function formatNumberWithCommas(num) {
   if (num === '' || num === null || num === undefined) return '';
   let number = num.toString().replace(/,/g, '');
@@ -1533,17 +1528,45 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
+// Handle all number inputs with commas and decimals
+function handleNumberInput(input, callback) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+  } else {
+    let num = parseFloat(rawValue);
+    if (!isNaN(num)) {
+      input.value = formatNumberWithCommas(num);
+    }
+  }
+  if (callback) callback();
+}
+
+function handleDesiredInput(input) {
+  let rawValue = input.value.replace(/,/g, '');
+  if (rawValue === '') {
+    input.value = '';
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  let num = parseFloat(rawValue);
+  if (!isNaN(num)) {
+    input.value = formatNumberWithCommas(num);
+  }
+  calculateFromDesiredProceed();
+}
+
 // ============ AREA & ZONAL FUNCTIONS ============
 function calculateTotalZonalValue() {
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  const area = parseCommaNumber(document.getElementById('areaSqm').value);
+  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
   return area * zonalPerSqm;
 }
 
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+  const area = parseCommaNumber(document.getElementById('areaSqm').value);
+  const zonalPerSqm = parseCommaNumber(document.getElementById('zonalValuePerSqm').value);
   
   document.getElementById('totalZonalValue').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
   document.getElementById('totalZonalValueResult').innerHTML = totalZv > 0 ? '₱' + totalZv.toLocaleString() : '₱0';
@@ -1555,28 +1578,19 @@ function updateTotalZonalValueDisplay() {
   }
 }
 
-function handleAreaInput(input) {
+function updateFromArea() {
   updateTotalZonalValueDisplay();
   calculateAll();
 }
 
-function handleZonalPerSqmInput(input) {
+function updateFromZonalPerSqm() {
   updateTotalZonalValueDisplay();
   calculateAll();
 }
 
-function handlePriceInput(input) {
+function updateFromSellingPrice() {
   updateTotalZonalValueDisplay();
-  updateFromSellingPrice();
-}
-
-function handleDesiredInput(input) {
-  let rawValue = input.value;
-  if (rawValue === '') {
-    document.getElementById('desiredResult').style.display = 'none';
-    return;
-  }
-  calculateFromDesiredProceed();
+  calculateAll();
 }
 
 // ============ CITY DROPDOWN FUNCTIONS ============
@@ -1699,7 +1713,7 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValuePerSqm').value = value;
+  document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
   document.getElementById('zonalDropdown').classList.remove('show');
   updateTotalZonalValueDisplay();
   calculateAll();
@@ -1742,7 +1756,7 @@ function setCommission(rate) {
 }
 
 function getTaxBasis() {
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
   const totalZv = calculateTotalZonalValue();
   return Math.max(sellingPrice, totalZv);
 }
@@ -1769,7 +1783,7 @@ function calculateNotarialFee(price) {
 function calculateAll() {
   if (isReversing) return;
   
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
+  const sellingPrice = parseCommaNumber(document.getElementById('propertyValue').value);
   const totalZv = calculateTotalZonalValue();
   const taxBasis = getTaxBasis();
   const commissionRate = currentCommission;
@@ -1784,7 +1798,6 @@ function calculateAll() {
     sellerTax = taxBasis * 0.06;
     sellerTaxLabel = 'Capital Gains Tax (6%)';
   } else {
-    // Ordinary Asset: VAT 12% + EWT 6% = 18% total
     sellerTax = sellingPrice * 0.18;
     sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
   }
@@ -1827,13 +1840,8 @@ function calculateAll() {
   document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
 }
 
-function updateFromSellingPrice() {
-  isReversing = false;
-  calculateAll();
-}
-
 function calculateFromDesiredProceed() {
-  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
+  const desiredNet = parseCommaNumber(document.getElementById('desiredNetProceed').value);
   if (desiredNet <= 0) {
     document.getElementById('desiredResult').style.display = 'none';
     return;
@@ -1859,7 +1867,7 @@ function calculateFromDesiredProceed() {
     iterations++;
   }
   isReversing = false;
-  document.getElementById('propertyValue').value = sellingPrice;
+  document.getElementById('propertyValue').value = formatNumberWithCommas(sellingPrice);
   calculateAll();
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
