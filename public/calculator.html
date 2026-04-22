@@ -1404,7 +1404,7 @@ body.dark-mode .disclaimer {
       </div>
       <div class="schedule-card">
         <h4>Metro Manila Transfer Tax Rates</h4>
-        </table>
+        <table>
           <tr>
             
 Caloocan, Las Piñas, Makati, Malabon, Marikina, Muntinlupa, Navotas, Pateros, Valenzuela</span><td>0.50%</span></tr>
@@ -1418,8 +1418,8 @@ Mandaluyong, Manila, Parañaque, Pasay, Pasig, Quezon City, San Juan</span><td>0
       </div>
       <div class="schedule-card">
         <h4>Outside Metro Manila</h4>
-        <tr>
-           hilabihan
+        </table>
+          <tr>
             
 Municipalities</span><td>0.50%</span></tr>
           <tr>
@@ -1524,6 +1524,7 @@ if (localStorage.getItem('darkMode') === 'true') {
 }
 
 // ============ NUMBER FORMATTING FUNCTIONS ============
+// Format number with commas and 2 decimal places for DISPLAY only
 function formatNumberWithCommas(num) {
   if (num === '' || num === null || num === undefined) return '';
   let number = num.toString().replace(/,/g, '');
@@ -1537,74 +1538,69 @@ function parseCommaNumber(value) {
   return parseFloat(value.toString().replace(/,/g, '')) || 0;
 }
 
+// Handle input - keep raw numbers while typing, format on blur
 function handleNumberInput(input, type) {
-  // Remove existing commas
-  let rawValue = input.value.replace(/,/g, '');
-  // Allow only numbers and decimal point
-  rawValue = rawValue.replace(/[^0-9.]/g, '');
-  // Prevent multiple decimal points
-  let parts = rawValue.split('.');
-  if (parts.length > 2) {
-    rawValue = parts[0] + '.' + parts.slice(1).join('');
-  }
-  input.value = rawValue;
+  // Store raw value without formatting
+  let rawValue = input.value;
+  input.setAttribute('data-raw', rawValue);
   
-  // Update calculations
+  // Update calculations in real-time using raw value
   if (type === 'area') {
-    updateTotalZonalValueDisplay();
-    calculateAll();
+    updateTotalZonalValueDisplayRaw();
+    calculateAllRaw();
   } else if (type === 'price') {
-    updateTotalZonalValueDisplay();
-    updateFromSellingPrice();
+    updateTotalZonalValueDisplayRaw();
+    updateFromSellingPriceRaw();
   } else if (type === 'zonal') {
-    updateTotalZonalValueDisplay();
-    calculateAll();
+    updateTotalZonalValueDisplayRaw();
+    calculateAllRaw();
   }
 }
 
 function handleDesiredInput(input) {
-  let rawValue = input.value.replace(/,/g, '');
-  rawValue = rawValue.replace(/[^0-9.]/g, '');
-  let parts = rawValue.split('.');
-  if (parts.length > 2) {
-    rawValue = parts[0] + '.' + parts.slice(1).join('');
-  }
-  input.value = rawValue;
+  let rawValue = input.value;
+  input.setAttribute('data-raw', rawValue);
   
   if (rawValue === '') {
     document.getElementById('desiredResult').style.display = 'none';
     return;
   }
-  calculateFromDesiredProceed();
+  calculateFromDesiredProceedRaw();
 }
 
-function formatAllDisplayedValues() {
-  // Format the display values with commas and 2 decimal places
-  const elements = ['grossPrice', 'totalZonalValueResult', 'taxBasis', 'sellerTax', 'netBeforeCommission', 'brokerCommission', 'netProceedDetail', 'dstTax', 'transferTax', 'registrationFee', 'notarialFee', 'buyerCostsTotal', 'netProceedSummary', 'totalCostsSummary', 'sellerPaysSummary', 'buyerPaysSummary'];
-  
-  elements.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && el.textContent) {
-      let value = el.textContent.replace('₱', '').replace(/,/g, '');
-      let num = parseFloat(value);
+// Format all inputs on blur
+function formatInputs() {
+  const inputs = ['areaSqm', 'propertyValue', 'zonalValuePerSqm', 'desiredNetProceed'];
+  inputs.forEach(id => {
+    const input = document.getElementById(id);
+    if (input && input.value) {
+      let rawValue = input.value.replace(/,/g, '');
+      let num = parseFloat(rawValue);
       if (!isNaN(num)) {
-        el.textContent = '₱' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        input.value = formatNumberWithCommas(num);
       }
     }
   });
 }
 
-// ============ AREA & ZONAL FUNCTIONS ============
-function calculateTotalZonalValue() {
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+// Get raw number from input (handles commas)
+function getRawValue(id) {
+  const input = document.getElementById(id);
+  if (!input || !input.value) return 0;
+  return parseFloat(input.value.replace(/,/g, '')) || 0;
+}
+
+// Raw calculation functions (no formatting during typing)
+function calculateTotalZonalValueRaw() {
+  const area = getRawValue('areaSqm');
+  const zonalPerSqm = getRawValue('zonalValuePerSqm');
   return area * zonalPerSqm;
 }
 
-function updateTotalZonalValueDisplay() {
-  const totalZv = calculateTotalZonalValue();
-  const area = parseFloat(document.getElementById('areaSqm').value) || 0;
-  const zonalPerSqm = parseFloat(document.getElementById('zonalValuePerSqm').value) || 0;
+function updateTotalZonalValueDisplayRaw() {
+  const totalZv = calculateTotalZonalValueRaw();
+  const area = getRawValue('areaSqm');
+  const zonalPerSqm = getRawValue('zonalValuePerSqm');
   
   document.getElementById('totalZonalValue').innerHTML = '₱' + totalZv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1616,8 +1612,138 @@ function updateTotalZonalValueDisplay() {
   }
 }
 
-function updateFromSellingPrice() {
-  calculateAll();
+function updateFromSellingPriceRaw() {
+  calculateAllRaw();
+}
+
+function calculateAllRaw() {
+  if (isReversing) return;
+  
+  const sellingPrice = getRawValue('propertyValue');
+  const totalZv = calculateTotalZonalValueRaw();
+  const taxBasis = Math.max(sellingPrice, totalZv);
+  const commissionRate = currentCommission;
+  const transferTaxRate = currentTransferTaxRate;
+  
+  const taxBasisHint = document.getElementById('taxBasisValue');
+  if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
+  else taxBasisHint.innerHTML = 'Total Zonal Value (higher)';
+  
+  let sellerTax = 0, sellerTaxLabel = '';
+  if (currentAssetType === 'capital') {
+    sellerTax = taxBasis * 0.06;
+    sellerTaxLabel = 'Capital Gains Tax (6%)';
+  } else {
+    sellerTax = taxBasis * 0.18;
+    sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
+  }
+  
+  const netBeforeCommission = sellingPrice - sellerTax;
+  const brokerCommission = sellingPrice * (commissionRate / 100);
+  const netProceed = netBeforeCommission - brokerCommission;
+  
+  const dstTax = taxBasis * 0.015;
+  const transferTax = taxBasis * (transferTaxRate / 100);
+  const registrationFee = calculateRegistrationFee(taxBasis);
+  const notarialFee = calculateNotarialFee(sellingPrice);
+  
+  const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
+  const totalSellerCosts = sellerTax + brokerCommission;
+  const totalCosts = totalSellerCosts + totalBuyerCosts;
+  const totalCostsPercent = sellingPrice > 0 ? (totalCosts / sellingPrice * 100).toFixed(1) : 0;
+  
+  // Format all display values with commas and .00
+  document.getElementById('netProceedSummary').innerHTML = '₱' + netProceed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('totalCostsSummary').innerHTML = '₱' + totalCosts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('totalPercentSummary').innerHTML = `${totalCostsPercent}% of price`;
+  document.getElementById('sellerPaysSummary').innerHTML = '₱' + totalSellerCosts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('buyerPaysSummary').innerHTML = '₱' + totalBuyerCosts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  document.getElementById('grossPrice').innerHTML = '₱' + sellingPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('totalZonalValueResult').innerHTML = '₱' + totalZv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('taxBasis').innerHTML = '₱' + taxBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
+  document.getElementById('sellerTax').innerHTML = '₱' + sellerTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('netBeforeCommission').innerHTML = '₱' + netBeforeCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('commissionDisplay').innerHTML = commissionRate;
+  document.getElementById('brokerCommission').innerHTML = '₱' + brokerCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('netProceedDetail').innerHTML = '₱' + netProceed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  document.getElementById('dstTax').innerHTML = '₱' + dstTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('transferRateDisplay').innerHTML = transferTaxRate;
+  document.getElementById('transferTax').innerHTML = '₱' + transferTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('registrationFee').innerHTML = '₱' + registrationFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('notarialFee').innerHTML = '₱' + notarialFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('buyerCostsTotal').innerHTML = '₱' + totalBuyerCosts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function calculateFromDesiredProceedRaw() {
+  const desiredNet = getRawValue('desiredNetProceed');
+  if (desiredNet <= 0) {
+    document.getElementById('desiredResult').style.display = 'none';
+    return;
+  }
+  isReversing = true;
+  let low = desiredNet, high = desiredNet * 3;
+  let sellingPrice = desiredNet;
+  let iterations = 0;
+  while (iterations < 50) {
+    const totalZv = calculateTotalZonalValueRaw();
+    const taxBasis = Math.max(sellingPrice, totalZv);
+    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
+    const brokerCommission = sellingPrice * (currentCommission / 100);
+    const netProceed = sellingPrice - sellerTax - brokerCommission;
+    if (Math.abs(netProceed - desiredNet) < 100) break;
+    if (netProceed < desiredNet) {
+      low = sellingPrice;
+      sellingPrice = sellingPrice * 1.1;
+    } else {
+      high = sellingPrice;
+      sellingPrice = (low + high) / 2;
+    }
+    iterations++;
+  }
+  isReversing = false;
+  const priceInput = document.getElementById('propertyValue');
+  priceInput.value = formatNumberWithCommas(sellingPrice);
+  calculateAllRaw();
+  document.getElementById('desiredResult').style.display = 'block';
+  document.getElementById('requiredSellingPrice').innerHTML = '₱' + sellingPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('desiredAmountDisplay').innerHTML = '₱' + desiredNet.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  isReversing = true;
+}
+
+// Format inputs when they lose focus
+document.getElementById('areaSqm')?.addEventListener('blur', function() {
+  let num = parseFloat(this.value.replace(/,/g, ''));
+  if (!isNaN(num)) this.value = formatNumberWithCommas(num);
+});
+document.getElementById('propertyValue')?.addEventListener('blur', function() {
+  let num = parseFloat(this.value.replace(/,/g, ''));
+  if (!isNaN(num)) this.value = formatNumberWithCommas(num);
+});
+document.getElementById('zonalValuePerSqm')?.addEventListener('blur', function() {
+  let num = parseFloat(this.value.replace(/,/g, ''));
+  if (!isNaN(num)) this.value = formatNumberWithCommas(num);
+});
+document.getElementById('desiredNetProceed')?.addEventListener('blur', function() {
+  let num = parseFloat(this.value.replace(/,/g, ''));
+  if (!isNaN(num)) this.value = formatNumberWithCommas(num);
+});
+
+function calculateRegistrationFee(price) {
+  if (price <= 500000) return price * 0.01;
+  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
+  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
+  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
+  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
+  return 42000 + (price - 10000000) * 0.0025;
+}
+
+function calculateNotarialFee(price) {
+  if (price <= 2000000) return price * 0.01;
+  if (price <= 10000000) return price * 0.005;
+  return price * 0.0025;
 }
 
 // ============ CITY DROPDOWN FUNCTIONS ============
@@ -1650,7 +1776,7 @@ function selectCity(cityName, rate) {
   document.getElementById('cityList').classList.remove('show');
   document.querySelector('#cityDropdown .dropdown-selected').classList.remove('open');
   
-  calculateAll();
+  calculateAllRaw();
 }
 
 document.addEventListener('click', function(e) {
@@ -1740,10 +1866,10 @@ function filterZonalLocations(searchTerm) {
 
 function selectZonalLocation(location, value) {
   document.getElementById('zonalSearchInput').value = location;
-  document.getElementById('zonalValuePerSqm').value = value;
+  document.getElementById('zonalValuePerSqm').value = formatNumberWithCommas(value);
   document.getElementById('zonalDropdown').classList.remove('show');
-  updateTotalZonalValueDisplay();
-  calculateAll();
+  updateTotalZonalValueDisplayRaw();
+  calculateAllRaw();
 }
 
 function openZonalLookup() {
@@ -1751,7 +1877,7 @@ function openZonalLookup() {
   showToast('Opening BIR Zonal Value lookup tool...');
 }
 
-// ============ CALCULATOR FUNCTIONS ============
+// ============ CALCULATOR STATE ============
 let currentAssetType = 'capital';
 let currentCommission = 5;
 let isReversing = false;
@@ -1767,7 +1893,7 @@ function selectAssetType(type) {
       opt.classList.add('selected');
     }
   });
-  calculateAll();
+  calculateAllRaw();
 }
 
 function setCommission(rate) {
@@ -1779,128 +1905,7 @@ function setCommission(rate) {
     btn.classList.remove('active');
     if (parseInt(btn.dataset.rate) === rate) btn.classList.add('active');
   });
-  if (!isReversing) calculateAll();
-}
-
-function getTaxBasis() {
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
-  const totalZv = calculateTotalZonalValue();
-  return Math.max(sellingPrice, totalZv);
-}
-
-function formatCurrency(amount) {
-  return '₱' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function calculateRegistrationFee(price) {
-  if (price <= 500000) return price * 0.01;
-  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
-  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
-  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
-  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
-  return 42000 + (price - 10000000) * 0.0025;
-}
-
-function calculateNotarialFee(price) {
-  if (price <= 2000000) return price * 0.01;
-  if (price <= 10000000) return price * 0.005;
-  return price * 0.0025;
-}
-
-function calculateAll() {
-  if (isReversing) return;
-  
-  const sellingPrice = parseFloat(document.getElementById('propertyValue').value) || 0;
-  const totalZv = calculateTotalZonalValue();
-  const taxBasis = getTaxBasis();
-  const commissionRate = currentCommission;
-  const transferTaxRate = currentTransferTaxRate;
-  
-  const taxBasisHint = document.getElementById('taxBasisValue');
-  if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
-  else taxBasisHint.innerHTML = 'Total Zonal Value (higher)';
-  
-  let sellerTax = 0, sellerTaxLabel = '';
-  if (currentAssetType === 'capital') {
-    sellerTax = taxBasis * 0.06;
-    sellerTaxLabel = 'Capital Gains Tax (6%)';
-  } else {
-    // Ordinary Asset: VAT 12% + EWT 6% = 18% of TAX BASIS (higher value)
-    sellerTax = taxBasis * 0.18;
-    sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
-  }
-  
-  const netBeforeCommission = sellingPrice - sellerTax;
-  const brokerCommission = sellingPrice * (commissionRate / 100);
-  const netProceed = netBeforeCommission - brokerCommission;
-  
-  const dstTax = taxBasis * 0.015;
-  const transferTax = taxBasis * (transferTaxRate / 100);
-  const registrationFee = calculateRegistrationFee(taxBasis);
-  const notarialFee = calculateNotarialFee(sellingPrice);
-  
-  const totalBuyerCosts = dstTax + transferTax + registrationFee + notarialFee;
-  const totalSellerCosts = sellerTax + brokerCommission;
-  const totalCosts = totalSellerCosts + totalBuyerCosts;
-  const totalCostsPercent = sellingPrice > 0 ? (totalCosts / sellingPrice * 100).toFixed(1) : 0;
-  
-  document.getElementById('netProceedSummary').innerHTML = formatCurrency(netProceed);
-  document.getElementById('totalCostsSummary').innerHTML = formatCurrency(totalCosts);
-  document.getElementById('totalPercentSummary').innerHTML = `${totalCostsPercent}% of price`;
-  document.getElementById('sellerPaysSummary').innerHTML = formatCurrency(totalSellerCosts);
-  document.getElementById('buyerPaysSummary').innerHTML = formatCurrency(totalBuyerCosts);
-  
-  document.getElementById('grossPrice').innerHTML = formatCurrency(sellingPrice);
-  document.getElementById('totalZonalValueResult').innerHTML = formatCurrency(totalZv);
-  document.getElementById('taxBasis').innerHTML = formatCurrency(taxBasis);
-  document.getElementById('sellerTaxLabel').innerHTML = sellerTaxLabel;
-  document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
-  document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
-  document.getElementById('commissionDisplay').innerHTML = commissionRate;
-  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
-  document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
-  
-  document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
-  document.getElementById('transferRateDisplay').innerHTML = transferTaxRate;
-  document.getElementById('transferTax').innerHTML = formatCurrency(transferTax);
-  document.getElementById('registrationFee').innerHTML = formatCurrency(registrationFee);
-  document.getElementById('notarialFee').innerHTML = formatCurrency(notarialFee);
-  document.getElementById('buyerCostsTotal').innerHTML = formatCurrency(totalBuyerCosts);
-}
-
-function calculateFromDesiredProceed() {
-  const desiredNet = parseFloat(document.getElementById('desiredNetProceed').value) || 0;
-  if (desiredNet <= 0) {
-    document.getElementById('desiredResult').style.display = 'none';
-    return;
-  }
-  isReversing = true;
-  let low = desiredNet, high = desiredNet * 3;
-  let sellingPrice = desiredNet;
-  let iterations = 0;
-  while (iterations < 50) {
-    const totalZv = calculateTotalZonalValue();
-    const taxBasis = Math.max(sellingPrice, totalZv);
-    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
-    const brokerCommission = sellingPrice * (currentCommission / 100);
-    const netProceed = sellingPrice - sellerTax - brokerCommission;
-    if (Math.abs(netProceed - desiredNet) < 100) break;
-    if (netProceed < desiredNet) {
-      low = sellingPrice;
-      sellingPrice = sellingPrice * 1.1;
-    } else {
-      high = sellingPrice;
-      sellingPrice = (low + high) / 2;
-    }
-    iterations++;
-  }
-  isReversing = false;
-  document.getElementById('propertyValue').value = formatNumberWithCommas(sellingPrice);
-  calculateAll();
-  document.getElementById('desiredResult').style.display = 'block';
-  document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
-  document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
-  isReversing = true;
+  if (!isReversing) calculateAllRaw();
 }
 
 // ============ PRINT FUNCTION ============
@@ -1983,7 +1988,7 @@ window.addEventListener('scroll', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-  calculateAll();
+  calculateAllRaw();
 });
 </script>
 </body>
