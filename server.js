@@ -11,9 +11,10 @@ const app = express();
 // ============ RESEND EMAIL CONFIGURATION ============
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Email sending function
+// Email sending function - USING YOUR VERIFIED DOMAIN
 async function sendEmail(to, subject, htmlContent) {
   try {
+    // Use your verified domain - emails will come from hello@glrarealty.com
     const { data, error } = await resend.emails.send({
       from: 'GLRA Realty <hello@glrarealty.com>',
       to: [to],
@@ -338,7 +339,7 @@ app.post('/api/unsubscribe', async (req, res) => {
   }
 });
 
-// ============ WISHLIST ROUTES (WITH EMAIL) ============
+// ============ WISHLIST ROUTES ============
 
 app.post('/api/wishlist', async (req, res) => {
   try {
@@ -420,7 +421,7 @@ app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
   }
 });
 
-// ============ PRICE ALERT ROUTES (WITH EMAIL) ============
+// ============ PRICE ALERT ROUTES ============
 
 app.post('/api/price-alert', async (req, res) => {
   try {
@@ -832,7 +833,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   Admin:   https://glrarealty.com/admin.html                 ║
   ║   MongoDB: Connected ✅                                       ║
   ║   Cloudinary: Connected ✅                                    ║
-  ║   Resend Email: Ready ✅                                      ║
+  ║   Resend Email: Ready ✅ (Using hello@glrarealty.com)         ║
   ║   Features: Properties | Inquiries | Wishlist | Alerts       ║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
