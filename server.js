@@ -5,33 +5,55 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
-const { Resend } = require('resend');
+const brevo = require('@getbrevo/brevo');
+
 const app = express();
 
-// ============ RESEND EMAIL CONFIGURATION ============
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ============ BREVO EMAIL CONFIGURATION ============
+let brevoApiInstance = null;
 
-// Email sending function - USING YOUR VERIFIED DOMAIN
-async function sendEmail(to, subject, htmlContent) {
-  try {
-    // Use your verified domain - emails will come from hello@glrarealty.com
-    const { data, error } = await resend.emails.send({
-      from: 'GLRA Realty <hello@glrarealty.com>',
-      to: [to],
-      subject: subject,
-      html: htmlContent
-    });
-    if (error) {
-      console.error('Email error:', error);
-      return { success: false, error };
+function initBrevo() {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.log('⚠️ BREVO_API_KEY not set. Email sending will be disabled.');
+    return false;
+  }
+  
+  let defaultClient = brevo.ApiClient.instance;
+  let apiKeyAuth = defaultClient.authentications['api-key'];
+  apiKeyAuth.apiKey = apiKey;
+  brevoApiInstance = new brevo.TransactionalEmailsApi();
+  console.log('✅ Brevo email service initialized');
+  return true;
+}
+
+async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty') {
+  if (!brevoApiInstance) {
+    const initialized = initBrevo();
+    if (!initialized) {
+      console.error('❌ Brevo not configured. Cannot send email to:', to);
+      return { success: false, error: 'Email service not configured' };
     }
+  }
+  
+  try {
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.sender = { email: 'hello@glrarealty.com', name: fromName };
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = htmlContent;
+    
+    const response = await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
     console.log(`✅ Email sent to ${to}: ${subject}`);
-    return { success: true, data };
+    return { success: true, data: response };
   } catch (error) {
-    console.error('Email send failed:', error);
+    console.error('Email send failed:', error.response?.body || error.message);
     return { success: false, error };
   }
 }
+
+// Initialize Brevo on startup
+initBrevo();
 
 // ============ CLOUDINARY CONFIGURATION ============
 cloudinary.config({
@@ -76,7 +98,7 @@ const upload = multer({
 });
 
 // MongoDB Connection String
-const MONGODB_URI = 'mongodb+srv://sampayorafael12345_db_user:o6xXWtciFpaeQjuk@cluster0.sxp5mwy.mongodb.net/glra_realty?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URL || 'mongodb+srv://sampayorafael12345_db_user:o6xXWtciFpaeQjuk@cluster0.sxp5mwy.mongodb.net/glra_realty?retryWrites=true&w=majority';
 
 // ============ SCHEMAS ============
 
@@ -227,7 +249,7 @@ app.post('/api/inquiries', async (req, res) => {
           <p>We have received your message and will get back to you within 24 hours.</p>
           <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <p><strong>Your message:</strong></p>
-            <p>${req.body.message}</p>
+            <p>${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
             ${req.body.propertyTitle ? `<p><strong>Property of interest:</strong> ${req.body.propertyTitle}</p>` : ''}
           </div>
           <p>Best regards,<br><strong>GLRA Realty Team</strong></p>
@@ -244,7 +266,7 @@ app.post('/api/inquiries', async (req, res) => {
         <p><strong>Name:</strong> ${req.body.name}</p>
         <p><strong>Email:</strong> ${req.body.email}</p>
         <p><strong>Phone:</strong> ${req.body.phone || 'Not provided'}</p>
-        <p><strong>Message:</strong> ${req.body.message}</p>
+        <p><strong>Message:</strong> ${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
         ${req.body.propertyTitle ? `<p><strong>Property:</strong> ${req.body.propertyTitle}</p>` : ''}
         <hr>
         <p><a href="https://glrarealty.com/admin.html" style="background: #f97316; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin</a></p>
@@ -833,7 +855,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   Admin:   https://glrarealty.com/admin.html                 ║
   ║   MongoDB: Connected ✅                                       ║
   ║   Cloudinary: Connected ✅                                    ║
-  ║   Resend Email: Ready ✅ (Using hello@glrarealty.com)         ║
+  ║   Brevo Email: Connected ✅ (300 free emails/day)             ║
   ║   Features: Properties | Inquiries | Wishlist | Alerts       ║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
