@@ -9,22 +9,16 @@
 <meta name="author" content="GLRA Realty">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://glrarealty.com/properties.html">
-<link rel="icon" type="image/png" href="/logo.png">
+<link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/properties.html">
 <meta property="og:title" content="GLRA Realty | Browse Properties Philippines">
-<meta property="og:description" content="Find your dream home with GLRA Realty - Licensed real estate agent in Metro Manila and Luzon.">
+<meta property="og:description" content="Find your dream home with GLRA Realty - Licensed real estate broker in Metro Manila and Luzon.">
 <meta property="og:image" content="https://glrarealty.com/logo.png">
 <meta property="og:site_name" content="GLRA Realty">
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="GLRA Realty | Browse Properties">
-<meta name="twitter:description" content="Find your dream property with GLRA Realty.">
-<meta name="twitter:image" content="https://glrarealty.com/logo.png">
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,7 +41,7 @@
   --gray-light: #f3f4f6;
   --white: #ffffff;
   --card-bg: #ffffff;
-  --border-color: #e5e7eb;
+  --border-color: #cbd5e1;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
@@ -65,7 +59,7 @@ body.dark-mode {
   --gray-light: #0f0f1a;
   --white: #0f0f1a;
   --card-bg: #1a1a2a;
-  --border-color: #2a2a3a;
+  --border-color: #3a3a4a;
   --text-color: #e0e0e0;
 }
 
@@ -80,35 +74,23 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--gray-light); }
-::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 4px; }
-
-/* Dark mode fixes */
-body.dark-mode .search-card,
-body.dark-mode .search-field,
-body.dark-mode .dropdown-list,
-body.dark-mode .price-custom-inputs,
-body.dark-mode .location-suggestions,
-body.dark-mode .email-modal-content,
-body.dark-mode .modal-body {
-  background: #1a1a2a !important;
+/* Custom Scrollbar - Hidden but functional */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-body.dark-mode .modal-mortgage-result .amount {
-  color: var(--orange) !important;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-body.dark-mode .tab-btn {
-  border-color: #3a3a4a !important;
-  color: var(--text-color) !important;
+::-webkit-scrollbar-thumb {
+  background: var(--orange);
+  border-radius: 3px;
 }
 
-body.dark-mode .tab-btn.active {
-  background: var(--orange) !important;
-  color: white !important;
-  border-color: var(--orange) !important;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--orange-dark);
 }
 
 /* Navigation */
@@ -136,7 +118,23 @@ body.dark-mode .navbar.scrolled {
   background: #0f0f1a;
 }
 
-.logo img { height: 55px; width: auto; display: block; }
+.logo {
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.navbar.scrolled .logo {
+  opacity: 1;
+  visibility: visible;
+}
+
+.logo img { 
+  height: 56px; 
+  width: auto; 
+  display: block;
+}
 
 .nav-links {
   display: flex;
@@ -157,6 +155,17 @@ body.dark-mode .navbar.scrolled {
 .navbar.scrolled .nav-links a { color: var(--text-color); }
 .nav-links a:hover { color: var(--orange); }
 
+/* Active navigation link */
+.nav-links a.active {
+  color: var(--orange);
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+}
+
+.navbar.scrolled .nav-links a.active {
+  color: var(--orange);
+}
+
 .contact-btn-nav {
   background: transparent;
   border: 2px solid var(--orange);
@@ -167,6 +176,11 @@ body.dark-mode .navbar.scrolled {
 
 .navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
 .contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+.contact-btn-nav.active {
+  background: var(--orange);
+  color: var(--white) !important;
+  border-bottom: none;
+}
 
 .mobile-menu-btn {
   display: none;
@@ -219,12 +233,14 @@ body.dark-mode .navbar.scrolled {
   cursor: pointer;
 }
 
-.mobile-overlay-links a:hover { color: var(--orange); }
+.mobile-overlay-links a.active {
+  color: var(--orange);
+}
 
 /* Page Hero */
 .page-hero {
   height: 40vh;
-  min-height: 300px;
+  min-height: 350px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   display: flex;
   align-items: center;
@@ -237,23 +253,16 @@ body.dark-mode .page-hero {
   background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
 }
 
-.page-hero h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 48px;
-  color: #ffffff;
-  margin-bottom: 15px;
+.page-hero .slide-content {
+  text-align: center;
 }
 
-.page-hero p {
-  color: rgba(255,255,255,0.8);
-  font-size: 16px;
-}
-
-.hero-line {
-  width: 60px;
-  height: 2px;
-  background: var(--orange);
-  margin: 15px auto 0;
+.page-hero .slide-content img {
+  max-width: 280px;
+  width: 80%;
+  height: auto;
+  margin: 0 auto;
+  display: block;
 }
 
 /* Search Bar */
@@ -268,312 +277,183 @@ body.dark-mode .page-hero {
 .search-card {
   background: #1a1a2e;
   border-radius: 20px;
-  padding: 20px 25px;
-  max-width: 1100px;
+  padding: 25px 30px;
+  max-width: 1200px;
   margin: 0 auto;
-  box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
 }
 
-.compact-search-row {
+.search-row {
   display: flex;
-  gap: 10px;
+  gap: 15px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.location-field {
+.search-field-wrapper {
   flex: 2;
-  min-width: 180px;
+  min-width: 200px;
+  position: relative;
 }
 
-.compact-search-actions {
-  display: flex;
-  gap: 10px;
-  flex: 1;
-  min-width: 160px;
-}
-
-.advanced-filter-btn {
-  background: transparent;
-  border: 1px solid var(--orange);
+.search-field-wrapper .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--orange);
-  padding: 0 20px;
+  font-size: 14px;
+}
+
+.search-field-wrapper input {
+  width: 100%;
+  padding: 14px 16px 14px 42px;
+  border: none;
+  border-radius: 50px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--dark);
+  transition: var(--transition);
+}
+
+.search-field-wrapper input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
+}
+
+.search-field-wrapper input::placeholder {
+  color: var(--gray);
+}
+
+.search-btn-main {
+  background: var(--orange);
+  color: white;
+  border: none;
+  padding: 14px 32px;
   border-radius: 50px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: var(--transition);
-  height: 48px;
   display: flex;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
 }
 
-.advanced-filter-btn:hover {
+.search-btn-main:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+}
+
+.filter-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-toggle-btn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.filter-toggle-btn.active {
   background: var(--orange);
   color: white;
+  border-color: var(--orange);
 }
 
-.advanced-filter-btn.active {
-  background: var(--orange);
-  color: white;
-}
-
+/* Advanced Filters */
 .advanced-filters {
   display: none;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 .advanced-filters.show {
   display: block;
 }
 
-.filter-row {
+.filter-grid {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
 }
 
-.filter-row .search-field {
+.filter-group {
   flex: 1;
-  min-width: 150px;
-}
-
-.reset-row {
-  justify-content: center;
-  margin-top: 5px;
-}
-
-.reset-btn-full {
-  background: transparent;
-  border: 1px solid var(--orange);
-  color: var(--orange);
-  padding: 10px 24px;
-  border-radius: 50px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: var(--transition);
-  display: inline-flex;
-  align-items: center;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.reset-btn-full:hover {
-  background: var(--orange);
-  color: white;
-}
-
-.search-field {
-  background: var(--white);
-  border-radius: 50px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  position: relative;
-}
-
-.search-field i {
+.filter-group label {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--orange);
-  font-size: 14px;
-  margin-right: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.search-field input,
-.search-field .dropdown-selected {
-  width: 100%;
-  padding: 12px 0;
+.filter-group select,
+.filter-group input {
+  padding: 12px 14px;
   border: none;
-  background: transparent;
+  border-radius: 12px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: 'Inter', sans-serif;
+  background: var(--white);
+  color: var(--dark);
   cursor: pointer;
-  color: var(--text-color);
-}
-
-.search-field input:focus { outline: none; }
-
-.simple-dropdown {
-  position: relative;
   width: 100%;
 }
 
-.dropdown-selected {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
 }
 
-.dropdown-selected i {
-  color: var(--orange);
-  font-size: 12px;
-  transition: transform 0.3s;
-}
-
-.dropdown-selected.open i { transform: rotate(180deg); }
-
-.dropdown-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  max-height: 220px;
-  overflow-y: auto;
-  z-index: 1000;
-  display: none;
-  margin-top: 5px;
-}
-
-.dropdown-list.show { display: block; }
-
-.dropdown-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f0f0f0;
-  color: var(--text-color);
-}
-
-.dropdown-item:hover { background: #f8f8f8; color: var(--orange); }
-
-.location-input { position: relative; width: 100%; }
-
-.location-suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
-  display: none;
-}
-
-.location-suggestions div {
-  padding: 10px 15px;
-  cursor: pointer;
-  font-size: 13px;
-  border-bottom: 1px solid #eee;
-  color: var(--text-color);
-}
-
-.location-suggestions div:hover { background: var(--gray-light); color: var(--orange); }
-
-.price-custom { position: relative; }
-
-.price-display {
-  padding: 12px 0;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 13px;
-  color: var(--text-color);
-}
-
-.price-custom-inputs {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
-  padding: 15px;
-  margin-top: 8px;
-  min-width: 260px;
-  z-index: 100;
-  display: none;
-}
-
-.price-custom-inputs.show { display: block; }
-
-.price-input-group {
+.price-range-group {
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
 }
 
-.price-input-group input {
+.price-range-group input {
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 13px;
-  background: var(--white);
-  color: var(--text-color);
+  min-width: 0;
 }
 
-.price-input-group input:focus { outline: none; border-color: var(--orange); }
-
-.apply-price-btn {
-  width: 100%;
-  padding: 10px;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.apply-price-btn:hover { background: var(--orange-dark); }
-
-.quick-price-options {
-  margin-top: 12px;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
-}
-
-.price-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.price-chip {
-  font-size: 11px;
-  background: #f0f0f0;
-  padding: 4px 10px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: var(--transition);
-  color: #333;
-}
-
-.price-chip:hover { background: var(--orange); color: white; }
-
-.search-btn {
-  background: var(--orange);
+.reset-filters-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
   color: var(--white);
-  border: none;
-  padding: 0 28px;
-  border-radius: 50px;
-  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 40px;
+  font-weight: 500;
   font-size: 13px;
   cursor: pointer;
   transition: var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 48px;
+  width: 100%;
 }
 
-.search-btn:hover { background: var(--orange-dark); }
+.reset-filters-btn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
 
 /* Category Tabs */
 .category-tabs {
@@ -805,6 +685,7 @@ body.dark-mode .page-hero {
   padding: 50px;
   background: var(--gray-light);
   border-radius: 14px;
+  border: 1px solid var(--border-color);
   color: var(--gray);
 }
 
@@ -814,7 +695,7 @@ body.dark-mode .page-hero {
   color: var(--orange);
 }
 
-/* Modal - UPGRADED */
+/* Modal */
 #modal {
   position: fixed;
   top: 0;
@@ -832,7 +713,7 @@ body.dark-mode .page-hero {
   margin: 30px auto;
   padding: 25px;
   background: var(--white);
-  border-radius: 24px;
+  border-radius: 20px;
 }
 
 .close {
@@ -859,7 +740,6 @@ body.dark-mode .page-hero {
   background: rgba(0,0,0,0.8);
 }
 
-/* 1:1 Square Gallery Images */
 .gallery-main {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -898,7 +778,6 @@ body.dark-mode .page-hero {
   border-color: var(--orange);
 }
 
-/* Modal Details */
 .modal-details h1 {
   font-size: 24px;
   font-weight: 700;
@@ -917,9 +796,9 @@ body.dark-mode .page-hero {
   padding: 15px;
   background: var(--gray-light);
   border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
-/* Specs above price */
 .modal-specs {
   display: flex;
   flex-wrap: wrap;
@@ -950,12 +829,12 @@ body.dark-mode .page-hero {
   margin: 10px 0 15px 0;
 }
 
-/* Mortgage Calculator */
 .modal-mortgage {
   margin: 15px 0;
   padding: 20px;
   background: var(--gray-light);
   border-radius: 16px;
+  border: 1px solid var(--border-color);
 }
 
 .modal-mortgage-title {
@@ -991,7 +870,7 @@ body.dark-mode .page-hero {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   background: var(--white);
   color: var(--text-color);
   font-size: 13px;
@@ -1041,7 +920,6 @@ body.dark-mode .modal-mortgage-result {
   background: #0a0a14;
 }
 
-/* Share Section */
 .modal-share {
   margin: 15px 0;
   padding: 15px 0;
@@ -1086,7 +964,6 @@ body.dark-mode .modal-mortgage-result {
   filter: brightness(1.05);
 }
 
-/* Map Container */
 .map-container {
   margin-top: 20px;
   border-radius: 16px;
@@ -1141,6 +1018,7 @@ body.dark-mode .modal-mortgage-result {
   text-align: center;
   position: relative;
   animation: modalSlideIn 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes modalSlideIn {
@@ -1339,6 +1217,64 @@ body.dark-mode .btn-darkmode {
   }
 }
 
+/* Back to Top */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background: var(--orange);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  z-index: 100;
+}
+
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Loader */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.loader.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-light);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .nav-links { display: none; }
@@ -1349,23 +1285,32 @@ body.dark-mode .btn-darkmode {
     left: 50%;
     transform: translateX(-50%);
   }
-  .logo img { height: 40px; }
   
-  .page-hero h1 { font-size: 32px; }
+  .navbar.scrolled .logo {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .logo img { height: 45px; }
+  
+  .page-hero { min-height: 280px; }
+  .page-hero .slide-content img { max-width: 180px; }
   
   .search-float { margin-top: -30px; margin-bottom: 30px; }
-  .search-card { padding: 15px; }
+  .search-card { padding: 20px; }
   
-  .compact-search-row {
+  .search-row {
     flex-direction: column;
     gap: 10px;
   }
   
-  .location-field { width: 100%; }
-  .compact-search-actions { width: 100%; }
-  .search-btn, .advanced-filter-btn { flex: 1; justify-content: center; }
-  .filter-row { flex-direction: column; gap: 10px; }
-  .filter-row .search-field { width: 100%; }
+  .search-field-wrapper { width: 100%; }
+  .search-btn-main { width: 100%; justify-content: center; }
+  .filter-toggle-btn { width: 100%; justify-content: center; }
+  
+  .filter-grid { flex-direction: column; }
+  .filter-group { min-width: 100%; }
+  .price-range-group { gap: 8px; }
   
   .category-tabs { gap: 10px; }
   .tab-btn { padding: 8px 20px; font-size: 13px; }
@@ -1387,7 +1332,7 @@ body.dark-mode .btn-darkmode {
   .advanced-filters {
     display: block !important;
   }
-  .advanced-filter-btn {
+  .filter-toggle-btn {
     display: none;
   }
 }
@@ -1395,19 +1340,24 @@ body.dark-mode .btn-darkmode {
 </head>
 <body>
 
+<!-- Loader -->
+<div class="loader" id="loader">
+  <div class="loader-spinner"></div>
+</div>
+
 <!-- Navigation -->
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()">
     <i class="fas fa-bars"></i>
   </div>
-  <div class="logo">
-    <img src="/logo.png" alt="GLRA Realty">
+  <div class="logo" onclick="goHome()">
+    <img src="/logo.png" alt="GLRA Realty Logo">
   </div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/#featured">FEATURED</a>
-    <a href="/properties.html">PROPERTIES</a>
-    <a href="/#agent">AGENT</a>
+    <a href="/properties.html" class="active">PROPERTIES</a>
+    <a href="/#broker">BROKER</a>
     <a href="/calculator.html">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -1420,8 +1370,8 @@ body.dark-mode .btn-darkmode {
   <div class="mobile-overlay-links">
     <a href="/" onclick="closeMobileMenu()">HOME</a>
     <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
-    <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
-    <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
+    <a href="/properties.html" class="active" onclick="closeMobileMenu()">PROPERTIES</a>
+    <a href="/#broker" onclick="closeMobileMenu()">BROKER</a>
     <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
     <a href="/#contact" onclick="closeMobileMenu()">CONTACT</a>
@@ -1430,122 +1380,73 @@ body.dark-mode .btn-darkmode {
 
 <!-- Page Hero -->
 <section class="page-hero">
-  <div>
-    <h1>Browse Properties</h1>
-    <div class="hero-line"></div>
-    <p>Find your dream home from our exclusive listings</p>
+  <div class="slide-content">
+    <img src="/hero-logo.png" alt="GLRA Realty">
   </div>
 </section>
 
 <!-- Search Bar -->
 <div class="search-float">
   <div class="search-card">
-    <div class="compact-search-row">
-      <div class="search-field location-field">
-        <i class="fas fa-map-marker-alt"></i>
-        <div class="location-input">
-          <input type="text" id="locationInput" placeholder="Location" autocomplete="off" oninput="filterLocations(this.value)">
-          <div class="location-suggestions" id="locationSuggestions"></div>
-        </div>
+    <div class="search-row">
+      <div class="search-field-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" value="">
       </div>
-      
-      <div class="compact-search-actions">
-        <button class="search-btn" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
-        <button type="button" class="advanced-filter-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
-          <i class="fas fa-sliders-h"></i> Filter
-          <i class="fas fa-chevron-down" id="filterIcon"></i>
-        </button>
-      </div>
+      <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search Properties</button>
+      <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
+        <i class="fas fa-sliders-h"></i> Filters
+        <i class="fas fa-chevron-down" id="filterIcon"></i>
+      </button>
     </div>
     
     <div class="advanced-filters" id="advancedFilters">
-      <div class="filter-row">
-        <div class="search-field">
-          <i class="fas fa-building"></i>
-          <div class="simple-dropdown" id="propertyTypeDropdown">
-            <div class="dropdown-selected" onclick="toggleDropdown('propertyTypeDropdown')">
-              <span id="selectedPropertyType">Property Type</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-list" id="propertyTypeList">
-              <div class="dropdown-item" data-value="" onclick="selectDropdown('propertyType', '', 'Property Type')">All Types</div>
-              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdown('propertyType', 'Condominium', 'Condominium')">Condominium</div>
-              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdown('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
-              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdown('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
-              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdown('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
-              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdown('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
-            </div>
-          </div>
+      <div class="filter-grid">
+        <div class="filter-group">
+          <label>PROPERTY TYPE</label>
+          <select id="propertyTypeSelect">
+            <option value="">All Types</option>
+            <option value="Condominium">Condominium</option>
+            <option value="House and Lot">House and Lot</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Commercial Lot">Commercial Lot</option>
+            <option value="Residential Lot">Residential Lot</option>
+          </select>
         </div>
         
-        <div class="search-field">
-          <i class="fas fa-bed"></i>
-          <div class="simple-dropdown" id="bedroomsDropdown">
-            <div class="dropdown-selected" onclick="toggleDropdown('bedroomsDropdown')">
-              <span id="selectedBedrooms">Bedrooms</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-list" id="bedroomsList">
-              <div class="dropdown-item" data-value="" onclick="selectDropdown('bedrooms', '', 'Bedrooms')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdown('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdown('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdown('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdown('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
-              <div class="dropdown-item" data-value="5" onclick="selectDropdown('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
-            </div>
-          </div>
+        <div class="filter-group">
+          <label>BEDROOMS</label>
+          <select id="bedroomsSelect">
+            <option value="">Any</option>
+            <option value="1">1+ Bedrooms</option>
+            <option value="2">2+ Bedrooms</option>
+            <option value="3">3+ Bedrooms</option>
+            <option value="4">4+ Bedrooms</option>
+            <option value="5">5+ Bedrooms</option>
+          </select>
         </div>
         
-        <div class="search-field">
-          <i class="fas fa-bath"></i>
-          <div class="simple-dropdown" id="bathsDropdown">
-            <div class="dropdown-selected" onclick="toggleDropdown('bathsDropdown')">
-              <span id="selectedBaths">Bathrooms</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-list" id="bathsList">
-              <div class="dropdown-item" data-value="" onclick="selectDropdown('baths', '', 'Bathrooms')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdown('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdown('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdown('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdown('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
-            </div>
+        <div class="filter-group">
+          <label>BATHROOMS</label>
+          <select id="bathsSelect">
+            <option value="">Any</option>
+            <option value="1">1+ Bathrooms</option>
+            <option value="2">2+ Bathrooms</option>
+            <option value="3">3+ Bathrooms</option>
+            <option value="4">4+ Bathrooms</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>PRICE RANGE (₱)</label>
+          <div class="price-range-group">
+            <input type="number" id="minPriceInput" placeholder="Min">
+            <input type="number" id="maxPriceInput" placeholder="Max">
           </div>
         </div>
       </div>
       
-      <div class="filter-row">
-        <div class="search-field price-custom">
-          <i class="fas fa-tag"></i>
-          <div style="width:100%;" onclick="togglePriceDropdown()">
-            <div class="price-display" id="priceDisplay">Price Range</div>
-          </div>
-          <div class="price-custom-inputs" id="priceDropdown">
-            <div class="price-input-group">
-              <input type="number" id="customMinPrice" placeholder="Min ₱" value="">
-              <input type="number" id="customMaxPrice" placeholder="Max ₱" value="">
-            </div>
-            <button class="apply-price-btn" onclick="applyCustomPrice()">Apply</button>
-            <div class="quick-price-options">
-              <div>Quick Select:</div>
-              <div class="price-chips">
-                <span class="price-chip" onclick="setQuickPrice(0,5000000)">₱0-5M</span>
-                <span class="price-chip" onclick="setQuickPrice(5000000,10000000)">₱5M-10M</span>
-                <span class="price-chip" onclick="setQuickPrice(10000000,20000000)">₱10M-20M</span>
-                <span class="price-chip" onclick="setQuickPrice(20000000,50000000)">₱20M-50M</span>
-                <span class="price-chip" onclick="setQuickPrice(50000000,100000000)">₱50M-100M</span>
-                <span class="price-chip" onclick="setQuickPrice(100000000,500000000)">₱100M+</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="filter-row reset-row">
-        <div class="reset-button-wrapper">
-          <button class="reset-btn-full" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
-        </div>
-      </div>
+      <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
     </div>
   </div>
 </div>
@@ -1600,7 +1501,7 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Main Modal -->
 <div id="modal">
   <span class="close" onclick="closeModal()">×</span>
   <div id="modal-content" class="modal-body"></div>
@@ -1611,7 +1512,7 @@ body.dark-mode .btn-darkmode {
   <div class="footer-content">
     <div class="footer-col">
       <h4>GLRA REALTY</h4>
-      <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
+      <p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p>
       <div class="social-links">
         <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://m.me/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
@@ -1654,7 +1555,15 @@ body.dark-mode .btn-darkmode {
   </button>
 </div>
 
+<!-- Back to Top -->
+<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+
 <script>
+// ============ GO HOME FUNCTION ============
+function goHome() {
+  window.location.href = '/';
+}
+
 // ============ ESC KEY TO CLOSE MODALS ============
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
@@ -1704,7 +1613,10 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ============ ADVANCED FILTER ============
+// ============ SEARCH FUNCTIONS ============
+let customMinPrice = 0;
+let customMaxPrice = 500000000;
+
 function toggleAdvancedFilter() {
   const filters = document.getElementById('advancedFilters');
   const btn = document.getElementById('advancedFilterBtn');
@@ -1719,6 +1631,36 @@ function toggleAdvancedFilter() {
       icon.style.transform = 'rotate(0deg)';
     }
   }
+}
+
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+function performSearch() {
+  const searchTerm = document.getElementById('locationInput').value.trim();
+  const propertyType = document.getElementById('propertyTypeSelect').value;
+  const bedrooms = document.getElementById('bedroomsSelect').value;
+  const baths = document.getElementById('bathsSelect').value;
+  const minPrice = document.getElementById('minPriceInput').value;
+  const maxPrice = document.getElementById('maxPriceInput').value;
+  
+  let url = '/properties.html?';
+  const params = [];
+  
+  if (searchTerm) params.push(`search=${encodeURIComponent(searchTerm)}`);
+  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
+  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
+  if (baths) params.push(`baths=${baths}`);
+  if (minPrice) params.push(`minPrice=${minPrice}`);
+  if (maxPrice) params.push(`maxPrice=${maxPrice}`);
+  
+  window.location.href = url + params.join('&');
+}
+
+function resetAllFilters() {
+  window.location.href = '/properties.html';
 }
 
 // ============ PRICE ALERT FUNCTIONS ============
@@ -1760,7 +1702,7 @@ async function submitPriceAlert() {
     const data = await response.json();
     if (data.success) {
       closeEmailModal();
-      showToast('✅ You will be notified when price drops!');
+      showToast('You will be notified when price drops!');
     } else {
       showToast('Failed to subscribe. Please try again.', true);
     }
@@ -1814,7 +1756,7 @@ async function submitWishlist() {
     const data = await response.json();
     if (data.success) {
       closeWishlistModal();
-      showToast('❤️ Property saved to your wishlist!');
+      showToast('Property saved to your wishlist!');
     } else {
       showToast('Failed to save. Please try again.', true);
     }
@@ -1837,140 +1779,18 @@ function closeMobileMenu() {
   document.body.style.overflow = '';
 }
 
-// ============ NAVBAR SCROLL ============
+// ============ NAVBAR SCROLL EFFECT ============
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
+  const backToTop = document.getElementById('backToTop');
   if (window.scrollY > 50) {
     navbar.classList.add('scrolled');
+    backToTop.classList.add('show');
   } else {
     navbar.classList.remove('scrolled');
+    backToTop.classList.remove('show');
   }
 });
-
-// ============ LOCATION AUTOCOMPLETE ============
-const locationSuggestionsList = [
-  "Makati City", "Taguig City", "Pasig City", "Quezon City", "Mandaluyong City",
-  "Manila City", "Parañaque City", "Pasay City", "Marikina City", "Muntinlupa City",
-  "Las Piñas City", "BGC", "Ortigas", "Alabang", "Tagaytay City", "Batangas City",
-  "Sta. Rosa", "Nuvali", "Cavite City", "Dasmariñas", "Imus", "Bacoor", "Antipolo City"
-];
-
-function filterLocations(value) {
-  const suggestionsDiv = document.getElementById('locationSuggestions');
-  if (!value.trim()) {
-    suggestionsDiv.style.display = 'none';
-    return;
-  }
-  const filtered = locationSuggestionsList.filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
-  if (filtered.length > 0) {
-    suggestionsDiv.innerHTML = filtered.map(loc => `<div onclick="selectLocation('${loc}')">${loc}</div>`).join('');
-    suggestionsDiv.style.display = 'block';
-  } else {
-    suggestionsDiv.style.display = 'none';
-  }
-}
-
-function selectLocation(location) {
-  document.getElementById('locationInput').value = location;
-  document.getElementById('locationSuggestions').style.display = 'none';
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.location-input')) {
-    document.getElementById('locationSuggestions').style.display = 'none';
-  }
-});
-
-// ============ DROPDOWN FUNCTIONS ============
-function toggleDropdown(dropdownId) {
-  const dropdown = document.getElementById(dropdownId);
-  const list = dropdown.querySelector('.dropdown-list');
-  const selected = dropdown.querySelector('.dropdown-selected');
-  document.querySelectorAll('.dropdown-list').forEach(l => { if (l !== list) l.classList.remove('show'); });
-  document.querySelectorAll('.dropdown-selected').forEach(s => { if (s !== selected) s.classList.remove('open'); });
-  list.classList.toggle('show');
-  selected.classList.toggle('open');
-}
-
-function selectDropdown(type, value, displayText) {
-  if (type === 'propertyType') {
-    document.getElementById('selectedPropertyType').innerText = displayText;
-    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-list').classList.remove('show');
-    document.getElementById('propertyTypeDropdown').querySelector('.dropdown-selected').classList.remove('open');
-    window.selectedPropertyTypeValue = value;
-  } else if (type === 'bedrooms') {
-    document.getElementById('selectedBedrooms').innerText = displayText;
-    document.getElementById('bedroomsDropdown').querySelector('.dropdown-list').classList.remove('show');
-    document.getElementById('bedroomsDropdown').querySelector('.dropdown-selected').classList.remove('open');
-    window.selectedBedroomsValue = value;
-  } else if (type === 'baths') {
-    document.getElementById('selectedBaths').innerText = displayText;
-    document.getElementById('bathsDropdown').querySelector('.dropdown-list').classList.remove('show');
-    document.getElementById('bathsDropdown').querySelector('.dropdown-selected').classList.remove('open');
-    window.selectedBathsValue = value;
-  }
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.simple-dropdown')) {
-    document.querySelectorAll('.dropdown-list').forEach(list => list.classList.remove('show'));
-    document.querySelectorAll('.dropdown-selected').forEach(selected => selected.classList.remove('open'));
-  }
-});
-
-// ============ PRICE DROPDOWN ============
-let customMinPrice = 0;
-let customMaxPrice = 500000000;
-
-function togglePriceDropdown() {
-  const dropdown = document.getElementById('priceDropdown');
-  dropdown.classList.toggle('show');
-}
-
-function applyCustomPrice() {
-  const minVal = document.getElementById('customMinPrice').value;
-  const maxVal = document.getElementById('customMaxPrice').value;
-  customMinPrice = minVal ? parseInt(minVal) : 0;
-  customMaxPrice = maxVal ? parseInt(maxVal) : 500000000;
-  document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
-  document.getElementById('priceDropdown').classList.remove('show');
-}
-
-function setQuickPrice(min, max) {
-  customMinPrice = min;
-  customMaxPrice = max;
-  document.getElementById('customMinPrice').value = min;
-  document.getElementById('customMaxPrice').value = max;
-  document.getElementById('priceDisplay').innerHTML = `₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
-  document.getElementById('priceDropdown').classList.remove('show');
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.price-custom')) {
-    document.getElementById('priceDropdown').classList.remove('show');
-  }
-});
-
-// ============ SEARCH FUNCTIONS ============
-function performSearch() {
-  const location = document.getElementById('locationInput').value;
-  const propertyType = window.selectedPropertyTypeValue || '';
-  const bedrooms = window.selectedBedroomsValue || '';
-  const baths = window.selectedBathsValue || '';
-  let url = '/properties.html?';
-  const params = [];
-  if (location) params.push(`city=${encodeURIComponent(location)}`);
-  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
-  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
-  if (baths) params.push(`baths=${baths}`);
-  if (customMinPrice > 0) params.push(`minPrice=${customMinPrice}`);
-  if (customMaxPrice < 500000000) params.push(`maxPrice=${customMaxPrice}`);
-  window.location.href = url + params.join('&');
-}
-
-function resetAllFilters() {
-  window.location.href = '/properties.html';
-}
 
 // ============ SHARE FUNCTIONS ============
 function shareProperty(platform, property) {
@@ -2010,11 +1830,6 @@ function getDisplayPrice(prop) {
   }
 }
 
-function getUrlParameter(name) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(name);
-}
-
 let cachedProperties = null;
 
 async function loadProperties() {
@@ -2035,6 +1850,13 @@ async function loadProperties() {
 
 function applyCategoryFilter(properties) {
   const categoryParam = getUrlParameter('category');
+  const searchParam = getUrlParameter('search');
+  const propertyTypeParam = getUrlParameter('propertyType');
+  const bedroomsParam = getUrlParameter('bedrooms');
+  const bathsParam = getUrlParameter('baths');
+  const minPriceParam = getUrlParameter('minPrice');
+  const maxPriceParam = getUrlParameter('maxPrice');
+  
   let currentCategory = 'all';
   if (categoryParam === 'FOR SALE') currentCategory = 'FOR SALE';
   else if (categoryParam === 'FOR LEASE') currentCategory = 'FOR LEASE';
@@ -2047,44 +1869,42 @@ function applyCategoryFilter(properties) {
   const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
   document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
   
-  const searchCity = getUrlParameter('city');
-  const searchPropertyType = getUrlParameter('propertyType');
-  const searchBedrooms = getUrlParameter('bedrooms');
-  const searchBaths = getUrlParameter('baths');
-  const searchMinPrice = getUrlParameter('minPrice');
-  const searchMaxPrice = getUrlParameter('maxPrice');
+  // Populate search fields from URL
+  if (searchParam) document.getElementById('locationInput').value = searchParam;
+  if (propertyTypeParam) document.getElementById('propertyTypeSelect').value = propertyTypeParam;
+  if (bedroomsParam) document.getElementById('bedroomsSelect').value = bedroomsParam;
+  if (bathsParam) document.getElementById('bathsSelect').value = bathsParam;
+  if (minPriceParam) document.getElementById('minPriceInput').value = minPriceParam;
+  if (maxPriceParam) document.getElementById('maxPriceInput').value = maxPriceParam;
   
-  if (searchCity) document.getElementById('locationInput').value = searchCity;
-  if (searchPropertyType) selectDropdown('propertyType', searchPropertyType, searchPropertyType);
-  if (searchBedrooms) selectDropdown('bedrooms', searchBedrooms, searchBedrooms + '+ Bedrooms');
-  if (searchBaths) selectDropdown('baths', searchBaths, searchBaths + '+ Bathrooms');
-  if (searchMinPrice) customMinPrice = parseInt(searchMinPrice);
-  if (searchMaxPrice) customMaxPrice = parseInt(searchMaxPrice);
-  if (customMinPrice > 0 || customMaxPrice < 500000000) {
-    document.getElementById('priceDisplay').innerHTML = `₱${customMinPrice.toLocaleString()} - ₱${customMaxPrice.toLocaleString()}`;
-  }
   applyFilters(currentCategory, properties);
 }
 
 function applyFilters(currentCategory, properties) {
-  const location = document.getElementById('locationInput').value;
-  const propertyType = window.selectedPropertyTypeValue || '';
-  const bedrooms = window.selectedBedroomsValue || '';
-  const baths = window.selectedBathsValue || '';
+  const location = document.getElementById('locationInput').value.toLowerCase().trim();
+  const propertyType = document.getElementById('propertyTypeSelect').value;
+  const bedrooms = document.getElementById('bedroomsSelect').value;
+  const baths = document.getElementById('bathsSelect').value;
+  const minPrice = parseFloat(document.getElementById('minPriceInput').value) || 0;
+  const maxPrice = parseFloat(document.getElementById('maxPriceInput').value) || 500000000;
+  
   let filtered = [...properties];
+  
   filtered = filtered.filter(prop => {
-    if (location && !prop.location.toLowerCase().includes(location.toLowerCase())) return false;
+    if (location && !prop.title.toLowerCase().includes(location) && !prop.location.toLowerCase().includes(location)) return false;
     if (propertyType && prop.propertyType !== propertyType) return false;
     if (bedrooms && prop.bedrooms < parseInt(bedrooms)) return false;
     if (baths && prop.bathrooms < parseInt(baths)) return false;
     let priceToCheck = 0;
     if (isForLease(prop)) priceToCheck = prop.monthlyRental || prop.price || 0;
     else priceToCheck = prop.price || 0;
-    if (priceToCheck < customMinPrice || priceToCheck > customMaxPrice) return false;
+    if (priceToCheck < minPrice || priceToCheck > maxPrice) return false;
     return true;
   });
+  
   if (currentCategory === 'FOR SALE') filtered = filtered.filter(p => p.listingType === 'FOR SALE');
   else if (currentCategory === 'FOR LEASE') filtered = filtered.filter(p => isForLease(p));
+  
   renderProperties(filtered);
   document.getElementById('resultsCount').innerHTML = `${filtered.length} properties found`;
   allProperties = filtered;
@@ -2324,11 +2144,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// Initialize
-window.selectedPropertyTypeValue = '';
-window.selectedBedroomsValue = '';
-window.selectedBathsValue = '';
+// Hide loader
+window.addEventListener('load', function() {
+  const loader = document.getElementById('loader');
+  loader.classList.add('hide');
+  setTimeout(() => { loader.style.display = 'none'; }, 500);
+});
 
+// Initialize
 loadProperties();
 </script>
 </body>
