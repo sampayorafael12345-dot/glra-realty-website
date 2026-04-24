@@ -12,14 +12,6 @@
 <link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="apple-touch-icon" href="/logo.png">
 
-<!-- Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://glrarealty.com/properties.html">
-<meta property="og:title" content="GLRA Realty | Browse Properties Philippines">
-<meta property="og:description" content="Find your dream home with GLRA Realty - Licensed real estate broker in Metro Manila and Luzon.">
-<meta property="og:image" content="https://glrarealty.com/logo.png">
-<meta property="og:site_name" content="GLRA Realty">
-
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -42,6 +34,7 @@
   --white: #ffffff;
   --card-bg: #ffffff;
   --border-color: #cbd5e1;
+  --border-dark: #94a3b8;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
@@ -56,10 +49,11 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #0f0f1a;
-  --white: #0f0f1a;
-  --card-bg: #1a1a2a;
-  --border-color: #3a3a4a;
+  --gray-light: #1a1a2a;
+  --white: #1a1a2a;
+  --card-bg: #252535;
+  --border-color: #4a4a5a;
+  --border-dark: #5a5a6a;
   --text-color: #e0e0e0;
 }
 
@@ -74,23 +68,24 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar - Hidden but functional */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Custom Scrollbar - Minimal */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--orange) transparent;
 }
 
-::-webkit-scrollbar-track {
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: var(--orange);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--orange-dark);
+  border-radius: 4px;
 }
 
 /* Navigation */
@@ -115,7 +110,48 @@ body {
 }
 
 body.dark-mode .navbar.scrolled {
-  background: #0f0f1a;
+  background: #1a1a2a;
+}
+
+/* Navbar text colors - WHITE at top, normal when scrolled */
+.nav-links a {
+  text-decoration: none;
+  color: #ffffff !important;
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.navbar.scrolled .nav-links a {
+  color: var(--text-color) !important;
+}
+
+.nav-links a:hover { color: var(--orange) !important; }
+
+.nav-links a.active {
+  color: var(--orange) !important;
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+}
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: #ffffff !important;
+}
+
+.navbar.scrolled .contact-btn-nav { 
+  color: var(--orange) !important; 
+  border-color: var(--orange);
+}
+
+.contact-btn-nav:hover { 
+  background: var(--orange); 
+  color: #ffffff !important; 
 }
 
 .logo {
@@ -136,57 +172,11 @@ body.dark-mode .navbar.scrolled {
   display: block;
 }
 
-.nav-links {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: var(--white);
-  font-weight: 500;
-  transition: var(--transition);
-  font-size: 14px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.navbar.scrolled .nav-links a { color: var(--text-color); }
-.nav-links a:hover { color: var(--orange); }
-
-/* Active navigation link */
-.nav-links a.active {
-  color: var(--orange);
-  border-bottom: 2px solid var(--orange);
-  padding-bottom: 4px;
-}
-
-.navbar.scrolled .nav-links a.active {
-  color: var(--orange);
-}
-
-.contact-btn-nav {
-  background: transparent;
-  border: 2px solid var(--orange);
-  padding: 8px 20px;
-  border-radius: 40px;
-  color: var(--white) !important;
-}
-
-.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
-.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
-.contact-btn-nav.active {
-  background: var(--orange);
-  color: var(--white) !important;
-  border-bottom: none;
-}
-
 .mobile-menu-btn {
   display: none;
   font-size: 24px;
   cursor: pointer;
-  color: var(--white);
+  color: #ffffff;
   z-index: 1001;
 }
 
@@ -231,10 +221,6 @@ body.dark-mode .navbar.scrolled {
   font-weight: 500;
   font-family: 'Playfair Display', serif;
   cursor: pointer;
-}
-
-.mobile-overlay-links a.active {
-  color: var(--orange);
 }
 
 /* Page Hero */
@@ -303,6 +289,7 @@ body.dark-mode .page-hero {
   transform: translateY(-50%);
   color: var(--orange);
   font-size: 14px;
+  z-index: 2;
 }
 
 .search-field-wrapper input {
@@ -322,8 +309,43 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
 }
 
-.search-field-wrapper input::placeholder {
-  color: var(--gray);
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  margin-top: 8px;
+  border: 2px solid var(--border-color);
+}
+
+body.dark-mode .search-suggestions {
+  background: #252535;
+}
+
+.search-suggestions div {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.search-suggestions div:hover {
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+.search-suggestions div:last-child {
+  border-bottom: none;
 }
 
 .search-btn-main {
@@ -372,12 +394,12 @@ body.dark-mode .page-hero {
   border-color: var(--orange);
 }
 
-/* Advanced Filters */
+/* Advanced Filters - WITH VISIBLE BORDERS */
 .advanced-filters {
   display: none;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.15);
+  border-top: 1px solid rgba(255,255,255,0.2);
 }
 
 .advanced-filters.show {
@@ -411,20 +433,39 @@ body.dark-mode .page-hero {
 .filter-group select,
 .filter-group input {
   padding: 12px 14px;
-  border: none;
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   font-size: 13px;
   font-family: 'Inter', sans-serif;
   background: var(--white);
-  color: var(--dark);
+  color: var(--text-color);
   cursor: pointer;
   width: 100%;
+  transition: var(--transition);
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.filter-group select:hover,
+.filter-group input:hover {
+  border-color: var(--border-dark);
+}
+
+/* Dropdown options styling */
+.filter-group select option {
+  padding: 10px;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+body.dark-mode .filter-group select option {
+  background: #252535;
+  color: #e0e0e0;
 }
 
 .price-range-group {
@@ -439,7 +480,7 @@ body.dark-mode .page-hero {
 
 .reset-filters-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255,255,255,0.3);
   color: var(--white);
   padding: 12px 24px;
   border-radius: 40px;
@@ -453,6 +494,25 @@ body.dark-mode .page-hero {
 .reset-filters-btn:hover {
   border-color: var(--orange);
   color: var(--orange);
+  background: rgba(249, 115, 22, 0.1);
+}
+
+/* Dark mode specific fixes */
+body.dark-mode .reset-filters-btn {
+  color: #e0e0e0;
+  border-color: #5a5a6a;
+}
+
+body.dark-mode .reset-filters-btn:hover {
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+body.dark-mode .filter-group select,
+body.dark-mode .filter-group input {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border-color: #4a4a5a;
 }
 
 /* Category Tabs */
@@ -525,7 +585,7 @@ body.dark-mode .page-hero {
   font-weight: 500;
 }
 
-/* Property Cards - 1:1 Square Images */
+/* Property Cards */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -737,7 +797,6 @@ body.dark-mode .page-hero {
 .close:hover { 
   color: var(--orange); 
   transform: rotate(90deg);
-  background: rgba(0,0,0,0.8);
 }
 
 .gallery-main {
@@ -746,7 +805,6 @@ body.dark-mode .page-hero {
   object-fit: cover;
   border-radius: 16px;
   margin-bottom: 15px;
-  background: var(--gray-light);
 }
 
 .thumb-row {
@@ -1391,7 +1449,8 @@ body.dark-mode .btn-darkmode {
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" value="">
+        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="showSuggestions(this.value)">
+        <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search Properties</button>
       <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
@@ -1440,8 +1499,8 @@ body.dark-mode .btn-darkmode {
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
           <div class="price-range-group">
-            <input type="number" id="minPriceInput" placeholder="Min">
-            <input type="number" id="maxPriceInput" placeholder="Max">
+            <input type="number" id="minPriceInput" placeholder="Min Price">
+            <input type="number" id="maxPriceInput" placeholder="Max Price">
           </div>
         </div>
       </div>
@@ -1467,7 +1526,7 @@ body.dark-mode .btn-darkmode {
   <div id="property-list" class="grid"></div>
 </section>
 
-<!-- Email Modal for Notify Me -->
+<!-- Email Modals -->
 <div id="emailModal" class="email-modal">
   <div class="email-modal-content">
     <span class="close-modal" onclick="closeEmailModal()">&times;</span>
@@ -1483,7 +1542,6 @@ body.dark-mode .btn-darkmode {
   </div>
 </div>
 
-<!-- Email Modal for Wishlist -->
 <div id="wishlistModal" class="email-modal">
   <div class="email-modal-content">
     <span class="close-modal" onclick="closeWishlistModal()">&times;</span>
@@ -1564,12 +1622,60 @@ function goHome() {
   window.location.href = '/';
 }
 
+// ============ SEARCH SUGGESTIONS ============
+let allPropertyTitles = [];
+
+async function loadPropertyTitles() {
+  try {
+    const response = await fetch('/api/properties');
+    const properties = await response.json();
+    allPropertyTitles = properties.filter(p => p.status === 'available').map(p => p.title);
+  } catch (error) {
+    console.error('Error loading property titles:', error);
+  }
+}
+
+function showSuggestions(value) {
+  const suggestionsDiv = document.getElementById('searchSuggestions');
+  if (!value.trim() || value.length < 2) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  
+  const filtered = allPropertyTitles.filter(title => 
+    title.toLowerCase().includes(value.toLowerCase())
+  ).slice(0, 8);
+  
+  if (filtered.length > 0) {
+    suggestionsDiv.innerHTML = filtered.map(title => 
+      `<div onclick="selectSuggestion('${escapeHtml(title)}')">${escapeHtml(title)}</div>`
+    ).join('');
+    suggestionsDiv.style.display = 'block';
+  } else {
+    suggestionsDiv.style.display = 'none';
+  }
+}
+
+function selectSuggestion(title) {
+  document.getElementById('locationInput').value = title;
+  document.getElementById('searchSuggestions').style.display = 'none';
+  performSearch();
+}
+
+// Close suggestions when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-field-wrapper')) {
+    document.getElementById('searchSuggestions').style.display = 'none';
+  }
+});
+
 // ============ ESC KEY TO CLOSE MODALS ============
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     if (document.getElementById("modal").style.display === "block") closeModal();
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
+    document.getElementById('searchSuggestions').style.display = 'none';
   }
 });
 
@@ -1614,9 +1720,6 @@ function escapeHtml(str) {
 }
 
 // ============ SEARCH FUNCTIONS ============
-let customMinPrice = 0;
-let customMaxPrice = 500000000;
-
 function toggleAdvancedFilter() {
   const filters = document.getElementById('advancedFilters');
   const btn = document.getElementById('advancedFilterBtn');
@@ -1841,6 +1944,7 @@ async function loadProperties() {
     const response = await fetch('/api/properties');
     const allProps = await response.json();
     cachedProperties = allProps.filter(p => p.status === 'available');
+    await loadPropertyTitles();
     applyCategoryFilter(cachedProperties);
   } catch (error) { 
     console.error(error); 
@@ -1869,7 +1973,6 @@ function applyCategoryFilter(properties) {
   const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
   document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
   
-  // Populate search fields from URL
   if (searchParam) document.getElementById('locationInput').value = searchParam;
   if (propertyTypeParam) document.getElementById('propertyTypeSelect').value = propertyTypeParam;
   if (bedroomsParam) document.getElementById('bedroomsSelect').value = bedroomsParam;
