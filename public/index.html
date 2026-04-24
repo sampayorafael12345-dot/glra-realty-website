@@ -101,7 +101,11 @@ body.dark-mode .navbar.scrolled {
   visibility: visible;
 }
 
-.logo img { height: 45px; width: auto; display: block; }
+.logo img { 
+  height: 56px; 
+  width: auto; 
+  display: block;
+}
 
 .nav-links {
   display: flex;
@@ -226,7 +230,7 @@ body.dark-mode .navbar.scrolled {
   display: block;
 }
 
-/* Search Bar - Redesigned */
+/* Search Bar - Dark Blue Background */
 .search-float {
   position: relative;
   z-index: 10;
@@ -236,17 +240,12 @@ body.dark-mode .navbar.scrolled {
 }
 
 .search-card {
-  background: var(--white);
+  background: #1a1a2e;
   border-radius: 20px;
   padding: 25px 30px;
   max-width: 1200px;
   margin: 0 auto;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  border: 1px solid var(--border-color);
-}
-
-body.dark-mode .search-card {
-  background: #1a1a2a;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
 }
 
 .search-row {
@@ -274,19 +273,22 @@ body.dark-mode .search-card {
 .search-field-wrapper input {
   width: 100%;
   padding: 14px 16px 14px 42px;
-  border: 2px solid var(--border-color);
+  border: none;
   border-radius: 50px;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
   background: var(--white);
-  color: var(--text-color);
+  color: var(--dark);
   transition: var(--transition);
 }
 
 .search-field-wrapper input:focus {
   outline: none;
-  border-color: var(--orange);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
+}
+
+.search-field-wrapper input::placeholder {
+  color: var(--gray);
 }
 
 .search-btn-main {
@@ -311,8 +313,8 @@ body.dark-mode .search-card {
 
 .filter-toggle-btn {
   background: transparent;
-  border: 2px solid var(--border-color);
-  color: var(--text-color);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: var(--white);
   padding: 12px 24px;
   border-radius: 50px;
   font-weight: 500;
@@ -340,7 +342,7 @@ body.dark-mode .search-card {
   display: none;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 .advanced-filters.show {
@@ -348,42 +350,46 @@ body.dark-mode .search-card {
 }
 
 .filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 20px;
+  align-items: flex-end;
 }
 
 .filter-group {
+  flex: 1;
+  min-width: 160px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .filter-group label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--gray);
+  color: var(--orange);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .filter-group select,
 .filter-group input {
-  padding: 12px 16px;
-  border: 2px solid var(--border-color);
+  padding: 12px 14px;
+  border: none;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Inter', sans-serif;
   background: var(--white);
-  color: var(--text-color);
+  color: var(--dark);
   cursor: pointer;
+  width: 100%;
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
   outline: none;
-  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
 }
 
 .price-range-group {
@@ -393,12 +399,13 @@ body.dark-mode .search-card {
 
 .price-range-group input {
   flex: 1;
+  min-width: 0;
 }
 
 .reset-filters-btn {
   background: transparent;
-  border: 2px solid var(--border-color);
-  color: var(--text-color);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: var(--white);
   padding: 12px 24px;
   border-radius: 40px;
   font-weight: 500;
@@ -597,7 +604,7 @@ body.dark-mode .search-card {
   margin: 8px 0 0 0;
 }
 
-/* Sections */
+/* Other sections remain the same as previous working version */
 .section {
   padding: 50px 5%;
   max-width: 1400px;
@@ -651,7 +658,6 @@ body.dark-mode .search-card {
 
 .view-all-btn:hover { background: var(--orange); color: var(--white); }
 
-/* Resources Section */
 .resources-section {
   background: var(--gray-light);
   padding: 60px 5%;
@@ -731,7 +737,6 @@ body.dark-mode .search-card {
   color: white;
 }
 
-/* Broker Spotlight */
 .broker-spotlight {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   padding: 60px 5%;
@@ -805,7 +810,6 @@ body.dark-mode .search-card {
   color: var(--orange);
 }
 
-/* CTA Section */
 .cta-section {
   padding: 60px 5%;
   background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
@@ -837,7 +841,6 @@ body.dark-mode .search-card {
   font-size: 14px;
 }
 
-/* Contact Form */
 .contact-form-section {
   padding: 60px 5%;
   max-width: 800px;
@@ -885,7 +888,6 @@ body.dark-mode .search-card {
 
 .submit-btn:hover { background: var(--orange-dark); }
 
-/* Footer */
 footer {
   background: #1a1a2e;
   color: #888;
@@ -940,7 +942,6 @@ footer {
   font-size: 10px;
 }
 
-/* Floating Buttons */
 .floating-buttons {
   position: fixed;
   bottom: 20px;
@@ -980,7 +981,6 @@ body.dark-mode .btn-darkmode {
   border-color: var(--orange);
 }
 
-/* Back to Top */
 .back-to-top {
   position: fixed;
   bottom: 20px;
@@ -1005,7 +1005,6 @@ body.dark-mode .btn-darkmode {
   visibility: visible;
 }
 
-/* Modal */
 #modal {
   position: fixed;
   top: 0;
@@ -1297,7 +1296,6 @@ body.dark-mode .modal-mortgage-result {
   transform: translateY(-2px);
 }
 
-/* Email Modal */
 .email-modal {
   display: none;
   position: fixed;
@@ -1392,7 +1390,6 @@ body.dark-mode .modal-mortgage-result {
   color: var(--danger);
 }
 
-/* Toast */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -1425,7 +1422,6 @@ body.dark-mode .modal-mortgage-result {
   color: var(--orange);
 }
 
-/* Loader */
 .loader {
   position: fixed;
   top: 0;
@@ -1458,7 +1454,6 @@ body.dark-mode .modal-mortgage-result {
   to { transform: rotate(360deg); }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .nav-links { display: none; }
   .mobile-menu-btn { display: block; }
@@ -1474,10 +1469,10 @@ body.dark-mode .modal-mortgage-result {
     transform: translateX(-50%);
   }
   
-  .logo img { height: 35px; }
+  .logo img { height: 45px; }
   
   .hero-slider { height: 70vh; min-height: 500px; }
-  .slide-content img { max-width: 200px; }
+  .slide-content img { max-width: 180px; }
   
   .search-float { margin-top: -30px; margin-bottom: 30px; }
   .search-card { padding: 20px; }
@@ -1491,8 +1486,9 @@ body.dark-mode .modal-mortgage-result {
   .search-btn-main { width: 100%; justify-content: center; }
   .filter-toggle-btn { width: 100%; justify-content: center; }
   
-  .filter-grid { grid-template-columns: 1fr; }
-  .price-range-group { flex-direction: column; }
+  .filter-grid { flex-direction: column; }
+  .filter-group { min-width: 100%; }
+  .price-range-group { gap: 8px; }
   
   .stats-grid { grid-template-columns: 1fr; gap: 20px; }
   .section-header h2 { font-size: 28px; }
@@ -1508,6 +1504,15 @@ body.dark-mode .modal-mortgage-result {
   .social-links { justify-content: center; }
   .grid { grid-template-columns: 1fr; }
   .modal-body { margin: 15px; padding: 15px; }
+}
+
+@media (min-width: 769px) {
+  .advanced-filters {
+    display: block !important;
+  }
+  .filter-toggle-btn {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -1563,7 +1568,7 @@ body.dark-mode .modal-mortgage-result {
   <div class="swiper-pagination"></div>
 </div>
 
-<!-- Search Bar - Redesigned -->
+<!-- Search Bar -->
 <div class="search-float">
   <div class="search-card">
     <div class="search-row">
@@ -1581,7 +1586,7 @@ body.dark-mode .modal-mortgage-result {
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
         <div class="filter-group">
-          <label>Property Type</label>
+          <label>PROPERTY TYPE</label>
           <select id="propertyTypeSelect">
             <option value="">All Types</option>
             <option value="Condominium">Condominium</option>
@@ -1593,7 +1598,7 @@ body.dark-mode .modal-mortgage-result {
         </div>
         
         <div class="filter-group">
-          <label>Bedrooms</label>
+          <label>BEDROOMS</label>
           <select id="bedroomsSelect">
             <option value="">Any</option>
             <option value="1">1+ Bedrooms</option>
@@ -1605,7 +1610,7 @@ body.dark-mode .modal-mortgage-result {
         </div>
         
         <div class="filter-group">
-          <label>Bathrooms</label>
+          <label>BATHROOMS</label>
           <select id="bathsSelect">
             <option value="">Any</option>
             <option value="1">1+ Bathrooms</option>
@@ -1616,10 +1621,10 @@ body.dark-mode .modal-mortgage-result {
         </div>
         
         <div class="filter-group">
-          <label>Price Range (₱)</label>
+          <label>PRICE RANGE (₱)</label>
           <div class="price-range-group">
-            <input type="number" id="minPriceInput" placeholder="Min Price" value="">
-            <input type="number" id="maxPriceInput" placeholder="Max Price" value="">
+            <input type="number" id="minPriceInput" placeholder="Min">
+            <input type="number" id="maxPriceInput" placeholder="Max">
           </div>
         </div>
       </div>
