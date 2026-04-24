@@ -34,26 +34,21 @@
   --white: #ffffff;
   --card-bg: #ffffff;
   --border-color: #cbd5e1;
-  --border-dark: #94a3b8;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
   --transition: all 0.3s ease;
-  --success: #10b981;
-  --danger: #ef4444;
-  --info: #3b82f6;
 }
 
 body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #1a1a2a;
-  --white: #1a1a2a;
-  --card-bg: #252535;
-  --border-color: #4a4a5a;
-  --border-dark: #5a5a6a;
+  --gray-light: #0f0f1a;
+  --white: #0f0f1a;
+  --card-bg: #1a1a2a;
+  --border-color: #3a3a4a;
   --text-color: #e0e0e0;
 }
 
@@ -69,21 +64,14 @@ body {
 }
 
 /* Custom Scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--orange) transparent;
-}
-
-*::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
-
-*::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
-
-*::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--orange);
   border-radius: 4px;
 }
@@ -110,7 +98,7 @@ body {
 }
 
 body.dark-mode .navbar.scrolled {
-  background: #1a1a2a;
+  background: #0f0f1a;
 }
 
 .logo {
@@ -129,12 +117,6 @@ body.dark-mode .navbar.scrolled {
   height: 56px; 
   width: auto; 
   display: block;
-  transition: var(--transition);
-}
-
-/* Logo color change in dark mode */
-body.dark-mode .logo img {
-  filter: brightness(0) invert(1);
 }
 
 .nav-links {
@@ -262,7 +244,7 @@ body.dark-mode .page-hero {
   display: block;
 }
 
-/* Search Bar */
+/* Search Bar - Dark Blue Background */
 .search-float {
   position: relative;
   z-index: 10;
@@ -356,11 +338,6 @@ body.dark-mode .search-suggestions {
   color: white;
 }
 
-body.dark-mode .search-suggestions div:hover {
-  background: var(--orange);
-  color: white;
-}
-
 .search-suggestions div:last-child {
   border-bottom: none;
 }
@@ -411,12 +388,12 @@ body.dark-mode .search-suggestions div:hover {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Custom Dropdowns */
+/* Advanced Filters */
 .advanced-filters {
   display: none;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.2);
+  border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 .advanced-filters.show {
@@ -532,94 +509,40 @@ body.dark-mode .dropdown-menu {
   color: white;
 }
 
-body.dark-mode .dropdown-item:hover {
-  background: var(--orange);
-  color: white;
-}
-
-/* Price Range with Sliders */
-.price-range-container {
+/* Price Range - Simple with commas */
+.price-range-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
   background: var(--white);
-  padding: 12px;
   border: 2px solid var(--border-color);
   border-radius: 12px;
+  padding: 0 12px;
 }
 
-body.dark-mode .price-range-container {
+body.dark-mode .price-range-wrapper {
   background: #2a2a3a;
 }
 
-.price-sliders {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 12px;
-}
-
-.price-slider-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.price-slider-group label {
-  font-size: 10px;
-  color: var(--gray);
-  text-transform: none;
-}
-
-.price-slider-group input[type="range"] {
-  width: 100%;
-  height: 4px;
-  -webkit-appearance: none;
-  background: var(--border-color);
-  border-radius: 2px;
-  outline: none;
-  padding: 0;
-}
-
-.price-slider-group input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--orange);
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-}
-
-.price-slider-group input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.price-values {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 600;
+.price-range-wrapper span {
   color: var(--orange);
-  margin-top: 5px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-.price-inputs {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.price-inputs input {
+.price-range-wrapper input {
   flex: 1;
-  padding: 8px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 12px;
-  background: var(--white);
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
   color: var(--text-color);
+  outline: none;
 }
 
-body.dark-mode .price-inputs input {
-  background: #1a1a2a;
-  border-color: #4a4a5a;
+.price-range-wrapper input::placeholder {
+  color: var(--gray);
 }
 
 .reset-filters-btn {
@@ -643,12 +566,6 @@ body.dark-mode .price-inputs input {
 
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
-  border-color: #5a5a6a;
-}
-
-body.dark-mode .reset-filters-btn:hover {
-  color: var(--orange);
-  border-color: var(--orange);
 }
 
 /* Category Tabs */
@@ -891,7 +808,7 @@ body.dark-mode .reset-filters-btn:hover {
   color: var(--orange);
 }
 
-/* Modal (abbreviated for length - same as before) */
+/* Modal */
 #modal {
   position: fixed;
   top: 0;
@@ -1504,6 +1421,7 @@ body.dark-mode .btn-darkmode {
   
   .filter-grid { flex-direction: column; }
   .filter-group { min-width: 100%; }
+  .price-range-wrapper { width: 100%; }
   
   .category-tabs { gap: 10px; }
   .tab-btn { padding: 8px 20px; font-size: 13px; }
@@ -1605,12 +1523,12 @@ body.dark-mode .btn-darkmode {
               <i class="fas fa-chevron-down"></i>
             </div>
             <div class="dropdown-menu" id="propertyTypeMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('propertyType', '', 'All Types')">All Types</div>
-              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdownValue('propertyType', 'Condominium', 'Condominium')">Condominium</div>
-              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdownValue('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
-              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdownValue('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
-              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdownValue('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
-              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdownValue('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
+              <div class="dropdown-item" data-value="" data-text="All Types" onclick="selectDropdownValue('propertyType', '', 'All Types')">All Types</div>
+              <div class="dropdown-item" data-value="Condominium" data-text="Condominium" onclick="selectDropdownValue('propertyType', 'Condominium', 'Condominium')">Condominium</div>
+              <div class="dropdown-item" data-value="House and Lot" data-text="House and Lot" onclick="selectDropdownValue('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
+              <div class="dropdown-item" data-value="Townhouse" data-text="Townhouse" onclick="selectDropdownValue('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
+              <div class="dropdown-item" data-value="Commercial Lot" data-text="Commercial Lot" onclick="selectDropdownValue('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
+              <div class="dropdown-item" data-value="Residential Lot" data-text="Residential Lot" onclick="selectDropdownValue('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
             </div>
           </div>
         </div>
@@ -1624,12 +1542,12 @@ body.dark-mode .btn-darkmode {
               <i class="fas fa-chevron-down"></i>
             </div>
             <div class="dropdown-menu" id="bedroomsMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('bedrooms', '', 'Any')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
-              <div class="dropdown-item" data-value="5" onclick="selectDropdownValue('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
+              <div class="dropdown-item" data-value="" data-text="Any" onclick="selectDropdownValue('bedrooms', '', 'Any')">Any</div>
+              <div class="dropdown-item" data-value="1" data-text="1+ Bedrooms" onclick="selectDropdownValue('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
+              <div class="dropdown-item" data-value="2" data-text="2+ Bedrooms" onclick="selectDropdownValue('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
+              <div class="dropdown-item" data-value="3" data-text="3+ Bedrooms" onclick="selectDropdownValue('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
+              <div class="dropdown-item" data-value="4" data-text="4+ Bedrooms" onclick="selectDropdownValue('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
+              <div class="dropdown-item" data-value="5" data-text="5+ Bedrooms" onclick="selectDropdownValue('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
             </div>
           </div>
         </div>
@@ -1643,41 +1561,24 @@ body.dark-mode .btn-darkmode {
               <i class="fas fa-chevron-down"></i>
             </div>
             <div class="dropdown-menu" id="bathsMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('baths', '', 'Any')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
+              <div class="dropdown-item" data-value="" data-text="Any" onclick="selectDropdownValue('baths', '', 'Any')">Any</div>
+              <div class="dropdown-item" data-value="1" data-text="1+ Bathrooms" onclick="selectDropdownValue('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
+              <div class="dropdown-item" data-value="2" data-text="2+ Bathrooms" onclick="selectDropdownValue('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
+              <div class="dropdown-item" data-value="3" data-text="3+ Bathrooms" onclick="selectDropdownValue('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
+              <div class="dropdown-item" data-value="4" data-text="4+ Bathrooms" onclick="selectDropdownValue('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
             </div>
           </div>
         </div>
         
-        <!-- Price Range with Sliders -->
+        <!-- Price Range - Simple with commas -->
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
-          <div class="price-range-container">
-            <div class="price-sliders">
-              <div class="price-slider-group">
-                <label>Min Price</label>
-                <input type="range" id="minPriceSlider" min="0" max="50000000" step="500000" value="0" oninput="updateMinPrice(this.value)">
-                <div class="price-values">
-                  <span>₱0</span>
-                  <span id="minPriceDisplay">₱0</span>
-                </div>
-              </div>
-              <div class="price-slider-group">
-                <label>Max Price</label>
-                <input type="range" id="maxPriceSlider" min="0" max="50000000" step="500000" value="50000000" oninput="updateMaxPrice(this.value)">
-                <div class="price-values">
-                  <span id="maxPriceDisplay">₱50M</span>
-                  <span>₱50M+</span>
-                </div>
-              </div>
-            </div>
-            <div class="price-inputs">
-              <input type="number" id="minPriceInput" placeholder="Min" value="0" oninput="updateMinPriceFromInput(this.value)">
-              <input type="number" id="maxPriceInput" placeholder="Max" value="50000000" oninput="updateMaxPriceFromInput(this.value)">
-            </div>
+          <div class="price-range-wrapper">
+            <span>₱</span>
+            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this)" value="">
+            <span>-</span>
+            <span>₱</span>
+            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this)" value="">
           </div>
         </div>
       </div>
@@ -1806,9 +1707,24 @@ function goHome() {
   window.location.href = '/';
 }
 
+// ============ PRICE FORMAT WITH COMMAS ============
+function formatPriceInput(input) {
+  let value = input.value.replace(/,/g, '');
+  if (value === '') return;
+  let num = parseFloat(value);
+  if (!isNaN(num)) {
+    input.value = num.toLocaleString('en-US');
+  }
+}
+
+function getRawPriceValue(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input.value) return 0;
+  return parseFloat(input.value.replace(/,/g, '')) || 0;
+}
+
 // ============ DROPDOWN FUNCTIONS ============
 function toggleDropdown(dropdownId) {
-  // Close all other dropdowns first
   document.querySelectorAll('.dropdown-menu').forEach(menu => {
     if (menu.id !== dropdownId + 'Menu') {
       menu.classList.remove('show');
@@ -1823,8 +1739,10 @@ function toggleDropdown(dropdownId) {
   const menu = document.getElementById(dropdownId + 'Menu');
   const trigger = document.querySelector(`#${dropdownId} .dropdown-trigger`);
   
-  menu.classList.toggle('show');
-  trigger.classList.toggle('open');
+  if (menu) {
+    menu.classList.toggle('show');
+    trigger.classList.toggle('open');
+  }
 }
 
 function selectDropdownValue(type, value, displayText) {
@@ -1833,27 +1751,27 @@ function selectDropdownValue(type, value, displayText) {
     document.getElementById('selectedPropertyTypeText').innerText = displayText;
     const menu = document.getElementById('propertyTypeMenu');
     const trigger = document.querySelector('#propertyTypeDropdown .dropdown-trigger');
-    menu.classList.remove('show');
-    trigger.classList.remove('open');
+    if (menu) menu.classList.remove('show');
+    if (trigger) trigger.classList.remove('open');
   } else if (type === 'bedrooms') {
     selectedBedrooms = value;
     document.getElementById('selectedBedroomsText').innerText = displayText;
     const menu = document.getElementById('bedroomsMenu');
     const trigger = document.querySelector('#bedroomsDropdown .dropdown-trigger');
-    menu.classList.remove('show');
-    trigger.classList.remove('open');
+    if (menu) menu.classList.remove('show');
+    if (trigger) trigger.classList.remove('open');
   } else if (type === 'baths') {
     selectedBaths = value;
     document.getElementById('selectedBathsText').innerText = displayText;
     const menu = document.getElementById('bathsMenu');
     const trigger = document.querySelector('#bathsDropdown .dropdown-trigger');
-    menu.classList.remove('show');
-    trigger.classList.remove('open');
+    if (menu) menu.classList.remove('show');
+    if (trigger) trigger.classList.remove('open');
   }
   
-  // Apply filters after selection
+  // Apply filters immediately
+  const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
   if (typeof cachedProperties !== 'undefined') {
-    const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
     applyFilters(currentCategory, cachedProperties);
   }
 }
@@ -1872,59 +1790,6 @@ document.addEventListener('click', function(e) {
     document.getElementById('searchSuggestions').style.display = 'none';
   }
 });
-
-// ============ PRICE RANGE FUNCTIONS ============
-function updateMinPrice(value) {
-  minPrice = parseInt(value);
-  document.getElementById('minPriceSlider').value = value;
-  document.getElementById('minPriceInput').value = value;
-  document.getElementById('minPriceDisplay').innerText = '₱' + (value / 1000000).toFixed(0) + 'M';
-  
-  if (minPrice > maxPrice) {
-    maxPrice = minPrice;
-    document.getElementById('maxPriceSlider').value = maxPrice;
-    document.getElementById('maxPriceInput').value = maxPrice;
-    document.getElementById('maxPriceDisplay').innerText = '₱' + (maxPrice / 1000000).toFixed(0) + 'M';
-  }
-  
-  const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
-  if (typeof cachedProperties !== 'undefined') {
-    applyFilters(currentCategory, cachedProperties);
-  }
-}
-
-function updateMaxPrice(value) {
-  maxPrice = parseInt(value);
-  document.getElementById('maxPriceSlider').value = value;
-  document.getElementById('maxPriceInput').value = value;
-  document.getElementById('maxPriceDisplay').innerText = '₱' + (value / 1000000).toFixed(0) + 'M';
-  
-  if (maxPrice < minPrice) {
-    minPrice = maxPrice;
-    document.getElementById('minPriceSlider').value = minPrice;
-    document.getElementById('minPriceInput').value = minPrice;
-    document.getElementById('minPriceDisplay').innerText = '₱' + (minPrice / 1000000).toFixed(0) + 'M';
-  }
-  
-  const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
-  if (typeof cachedProperties !== 'undefined') {
-    applyFilters(currentCategory, cachedProperties);
-  }
-}
-
-function updateMinPriceFromInput(value) {
-  minPrice = parseInt(value) || 0;
-  document.getElementById('minPriceSlider').value = minPrice;
-  document.getElementById('minPriceDisplay').innerText = '₱' + (minPrice / 1000000).toFixed(0) + 'M';
-  updateMinPrice(minPrice);
-}
-
-function updateMaxPriceFromInput(value) {
-  maxPrice = parseInt(value) || 50000000;
-  document.getElementById('maxPriceSlider').value = maxPrice;
-  document.getElementById('maxPriceDisplay').innerText = '₱' + (maxPrice / 1000000).toFixed(0) + 'M';
-  updateMaxPrice(maxPrice);
-}
 
 // ============ SEARCH SUGGESTIONS ============
 let allPropertyTitles = [];
@@ -1966,13 +1831,14 @@ function selectSuggestion(title) {
   performSearch();
 }
 
-// ============ ESC KEY TO CLOSE MODALS ============
+// ============ ESC KEY ============
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     if (document.getElementById("modal").style.display === "block") closeModal();
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
     document.getElementById('searchSuggestions').style.display = 'none';
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
 
@@ -2013,8 +1879,6 @@ function escapeHtml(str) {
 }
 
 // ============ SEARCH FUNCTIONS ============
-let advancedFiltersVisible = true;
-
 function toggleAdvancedFilter() {
   const filters = document.getElementById('advancedFilters');
   const btn = document.getElementById('advancedFilterBtn');
@@ -2046,8 +1910,11 @@ function performSearch() {
   if (selectedPropertyType) params.push(`propertyType=${encodeURIComponent(selectedPropertyType)}`);
   if (selectedBedrooms) params.push(`bedrooms=${selectedBedrooms}`);
   if (selectedBaths) params.push(`baths=${selectedBaths}`);
-  if (minPrice > 0) params.push(`minPrice=${minPrice}`);
-  if (maxPrice < 50000000) params.push(`maxPrice=${maxPrice}`);
+  
+  const minPriceVal = getRawPriceValue('minPriceInput');
+  const maxPriceVal = getRawPriceValue('maxPriceInput');
+  if (minPriceVal > 0) params.push(`minPrice=${minPriceVal}`);
+  if (maxPriceVal < 50000000) params.push(`maxPrice=${maxPriceVal}`);
   
   window.location.href = url + params.join('&');
 }
@@ -2262,6 +2129,7 @@ function applyCategoryFilter(properties) {
   const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
   document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
   
+  // Populate from URL
   if (searchParam) document.getElementById('locationInput').value = searchParam;
   if (propertyTypeParam) {
     selectedPropertyType = propertyTypeParam;
@@ -2269,19 +2137,21 @@ function applyCategoryFilter(properties) {
   }
   if (bedroomsParam) {
     selectedBedrooms = bedroomsParam;
-    document.getElementById('selectedBedroomsText').innerText = bedroomsParam + '+ Bedrooms';
+    let bedroomText = bedroomsParam === '1' ? '1+ Bedrooms' : bedroomsParam + '+ Bedrooms';
+    document.getElementById('selectedBedroomsText').innerText = bedroomText;
   }
   if (bathsParam) {
     selectedBaths = bathsParam;
-    document.getElementById('selectedBathsText').innerText = bathsParam + '+ Bathrooms';
+    let bathText = bathsParam === '1' ? '1+ Bathrooms' : bathsParam + '+ Bathrooms';
+    document.getElementById('selectedBathsText').innerText = bathText;
   }
   if (minPriceParam) {
     minPrice = parseInt(minPriceParam);
-    updateMinPrice(minPrice);
+    document.getElementById('minPriceInput').value = minPrice.toLocaleString();
   }
   if (maxPriceParam) {
     maxPrice = parseInt(maxPriceParam);
-    updateMaxPrice(maxPrice);
+    document.getElementById('maxPriceInput').value = maxPrice.toLocaleString();
   }
   
   applyFilters(currentCategory, properties);
@@ -2289,6 +2159,8 @@ function applyCategoryFilter(properties) {
 
 function applyFilters(currentCategory, properties) {
   const location = document.getElementById('locationInput').value.toLowerCase().trim();
+  const minPriceVal = getRawPriceValue('minPriceInput');
+  const maxPriceVal = getRawPriceValue('maxPriceInput');
   
   let filtered = [...properties];
   
@@ -2300,7 +2172,8 @@ function applyFilters(currentCategory, properties) {
     let priceToCheck = 0;
     if (isForLease(prop)) priceToCheck = prop.monthlyRental || prop.price || 0;
     else priceToCheck = prop.price || 0;
-    if (priceToCheck < minPrice || priceToCheck > maxPrice) return false;
+    if (minPriceVal > 0 && priceToCheck < minPriceVal) return false;
+    if (maxPriceVal < 50000000 && priceToCheck > maxPriceVal) return false;
     return true;
   });
   
