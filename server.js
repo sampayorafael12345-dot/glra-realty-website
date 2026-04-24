@@ -212,6 +212,43 @@ mongoose.connection.on('disconnected', () => {
   setTimeout(() => mongoose.connect(MONGODB_URI), 5000);
 });
 
+// ============ PROFESSIONAL EMAIL TEMPLATES ============
+
+function getEmailHeader() {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>GLRA Realty</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f0; font-family: Arial, sans-serif;">
+      <div style="max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div style="background-color: #1a1a2e; padding: 30px 25px; text-align: center;">
+          <h1 style="color: #c5a059; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 28px; margin: 0; letter-spacing: 2px;">GLRA REALTY</h1>
+          <p style="color: #a0a0a0; margin: 8px 0 0 0; font-size: 12px;">Licensed Real Estate Agent | Metro Manila & Luzon</p>
+        </div>
+        <div style="padding: 35px 30px;">
+  `;
+}
+
+function getEmailFooter() {
+  return `
+        </div>
+        <div style="background-color: #f9f9f5; padding: 20px 30px; text-align: center; border-top: 1px solid #e8e8e0;">
+          <p style="margin: 0 0 5px 0; color: #888888; font-size: 12px;">GLRA Realty Group</p>
+          <p style="margin: 0; color: #888888; font-size: 11px;">17th Floor, 252 Senator Gil J. Puyat Avenue, Makati City, Philippines 1200</p>
+          <p style="margin: 10px 0 0 0; color: #888888; font-size: 11px;">
+            <a href="tel:+639171774572" style="color: #c5a059; text-decoration: none;">+63 917 177 4572</a> | 
+            <a href="mailto:glrarealty@gmail.com" style="color: #c5a059; text-decoration: none;">glrarealty@gmail.com</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // ============ PUBLIC ROUTES ============
 
 app.get('/api/properties', async (req, res) => {
@@ -240,38 +277,37 @@ app.post('/api/inquiries', async (req, res) => {
     
     // Send confirmation email to user
     if (req.body.email) {
-      const userEmailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #f97316;">GLRA Realty</h1>
-          </div>
-          <h2 style="color: #333;">Thank you for your inquiry, ${req.body.name}!</h2>
-          <p>We have received your message and will get back to you within 24 hours.</p>
-          <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Your message:</strong></p>
-            <p>${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
-            ${req.body.propertyTitle ? `<p><strong>Property of interest:</strong> ${req.body.propertyTitle}</p>` : ''}
-          </div>
-          <p>Best regards,<br><strong>GLRA Realty Team</strong></p>
-          <p style="font-size: 12px; color: #888; margin-top: 20px;">📍 17th Floor, 252 Senator Gil J. Puyat Avenue, Makati City</p>
+      const userEmailHtml = getEmailHeader() + `
+        <h2 style="color: #1a1a2e; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; margin: 0 0 8px 0;">Dear ${req.body.name},</h2>
+        <p style="color: #555555; line-height: 1.6; font-size: 14px;">Thank you for reaching out to GLRA Realty. We have received your inquiry and our team will respond within 24 hours.</p>
+        
+        <div style="background-color: #f9f9f5; border-left: 3px solid #c5a059; padding: 18px 20px; margin: 25px 0; border-radius: 4px;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a2e;">Your Message:</p>
+          <p style="margin: 0; color: #555555; font-size: 14px; line-height: 1.5;">${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          ${req.body.propertyTitle ? `<p style="margin: 12px 0 0 0; color: #555555; font-size: 13px;"><strong>Property of Interest:</strong> ${req.body.propertyTitle}</p>` : ''}
         </div>
-      `;
+        
+        <p style="color: #555555; line-height: 1.6; font-size: 14px;">We look forward to assisting you with your real estate needs.</p>
+        
+        <p style="color: #555555; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+      ` + getEmailFooter();
       await sendEmail(req.body.email, 'Thank you for contacting GLRA Realty', userEmailHtml);
     }
     
     // Send notification to admin
-    const adminEmailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <h2 style="color: #f97316;">New Inquiry Received!</h2>
-        <p><strong>Name:</strong> ${req.body.name}</p>
-        <p><strong>Email:</strong> ${req.body.email}</p>
-        <p><strong>Phone:</strong> ${req.body.phone || 'Not provided'}</p>
-        <p><strong>Message:</strong> ${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
-        ${req.body.propertyTitle ? `<p><strong>Property:</strong> ${req.body.propertyTitle}</p>` : ''}
-        <hr>
-        <p><a href="https://glrarealty.com/admin.html" style="background: #f97316; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Admin</a></p>
-      </div>
-    `;
+    const adminEmailHtml = getEmailHeader() + `
+      <h2 style="color: #c5a059; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 20px; margin: 0 0 15px 0;">New Inquiry Received</h2>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${req.body.name}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Email</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${req.body.email}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Phone</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${req.body.phone || 'Not provided'}</td></tr>
+        ${req.body.propertyTitle ? `<tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${req.body.propertyTitle}</td></tr>` : ''}
+        <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Message</td><td style="padding: 8px 0;">${req.body.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td></tr>
+      </table>
+      
+      <p><a href="https://glrarealty.com/admin.html" style="background-color: #c5a059; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View in Admin Dashboard</a></p>
+    ` + getEmailFooter();
     await sendEmail('glrarealty@gmail.com', 'New Property Inquiry - GLRA Realty', adminEmailHtml);
     
     res.json({ success: true });
@@ -321,26 +357,37 @@ app.post('/api/subscribe', async (req, res) => {
       });
       isNew = true;
       
-      // Send welcome email for new subscribers
+      // Send welcome email for new subscribers (not from calculator print)
       if (source !== 'calculator_print') {
-        const welcomeHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #f97316;">GLRA Realty</h1>
-            </div>
-            <h2>Welcome to GLRA Realty, ${name || 'Valued Customer'}!</h2>
-            <p>Thank you for subscribing to our newsletter. You'll receive updates on:</p>
-            <ul>
-              <li>New property listings</li>
-              <li>Price drop alerts on properties you're interested in</li>
-              <li>Real estate tips and guides</li>
-              <li>Market updates</li>
-            </ul>
-            <p>Best regards,<br><strong>GLRA Realty Team</strong></p>
+        const welcomeHtml = getEmailHeader() + `
+          <h2 style="color: #1a1a2e; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; margin: 0 0 8px 0;">Welcome to GLRA Realty</h2>
+          <p style="color: #555555; line-height: 1.6; font-size: 14px;">Dear ${name || 'Valued Subscriber'},</p>
+          <p style="color: #555555; line-height: 1.6; font-size: 14px;">Thank you for subscribing to our newsletter. You will now receive updates on new property listings, price drops, and real estate market insights.</p>
+          
+          <div style="background-color: #f9f9f5; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+            <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a2e;">What to expect:</p>
+            <p style="margin: 0; color: #555555; font-size: 13px;">New property listings • Price drop alerts • Real estate guides • Market updates</p>
           </div>
-        `;
-        await sendEmail(email, 'Welcome to GLRA Realty!', welcomeHtml);
+          
+          <p style="color: #555555; line-height: 1.6; font-size: 14px;">We're honored to be part of your real estate journey.</p>
+          <p style="color: #555555; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+        ` + getEmailFooter();
+        await sendEmail(email, 'Welcome to GLRA Realty', welcomeHtml);
       }
+    }
+    
+    // Send admin notification for new subscribers
+    if (isNew) {
+      const adminSubHtml = getEmailHeader() + `
+        <h2 style="color: #c5a059; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 20px; margin: 0 0 15px 0;">New Subscriber</h2>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+          <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Email</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${email}</td></tr>
+          <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${name || 'Not provided'}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: 600;">Source</td><td style="padding: 8px 0;">${source || 'footer'}</td></tr>
+        </table>
+        <p><a href="https://glrarealty.com/admin.html" style="background-color: #c5a059; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View All Subscribers</a></p>
+      ` + getEmailFooter();
+      await sendEmail('glrarealty@gmail.com', 'New Subscriber - GLRA Realty', adminSubHtml);
     }
     
     console.log(`📧 ${isNew ? 'New' : 'Updated'} subscriber:`, email);
@@ -395,27 +442,37 @@ app.post('/api/wishlist', async (req, res) => {
       await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
     }
     
-    // Send confirmation email
-    const wishlistEmailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #f97316;">GLRA Realty</h1>
-        </div>
-        <h2>❤️ Property Saved to Your Wishlist!</h2>
-        <p>You have successfully saved the following property to your wishlist:</p>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>${propertyTitle}</strong></p>
-          <p>📍 ${propertyLocation}</p>
-          <p>💰 ₱${propertyPrice.toLocaleString()}</p>
-        </div>
-        <p>You can view all your saved properties anytime.</p>
-        <a href="https://glrarealty.com/properties.html" style="background: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Browse More Properties</a>
-        <p style="margin-top: 20px;">Best regards,<br><strong>GLRA Realty Team</strong></p>
+    // Send confirmation email to user
+    const userWishlistHtml = getEmailHeader() + `
+      <h2 style="color: #1a1a2e; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; margin: 0 0 8px 0;">Property Saved to Wishlist</h2>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">Dear Valued Client,</p>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">You have successfully saved the following property to your wishlist:</p>
+      
+      <div style="background-color: #f9f9f5; border-left: 3px solid #c5a059; padding: 18px 20px; margin: 25px 0; border-radius: 4px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a2e;">${propertyTitle}</p>
+        <p style="margin: 0 0 5px 0; color: #555555; font-size: 13px;">📍 ${propertyLocation}</p>
+        <p style="margin: 0; color: #c5a059; font-weight: 600; font-size: 16px;">₱${propertyPrice.toLocaleString()}</p>
       </div>
-    `;
-    await sendEmail(email, `❤️ Saved to Wishlist: ${propertyTitle}`, wishlistEmailHtml);
+      
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">You can view all your saved properties in the <a href="https://glrarealty.com/properties.html" style="color: #c5a059;">properties page</a>.</p>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+    ` + getEmailFooter();
+    await sendEmail(email, `Saved to Wishlist: ${propertyTitle}`, userWishlistHtml);
     
-    console.log(`❤️ ${email} saved ${propertyTitle} to wishlist`);
+    // Send admin notification
+    const adminWishlistHtml = getEmailHeader() + `
+      <h2 style="color: #c5a059; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 20px; margin: 0 0 15px 0;">New Wishlist Item</h2>
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Customer</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${email}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${propertyTitle}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Location</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${propertyLocation}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600;">Price</td><td style="padding: 8px 0;">₱${propertyPrice.toLocaleString()}</td></tr>
+      </table>
+      <p><a href="https://glrarealty.com/admin.html" style="background-color: #c5a059; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View in Admin Dashboard</a></p>
+    ` + getEmailFooter();
+    await sendEmail('glrarealty@gmail.com', `Wishlist Alert: ${propertyTitle}`, adminWishlistHtml);
+    
+    console.log(`📋 ${email} saved ${propertyTitle} to wishlist`);
     res.json({ success: true, message: 'Property saved to wishlist!' });
   } catch (err) {
     console.error('Wishlist error:', err);
@@ -475,23 +532,33 @@ app.post('/api/price-alert', async (req, res) => {
       await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
     }
     
-    // Send confirmation email
-    const confirmationHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #f97316;">GLRA Realty</h1>
-        </div>
-        <h2>🔔 Price Drop Alert Set!</h2>
-        <p>You will be notified when the price drops for:</p>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>${propertyTitle}</strong></p>
-          <p>💰 Current Price: ₱${propertyPrice.toLocaleString()}</p>
-        </div>
-        <p>We'll email you immediately when the price changes.</p>
-        <p>Best regards,<br><strong>GLRA Realty Team</strong></p>
+    // Send confirmation email to user
+    const userAlertHtml = getEmailHeader() + `
+      <h2 style="color: #1a1a2e; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; margin: 0 0 8px 0;">Price Alert Confirmation</h2>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">Dear Valued Client,</p>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">You have successfully set a price alert for the following property:</p>
+      
+      <div style="background-color: #f9f9f5; border-left: 3px solid #c5a059; padding: 18px 20px; margin: 25px 0; border-radius: 4px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a2e;">${propertyTitle}</p>
+        <p style="margin: 0; color: #c5a059; font-weight: 600; font-size: 16px;">Current Price: ₱${propertyPrice.toLocaleString()}</p>
       </div>
-    `;
-    await sendEmail(email, `🔔 Price Alert Set for ${propertyTitle}`, confirmationHtml);
+      
+      <p style="color: #555555; line-height: 1.6; font-size: 14px;">You will receive an email notification immediately if the price drops.</p>
+      <p style="color: #555555; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+    ` + getEmailFooter();
+    await sendEmail(email, `Price Alert Set: ${propertyTitle}`, userAlertHtml);
+    
+    // Send admin notification
+    const adminAlertHtml = getEmailHeader() + `
+      <h2 style="color: #c5a059; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 20px; margin: 0 0 15px 0;">New Price Alert Request</h2>
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Customer</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${email}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${propertyTitle}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600;">Current Price</td><td style="padding: 8px 0;">₱${propertyPrice.toLocaleString()}</td></tr>
+      </table>
+      <p><a href="https://glrarealty.com/admin.html" style="background-color: #c5a059; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View in Admin Dashboard</a></p>
+    ` + getEmailFooter();
+    await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
     
     console.log(`🔔 Price alert set for ${email} on ${propertyTitle}`);
     res.json({ success: true, message: 'You will be notified when price drops!' });
@@ -633,25 +700,23 @@ app.put('/api/admin/properties/:id', async (req, res) => {
       if (alerts.length > 0) {
         // Send email to each user
         for (const alert of alerts) {
-          const priceDropHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #f97316;">GLRA Realty</h1>
-              </div>
-              <h2 style="color: #10b981;">💰 Price Drop Alert!</h2>
-              <p>Great news! The price has dropped for a property you're watching:</p>
-              <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>${oldProperty.title}</strong></p>
-                <p>📍 ${oldProperty.location}</p>
-                <p><span style="text-decoration: line-through; color: #888;">Old Price: ₱${oldProperty.price.toLocaleString()}</span></p>
-                <p><strong style="color: #10b981;">New Price: ₱${updatedData.price.toLocaleString()}</strong></p>
-                <p>💵 Savings: ₱${(oldProperty.price - updatedData.price).toLocaleString()}</p>
-              </div>
-              <a href="https://glrarealty.com/properties.html?property=${req.params.id}" style="background: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">View Property</a>
-              <p style="margin-top: 20px;">Best regards,<br><strong>GLRA Realty Team</strong></p>
+          const priceDropHtml = getEmailHeader() + `
+            <h2 style="color: #1a1a2e; font-family: Georgia, 'Times New Roman', Times, serif; font-size: 22px; margin: 0 0 8px 0;">Price Drop Alert</h2>
+            <p style="color: #555555; line-height: 1.6; font-size: 14px;">Dear Valued Client,</p>
+            <p style="color: #555555; line-height: 1.6; font-size: 14px;">Good news! The price has dropped for a property you are watching:</p>
+            
+            <div style="background-color: #f9f9f5; border-left: 3px solid #c5a059; padding: 18px 20px; margin: 25px 0; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a2e;">${oldProperty.title}</p>
+              <p style="margin: 0 0 5px 0; color: #555555; font-size: 13px;">📍 ${oldProperty.location}</p>
+              <p style="margin: 0 0 5px 0; color: #888888; font-size: 14px; text-decoration: line-through;">Previous Price: ₱${oldProperty.price.toLocaleString()}</p>
+              <p style="margin: 0; color: #10b981; font-weight: 700; font-size: 18px;">New Price: ₱${updatedData.price.toLocaleString()}</p>
+              <p style="margin: 10px 0 0 0; color: #555555; font-size: 13px;">Savings: ₱${(oldProperty.price - updatedData.price).toLocaleString()}</p>
             </div>
-          `;
-          await sendEmail(alert.email, `💰 Price Drop: ${oldProperty.title}`, priceDropHtml);
+            
+            <p><a href="https://glrarealty.com/properties.html?property=${req.params.id}" style="background-color: #c5a059; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View Property Details</a></p>
+            <p style="color: #555555; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+          ` + getEmailFooter();
+          await sendEmail(alert.email, `Price Drop Alert: ${oldProperty.title}`, priceDropHtml);
           
           // Mark alert as notified
           alert.isNotified = true;
