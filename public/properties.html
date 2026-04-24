@@ -68,7 +68,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar - Minimal */
+/* Custom Scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--orange) transparent;
@@ -113,14 +113,20 @@ body.dark-mode .navbar.scrolled {
   background: #1a1a2a;
 }
 
-/* Navbar text colors - WHITE at top, normal when scrolled */
+/* Navbar text colors - WHITE at top */
+.nav-links {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
 .nav-links a {
   text-decoration: none;
   color: #ffffff !important;
   font-weight: 500;
   transition: var(--transition);
   font-size: 14px;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   cursor: pointer;
 }
 
@@ -170,12 +176,11 @@ body.dark-mode .navbar.scrolled {
   height: 56px; 
   width: auto; 
   display: block;
-  transition: var(--transition);
 }
 
-/* In dark mode when scrolled, use the white logo */
+/* In dark mode when scrolled, use white logo */
 body.dark-mode .navbar.scrolled .logo img {
-  content: url('/hero-logo.png');
+  filter: brightness(0) invert(1);
 }
 
 .mobile-menu-btn {
@@ -401,7 +406,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - WITH CUSTOM DROPDOWNS */
+/* Advanced Filters */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -522,7 +527,7 @@ body.dark-mode .dropdown-menu {
   color: white;
 }
 
-/* Price Range - with commas while typing */
+/* Price Range - with commas */
 .price-range-wrapper {
   display: flex;
   gap: 10px;
@@ -827,7 +832,7 @@ body.dark-mode .reset-filters-btn:hover {
   color: var(--orange);
 }
 
-/* Modal (abbreviated for length - keeping existing modal code) */
+/* Modal (abbreviated for length) */
 #modal {
   position: fixed;
   top: 0;
@@ -1742,6 +1747,7 @@ function getRawPriceValue(inputId) {
 
 // ============ DROPDOWN FUNCTIONS ============
 function toggleDropdown(dropdownId) {
+  // Close all other dropdowns first
   document.querySelectorAll('.dropdown-menu').forEach(menu => {
     if (menu.id !== dropdownId + 'Menu') {
       menu.classList.remove('show');
@@ -1758,7 +1764,7 @@ function toggleDropdown(dropdownId) {
   
   if (menu) {
     menu.classList.toggle('show');
-    trigger.classList.toggle('open');
+    if (trigger) trigger.classList.toggle('open');
   }
 }
 
@@ -1855,6 +1861,7 @@ document.addEventListener('keydown', function(e) {
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
     document.getElementById('searchSuggestions').style.display = 'none';
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
 
