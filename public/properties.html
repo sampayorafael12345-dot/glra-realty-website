@@ -68,7 +68,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar - Minimal */
+/* Custom Scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--orange) transparent;
@@ -113,7 +113,36 @@ body.dark-mode .navbar.scrolled {
   background: #1a1a2a;
 }
 
-/* Navbar text colors - WHITE at top, normal when scrolled */
+.logo {
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.navbar.scrolled .logo {
+  opacity: 1;
+  visibility: visible;
+}
+
+.logo img { 
+  height: 56px; 
+  width: auto; 
+  display: block;
+  transition: var(--transition);
+}
+
+/* Logo color change in dark mode */
+body.dark-mode .logo img {
+  filter: brightness(0) invert(1);
+}
+
+.nav-links {
+  display: flex;
+  gap: 35px;
+  align-items: center;
+}
+
 .nav-links a {
   text-decoration: none;
   color: #ffffff !important;
@@ -152,24 +181,6 @@ body.dark-mode .navbar.scrolled {
 .contact-btn-nav:hover { 
   background: var(--orange); 
   color: #ffffff !important; 
-}
-
-.logo {
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
-  cursor: pointer;
-}
-
-.navbar.scrolled .logo {
-  opacity: 1;
-  visibility: visible;
-}
-
-.logo img { 
-  height: 56px; 
-  width: auto; 
-  display: block;
 }
 
 .mobile-menu-btn {
@@ -274,6 +285,7 @@ body.dark-mode .page-hero {
   gap: 15px;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .search-field-wrapper {
@@ -340,8 +352,13 @@ body.dark-mode .search-suggestions {
 }
 
 .search-suggestions div:hover {
-  background: var(--orange-light);
-  color: var(--orange);
+  background: var(--orange);
+  color: white;
+}
+
+body.dark-mode .search-suggestions div:hover {
+  background: var(--orange);
+  color: white;
 }
 
 .search-suggestions div:last-child {
@@ -394,7 +411,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - WITH VISIBLE BORDERS */
+/* Advanced Filters - Custom Dropdowns */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -420,6 +437,7 @@ body.dark-mode .search-suggestions {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 }
 
 .filter-group label {
@@ -430,52 +448,178 @@ body.dark-mode .search-suggestions {
   letter-spacing: 0.5px;
 }
 
-.filter-group select,
-.filter-group input {
+/* Custom Dropdown Styling */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-trigger {
+  width: 100%;
   padding: 12px 14px;
+  background: var(--white);
   border: 2px solid var(--border-color);
   border-radius: 12px;
   font-size: 13px;
   font-family: 'Inter', sans-serif;
-  background: var(--white);
   color: var(--text-color);
   cursor: pointer;
-  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   transition: var(--transition);
 }
 
-.filter-group select:focus,
-.filter-group input:focus {
-  outline: none;
+body.dark-mode .dropdown-trigger {
+  background: #2a2a3a;
+  color: #e0e0e0;
+}
+
+.dropdown-trigger:hover {
   border-color: var(--orange);
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
 }
 
-.filter-group select:hover,
-.filter-group input:hover {
-  border-color: var(--border-dark);
+.dropdown-trigger i {
+  color: var(--orange);
+  font-size: 12px;
+  transition: transform 0.3s;
 }
 
-/* Dropdown options styling */
-.filter-group select option {
-  padding: 10px;
+.dropdown-trigger.open i {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  margin-top: 5px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  box-shadow: var(--shadow-md);
+}
+
+body.dark-mode .dropdown-menu {
+  background: #2a2a3a;
+  border-color: #4a4a5a;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: var(--transition);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: var(--orange);
+  color: white;
+}
+
+body.dark-mode .dropdown-item:hover {
+  background: var(--orange);
+  color: white;
+}
+
+/* Price Range with Sliders */
+.price-range-container {
+  background: var(--white);
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+}
+
+body.dark-mode .price-range-container {
+  background: #2a2a3a;
+}
+
+.price-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 12px;
+}
+
+.price-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.price-slider-group label {
+  font-size: 10px;
+  color: var(--gray);
+  text-transform: none;
+}
+
+.price-slider-group input[type="range"] {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border-color);
+  border-radius: 2px;
+  outline: none;
+  padding: 0;
+}
+
+.price-slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.price-slider-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.price-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--orange);
+  margin-top: 5px;
+}
+
+.price-inputs {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.price-inputs input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 12px;
   background: var(--white);
   color: var(--text-color);
 }
 
-body.dark-mode .filter-group select option {
-  background: #252535;
-  color: #e0e0e0;
-}
-
-.price-range-group {
-  display: flex;
-  gap: 10px;
-}
-
-.price-range-group input {
-  flex: 1;
-  min-width: 0;
+body.dark-mode .price-inputs input {
+  background: #1a1a2a;
+  border-color: #4a4a5a;
 }
 
 .reset-filters-btn {
@@ -497,7 +641,6 @@ body.dark-mode .filter-group select option {
   background: rgba(249, 115, 22, 0.1);
 }
 
-/* Dark mode specific fixes */
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
   border-color: #5a5a6a;
@@ -506,13 +649,6 @@ body.dark-mode .reset-filters-btn {
 body.dark-mode .reset-filters-btn:hover {
   color: var(--orange);
   border-color: var(--orange);
-}
-
-body.dark-mode .filter-group select,
-body.dark-mode .filter-group input {
-  background: #2a2a3a;
-  color: #e0e0e0;
-  border-color: #4a4a5a;
 }
 
 /* Category Tabs */
@@ -755,7 +891,7 @@ body.dark-mode .filter-group input {
   color: var(--orange);
 }
 
-/* Modal */
+/* Modal (abbreviated for length - same as before) */
 #modal {
   position: fixed;
   top: 0;
@@ -1368,7 +1504,6 @@ body.dark-mode .btn-darkmode {
   
   .filter-grid { flex-direction: column; }
   .filter-group { min-width: 100%; }
-  .price-range-group { gap: 8px; }
   
   .category-tabs { gap: 10px; }
   .tab-btn { padding: 8px 20px; font-size: 13px; }
@@ -1461,46 +1596,88 @@ body.dark-mode .btn-darkmode {
     
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
+        <!-- Property Type Dropdown -->
         <div class="filter-group">
           <label>PROPERTY TYPE</label>
-          <select id="propertyTypeSelect">
-            <option value="">All Types</option>
-            <option value="Condominium">Condominium</option>
-            <option value="House and Lot">House and Lot</option>
-            <option value="Townhouse">Townhouse</option>
-            <option value="Commercial Lot">Commercial Lot</option>
-            <option value="Residential Lot">Residential Lot</option>
-          </select>
+          <div class="custom-dropdown" id="propertyTypeDropdown">
+            <div class="dropdown-trigger" onclick="toggleDropdown('propertyTypeDropdown')">
+              <span id="selectedPropertyTypeText">All Types</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-menu" id="propertyTypeMenu">
+              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('propertyType', '', 'All Types')">All Types</div>
+              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdownValue('propertyType', 'Condominium', 'Condominium')">Condominium</div>
+              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdownValue('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
+              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdownValue('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
+              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdownValue('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
+              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdownValue('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
+            </div>
+          </div>
         </div>
         
+        <!-- Bedrooms Dropdown -->
         <div class="filter-group">
           <label>BEDROOMS</label>
-          <select id="bedroomsSelect">
-            <option value="">Any</option>
-            <option value="1">1+ Bedrooms</option>
-            <option value="2">2+ Bedrooms</option>
-            <option value="3">3+ Bedrooms</option>
-            <option value="4">4+ Bedrooms</option>
-            <option value="5">5+ Bedrooms</option>
-          </select>
+          <div class="custom-dropdown" id="bedroomsDropdown">
+            <div class="dropdown-trigger" onclick="toggleDropdown('bedroomsDropdown')">
+              <span id="selectedBedroomsText">Any</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-menu" id="bedroomsMenu">
+              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('bedrooms', '', 'Any')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
+              <div class="dropdown-item" data-value="5" onclick="selectDropdownValue('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
+            </div>
+          </div>
         </div>
         
+        <!-- Bathrooms Dropdown -->
         <div class="filter-group">
           <label>BATHROOMS</label>
-          <select id="bathsSelect">
-            <option value="">Any</option>
-            <option value="1">1+ Bathrooms</option>
-            <option value="2">2+ Bathrooms</option>
-            <option value="3">3+ Bathrooms</option>
-            <option value="4">4+ Bathrooms</option>
-          </select>
+          <div class="custom-dropdown" id="bathsDropdown">
+            <div class="dropdown-trigger" onclick="toggleDropdown('bathsDropdown')">
+              <span id="selectedBathsText">Any</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-menu" id="bathsMenu">
+              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('baths', '', 'Any')">Any</div>
+              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
+              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
+              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
+              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
+            </div>
+          </div>
         </div>
         
+        <!-- Price Range with Sliders -->
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
-          <div class="price-range-group">
-            <input type="number" id="minPriceInput" placeholder="Min Price">
-            <input type="number" id="maxPriceInput" placeholder="Max Price">
+          <div class="price-range-container">
+            <div class="price-sliders">
+              <div class="price-slider-group">
+                <label>Min Price</label>
+                <input type="range" id="minPriceSlider" min="0" max="50000000" step="500000" value="0" oninput="updateMinPrice(this.value)">
+                <div class="price-values">
+                  <span>₱0</span>
+                  <span id="minPriceDisplay">₱0</span>
+                </div>
+              </div>
+              <div class="price-slider-group">
+                <label>Max Price</label>
+                <input type="range" id="maxPriceSlider" min="0" max="50000000" step="500000" value="50000000" oninput="updateMaxPrice(this.value)">
+                <div class="price-values">
+                  <span id="maxPriceDisplay">₱50M</span>
+                  <span>₱50M+</span>
+                </div>
+              </div>
+            </div>
+            <div class="price-inputs">
+              <input type="number" id="minPriceInput" placeholder="Min" value="0" oninput="updateMinPriceFromInput(this.value)">
+              <input type="number" id="maxPriceInput" placeholder="Max" value="50000000" oninput="updateMaxPriceFromInput(this.value)">
+            </div>
           </div>
         </div>
       </div>
@@ -1617,9 +1794,136 @@ body.dark-mode .btn-darkmode {
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
 <script>
+// ============ SELECTED VALUES ============
+let selectedPropertyType = '';
+let selectedBedrooms = '';
+let selectedBaths = '';
+let minPrice = 0;
+let maxPrice = 50000000;
+
 // ============ GO HOME FUNCTION ============
 function goHome() {
   window.location.href = '/';
+}
+
+// ============ DROPDOWN FUNCTIONS ============
+function toggleDropdown(dropdownId) {
+  // Close all other dropdowns first
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    if (menu.id !== dropdownId + 'Menu') {
+      menu.classList.remove('show');
+    }
+  });
+  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+    if (trigger.parentElement.id !== dropdownId) {
+      trigger.classList.remove('open');
+    }
+  });
+  
+  const menu = document.getElementById(dropdownId + 'Menu');
+  const trigger = document.querySelector(`#${dropdownId} .dropdown-trigger`);
+  
+  menu.classList.toggle('show');
+  trigger.classList.toggle('open');
+}
+
+function selectDropdownValue(type, value, displayText) {
+  if (type === 'propertyType') {
+    selectedPropertyType = value;
+    document.getElementById('selectedPropertyTypeText').innerText = displayText;
+    const menu = document.getElementById('propertyTypeMenu');
+    const trigger = document.querySelector('#propertyTypeDropdown .dropdown-trigger');
+    menu.classList.remove('show');
+    trigger.classList.remove('open');
+  } else if (type === 'bedrooms') {
+    selectedBedrooms = value;
+    document.getElementById('selectedBedroomsText').innerText = displayText;
+    const menu = document.getElementById('bedroomsMenu');
+    const trigger = document.querySelector('#bedroomsDropdown .dropdown-trigger');
+    menu.classList.remove('show');
+    trigger.classList.remove('open');
+  } else if (type === 'baths') {
+    selectedBaths = value;
+    document.getElementById('selectedBathsText').innerText = displayText;
+    const menu = document.getElementById('bathsMenu');
+    const trigger = document.querySelector('#bathsDropdown .dropdown-trigger');
+    menu.classList.remove('show');
+    trigger.classList.remove('open');
+  }
+  
+  // Apply filters after selection
+  if (typeof cachedProperties !== 'undefined') {
+    const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
+    applyFilters(currentCategory, cachedProperties);
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.custom-dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+    });
+    document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+      trigger.classList.remove('open');
+    });
+  }
+  if (!e.target.closest('.search-field-wrapper')) {
+    document.getElementById('searchSuggestions').style.display = 'none';
+  }
+});
+
+// ============ PRICE RANGE FUNCTIONS ============
+function updateMinPrice(value) {
+  minPrice = parseInt(value);
+  document.getElementById('minPriceSlider').value = value;
+  document.getElementById('minPriceInput').value = value;
+  document.getElementById('minPriceDisplay').innerText = '₱' + (value / 1000000).toFixed(0) + 'M';
+  
+  if (minPrice > maxPrice) {
+    maxPrice = minPrice;
+    document.getElementById('maxPriceSlider').value = maxPrice;
+    document.getElementById('maxPriceInput').value = maxPrice;
+    document.getElementById('maxPriceDisplay').innerText = '₱' + (maxPrice / 1000000).toFixed(0) + 'M';
+  }
+  
+  const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
+  if (typeof cachedProperties !== 'undefined') {
+    applyFilters(currentCategory, cachedProperties);
+  }
+}
+
+function updateMaxPrice(value) {
+  maxPrice = parseInt(value);
+  document.getElementById('maxPriceSlider').value = value;
+  document.getElementById('maxPriceInput').value = value;
+  document.getElementById('maxPriceDisplay').innerText = '₱' + (value / 1000000).toFixed(0) + 'M';
+  
+  if (maxPrice < minPrice) {
+    minPrice = maxPrice;
+    document.getElementById('minPriceSlider').value = minPrice;
+    document.getElementById('minPriceInput').value = minPrice;
+    document.getElementById('minPriceDisplay').innerText = '₱' + (minPrice / 1000000).toFixed(0) + 'M';
+  }
+  
+  const currentCategory = document.querySelector('.tab-btn.active')?.dataset.category || 'all';
+  if (typeof cachedProperties !== 'undefined') {
+    applyFilters(currentCategory, cachedProperties);
+  }
+}
+
+function updateMinPriceFromInput(value) {
+  minPrice = parseInt(value) || 0;
+  document.getElementById('minPriceSlider').value = minPrice;
+  document.getElementById('minPriceDisplay').innerText = '₱' + (minPrice / 1000000).toFixed(0) + 'M';
+  updateMinPrice(minPrice);
+}
+
+function updateMaxPriceFromInput(value) {
+  maxPrice = parseInt(value) || 50000000;
+  document.getElementById('maxPriceSlider').value = maxPrice;
+  document.getElementById('maxPriceDisplay').innerText = '₱' + (maxPrice / 1000000).toFixed(0) + 'M';
+  updateMaxPrice(maxPrice);
 }
 
 // ============ SEARCH SUGGESTIONS ============
@@ -1662,13 +1966,6 @@ function selectSuggestion(title) {
   performSearch();
 }
 
-// Close suggestions when clicking outside
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.search-field-wrapper')) {
-    document.getElementById('searchSuggestions').style.display = 'none';
-  }
-});
-
 // ============ ESC KEY TO CLOSE MODALS ============
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
@@ -1687,12 +1984,8 @@ function toggleDarkMode() {
   const btn = document.getElementById('floatingDarkModeToggle');
   if (isDarkMode) {
     btn.innerHTML = '<i class="fas fa-sun"></i>';
-    btn.style.background = '#2a2a3a';
-    btn.style.color = '#f97316';
   } else {
     btn.innerHTML = '<i class="fas fa-moon"></i>';
-    btn.style.background = '#1e1e2e';
-    btn.style.color = 'white';
   }
 }
 
@@ -1720,6 +2013,8 @@ function escapeHtml(str) {
 }
 
 // ============ SEARCH FUNCTIONS ============
+let advancedFiltersVisible = true;
+
 function toggleAdvancedFilter() {
   const filters = document.getElementById('advancedFilters');
   const btn = document.getElementById('advancedFilterBtn');
@@ -1743,21 +2038,16 @@ function getUrlParameter(name) {
 
 function performSearch() {
   const searchTerm = document.getElementById('locationInput').value.trim();
-  const propertyType = document.getElementById('propertyTypeSelect').value;
-  const bedrooms = document.getElementById('bedroomsSelect').value;
-  const baths = document.getElementById('bathsSelect').value;
-  const minPrice = document.getElementById('minPriceInput').value;
-  const maxPrice = document.getElementById('maxPriceInput').value;
   
   let url = '/properties.html?';
   const params = [];
   
   if (searchTerm) params.push(`search=${encodeURIComponent(searchTerm)}`);
-  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
-  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
-  if (baths) params.push(`baths=${baths}`);
-  if (minPrice) params.push(`minPrice=${minPrice}`);
-  if (maxPrice) params.push(`maxPrice=${maxPrice}`);
+  if (selectedPropertyType) params.push(`propertyType=${encodeURIComponent(selectedPropertyType)}`);
+  if (selectedBedrooms) params.push(`bedrooms=${selectedBedrooms}`);
+  if (selectedBaths) params.push(`baths=${selectedBaths}`);
+  if (minPrice > 0) params.push(`minPrice=${minPrice}`);
+  if (maxPrice < 50000000) params.push(`maxPrice=${maxPrice}`);
   
   window.location.href = url + params.join('&');
 }
@@ -1918,6 +2208,7 @@ function shareProperty(platform, property) {
 let allProperties = [];
 let galleryImages = [];
 let currentProperty = null;
+let cachedProperties = null;
 
 function isForLease(prop) {
   const type = (prop.listingType || '').toUpperCase();
@@ -1932,8 +2223,6 @@ function getDisplayPrice(prop) {
     return '₱' + Number(prop.price || 0).toLocaleString();
   }
 }
-
-let cachedProperties = null;
 
 async function loadProperties() {
   if (cachedProperties) {
@@ -1974,30 +2263,40 @@ function applyCategoryFilter(properties) {
   document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
   
   if (searchParam) document.getElementById('locationInput').value = searchParam;
-  if (propertyTypeParam) document.getElementById('propertyTypeSelect').value = propertyTypeParam;
-  if (bedroomsParam) document.getElementById('bedroomsSelect').value = bedroomsParam;
-  if (bathsParam) document.getElementById('bathsSelect').value = bathsParam;
-  if (minPriceParam) document.getElementById('minPriceInput').value = minPriceParam;
-  if (maxPriceParam) document.getElementById('maxPriceInput').value = maxPriceParam;
+  if (propertyTypeParam) {
+    selectedPropertyType = propertyTypeParam;
+    document.getElementById('selectedPropertyTypeText').innerText = propertyTypeParam;
+  }
+  if (bedroomsParam) {
+    selectedBedrooms = bedroomsParam;
+    document.getElementById('selectedBedroomsText').innerText = bedroomsParam + '+ Bedrooms';
+  }
+  if (bathsParam) {
+    selectedBaths = bathsParam;
+    document.getElementById('selectedBathsText').innerText = bathsParam + '+ Bathrooms';
+  }
+  if (minPriceParam) {
+    minPrice = parseInt(minPriceParam);
+    updateMinPrice(minPrice);
+  }
+  if (maxPriceParam) {
+    maxPrice = parseInt(maxPriceParam);
+    updateMaxPrice(maxPrice);
+  }
   
   applyFilters(currentCategory, properties);
 }
 
 function applyFilters(currentCategory, properties) {
   const location = document.getElementById('locationInput').value.toLowerCase().trim();
-  const propertyType = document.getElementById('propertyTypeSelect').value;
-  const bedrooms = document.getElementById('bedroomsSelect').value;
-  const baths = document.getElementById('bathsSelect').value;
-  const minPrice = parseFloat(document.getElementById('minPriceInput').value) || 0;
-  const maxPrice = parseFloat(document.getElementById('maxPriceInput').value) || 500000000;
   
   let filtered = [...properties];
   
   filtered = filtered.filter(prop => {
     if (location && !prop.title.toLowerCase().includes(location) && !prop.location.toLowerCase().includes(location)) return false;
-    if (propertyType && prop.propertyType !== propertyType) return false;
-    if (bedrooms && prop.bedrooms < parseInt(bedrooms)) return false;
-    if (baths && prop.bathrooms < parseInt(baths)) return false;
+    if (selectedPropertyType && prop.propertyType !== selectedPropertyType) return false;
+    if (selectedBedrooms && prop.bedrooms < parseInt(selectedBedrooms)) return false;
+    if (selectedBaths && prop.bathrooms < parseInt(selectedBaths)) return false;
     let priceToCheck = 0;
     if (isForLease(prop)) priceToCheck = prop.monthlyRental || prop.price || 0;
     else priceToCheck = prop.price || 0;
