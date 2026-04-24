@@ -39,6 +39,9 @@
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
   --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
   --transition: all 0.3s ease;
+  --success: #10b981;
+  --danger: #ef4444;
+  --info: #3b82f6;
 }
 
 body.dark-mode {
@@ -50,6 +53,7 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #3a3a4a;
   --text-color: #e0e0e0;
+  --orange-light: #2a1a0a;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -63,17 +67,23 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Hidden but functional */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--orange);
   border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--orange-dark);
 }
 
 /* Navigation */
@@ -121,13 +131,13 @@ body.dark-mode .navbar.scrolled {
 
 .nav-links {
   display: flex;
-  gap: 35px;
+  gap: 30px;
   align-items: center;
 }
 
 .nav-links a {
   text-decoration: none;
-  color: #ffffff !important;
+  color: var(--white);
   font-weight: 500;
   transition: var(--transition);
   font-size: 14px;
@@ -135,16 +145,17 @@ body.dark-mode .navbar.scrolled {
   cursor: pointer;
 }
 
-.navbar.scrolled .nav-links a {
-  color: var(--text-color) !important;
-}
-
-.nav-links a:hover { color: var(--orange) !important; }
+.navbar.scrolled .nav-links a { color: var(--text-color); }
+.nav-links a:hover { color: var(--orange); }
 
 .nav-links a.active {
-  color: var(--orange) !important;
+  color: var(--orange);
   border-bottom: 2px solid var(--orange);
   padding-bottom: 4px;
+}
+
+.navbar.scrolled .nav-links a.active {
+  color: var(--orange);
 }
 
 .contact-btn-nav {
@@ -152,24 +163,17 @@ body.dark-mode .navbar.scrolled {
   border: 2px solid var(--orange);
   padding: 8px 20px;
   border-radius: 40px;
-  color: #ffffff !important;
+  color: var(--white) !important;
 }
 
-.navbar.scrolled .contact-btn-nav { 
-  color: var(--orange) !important; 
-  border-color: var(--orange);
-}
-
-.contact-btn-nav:hover { 
-  background: var(--orange); 
-  color: #ffffff !important; 
-}
+.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
+.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
 
 .mobile-menu-btn {
   display: none;
   font-size: 24px;
   cursor: pointer;
-  color: #ffffff;
+  color: var(--white);
   z-index: 1001;
 }
 
@@ -214,6 +218,10 @@ body.dark-mode .navbar.scrolled {
   font-weight: 500;
   font-family: 'Playfair Display', serif;
   cursor: pointer;
+}
+
+.mobile-overlay-links a.active {
+  color: var(--orange);
 }
 
 /* Page Hero */
@@ -303,45 +311,6 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
 }
 
-/* Search Suggestions */
-.search-suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--white);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 100;
-  display: none;
-  margin-top: 8px;
-  border: 2px solid var(--border-color);
-}
-
-body.dark-mode .search-suggestions {
-  background: #252535;
-}
-
-.search-suggestions div {
-  padding: 12px 16px;
-  cursor: pointer;
-  font-size: 13px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-  transition: var(--transition);
-}
-
-.search-suggestions div:hover {
-  background: var(--orange);
-  color: white;
-}
-
-.search-suggestions div:last-child {
-  border-bottom: none;
-}
-
 .search-btn-main {
   background: var(--orange);
   color: white;
@@ -388,7 +357,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters */
+/* Advanced Filters - Custom Dropdowns */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -509,7 +478,7 @@ body.dark-mode .dropdown-menu {
   color: white;
 }
 
-/* Price Range - Simple with commas */
+/* Price Range - Simple with commas (like index) */
 .price-range-wrapper {
   display: flex;
   gap: 10px;
@@ -1502,8 +1471,7 @@ body.dark-mode .btn-darkmode {
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="showSuggestions(this.value)">
-        <div class="search-suggestions" id="searchSuggestions"></div>
+        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off">
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search Properties</button>
       <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
@@ -1695,17 +1663,15 @@ body.dark-mode .btn-darkmode {
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
 <script>
-// ============ SELECTED VALUES ============
-let selectedPropertyType = '';
-let selectedBedrooms = '';
-let selectedBaths = '';
-let minPrice = 0;
-let maxPrice = 50000000;
-
 // ============ GO HOME FUNCTION ============
 function goHome() {
   window.location.href = '/';
 }
+
+// ============ SELECTED VALUES ============
+let selectedPropertyType = '';
+let selectedBedrooms = '';
+let selectedBaths = '';
 
 // ============ PRICE FORMAT WITH COMMAS ============
 function formatPriceInput(input) {
@@ -1786,50 +1752,7 @@ document.addEventListener('click', function(e) {
       trigger.classList.remove('open');
     });
   }
-  if (!e.target.closest('.search-field-wrapper')) {
-    document.getElementById('searchSuggestions').style.display = 'none';
-  }
 });
-
-// ============ SEARCH SUGGESTIONS ============
-let allPropertyTitles = [];
-
-async function loadPropertyTitles() {
-  try {
-    const response = await fetch('/api/properties');
-    const properties = await response.json();
-    allPropertyTitles = properties.filter(p => p.status === 'available').map(p => p.title);
-  } catch (error) {
-    console.error('Error loading property titles:', error);
-  }
-}
-
-function showSuggestions(value) {
-  const suggestionsDiv = document.getElementById('searchSuggestions');
-  if (!value.trim() || value.length < 2) {
-    suggestionsDiv.style.display = 'none';
-    return;
-  }
-  
-  const filtered = allPropertyTitles.filter(title => 
-    title.toLowerCase().includes(value.toLowerCase())
-  ).slice(0, 8);
-  
-  if (filtered.length > 0) {
-    suggestionsDiv.innerHTML = filtered.map(title => 
-      `<div onclick="selectSuggestion('${escapeHtml(title)}')">${escapeHtml(title)}</div>`
-    ).join('');
-    suggestionsDiv.style.display = 'block';
-  } else {
-    suggestionsDiv.style.display = 'none';
-  }
-}
-
-function selectSuggestion(title) {
-  document.getElementById('locationInput').value = title;
-  document.getElementById('searchSuggestions').style.display = 'none';
-  performSearch();
-}
 
 // ============ ESC KEY ============
 document.addEventListener('keydown', function(e) {
@@ -1837,8 +1760,6 @@ document.addEventListener('keydown', function(e) {
     if (document.getElementById("modal").style.display === "block") closeModal();
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
-    document.getElementById('searchSuggestions').style.display = 'none';
-    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
 
@@ -1914,7 +1835,7 @@ function performSearch() {
   const minPriceVal = getRawPriceValue('minPriceInput');
   const maxPriceVal = getRawPriceValue('maxPriceInput');
   if (minPriceVal > 0) params.push(`minPrice=${minPriceVal}`);
-  if (maxPriceVal < 50000000) params.push(`maxPrice=${maxPriceVal}`);
+  if (maxPriceVal > 0 && maxPriceVal < 50000000) params.push(`maxPrice=${maxPriceVal}`);
   
   window.location.href = url + params.join('&');
 }
@@ -2100,7 +2021,6 @@ async function loadProperties() {
     const response = await fetch('/api/properties');
     const allProps = await response.json();
     cachedProperties = allProps.filter(p => p.status === 'available');
-    await loadPropertyTitles();
     applyCategoryFilter(cachedProperties);
   } catch (error) { 
     console.error(error); 
@@ -2146,12 +2066,10 @@ function applyCategoryFilter(properties) {
     document.getElementById('selectedBathsText').innerText = bathText;
   }
   if (minPriceParam) {
-    minPrice = parseInt(minPriceParam);
-    document.getElementById('minPriceInput').value = minPrice.toLocaleString();
+    document.getElementById('minPriceInput').value = parseInt(minPriceParam).toLocaleString();
   }
   if (maxPriceParam) {
-    maxPrice = parseInt(maxPriceParam);
-    document.getElementById('maxPriceInput').value = maxPrice.toLocaleString();
+    document.getElementById('maxPriceInput').value = parseInt(maxPriceParam).toLocaleString();
   }
   
   applyFilters(currentCategory, properties);
@@ -2173,7 +2091,7 @@ function applyFilters(currentCategory, properties) {
     if (isForLease(prop)) priceToCheck = prop.monthlyRental || prop.price || 0;
     else priceToCheck = prop.price || 0;
     if (minPriceVal > 0 && priceToCheck < minPriceVal) return false;
-    if (maxPriceVal < 50000000 && priceToCheck > maxPriceVal) return false;
+    if (maxPriceVal > 0 && priceToCheck > maxPriceVal) return false;
     return true;
   });
   
