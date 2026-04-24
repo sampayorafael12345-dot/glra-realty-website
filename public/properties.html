@@ -34,6 +34,7 @@
   --white: #ffffff;
   --card-bg: #ffffff;
   --border-color: #cbd5e1;
+  --border-dark: #94a3b8;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
@@ -48,12 +49,12 @@ body.dark-mode {
   --dark: #e0e0e0;
   --dark-gray: #c0c0c0;
   --gray: #a0a0a0;
-  --gray-light: #0f0f1a;
-  --white: #0f0f1a;
-  --card-bg: #1a1a2a;
-  --border-color: #3a3a4a;
+  --gray-light: #1a1a2a;
+  --white: #1a1a2a;
+  --card-bg: #252535;
+  --border-color: #4a4a5a;
+  --border-dark: #5a5a6a;
   --text-color: #e0e0e0;
-  --orange-light: #2a1a0a;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -67,23 +68,24 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar - Hidden but functional */
-::-webkit-scrollbar {
+/* Custom Scrollbar - Minimal */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--orange) transparent;
+}
+
+*::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
-::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: var(--orange);
   border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--orange-dark);
 }
 
 /* Navigation */
@@ -108,7 +110,48 @@ body {
 }
 
 body.dark-mode .navbar.scrolled {
-  background: #0f0f1a;
+  background: #1a1a2a;
+}
+
+/* Navbar text colors - WHITE at top, normal when scrolled */
+.nav-links a {
+  text-decoration: none;
+  color: #ffffff !important;
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.navbar.scrolled .nav-links a {
+  color: var(--text-color) !important;
+}
+
+.nav-links a:hover { color: var(--orange) !important; }
+
+.nav-links a.active {
+  color: var(--orange) !important;
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+}
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: #ffffff !important;
+}
+
+.navbar.scrolled .contact-btn-nav { 
+  color: var(--orange) !important; 
+  border-color: var(--orange);
+}
+
+.contact-btn-nav:hover { 
+  background: var(--orange); 
+  color: #ffffff !important; 
 }
 
 .logo {
@@ -127,53 +170,19 @@ body.dark-mode .navbar.scrolled {
   height: 56px; 
   width: auto; 
   display: block;
-}
-
-.nav-links {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: var(--white);
-  font-weight: 500;
   transition: var(--transition);
-  font-size: 14px;
-  letter-spacing: 1px;
-  cursor: pointer;
 }
 
-.navbar.scrolled .nav-links a { color: var(--text-color); }
-.nav-links a:hover { color: var(--orange); }
-
-.nav-links a.active {
-  color: var(--orange);
-  border-bottom: 2px solid var(--orange);
-  padding-bottom: 4px;
+/* In dark mode when scrolled, use the white logo */
+body.dark-mode .navbar.scrolled .logo img {
+  content: url('/hero-logo.png');
 }
-
-.navbar.scrolled .nav-links a.active {
-  color: var(--orange);
-}
-
-.contact-btn-nav {
-  background: transparent;
-  border: 2px solid var(--orange);
-  padding: 8px 20px;
-  border-radius: 40px;
-  color: var(--white) !important;
-}
-
-.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
-.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
 
 .mobile-menu-btn {
   display: none;
   font-size: 24px;
   cursor: pointer;
-  color: var(--white);
+  color: #ffffff;
   z-index: 1001;
 }
 
@@ -220,10 +229,6 @@ body.dark-mode .navbar.scrolled {
   cursor: pointer;
 }
 
-.mobile-overlay-links a.active {
-  color: var(--orange);
-}
-
 /* Page Hero */
 .page-hero {
   height: 40vh;
@@ -252,7 +257,7 @@ body.dark-mode .page-hero {
   display: block;
 }
 
-/* Search Bar - Dark Blue Background */
+/* Search Bar */
 .search-float {
   position: relative;
   z-index: 10;
@@ -311,6 +316,45 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
 }
 
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  margin-top: 8px;
+  border: 2px solid var(--border-color);
+}
+
+body.dark-mode .search-suggestions {
+  background: #252535;
+}
+
+.search-suggestions div {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.search-suggestions div:hover {
+  background: var(--orange);
+  color: white;
+}
+
+.search-suggestions div:last-child {
+  border-bottom: none;
+}
+
 .search-btn-main {
   background: var(--orange);
   color: white;
@@ -357,12 +401,12 @@ body.dark-mode .page-hero {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Custom Dropdowns */
+/* Advanced Filters - WITH CUSTOM DROPDOWNS */
 .advanced-filters {
   display: none;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.15);
+  border-top: 1px solid rgba(255,255,255,0.2);
 }
 
 .advanced-filters.show {
@@ -478,7 +522,7 @@ body.dark-mode .dropdown-menu {
   color: white;
 }
 
-/* Price Range - Simple with commas (like index) */
+/* Price Range - with commas while typing */
 .price-range-wrapper {
   display: flex;
   gap: 10px;
@@ -535,6 +579,12 @@ body.dark-mode .price-range-wrapper {
 
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
+  border-color: #5a5a6a;
+}
+
+body.dark-mode .reset-filters-btn:hover {
+  color: var(--orange);
+  border-color: var(--orange);
 }
 
 /* Category Tabs */
@@ -777,7 +827,7 @@ body.dark-mode .reset-filters-btn {
   color: var(--orange);
 }
 
-/* Modal */
+/* Modal (abbreviated for length - keeping existing modal code) */
 #modal {
   position: fixed;
   top: 0;
@@ -1471,7 +1521,8 @@ body.dark-mode .btn-darkmode {
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off">
+        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="showSuggestions(this.value)">
+        <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search Properties</button>
       <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()">
@@ -1482,7 +1533,7 @@ body.dark-mode .btn-darkmode {
     
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
-        <!-- Property Type Dropdown -->
+        <!-- Property Type Custom Dropdown -->
         <div class="filter-group">
           <label>PROPERTY TYPE</label>
           <div class="custom-dropdown" id="propertyTypeDropdown">
@@ -1501,7 +1552,7 @@ body.dark-mode .btn-darkmode {
           </div>
         </div>
         
-        <!-- Bedrooms Dropdown -->
+        <!-- Bedrooms Custom Dropdown -->
         <div class="filter-group">
           <label>BEDROOMS</label>
           <div class="custom-dropdown" id="bedroomsDropdown">
@@ -1520,7 +1571,7 @@ body.dark-mode .btn-darkmode {
           </div>
         </div>
         
-        <!-- Bathrooms Dropdown -->
+        <!-- Bathrooms Custom Dropdown -->
         <div class="filter-group">
           <label>BATHROOMS</label>
           <div class="custom-dropdown" id="bathsDropdown">
@@ -1538,15 +1589,15 @@ body.dark-mode .btn-darkmode {
           </div>
         </div>
         
-        <!-- Price Range - Simple with commas -->
+        <!-- Price Range with commas -->
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
           <div class="price-range-wrapper">
             <span>₱</span>
-            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this)" value="">
+            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this)">
             <span>-</span>
             <span>₱</span>
-            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this)" value="">
+            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this)">
           </div>
         </div>
       </div>
@@ -1752,7 +1803,50 @@ document.addEventListener('click', function(e) {
       trigger.classList.remove('open');
     });
   }
+  if (!e.target.closest('.search-field-wrapper')) {
+    document.getElementById('searchSuggestions').style.display = 'none';
+  }
 });
+
+// ============ SEARCH SUGGESTIONS ============
+let allPropertyTitles = [];
+
+async function loadPropertyTitles() {
+  try {
+    const response = await fetch('/api/properties');
+    const properties = await response.json();
+    allPropertyTitles = properties.filter(p => p.status === 'available').map(p => p.title);
+  } catch (error) {
+    console.error('Error loading property titles:', error);
+  }
+}
+
+function showSuggestions(value) {
+  const suggestionsDiv = document.getElementById('searchSuggestions');
+  if (!value.trim() || value.length < 2) {
+    suggestionsDiv.style.display = 'none';
+    return;
+  }
+  
+  const filtered = allPropertyTitles.filter(title => 
+    title.toLowerCase().includes(value.toLowerCase())
+  ).slice(0, 8);
+  
+  if (filtered.length > 0) {
+    suggestionsDiv.innerHTML = filtered.map(title => 
+      `<div onclick="selectSuggestion('${escapeHtml(title)}')">${escapeHtml(title)}</div>`
+    ).join('');
+    suggestionsDiv.style.display = 'block';
+  } else {
+    suggestionsDiv.style.display = 'none';
+  }
+}
+
+function selectSuggestion(title) {
+  document.getElementById('locationInput').value = title;
+  document.getElementById('searchSuggestions').style.display = 'none';
+  performSearch();
+}
 
 // ============ ESC KEY ============
 document.addEventListener('keydown', function(e) {
@@ -1760,6 +1854,7 @@ document.addEventListener('keydown', function(e) {
     if (document.getElementById("modal").style.display === "block") closeModal();
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
+    document.getElementById('searchSuggestions').style.display = 'none';
   }
 });
 
@@ -1835,7 +1930,7 @@ function performSearch() {
   const minPriceVal = getRawPriceValue('minPriceInput');
   const maxPriceVal = getRawPriceValue('maxPriceInput');
   if (minPriceVal > 0) params.push(`minPrice=${minPriceVal}`);
-  if (maxPriceVal > 0 && maxPriceVal < 50000000) params.push(`maxPrice=${maxPriceVal}`);
+  if (maxPriceVal > 0) params.push(`maxPrice=${maxPriceVal}`);
   
   window.location.href = url + params.join('&');
 }
@@ -2021,6 +2116,7 @@ async function loadProperties() {
     const response = await fetch('/api/properties');
     const allProps = await response.json();
     cachedProperties = allProps.filter(p => p.status === 'available');
+    await loadPropertyTitles();
     applyCategoryFilter(cachedProperties);
   } catch (error) { 
     console.error(error); 
@@ -2049,7 +2145,6 @@ function applyCategoryFilter(properties) {
   const titleMap = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease' };
   document.getElementById('sectionTitle').innerText = titleMap[currentCategory] || 'All Properties';
   
-  // Populate from URL
   if (searchParam) document.getElementById('locationInput').value = searchParam;
   if (propertyTypeParam) {
     selectedPropertyType = propertyTypeParam;
