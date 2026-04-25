@@ -68,7 +68,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar - Minimal */
+/* Custom Scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--orange) transparent;
@@ -88,7 +88,7 @@ body {
   border-radius: 4px;
 }
 
-/* Navigation - EXACT MATCH to index.html */
+/* Navigation - Matching index.html */
 .navbar {
   position: fixed;
   top: 0;
@@ -397,7 +397,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Beautiful Dropdowns */
+/* Advanced Filters */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -433,7 +433,7 @@ body.dark-mode .search-suggestions {
   letter-spacing: 0.5px;
 }
 
-/* Beautiful rounded dropdowns - like search suggestions */
+/* Beautiful dropdowns */
 .filter-group select {
   padding: 12px 14px;
   border: 2px solid var(--border-color);
@@ -473,7 +473,7 @@ body.dark-mode .filter-group select option {
   color: #e0e0e0;
 }
 
-/* Price Range with commas - matching dropdown styling */
+/* Price Range with commas */
 .price-range-group {
   display: flex;
   gap: 10px;
@@ -500,17 +500,6 @@ body.dark-mode .filter-group select option {
 
 .price-range-group input::placeholder {
   color: var(--gray);
-}
-
-/* Hide number input arrows */
-.price-range-group input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-.price-range-group input[type="number"]::-webkit-inner-spin-button,
-.price-range-group input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .reset-filters-btn {
@@ -1717,6 +1706,14 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.search-field-wrapper')) {
     document.getElementById('searchSuggestions').style.display = 'none';
   }
+  if (!e.target.closest('.custom-dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+    });
+    document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+      trigger.classList.remove('open');
+    });
+  }
 });
 
 // ============ ESC KEY TO CLOSE MODALS ============
@@ -1726,6 +1723,7 @@ document.addEventListener('keydown', function(e) {
     if (document.getElementById("emailModal").style.display === "flex") closeEmailModal();
     if (document.getElementById("wishlistModal").style.display === "flex") closeWishlistModal();
     document.getElementById('searchSuggestions').style.display = 'none';
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
   }
 });
 
@@ -2076,8 +2074,7 @@ function createCard(prop) {
   card.style.cursor = 'pointer';
   card.onclick = () => openDetail(prop._id);
   
-  const isSale
-    const isSale = prop.listingType === 'FOR SALE';
+  const isSale = prop.listingType === 'FOR SALE';
   const badge = isSale ? 'badge-sale' : 'badge-lease';
   const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
@@ -2144,7 +2141,7 @@ function openDetail(id) {
             <i class="far fa-heart"></i> Save
           </button>
           <button onclick="openPriceAlertModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price})" style="background: transparent; border: 2px solid var(--orange); color: var(--orange); padding: 8px 14px; border-radius: 30px; font-size: 12px; cursor: pointer;">
-            <i class="fas fa-bell"></i> Notify
+            <i class="fas fa-bell</i> Notify
           </button>
         </div>
       </div>
