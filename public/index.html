@@ -419,7 +419,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - SIMPLE WORKING DROPDOWNS (copied from properties) */
+/* Advanced Filters - WORKING SELECTS */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -455,7 +455,6 @@ body.dark-mode .search-suggestions {
   letter-spacing: 0.5px;
 }
 
-/* SIMPLE WORKING SELECT DROPDOWNS */
 .filter-group select {
   padding: 12px 14px;
   border: 2px solid var(--border-color);
@@ -2141,7 +2140,7 @@ function performSearch() {
   if (bedrooms) params.push(`bedrooms=${bedrooms}`);
   if (baths) params.push(`baths=${baths}`);
   if (minPrice > 0) params.push(`minPrice=${minPrice}`);
-  if (maxPrice > 0) params.push(`maxPrice=${maxPrice}`);
+  if (maxPrice > 0 && maxPrice < 500000000) params.push(`maxPrice=${maxPrice}`);
   
   window.location.href = url + params.join('&');
 }
