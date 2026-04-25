@@ -1697,9 +1697,19 @@ function showSuggestions(value) {
 }
 
 function selectSuggestion(title) {
-  document.getElementById('locationInput').value = title;
-  document.getElementById('searchSuggestions').style.display = 'none';
-  performSearch();
+  // Find the property by title
+  const property = allProperties.find(p => p.title === title);
+  if (property) {
+    // Close suggestions dropdown
+    document.getElementById('searchSuggestions').style.display = 'none';
+    // Open the property modal directly
+    openDetail(property._id);
+  } else {
+    // Fallback to search if property not found
+    document.getElementById('locationInput').value = title;
+    document.getElementById('searchSuggestions').style.display = 'none';
+    performSearch();
+  }
 }
 
 // Close suggestions when clicking outside
