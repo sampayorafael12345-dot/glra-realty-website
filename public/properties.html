@@ -88,7 +88,7 @@ body {
   border-radius: 4px;
 }
 
-/* Navigation */
+/* Navigation - EXACT MATCH to index.html */
 .navbar {
   position: fixed;
   top: 0;
@@ -110,54 +110,7 @@ body {
 }
 
 body.dark-mode .navbar.scrolled {
-  background: #1a1a2a;
-}
-
-/* Navbar spacing - changed to 35px to match index */
-.nav-links {
-  display: flex;
-  gap: 35px;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #ffffff !important;
-  font-weight: 500;
-  transition: var(--transition);
-  font-size: 14px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.navbar.scrolled .nav-links a {
-  color: var(--text-color) !important;
-}
-
-.nav-links a:hover { color: var(--orange) !important; }
-
-.nav-links a.active {
-  color: var(--orange) !important;
-  border-bottom: 2px solid var(--orange);
-  padding-bottom: 4px;
-}
-
-.contact-btn-nav {
-  background: transparent;
-  border: 2px solid var(--orange);
-  padding: 8px 20px;
-  border-radius: 40px;
-  color: #ffffff !important;
-}
-
-.navbar.scrolled .contact-btn-nav { 
-  color: var(--orange) !important; 
-  border-color: var(--orange);
-}
-
-.contact-btn-nav:hover { 
-  background: var(--orange); 
-  color: #ffffff !important; 
+  background: #0f0f1a;
 }
 
 .logo {
@@ -178,11 +131,47 @@ body.dark-mode .navbar.scrolled {
   display: block;
 }
 
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--white);
+  font-weight: 500;
+  transition: var(--transition);
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.navbar.scrolled .nav-links a { color: var(--text-color); }
+.nav-links a:hover { color: var(--orange); }
+
+.nav-links a.active {
+  color: var(--orange);
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+}
+
+.contact-btn-nav {
+  background: transparent;
+  border: 2px solid var(--orange);
+  padding: 8px 20px;
+  border-radius: 40px;
+  color: var(--white) !important;
+}
+
+.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
+.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+
 .mobile-menu-btn {
   display: none;
   font-size: 24px;
   cursor: pointer;
-  color: #ffffff;
+  color: var(--white);
   z-index: 1001;
 }
 
@@ -227,6 +216,10 @@ body.dark-mode .navbar.scrolled {
   font-weight: 500;
   font-family: 'Playfair Display', serif;
   cursor: pointer;
+}
+
+.mobile-overlay-links a.active {
+  color: var(--orange);
 }
 
 /* Page Hero */
@@ -315,7 +308,11 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
 }
 
-/* Search Suggestions */
+.search-field-wrapper input::placeholder {
+  color: var(--gray);
+}
+
+/* Search Suggestions Dropdown */
 .search-suggestions {
   position: absolute;
   top: 100%;
@@ -346,8 +343,8 @@ body.dark-mode .search-suggestions {
 }
 
 .search-suggestions div:hover {
-  background: var(--orange-light);
-  color: var(--orange);
+  background: var(--orange);
+  color: white;
 }
 
 .search-suggestions div:last-child {
@@ -400,7 +397,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Better dropdown styling */
+/* Advanced Filters - Beautiful Dropdowns */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -436,7 +433,7 @@ body.dark-mode .search-suggestions {
   letter-spacing: 0.5px;
 }
 
-/* Better dropdown styling - rounded corners like index */
+/* Beautiful rounded dropdowns - like search suggestions */
 .filter-group select {
   padding: 12px 14px;
   border: 2px solid var(--border-color);
@@ -476,7 +473,7 @@ body.dark-mode .filter-group select option {
   color: #e0e0e0;
 }
 
-/* Price Range with commas */
+/* Price Range with commas - matching dropdown styling */
 .price-range-group {
   display: flex;
   gap: 10px;
@@ -485,7 +482,7 @@ body.dark-mode .filter-group select option {
 .price-range-group input {
   flex: 1;
   min-width: 0;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 2px solid var(--border-color);
   border-radius: 40px;
   font-size: 13px;
@@ -499,6 +496,10 @@ body.dark-mode .filter-group select option {
   outline: none;
   border-color: var(--orange);
   box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.price-range-group input::placeholder {
+  color: var(--gray);
 }
 
 /* Hide number input arrows */
@@ -531,7 +532,6 @@ body.dark-mode .filter-group select option {
   background: rgba(249, 115, 22, 0.1);
 }
 
-/* Dark mode specific fixes */
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
   border-color: #5a5a6a;
@@ -685,7 +685,7 @@ body.dark-mode .price-range-group input {
   border-radius: 20px;
   font-size: 10px;
   font-weight: 600;
-    z-index: 2;
+  z-index: 2;
 }
 
 .card-actions {
@@ -1737,12 +1737,8 @@ function toggleDarkMode() {
   const btn = document.getElementById('floatingDarkModeToggle');
   if (isDarkMode) {
     btn.innerHTML = '<i class="fas fa-sun"></i>';
-    btn.style.background = '#2a2a3a';
-    btn.style.color = '#f97316';
   } else {
     btn.innerHTML = '<i class="fas fa-moon"></i>';
-    btn.style.background = '#1e1e2e';
-    btn.style.color = 'white';
   }
 }
 
@@ -1968,6 +1964,7 @@ function shareProperty(platform, property) {
 let allProperties = [];
 let galleryImages = [];
 let currentProperty = null;
+let cachedProperties = null;
 
 function isForLease(prop) {
   const type = (prop.listingType || '').toUpperCase();
@@ -1982,8 +1979,6 @@ function getDisplayPrice(prop) {
     return '₱' + Number(prop.price || 0).toLocaleString();
   }
 }
-
-let cachedProperties = null;
 
 async function loadProperties() {
   if (cachedProperties) {
@@ -2081,7 +2076,8 @@ function createCard(prop) {
   card.style.cursor = 'pointer';
   card.onclick = () => openDetail(prop._id);
   
-  const isSale = prop.listingType === 'FOR SALE';
+  const isSale
+    const isSale = prop.listingType === 'FOR SALE';
   const badge = isSale ? 'badge-sale' : 'badge-lease';
   const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
