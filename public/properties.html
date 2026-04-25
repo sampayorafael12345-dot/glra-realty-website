@@ -68,7 +68,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Minimal */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--orange) transparent;
@@ -113,7 +113,7 @@ body.dark-mode .navbar.scrolled {
   background: #1a1a2a;
 }
 
-/* Navbar spacing matching index.html - gap: 35px */
+/* Navbar spacing - changed to 35px to match index */
 .nav-links {
   display: flex;
   gap: 35px;
@@ -280,7 +280,6 @@ body.dark-mode .page-hero {
   gap: 15px;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 20px;
 }
 
 .search-field-wrapper {
@@ -314,6 +313,45 @@ body.dark-mode .page-hero {
 .search-field-wrapper input:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
+}
+
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  margin-top: 8px;
+  border: 2px solid var(--border-color);
+}
+
+body.dark-mode .search-suggestions {
+  background: #252535;
+}
+
+.search-suggestions div {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.search-suggestions div:hover {
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+.search-suggestions div:last-child {
+  border-bottom: none;
 }
 
 .search-btn-main {
@@ -362,7 +400,7 @@ body.dark-mode .page-hero {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Beautiful Dropdowns */
+/* Advanced Filters - Better dropdown styling */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -398,7 +436,7 @@ body.dark-mode .page-hero {
   letter-spacing: 0.5px;
 }
 
-/* Beautiful Dropdown Styling - Rounded corners */
+/* Better dropdown styling - rounded corners like index */
 .filter-group select {
   padding: 12px 14px;
   border: 2px solid var(--border-color);
@@ -427,49 +465,49 @@ body.dark-mode .page-hero {
   border-color: var(--orange);
 }
 
-/* Price Range with commas and step 50000 */
-.price-range-wrapper {
+.filter-group select option {
+  padding: 10px;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+body.dark-mode .filter-group select option {
+  background: #252535;
+  color: #e0e0e0;
+}
+
+/* Price Range with commas */
+.price-range-group {
   display: flex;
   gap: 10px;
-  align-items: center;
-  background: var(--white);
+}
+
+.price-range-group input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
   border: 2px solid var(--border-color);
   border-radius: 40px;
-  padding: 0 16px;
-}
-
-body.dark-mode .price-range-wrapper {
-  background: #2a2a3a;
-}
-
-.price-range-wrapper span {
-  color: var(--orange);
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.price-range-wrapper input {
-  flex: 1;
-  padding: 12px 0;
-  border: none;
-  background: transparent;
   font-size: 13px;
   font-family: 'Inter', sans-serif;
+  background: var(--white);
   color: var(--text-color);
-  outline: none;
+  transition: var(--transition);
 }
 
-.price-range-wrapper input::placeholder {
-  color: var(--gray);
+.price-range-group input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
 }
 
 /* Hide number input arrows */
-.price-range-wrapper input[type="number"] {
+.price-range-group input[type="number"] {
   -moz-appearance: textfield;
 }
 
-.price-range-wrapper input[type="number"]::-webkit-inner-spin-button,
-.price-range-wrapper input[type="number"]::-webkit-outer-spin-button {
+.price-range-group input[type="number"]::-webkit-inner-spin-button,
+.price-range-group input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -493,6 +531,7 @@ body.dark-mode .price-range-wrapper {
   background: rgba(249, 115, 22, 0.1);
 }
 
+/* Dark mode specific fixes */
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
   border-color: #5a5a6a;
@@ -501,6 +540,13 @@ body.dark-mode .reset-filters-btn {
 body.dark-mode .reset-filters-btn:hover {
   color: var(--orange);
   border-color: var(--orange);
+}
+
+body.dark-mode .filter-group select,
+body.dark-mode .price-range-group input {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border-color: #4a4a5a;
 }
 
 /* Category Tabs */
@@ -639,7 +685,7 @@ body.dark-mode .reset-filters-btn:hover {
   border-radius: 20px;
   font-size: 10px;
   font-weight: 600;
-  z-index: 2;
+    z-index: 2;
 }
 
 .card-actions {
@@ -1356,7 +1402,7 @@ body.dark-mode .btn-darkmode {
   
   .filter-grid { flex-direction: column; }
   .filter-group { min-width: 100%; }
-  .price-range-wrapper { width: 100%; }
+  .price-range-group { gap: 8px; }
   
   .category-tabs { gap: 10px; }
   .tab-btn { padding: 8px 20px; font-size: 13px; }
@@ -1486,12 +1532,9 @@ body.dark-mode .btn-darkmode {
         
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
-          <div class="price-range-wrapper">
-            <span>₱</span>
-            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this)">
-            <span>-</span>
-            <span>₱</span>
-            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this)">
+          <div class="price-range-group">
+            <input type="text" id="minPriceInput" placeholder="Min Price" oninput="formatPriceInput(this)">
+            <input type="text" id="maxPriceInput" placeholder="Max Price" oninput="formatPriceInput(this)">
           </div>
         </div>
       </div>
@@ -1556,7 +1599,7 @@ body.dark-mode .btn-darkmode {
   <div id="modal-content" class="modal-body"></div>
 </div>
 
-<!-- Footer (same as before, abbreviated for length - add your existing footer here) -->
+<!-- Footer -->
 <footer>
   <div class="footer-content">
     <div class="footer-col">
@@ -1694,8 +1737,12 @@ function toggleDarkMode() {
   const btn = document.getElementById('floatingDarkModeToggle');
   if (isDarkMode) {
     btn.innerHTML = '<i class="fas fa-sun"></i>';
+    btn.style.background = '#2a2a3a';
+    btn.style.color = '#f97316';
   } else {
     btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.style.background = '#1e1e2e';
+    btn.style.color = 'white';
   }
 }
 
@@ -1921,7 +1968,6 @@ function shareProperty(platform, property) {
 let allProperties = [];
 let galleryImages = [];
 let currentProperty = null;
-let cachedProperties = null;
 
 function isForLease(prop) {
   const type = (prop.listingType || '').toUpperCase();
@@ -1936,6 +1982,8 @@ function getDisplayPrice(prop) {
     return '₱' + Number(prop.price || 0).toLocaleString();
   }
 }
+
+let cachedProperties = null;
 
 async function loadProperties() {
   if (cachedProperties) {
