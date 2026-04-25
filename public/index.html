@@ -128,7 +128,6 @@ body.dark-mode .navbar.scrolled {
   display: block;
 }
 
-/* Dark mode logo change when scrolled */
 body.dark-mode .navbar.scrolled .logo img {
   content: url('/hero-logo.png');
 }
@@ -420,7 +419,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - Custom Dropdowns like properties */
+/* Advanced Filters - SIMPLE WORKING DROPDOWNS (copied from properties) */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -446,7 +445,6 @@ body.dark-mode .search-suggestions {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  position: relative;
 }
 
 .filter-group label {
@@ -457,88 +455,39 @@ body.dark-mode .search-suggestions {
   letter-spacing: 0.5px;
 }
 
-/* Custom Dropdown Styling */
-.custom-dropdown {
-  position: relative;
-  width: 100%;
-}
-
-.dropdown-trigger {
-  width: 100%;
+/* SIMPLE WORKING SELECT DROPDOWNS */
+.filter-group select {
   padding: 12px 14px;
-  background: var(--white);
   border: 2px solid var(--border-color);
   border-radius: 40px;
   font-size: 13px;
   font-family: 'Inter', sans-serif;
+  background: var(--white);
   color: var(--text-color);
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  width: 100%;
   transition: var(--transition);
 }
 
-body.dark-mode .dropdown-trigger {
-  background: #2a2a3a;
-  color: #e0e0e0;
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
 }
 
-.dropdown-trigger:hover {
+.filter-group select:hover {
   border-color: var(--orange);
 }
 
-.dropdown-trigger i {
-  color: var(--orange);
-  font-size: 12px;
-  transition: transform 0.3s;
-}
-
-.dropdown-trigger.open i {
-  transform: rotate(180deg);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+.filter-group select option {
+  padding: 10px;
   background: var(--white);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  margin-top: 8px;
-  max-height: 250px;
-  overflow-y: auto;
-  z-index: 100;
-  display: none;
-  box-shadow: var(--shadow-md);
-}
-
-body.dark-mode .dropdown-menu {
-  background: #2a2a3a;
-  border-color: #4a4a5a;
-}
-
-.dropdown-menu.show {
-  display: block;
-}
-
-.dropdown-item {
-  padding: 12px 16px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: var(--transition);
-  border-bottom: 1px solid var(--border-color);
   color: var(--text-color);
 }
 
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover {
-  background: var(--orange);
-  color: white;
+body.dark-mode .filter-group select option {
+  background: #252535;
+  color: #e0e0e0;
 }
 
 /* Price Range with commas */
@@ -597,6 +546,13 @@ body.dark-mode .reset-filters-btn {
 body.dark-mode .reset-filters-btn:hover {
   color: var(--orange);
   border-color: var(--orange);
+}
+
+body.dark-mode .filter-group select,
+body.dark-mode .price-range-group input {
+  background: #2a2a3a;
+  color: #e0e0e0;
+  border-color: #4a4a5a;
 }
 
 /* Stats Section */
@@ -1766,63 +1722,41 @@ body.dark-mode .modal-mortgage-result {
     
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
-        <!-- PROPERTY TYPE Custom Dropdown -->
         <div class="filter-group">
           <label>PROPERTY TYPE</label>
-          <div class="custom-dropdown" id="propertyTypeDropdown">
-            <div class="dropdown-trigger" onclick="toggleDropdown('propertyTypeDropdown')">
-              <span id="selectedPropertyTypeText">All Types</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-menu" id="propertyTypeMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('propertyType', '', 'All Types')">All Types</div>
-              <div class="dropdown-item" data-value="Condominium" onclick="selectDropdownValue('propertyType', 'Condominium', 'Condominium')">Condominium</div>
-              <div class="dropdown-item" data-value="House and Lot" onclick="selectDropdownValue('propertyType', 'House and Lot', 'House and Lot')">House and Lot</div>
-              <div class="dropdown-item" data-value="Townhouse" onclick="selectDropdownValue('propertyType', 'Townhouse', 'Townhouse')">Townhouse</div>
-              <div class="dropdown-item" data-value="Commercial Lot" onclick="selectDropdownValue('propertyType', 'Commercial Lot', 'Commercial Lot')">Commercial Lot</div>
-              <div class="dropdown-item" data-value="Residential Lot" onclick="selectDropdownValue('propertyType', 'Residential Lot', 'Residential Lot')">Residential Lot</div>
-            </div>
-          </div>
+          <select id="propertyTypeSelect">
+            <option value="">All Types</option>
+            <option value="Condominium">Condominium</option>
+            <option value="House and Lot">House and Lot</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Commercial Lot">Commercial Lot</option>
+            <option value="Residential Lot">Residential Lot</option>
+          </select>
         </div>
         
-        <!-- BEDROOMS Custom Dropdown -->
         <div class="filter-group">
           <label>BEDROOMS</label>
-          <div class="custom-dropdown" id="bedroomsDropdown">
-            <div class="dropdown-trigger" onclick="toggleDropdown('bedroomsDropdown')">
-              <span id="selectedBedroomsText">Any</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-menu" id="bedroomsMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('bedrooms', '', 'Any')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('bedrooms', '1', '1+ Bedrooms')">1+ Bedrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('bedrooms', '2', '2+ Bedrooms')">2+ Bedrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('bedrooms', '3', '3+ Bedrooms')">3+ Bedrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('bedrooms', '4', '4+ Bedrooms')">4+ Bedrooms</div>
-              <div class="dropdown-item" data-value="5" onclick="selectDropdownValue('bedrooms', '5', '5+ Bedrooms')">5+ Bedrooms</div>
-            </div>
-          </div>
+          <select id="bedroomsSelect">
+            <option value="">Any</option>
+            <option value="1">1+ Bedrooms</option>
+            <option value="2">2+ Bedrooms</option>
+            <option value="3">3+ Bedrooms</option>
+            <option value="4">4+ Bedrooms</option>
+            <option value="5">5+ Bedrooms</option>
+          </select>
         </div>
         
-        <!-- BATHROOMS Custom Dropdown -->
         <div class="filter-group">
           <label>BATHROOMS</label>
-          <div class="custom-dropdown" id="bathsDropdown">
-            <div class="dropdown-trigger" onclick="toggleDropdown('bathsDropdown')">
-              <span id="selectedBathsText">Any</span>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="dropdown-menu" id="bathsMenu">
-              <div class="dropdown-item" data-value="" onclick="selectDropdownValue('baths', '', 'Any')">Any</div>
-              <div class="dropdown-item" data-value="1" onclick="selectDropdownValue('baths', '1', '1+ Bathrooms')">1+ Bathrooms</div>
-              <div class="dropdown-item" data-value="2" onclick="selectDropdownValue('baths', '2', '2+ Bathrooms')">2+ Bathrooms</div>
-              <div class="dropdown-item" data-value="3" onclick="selectDropdownValue('baths', '3', '3+ Bathrooms')">3+ Bathrooms</div>
-              <div class="dropdown-item" data-value="4" onclick="selectDropdownValue('baths', '4', '4+ Bathrooms')">4+ Bathrooms</div>
-            </div>
-          </div>
+          <select id="bathsSelect">
+            <option value="">Any</option>
+            <option value="1">1+ Bathrooms</option>
+            <option value="2">2+ Bathrooms</option>
+            <option value="3">3+ Bathrooms</option>
+            <option value="4">4+ Bathrooms</option>
+          </select>
         </div>
         
-        <!-- PRICE RANGE with commas -->
         <div class="filter-group">
           <label>PRICE RANGE (₱)</label>
           <div class="price-range-group">
@@ -2078,60 +2012,6 @@ function getRawPriceValue(inputId) {
   return parseFloat(input.value.replace(/,/g, '')) || 0;
 }
 
-// ============ SELECTED VALUES ============
-let selectedPropertyType = '';
-let selectedBedrooms = '';
-let selectedBaths = '';
-let minPrice = 0;
-let maxPrice = 50000000;
-
-// ============ CUSTOM DROPDOWN FUNCTIONS ============
-function toggleDropdown(dropdownId) {
-  const menu = document.getElementById(dropdownId + 'Menu');
-  const trigger = document.querySelector('#' + dropdownId + ' .dropdown-trigger');
-  
-  if (menu.classList.contains('show')) {
-    menu.classList.remove('show');
-    trigger.classList.remove('open');
-  } else {
-    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-    document.querySelectorAll('.dropdown-trigger').forEach(t => t.classList.remove('open'));
-    
-    menu.classList.add('show');
-    trigger.classList.add('open');
-  }
-}
-
-function selectDropdownValue(type, value, displayText) {
-  if (type === 'propertyType') {
-    selectedPropertyType = value;
-    document.getElementById('selectedPropertyTypeText').innerHTML = displayText;
-    document.getElementById('propertyTypeMenu').classList.remove('show');
-    document.querySelector('#propertyTypeDropdown .dropdown-trigger').classList.remove('open');
-  } else if (type === 'bedrooms') {
-    selectedBedrooms = value;
-    document.getElementById('selectedBedroomsText').innerHTML = displayText;
-    document.getElementById('bedroomsMenu').classList.remove('show');
-    document.querySelector('#bedroomsDropdown .dropdown-trigger').classList.remove('open');
-  } else if (type === 'baths') {
-    selectedBaths = value;
-    document.getElementById('selectedBathsText').innerHTML = displayText;
-    document.getElementById('bathsMenu').classList.remove('show');
-    document.querySelector('#bathsDropdown .dropdown-trigger').classList.remove('open');
-  }
-}
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.custom-dropdown')) {
-    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
-    document.querySelectorAll('.dropdown-trigger').forEach(trigger => trigger.classList.remove('open'));
-  }
-  if (!e.target.closest('.search-field-wrapper')) {
-    document.getElementById('searchSuggestions').style.display = 'none';
-  }
-});
-
 // ============ SEARCH SUGGESTIONS ============
 let allPropertyTitles = [];
 
@@ -2171,6 +2051,13 @@ function selectSuggestion(title) {
   document.getElementById('searchSuggestions').style.display = 'none';
   performSearch();
 }
+
+// Close suggestions when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-field-wrapper')) {
+    document.getElementById('searchSuggestions').style.display = 'none';
+  }
+});
 
 // ============ ESC KEY ============
 document.addEventListener('keydown', function(e) {
@@ -2240,6 +2127,9 @@ function toggleAdvancedFilter() {
 
 function performSearch() {
   const searchTerm = document.getElementById('locationInput').value.trim();
+  const propertyType = document.getElementById('propertyTypeSelect').value;
+  const bedrooms = document.getElementById('bedroomsSelect').value;
+  const baths = document.getElementById('bathsSelect').value;
   const minPrice = getRawPriceValue('minPriceInput');
   const maxPrice = getRawPriceValue('maxPriceInput');
   
@@ -2247,9 +2137,9 @@ function performSearch() {
   const params = [];
   
   if (searchTerm) params.push(`search=${encodeURIComponent(searchTerm)}`);
-  if (selectedPropertyType) params.push(`propertyType=${encodeURIComponent(selectedPropertyType)}`);
-  if (selectedBedrooms) params.push(`bedrooms=${selectedBedrooms}`);
-  if (selectedBaths) params.push(`baths=${selectedBaths}`);
+  if (propertyType) params.push(`propertyType=${encodeURIComponent(propertyType)}`);
+  if (bedrooms) params.push(`bedrooms=${bedrooms}`);
+  if (baths) params.push(`baths=${baths}`);
   if (minPrice > 0) params.push(`minPrice=${minPrice}`);
   if (maxPrice > 0) params.push(`maxPrice=${maxPrice}`);
   
@@ -2257,7 +2147,14 @@ function performSearch() {
 }
 
 function resetAllFilters() {
-  window.location.href = '/';
+  document.getElementById('locationInput').value = '';
+  document.getElementById('propertyTypeSelect').value = '';
+  document.getElementById('bedroomsSelect').value = '';
+  document.getElementById('bathsSelect').value = '';
+  document.getElementById('minPriceInput').value = '';
+  document.getElementById('maxPriceInput').value = '';
+  customMinPrice = 0;
+  customMaxPrice = 500000000;
 }
 
 // ============ PRICE ALERT FUNCTIONS ============
