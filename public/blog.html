@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Real Estate Blog & Tips | GLRA Realty Philippines</title>
+<meta name="description" content="Expert real estate tips, market insights, and guides for buying, selling, and leasing property in the Philippines. Stay informed with GLRA Realty's blog.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://glrarealty.com/blog.html">
+<link rel="icon" type="image/png" href="/favicon.ico.png"><link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c8a96e;--gold-dark:#a8894e;--navy:#0d1b2a;--gray:#7f8c8d;--gray-light:#f5f6f7;--white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;--shadow-md:0 8px 30px rgba(0,0,0,0.10);--transition:all 0.3s ease}
+body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
+html{scroll-behavior:smooth}body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white)}
+.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:15px 5%;background:var(--white);box-shadow:0 1px 20px rgba(0,0,0,0.08);border-bottom:1px solid var(--border-color);z-index:1000}
+body.dark-mode .navbar{background:#0d1b2a}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{text-decoration:none;color:var(--text-color);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;transition:var(--transition)}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+.contact-btn-nav{border:1px solid var(--gold);padding:8px 20px;border-radius:2px;color:var(--gold) !important}
+.contact-btn-nav:hover{background:var(--gold);color:#fff !important}
+.mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:var(--text-color)}
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left 0.4s ease;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mobile-overlay.active{left:0}
+.mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:#fff;cursor:pointer}
+.mobile-overlay-links{display:flex;flex-direction:column;gap:24px;text-align:center}
+.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif}
+.page-hero{padding:120px 5% 80px;background:var(--navy);text-align:center}
+.page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:14px}
+.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:56px;color:#fff;font-weight:600;margin-bottom:16px}
+.page-hero p{color:rgba(255,255,255,0.6);font-size:15px;max-width:500px;margin:0 auto}
+.featured-post{padding:80px 5%;max-width:1200px;margin:0 auto}
+.featured-post-card{display:grid;grid-template-columns:1.2fr 1fr;gap:0;border:1px solid var(--border-color);overflow:hidden;transition:var(--transition)}
+.featured-post-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
+.featured-img{background:var(--navy);min-height:320px;display:flex;align-items:flex-end;padding:30px;position:relative;overflow:hidden}
+.featured-img::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(13,27,42,0.4),rgba(13,27,42,0.8))}
+.featured-img-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0.5}
+.featured-img-content{position:relative;z-index:1}
+.featured-label{font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.4);padding:4px 12px;display:inline-block;margin-bottom:12px}
+.featured-img h2{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;font-weight:600;line-height:1.3}
+.featured-body{padding:40px}
+.post-meta{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+.featured-body p{font-size:14px;line-height:1.85;color:var(--gray);margin-bottom:20px}
+.read-more{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);text-decoration:none;border-bottom:1px solid transparent;transition:var(--transition)}
+.read-more:hover{border-color:var(--gold)}
+.blog-section{padding:20px 5% 80px;max-width:1200px;margin:0 auto}
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:28px}
+.blog-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;transition:var(--transition)}
+.blog-card:hover{border-color:var(--gold);transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.blog-card-img{height:200px;background:var(--navy);position:relative;overflow:hidden}
+.blog-card-img-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0.6;transition:transform 0.6s ease}
+.blog-card:hover .blog-card-img-bg{transform:scale(1.06)}
+.blog-card-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(13,27,42,0.7),transparent)}
+.blog-tag{position:absolute;bottom:14px;left:14px;font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;background:rgba(13,27,42,0.85);border:1px solid rgba(200,169,110,0.4);padding:4px 12px}
+.blog-body{padding:24px}
+.blog-meta{font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase}
+.blog-body h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text-color);margin-bottom:10px;line-height:1.35}
+.blog-body p{font-size:13px;line-height:1.75;color:var(--gray);margin-bottom:16px}
+.blog-footer{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--border-color)}
+.blog-author{font-size:11px;color:var(--gray)}
+.blog-author strong{color:var(--text-color)}
+.newsletter{background:var(--gold);padding:70px 5%;text-align:center}
+.newsletter h2{font-family:'Cormorant Garamond',serif;font-size:40px;color:#fff;margin-bottom:12px}
+.newsletter p{font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:28px;max-width:500px;margin-left:auto;margin-right:auto}
+.newsletter-form{display:flex;gap:0;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.newsletter-form input{flex:1;min-width:220px;padding:14px 18px;border:none;border-radius:0;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;color:#1a2332}
+.newsletter-form input:focus{outline:none}
+.newsletter-form button{padding:14px 24px;background:var(--navy);color:#fff;border:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif}
+.newsletter-form button:hover{background:#0a1520}
+footer{background:var(--navy);color:rgba(255,255,255,0.4);text-align:center;padding:30px 5%;font-size:12px}
+footer a{color:var(--gold);text-decoration:none}
+.floating-btn{position:fixed;bottom:24px;right:24px;width:46px;height:46px;background:var(--navy);border:1px solid var(--gold);border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:100;color:var(--gold);font-size:16px;transition:var(--transition)}
+.floating-btn:hover{background:var(--gold);color:#fff}
+@media(max-width:768px){.nav-links{display:none}.mobile-menu-btn{display:block}.page-hero h1{font-size:38px}.featured-post-card{grid-template-columns:1fr}.blog-grid{grid-template-columns:1fr}.newsletter-form{flex-direction:column}.newsletter-form input,.newsletter-form button{width:100%}}
+</style>
+</head>
+<body>
+<nav class="navbar"><div class="mobile-menu-btn" onclick="document.getElementById('mo').classList.add('active');document.body.style.overflow='hidden'"><i class="fas fa-bars"></i></div><a href="/"><img src="/logo.png" alt="GLRA Realty" style="height:50px"></a><div class="nav-links"><a href="/">Home</a><a href="/properties.html">Properties</a><a href="/about.html">About</a><a href="/testimonials.html">Testimonials</a><a href="/blog.html" class="active">Blog</a><a href="/#contact" class="contact-btn-nav">Contact</a></div></nav>
+<div class="mobile-overlay" id="mo"><div class="close-menu" onclick="document.getElementById('mo').classList.remove('active');document.body.style.overflow=''"><i class="fas fa-times"></i></div><div class="mobile-overlay-links"><a href="/">Home</a><a href="/properties.html">Properties</a><a href="/about.html">About</a><a href="/testimonials.html">Testimonials</a><a href="/blog.html">Blog</a><a href="/#contact">Contact</a></div></div>
+
+<div class="page-hero">
+  <span class="eyebrow">Insights & Tips</span>
+  <h1>Real Estate Blog</h1>
+  <p>Expert guides, market updates, and practical tips for buyers, investors, and homeowners in the Philippines.</p>
+</div>
+
+<div class="featured-post">
+  <div style="margin-bottom:30px;text-align:center"><span style="font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase">Featured Article</span></div>
+  <div class="featured-post-card">
+    <div class="featured-img">
+      <div class="featured-img-bg" style="background-image:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800')"></div>
+      <div class="featured-img-content">
+        <span class="featured-label">Buyer's Guide</span>
+        <h2>The Complete Guide to Buying Property in the Philippines in 2025</h2>
+      </div>
+    </div>
+    <div class="featured-body">
+      <div class="post-meta"><i class="far fa-calendar"></i> January 15, 2025 &nbsp;·&nbsp; <i class="far fa-clock"></i> 8 min read</div>
+      <p>Whether you're a first-time buyer or seasoned investor, navigating the Philippine real estate market requires understanding its unique processes, legal requirements, and financing options.</p>
+      <p>From choosing the right property type to understanding transfer taxes and Pag-IBIG financing, this comprehensive guide covers everything you need to know before signing on the dotted line.</p>
+      <a href="#article1" class="read-more">Read Full Guide <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</div>
+
+<section class="blog-section">
+  <div style="text-align:center;margin-bottom:50px">
+    <span style="font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px">Latest Articles</span>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600">All Posts</h2>
+  </div>
+  <div class="blog-grid">
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">Financing</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Feb 3, 2025</div>
+        <h3>Pag-IBIG vs Bank Loan: Which Is Better for Filipino Homebuyers?</h3>
+        <p>Comparing the two most common financing options for property buyers in the Philippines — interest rates, eligibility, and which is right for you.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">Investment</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Jan 28, 2025</div>
+        <h3>Top 5 Metro Manila Locations for Property Investment in 2025</h3>
+        <p>Where are the best opportunities in Metro Manila right now? We break down the hottest areas by rental yield, capital appreciation, and future development.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">Documents</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Jan 20, 2025</div>
+        <h3>TCT vs CCT: Understanding Your Property Title in the Philippines</h3>
+        <p>What's the difference between a Transfer Certificate of Title and a Condominium Certificate of Title — and why it matters for your purchase.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">Leasing</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Jan 10, 2025</div>
+        <h3>Renting vs Buying in Metro Manila: What Makes Sense in 2025?</h3>
+        <p>A practical comparison of renting vs buying in today's market — considering rising prices, mortgage rates, and your long-term financial goals.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">Taxes</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Dec 18, 2024</div>
+        <h3>A Complete Guide to Property Taxes and Transfer Fees in the Philippines</h3>
+        <p>Documentary stamp tax, capital gains tax, transfer tax, registration fees — here's exactly what you'll pay and who shoulders each cost.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-card">
+      <div class="blog-card-img">
+        <div class="blog-card-img-bg" style="background-image:url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600')"></div>
+        <div class="blog-card-img-overlay"></div>
+        <span class="blog-tag">OFW Guide</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-meta"><i class="far fa-calendar"></i> Dec 5, 2024</div>
+        <h3>OFW Property Buying Guide: How to Invest in Philippine Real Estate From Abroad</h3>
+        <p>Everything overseas Filipino workers need to know about buying property back home — from SPA (Special Power of Attorney) to remote property viewing.</p>
+        <div class="blog-footer">
+          <span class="blog-author">By <strong>Catherine Sampayo</strong></span>
+          <a href="#" class="read-more" style="font-size:11px">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="newsletter">
+  <h2>Stay In the Know</h2>
+  <p>Get market updates, new property listings, and expert tips delivered straight to your inbox.</p>
+  <div class="newsletter-form">
+    <input type="email" id="newsletterEmail" placeholder="Enter your email address">
+    <button onclick="subscribeNewsletter()">Subscribe</button>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 GLRA Realty Group. All rights reserved. | <a href="/">Home</a> | <a href="/properties.html">Properties</a> | <a href="/about.html">About</a></p></footer>
+<button class="floating-btn" onclick="toggleDM()" id="dmBtn"><i class="fas fa-moon"></i></button>
+<script>
+function toggleDM(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);document.getElementById('dmBtn').innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>'}
+if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('dmBtn');if(b)b.innerHTML='<i class="fas fa-sun"></i>'}
+async function subscribeNewsletter(){const email=document.getElementById('newsletterEmail').value;if(!email||!email.includes('@')){alert('Please enter a valid email address');return}try{const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'blog_newsletter'})});const d=await r.json();if(d.success){document.getElementById('newsletterEmail').value='';alert('Thank you for subscribing! You will receive updates from GLRA Realty.')}else alert('Something went wrong. Please try again.')}catch{alert('Network error. Please try again.')}}
+</script>
+</body>
+</html>
