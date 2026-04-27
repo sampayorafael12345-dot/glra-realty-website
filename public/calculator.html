@@ -2,231 +2,82 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>Sales Closing Fees Calculator | GLRA Realty</title>
-<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates based on city.">
-<link rel="icon" type="image/png" href="/logo.png">
-<link rel="apple-touch-icon" href="/logo.png">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sales Closing Fees Calculator | GLRA Realty Philippines</title>
+<meta name="description" content="Calculate all taxes and fees for property transactions in the Philippines. Includes BIR Zonal Value lookup and accurate local transfer tax rates.">
+<meta name="keywords" content="property transaction calculator philippines, capital gains tax, documentary stamp tax, transfer fees, BIR zonal value">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://glrarealty.com/calculator.html">
+<link rel="icon" type="image/png" href="/favicon.ico.png">
+<link rel="apple-touch-icon" href="/favicon.ico.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#f97316">
-
-<!-- Preload critical resources -->
-<link rel="preload" href="/logo.png" as="image">
-<link rel="preload" href="/hero-logo.png" as="image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<!-- Open Graph -->
+<meta name="theme-color" content="#c8a96e">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/calculator.html">
 <meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
-<meta property="og:description" content="Complete property transaction calculator. Includes BIR Zonal Value lookup and Desired Net Proceed.">
-<meta property="og:image" content="https://glrarealty.com/logo.png">
-<meta property="og:site_name" content="GLRA Realty">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta property="og:description" content="Complete property transaction calculator with BIR Zonal Value and all transfer fees.">
+<meta property="og:image" content="https://glrarealty.com/hero-logo.png">
+<link rel="preload" href="/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
 <style>
-/* Copy your existing calculator.css styles here - keeping your original design */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-:root {
-  --orange: #f97316;
-  --orange-dark: #ea580c;
-  --orange-light: rgba(249, 115, 22, 0.15);
-  --dark: #1a1a2e;
-  --dark-gray: #16213e;
-  --gray: #6b7280;
-  --gray-light: #f3f4f6;
-  --white: #ffffff;
-  --card-bg: #ffffff;
-  --border-color: #e0e0e0;
-  --text-color: #1a1a2e;
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.1);
-  --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
-  --transition: all 0.3s ease;
-  --success: #10b981;
-  --danger: #ef4444;
-  --info: #3b82f6;
-}
-
-body.dark-mode {
-  --dark: #e0e0e0;
-  --dark-gray: #c0c0c0;
-  --gray: #a0a0a0;
-  --gray-light: #0f0f1a;
-  --white: #0f0f1a;
-  --card-bg: #1a1a2a;
-  --border-color: #2a2a3a;
-  --text-color: #e0e0e0;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  font-family: 'Inter', sans-serif;
-  color: var(--text-color);
-  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-  min-height: 100vh;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode {
-  background: linear-gradient(135deg, #0a0a14 0%, #0f0f1a 100%);
-}
-
-/* Navigation (same as index) */
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 5%;
-  background: transparent;
-  transition: var(--transition);
-  z-index: 1000;
-}
-
-.navbar.scrolled {
-  background: var(--white);
-  padding: 10px 5%;
-  box-shadow: var(--shadow-sm);
-}
-
-body.dark-mode .navbar.scrolled {
-  background: #0f0f1a;
-}
-
-.logo {
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
-  cursor: pointer;
-}
-
-.navbar.scrolled .logo {
-  opacity: 1;
-  visibility: visible;
-}
-
-.logo img { 
-  height: 56px; 
-  width: auto; 
-  display: block;
-}
-
-body.dark-mode .navbar.scrolled .logo img {
-  content: url('/hero-logo.png');
-}
-
-.nav-links {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #ffffff !important;
-  font-weight: 500;
-  transition: var(--transition);
-  font-size: 14px;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.navbar.scrolled .nav-links a {
-  color: var(--text-color) !important;
-}
-
-.nav-links a:hover { color: var(--orange) !important; }
-
-.nav-links a.active {
-  color: var(--orange) !important;
-  border-bottom: 2px solid var(--orange);
-  padding-bottom: 4px;
-}
-
-.contact-btn-nav {
-  background: transparent;
-  border: 2px solid var(--orange);
-  padding: 8px 20px;
-  border-radius: 40px;
-  color: #ffffff !important;
-}
-
-.navbar.scrolled .contact-btn-nav { 
-  color: var(--orange) !important; 
-  border-color: var(--orange);
-}
-
-.contact-btn-nav:hover { 
-  background: var(--orange); 
-  color: #ffffff !important; 
-}
-
-.mobile-menu-btn {
-  display: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #ffffff;
-  z-index: 1001;
-}
-
-.navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
-
-.mobile-overlay {
-  position: fixed;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: var(--dark);
-  z-index: 2000;
-  transition: left 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.mobile-overlay.active { left: 0; }
-.mobile-overlay .close-menu {
-  position: absolute;
-  top: 20px;
-  right: 25px;
-  font-size: 28px;
-  color: var(--white);
-  cursor: pointer;
-}
-
-.mobile-overlay-links {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  text-align: center;
-}
-
-.mobile-overlay-links a {
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 24px;
-  font-weight: 500;
-  font-family: 'Playfair Display', serif;
-  cursor: pointer;
-}
-
-/* Page Hero */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);--navy:#0d1b2a;--navy-mid:#1a2d42;--gray:#7f8c8d;--gray-light:#f5f6f7;--white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;--shadow-sm:0 2px 12px rgba(0,0,0,0.06);--shadow-md:0 8px 30px rgba(0,0,0,0.10);--shadow-lg:0 20px 50px rgba(0,0,0,0.14);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);--success:#10b981;--danger:#ef4444;--orange:#c8a96e;--orange-dark:#a8894e;--orange-light:rgba(200,169,110,0.12);--dark:#0d1b2a}
+body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white);overflow-x:hidden;transition:background 0.3s,color 0.3s}
+*{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+*::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 5%;background:var(--navy);border-bottom:1px solid rgba(200,169,110,0.2);transition:var(--transition);z-index:1000}
+body.dark-mode .navbar{background:#0a1520}
+.logo{cursor:pointer;display:flex;align-items:center}
+.logo img{height:48px;width:auto;display:block}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{text-decoration:none;color:rgba(255,255,255,0.8);font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+.contact-btn-nav{border:1px solid var(--gold);padding:8px 20px;border-radius:2px;color:var(--gold) !important}
+.contact-btn-nav:hover{background:var(--gold);color:#fff !important}
+.mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff}
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left 0.4s ease;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mobile-overlay.active{left:0}
+.mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:#fff;cursor:pointer}
+.mobile-overlay-links{display:flex;flex-direction:column;gap:24px;text-align:center}
+.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
+.mobile-overlay-links a:hover{color:var(--gold)}
+.nav-dropdown{position:relative}
+.nav-dropdown-menu{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:180px;padding:8px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
+body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
+.nav-dropdown:hover .nav-dropdown-menu{display:block}
+.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color) !important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color)}
+.nav-dropdown-menu a:last-child{border-bottom:none}
+.nav-dropdown-menu a:hover{color:var(--gold) !important;background:var(--gray-light)}
+.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100}
+.floating-btn{width:46px;height:46px;border-radius:0;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--shadow-md);transition:var(--transition);cursor:pointer;border:none;font-size:16px}
+.floating-btn:hover{transform:scale(1.08)}
+.btn-call{background:#25d366;color:#fff}.btn-messenger{background:#0084ff;color:#fff}
+.btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf);color:#fff}
+.btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
+body.dark-mode .btn-darkmode{background:var(--gold);color:#fff}
+.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;border-radius:0;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:100;font-size:13px}
+.back-to-top.show{opacity:1;visibility:visible}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn 0.3s ease;font-size:13px;border-left:3px solid var(--gold)}
+@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
+footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:50px 5% 22px}
+.footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:36px;margin-bottom:36px}
+.footer-col h4{color:var(--gold);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;transition:var(--transition)}
+.footer-col ul li a:hover{color:var(--gold)}
+.footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,0.4)}
+.social-links{display:flex;gap:10px;margin-top:14px}
+.social-links a{width:32px;height:32px;border:1px solid rgba(200,169,110,0.3);border-radius:0;display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,0.4);font-size:13px}
+.social-links a:hover{border-color:var(--gold);background:var(--gold);color:#fff}
+.footer-bottom{max-width:1100px;margin:20px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08);text-align:center}
+.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:1px}
+@media(max-width:768px){.nav-links{display:none}.mobile-menu-btn{display:block}.logo{position:absolute;left:50%;transform:translateX(-50%)}.logo img{height:42px}}
+/* ===== CALCULATOR-SPECIFIC STYLES (UPDATED TO GOLD/NAVY) ===== */
 .page-hero {
   height: 25vh;
   min-height: 220px;
@@ -243,7 +94,7 @@ body.dark-mode .page-hero {
 }
 
 .page-hero h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 42px;
   color: #ffffff;
   margin-bottom: 15px;
@@ -346,7 +197,7 @@ body.dark-mode .page-hero {
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   transition: var(--transition);
   background: var(--white);
   color: var(--text-color);
@@ -450,7 +301,7 @@ body.dark-mode .search-field {
   border: 2px solid var(--border-color);
   border-radius: 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--white);
   color: var(--text-color);
 }
@@ -525,7 +376,7 @@ body.dark-mode .search-field {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   color: var(--text-color);
   white-space: nowrap;
 }
@@ -606,7 +457,7 @@ body.dark-mode .search-field {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   text-align: center;
   color: var(--text-color);
   min-width: 50px;
@@ -848,7 +699,7 @@ body.dark-mode .email-print-content {
   border-radius: 12px;
   font-size: 14px;
   margin-bottom: 15px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--white);
   color: var(--text-color);
 }
@@ -1117,43 +968,42 @@ body.dark-mode .disclaimer {
   .footer-content { text-align: center; }
   .social-links { justify-content: center; }
 }
+
 </style>
 </head>
 <body>
-
-<!-- Navigation -->
 <nav class="navbar" id="navbar">
-  <div class="mobile-menu-btn" onclick="openMobileMenu()">
-    <i class="fas fa-bars"></i>
-  </div>
-  <div class="logo" onclick="goHome()">
-    <img src="/logo.png" alt="GLRA Realty">
-  </div>
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="goHome()"><img src="/logo.png" alt="GLRA Realty Logo"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
-    <a href="/#featured">FEATURED</a>
     <a href="/properties.html">PROPERTIES</a>
-    <a href="/#broker">BROKER</a>
     <a href="/calculator.html" class="active">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown"><a href="#" onclick="return false">MORE</a>
+      <div class="nav-dropdown-menu">
+        <a href="/about.html">About Us</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog & Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
   </div>
 </nav>
-
 <div class="mobile-overlay" id="mobileOverlay">
   <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
   <div class="mobile-overlay-links">
-    <a href="/" onclick="closeMobileMenu()">HOME</a>
-    <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
-    <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
-    <a href="/#broker" onclick="closeMobileMenu()">BROKER</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
-    <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
-    <a href="/#contact" onclick="closeMobileMenu()">CONTACT</a>
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
-
 <!-- Page Hero -->
+
 <section class="page-hero">
   <div>
     <h1>Sales Closing Fees Calculator</h1>
@@ -1442,57 +1292,23 @@ body.dark-mode .disclaimer {
   </div>
 </div>
 
-<!-- Footer (same structure as index) -->
+
 <footer>
   <div class="footer-content">
-    <div class="footer-col">
-      <h4>GLRA REALTY</h4>
-      <p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p>
-      <div class="social-links">
-        <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
-        <a href="tel:09171774572"><i class="fas fa-phone-alt"></i></a>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h4>QUICK LINKS</h4>
-      <ul>
-        <li><a href="/properties.html?category=FOR SALE">Properties For Sale</a></li>
-        <li><a href="/properties.html?category=FOR LEASE">Properties For Lease</a></li>
-        <li><a href="/guide.html">Documentation Guide</a></li>
-        <li><a href="/calculator.html">Transaction Calculator</a></li>
-        <li><a href="/zonal.html">Zonal Value Lookup</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>CONTACT</h4>
-      <p><i class="fas fa-phone-alt"></i> 0917 177 4572</p>
-      <p><i class="fab fa-instagram"></i> @glra_realty</p>
-      <p><i class="fas fa-envelope"></i> glrarealty@gmail.com</p>
-    </div>
-    <div class="footer-col">
-      <h4>LOCATION</h4>
-      <p><i class="fas fa-map-marker-alt"></i> 17th Floor, 252 Senator Gil J. Puyat Avenue<br>Makati City, Philippines 1200</p>
-    </div>
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p><div class="social-links"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a></div></div>
+    <div class="footer-col"><h4>Properties</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li></ul></div>
+    <div class="footer-col"><h4>Resources</h4><ul><li><a href="/guide.html">Documentation Guide</a></li><li><a href="/calculator.html">Transaction Calculator</a></li><li><a href="/zonal.html">Zonal Value</a></li></ul></div>
+    <div class="footer-col"><h4>Contact</h4><p>0917 177 4572</p><p>glrarealty@gmail.com</p></div>
   </div>
-  <div class="footer-bottom">
-    <p>© 2026 GLRA REALTY GROUP. All rights reserved.</p>
-  </div>
+  <div class="footer-bottom"><p>&copy; 2026 GLRA Realty Group. All rights reserved.</p></div>
 </footer>
-
-<!-- Floating Buttons -->
 <div class="floating-buttons">
   <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
-  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-f"></i></a>
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
-    <i class="fas fa-moon"></i>
-  </button>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
 </div>
-
-<!-- Back to Top -->
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
-
 <script>
 // ============ PWA SERVICE WORKER REGISTRATION ============
 if ('serviceWorker' in navigator) {
@@ -1974,6 +1790,12 @@ if (localStorage.getItem('darkMode') === 'true') {
 document.addEventListener('DOMContentLoaded', function() {
   calculateAll();
 });
+
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);document.getElementById('floatingDarkModeToggle').innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';}
+if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML='<i class="fas fa-sun"></i>';}
+function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('active');document.body.style.overflow='hidden';}
+function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('active');document.body.style.overflow='';}
+window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(window.scrollY>50)b.classList.add('show');else b.classList.remove('show');});
 </script>
 </body>
 </html>

@@ -2,28 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>GLRA Realty - Admin Dashboard</title>
-<meta name="description" content="Admin dashboard for GLRA Realty - Manage properties, inquiries, subscribers, and hero images">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Dashboard | GLRA Realty</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="canonical" href="https://glrarealty.com/admin.html">
-<link rel="icon" type="image/png" href="/logo.png">
-<link rel="apple-touch-icon" href="/logo.png">
+<link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#f97316">
-
-<!-- Preload critical resources -->
-<link rel="preload" href="/logo.png" as="image">
-<link rel="preload" href="/hero-logo.png" as="image">
+<meta name="theme-color" content="#c8a96e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-
 <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);--navy:#0d1b2a;--navy-mid:#1a2d42;--gray:#7f8c8d;--gray-light:#f5f6f7;--white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;--shadow-sm:0 2px 12px rgba(0,0,0,0.06);--shadow-md:0 8px 30px rgba(0,0,0,0.10);--shadow-lg:0 20px 50px rgba(0,0,0,0.14);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);--success:#10b981;--danger:#ef4444;--info:#3b82f6;--orange:#c8a96e;--orange-dark:#a8894e;--orange-light:rgba(200,169,110,0.12);--dark:#0d1b2a}
+body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white);overflow-x:hidden;transition:background 0.3s,color 0.3s}
+*{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+*::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn 0.3s ease;font-size:13px;border-left:3px solid var(--gold)}
+@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
+/* ===== ADMIN-SPECIFIC STYLES ===== */
+
 * {
   margin: 0;
   padding: 0;
@@ -31,8 +31,8 @@
 }
 
 :root {
-  --orange: #f97316;
-  --orange-dark: #ea580c;
+  --orange: #c8a96e;
+  --orange-dark: #a8894e;
   --orange-light: #ffedd5;
   --dark: #111827;
   --dark-gray: #1f2937;
@@ -60,7 +60,7 @@ body.dark-mode {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--gray-light);
   color: var(--dark);
   transition: background 0.3s ease, color 0.3s ease;
@@ -121,7 +121,7 @@ body.dark-mode .search-bar-admin {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, var(--orange) 100%);
+  background: linear-gradient(135deg, #0d1b2a 0%, var(--orange) 100%);
 }
 
 .login-box {
@@ -148,7 +148,7 @@ body.dark-mode .search-bar-admin {
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   transition: all 0.3s ease;
 }
 
@@ -388,7 +388,7 @@ body.dark-mode .darkmode-btn-header {
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--white);
   transition: all 0.3s ease;
 }
@@ -563,7 +563,7 @@ body.dark-mode .darkmode-btn-header {
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--white);
   transition: all 0.3s ease;
 }
@@ -1228,9 +1228,11 @@ button.danger:hover:not(:disabled) {
     padding: 8px;
   }
 }
+
 </style>
 </head>
 <body>
+
 
 <div class="login-container" id="loginContainer">
   <div class="login-box">
@@ -1575,7 +1577,9 @@ button.danger:hover:not(:disabled) {
   <div>Saving property... Please wait</div>
 </div>
 
+
 <script>
+
 // ============ PWA SERVICE WORKER REGISTRATION ============
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -2710,6 +2714,7 @@ window.addEventListener('load', function() {
     setTimeout(() => { if (loader) loader.style.display = 'none'; }, 500);
   }
 });
+
 </script>
 </body>
 </html>
