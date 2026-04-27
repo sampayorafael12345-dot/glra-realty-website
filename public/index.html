@@ -12,6 +12,14 @@
 <link rel="canonical" href="https://glrarealty.com/">
 <link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="apple-touch-icon" href="/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f97316">
+
+<!-- Preload critical resources -->
+<link rel="preload" href="/logo.png" as="image">
+<link rel="preload" href="/hero-logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -419,7 +427,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - WORKING SELECTS */
+/* Advanced Filters */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -429,14 +437,6 @@ body.dark-mode .search-suggestions {
 
 .advanced-filters.show {
   display: block;
-}
-
-.filter-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: flex-end;
 }
 
 .filter-group {
@@ -620,6 +620,13 @@ body.dark-mode .price-range-group input {
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
+  /* Lazy loading blur effect */
+  filter: blur(0px);
+  transition: filter 0.3s ease;
+}
+
+.prop-card-image img.lazy {
+  filter: blur(4px);
 }
 
 .prop-card:hover .prop-card-image img { transform: scale(1.05); }
@@ -1355,7 +1362,7 @@ body.dark-mode .btn-darkmode {
 
 .modal-mortgage-result .label {
   font-size: 10px;
-  color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.6);
 }
 
 .modal-mortgage-result .amount {
@@ -1621,7 +1628,6 @@ body.dark-mode .modal-mortgage-result {
   .search-btn-main { width: 100%; justify-content: center; }
   .filter-toggle-btn { width: 100%; justify-content: center; }
   
-  .filter-grid { flex-direction: column; }
   .filter-group { min-width: 100%; }
   .price-range-group { gap: 8px; }
   
@@ -1709,7 +1715,7 @@ body.dark-mode .modal-mortgage-result {
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="showSuggestions(this.value)">
+        <input type="text" id="locationInput" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="handleSearchInput(this.value)">
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search Properties</button>
@@ -1720,48 +1726,46 @@ body.dark-mode .modal-mortgage-result {
     </div>
     
     <div class="advanced-filters" id="advancedFilters">
-      <div class="filter-grid">
-        <div class="filter-group">
-          <label>PROPERTY TYPE</label>
-          <select id="propertyTypeSelect">
-            <option value="">All Types</option>
-            <option value="Condominium">Condominium</option>
-            <option value="House and Lot">House and Lot</option>
-            <option value="Townhouse">Townhouse</option>
-            <option value="Commercial Lot">Commercial Lot</option>
-            <option value="Residential Lot">Residential Lot</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label>BEDROOMS</label>
-          <select id="bedroomsSelect">
-            <option value="">Any</option>
-            <option value="1">1+ Bedrooms</option>
-            <option value="2">2+ Bedrooms</option>
-            <option value="3">3+ Bedrooms</option>
-            <option value="4">4+ Bedrooms</option>
-            <option value="5">5+ Bedrooms</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label>BATHROOMS</label>
-          <select id="bathsSelect">
-            <option value="">Any</option>
-            <option value="1">1+ Bathrooms</option>
-            <option value="2">2+ Bathrooms</option>
-            <option value="3">3+ Bathrooms</option>
-            <option value="4">4+ Bathrooms</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label>PRICE RANGE (₱)</label>
-          <div class="price-range-group">
-            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this)">
-            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this)">
-          </div>
+      <div class="filter-group">
+        <label>PROPERTY TYPE</label>
+        <select id="propertyTypeSelect" onchange="applyLiveFilters()">
+          <option value="">All Types</option>
+          <option value="Condominium">Condominium</option>
+          <option value="House and Lot">House and Lot</option>
+          <option value="Townhouse">Townhouse</option>
+          <option value="Commercial Lot">Commercial Lot</option>
+          <option value="Residential Lot">Residential Lot</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>BEDROOMS</label>
+        <select id="bedroomsSelect" onchange="applyLiveFilters()">
+          <option value="">Any</option>
+          <option value="1">1+ Bedrooms</option>
+          <option value="2">2+ Bedrooms</option>
+          <option value="3">3+ Bedrooms</option>
+          <option value="4">4+ Bedrooms</option>
+          <option value="5">5+ Bedrooms</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>BATHROOMS</label>
+        <select id="bathsSelect" onchange="applyLiveFilters()">
+          <option value="">Any</option>
+          <option value="1">1+ Bathrooms</option>
+          <option value="2">2+ Bathrooms</option>
+          <option value="3">3+ Bathrooms</option>
+          <option value="4">4+ Bathrooms</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>PRICE RANGE (₱)</label>
+        <div class="price-range-group">
+          <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this); applyLiveFilters();">
+          <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this); applyLiveFilters();">
         </div>
       </div>
       
@@ -1948,7 +1952,7 @@ body.dark-mode .modal-mortgage-result {
 <!-- Back to Top -->
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
-<!-- Price Alert Modal -->
+<!-- Modals -->
 <div id="emailModal" class="email-modal">
   <div class="email-modal-content">
     <span class="close-modal" onclick="closeEmailModal()">&times;</span>
@@ -1964,7 +1968,6 @@ body.dark-mode .modal-mortgage-result {
   </div>
 </div>
 
-<!-- Wishlist Modal -->
 <div id="wishlistModal" class="email-modal">
   <div class="email-modal-content">
     <span class="close-modal" onclick="closeWishlistModal()">&times;</span>
@@ -1982,7 +1985,6 @@ body.dark-mode .modal-mortgage-result {
   </div>
 </div>
 
-<!-- Main Modal -->
 <div id="modal">
   <span class="close" onclick="closeModal()">×</span>
   <div id="modal-content" class="modal-body"></div>
@@ -1990,6 +1992,73 @@ body.dark-mode .modal-mortgage-result {
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
+// ============ PWA SERVICE WORKER REGISTRATION ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+      console.log('ServiceWorker registered successfully:', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker registration failed:', err);
+    });
+  });
+}
+
+// ============ LAZY LOADING IMAGES ============
+function initLazyLoading() {
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '50px' });
+  
+  document.querySelectorAll('img[data-src]').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+// ============ LIVE FILTERING ============
+function applyLiveFilters() {
+  if (!cachedProperties) return;
+  
+  const searchTerm = document.getElementById('locationInput').value.toLowerCase().trim();
+  const propertyType = document.getElementById('propertyTypeSelect').value;
+  const bedrooms = document.getElementById('bedroomsSelect').value;
+  const baths = document.getElementById('bathsSelect').value;
+  const minPrice = getRawPriceValue('minPriceInput');
+  const maxPrice = getRawPriceValue('maxPriceInput');
+  
+  let filtered = [...cachedProperties];
+  
+  filtered = filtered.filter(prop => {
+    if (searchTerm && !prop.title.toLowerCase().includes(searchTerm) && !prop.location.toLowerCase().includes(searchTerm)) return false;
+    if (propertyType && prop.propertyType !== propertyType) return false;
+    if (bedrooms && prop.bedrooms < parseInt(bedrooms)) return false;
+    if (baths && prop.bathrooms < parseInt(baths)) return false;
+    let priceToCheck = isForLease(prop) ? (prop.monthlyRental || prop.price || 0) : (prop.price || 0);
+    if (minPrice > 0 && priceToCheck < minPrice) return false;
+    if (maxPrice > 0 && priceToCheck > maxPrice) return false;
+    return true;
+  });
+  
+  // Re-render all sections with filtered properties
+  const featuredFiltered = filtered.filter(p => p.featured === true).slice(0, 6);
+  const forSaleFiltered = filtered.filter(p => p.listingType === 'FOR SALE').slice(0, 6);
+  const forLeaseFiltered = filtered.filter(p => isForLease(p)).slice(0, 6);
+  
+  renderProperties(featuredFiltered, 'featured-list');
+  renderProperties(forSaleFiltered, 'sale-list');
+  renderProperties(forLeaseFiltered, 'lease-list');
+  document.getElementById('statProperties').innerText = filtered.length;
+  allProperties = filtered;
+}
+
 // ============ GO HOME FUNCTION ============
 function goHome() {
   window.location.href = '/';
@@ -2024,6 +2093,11 @@ async function loadPropertyTitles() {
   }
 }
 
+function handleSearchInput(value) {
+  showSuggestions(value);
+  applyLiveFilters();
+}
+
 function showSuggestions(value) {
   const suggestionsDiv = document.getElementById('searchSuggestions');
   if (!value.trim() || value.length < 2) {
@@ -2046,18 +2120,14 @@ function showSuggestions(value) {
 }
 
 function selectSuggestion(title) {
-  // Find the property by title
   const property = allProperties.find(p => p.title === title);
   if (property) {
-    // Close suggestions dropdown
     document.getElementById('searchSuggestions').style.display = 'none';
-    // Open the property modal directly
     openDetail(property._id);
   } else {
-    // Fallback to search if property not found
     document.getElementById('locationInput').value = title;
     document.getElementById('searchSuggestions').style.display = 'none';
-    performSearch();
+    applyLiveFilters();
   }
 }
 
@@ -2115,9 +2185,6 @@ function escapeHtml(str) {
 }
 
 // ============ SEARCH FUNCTIONS ============
-let customMinPrice = 0;
-let customMaxPrice = 500000000;
-
 function toggleAdvancedFilter() {
   const filters = document.getElementById('advancedFilters');
   const btn = document.getElementById('advancedFilterBtn');
@@ -2150,7 +2217,7 @@ function performSearch() {
   if (bedrooms) params.push(`bedrooms=${bedrooms}`);
   if (baths) params.push(`baths=${baths}`);
   if (minPrice > 0) params.push(`minPrice=${minPrice}`);
-  if (maxPrice > 0 && maxPrice < 500000000) params.push(`maxPrice=${maxPrice}`);
+  if (maxPrice > 0) params.push(`maxPrice=${maxPrice}`);
   
   window.location.href = url + params.join('&');
 }
@@ -2162,8 +2229,7 @@ function resetAllFilters() {
   document.getElementById('bathsSelect').value = '';
   document.getElementById('minPriceInput').value = '';
   document.getElementById('maxPriceInput').value = '';
-  customMinPrice = 0;
-  customMaxPrice = 500000000;
+  applyLiveFilters();
 }
 
 // ============ PRICE ALERT FUNCTIONS ============
@@ -2296,6 +2362,7 @@ window.addEventListener('load', function() {
   const loader = document.getElementById('loader');
   loader.classList.add('hide');
   setTimeout(() => { loader.style.display = 'none'; }, 500);
+  initLazyLoading();
 });
 
 // Navbar scroll effect
@@ -2440,11 +2507,14 @@ function createCard(prop) {
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
   const displayPrice = getDisplayPrice(prop);
   
+  // Use data-src for lazy loading
+  const imgSrc = prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image';
+  
   card.innerHTML = `
     <div class="prop-card-image">
       <span class="prop-badge ${badge}">${badgeText}</span>
       ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
-      <img src="${prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image'}" alt="${escapeHtml(prop.title)}" loading="lazy">
+      <img class="lazy" data-src="${imgSrc}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy">
       <div class="card-actions">
         <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
           <i class="far fa-heart"></i>
@@ -2672,6 +2742,34 @@ document.getElementById("contactForm")?.addEventListener("submit", async functio
     submitBtn.disabled = false;
   }
 });
+
+// Initialize lazy loading for images after they're added
+function initLazyLoadingAfterRender() {
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '50px' });
+  
+  document.querySelectorAll('img.lazy').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+// Override renderProperties to initialize lazy loading
+const originalRenderProperties = renderProperties;
+window.renderProperties = function(properties, containerId) {
+  originalRenderProperties(properties, containerId);
+  setTimeout(initLazyLoadingAfterRender, 100);
+};
+renderProperties = window.renderProperties;
 
 // Initialize
 loadHeroImages();
