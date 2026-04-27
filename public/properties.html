@@ -11,6 +11,14 @@
 <link rel="canonical" href="https://glrarealty.com/properties.html">
 <link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="apple-touch-icon" href="/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f97316">
+
+<!-- Preload critical resources -->
+<link rel="preload" href="/logo.png" as="image">
+<link rel="preload" href="/hero-logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -110,7 +118,7 @@ body {
 }
 
 body.dark-mode .navbar.scrolled {
-  background: #0f0f1a;
+  background: #1a1a2a;
 }
 
 .logo {
@@ -129,6 +137,10 @@ body.dark-mode .navbar.scrolled {
   height: 56px; 
   width: auto; 
   display: block;
+}
+
+body.dark-mode .navbar.scrolled .logo img {
+  content: url('/hero-logo.png');
 }
 
 .nav-links {
@@ -314,10 +326,6 @@ body.dark-mode .page-hero {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
 }
 
-.search-field-wrapper input::placeholder {
-  color: var(--gray);
-}
-
 /* Search Suggestions */
 .search-suggestions {
   position: absolute;
@@ -403,7 +411,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters - SIMPLE WORKING SELECTS */
+/* Advanced Filters */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -522,6 +530,7 @@ body.dark-mode .filter-group select option {
   background: rgba(249, 115, 22, 0.1);
 }
 
+/* Dark mode specific fixes */
 body.dark-mode .reset-filters-btn {
   color: #e0e0e0;
   border-color: #5a5a6a;
@@ -646,6 +655,10 @@ body.dark-mode .price-range-group input {
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
+}
+
+.prop-card-image img.lazy {
+  filter: blur(4px);
 }
 
 .prop-card:hover .prop-card-image img { transform: scale(1.05); }
@@ -1561,6 +1574,7 @@ body.dark-mode .btn-darkmode {
     <input type="hidden" id="modalPropertyId">
     <input type="hidden" id="modalPropertyTitle">
     <input type="hidden" id="modalPropertyPrice">
+    <button onclick="submitPriceAlert()">Notify Me When Price
     <button onclick="submitPriceAlert()">Notify Me When Price Drops</button>
     <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll only email you about this property when price changes.</p>
   </div>
@@ -1641,6 +1655,37 @@ body.dark-mode .btn-darkmode {
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
 <script>
+// ============ PWA SERVICE WORKER REGISTRATION ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+      console.log('ServiceWorker registered successfully:', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker registration failed:', err);
+    });
+  });
+}
+
+// ============ LAZY LOADING IMAGES ============
+function initLazyLoading() {
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '50px' });
+  
+  document.querySelectorAll('img[data-src]').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
 // ============ GO HOME FUNCTION ============
 function goHome() {
   window.location.href = '/';
@@ -1697,15 +1742,11 @@ function showSuggestions(value) {
 }
 
 function selectSuggestion(title) {
-  // Find the property by title
   const property = allProperties.find(p => p.title === title);
   if (property) {
-    // Close suggestions dropdown
     document.getElementById('searchSuggestions').style.display = 'none';
-    // Open the property modal directly
     openDetail(property._id);
   } else {
-    // Fallback to search if property not found
     document.getElementById('locationInput').value = title;
     document.getElementById('searchSuggestions').style.display = 'none';
     performSearch();
@@ -1964,7 +2005,6 @@ function shareProperty(platform, property) {
 let allProperties = [];
 let galleryImages = [];
 let currentProperty = null;
-let cachedProperties = null;
 
 function isForLease(prop) {
   const type = (prop.listingType || '').toUpperCase();
@@ -1979,6 +2019,8 @@ function getDisplayPrice(prop) {
     return '₱' + Number(prop.price || 0).toLocaleString();
   }
 }
+
+let cachedProperties = null;
 
 async function loadProperties() {
   if (cachedProperties) {
@@ -2081,12 +2123,13 @@ function createCard(prop) {
   const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
   const displayPrice = getDisplayPrice(prop);
+  const imgSrc = prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image';
   
   card.innerHTML = `
     <div class="prop-card-image">
       <span class="prop-badge ${badge}">${badgeText}</span>
       ${prop.featured ? '<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>' : ''}
-      <img src="${prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image'}" alt="${escapeHtml(prop.title)}" loading="lazy">
+      <img class="lazy" data-src="${imgSrc}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy">
       <div class="card-actions">
         <button class="card-action-btn" onclick="event.stopPropagation(); openWishlistModal('${prop._id}', '${escapeHtml(prop.title)}', ${prop.price}, '${escapeHtml(prop.location)}', '${prop.mainImage || ''}')" title="Save to wishlist">
           <i class="far fa-heart"></i>
@@ -2111,6 +2154,33 @@ function createCard(prop) {
   `;
   return card;
 }
+
+function initLazyLoadingAfterRender() {
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '50px' });
+  
+  document.querySelectorAll('img.lazy').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+// Override renderProperties to initialize lazy loading
+const originalRenderProperties = renderProperties;
+window.renderProperties = function(properties, containerId) {
+  originalRenderProperties(properties, containerId);
+  setTimeout(initLazyLoadingAfterRender, 100);
+};
+renderProperties = window.renderProperties;
 
 function openDetail(id) {
   const prop = allProperties.find(x => x._id === id);
@@ -2298,6 +2368,7 @@ window.addEventListener('load', function() {
   const loader = document.getElementById('loader');
   loader.classList.add('hide');
   setTimeout(() => { loader.style.display = 'none'; }, 500);
+  initLazyLoading();
 });
 
 // Initialize
