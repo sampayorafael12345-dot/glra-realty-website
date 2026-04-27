@@ -2,22 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>GLRA Realty - Admin Dashboard</title>
 <meta name="description" content="Admin dashboard for GLRA Realty - Manage properties, inquiries, subscribers, and hero images">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://glrarealty.com/admin.html">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f97316">
 
-<!-- Preconnect for faster loading -->
+<!-- Preload critical resources -->
+<link rel="preload" href="/logo.png" as="image">
+<link rel="preload" href="/hero-logo.png" as="image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 
 <!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
 
 <style>
@@ -1146,6 +1149,35 @@ button.danger:hover:not(:disabled) {
   font-weight: 600;
 }
 
+/* Loader */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.loader.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-light);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .container {
@@ -1544,6 +1576,17 @@ button.danger:hover:not(:disabled) {
 </div>
 
 <script>
+// ============ PWA SERVICE WORKER REGISTRATION ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+      console.log('ServiceWorker registered successfully:', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker registration failed:', err);
+    });
+  });
+}
+
 // ============ LOADING OVERLAY ============
 function showLoading(message = 'Saving property... Please wait') {
   const overlay = document.getElementById('loadingOverlay');
@@ -2658,6 +2701,15 @@ async function startImport() {
   showRefreshNotice();
   excelData = [];
 }
+
+// Hide loader
+window.addEventListener('load', function() {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.classList.add('hide');
+    setTimeout(() => { if (loader) loader.style.display = 'none'; }, 500);
+  }
+});
 </script>
 </body>
 </html>
