@@ -11,6 +11,14 @@
 <link rel="canonical" href="https://glrarealty.com/guide.html">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="apple-touch-icon" href="/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f97316">
+
+<!-- Preload critical resources -->
+<link rel="preload" href="/logo.png" as="image">
+<link rel="preload" href="/hero-logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -48,17 +56,17 @@
 }
 </script>
 
-<!-- Preconnect for faster loading -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
-
 <!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
-/* ============ CSS VARIABLES ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
   --orange: #f97316;
   --orange-dark: #ea580c;
@@ -69,7 +77,7 @@
   --gray-light: #f3f4f6;
   --white: #ffffff;
   --card-bg: #ffffff;
-  --border-color: #e5e7eb;
+  --border-color: #e8e8e0;
   --text-color: #1a1a2e;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
   --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
@@ -89,59 +97,37 @@ body.dark-mode {
   --card-bg: #1a1a2a;
   --border-color: #2a2a3a;
   --text-color: #e0e0e0;
-  --orange-light: #2a1a0a;
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-md: 0 10px 25px rgba(0,0,0,0.4);
-  --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', sans-serif;
   color: var(--text-color);
   background: var(--white);
+  overflow-x: hidden;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Dark mode fixes */
-body.dark-mode .section-card,
-body.dark-mode .doc-item,
-body.dark-mode .disclosure-form,
-body.dark-mode .warning-box,
-body.dark-mode .email-modal-content {
-  background: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
+/* Custom Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--orange) transparent;
 }
 
-body.dark-mode .doc-table th,
-body.dark-mode .doc-table td {
-  background: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-color) !important;
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-body.dark-mode .doc-table th {
-  background: var(--dark-gray) !important;
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-body.dark-mode .checklist li {
-  color: var(--text-color) !important;
-  border-color: var(--border-color) !important;
-}
-
-body.dark-mode .warning-box {
-  background: #2a1a0a !important;
-  border-left-color: var(--orange) !important;
-}
-
-body.dark-mode .warning-box strong,
-body.dark-mode .warning-box i {
-  color: var(--orange) !important;
-}
-
-body.dark-mode .warning-box div {
-  color: var(--text-color) !important;
+*::-webkit-scrollbar-thumb {
+  background: var(--orange);
+  border-radius: 4px;
 }
 
 /* Navigation */
@@ -169,7 +155,27 @@ body.dark-mode .navbar.scrolled {
   background: #0f0f1a;
 }
 
-.logo img { height: 55px; width: auto; display: block; }
+.logo {
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.navbar.scrolled .logo {
+  opacity: 1;
+  visibility: visible;
+}
+
+.logo img { 
+  height: 56px; 
+  width: auto; 
+  display: block;
+}
+
+body.dark-mode .navbar.scrolled .logo img {
+  content: url('/hero-logo.png');
+}
 
 .nav-links {
   display: flex;
@@ -179,7 +185,7 @@ body.dark-mode .navbar.scrolled {
 
 .nav-links a {
   text-decoration: none;
-  color: var(--white);
+  color: #ffffff !important;
   font-weight: 500;
   transition: var(--transition);
   font-size: 14px;
@@ -187,31 +193,46 @@ body.dark-mode .navbar.scrolled {
   cursor: pointer;
 }
 
-.navbar.scrolled .nav-links a { color: var(--text-color); }
-.nav-links a:hover { color: var(--orange); }
+.navbar.scrolled .nav-links a {
+  color: var(--text-color) !important;
+}
+
+.nav-links a:hover { color: var(--orange) !important; }
+
+.nav-links a.active {
+  color: var(--orange) !important;
+  border-bottom: 2px solid var(--orange);
+  padding-bottom: 4px;
+}
 
 .contact-btn-nav {
   background: transparent;
   border: 2px solid var(--orange);
   padding: 8px 20px;
   border-radius: 40px;
-  color: var(--white) !important;
+  color: #ffffff !important;
 }
 
-.navbar.scrolled .contact-btn-nav { color: var(--orange) !important; border-color: var(--orange); }
-.contact-btn-nav:hover { background: var(--orange); color: var(--white) !important; }
+.navbar.scrolled .contact-btn-nav { 
+  color: var(--orange) !important; 
+  border-color: var(--orange);
+}
+
+.contact-btn-nav:hover { 
+  background: var(--orange); 
+  color: #ffffff !important; 
+}
 
 .mobile-menu-btn {
   display: none;
   font-size: 24px;
   cursor: pointer;
-  color: var(--white);
+  color: #ffffff;
   z-index: 1001;
 }
 
 .navbar.scrolled .mobile-menu-btn { color: var(--text-color); }
 
-/* Mobile Overlay */
 .mobile-overlay {
   position: fixed;
   top: 0;
@@ -245,15 +266,13 @@ body.dark-mode .navbar.scrolled {
 }
 
 .mobile-overlay-links a {
-  color: var(--white);
+  color: #ffffff;
   text-decoration: none;
   font-size: 24px;
   font-weight: 500;
   font-family: 'Playfair Display', serif;
   cursor: pointer;
 }
-
-.mobile-overlay-links a:hover { color: var(--orange); }
 
 /* Page Hero */
 .page-hero {
@@ -534,14 +553,6 @@ body.dark-mode footer {
   text-decoration: none;
 }
 
-.footer-col ul {
-  list-style: none;
-}
-
-.footer-col ul li {
-  margin-bottom: 5px;
-}
-
 .social-links {
   display: flex;
   gap: 10px;
@@ -598,12 +609,12 @@ body.dark-mode footer {
 .btn-messenger { background: #0084ff; color: white; }
 .btn-whatsapp { background: #25d366; color: white; }
 .btn-viber { background: #7360f2; color: white; }
-.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 .btn-instagram {
   background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
   color: white;
   border: none;
 }
+.btn-darkmode { background: #1e1e2e; color: white; border: 2px solid var(--orange); }
 
 body.dark-mode .btn-darkmode {
   background: #2a2a3a;
@@ -655,42 +666,37 @@ body.dark-mode .btn-darkmode {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Print Styles */
-@media print {
-  .navbar, .floating-buttons, .print-button-wrapper, .email-modal, footer, .back-to-top, .mobile-menu-btn {
-    display: none !important;
-  }
-  
-  .page-hero {
-    background: #1a1a2e;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    height: auto;
-    padding: 40px 20px;
-  }
-  
-  .section-header {
-    background: #1a1a2e;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .content-container {
-    margin: 0;
-    padding: 20px;
-  }
-  
-  .section-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #ddd;
-  }
-  
-  body {
-    background: white;
-    padding: 0;
-  }
+/* Loader */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.loader.hide {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-light);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Mobile */
@@ -723,19 +729,24 @@ body.dark-mode .btn-darkmode {
 </head>
 <body>
 
+<!-- Loader -->
+<div class="loader" id="loader">
+  <div class="loader-spinner"></div>
+</div>
+
 <!-- Navigation -->
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()">
     <i class="fas fa-bars"></i>
   </div>
-  <div class="logo">
-    <img src="/logo.png" alt="GLRA Realty">
+  <div class="logo" onclick="goHome()">
+    <img src="/logo.png" alt="GLRA Realty Logo">
   </div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/#featured">FEATURED</a>
     <a href="/properties.html">PROPERTIES</a>
-    <a href="/#agent">AGENT</a>
+    <a href="/#broker">BROKER</a>
     <a href="/calculator.html">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -748,7 +759,7 @@ body.dark-mode .btn-darkmode {
     <a href="/" onclick="closeMobileMenu()">HOME</a>
     <a href="/#featured" onclick="closeMobileMenu()">FEATURED</a>
     <a href="/properties.html" onclick="closeMobileMenu()">PROPERTIES</a>
-    <a href="/#agent" onclick="closeMobileMenu()">AGENT</a>
+    <a href="/#broker" onclick="closeMobileMenu()">BROKER</a>
     <a href="/calculator.html" onclick="closeMobileMenu()">CALCULATOR</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">ZONAL VALUE</a>
     <a href="/#contact" onclick="closeMobileMenu()">CONTACT</a>
@@ -840,7 +851,7 @@ body.dark-mode .btn-darkmode {
           <tr><td><strong>Statement of Account</strong></td><td>Shows remaining balance (if under mortgage)</td></tr>
           <tr><td><strong>Bank Certification</strong></td><td>Confirms loan payoff amount (if applicable)</td></tr>
         </tbody>
-       </table>
+      </table>
     </div>
   </div>
 
@@ -861,7 +872,7 @@ body.dark-mode .btn-darkmode {
           <tr><td><strong>Transfer Tax Receipt</strong></td><td>Buyer</td><td>Proof of payment to local government</td></tr>
           <tr><td><strong>New Title in Buyer's Name</strong></td><td>Register of Deeds</td><td>Final proof of ownership</td></tr>
         </tbody>
-       </table>
+      </table>
     </div>
   </div>
 
@@ -974,7 +985,7 @@ body.dark-mode .btn-darkmode {
         </div>
         <div class="doc-item">
           <h3>💼 Professional Image</h3>
-          <p>Positions you as an expert real estate agent, not just a middleman.</p>
+          <p>Positions you as an expert real estate broker, not just a middleman.</p>
         </div>
       </div>
     </div>
@@ -992,16 +1003,12 @@ body.dark-mode .btn-darkmode {
         </thead>
         <tbody>
           <tr><td><strong>Capital Gains Tax</strong></td><td>6%</td><td>Seller</td><td>Within 30 days of sale</td></tr>
-          <tr><td><strong>Documentary Stamp Tax</strong></td><td>1.5%</td><td>Buyer</td><td>Before notarization</span></td>
-          <tr>
-          <tr><td><strong>Local Transfer Tax</strong></td><td>0.5% - 0.75%</td><td>Buyer</td><td>Within 60 days</td>
-          </tr>
-          <tr><td><strong>Registration Fee</strong></td><td>Tiered</td><td>Buyer</td><td>Upon transfer</td>
-          </tr>
-          <tr><td><strong>Broker Commission</strong></td><td>3% - 7%</td><td>Seller</td><td>Upon closing</td>
-          </tr>
+          <tr><td><strong>Documentary Stamp Tax</strong></td><td>1.5%</td><td>Buyer</td><td>Before notarization</td></tr>
+          <tr><td><strong>Local Transfer Tax</strong></td><td>0.5% - 0.75%</td><td>Buyer</td><td>Within 60 days</td></tr>
+          <tr><td><strong>Registration Fee</strong></td><td>Tiered</td><td>Buyer</td><td>Upon transfer</td></tr>
+          <tr><td><strong>Broker Commission</strong></td><td>3% - 7%</td><td>Seller</td><td>Upon closing</td></tr>
         </tbody>
-      </table>
+       </table>
       <div class="warning-box" style="margin-top: 20px;">
         <i class="fas fa-calendar-alt"></i>
         <strong>Deadline Reminder:</strong> Capital Gains Tax and Documentary Stamp Tax must be paid within 30 days from the date of sale to avoid penalties and surcharges.
@@ -1016,7 +1023,7 @@ body.dark-mode .btn-darkmode {
   <div class="footer-content">
     <div class="footer-col">
       <h4>GLRA REALTY</h4>
-      <p>Licensed Real Estate Agent<br>Metro Manila & Luzon</p>
+      <p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p>
       <div class="social-links">
         <a href="https://instagram.com/glra_realty" target="_blank"><i class="fab fa-instagram"></i></a>
         <a href="https://facebook.com/messages/t/glrarealty" target="_blank"><i class="fab fa-facebook-messenger"></i></a>
@@ -1051,22 +1058,9 @@ body.dark-mode .btn-darkmode {
 
 <!-- Floating Buttons -->
 <div class="floating-buttons">
-  <!-- Phone -->
-  <a href="tel:+639171774572" class="floating-btn btn-call">
-    <i class="fas fa-phone-alt"></i>
-  </a>
-  
-  <!-- Facebook Page -->
-  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank">
-    <i class="fab fa-facebook-f"></i>
-  </a>
-  
-  <!-- Instagram -->
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank">
-    <i class="fab fa-instagram"></i>
-  </a>
-  
-  <!-- Dark Mode -->
+  <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://facebook.com/glrarealty" class="floating-btn btn-messenger" target="_blank"><i class="fab fa-facebook-f"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()">
     <i class="fas fa-moon"></i>
   </button>
@@ -1076,6 +1070,22 @@ body.dark-mode .btn-darkmode {
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 
 <script>
+// ============ PWA SERVICE WORKER REGISTRATION ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+      console.log('ServiceWorker registered successfully:', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker registration failed:', err);
+    });
+  });
+}
+
+// ============ GO HOME FUNCTION ============
+function goHome() {
+  window.location.href = '/';
+}
+
 // ============ DARK MODE ============
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
@@ -1109,7 +1119,7 @@ function showToast(message, isError = false) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-// Mobile menu
+// ============ MOBILE MENU ============
 function openMobileMenu() {
   document.getElementById('mobileOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -1124,7 +1134,6 @@ function closeMobileMenu() {
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
   const backToTop = document.getElementById('backToTop');
-  
   if (window.scrollY > 50) {
     navbar.classList.add('scrolled');
     backToTop.classList.add('show');
@@ -1132,6 +1141,13 @@ window.addEventListener('scroll', function() {
     navbar.classList.remove('scrolled');
     backToTop.classList.remove('show');
   }
+});
+
+// Hide loader
+window.addEventListener('load', function() {
+  const loader = document.getElementById('loader');
+  loader.classList.add('hide');
+  setTimeout(() => { loader.style.display = 'none'; }, 500);
 });
 </script>
 </body>
