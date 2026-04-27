@@ -427,7 +427,7 @@ body.dark-mode .search-suggestions {
   border-color: var(--orange);
 }
 
-/* Advanced Filters */
+/* Advanced Filters - PROPER LAYOUT */
 .advanced-filters {
   display: none;
   margin-top: 20px;
@@ -437,6 +437,14 @@ body.dark-mode .search-suggestions {
 
 .advanced-filters.show {
   display: block;
+}
+
+.filter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
 }
 
 .filter-group {
@@ -489,10 +497,11 @@ body.dark-mode .filter-group select option {
   color: #e0e0e0;
 }
 
-/* Price Range with commas */
+/* Price Range - side by side */
 .price-range-group {
   display: flex;
   gap: 10px;
+  width: 100%;
 }
 
 .price-range-group input {
@@ -620,9 +629,6 @@ body.dark-mode .price-range-group input {
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
-  /* Lazy loading blur effect */
-  filter: blur(0px);
-  transition: filter 0.3s ease;
 }
 
 .prop-card-image img.lazy {
@@ -1362,7 +1368,7 @@ body.dark-mode .btn-darkmode {
 
 .modal-mortgage-result .label {
   font-size: 10px;
-    color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.6);
 }
 
 .modal-mortgage-result .amount {
@@ -1726,46 +1732,48 @@ body.dark-mode .modal-mortgage-result {
     </div>
     
     <div class="advanced-filters" id="advancedFilters">
-      <div class="filter-group">
-        <label>PROPERTY TYPE</label>
-        <select id="propertyTypeSelect" onchange="applyLiveFilters()">
-          <option value="">All Types</option>
-          <option value="Condominium">Condominium</option>
-          <option value="House and Lot">House and Lot</option>
-          <option value="Townhouse">Townhouse</option>
-          <option value="Commercial Lot">Commercial Lot</option>
-          <option value="Residential Lot">Residential Lot</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label>BEDROOMS</label>
-        <select id="bedroomsSelect" onchange="applyLiveFilters()">
-          <option value="">Any</option>
-          <option value="1">1+ Bedrooms</option>
-          <option value="2">2+ Bedrooms</option>
-          <option value="3">3+ Bedrooms</option>
-          <option value="4">4+ Bedrooms</option>
-          <option value="5">5+ Bedrooms</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label>BATHROOMS</label>
-        <select id="bathsSelect" onchange="applyLiveFilters()">
-          <option value="">Any</option>
-          <option value="1">1+ Bathrooms</option>
-          <option value="2">2+ Bathrooms</option>
-          <option value="3">3+ Bathrooms</option>
-          <option value="4">4+ Bathrooms</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label>PRICE RANGE (₱)</label>
-        <div class="price-range-group">
-          <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this); applyLiveFilters();">
-          <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this); applyLiveFilters();">
+      <div class="filter-grid">
+        <div class="filter-group">
+          <label>PROPERTY TYPE</label>
+          <select id="propertyTypeSelect" onchange="applyLiveFilters()">
+            <option value="">All Types</option>
+            <option value="Condominium">Condominium</option>
+            <option value="House and Lot">House and Lot</option>
+            <option value="Townhouse">Townhouse</option>
+            <option value="Commercial Lot">Commercial Lot</option>
+            <option value="Residential Lot">Residential Lot</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>BEDROOMS</label>
+          <select id="bedroomsSelect" onchange="applyLiveFilters()">
+            <option value="">Any</option>
+            <option value="1">1+ Bedrooms</option>
+            <option value="2">2+ Bedrooms</option>
+            <option value="3">3+ Bedrooms</option>
+            <option value="4">4+ Bedrooms</option>
+            <option value="5">5+ Bedrooms</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>BATHROOMS</label>
+          <select id="bathsSelect" onchange="applyLiveFilters()">
+            <option value="">Any</option>
+            <option value="1">1+ Bathrooms</option>
+            <option value="2">2+ Bathrooms</option>
+            <option value="3">3+ Bathrooms</option>
+            <option value="4">4+ Bathrooms</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>PRICE RANGE (₱)</label>
+          <div class="price-range-group">
+            <input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this); applyLiveFilters();">
+            <input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this); applyLiveFilters();">
+          </div>
         </div>
       </div>
       
@@ -2157,7 +2165,7 @@ function toggleDarkMode() {
   if (isDarkMode) {
     btn.innerHTML = '<i class="fas fa-sun"></i>';
   } else {
-    btn.innerHTML = '<i class="fas fa-moon"></i>';
+    btn.innerHTML = '<i class="fas fa-moon</i>';
   }
 }
 
@@ -2506,8 +2514,6 @@ function createCard(prop) {
   const badgeText = isSale ? 'FOR SALE' : 'FOR LEASE';
   const parking = prop.parking > 0 ? `<span><i class="fas fa-parking"></i> ${prop.parking}</span>` : '';
   const displayPrice = getDisplayPrice(prop);
-  
-  // Use data-src for lazy loading
   const imgSrc = prop.mainImage || 'https://via.placeholder.com/400x400?text=No+Image';
   
   card.innerHTML = `
@@ -2539,6 +2545,33 @@ function createCard(prop) {
   `;
   return card;
 }
+
+function initLazyLoadingAfterRender() {
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { rootMargin: '50px' });
+  
+  document.querySelectorAll('img.lazy').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+// Override renderProperties to initialize lazy loading
+const originalRenderProperties = renderProperties;
+window.renderProperties = function(properties, containerId) {
+  originalRenderProperties(properties, containerId);
+  setTimeout(initLazyLoadingAfterRender, 100);
+};
+renderProperties = window.renderProperties;
 
 function openDetail(id) {
   const prop = allProperties.find(x => x._id === id);
@@ -2742,34 +2775,6 @@ document.getElementById("contactForm")?.addEventListener("submit", async functio
     submitBtn.disabled = false;
   }
 });
-
-// Initialize lazy loading for images after they're added
-function initLazyLoadingAfterRender() {
-  const imageObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const img = entry.target;
-        if (img.dataset.src) {
-          img.src = img.dataset.src;
-          img.classList.remove('lazy');
-        }
-        observer.unobserve(img);
-      }
-    });
-  }, { rootMargin: '50px' });
-  
-  document.querySelectorAll('img.lazy').forEach(img => {
-    imageObserver.observe(img);
-  });
-}
-
-// Override renderProperties to initialize lazy loading
-const originalRenderProperties = renderProperties;
-window.renderProperties = function(properties, containerId) {
-  originalRenderProperties(properties, containerId);
-  setTimeout(initLazyLoadingAfterRender, 100);
-};
-renderProperties = window.renderProperties;
 
 // Initialize
 loadHeroImages();
