@@ -199,6 +199,35 @@ const PriceAlert = mongoose.model('PriceAlert', priceAlertSchema);
 const Wishlist = mongoose.model('Wishlist', wishlistSchema);
 const AlertLog = mongoose.model('AlertLog', alertLogSchema);
 
+const auditLogSchema = new mongoose.Schema({
+  actor: { type: String, required: true },     // email of who did it
+  actorName: { type: String, default: '' },
+  actorRole: { type: String, default: 'employee' },
+  action: { type: String, required: true },     // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  target: { type: String, default: '' },        // e.g. "Property", "HeroImage"
+  targetId: { type: String, default: '' },
+  targetTitle: { type: String, default: '' },
+  changes: { type: mongoose.Schema.Types.Mixed, default: null }, // before/after
+  ip: { type: String, default: '' },
+  userAgent: { type: String, default: '' },
+  timestamp: { type: Date, default: Date.now }
+});
+
+// Account schema — stored in MongoDB so admin can manage from dashboard
+const accountSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, default: '' },
+  role: { type: String, enum: ['admin','employee'], default: 'employee' },
+  createdAt: { type: Date, default: Date.now },
+  lastLogin: { type: Date, default: null },
+  isActive: { type: Boolean, default: true }
+});
+
+const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+const Account = mongoose.model('Account', accountSchema);
+
+
 // ============ CONNECT TO MONGODB ============
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 30000,
@@ -590,13 +619,56 @@ const ADMIN_ACCOUNTS = [
   { email: (process.env.EMP2_EMAIL || 'employee2@glrarealty.com'), password: (process.env.EMP2_PASSWORD || 'GLRAEmp2026!'), role: 'employee', name: 'Staff Account 2' },
 ];
 
-app.post('/api/admin/login', (req, res) => {
+
+// ============ AUDIT LOG HELPER ============
+async function logAudit(actor, actorName, actorRole, action, target, targetId, targetTitle, changes, req) {
+  try {
+    await AuditLog.create({
+      actor, actorName, actorRole, action, target, targetId, targetTitle,
+      changes: changes || null,
+      ip: req?.ip || req?.connection?.remoteAddress || '',
+      userAgent: req?.headers?.['user-agent'] || '',
+      timestamp: new Date()
+    });
+  } catch(e) { console.error('Audit log error:', e.message); }
+}
+
+// ============ SEED DEFAULT ADMIN ACCOUNT ============
+async function seedDefaultAdmin() {
+  try {
+    const existing = await Account.findOne({ role: 'admin' });
+    if (!existing) {
+      await Account.create({
+        email: process.env.ADMIN_EMAIL || 'admin@glrarealty.com',
+        password: process.env.ADMIN_PASSWORD || 'GLRA@Admin2026!',
+        name: 'Catherine Sampayo',
+        role: 'admin'
+      });
+      console.log('✅ Default admin account created');
+    }
+  } catch(e) { console.error('Seed error:', e.message); }
+}
+
+app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
-  const account = ADMIN_ACCOUNTS.find(a => a.email === email && a.password === password);
-  if (account) {
-    res.json({ success: true, role: account.role, name: account.name, email: account.email });
-  } else {
+  try {
+    // First check MongoDB accounts
+    let account = await Account.findOne({ email, password, isActive: true });
+    if (account) {
+      await Account.findByIdAndUpdate(account._id, { lastLogin: new Date() });
+      await logAudit(email, account.name, account.role, 'LOGIN', 'Session', '', '', null, req);
+      return res.json({ success: true, role: account.role, name: account.name, email: account.email, id: account._id });
+    }
+    // Fallback to hardcoded accounts (backward compat)
+    const fallback = ADMIN_ACCOUNTS.find(a => a.email === email && a.password === password);
+    if (fallback) {
+      await logAudit(email, fallback.name, fallback.role, 'LOGIN', 'Session', '', '', null, req);
+      return res.json({ success: true, role: fallback.role, name: fallback.name, email: fallback.email });
+    }
     res.status(401).json({ error: 'Invalid credentials' });
+  } catch(e) {
+    console.error('Login error:', e);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -611,9 +683,70 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/accounts', (req, res) => {
-  // Return accounts without passwords
-  res.json(ADMIN_ACCOUNTS.map(a => ({ email: a.email, role: a.role, name: a.name })));
+app.get('/api/admin/accounts', async (req, res) => {
+  try {
+    const accounts = await Account.find({}, { password: 0 }).sort({ createdAt: 1 });
+    // Merge with hardcoded fallbacks if DB is empty
+    if (accounts.length === 0) {
+      return res.json(ADMIN_ACCOUNTS.map(a => ({ email: a.email, role: a.role, name: a.name, isActive: true })));
+    }
+    res.json(accounts);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Create account
+app.post('/api/admin/accounts', requireAdmin, async (req, res) => {
+  const { email, password, name, role } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  try {
+    const account = await Account.create({ email, password, name: name||email.split('@')[0], role: role||'employee' });
+    const actor = req.headers['x-admin-email'] || 'admin';
+    const actorName = req.headers['x-admin-name'] || 'Admin';
+    await logAudit(actor, actorName, 'admin', 'CREATE', 'Account', account._id, email, { role }, req);
+    res.json({ success: true, account: { email: account.email, name: account.name, role: account.role, _id: account._id } });
+  } catch(e) {
+    if (e.code === 11000) return res.status(400).json({ error: 'Email already exists' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Update account
+app.put('/api/admin/accounts/:id', requireAdmin, async (req, res) => {
+  const { email, password, name, role, isActive } = req.body;
+  try {
+    const before = await Account.findById(req.params.id, { password: 0 });
+    const update = {};
+    if (email) update.email = email;
+    if (password) update.password = password;
+    if (name) update.name = name;
+    if (role) update.role = role;
+    if (isActive !== undefined) update.isActive = isActive;
+    const account = await Account.findByIdAndUpdate(req.params.id, update, { new: true, select: '-password' });
+    if (!account) return res.status(404).json({ error: 'Account not found' });
+    const actor = req.headers['x-admin-email'] || 'admin';
+    const actorName = req.headers['x-admin-name'] || 'Admin';
+    await logAudit(actor, actorName, 'admin', 'UPDATE', 'Account', req.params.id, account.email, { before, after: update }, req);
+    res.json({ success: true, account });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete account
+app.delete('/api/admin/accounts/:id', requireAdmin, async (req, res) => {
+  try {
+    const account = await Account.findByIdAndDelete(req.params.id);
+    if (!account) return res.status(404).json({ error: 'Account not found' });
+    const actor = req.headers['x-admin-email'] || 'admin';
+    await logAudit(actor, '', 'admin', 'DELETE', 'Account', req.params.id, account.email, null, req);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Get audit log
+app.get('/api/admin/audit-log', requireAdmin, async (req, res) => {
+  try {
+    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(200);
+    res.json(logs);
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/admin/stats', async (req, res) => {
