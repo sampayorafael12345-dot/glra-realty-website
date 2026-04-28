@@ -48,14 +48,7 @@ body.dark-mode .navbar{background:#0a1520}
 .mobile-overlay-links{display:flex;flex-direction:column;gap:28px;text-align:center}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
 .mobile-overlay-links a:hover{color:var(--gold)}
-.nav-dropdown{position:relative}
-.nav-dropdown-menu{position:absolute;top:100%;left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:190px;padding:6px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
-body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
-.nav-dropdown:hover .nav-dropdown-menu{display:block}
-.nav-dropdown-menu::before{content:'';position:absolute;top:-14px;left:0;right:0;height:14px}
-.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color) !important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
-.nav-dropdown-menu a:last-child{border-bottom:none}
-.nav-dropdown-menu a:hover{color:var(--gold) !important;background:var(--gray-light);padding-left:26px}
+.nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
 /* PAGE HERO */
 .page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,0.15);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,0.07) 0%,transparent 65%);pointer-events:none}
@@ -417,6 +410,7 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
 </div>
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 <script>
+window.addEventListener('DOMContentLoaded',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',400)}});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 /* ---- DARK MODE ---- */
 function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';}

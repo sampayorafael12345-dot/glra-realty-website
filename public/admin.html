@@ -17,493 +17,335 @@
 :root{
   --gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,.12);
   --navy:#0d1b2a;--navy-mid:#1a2d42;--navy-light:#243550;
-  --gray:#7f8c8d;--gray-light:#f4f6f9;
-  --white:#fff;--card-bg:#fff;--border-color:#e2e8f0;--text-color:#1a2332;
-  --shadow-sm:0 1px 4px rgba(0,0,0,.06);
+  --gray:#64748b;--gray-light:#f1f5f9;
+  --white:#fff;--card-bg:#fff;--border-color:#e2e8f0;--text-color:#1e293b;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
   --shadow-md:0 4px 16px rgba(0,0,0,.08);
   --shadow-lg:0 12px 40px rgba(0,0,0,.12);
   --success:#10b981;--danger:#ef4444;--info:#3b82f6;--warning:#f59e0b;
-  --sidebar-w:240px;--header-h:64px;
-  --transition:all .25s cubic-bezier(.4,0,.2,1)
+  --sidebar-w:248px;--header-h:60px;
+  --transition:all .2s cubic-bezier(.4,0,.2,1)
 }
 body.dark-mode{
   --gray-light:#0f172a;--white:#111827;--card-bg:#1e293b;
   --border-color:#334155;--text-color:#e2e8f0;--gray:#94a3b8
 }
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--gray-light);overflow-x:hidden;transition:background .3s,color .3s}
+body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--gray-light);overflow-x:hidden}
 *{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
-*::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+*::-webkit-scrollbar{width:5px}*::-webkit-scrollbar-thumb{background:var(--gold)}
 
-/* ── LOGIN SCREEN ────────────────────────────────────── */
-.login-screen{
-  position:fixed;inset:0;background:var(--navy);
-  display:flex;align-items:center;justify-content:center;z-index:9999;
-}
-.login-card{
-  background:var(--navy-mid);border:1px solid rgba(200,169,110,.2);
-  padding:48px 44px;width:100%;max-width:420px;position:relative;overflow:hidden;
-}
-.login-card::before{
-  content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;
-  border-radius:50%;background:rgba(200,169,110,.05);pointer-events:none;
-}
-.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+/* ── LOGIN ─────────────────────────────────────────── */
+.login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(200,169,110,.08) 0%,transparent 60%)}
+.login-card{background:rgba(255,255,255,.04);border:1px solid rgba(200,169,110,.2);backdrop-filter:blur(10px);padding:52px 44px;width:100%;max-width:420px}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:40px}
 .login-logo img{height:44px}
-.login-logo-text{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600;letter-spacing:1px}
-.login-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;margin-bottom:6px}
-.login-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:32px;letter-spacing:.3px}
-.login-field{margin-bottom:16px}
-.login-field label{display:block;font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:500}
-.login-field input{
-  width:100%;padding:13px 16px;background:rgba(255,255,255,.06);
-  border:1px solid rgba(200,169,110,.2);color:#fff;
-  font-size:14px;font-family:'DM Sans',sans-serif;transition:var(--transition);
-}
-.login-field input:focus{outline:none;border-color:var(--gold);background:rgba(255,255,255,.09)}
+.login-brand{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600;letter-spacing:1px}
+.login-brand small{display:block;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:'DM Sans',sans-serif;font-weight:400;margin-top:1px}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:30px;color:#fff;margin-bottom:6px;font-weight:600}
+.login-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:36px}
+.login-field{margin-bottom:18px}
+.login-field label{display:block;font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.login-field input{width:100%;padding:13px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(200,169,110,.2);color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;transition:var(--transition);outline:none}
+.login-field input:focus{border-color:var(--gold);background:rgba(255,255,255,.09)}
 .login-field input::placeholder{color:rgba(255,255,255,.3)}
-.login-btn{
-  width:100%;padding:14px;background:var(--gold);color:#fff;border:none;
-  font-size:13px;letter-spacing:2px;text-transform:uppercase;
-  cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;
-  transition:var(--transition);margin-top:8px;
-}
+.login-btn{width:100%;padding:14px;background:var(--gold);color:#fff;border:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;transition:var(--transition);margin-top:8px}
 .login-btn:hover{background:var(--gold-dark)}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
-.login-error{font-size:12px;color:#ef4444;margin-top:12px;text-align:center;display:none}
-.login-accounts-hint{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)}
-.login-accounts-hint p{font-size:11px;color:rgba(255,255,255,.3);text-align:center;letter-spacing:.5px}
+.login-error{font-size:12px;color:#f87171;margin-top:14px;text-align:center;padding:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);display:none}
 
-/* ── ADMIN SHELL ─────────────────────────────────────── */
-.admin-shell{display:none;min-height:100vh}
+/* ── SHELL LAYOUT ───────────────────────────────────── */
+.admin-shell{display:none;min-height:100vh;flex-direction:row}
 .admin-shell.visible{display:flex}
 
 /* SIDEBAR */
-.sidebar{
-  width:var(--sidebar-w);background:var(--navy);
-  display:flex;flex-direction:column;
-  position:fixed;left:0;top:0;bottom:0;z-index:300;
-  border-right:1px solid rgba(200,169,110,.12);
-  transition:transform .3s ease;overflow-y:auto;
-}
-.sidebar-header{
-  padding:20px 22px;border-bottom:1px solid rgba(200,169,110,.12);
-  display:flex;align-items:center;gap:12px;
-}
-.sidebar-header img{height:40px;width:auto}
-.sidebar-brand{font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-weight:600;letter-spacing:.5px}
-.sidebar-nav{padding:16px 0;flex:1}
-.nav-section-label{
-  font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px;
-  text-transform:uppercase;padding:8px 22px 4px;font-weight:600;
-}
-.nav-item{
-  display:flex;align-items:center;gap:12px;
-  padding:11px 22px;color:rgba(255,255,255,.55);
-  font-size:13px;cursor:pointer;transition:var(--transition);
-  border-left:3px solid transparent;text-decoration:none;
-  font-weight:400;letter-spacing:.3px;
-}
-.nav-item:hover{color:#fff;background:rgba(200,169,110,.08)}
-.nav-item.active{color:var(--gold);background:rgba(200,169,110,.1);border-left-color:var(--gold)}
-.nav-item i{width:18px;text-align:center;font-size:14px;flex-shrink:0}
-.nav-item .nav-badge{
-  margin-left:auto;background:var(--gold);color:#fff;
-  font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;
-}
-.sidebar-footer{
-  padding:16px 22px;border-top:1px solid rgba(200,169,110,.12);
-}
-.user-card{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px;background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.15);
-  margin-bottom:12px;cursor:default;
-}
-.user-avatar{
-  width:34px;height:34px;background:var(--gold);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#fff;
-  flex-shrink:0;
-}
-.user-name{font-size:12px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-role{font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
-.sidebar-actions{display:flex;gap:8px}
-.sidebar-action-btn{
-  flex:1;padding:9px;border:1px solid rgba(200,169,110,.2);
-  background:transparent;color:rgba(255,255,255,.5);
-  font-size:12px;cursor:pointer;transition:var(--transition);
-  font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;
-}
-.sidebar-action-btn:hover{border-color:var(--gold);color:var(--gold)}
-.sidebar-action-btn.danger:hover{border-color:#ef4444;color:#ef4444}
+.sidebar{width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:300;border-right:1px solid rgba(200,169,110,.1);overflow-y:auto;transition:transform .3s ease}
+.sb-head{padding:18px 20px;border-bottom:1px solid rgba(200,169,110,.1);display:flex;align-items:center;gap:12px}
+.sb-head img{height:38px}
+.sb-brand{font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-weight:600}
+.sb-brand small{display:block;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1.5px;font-family:'DM Sans',sans-serif;margin-top:0}
+.sb-nav{padding:12px 0;flex:1}
+.sb-section{font-size:10px;color:rgba(255,255,255,.25);letter-spacing:2px;text-transform:uppercase;padding:10px 20px 4px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;text-decoration:none;font-weight:400}
+.nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}
+.nav-item.active{color:var(--gold);background:rgba(200,169,110,.08);border-left-color:var(--gold)}
+.nav-item i{width:17px;text-align:center;font-size:13px;flex-shrink:0;opacity:.7}
+.nav-item.active i{opacity:1}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700}
+.sb-foot{padding:14px 20px;border-top:1px solid rgba(200,169,110,.1)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.12);margin-bottom:10px}
+.user-av{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:15px;color:#fff;font-weight:700;flex-shrink:0}
+.user-nm{font-size:12px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.user-rl{font-size:10px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.sb-btns{display:flex;gap:8px}
+.sb-btn{flex:1;padding:8px;border:1px solid rgba(200,169,110,.18);background:transparent;color:rgba(255,255,255,.45);font-size:11px;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px}
+.sb-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sb-btn.danger:hover{border-color:#ef4444;color:#ef4444}
 
-/* MAIN CONTENT */
-.main-content{
-  margin-left:var(--sidebar-w);flex:1;
-  display:flex;flex-direction:column;min-height:100vh;
-}
-.main-header{
-  background:var(--card-bg);height:var(--header-h);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 28px;border-bottom:1px solid var(--border-color);
-  position:sticky;top:0;z-index:200;
-  box-shadow:var(--shadow-sm);
-}
-.header-left{display:flex;align-items:center;gap:16px}
-.sidebar-toggle{
-  display:none;width:36px;height:36px;background:transparent;
-  border:1px solid var(--border-color);cursor:pointer;
-  align-items:center;justify-content:center;font-size:16px;color:var(--text-color);
-  transition:var(--transition);
-}
+/* MAIN */
+.main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.main-header{background:var(--card-bg);height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-color);position:sticky;top:0;z-index:200;box-shadow:var(--shadow-sm)}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.sidebar-toggle{display:none;width:34px;height:34px;background:transparent;border:1px solid var(--border-color);cursor:pointer;align-items:center;justify-content:center;font-size:15px;color:var(--text-color);transition:var(--transition)}
 .sidebar-toggle:hover{border-color:var(--gold);color:var(--gold)}
-.page-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text-color)}
-.page-subtitle{font-size:12px;color:var(--gray);margin-top:1px}
-.header-right{display:flex;align-items:center;gap:12px}
-.header-btn{
-  padding:8px 16px;border:1px solid var(--border-color);
-  background:transparent;color:var(--text-color);font-size:12px;
-  cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;
-  display:flex;align-items:center;gap:7px;letter-spacing:.5px;
-}
-.header-btn:hover{border-color:var(--gold);color:var(--gold)}
-.header-btn.primary{background:var(--gold);color:#fff;border-color:var(--gold)}
-.header-btn.primary:hover{background:var(--gold-dark)}
-.header-btn.danger{color:#ef4444;border-color:#ef4444}
-.header-btn.danger:hover{background:#ef4444;color:#fff}
-/* Page content area */
-.page-content{flex:1;padding:28px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--text-color)}
+.page-sub{font-size:11px;color:var(--gray);margin-top:1px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-btn{padding:7px 14px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);font-size:11px;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;letter-spacing:.5px;white-space:nowrap}
+.hdr-btn:hover{border-color:var(--gold);color:var(--gold)}
+.hdr-btn.primary{background:var(--gold);color:#fff;border-color:var(--gold)}
+.hdr-btn.primary:hover{background:var(--gold-dark)}
+.hdr-btn.danger{color:#ef4444;border-color:rgba(239,68,68,.3)}
+.hdr-btn.danger:hover{background:#ef4444;color:#fff;border-color:#ef4444}
+.page-content{flex:1;padding:24px}
 
-/* ── STATS GRID ──────────────────────────────────────── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:28px}
-.stat-card{
-  background:var(--card-bg);border:1px solid var(--border-color);
-  padding:22px 24px;display:flex;align-items:center;gap:18px;
-  transition:var(--transition);
-}
+/* ── STATS ──────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card-bg);border:1px solid var(--border-color);padding:20px;display:flex;align-items:center;gap:16px;transition:var(--transition)}
 .stat-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
-.stat-icon{
-  width:50px;height:50px;display:flex;align-items:center;justify-content:center;
-  font-size:20px;flex-shrink:0;
-}
-.stat-icon.gold{background:rgba(200,169,110,.12);color:var(--gold)}
-.stat-icon.blue{background:rgba(59,130,246,.1);color:#3b82f6}
-.stat-icon.green{background:rgba(16,185,129,.1);color:#10b981}
-.stat-icon.orange{background:rgba(249,115,22,.1);color:#f97316}
-.stat-icon.purple{background:rgba(139,92,246,.1);color:#8b5cf6}
-.stat-number{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--text-color);line-height:1}
-.stat-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.stat-ico{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.ico-gold{background:rgba(200,169,110,.1);color:var(--gold)}
+.ico-blue{background:rgba(59,130,246,.1);color:#3b82f6}
+.ico-green{background:rgba(16,185,129,.1);color:#10b981}
+.ico-orange{background:rgba(249,115,22,.1);color:#f97316}
+.ico-purple{background:rgba(139,92,246,.1);color:#8b5cf6}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:var(--text-color);line-height:1}
+.stat-lbl{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
 
-/* ── CARD / PANEL ────────────────────────────────────── */
-.panel{background:var(--card-bg);border:1px solid var(--border-color);margin-bottom:24px}
-.panel-header{
-  padding:18px 24px;border-bottom:1px solid var(--border-color);
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
-}
-.panel-title{font-size:14px;font-weight:600;color:var(--text-color);display:flex;align-items:center;gap:8px}
+/* ── PANEL ──────────────────────────────────────────── */
+.panel{background:var(--card-bg);border:1px solid var(--border-color);margin-bottom:20px}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.panel-title{font-size:13px;font-weight:600;color:var(--text-color);display:flex;align-items:center;gap:7px}
 .panel-title i{color:var(--gold)}
-.panel-body{padding:24px}
+.panel-body{padding:20px}
 
-/* ── TABLE ───────────────────────────────────────────── */
-.table-wrap{overflow-x:auto}
+/* ── TABLE ──────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{
-  padding:11px 16px;text-align:left;font-size:11px;font-weight:600;
-  color:var(--gray);text-transform:uppercase;letter-spacing:1px;
-  border-bottom:2px solid var(--border-color);background:var(--gray-light);
-  white-space:nowrap;
-}
+th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border-color);background:var(--gray-light);white-space:nowrap}
 body.dark-mode th{background:#1e293b}
-td{padding:13px 16px;font-size:13px;border-bottom:1px solid var(--border-color);vertical-align:middle;color:var(--text-color)}
-tr:hover td{background:rgba(200,169,110,.04)}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-color);vertical-align:middle;color:var(--text-color)}
 tr:last-child td{border-bottom:none}
-.table-img{width:52px;height:40px;object-fit:cover;border:1px solid var(--border-color)}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
-.badge-sale{background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)}
-.badge-lease{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-.badge-available{background:rgba(16,185,129,.1);color:#10b981}
-.badge-sold{background:rgba(239,68,68,.1);color:#ef4444}
-.badge-admin{background:rgba(200,169,110,.15);color:var(--gold);border:1px solid rgba(200,169,110,.3)}
-.badge-employee{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
-.badge-featured{background:rgba(245,158,11,.1);color:#f59e0b}
-.action-btns{display:flex;gap:6px;flex-wrap:wrap}
-.action-btn{
-  padding:6px 12px;border:none;font-size:11px;font-family:'DM Sans',sans-serif;
-  cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:5px;
-  letter-spacing:.5px;font-weight:500;
-}
-.action-btn.edit{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.25)}
-.action-btn.edit:hover{background:#3b82f6;color:#fff}
-.action-btn.delete{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
-.action-btn.delete:hover{background:#ef4444;color:#fff}
-.action-btn.view{background:rgba(200,169,110,.1);color:var(--gold);border:1px solid rgba(200,169,110,.25)}
-.action-btn.view:hover{background:var(--gold);color:#fff}
-.action-btn:disabled{opacity:.4;cursor:not-allowed}
+tr:hover td{background:rgba(200,169,110,.03)}
+.tbl-img{width:50px;height:38px;object-fit:cover;border:1px solid var(--border-color)}
 
-/* ── SEARCH / FILTER BAR ─────────────────────────────── */
-.filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
-.filter-search{position:relative;flex:1;min-width:200px}
-.filter-search input{
-  width:100%;padding:10px 16px 10px 38px;border:1px solid var(--border-color);
-  background:var(--card-bg);color:var(--text-color);font-size:13px;font-family:'DM Sans',sans-serif;
-  transition:var(--transition);
-}
-.filter-search input:focus{outline:none;border-color:var(--gold)}
-.filter-search i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:13px}
-.filter-select{
-  padding:10px 14px;border:1px solid var(--border-color);background:var(--card-bg);
-  color:var(--text-color);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;
-}
-.filter-select:focus{outline:none;border-color:var(--gold)}
-.results-count{font-size:12px;color:var(--gray);white-space:nowrap}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;border-radius:2px}
+.b-sale{background:rgba(200,169,110,.1);color:var(--gold);border:1px solid rgba(200,169,110,.25)}
+.b-lease{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.25)}
+.b-avail{background:rgba(16,185,129,.1);color:#10b981}
+.b-sold{background:rgba(239,68,68,.1);color:#ef4444}
+.b-admin{background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)}
+.b-emp{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.25)}
+.b-feat{background:rgba(245,158,11,.1);color:#f59e0b}
 
-/* ── FORM ────────────────────────────────────────────── */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.form-group{display:flex;flex-direction:column;gap:7px}
-.form-group.full{grid-column:1/-1}
-.form-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px}
-.form-group input,.form-group select,.form-group textarea{
-  padding:11px 14px;border:1px solid var(--border-color);
-  background:var(--card-bg);color:var(--text-color);
-  font-size:14px;font-family:'DM Sans',sans-serif;transition:var(--transition);
-}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--gold)}
-.form-group input::placeholder,.form-group textarea::placeholder{color:var(--gray);font-size:13px}
-.form-section-label{
-  font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;
-  font-weight:600;padding-bottom:10px;border-bottom:1px solid var(--border-color);
-  margin-bottom:18px;margin-top:4px;grid-column:1/-1;
-}
-.switch-row{display:flex;align-items:center;gap:12px}
-.switch{position:relative;display:inline-block;width:46px;height:24px}
-.switch input{display:none}
-.switch-slider{
-  position:absolute;cursor:pointer;inset:0;background:var(--border-color);
-  transition:.3s;border-radius:24px;
-}
-.switch-slider::before{
-  content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;
-  background:#fff;transition:.3s;border-radius:50%;
-}
-.switch input:checked+.switch-slider{background:var(--gold)}
-.switch input:checked+.switch-slider::before{transform:translateX(22px)}
-.switch-label{font-size:13px;color:var(--text-color)}
-.form-actions{display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color)}
-.form-btn{
-  padding:11px 24px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;
-  cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition);
-  border:none;display:inline-flex;align-items:center;gap:8px;
-}
-.form-btn.primary{background:var(--gold);color:#fff}
-.form-btn.primary:hover{background:var(--gold-dark)}
-.form-btn.secondary{background:var(--gray-light);color:var(--gray);border:1px solid var(--border-color)}
-body.dark-mode .form-btn.secondary{background:#1e293b}
-.form-btn.secondary:hover{border-color:var(--gold);color:var(--gold)}
-.form-btn:disabled{opacity:.6;cursor:not-allowed}
+/* ACTION BUTTONS */
+.act-btns{display:flex;gap:6px;flex-wrap:wrap}
+.act{padding:5px 11px;border:none;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:4px;font-weight:500;letter-spacing:.3px}
+.act-edit{background:rgba(59,130,246,.08);color:#3b82f6;border:1px solid rgba(59,130,246,.2)}
+.act-edit:hover{background:#3b82f6;color:#fff}
+.act-del{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.act-del:hover{background:#ef4444;color:#fff}
+.act-view{background:rgba(200,169,110,.08);color:var(--gold);border:1px solid rgba(200,169,110,.2)}
+.act-view:hover{background:var(--gold);color:#fff}
+.act:disabled{opacity:.35;cursor:not-allowed}
 
-/* ── IMAGE UPLOAD ────────────────────────────────────── */
-.upload-zone{
-  border:2px dashed var(--border-color);padding:32px;text-align:center;
-  cursor:pointer;transition:var(--transition);
-}
-.upload-zone:hover{border-color:var(--gold);background:rgba(200,169,110,.04)}
-.upload-zone i{font-size:32px;color:var(--gold);margin-bottom:10px;display:block}
-.upload-zone p{font-size:13px;color:var(--gray)}
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.fsearch{position:relative;flex:1;min-width:180px}
+.fsearch input{width:100%;padding:9px 14px 9px 36px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:13px;font-family:'DM Sans',sans-serif;transition:var(--transition)}
+.fsearch input:focus{outline:none;border-color:var(--gold)}
+.fsearch i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:12px}
+.fsel{padding:9px 12px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer}
+.fsel:focus{outline:none;border-color:var(--gold)}
+.res-count{font-size:12px;color:var(--gray);white-space:nowrap}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg{display:flex;flex-direction:column;gap:6px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px}
+.fg input,.fg select,.fg textarea{padding:10px 13px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:13px;font-family:'DM Sans',sans-serif;transition:var(--transition)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--gold)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--gray);font-size:12px}
+.fsec{font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:700;padding-bottom:10px;border-bottom:1px solid var(--border-color);margin-bottom:4px;grid-column:1/-1}
+.sw-row{display:flex;align-items:center;gap:10px}
+.sw{position:relative;display:inline-block;width:42px;height:22px}
+.sw input{display:none}
+.sw-sl{position:absolute;cursor:pointer;inset:0;background:var(--border-color);transition:.3s;border-radius:22px}
+.sw-sl::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
+.sw input:checked+.sw-sl{background:var(--gold)}
+.sw input:checked+.sw-sl::before{transform:translateX(20px)}
+.sw-lbl{font-size:13px;color:var(--text-color)}
+.form-actions{display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border-color)}
+.fbtn{padding:10px 22px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;transition:var(--transition);border:none;display:inline-flex;align-items:center;gap:7px}
+.fbtn.primary{background:var(--gold);color:#fff}
+.fbtn.primary:hover{background:var(--gold-dark)}
+.fbtn.secondary{background:var(--gray-light);color:var(--gray);border:1px solid var(--border-color)}
+body.dark-mode .fbtn.secondary{background:#1e293b}
+.fbtn.secondary:hover{border-color:var(--gold);color:var(--gold)}
+.fbtn:disabled{opacity:.6;cursor:not-allowed}
+.field-hint{font-size:11px;color:var(--gray);margin-top:3px;line-height:1.5}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border-color);padding:28px;text-align:center;cursor:pointer;transition:var(--transition)}
+.upload-zone:hover{border-color:var(--gold);background:rgba(200,169,110,.03)}
+.upload-zone i{font-size:28px;color:var(--gold);margin-bottom:8px;display:block}
+.upload-zone p{font-size:12px;color:var(--gray)}
 .upload-zone input{display:none}
-.img-preview-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.img-preview{position:relative;width:90px;height:70px}
-.img-preview img{width:100%;height:100%;object-fit:cover;border:1px solid var(--border-color)}
-.img-preview .remove{
-  position:absolute;top:-6px;right:-6px;width:20px;height:20px;
-  background:#ef4444;color:#fff;border-radius:50%;border:none;
-  cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;
-}
-.upload-progress{margin-top:10px;display:none}
-.upload-progress-bar{height:3px;background:var(--border-color);border-radius:3px;overflow:hidden}
-.upload-progress-fill{height:100%;background:var(--gold);transition:width .3s;width:0}
+.img-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.img-thumb{position:relative;width:80px;height:62px}
+.img-thumb img{width:100%;height:100%;object-fit:cover;border:1px solid var(--border-color)}
+.img-thumb .rm{position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:#ef4444;color:#fff;border-radius:50%;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
+.uprog{margin-top:8px;display:none}
+.uprog-bar{height:3px;background:var(--border-color);border-radius:3px;overflow:hidden}
+.uprog-fill{height:100%;background:var(--gold);transition:width .3s;width:0}
 
-/* ── ACCOUNTS TAB ────────────────────────────────────── */
-.account-card{
-  display:flex;align-items:center;gap:18px;padding:20px 24px;
-  border:1px solid var(--border-color);margin-bottom:14px;transition:var(--transition);
-  background:var(--card-bg);
-}
-.account-card:hover{border-color:var(--gold);box-shadow:var(--shadow-sm)}
-.account-avatar{
-  width:48px;height:48px;background:var(--navy);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:600;
-  flex-shrink:0;
-}
-.account-info{flex:1}
-.account-name{font-weight:600;font-size:14px;color:var(--text-color)}
-.account-email{font-size:12px;color:var(--gray);margin-top:2px}
-.account-permissions{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
-.perm-tag{padding:3px 10px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;border:1px solid}
-.perm-allow{color:#10b981;border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
-.perm-deny{color:#ef4444;border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.06)}
-
-/* ── MODAL ───────────────────────────────────────────── */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(5,12,22,.88);
-  display:none;align-items:center;justify-content:center;z-index:2000;
-}
-.modal-overlay.open{display:flex}
-.modal-box{
-  background:var(--card-bg);max-width:720px;width:95%;
-  max-height:90vh;overflow-y:auto;position:relative;
-  border:1px solid var(--border-color);animation:modalIn .25s ease;
-}
-@keyframes modalIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-header{
-  padding:20px 24px;border-bottom:1px solid var(--border-color);
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--navy);position:sticky;top:0;z-index:1;
-}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;font-weight:600}
-.modal-close{color:rgba(255,255,255,.5);cursor:pointer;font-size:20px;background:none;border:none;transition:var(--transition)}
-.modal-close:hover{color:var(--gold)}
-.modal-body{padding:28px}
-
-/* ── TOAST ───────────────────────────────────────────── */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:13px 20px;border:1px solid rgba(200,169,110,.3);z-index:9999;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold);max-width:360px;box-shadow:var(--shadow-lg)}
-@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ── LOADING OVERLAY ─────────────────────────────────── */
-.loading-overlay{position:fixed;inset:0;background:rgba(13,27,42,.7);display:flex;align-items:center;justify-content:center;z-index:5000;display:none}
-.loading-overlay.show{display:flex}
-.loading-box{background:var(--navy-mid);padding:32px 48px;border:1px solid rgba(200,169,110,.2);text-align:center}
-.loading-spinner{width:40px;height:40px;border:2px solid rgba(200,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{color:#fff;font-size:13px;letter-spacing:1px}
-
-/* ── EMPTY ───────────────────────────────────────────── */
-.empty-state{text-align:center;padding:60px 20px;color:var(--gray)}
-.empty-state i{font-size:40px;color:rgba(200,169,110,.4);margin-bottom:16px;display:block}
-.empty-state p{font-size:14px;line-height:1.7}
-
-/* ── REFRESH NOTICE ──────────────────────────────────── */
-.refresh-notice{position:fixed;top:80px;right:24px;background:var(--gold);color:#fff;padding:10px 18px;font-size:12px;cursor:pointer;z-index:1000;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-md);animation:toastIn .3s ease}
-
-/* ── HERO IMAGE GRID ─────────────────────────────────── */
-.hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-.hero-card{border:1px solid var(--border-color);overflow:hidden;position:relative;transition:var(--transition)}
+/* HERO GRID */
+.hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.hero-card{border:1px solid var(--border-color);overflow:hidden;transition:var(--transition)}
 .hero-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
-.hero-card img{width:100%;height:140px;object-fit:cover;display:block}
-.hero-card-footer{padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
-.hero-default-badge{background:rgba(200,169,110,.12);color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border:1px solid rgba(200,169,110,.3)}
-.hero-card-actions{display:flex;gap:6px}
-.hero-btn{padding:5px 10px;font-size:11px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif}
+.hero-card img{width:100%;height:130px;object-fit:cover;display:block}
+.hero-foot{padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.hero-def{background:rgba(200,169,110,.1);color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border:1px solid rgba(200,169,110,.3)}
+.hero-acts{display:flex;gap:5px}
+.hero-btn{padding:4px 9px;font-size:11px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif}
 .hero-btn:hover{border-color:var(--gold);color:var(--gold)}
 .hero-btn.danger:hover{border-color:#ef4444;color:#ef4444}
 
-/* ── PROGRESS BARS ───────────────────────────────────── */
-.progress-container{position:fixed;bottom:24px;left:24px;width:320px;z-index:5000;display:flex;flex-direction:column;gap:8px}
-.progress-item{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;box-shadow:var(--shadow-md)}
-.progress-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
-.progress-spinner{width:18px;height:18px;border:2px solid var(--border-color);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-.progress-info{flex:1;min-width:0}
-.progress-filename{font-size:12px;font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.progress-status{font-size:11px;color:var(--gray);margin-top:2px}
-.progress-percent{font-size:12px;font-weight:600;color:var(--gold)}
-.progress-close{color:var(--gray);cursor:pointer;font-size:13px;transition:var(--transition)}
-.progress-close:hover{color:#ef4444}
-.progress-bar-container{padding:0 14px 12px}
-.progress-bar-bg{height:3px;background:var(--border-color);border-radius:3px;overflow:hidden}
-.progress-bar-fill{height:100%;background:var(--gold);transition:width .3s}
+/* ACCOUNTS */
+.acc-card{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;border:1px solid var(--border-color);margin-bottom:12px;transition:var(--transition);background:var(--card-bg)}
+.acc-card:hover{border-color:var(--gold);box-shadow:var(--shadow-sm)}
+.acc-av{width:44px;height:44px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:700;flex-shrink:0}
+.acc-info{flex:1}
+.acc-name{font-weight:600;font-size:14px;color:var(--text-color)}
+.acc-email{font-size:12px;color:var(--gray);margin-top:2px}
+.acc-perms{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px}
+.pt{padding:2px 9px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;border:1px solid}
+.pt-allow{color:#10b981;border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.07)}
+.pt-deny{color:#ef4444;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.05)}
+.acc-acts{display:flex;gap:6px;flex-direction:column;align-items:flex-end;flex-shrink:0}
+.you-tag{font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
 
-/* ── MOBILE ──────────────────────────────────────────── */
-@media(max-width:1024px){
-  :root{--sidebar-w:220px}
-}
+/* AUDIT LOG */
+.audit-action{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase}
+.a-create{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2)}
+.a-update{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.2)}
+.a-delete{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.a-login{background:rgba(200,169,110,.1);color:var(--gold);border:1px solid rgba(200,169,110,.2)}
+.changes-pre{font-size:11px;color:var(--gray);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(5,12,22,.9);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--card-bg);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;border:1px solid var(--border-color);animation:mIn .2s ease}
+@keyframes mIn{from{transform:translateY(-18px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:var(--navy);position:sticky;top:0;z-index:1}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600}
+.modal-close{color:rgba(255,255,255,.45);cursor:pointer;font-size:18px;background:none;border:none;transition:var(--transition)}
+.modal-close:hover{color:var(--gold)}
+.modal-body{padding:24px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 18px;border:1px solid rgba(200,169,110,.3);z-index:9999;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold);max-width:340px;box-shadow:var(--shadow-lg)}
+@keyframes toastIn{from{transform:translateX(180px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* LOADING */
+.load-ov{position:fixed;inset:0;background:rgba(13,27,42,.75);display:none;align-items:center;justify-content:center;z-index:5000}
+.load-ov.show{display:flex}
+.load-box{background:var(--navy-mid);padding:30px 44px;border:1px solid rgba(200,169,110,.2);text-align:center}
+.load-spin{width:36px;height:36px;border:2px solid rgba(200,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{color:#fff;font-size:13px;letter-spacing:1px}
+
+/* PROGRESS */
+.prog-wrap{position:fixed;bottom:20px;left:20px;width:300px;z-index:5000;display:flex;flex-direction:column;gap:7px}
+.prog-item{background:var(--card-bg);border:1px solid var(--border-color);box-shadow:var(--shadow-md)}
+.prog-hd{display:flex;align-items:center;gap:9px;padding:11px 13px}
+.prog-spin{width:16px;height:16px;border:2px solid var(--border-color);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+.prog-info{flex:1;min-width:0}
+.prog-fn{font-size:11px;font-weight:500;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-st{font-size:10px;color:var(--gray)}
+.prog-pct{font-size:11px;font-weight:600;color:var(--gold)}
+.prog-cl{color:var(--gray);cursor:pointer;font-size:12px}
+.prog-cl:hover{color:#ef4444}
+.prog-bar{padding:0 13px 11px}
+.prog-bg{height:2px;background:var(--border-color);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);transition:width .3s}
+
+/* REFRESH NOTICE */
+.refresh-notice{position:fixed;top:72px;right:20px;background:var(--gold);color:#fff;padding:9px 16px;font-size:12px;cursor:pointer;z-index:1000;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow-md);animation:toastIn .3s ease}
+
+/* EMPTY */
+.empty-st{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-st i{font-size:36px;color:rgba(200,169,110,.35);margin-bottom:14px;display:block}
+.empty-st p{font-size:13px;line-height:1.7}
+
+/* MOBILE */
+@media(max-width:1024px){:root{--sidebar-w:220px}}
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
-  .sidebar.open{transform:translateX(0)}
-  .main-content{margin-left:0}
-  .sidebar-toggle{display:flex}
-  .form-grid{grid-template-columns:1fr}
-  .form-group.full{grid-column:1}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .page-content{padding:16px}
-  .panel-body{padding:16px}
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0}.sidebar-toggle{display:flex}
+  .form-grid{grid-template-columns:1fr}.fg.full{grid-column:1}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}.page-content{padding:16px}
+  .panel-body{padding:16px}.hdr-right .hdr-btn span{display:none}
 }
-@media(max-width:480px){
-  .stats-grid{grid-template-columns:1fr}
-  .main-header{padding:0 16px}
-}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr}.main-header{padding:0 14px}}
+
+.fg{display:flex;flex-direction:column;gap:6px}
+.flbl{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px}
+.finput{padding:11px 14px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;transition:all .25s ease;outline:none}
+.finput:focus{border-color:var(--gold)}
+.b-admin{background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)}
+.b-emp{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+.modal-ov.open{display:flex}
+@keyframes modalIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
 
-<!-- ── LOADING OVERLAY ──────────────────────────────── -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-box">
-    <div class="loading-spinner"></div>
-    <div class="loading-text" id="loadingText">Processing...</div>
-  </div>
-</div>
+<div class="load-ov" id="loadOv"><div class="load-box"><div class="load-spin"></div><div class="load-txt" id="loadTxt">Processing...</div></div></div>
 
-<!-- ── LOGIN SCREEN ─────────────────────────────────── -->
+<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="login-logo">
-      <img src="/logo.png" alt="GLRA Realty">
-      <div class="login-logo-text">GLRA Realty</div>
-    </div>
-    <div class="login-title">Admin Portal</div>
-    <div class="login-sub">Sign in to manage your property listings</div>
-    <div class="login-field">
-      <label>Email Address</label>
-      <input type="email" id="loginEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()">
-    </div>
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
-    </div>
-    <button class="login-btn" id="loginBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
-    <div class="login-error" id="loginError">Invalid email or password. Please try again.</div>
-    <div class="login-accounts-hint">
-      <p>Access restricted to authorized GLRA Realty staff only</p>
-    </div>
+    <div class="login-logo"><img src="/logo.png" alt="GLRA"><div class="login-brand">GLRA Realty<small>Admin Portal</small></div></div>
+    <div class="login-title">Welcome Back</div>
+    <div class="login-sub">Sign in to manage your listings and team</div>
+    <div class="login-field"><label>Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+    <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+    <div class="login-error" id="lgErr">Invalid email or password.</div>
   </div>
 </div>
 
-<!-- ── ADMIN SHELL ───────────────────────────────────── -->
+<!-- SHELL -->
 <div class="admin-shell" id="adminShell">
-
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/logo.png" alt="GLRA Realty">
-      <div class="sidebar-brand">GLRA Admin</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Overview</div>
+    <div class="sb-head"><img src="/logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
+    <nav class="sb-nav">
+      <div class="sb-section">Overview</div>
       <a class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
-      <div class="nav-section-label" style="margin-top:8px">Listings</div>
+      <div class="sb-section" style="margin-top:6px">Listings</div>
       <a class="nav-item" onclick="switchTab('properties')"><i class="fas fa-home"></i> Properties</a>
-      <a class="nav-item" id="nav-hero" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
-      <div class="nav-section-label" style="margin-top:8px">CRM</div>
-      <a class="nav-item" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inquiryBadge" style="display:none">0</span></a>
+      <a class="nav-item" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
+      <div class="sb-section" style="margin-top:6px">CRM</div>
+      <a class="nav-item" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inqBadge" style="display:none">0</span></a>
       <a class="nav-item" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
       <a class="nav-item" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
-      <div class="nav-section-label" id="nav-admin-section" style="margin-top:8px;display:none">Admin</div>
-      <a class="nav-item" id="nav-accounts" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
-      <div class="nav-section-label" style="margin-top:8px">Quick Links</div>
+      <!-- Admin only section — hidden for employees via JS -->
+      <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
+      <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
+      <a class="nav-item admin-only" onclick="switchTab('auditlog')" style="display:none"><i class="fas fa-history"></i> Audit Log</a>
+      <div class="sb-section" style="margin-top:6px">Links</div>
       <a class="nav-item" href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Website</a>
-      <a class="nav-item" href="/properties.html" target="_blank"><i class="fas fa-list"></i> Properties Page</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="user-card" id="userCard">
-        <div class="user-avatar" id="userAvatar">A</div>
-        <div>
-          <div class="user-name" id="userName">Loading...</div>
-          <div class="user-role" id="userRole">Admin</div>
-        </div>
-      </div>
-      <div class="sidebar-actions">
-        <button class="sidebar-action-btn" onclick="toggleDarkMode()" id="darkModeBtn"><i class="fas fa-moon"></i> Theme</button>
-        <button class="sidebar-action-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    <div class="sb-foot">
+      <div class="user-pill"><div class="user-av" id="userAv">A</div><div><div class="user-nm" id="userName">Loading...</div><div class="user-rl" id="userRole">Role</div></div></div>
+      <div class="sb-btns">
+        <button class="sb-btn" onclick="toggleDarkMode()" id="dmBtn"><i class="fas fa-moon"></i> Theme</button>
+        <button class="sb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
     </div>
   </aside>
@@ -511,657 +353,761 @@ body.dark-mode .form-btn.secondary{background:#1e293b}
   <!-- MAIN -->
   <div class="main-content">
     <header class="main-header">
-      <div class="header-left">
-        <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-        <div>
-          <div class="page-title" id="pageTitle">Dashboard</div>
-          <div class="page-subtitle" id="pageSubtitle">Welcome back, loading...</div>
-        </div>
+      <div class="hdr-left">
+        <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+        <div><div class="page-title" id="pageTitle">Dashboard</div><div class="page-sub" id="pageSub">Welcome back</div></div>
       </div>
-      <div class="header-right">
-        <button class="header-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh</button>
-        <button class="header-btn primary" id="addPropertyBtn" onclick="openAddProperty()"><i class="fas fa-plus"></i> Add Property</button>
+      <div class="hdr-right">
+        <button class="hdr-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
+        <button class="hdr-btn primary admin-only" id="addPropBtn" onclick="openAddProperty()" style="display:none"><i class="fas fa-plus"></i> <span>Add Property</span></button>
       </div>
     </header>
 
     <div class="page-content">
 
-      <!-- DASHBOARD TAB -->
-      <div id="tab-dashboard" class="tab-pane">
-        <div class="stats-grid" id="statsGrid">
-          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-home"></i></div><div><div class="stat-number" id="st-props">—</div><div class="stat-label">Total Properties</div></div></div>
-          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div><div class="stat-number" id="st-avail">—</div><div class="stat-label">Available</div></div></div>
-          <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-envelope-open-text"></i></div><div><div class="stat-number" id="st-inq">—</div><div class="stat-label">Inquiries</div></div></div>
-          <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-users"></i></div><div><div class="stat-number" id="st-subs">—</div><div class="stat-label">Subscribers</div></div></div>
-          <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-bell"></i></div><div><div class="stat-number" id="st-alerts">—</div><div class="stat-label">Price Alerts</div></div></div>
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-ico ico-gold"><i class="fas fa-home"></i></div><div><div class="stat-num" id="st-props">—</div><div class="stat-lbl">Properties</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-num" id="st-avail">—</div><div class="stat-lbl">Available</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-blue"><i class="fas fa-envelope"></i></div><div><div class="stat-num" id="st-inq">—</div><div class="stat-lbl">Inquiries</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-orange"><i class="fas fa-users"></i></div><div><div class="stat-num" id="st-subs">—</div><div class="stat-lbl">Subscribers</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-purple"><i class="fas fa-bell"></i></div><div><div class="stat-num" id="st-alerts">—</div><div class="stat-lbl">Price Alerts</div></div></div>
         </div>
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title"><i class="fas fa-clock"></i> Recent Inquiries</div><button class="header-btn" onclick="switchTab('inquiries')">View All</button></div>
-          <div class="panel-body table-wrap"><div id="dashInquiries"><div class="empty-state"><i class="fas fa-envelope"></i><p>Loading inquiries...</p></div></div></div>
-        </div>
+        <div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-clock"></i> Recent Inquiries</div><button class="hdr-btn" onclick="switchTab('inquiries')">View All</button></div><div class="panel-body"><div id="dashInq"></div></div></div>
       </div>
 
-      <!-- PROPERTIES TAB -->
-      <div id="tab-properties" class="tab-pane" style="display:none">
+      <!-- PROPERTIES -->
+      <div id="tab-properties" style="display:none">
         <div class="filter-bar">
-          <div class="filter-search"><i class="fas fa-search"></i><input type="text" id="propSearch" placeholder="Search properties..." oninput="filterProperties()"></div>
-          <select class="filter-select" id="propTypeFilter" onchange="filterProperties()">
-            <option value="">All Types</option>
-            <option>Condominium</option><option>House and Lot</option>
-            <option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option>
-          </select>
-          <select class="filter-select" id="propStatusFilter" onchange="filterProperties()">
-            <option value="">All Status</option>
-            <option value="available">Available</option>
-            <option value="sold">Sold/Leased</option>
-          </select>
-          <select class="filter-select" id="propListingFilter" onchange="filterProperties()">
-            <option value="">All Listings</option>
-            <option value="FOR SALE">For Sale</option>
-            <option value="FOR LEASE">For Lease</option>
-          </select>
-          <div class="results-count" id="propCount"></div>
+          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="pSearch" placeholder="Search title or location..." oninput="filterProps()"></div>
+          <select class="fsel" id="pType" onchange="filterProps()"><option value="">All Types</option><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select>
+          <select class="fsel" id="pStatus" onchange="filterProps()"><option value="">All Status</option><option value="available">Available</option><option value="sold">Sold/Leased</option></select>
+          <select class="fsel" id="pListing" onchange="filterProps()"><option value="">All Listings</option><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option></select>
+          <div class="res-count" id="pCount"></div>
         </div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Image</th><th>Property</th><th>Type</th><th>Listing</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="propTbody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- HERO IMAGES -->
+      <div id="tab-hero" style="display:none">
         <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title"><i class="fas fa-images"></i> Homepage Slider</div>
+            <label class="hdr-btn primary admin-only" style="cursor:pointer;display:none" id="heroUploadBtn"><i class="fas fa-upload"></i> Upload<input type="file" accept="image/*" multiple style="display:none" onchange="uploadHeroImgs(this.files)"></label>
+          </div>
+          <div class="panel-body"><div id="heroGrid" class="hero-grid"></div></div>
+        </div>
+      </div>
+
+      <!-- INQUIRIES -->
+      <div id="tab-inquiries" style="display:none">
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Property</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inqTbody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- SUBSCRIBERS -->
+      <div id="tab-subscribers" style="display:none">
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Source</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody id="subTbody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- ALERTS -->
+      <div id="tab-alerts" style="display:none">
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Property</th><th>Price</th><th>Status</th></tr></thead><tbody id="alertTbody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- ACCOUNTS (admin only) -->
+      <div id="tab-accounts" style="display:none">
+        <!-- Add Account Button -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:18px">
+          <button class="hdr-btn primary" onclick="openAddAccount()"><i class="fas fa-user-plus"></i> Add Account</button>
+        </div>
+        <!-- Accounts List -->
+        <div id="accountsList"></div>
+        <!-- Permissions Reference -->
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-shield-alt"></i> Permission Reference</div></div>
           <div class="panel-body" style="padding:0">
-            <div class="table-wrap"><table><thead><tr><th>Image</th><th>Property</th><th>Type</th><th>Listing</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="propertiesTableBody"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HERO IMAGES TAB -->
-      <div id="tab-hero" class="tab-pane" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="fas fa-images"></i> Homepage Slider Images</div>
-            <label class="header-btn primary" style="cursor:pointer"><i class="fas fa-upload"></i> Upload Image<input type="file" accept="image/*" multiple style="display:none" onchange="uploadHeroImages(this.files)"></label>
-          </div>
-          <div class="panel-body">
-            <div id="heroGrid" class="hero-grid"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- INQUIRIES TAB -->
-      <div id="tab-inquiries" class="tab-pane" style="display:none">
-        <div class="panel">
-          <div class="panel-body" style="padding:0">
-            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Property</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inquiriesBody"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBSCRIBERS TAB -->
-      <div id="tab-subscribers" class="tab-pane" style="display:none">
-        <div class="panel">
-          <div class="panel-body" style="padding:0">
-            <div class="table-wrap"><table><thead><tr><th>Email</th><th>Source</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody id="subscribersBody"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ALERTS TAB -->
-      <div id="tab-alerts" class="tab-pane" style="display:none">
-        <div class="panel">
-          <div class="panel-body" style="padding:0">
-            <div class="table-wrap"><table><thead><tr><th>Email</th><th>Property</th><th>Price</th><th>Status</th></tr></thead><tbody id="alertsBody"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACCOUNTS TAB (admin only) -->
-      <div id="tab-accounts" class="tab-pane" style="display:none">
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title"><i class="fas fa-user-shield"></i> Team Accounts</div></div>
-          <div class="panel-body">
-            <div id="accountsList"></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title"><i class="fas fa-info-circle"></i> Permission Summary</div></div>
-          <div class="panel-body">
-            <div style="overflow-x:auto"><table><thead><tr><th>Permission</th><th>Admin</th><th>Employee</th></tr></thead>
-            <tbody>
-              <tr><td>View dashboard & stats</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
-              <tr><td>View all properties</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
-              <tr><td>Add new properties</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+            <div class="tbl-wrap"><table><thead><tr><th>Permission</th><th>Admin</th><th>Employee</th></tr></thead><tbody>
+              <tr><td>View dashboard &amp; stats</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
+              <tr><td>View &amp; browse properties</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
+              <tr><td>Add new property listings</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>Edit property details</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>Delete properties</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
-              <tr><td>Upload hero images</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>Upload &amp; manage hero images</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>View inquiries</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
-              <tr><td>Delete inquiries</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
-              <tr><td>View subscribers</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
-              <tr><td>Delete subscribers</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
-              <tr><td>View accounts tab</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
-              <tr><td>Change account passwords</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>Delete inquiries / subscribers</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>View team accounts</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>Create / edit accounts</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>View audit log</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
             </tbody></table></div>
           </div>
         </div>
       </div>
 
+      <!-- AUDIT LOG TAB (admin only) -->
+      <div id="tab-auditlog" style="display:none">
+        <div class="filter-bar" style="margin-bottom:16px">
+          <div class="filter-search"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or property..." oninput="filterAuditLog()"></div>
+          <select class="filter-sel" id="auditActionFilter" onchange="filterAuditLog()">
+            <option value="">All Actions</option>
+            <option value="LOGIN">Login</option>
+            <option value="CREATE">Create</option>
+            <option value="UPDATE">Update / Edit</option>
+            <option value="DELETE">Delete</option>
+          </select>
+          <button class="hdr-btn" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div class="panel">
+          <div class="panel-body" style="padding:0">
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>What</th><th>Details</th></tr></thead>
+                <tbody id="auditBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div><!-- /page-content -->
   </div><!-- /main-content -->
 </div><!-- /admin-shell -->
 
-<!-- ADD/EDIT PROPERTY MODAL -->
-<div class="modal-overlay" id="propertyModal">
+<!-- PROPERTY MODAL -->
+<div class="modal-ov" id="propModal">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Add New Property</div>
-      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
-    </div>
+    <div class="modal-hd"><div class="modal-title" id="propModalTitle">Add Property</div><button class="modal-close" onclick="closePropModal()"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
-      <form id="propertyForm">
-        <input type="hidden" id="editPropertyId">
+      <form id="propForm">
+        <input type="hidden" id="editId">
         <div class="form-grid">
-          <div class="form-section-label">Basic Information</div>
-          <div class="form-group full"><label>Property Title *</label><input type="text" id="propTitle" placeholder="e.g. 2BR Condo at The Fort, BGC" required></div>
-          <div class="form-group"><label>Property Type *</label><select id="propType"><option value="Condominium">Condominium</option><option value="House and Lot">House and Lot</option><option value="Townhouse">Townhouse</option><option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option><option value="Commercial Space">Commercial Space</option></select></div>
-          <div class="form-group"><label>Listing Type *</label><select id="propListing"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale & Lease</option></select></div>
-          <div class="form-group full"><label>Location / Address *</label><input type="text" id="propLocation" placeholder="e.g. Taguig City, Metro Manila" required></div>
-          <div class="form-group full"><label>Map Location (for Google Maps embed)</label><input type="text" id="propMapLocation" placeholder="e.g. BGC, Taguig or paste address"></div>
-
-          <div class="form-section-label">Pricing</div>
-          <div class="form-group"><label>Selling / Contract Price (₱) *</label><input type="text" id="propPrice" placeholder="0" oninput="formatPriceField(this)" required></div>
-          <div class="form-group" id="monthlyRentalGroup"><label>Monthly Rental (₱)</label><input type="text" id="propMonthlyRental" placeholder="0" oninput="formatPriceField(this)"></div>
-
-          <div class="form-section-label">Property Details</div>
-          <div class="form-group"><label>Bedrooms</label><input type="number" id="propBedrooms" value="1" min="0" max="20"></div>
-          <div class="form-group"><label>Bathrooms</label><input type="number" id="propBathrooms" value="1" min="0" max="20"></div>
-          <div class="form-group"><label>Floor Area (sqm)</label><input type="number" id="propSqm" value="0" min="0"></div>
-          <div class="form-group"><label>Parking Slots</label><input type="number" id="propParking" value="0" min="0" max="10"></div>
-          <div class="form-group"><label>Floor Number</label><input type="text" id="propFloor" placeholder="e.g. 12th, Ground, N/A"></div>
-          <div class="form-group"><label>Status</label><select id="propStatus"><option value="available">Available</option><option value="sold">Sold / Leased</option></select></div>
-
-          <div class="form-section-label">Settings</div>
-          <div class="form-group">
-            <label>Featured Listing</label>
-            <div class="switch-row"><label class="switch"><input type="checkbox" id="propFeatured"><div class="switch-slider"></div></label><span class="switch-label">Show in Featured section on homepage</span></div>
-          </div>
-
-          <div class="form-section-label">Description</div>
-          <div class="form-group full"><label>Property Description</label><textarea id="propDescription" rows="5" placeholder="Describe the property — location highlights, amenities, nearby establishments..."></textarea></div>
-
-          <div class="form-section-label">Images</div>
-          <div class="form-group full">
+          <div class="fsec">Basic Information</div>
+          <div class="fg full"><label>Property Title *</label><input type="text" id="pTitle" placeholder="e.g. 2BR Condo at The Fort, BGC" required></div>
+          <div class="fg"><label>Property Type</label><select id="pType2"><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select></div>
+          <div class="fg"><label>Listing Type</label><select id="pListing2"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale &amp; Lease</option></select></div>
+          <div class="fg full"><label>Location / Address *</label><input type="text" id="pLoc" placeholder="e.g. Taguig City, Metro Manila" required></div>
+          <div class="fg full"><label>Map Location (Google Maps)</label><input type="text" id="pMapLoc" placeholder="e.g. BGC, Taguig"></div>
+          <div class="fsec">Pricing</div>
+          <div class="fg"><label>Selling / Contract Price (₱)</label><input type="text" id="pPrice" placeholder="0" oninput="fmtField(this)"></div>
+          <div class="fg"><label>Monthly Rental (₱)</label><input type="text" id="pRental" placeholder="0" oninput="fmtField(this)"></div>
+          <div class="fsec">Details</div>
+          <div class="fg"><label>Bedrooms</label><input type="number" id="pBed" value="1" min="0" max="20"></div>
+          <div class="fg"><label>Bathrooms</label><input type="number" id="pBath" value="1" min="0" max="20"></div>
+          <div class="fg"><label>Floor Area (sqm)</label><input type="number" id="pSqm" value="0" min="0"></div>
+          <div class="fg"><label>Parking Slots</label><input type="number" id="pPark" value="0" min="0" max="20"></div>
+          <div class="fg"><label>Floor Number</label><input type="text" id="pFloor" placeholder="e.g. 12th, Ground"></div>
+          <div class="fg"><label>Status</label><select id="pStat"><option value="available">Available</option><option value="sold">Sold / Leased</option></select></div>
+          <div class="fsec">Settings</div>
+          <div class="fg full"><label>Featured Listing</label><div class="sw-row"><label class="sw"><input type="checkbox" id="pFeatured"><div class="sw-sl"></div></label><span class="sw-lbl">Show in Featured section on homepage</span></div></div>
+          <div class="fsec">Description</div>
+          <div class="fg full"><label>Property Description</label><textarea id="pDesc" rows="5" placeholder="Describe the property, amenities, nearby landmarks..."></textarea></div>
+          <div class="fsec">Images</div>
+          <div class="fg full">
             <label>Main Image</label>
-            <div class="upload-zone" onclick="document.getElementById('mainImgInput').click()">
-              <i class="fas fa-cloud-upload-alt"></i>
-              <p>Click to upload main image (JPG, PNG, WebP)</p>
-              <input type="file" id="mainImgInput" accept="image/*" onchange="previewMainImage(this)">
-            </div>
-            <div id="mainImgPreviewWrap" style="margin-top:10px"></div>
-            <input type="hidden" id="propMainImage">
-            <div class="upload-progress" id="mainImgProgress"><div class="upload-progress-bar"><div class="upload-progress-fill" id="mainImgProgressFill"></div></div></div>
+            <div class="upload-zone" onclick="document.getElementById('mainImgInp').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload main photo</p><input type="file" id="mainImgInp" accept="image/*" onchange="uploadMain(this)"></div>
+            <div id="mainPreview" style="margin-top:10px"></div>
+            <input type="hidden" id="pMainImg">
+            <div class="uprog" id="mainProg"><div class="uprog-bar"><div class="uprog-fill" id="mainProgFill"></div></div></div>
           </div>
-          <div class="form-group full">
-            <label>Gallery Images (optional)</label>
-            <div class="upload-zone" onclick="document.getElementById('galleryInput').click()">
-              <i class="fas fa-images"></i>
-              <p>Click to upload additional photos</p>
-              <input type="file" id="galleryInput" accept="image/*" multiple onchange="previewGalleryImages(this)">
-            </div>
-            <div id="galleryPreviewWrap" class="img-preview-row" style="margin-top:10px"></div>
-            <input type="hidden" id="propGallery">
+          <div class="fg full">
+            <label>Gallery Photos</label>
+            <div class="upload-zone" onclick="document.getElementById('gallInp').click()"><i class="fas fa-images"></i><p>Click to add more photos</p><input type="file" id="gallInp" accept="image/*" multiple onchange="uploadGallery(this)"></div>
+            <div id="gallPreview" class="img-row" style="margin-top:10px"></div>
+            <input type="hidden" id="pGallery">
           </div>
         </div>
         <div class="form-actions">
-          <button type="submit" class="form-btn primary"><i class="fas fa-save"></i> Save Property</button>
-          <button type="button" class="form-btn secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="fbtn primary"><i class="fas fa-save"></i> Save Property</button>
+          <button type="button" class="fbtn secondary" onclick="closePropModal()">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- PROGRESS BARS -->
-<div class="progress-container" id="progressContainer"></div>
+<!-- ACCOUNT MODAL -->
+<div class="modal-ov" id="accModal">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hd"><div class="modal-title" id="accModalTitle">Add Account</div><button class="modal-close" onclick="closeAccModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="accEditId">
+      <div class="form-grid">
+        <div class="fg full"><label>Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
+        <div class="fg full"><label>Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
+        <div class="fg full"><label>Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint">Leave blank when editing to keep existing password.</div></div>
+        <div class="fg full"><label>Role</label><select id="accRole"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins have full access. Employees can only view data.</div></div>
+        <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
+      </div>
+      <div class="form-actions">
+        <button class="fbtn primary" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
+        <button class="fbtn secondary" onclick="closeAccModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="prog-wrap" id="progWrap"></div>
 
 <script>
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // ── STATE ─────────────────────────────────────────────────
-let currentUser = null; // {name, role, email}
-let allProperties = [];
-let currentEditId = null;
-let uploadedGalleryUrls = [];
+let CU = null; // current user {name,role,email,id}
+let allProps = [];
+let galleryUrls = [];
+let editPropId = null;
 
-// ── UTILITIES ─────────────────────────────────────────────
-function escapeHtml(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function fmt(n){return'₱'+(n||0).toLocaleString('en-PH')}
-function fmtDate(d){return d?new Date(d).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}):'—'}
+// ── UTILS ─────────────────────────────────────────────────
+const esc = s => {if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML};
+const fmt = n => '₱'+(n||0).toLocaleString('en-PH');
+const fmtDate = d => d?new Date(d).toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+const fmtDateShort = d => d?new Date(d).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}):'—';
+const isAdmin = () => CU?.role === 'admin';
 
-function showToast(msg,isErr=false){
+function showToast(m,e=false){
   const t=document.createElement('div');t.className='toast';
-  t.style.borderLeftColor=isErr?'#ef4444':'var(--gold)';
-  t.innerHTML=`<i class="fas fa-${isErr?'exclamation-circle':'check-circle'}" style="margin-right:8px"></i>${escapeHtml(msg)}`;
-  document.body.appendChild(t);setTimeout(()=>t.remove(),4000)
+  t.style.borderLeftColor=e?'#ef4444':'var(--gold)';
+  t.innerHTML=`<i class="fas fa-${e?'exclamation-circle':'check-circle'}" style="margin-right:8px;color:${e?'#ef4444':'var(--gold)'}"></i>${esc(m)}`;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),4500);
 }
-function showLoading(msg='Processing...'){document.getElementById('loadingOverlay').classList.add('show');document.getElementById('loadingText').textContent=msg}
-function hideLoading(){document.getElementById('loadingOverlay').classList.remove('show')}
-
-function toggleDarkMode(){
-  document.body.classList.toggle('dark-mode');
-  const d=document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkMode',d);
-  const b=document.getElementById('darkModeBtn');
-  if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme';
-}
-if(localStorage.getItem('darkMode')==='true'){
-  document.body.classList.add('dark-mode');
-  const b=document.getElementById('darkModeBtn');
-  if(b)b.innerHTML='<i class="fas fa-sun"></i> Theme';
-}
-
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
-
-function isAdmin(){return currentUser?.role==='admin'}
-
-function enforceRole(){
-  // Show/hide admin-only UI
-  const adminOnly=['nav-accounts','nav-admin-section','addPropertyBtn'];
-  adminOnly.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display=isAdmin()?'':'none';
-  });
-}
-
-function showRefreshNotice(){
-  const existing=document.querySelector('.refresh-notice');if(existing)existing.remove();
+function showLoad(msg='Processing...'){document.getElementById('loadOv').classList.add('show');document.getElementById('loadTxt').textContent=msg}
+function hideLoad(){document.getElementById('loadOv').classList.remove('show')}
+function showRefresh(){
+  const ex=document.querySelector('.refresh-notice');if(ex)ex.remove();
   const n=document.createElement('div');n.className='refresh-notice';
-  n.innerHTML='<i class="fas fa-sync-alt"></i> Changes saved! Click to refresh';
-  n.onclick=()=>location.reload();
-  document.body.appendChild(n);setTimeout(()=>{if(n.parentNode)n.remove()},5000);
+  n.innerHTML='<i class="fas fa-sync-alt"></i> Saved! Click to refresh';
+  n.onclick=()=>location.reload();document.body.appendChild(n);
+  setTimeout(()=>{if(n.parentNode)n.remove()},5000);
+}
+function fmtField(inp){let v=inp.value.replace(/,/g,'');if(v&&!isNaN(v))inp.value=parseFloat(v).toLocaleString('en-US')}
+function getNum(id){return parseFloat((document.getElementById(id).value||'').replace(/,/g,''))||0}
+
+// ── DARK MODE ─────────────────────────────────────────────
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('dmBtn');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme'}
+if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('dmBtn');if(b)b.innerHTML='<i class="fas fa-sun"></i> Theme'}
+
+// ── ROLE-BASED UI ─────────────────────────────────────────
+function applyRoleUI(){
+  // Show/hide ALL elements with class admin-only based on current role
+  // This must work even when CU is null (after logout)
+  const admin = isAdmin();
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = admin ? '' : 'none';
+  });
+  // Also reset the add property button
+  const addBtn = document.getElementById('addPropBtn');
+  if(addBtn) addBtn.style.display = 'none'; // Always hide on tab switch, switchTab controls it
 }
 
 // ── AUTH ──────────────────────────────────────────────────
 async function login(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  const btn=document.getElementById('loginBtn');
-  const errEl=document.getElementById('loginError');
-  if(!email||!password){errEl.style.display='block';errEl.textContent='Please enter email and password.';return}
-  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Signing in...';
-  errEl.style.display='none';
+  const email=document.getElementById('lgEmail').value.trim();
+  const pass=document.getElementById('lgPass').value;
+  const btn=document.getElementById('lgBtn');
+  const err=document.getElementById('lgErr');
+  if(!email||!pass){err.style.display='block';err.textContent='Please enter email and password.';return}
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Signing in...';err.style.display='none';
   try{
-    const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-    const data=await res.json();
-    if(res.ok&&data.success){
-      currentUser=data;
+    const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      CU=d;
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('adminShell').classList.add('visible');
-      // Set user info
-      document.getElementById('userName').textContent=data.name||email;
-      document.getElementById('userRole').textContent=data.role==='admin'?'Administrator':'Staff Employee';
-      document.getElementById('userAvatar').textContent=(data.name||email)[0].toUpperCase();
-      document.getElementById('pageSubtitle').textContent=`Welcome back, ${(data.name||email).split(' ')[0]}`;
-      enforceRole();
+      document.getElementById('userName').textContent=d.name||email;
+      document.getElementById('userRole').textContent=d.role==='admin'?'Administrator':'Staff Employee';
+      document.getElementById('userAv').textContent=(d.name||email)[0].toUpperCase();
+      document.getElementById('pageSub').textContent=`Welcome back, ${(d.name||'').split(' ')[0]||email}`;
+      applyRoleUI(); // Apply role restrictions BEFORE loading data
       loadAll();
-      showToast(`Welcome back, ${(data.name||'').split(' ')[0] || 'Admin'}!`);
-    }else{
-      errEl.style.display='block';errEl.textContent='Invalid email or password.';
-    }
-  }catch{errEl.style.display='block';errEl.textContent='Connection error. Please try again.'}
+      showToast(`Welcome, ${(d.name||'').split(' ')[0]||'Admin'}!`);
+    }else{err.style.display='block';err.textContent=d.error||'Invalid credentials.'}
+  }catch{err.style.display='block';err.textContent='Connection error. Try again.'}
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'}
 }
 
 function logout(){
-  currentUser=null;
+  CU=null;
+  // Apply role UI BEFORE anything else to hide admin-only elements
+  applyRoleUI();
+  // Reset all tab content to prevent stale data showing
+  document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
+  document.getElementById('tab-dashboard').style.display='';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item')?.classList.add('active');
+  // Hide shell, show login
   document.getElementById('adminShell').classList.remove('visible');
   document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginPassword').value='';
+  document.getElementById('lgPass').value='';
+  document.getElementById('lgErr').style.display='none';
 }
 
-// ── DATA LOADING ──────────────────────────────────────────
-async function loadAll(){
-  await Promise.all([loadStats(),loadAllProperties(),loadInquiries(),loadSubscribers(),loadAlerts(),loadHeroImages()]);
-  if(isAdmin())loadAccounts();
+// ── DATA ──────────────────────────────────────────────────
+function loadAll(){
+  loadStats();loadAllProps();loadInquiries();loadSubscribers();loadAlerts();loadHeroImages();
+  if(isAdmin()){loadAccounts();}
+  if(name==='auditlog'&&isAdmin())loadAuditLog();
 }
-
-function refreshData(){loadAll();showToast('Data refreshed')}
+function refreshAll(){loadAll();showToast('Data refreshed')}
 
 async function loadStats(){
   try{
-    const res=await fetch('/api/admin/stats');
-    const s=await res.json();
+    const s=await fetch('/api/admin/stats').then(r=>r.json());
     document.getElementById('st-props').textContent=s.totalProperties||0;
     document.getElementById('st-avail').textContent=s.availableProperties||0;
     document.getElementById('st-inq').textContent=s.totalInquiries||0;
     document.getElementById('st-subs').textContent=s.subscribers||0;
     document.getElementById('st-alerts').textContent=s.activeAlerts||0;
-    const badge=document.getElementById('inquiryBadge');
-    if(s.totalInquiries>0){badge.textContent=s.totalInquiries;badge.style.display=''}
-  }catch(e){console.error('Stats error',e)}
+    const b=document.getElementById('inqBadge');
+    if(s.totalInquiries>0){b.textContent=s.totalInquiries;b.style.display=''}else b.style.display='none';
+  }catch(e){console.error(e)}
 }
 
-async function loadAllProperties(){
+async function loadAllProps(){
   try{
-    const res=await fetch('/api/admin/all-properties');
-    allProperties=await res.json();
-    renderPropertiesTable(allProperties);
-  }catch(e){console.error('Properties error',e)}
+    allProps=await fetch('/api/admin/all-properties').then(r=>r.json());
+    renderProps(allProps);
+  }catch(e){console.error(e)}
 }
 
-function filterProperties(){
-  const search=document.getElementById('propSearch').value.toLowerCase();
-  const type=document.getElementById('propTypeFilter').value;
-  const status=document.getElementById('propStatusFilter').value;
-  const listing=document.getElementById('propListingFilter').value;
-  const filtered=allProperties.filter(p=>{
-    if(search&&!p.title.toLowerCase().includes(search)&&!p.location.toLowerCase().includes(search))return false;
-    if(type&&p.propertyType!==type)return false;
-    if(status&&p.status!==status)return false;
-    if(listing&&p.listingType!==listing)return false;
+function filterProps(){
+  const s=document.getElementById('pSearch').value.toLowerCase();
+  const t=document.getElementById('pType').value;
+  const st=document.getElementById('pStatus').value;
+  const lt=document.getElementById('pListing').value;
+  const f=allProps.filter(p=>{
+    if(s&&!p.title.toLowerCase().includes(s)&&!p.location.toLowerCase().includes(s))return false;
+    if(t&&p.propertyType!==t)return false;
+    if(st&&p.status!==st)return false;
+    if(lt&&p.listingType!==lt)return false;
     return true;
   });
-  renderPropertiesTable(filtered);
+  renderProps(f);
 }
 
-function renderPropertiesTable(props){
-  document.getElementById('propCount').textContent=`${props.length} properties`;
-  const tbody=document.getElementById('propertiesTableBody');
-  if(!props.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
-  tbody.innerHTML=props.map(p=>`<tr>
-    <td><img class="table-img" src="${p.mainImage||'https://via.placeholder.com/52x40?text=No+Img'}" alt="${escapeHtml(p.title)}" loading="lazy"></td>
-    <td><div style="font-weight:600;font-size:13px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${escapeHtml(p.location)}</div>${p.featured?'<span class="badge badge-featured" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
-    <td style="font-size:12px">${escapeHtml(p.propertyType||'—')}</td>
-    <td><span class="badge ${p.listingType==='FOR SALE'?'badge-sale':'badge-lease'}">${escapeHtml(p.listingType||'—')}</span></td>
+function renderProps(props){
+  document.getElementById('pCount').textContent=`${props.length} properties`;
+  const b=document.getElementById('propTbody');
+  if(!props.length){b.innerHTML=`<tr><td colspan="7"><div class="empty-st"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
+  b.innerHTML=props.map(p=>`<tr>
+    <td><img class="tbl-img" src="${p.mainImage||'https://via.placeholder.com/50x38?text=—'}" alt="" loading="lazy"></td>
+    <td><div style="font-weight:600;font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.title)}">${esc(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(p.location)}</div>${p.featured?'<span class="badge b-feat" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
+    <td style="font-size:12px;color:var(--gray)">${esc(p.propertyType||'—')}</td>
+    <td><span class="badge ${p.listingType==='FOR SALE'?'b-sale':'b-lease'}">${esc(p.listingType||'—')}</span></td>
     <td style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);font-weight:600">${fmt(p.price)}</td>
-    <td><span class="badge ${p.status==='available'?'badge-available':'badge-sold'}">${escapeHtml(p.status||'available')}</span></td>
-    <td><div class="action-btns">
-      ${isAdmin()?`<button class="action-btn edit" onclick="openEditProperty('${p._id}')"><i class="fas fa-edit"></i> Edit</button>`:''}
-      ${isAdmin()?`<button class="action-btn delete" onclick="deleteProperty('${p._id}','${escapeHtml(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
-      <button class="action-btn view" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
+    <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
+    <td><div class="act-btns">
+      ${isAdmin()?`<button class="act act-edit" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
+      ${isAdmin()?`<button class="act act-del" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
+      <button class="act act-view" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
     </div></td>
   </tr>`).join('');
 }
 
 // ── PROPERTY FORM ─────────────────────────────────────────
 function openAddProperty(){
-  if(!isAdmin()){showToast('Only admins can add properties',true);return}
-  currentEditId=null;uploadedGalleryUrls=[];
-  document.getElementById('propertyForm').reset();
-  document.getElementById('propMainImage').value='';
-  document.getElementById('propGallery').value='';
-  document.getElementById('mainImgPreviewWrap').innerHTML='';
-  document.getElementById('galleryPreviewWrap').innerHTML='';
-  document.getElementById('modalTitle').textContent='Add New Property';
-  document.getElementById('propertyModal').classList.add('open');
+  if(!isAdmin()){showToast('Admin access required',true);return}
+  editPropId=null;galleryUrls=[];
+  document.getElementById('propForm').reset();
+  document.getElementById('pMainImg').value='';document.getElementById('pGallery').value='';
+  document.getElementById('mainPreview').innerHTML='';document.getElementById('gallPreview').innerHTML='';
+  document.getElementById('propModalTitle').textContent='Add New Property';
+  document.getElementById('propModal').classList.add('open');
 }
 
-function openEditProperty(id){
-  if(!isAdmin()){showToast('Only admins can edit properties',true);return}
-  const p=allProperties.find(x=>x._id===id);
-  if(!p)return;
-  currentEditId=id;uploadedGalleryUrls=[...(p.gallery||[])];
-  document.getElementById('editPropertyId').value=id;
-  document.getElementById('propTitle').value=p.title||'';
-  document.getElementById('propType').value=p.propertyType||'Condominium';
-  document.getElementById('propListing').value=p.listingType||'FOR SALE';
-  document.getElementById('propLocation').value=p.location||'';
-  document.getElementById('propMapLocation').value=p.mapLocation||'';
-  document.getElementById('propPrice').value=p.price?p.price.toLocaleString('en-US'):'';
-  document.getElementById('propMonthlyRental').value=p.monthlyRental?p.monthlyRental.toLocaleString('en-US'):'';
-  document.getElementById('propBedrooms').value=p.bedrooms||0;
-  document.getElementById('propBathrooms').value=p.bathrooms||0;
-  document.getElementById('propSqm').value=p.sqm||0;
-  document.getElementById('propParking').value=p.parking||0;
-  document.getElementById('propFloor').value=p.floor||'';
-  document.getElementById('propStatus').value=p.status||'available';
-  document.getElementById('propFeatured').checked=!!p.featured;
-  document.getElementById('propDescription').value=p.description||'';
-  document.getElementById('propMainImage').value=p.mainImage||'';
-  document.getElementById('propGallery').value=JSON.stringify(uploadedGalleryUrls);
-  // Show current main image
-  document.getElementById('mainImgPreviewWrap').innerHTML=p.mainImage?`<img src="${p.mainImage}" style="height:80px;object-fit:cover;border:1px solid var(--border-color);margin-top:8px" alt="Current main image">`:''
-  // Show gallery thumbnails
-  document.getElementById('galleryPreviewWrap').innerHTML=uploadedGalleryUrls.map((url,i)=>`<div class="img-preview"><img src="${url}" alt="Gallery ${i+1}"><button class="remove" onclick="removeGalleryImg(${i})">&times;</button></div>`).join('');
-  document.getElementById('modalTitle').textContent='Edit Property';
-  document.getElementById('propertyModal').classList.add('open');
+function openEditProp(id){
+  if(!isAdmin()){showToast('Admin access required',true);return}
+  const p=allProps.find(x=>x._id===id);if(!p)return;
+  editPropId=id;galleryUrls=[...(p.gallery||[])];
+  document.getElementById('editId').value=id;
+  document.getElementById('pTitle').value=p.title||'';
+  document.getElementById('pType2').value=p.propertyType||'Condominium';
+  document.getElementById('pListing2').value=p.listingType||'FOR SALE';
+  document.getElementById('pLoc').value=p.location||'';
+  document.getElementById('pMapLoc').value=p.mapLocation||'';
+  document.getElementById('pPrice').value=p.price?p.price.toLocaleString('en-US'):'';
+  document.getElementById('pRental').value=p.monthlyRental?p.monthlyRental.toLocaleString('en-US'):'';
+  document.getElementById('pBed').value=p.bedrooms||0;document.getElementById('pBath').value=p.bathrooms||0;
+  document.getElementById('pSqm').value=p.sqm||0;document.getElementById('pPark').value=p.parking||0;
+  document.getElementById('pFloor').value=p.floor||'';document.getElementById('pStat').value=p.status||'available';
+  document.getElementById('pFeatured').checked=!!p.featured;document.getElementById('pDesc').value=p.description||'';
+  document.getElementById('pMainImg').value=p.mainImage||'';document.getElementById('pGallery').value=JSON.stringify(galleryUrls);
+  document.getElementById('mainPreview').innerHTML=p.mainImage?`<img src="${p.mainImage}" style="height:72px;object-fit:cover;border:1px solid var(--border-color);margin-top:8px">`:''
+  document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,i)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${i})">&times;</button></div>`).join('');
+  document.getElementById('propModalTitle').textContent='Edit Property';
+  document.getElementById('propModal').classList.add('open');
 }
 
-function closeModal(){document.getElementById('propertyModal').classList.remove('open')}
+function closePropModal(){document.getElementById('propModal').classList.remove('open')}
+function rmGall(i){galleryUrls.splice(i,1);document.getElementById('pGallery').value=JSON.stringify(galleryUrls);document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,j)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${j})">&times;</button></div>`).join('')}
 
-function removeGalleryImg(idx){
-  uploadedGalleryUrls.splice(idx,1);
-  document.getElementById('propGallery').value=JSON.stringify(uploadedGalleryUrls);
-  document.getElementById('galleryPreviewWrap').innerHTML=uploadedGalleryUrls.map((url,i)=>`<div class="img-preview"><img src="${url}"><button class="remove" onclick="removeGalleryImg(${i})">&times;</button></div>`).join('');
-}
-
-function formatPriceField(input){let v=input.value.replace(/,/g,'');if(v&&!isNaN(v))input.value=parseFloat(v).toLocaleString('en-US')}
-
-function getNum(id){return parseFloat(document.getElementById(id).value.replace(/,/g,''))||0}
-
-document.getElementById('propertyForm')?.addEventListener('submit',async function(e){
+document.getElementById('propForm').addEventListener('submit',async function(e){
   e.preventDefault();
-  if(!isAdmin()){showToast('Permission denied',true);return}
-  const btn=this.querySelector('.form-btn.primary');
-  const orig=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
-  showLoading('Saving property...');
+  if(!isAdmin()){showToast('Admin access required',true);return}
+  const btn=this.querySelector('.fbtn.primary');const orig=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';showLoad('Saving property...');
   try{
     const data={
-      title:document.getElementById('propTitle').value,
-      propertyType:document.getElementById('propType').value,
-      listingType:document.getElementById('propListing').value,
-      location:document.getElementById('propLocation').value,
-      mapLocation:document.getElementById('propMapLocation').value,
-      price:getNum('propPrice'),
-      monthlyRental:getNum('propMonthlyRental'),
-      bedrooms:parseInt(document.getElementById('propBedrooms').value)||0,
-      bathrooms:parseInt(document.getElementById('propBathrooms').value)||0,
-      sqm:parseFloat(document.getElementById('propSqm').value)||0,
-      parking:parseInt(document.getElementById('propParking').value)||0,
-      floor:document.getElementById('propFloor').value,
-      status:document.getElementById('propStatus').value,
-      featured:document.getElementById('propFeatured').checked,
-      description:document.getElementById('propDescription').value,
-      mainImage:document.getElementById('propMainImage').value,
-      gallery:uploadedGalleryUrls,
+      title:document.getElementById('pTitle').value,propertyType:document.getElementById('pType2').value,
+      listingType:document.getElementById('pListing2').value,location:document.getElementById('pLoc').value,
+      mapLocation:document.getElementById('pMapLoc').value,price:getNum('pPrice'),monthlyRental:getNum('pRental'),
+      bedrooms:parseInt(document.getElementById('pBed').value)||0,bathrooms:parseInt(document.getElementById('pBath').value)||0,
+      sqm:parseFloat(document.getElementById('pSqm').value)||0,parking:parseInt(document.getElementById('pPark').value)||0,
+      floor:document.getElementById('pFloor').value,status:document.getElementById('pStat').value,
+      featured:document.getElementById('pFeatured').checked,description:document.getElementById('pDesc').value,
+      mainImage:document.getElementById('pMainImg').value,gallery:galleryUrls,
     };
-    const url=currentEditId?`/api/admin/properties/${currentEditId}`:'/api/admin/properties';
-    const method=currentEditId?'PUT':'POST';
-    const headers={'Content-Type':'application/json','x-admin-role':'admin'};
+    const url=editPropId?`/api/admin/properties/${editPropId}`:'/api/admin/properties';
+    const method=editPropId?'PUT':'POST';
+    const headers={'Content-Type':'application/json','x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''};
     const res=await fetch(url,{method,headers,body:JSON.stringify(data)});
-    if(res.ok){
-      showToast(currentEditId?'Property updated!':'Property added!');
-      closeModal();await loadAllProperties();showRefreshNotice();
-    }else{const e=await res.json();showToast('Save failed: '+(e.error||'Unknown error'),true)}
-  }catch(err){showToast('Network error: '+err.message,true)}
-  finally{hideLoading();btn.disabled=false;btn.innerHTML=orig}
+    if(res.ok){showToast(editPropId?'Property updated!':'Property added!');closePropModal();await loadAllProps();showRefresh()}
+    else{const e=await res.json();showToast('Save failed: '+(e.error||'error'),true)}
+  }catch(err){showToast('Network error',true)}
+  finally{hideLoad();btn.disabled=false;btn.innerHTML=orig}
 });
 
-async function deleteProperty(id,title){
-  if(!isAdmin()){showToast('Only admins can delete properties',true);return}
-  if(!confirm(`Delete "${title}"?\n\nThis cannot be undone.`))return;
-  showLoading('Deleting property...');
+async function deleteProp(id,title){
+  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!confirm(`Delete "${title}"?\n\nThis CANNOT be undone.`))return;
+  showLoad('Deleting...');
   try{
-    const res=await fetch(`/api/admin/properties/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});
-    if(res.ok){showToast('Property deleted');await loadAllProperties()}
+    const res=await fetch(`/api/admin/properties/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});
+    if(res.ok){showToast('Property deleted');await loadAllProps()}
     else showToast('Delete failed',true)
-  }catch{showToast('Network error',true)}
-  finally{hideLoading()}
+  }catch{showToast('Error',true)}finally{hideLoad()}
 }
 
 // ── IMAGE UPLOAD ──────────────────────────────────────────
-async function previewMainImage(input){
-  const file=input.files[0];if(!file)return;
-  const progress=document.getElementById('mainImgProgress');
-  const fill=document.getElementById('mainImgProgressFill');
-  progress.style.display='block';fill.style.width='20%';
+async function uploadMain(inp){
+  const file=inp.files[0];if(!file)return;
+  const prog=document.getElementById('mainProg');const fill=document.getElementById('mainProgFill');
+  prog.style.display='block';fill.style.width='20%';
   try{
-    const formData=new FormData();formData.append('image',file);
-    fill.style.width='60%';
-    const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:formData});
-    fill.style.width='100%';
-    const data=await res.json();
-    if(data.url){
-      document.getElementById('propMainImage').value=data.url;
-      document.getElementById('mainImgPreviewWrap').innerHTML=`<img src="${data.url}" style="height:80px;object-fit:cover;border:1px solid var(--border-color);margin-top:8px">`;
-      showToast('Main image uploaded');
-    }else showToast('Upload failed',true);
+    const fd=new FormData();fd.append('image',file);fill.style.width='60%';
+    const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:fd});
+    fill.style.width='100%';const d=await res.json();
+    if(d.url){
+      document.getElementById('pMainImg').value=d.url;
+      document.getElementById('mainPreview').innerHTML=`<img src="${d.url}" style="height:72px;object-fit:cover;border:1px solid var(--border-color);margin-top:8px">`;
+      showToast('Image uploaded');
+    }else showToast('Upload failed',true)
   }catch{showToast('Upload error',true)}
-  finally{setTimeout(()=>{progress.style.display='none';fill.style.width='0'},1000)}
+  finally{setTimeout(()=>{prog.style.display='none';fill.style.width='0'},1000)}
 }
 
-async function previewGalleryImages(input){
-  const files=[...input.files];if(!files.length)return;
-  showLoading(`Uploading ${files.length} image${files.length>1?'s':''}...`);
+async function uploadGallery(inp){
+  const files=[...inp.files];if(!files.length)return;showLoad(`Uploading ${files.length} image${files.length>1?'s':''}...`);
   try{
     for(const file of files){
-      const formData=new FormData();formData.append('image',file);
-      const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:formData});
-      const data=await res.json();
-      if(data.url)uploadedGalleryUrls.push(data.url);
+      const fd=new FormData();fd.append('image',file);
+      const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:fd});
+      const d=await res.json();if(d.url)galleryUrls.push(d.url);
     }
-    document.getElementById('propGallery').value=JSON.stringify(uploadedGalleryUrls);
-    document.getElementById('galleryPreviewWrap').innerHTML=uploadedGalleryUrls.map((url,i)=>`<div class="img-preview"><img src="${url}"><button class="remove" onclick="removeGalleryImg(${i})">&times;</button></div>`).join('');
+    document.getElementById('pGallery').value=JSON.stringify(galleryUrls);
+    document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,i)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${i})">&times;</button></div>`).join('');
     showToast(`${files.length} image${files.length>1?'s':''} uploaded`);
-  }catch{showToast('Gallery upload error',true)}
-  finally{hideLoading()}
+  }catch{showToast('Upload error',true)}finally{hideLoad()}
 }
 
-async function uploadHeroImages(files){
-  if(!isAdmin()){showToast('Only admins can upload hero images',true);return}
-  if(!files.length)return;
-  showLoading(`Uploading ${files.length} hero image${files.length>1?'s':''}...`);
+async function uploadHeroImgs(files){
+  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!files.length)return;showLoad(`Uploading ${files.length} hero image${files.length>1?'s':''}...`);
   try{
     for(const file of files){
-      const formData=new FormData();formData.append('image',file);
-      const res=await fetch('/api/admin/hero-images/upload',{method:'POST',body:formData});
-      if(!res.ok)console.error('Hero upload failed for',file.name);
+      const fd=new FormData();fd.append('image',file);
+      await fetch('/api/admin/hero-images/upload',{method:'POST',body:fd});
     }
     await loadHeroImages();showToast('Hero images uploaded!');
-  }catch{showToast('Upload error',true)}
-  finally{hideLoading()}
+  }catch{showToast('Upload error',true)}finally{hideLoad()}
 }
 
 // ── INQUIRIES ─────────────────────────────────────────────
 async function loadInquiries(){
   try{
-    const res=await fetch('/api/admin/inquiries');
-    const data=await res.json();
-    // Dashboard preview
-    const dash=document.getElementById('dashInquiries');
-    const recent=data.slice(0,5);
-    dash.innerHTML=recent.length?`<table><thead><tr><th>Name</th><th>Email</th><th>Property</th><th>Date</th></tr></thead><tbody>${recent.map(i=>`<tr><td><strong>${escapeHtml(i.name)}</strong></td><td>${escapeHtml(i.email)}</td><td style="font-size:12px">${escapeHtml(i.propertyTitle||'General')}</td><td style="font-size:11px;color:var(--gray)">${fmtDate(i.createdAt)}</td></tr>`).join('')}</tbody></table>`:`<div class="empty-state"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div>`;
-    // Full table
-    const body=document.getElementById('inquiriesBody');
-    body.innerHTML=data.length?data.map(i=>`<tr><td><strong>${escapeHtml(i.name)}</strong></td><td style="font-size:12px">${escapeHtml(i.email)}</td><td style="font-size:12px">${escapeHtml(i.phone||'—')}</td><td style="font-size:12px;max-width:180px">${escapeHtml(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:220px;white-space:pre-wrap">${escapeHtml((i.message||'').substring(0,120))}${(i.message||'').length>120?'...':''}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDate(i.createdAt)}</td><td><div class="action-btns">${isAdmin()?`<button class="action-btn delete" onclick="deleteInquiry('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty-state"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div></td></tr>`;
-  }catch(e){console.error('Inquiries error',e)}
+    const data=await fetch('/api/admin/inquiries').then(r=>r.json());
+    // Dashboard
+    document.getElementById('dashInq').innerHTML=data.length?
+      `<table><thead><tr><th>Name</th><th>Email</th><th>Property</th><th>Date</th></tr></thead><tbody>${data.slice(0,6).map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(i.propertyTitle||'General')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td></tr>`).join('')}</tbody></table>`:
+      `<div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div>`;
+    // Full
+    document.getElementById('inqTbody').innerHTML=data.length?
+      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((i.message||'').substring(0,100))}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td><td><div class="act-btns">${isAdmin()?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
+  }catch(e){console.error(e)}
 }
 
-async function deleteInquiry(id){
-  if(!isAdmin()){showToast('Permission denied',true);return}
+async function delInq(id){
+  if(!isAdmin()){showToast('Admin access required',true);return}
   if(!confirm('Delete this inquiry?'))return;
-  try{
-    await fetch(`/api/admin/inquiries/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});
-    showToast('Inquiry deleted');loadInquiries();
-  }catch{showToast('Error',true)}
+  try{await fetch(`/api/admin/inquiries/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});showToast('Deleted');loadInquiries()}catch{showToast('Error',true)}
 }
 
 // ── SUBSCRIBERS ───────────────────────────────────────────
 async function loadSubscribers(){
   try{
-    const res=await fetch('/api/admin/subscribers');
-    const data=await res.json();
-    const body=document.getElementById('subscribersBody');
-    body.innerHTML=data.length?data.map(s=>`<tr><td style="font-size:13px">${escapeHtml(s.email)}</td><td style="font-size:12px;color:var(--gray)">${escapeHtml(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDate(s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'badge-available':'badge-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="action-btns">${isAdmin()?`<button class="action-btn delete" onclick="deleteSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):`<tr><td colspan="5"><div class="empty-state"><i class="fas fa-users"></i><p>No subscribers yet</p></div></td></tr>`;
-  }catch(e){console.error('Subscribers error',e)}
+    const data=await fetch('/api/admin/subscribers').then(r=>r.json());
+    document.getElementById('subTbody').innerHTML=data.length?
+      data.map(s=>`<tr><td style="font-size:13px">${esc(s.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDateShort(s.subscribedAt||s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="act-btns">${isAdmin()?`<button class="act act-del" onclick="delSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      `<tr><td colspan="5"><div class="empty-st"><i class="fas fa-users"></i><p>No subscribers</p></div></td></tr>`;
+  }catch(e){console.error(e)}
 }
 
-async function deleteSub(id){
-  if(!isAdmin()){showToast('Permission denied',true);return}
+async function delSub(id){
+  if(!isAdmin()){showToast('Admin access required',true);return}
   if(!confirm('Remove this subscriber?'))return;
-  try{
-    await fetch(`/api/admin/subscribers/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});
-    showToast('Subscriber removed');loadSubscribers();
-  }catch{showToast('Error',true)}
+  try{await fetch(`/api/admin/subscribers/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});showToast('Removed');loadSubscribers()}catch{showToast('Error',true)}
 }
 
-// ── PRICE ALERTS ──────────────────────────────────────────
+// ── ALERTS ────────────────────────────────────────────────
 async function loadAlerts(){
   try{
-    const res=await fetch('/api/admin/price-alerts');
-    const data=await res.json();
-    const body=document.getElementById('alertsBody');
-    body.innerHTML=data.length?data.map(a=>`<tr><td style="font-size:13px">${escapeHtml(a.email)}</td><td style="font-size:12px">${escapeHtml(a.propertyTitle||'—')}</td><td style="font-size:13px;color:var(--gold);font-family:'Cormorant Garamond',serif">${fmt(a.propertyPrice)}</td><td><span class="badge ${!a.isNotified?'badge-available':'badge-sold'}">${a.isNotified?'Notified':'Watching'}</span></td></tr>`).join(''):`<tr><td colspan="4"><div class="empty-state"><i class="fas fa-bell"></i><p>No price alerts yet</p></div></td></tr>`;
-  }catch(e){console.error('Alerts error',e)}
+    const data=await fetch('/api/admin/price-alerts').then(r=>r.json());
+    document.getElementById('alertTbody').innerHTML=data.length?
+      data.map(a=>`<tr><td style="font-size:13px">${esc(a.email)}</td><td style="font-size:12px">${esc(a.propertyTitle||'—')}</td><td style="font-size:13px;color:var(--gold);font-family:'Cormorant Garamond',serif">${fmt(a.propertyPrice)}</td><td><span class="badge ${!a.isNotified?'b-avail':'b-sold'}">${a.isNotified?'Notified':'Watching'}</span></td></tr>`).join(''):
+      `<tr><td colspan="4"><div class="empty-st"><i class="fas fa-bell"></i><p>No price alerts</p></div></td></tr>`;
+  }catch(e){console.error(e)}
 }
 
 // ── HERO IMAGES ───────────────────────────────────────────
 async function loadHeroImages(){
   try{
-    const res=await fetch('/api/admin/hero-images');
-    const data=await res.json();
-    const grid=document.getElementById('heroGrid');
-    grid.innerHTML=data.length?data.map(img=>`<div class="hero-card">
-      <img src="${img.url}" alt="Hero image" loading="lazy">
-      <div class="hero-card-footer">
-        ${img.isDefault?'<span class="hero-default-badge"><i class="fas fa-star"></i> Default</span>':'<button class="hero-btn" onclick="setDefaultHero(\''+img._id+'\')">Set Default</button>'}
-        ${isAdmin()?`<div class="hero-card-actions"><button class="hero-btn danger" onclick="deleteHeroImage('${img._id}')"><i class="fas fa-trash"></i></button></div>`:''}
-      </div>
-    </div>`).join(''):`<div class="empty-state"><i class="fas fa-images"></i><p>No hero images. Upload images to display in the homepage slider.</p></div>`;
-  }catch(e){console.error('Hero images error',e)}
+    const data=await fetch('/api/admin/hero-images').then(r=>r.json());
+    document.getElementById('heroGrid').innerHTML=data.length?
+      data.map(img=>`<div class="hero-card"><img src="${img.url}" alt="Hero" loading="lazy"><div class="hero-foot">${img.isDefault?'<span class="hero-def"><i class="fas fa-star"></i> Default</span>':`<button class="hero-btn" onclick="setHeroDef('${img._id}')">Set Default</button>`}<div class="hero-acts">${isAdmin()?`<button class="hero-btn danger" onclick="delHero('${img._id}')"><i class="fas fa-trash"></i></button>`:''}</div></div></div>`).join(''):
+      `<div class="empty-st"><i class="fas fa-images"></i><p>No hero images yet. Upload images to display in the homepage slider.</p></div>`;
+  }catch(e){console.error(e)}
 }
 
-async function setDefaultHero(id){
-  try{
-    await fetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});
-    showToast('Default image set');loadHeroImages();
-  }catch{showToast('Error',true)}
-}
-
-async function deleteHeroImage(id){
-  if(!isAdmin()){showToast('Permission denied',true);return}
-  if(!confirm('Delete this hero image?'))return;
-  try{
-    await fetch(`/api/admin/hero-images/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});
-    showToast('Image deleted');loadHeroImages();
-  }catch{showToast('Error',true)}
-}
+async function setHeroDef(id){try{await fetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});showToast('Default set');loadHeroImages()}catch{showToast('Error',true)}}
+async function delHero(id){if(!isAdmin()){showToast('Admin access required',true);return}if(!confirm('Delete this hero image?'))return;try{await fetch(`/api/admin/hero-images/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});showToast('Deleted');loadHeroImages()}catch{showToast('Error',true)}}
 
 // ── ACCOUNTS ──────────────────────────────────────────────
+let allAuditLogs = [];
+let editAccId = null;
+
 async function loadAccounts(){
+  if(!isAdmin())return;
   try{
-    const res=await fetch('/api/admin/accounts');
-    const accounts=await res.json();
-    const list=document.getElementById('accountsList');
-    list.innerHTML=accounts.map(a=>`<div class="account-card">
-      <div class="account-avatar">${(a.name||a.email)[0].toUpperCase()}</div>
-      <div class="account-info">
-        <div class="account-name">${escapeHtml(a.name||'—')}</div>
-        <div class="account-email">${escapeHtml(a.email)}</div>
-        <span class="badge ${a.role==='admin'?'badge-admin':'badge-employee'}" style="margin-top:6px"><i class="fas fa-${a.role==='admin'?'shield-alt':'user'}"></i> ${a.role==='admin'?'Administrator':'Staff Employee'}</span>
-        <div class="account-permissions">
-          ${a.role==='admin'?
-            ['Full Access','Add/Edit/Delete Properties','Upload Hero Images','Delete Inquiries','View All Accounts'].map(p=>`<span class="perm-tag perm-allow"><i class="fas fa-check"></i> ${p}</span>`).join(''):
-            ['View Dashboard','View Properties','View Inquiries','View Subscribers'].map(p=>`<span class="perm-tag perm-allow"><i class="fas fa-check"></i> ${p}</span>`).join('')+
-            ['Add/Edit Properties','Delete Records','Upload Images','View Accounts'].map(p=>`<span class="perm-tag perm-deny"><i class="fas fa-times"></i> ${p}</span>`).join('')
-          }
+    const data = await fetch('/api/admin/accounts').then(r=>r.json());
+    const list = document.getElementById('accountsList');
+    if(!list) return;
+    if(!data.length){
+      list.innerHTML='<div class="empty-st"><i class="fas fa-users"></i><p>No accounts yet. Add your first team member.</p></div>';
+      return;
+    }
+    list.innerHTML = data.map(a=>`
+      <div class="panel" style="margin-bottom:14px">
+        <div style="padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="width:46px;height:46px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:600;flex-shrink:0;border:1px solid rgba(200,169,110,.3)">${(a.name||a.email)[0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;color:var(--text-color)">${esc(a.name||'—')}</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(a.email)}</div>
+            <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="badge ${a.role==='admin'?'b-admin':'b-emp'}"><i class="fas fa-${a.role==='admin'?'shield-alt':'user'}"></i> ${a.role==='admin'?'Administrator':'Staff Employee'}</span>
+              <span class="badge ${a.isActive!==false?'b-avail':'b-sold'}">${a.isActive!==false?'Active':'Inactive'}</span>
+              ${a.lastLogin?`<span style="font-size:11px;color:var(--gray)"><i class="fas fa-clock" style="margin-right:4px"></i>Last login: ${fmtDateShort(a.lastLogin)}</span>`:'<span style="font-size:11px;color:var(--gray)">Never logged in</span>'}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="act act-edit" onclick="openEditAccount('${a._id}','${esc(a.email)}','${esc(a.name||'')}','${a.role}',${a.isActive!==false})"><i class="fas fa-edit"></i> Edit</button>
+            ${a.email !== CU?.email ? `<button class="act act-del" onclick="deleteAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--gold)">You</span>'}
+          </div>
         </div>
-      </div>
-      ${a.email===currentUser?.email?`<span style="font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase">You</span>`:''}
-    </div>`).join('');
+      </div>`).join('');
   }catch(e){console.error('Accounts error',e)}
+}
+
+function openAddAccount(){
+  editAccId = null;
+  document.getElementById('accModalTitle').textContent = 'Add Team Account';
+  document.getElementById('accEmail').value = '';
+  document.getElementById('accName').value = '';
+  document.getElementById('accPass').value = '';
+  document.getElementById('accRole').value = 'employee';
+  document.getElementById('accActive').checked = true;
+  document.getElementById('accPassHelp').textContent = 'Required for new accounts';
+  document.getElementById('accModal').classList.add('open');
+}
+
+function openEditAccount(id, email, name, role, isActive){
+  editAccId = id;
+  document.getElementById('accModalTitle').textContent = 'Edit Account';
+  document.getElementById('accEmail').value = email;
+  document.getElementById('accName').value = name;
+  document.getElementById('accPass').value = '';
+  document.getElementById('accRole').value = role;
+  document.getElementById('accActive').checked = isActive;
+  document.getElementById('accPassHelp').textContent = 'Leave blank to keep current password';
+  document.getElementById('accModal').classList.add('open');
+}
+
+function closeAccModal(){document.getElementById('accModal').classList.remove('open')}
+
+async function saveAccount(){
+  const email = document.getElementById('accEmail').value.trim();
+  const name = document.getElementById('accName').value.trim();
+  const pass = document.getElementById('accPass').value;
+  const role = document.getElementById('accRole').value;
+  const isActive = document.getElementById('accActive').checked;
+  if(!email){showToast('Email is required',true);return}
+  if(!editAccId && !pass){showToast('Password is required for new accounts',true);return}
+  const btn = document.getElementById('saveAccBtn');
+  const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+  try{
+    const body = {email,name,role,isActive};
+    if(pass) body.password = pass;
+    const url = editAccId ? `/api/admin/accounts/${editAccId}` : '/api/admin/accounts';
+    const method = editAccId ? 'PUT' : 'POST';
+    const res = await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''},body:JSON.stringify(body)});
+    const d = await res.json();
+    if(res.ok){
+      showToast(editAccId ? 'Account updated!' : 'Account created!');
+      closeAccModal();
+      loadAccounts();
+      logAuditLocally(editAccId?'UPDATE':'CREATE','Account',email);
+    }else showToast(d.error||'Save failed',true);
+  }catch(e){showToast('Network error',true)}
+  finally{btn.disabled=false;btn.innerHTML=orig}
+}
+
+async function deleteAccount(id, name){
+  if(!confirm(`Remove account for "${name}"?\n\nThey will no longer be able to log in.`)) return;
+  try{
+    const res = await fetch(`/api/admin/accounts/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});
+    if(res.ok){showToast('Account removed');loadAccounts()}
+    else showToast('Delete failed',true);
+  }catch{showToast('Error',true)}
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────
+async function loadAuditLog(){
+  if(!isAdmin())return;
+  try{
+    const data = await fetch('/api/admin/audit-log',{headers:{'x-admin-role':'admin'}}).then(r=>r.json());
+    allAuditLogs = data;
+    renderAuditLog(data);
+  }catch(e){
+    console.error('Audit log error',e);
+    document.getElementById('auditBody').innerHTML='<tr><td colspan="6"><div class="empty-st"><i class="fas fa-history"></i><p>Could not load audit log</p></div></td></tr>';
+  }
+}
+
+function filterAuditLog(){
+  const search = document.getElementById('auditSearch')?.value.toLowerCase()||'';
+  const action = document.getElementById('auditActionFilter')?.value||'';
+  const filtered = allAuditLogs.filter(l=>{
+    if(action && !l.action.startsWith(action)) return false;
+    if(search && !l.actor.toLowerCase().includes(search) && 
+       !l.targetTitle?.toLowerCase().includes(search) &&
+       !(l.action||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+  renderAuditLog(filtered);
+}
+
+function renderAuditLog(logs){
+  const body = document.getElementById('auditBody');
+  if(!body) return;
+  if(!logs.length){
+    body.innerHTML='<tr><td colspan="6"><div class="empty-st"><i class="fas fa-history"></i><p>No activity recorded yet</p></div></td></tr>';
+    return;
+  }
+  const actionColor = {LOGIN:'#3b82f6',CREATE:'#10b981',UPDATE:'#f59e0b',DELETE:'#ef4444'};
+  body.innerHTML = logs.map(l=>{
+    const color = actionColor[l.action] || 'var(--gray)';
+    const changes = l.changes ? `<details style="cursor:pointer"><summary style="font-size:11px;color:var(--gold)">View changes</summary><pre style="font-size:10px;color:var(--gray);white-space:pre-wrap;max-width:300px;margin-top:6px;background:var(--gray-light);padding:8px;overflow:auto">${esc(JSON.stringify(l.changes,null,2))}</pre></details>` : '—';
+    return `<tr>
+      <td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateTime(l.timestamp)}</td>
+      <td><div style="font-size:13px;font-weight:500">${esc(l.actorName||l.actor)}</div><div style="font-size:11px;color:var(--gray)">${esc(l.actor)}</div></td>
+      <td><span class="badge ${l.actorRole==='admin'?'b-admin':'b-emp'}">${l.actorRole||'—'}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;background:${color}18;color:${color};border:1px solid ${color}40">${esc(l.action)}</span></td>
+      <td style="font-size:12px"><div style="font-weight:500">${esc(l.target||'—')}</div><div style="font-size:11px;color:var(--gray);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.targetTitle||'')}</div></td>
+      <td style="font-size:12px">${changes}</td>
+    </tr>`;
+  }).join('');
+}
+
+function fmtDateTime(d){
+  if(!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) + ' ' +
+         dt.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+}
+
+// Local audit helper (for immediate feedback even before server responds)
+
+function toggleAccActive(){
+  const cb = document.getElementById('accActive');
+  const slider = document.getElementById('accActiveSlider');
+  const label = document.getElementById('accActiveLabel');
+  cb.checked = !cb.checked;
+  slider.style.background = cb.checked ? 'var(--gold)' : 'var(--border-color)';
+  label.textContent = cb.checked ? 'Active' : 'Inactive';
+}
+
+function logAuditLocally(action, target, title){
+  // Just refresh the audit log after a short delay
+  setTimeout(()=>{ if(isAdmin()) loadAuditLog(); }, 1500);
 }
 
 // ── TABS ──────────────────────────────────────────────────
 function switchTab(name){
-  document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pane=document.getElementById('tab-'+name);
-  if(pane)pane.style.display='';
+  const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
-  // Show/hide add button
-  const addBtn=document.getElementById('addPropertyBtn');
+  // Add property button only on properties tab for admins
+  const addBtn=document.getElementById('addPropBtn');
   if(addBtn)addBtn.style.display=(name==='properties'&&isAdmin())?'':'none';
+  // Hero upload button — admin only
+  const heroBtn=document.getElementById('heroUploadBtn');
+  if(heroBtn)heroBtn.style.display=(name==='hero'&&isAdmin())?'':'none';
+  // Load audit log on visit
+  if(name==='auditlog')loadAudit();
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
 }
-
-document.getElementById('addPropertyBtn').style.display='none';
 </script>
+
+<!-- ACCOUNT ADD/EDIT MODAL -->
+<div class="modal-ov" id="accModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:center;justify-content:center;z-index:2000">
+  <div style="background:var(--card-bg);max-width:480px;width:95%;border:1px solid var(--border-color);animation:modalIn .25s ease">
+    <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="accModalTitle">Add Account</div>
+      <button onclick="closeAccModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:28px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="fg"><label class="flbl">Full Name</label><input type="text" id="accName" placeholder="e.g. Maria Santos" class="finput"></div>
+        <div class="fg"><label class="flbl">Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com" class="finput"></div>
+        <div class="fg">
+          <label class="flbl">Password</label>
+          <input type="password" id="accPass" placeholder="Enter password" class="finput">
+          <div style="font-size:11px;color:var(--gray);margin-top:5px" id="accPassHelp">Required for new accounts</div>
+        </div>
+        <div class="fg"><label class="flbl">Role *</label>
+          <select id="accRole" class="finput">
+            <option value="employee">Staff Employee — View only, no edits</option>
+            <option value="admin">Administrator — Full access</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="flbl">Status</label>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+            <label style="position:relative;display:inline-block;width:46px;height:24px"><input type="checkbox" id="accActive" checked style="display:none"><div style="position:absolute;cursor:pointer;inset:0;background:var(--border-color);border-radius:24px;transition:.3s" id="accActiveSlider" onclick="toggleAccActive()"></div></label>
+            <span style="font-size:13px;color:var(--text-color)" id="accActiveLabel">Active</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color)">
+        <button id="saveAccBtn" onclick="saveAccount()" style="padding:11px 24px;background:var(--gold);color:#fff;border:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;gap:8px"><i class="fas fa-save"></i> Save Account</button>
+        <button onclick="closeAccModal()" style="padding:11px 24px;background:var(--gray-light);color:var(--gray);border:1px solid var(--border-color);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

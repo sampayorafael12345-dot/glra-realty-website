@@ -64,13 +64,7 @@ body.dark-mode .navbar{background:#0a1520}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
 .mobile-overlay-links a:hover{color:var(--gold)}
 /* NAV DROPDOWN */
-.nav-dropdown{position:relative}
-.nav-dropdown-menu{position:absolute;top:100%;left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:200px;padding:14px 0 6px;display:none;z-index:200;box-shadow:var(--shadow-lg)}.nav-dropdown-menu::before{content:'';position:absolute;top:-14px;left:0;right:0;height:14px}
-body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
-.nav-dropdown:hover .nav-dropdown-menu{display:block}
-.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color)!important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
-.nav-dropdown-menu a:last-child{border-bottom:none}
-.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
+.nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
 /* PAGE HERO */
 .page-hero{padding:108px 5% 56px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,.15);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,.07) 0%,transparent 65%);pointer-events:none}
@@ -166,7 +160,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
-<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+<div class="loader-bar"></div></div></div>
 
 
 
@@ -254,6 +248,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <script>
 
+window.addEventListener('DOMContentLoaded',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',400)}});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 function escapeHtml(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast';t.style.borderLeftColor=isErr?'#ef4444':'var(--gold)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}

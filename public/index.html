@@ -263,14 +263,7 @@ body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
 body.dark-mode .empty-state{background:#111b27}
 .empty-state i{font-size:36px;margin-bottom:12px;color:var(--gold)}
 .empty-state p{color:var(--gray);font-size:14px}
-.nav-dropdown{position:relative}
-.nav-dropdown-menu{position:absolute;top:calc(100% + 16px);left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:180px;padding:8px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
-body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
-.nav-dropdown:hover .nav-dropdown-menu{display:block}
-.nav-dropdown-menu::before{content:'';position:absolute;top:-14px;left:0;right:0;height:14px}
-.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color) !important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);letter-spacing:0.5px}
-.nav-dropdown-menu a:last-child{border-bottom:none}
-.nav-dropdown-menu a:hover{color:var(--gold) !important;background:var(--gray-light)}
+.nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
 .chatbot-toggle{position:fixed;bottom:24px;left:72px;width:46px;height:46px;background:var(--navy);border:1px solid var(--gold);border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:100;box-shadow:var(--shadow-md);transition:var(--transition);color:var(--gold)}
 .chatbot-toggle:hover{background:var(--gold);color:#fff}
 .chatbot-window{position:fixed;bottom:80px;left:24px;width:360px;height:520px;background:var(--white);border:1px solid var(--border-color);box-shadow:var(--shadow-lg);z-index:999;display:none;flex-direction:column;border-top:2px solid var(--gold)}
@@ -345,7 +338,7 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
     <a href="#broker">BROKER</a>
     <a href="/calculator.html">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
-    <div class="nav-dropdown"><a href="#" onclick="return false;">MORE</a>
+    <div class="nav-dropdown"><a>MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:3px"></i></a>
       <div class="nav-dropdown-menu">
         <a href="/about.html">About Us</a>
         <a href="/testimonials.html">Testimonials</a>
@@ -504,6 +497,7 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
 <div id="modal"><span class="close" onclick="closeModal()"><i class="fas fa-times"></i></span><div id="modal-content" class="modal-body"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
+window.addEventListener('DOMContentLoaded',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',400)}});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 function initLazyLoading(){const io=new IntersectionObserver((e,obs)=>{e.forEach(e=>{if(e.isIntersecting){const i=e.target;if(i.dataset.src){i.src=i.dataset.src;i.classList.remove('lazy')}obs.unobserve(i)}})},{rootMargin:'50px'});document.querySelectorAll('img[data-src]').forEach(i=>io.observe(i))}
 function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);document.getElementById('floatingDarkModeToggle').innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>'}
