@@ -48,9 +48,10 @@ body.dark-mode .navbar{background:#0a1520}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
 .mobile-overlay-links a:hover{color:var(--gold)}
 .nav-dropdown{position:relative}
-.nav-dropdown-menu{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:190px;padding:6px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
+.nav-dropdown-menu{position:absolute;top:100%;left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:190px;padding:6px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
 body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
 .nav-dropdown:hover .nav-dropdown-menu{display:block}
+.nav-dropdown-menu::before{content:'';position:absolute;top:-14px;left:0;right:0;height:14px}
 .nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color) !important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
 .nav-dropdown-menu a:last-child{border-bottom:none}
 .nav-dropdown-menu a:hover{color:var(--gold) !important;background:var(--gray-light);padding-left:26px}
@@ -243,7 +244,7 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
     <a href="/calculator.html" class="active">CALCULATOR</a>
     <a href="/zonal.html">ZONAL VALUE</a>
     <div class="nav-dropdown">
-      <a href="#" onclick="return false">MORE</a>
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
       <div class="nav-dropdown-menu">
         <a href="/about.html">About Us</a>
         <a href="/testimonials.html">Testimonials</a>
@@ -262,6 +263,8 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
     <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
     <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
+    <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
     <a href="/guide.html" onclick="closeMobileMenu()">Guide</a>
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
@@ -269,7 +272,7 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
 <div class="page-hero">
   <span class="eyebrow">Tools & Resources</span>
   <h1>Sales Closing Fees Calculator</h1>
-  <p>Calculate all property transaction taxes and fees — includes BIR Zonal Value and Desired Net Proceed</p>
+  <p>Calculate all taxes and fees for property transactions in the Philippines — includes BIR Zonal Value lookup, broker commission with VAT, and desired net proceed calculator</p>
 </div>
 
 
@@ -370,6 +373,7 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
         <button class="comm-btn" data-rate="7" onclick="setCommission(7)">7%</button>
       </div>
       <input type="hidden" id="commissionRate" value="5">
+      <div class="input-hint" style="margin-top:6px"><i class="fas fa-info-circle"></i> Commission + 12% VAT is shouldered by the seller. Total effective cost shown in results.</div>
       
       <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
       
@@ -458,7 +462,7 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
           <span class="fee-value" id="netBeforeCommission">₱0</span>
         </div>
         <div class="fee-row">
-          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%)</span>
+          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>% + 12% VAT)</span>
           <span class="fee-value" id="brokerCommission">₱0</span>
         </div>
         <div class="total-row">
@@ -861,7 +865,9 @@ function calculateAll() {
   }
   
   const netBeforeCommission = sellingPrice - sellerTax;
-  const brokerCommission = sellingPrice * (commissionRate / 100);
+  const commBase = sellingPrice * (commissionRate / 100);
+  const commVAT = commBase * 0.12;
+  const brokerCommission = commBase + commVAT;
   const netProceed = netBeforeCommission - brokerCommission;
   
   const dstTax = taxBasis * 0.015;
@@ -887,7 +893,8 @@ function calculateAll() {
   document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
   document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
   document.getElementById('commissionDisplay').innerHTML = commissionRate;
-  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
+  document.getElementById('commissionDisplay').innerHTML = commissionRate;
+  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission) + '<span style="font-size:11px;color:var(--gray);margin-left:6px">(incl. VAT)</span>';
   document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
   
   document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
