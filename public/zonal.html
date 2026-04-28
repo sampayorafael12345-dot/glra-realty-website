@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>BIR Zonal Value Lookup | GLRA Realty Philippines</title>
-<meta name="description" content="Find BIR Zonal Values for properties in Luzon — Metro Manila, Calabarzon, Central Luzon, Bicol, Ilocos and more. Calculate property taxes based on official BIR zonal values.">
-<meta name="keywords" content="BIR zonal value,zonal value philippines,property tax philippines,capital gains tax,zonal value lookup luzon,real estate philippines">
+<meta name="description" content="Find estimated BIR Zonal Values for properties across Metro Manila, Calabarzon, Central Luzon, Cordillera, Ilocos, Bicol and Palawan. Calculate CGT, DST and transfer taxes.">
+<meta name="keywords" content="BIR zonal value Philippines,zonal value Metro Manila,property tax Philippines,capital gains tax,documentary stamp tax,real estate tax calculator">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://glrarealty.com/zonal.html">
 <link rel="icon" type="image/png" href="/favicon.ico.png">
@@ -15,7 +15,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/zonal.html">
 <meta property="og:title" content="BIR Zonal Value Lookup | GLRA Realty Philippines">
-<meta property="og:description" content="Find BIR Zonal Values for properties in Luzon — Metro Manila, Calabarzon, Central Luzon, Bicol, Ilocos and more. Calculate property taxes based on official BIR zonal values.">
+<meta property="og:description" content="Find estimated BIR Zonal Values for properties across Metro Manila, Calabarzon, Central Luzon, Cordillera, Ilocos, Bicol and Palawan. Calculate CGT, DST and transfer taxes.">
 <meta property="og:image" content="https://glrarealty.com/hero-logo.png">
 <meta property="twitter:card" content="summary_large_image">
 <link rel="preload" href="/logo.png" as="image">
@@ -23,165 +23,171 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"BIR Zonal Value Lookup","description":"Look up BIR Zonal Values for properties across Luzon, Philippines","applicationCategory":"Real Estate Tool","url":"https://glrarealty.com/zonal.html","creator":{"@type":"RealEstateAgent","name":"GLRA Realty"}}</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);--navy:#0d1b2a;--navy-mid:#1a2d42;--gray:#7f8c8d;--gray-light:#f5f6f7;--white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;--shadow-sm:0 2px 12px rgba(0,0,0,0.06);--shadow-md:0 8px 30px rgba(0,0,0,0.10);--shadow-lg:0 20px 50px rgba(0,0,0,0.14);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);--success:#10b981;--danger:#ef4444;--orange:#c8a96e;--orange-dark:#a8894e;--orange-light:rgba(200,169,110,0.12)}
-body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
+:root{
+  --gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);
+  --navy:#0d1b2a;--navy-mid:#1a2d42;
+  --gray:#7f8c8d;--gray-light:#f5f6f7;
+  --white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;
+  --shadow-sm:0 2px 12px rgba(0,0,0,.06);
+  --shadow-md:0 8px 30px rgba(0,0,0,.10);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.14);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+  --success:#10b981;--danger:#ef4444
+}
+body.dark-mode{
+  --gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;
+  --border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8
+}
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white);overflow-x:hidden;transition:background .3s,color .3s}
 *{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
 *::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-thumb{background:var(--gold)}
-.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 5%;background:var(--navy);border-bottom:1px solid rgba(200,169,110,0.2);z-index:1000;transition:var(--transition)}
+/* NAVBAR */
+.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 5%;background:var(--navy);border-bottom:1px solid rgba(200,169,110,.2);z-index:1000;transition:var(--transition)}
 body.dark-mode .navbar{background:#0a1520}
 .logo{cursor:pointer;display:flex;align-items:center;flex-shrink:0}
 .logo img{height:48px;width:auto;display:block}
 .nav-links{display:flex;gap:28px;align-items:center}
-.nav-links a{text-decoration:none;color:rgba(255,255,255,0.75);font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
+.nav-links a{text-decoration:none;color:rgba(255,255,255,.78);font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
-.contact-btn-nav{border:1px solid var(--gold);padding:8px 22px;border-radius:2px;color:var(--gold) !important}
-.contact-btn-nav:hover{background:var(--gold);color:#fff !important}
+.contact-btn-nav{border:1px solid var(--gold);padding:8px 22px;border-radius:2px;color:var(--gold)!important}
+.contact-btn-nav:hover{background:var(--gold);color:#fff!important}
 .mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff}
-.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;justify-content:center;align-items:center}
 .mobile-overlay.active{left:0}
 .mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:#fff;cursor:pointer}
 .mobile-overlay-links{display:flex;flex-direction:column;gap:28px;text-align:center}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
 .mobile-overlay-links a:hover{color:var(--gold)}
+/* NAV DROPDOWN */
 .nav-dropdown{position:relative}
-.nav-dropdown-menu{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:190px;padding:6px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
+.nav-dropdown-menu{position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);background:var(--white);border:1px solid var(--border-color);min-width:195px;padding:6px 0;display:none;z-index:100;box-shadow:var(--shadow-md)}
 body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
 .nav-dropdown:hover .nav-dropdown-menu{display:block}
-.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color) !important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
+.nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color)!important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
 .nav-dropdown-menu a:last-child{border-bottom:none}
-.nav-dropdown-menu a:hover{color:var(--gold) !important;background:var(--gray-light);padding-left:26px}
-.page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,0.15);position:relative;overflow:hidden}
-.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,0.07) 0%,transparent 65%);pointer-events:none}
+.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
+/* PAGE HERO */
+.page-hero{padding:108px 5% 56px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,.15);position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,.07) 0%,transparent 65%);pointer-events:none}
 .page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
-.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
-.page-hero p{color:rgba(255,255,255,0.55);font-size:15px;max-width:560px;margin:0 auto;position:relative}
-.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100}
+.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px}
+.page-hero p{color:rgba(255,255,255,.55);font-size:15px;max-width:560px;margin:0 auto}
+/* FLOATING BUTTONS */
+.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:500}
 .floating-btn{width:46px;height:46px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--shadow-md);transition:var(--transition);cursor:pointer;border:none;font-size:16px}
 .floating-btn:hover{transform:scale(1.08)}
 .btn-call{background:#25d366;color:#fff}.btn-messenger{background:#0084ff;color:#fff}
 .btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf);color:#fff}
 .btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
 body.dark-mode .btn-darkmode{background:var(--gold);color:#fff}
-.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:100;font-size:13px}
+/* BACK TO TOP */
+.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:500;font-size:13px}
 .back-to-top.show{opacity:1;visibility:visible}
+/* LOADER */
 .loader{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
 .loader.hide{opacity:0;visibility:hidden}
 .loader-content{text-align:center}
 .loader-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);letter-spacing:8px;margin-bottom:18px}
-.loader-bar{width:100px;height:1px;background:rgba(200,169,110,0.2);margin:0 auto;position:relative;overflow:hidden}
+.loader-bar{width:100px;height:1px;background:rgba(200,169,110,.2);margin:0 auto;position:relative;overflow:hidden}
 .loader-bar::after{content:'';position:absolute;left:-50%;width:50%;height:100%;background:var(--gold);animation:loading 1.2s infinite}
 @keyframes loading{0%{left:-50%}100%{left:150%}}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold)}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,.3);z-index:3000;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold)}
 @keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
-footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;margin-top:20px}
+/* FOOTER */
+footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;margin-top:20px}
 .footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:38px;margin-bottom:38px}
 .footer-col h4{color:var(--gold);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-.footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;transition:var(--transition)}
+.footer-col ul li a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;transition:var(--transition)}
 .footer-col ul li a:hover{color:var(--gold)}
-.footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,0.4)}
+.footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,.4)}
 .footer-social{display:flex;gap:10px;margin-top:14px}
-.footer-social a{width:34px;height:34px;border:1px solid rgba(200,169,110,0.3);display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,0.4);font-size:13px}
+.footer-social a{width:34px;height:34px;border:1px solid rgba(200,169,110,.3);display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,.4);font-size:13px}
 .footer-social a:hover{border-color:var(--gold);background:var(--gold);color:#fff}
-.footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);max-width:1100px;margin:0 auto 20px}
+.footer-divider{border:none;border-top:1px solid rgba(255,255,255,.08);max-width:1100px;margin:0 auto 20px}
 .footer-bottom{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.22);letter-spacing:1px}
+.footer-bottom p{font-size:11px;color:rgba(255,255,255,.22);letter-spacing:1px}
 .footer-bottom-links{display:flex;gap:20px}
-.footer-bottom-links a{font-size:11px;color:rgba(255,255,255,0.22);text-decoration:none;transition:var(--transition)}
+.footer-bottom-links a{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:var(--transition)}
 .footer-bottom-links a:hover{color:var(--gold)}
-@media(max-width:768px){.nav-links{display:none}.mobile-menu-btn{display:block}.logo{position:absolute;left:50%;transform:translateX(-50%)}.logo img{height:42px}.page-hero h1{font-size:32px}.footer-content{text-align:center}.footer-social{justify-content:center}.footer-bottom{flex-direction:column;text-align:center}}
-
-/* PAGE-SPECIFIC */
-.page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,0.15);position:relative;overflow:hidden}
-.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,0.07) 0%,transparent 65%);pointer-events:none}
-.page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
-.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
-.page-hero p{color:rgba(255,255,255,0.55);font-size:15px;position:relative}
-.loader{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
-.loader.hide{opacity:0;visibility:hidden}
-.loader-content{text-align:center}
-.loader-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);letter-spacing:8px;margin-bottom:18px}
-.loader-bar{width:100px;height:1px;background:rgba(200,169,110,0.2);margin:0 auto;position:relative;overflow:hidden}
-.loader-bar::after{content:'';position:absolute;left:-50%;width:50%;height:100%;background:var(--gold);animation:loading 1.2s infinite}
-@keyframes loading{0%{left:-50%}100%{left:150%}}
-.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100}
-.floating-btn{width:46px;height:46px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--shadow-md);transition:var(--transition);cursor:pointer;border:none;font-size:16px}
-.floating-btn:hover{transform:scale(1.08)}
-.btn-call{background:#25d366;color:#fff}.btn-messenger{background:#0084ff;color:#fff}
-.btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf);color:#fff}
-.btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
-body.dark-mode .btn-darkmode{background:var(--gold);color:#fff}
-.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:100;font-size:13px}
-.back-to-top.show{opacity:1;visibility:visible}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold)}
-@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
-footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;margin-top:20px}
-.footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:38px;margin-bottom:38px}
-.footer-col h4{color:var(--gold);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-.footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;transition:var(--transition)}
-.footer-col ul li a:hover{color:var(--gold)}
-.footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,0.4)}
-.footer-social{display:flex;gap:10px;margin-top:14px}
-.footer-social a{width:34px;height:34px;border:1px solid rgba(200,169,110,0.3);display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,0.4);font-size:13px}
-.footer-social a:hover{border-color:var(--gold);background:var(--gold);color:#fff}
-.footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);max-width:1100px;margin:0 auto 20px}
-.footer-bottom{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.22);letter-spacing:1px}
-.footer-bottom-links{display:flex;gap:20px}
-.footer-bottom-links a{font-size:11px;color:rgba(255,255,255,0.22);text-decoration:none;transition:var(--transition)}
-.footer-bottom-links a:hover{color:var(--gold)}
-/* ---- ZONAL-SPECIFIC ---- */
-.search-container{max-width:900px;margin:0 auto;padding:40px 5%}
-.search-box{display:flex;gap:0;margin-bottom:20px}
-.search-box input{flex:1;padding:16px 20px;border:1px solid rgba(200,169,110,0.3);background:rgba(255,255,255,0.06);color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:var(--transition)}
-.search-box input::placeholder{color:rgba(255,255,255,0.4)}
-.search-box input:focus{border-color:var(--gold);background:rgba(255,255,255,0.1)}
-.search-box button{padding:16px 28px;background:var(--gold);color:#fff;border:none;font-weight:500;font-size:13px;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;letter-spacing:1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
-.search-box button:hover{background:var(--gold-dark)}
-.suggestions{display:flex;flex-wrap:wrap;gap:8px}
-.suggestion-chip{padding:6px 16px;border:1px solid rgba(200,169,110,0.3);color:rgba(255,255,255,0.7);cursor:pointer;font-size:12px;transition:var(--transition);letter-spacing:.5px}
-.suggestion-chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,169,110,0.1)}
-.results-container{max-width:900px;margin:0 auto;padding:0 5% 60px}
-.empty-state{text-align:center;padding:60px;border:1px solid rgba(200,169,110,0.15);background:rgba(200,169,110,0.05)}
-.empty-state i{font-size:48px;color:var(--gold);margin-bottom:20px;display:block}
-.empty-state h3{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;margin-bottom:12px}
-.empty-state p{color:rgba(255,255,255,0.55);font-size:14px}
-.result-card{background:var(--white);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden}
-body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
-.result-header{background:var(--navy);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(200,169,110,0.2)}
-.result-location{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#fff}
-.result-region{font-size:12px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
-.result-body{padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
-.result-stat{text-align:center;padding:16px;border:1px solid var(--border-color)}
-.result-stat .stat-label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:block}
-.result-stat .stat-value{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--gold)}
-.result-taxes{padding:0 24px 24px}
-.taxes-title{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px}
-.taxes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.tax-item{padding:14px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center}
-.tax-item .tax-name{font-size:13px;color:var(--gray)}
-.tax-item .tax-amount{font-size:14px;font-weight:600;color:var(--text-color)}
-.bir-link{display:block;text-align:center;margin:20px 24px;padding:12px;border:1px solid rgba(200,169,110,0.3);color:var(--gold);text-decoration:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;transition:var(--transition)}
-.bir-link:hover{background:rgba(200,169,110,0.1)}
-.no-results{text-align:center;padding:40px;border:1px solid var(--border-color);color:var(--gray);font-size:14px}
+/* MOBILE BASE */
 @media(max-width:768px){
   .nav-links{display:none}.mobile-menu-btn{display:block}
   .logo{position:absolute;left:50%;transform:translateX(-50%)}.logo img{height:42px}
   .page-hero h1{font-size:32px}
+  footer{margin-top:0}.footer-content{text-align:center}
+  .footer-social{justify-content:center}.footer-bottom{flex-direction:column;text-align:center}
+}
+
+/* ── PAGE-SPECIFIC ── */
+
+.search-section{background:var(--navy);padding:40px 5% 50px;border-bottom:1px solid rgba(200,169,110,.15)}
+.search-wrap{max-width:760px;margin:0 auto}
+.search-box{display:flex;gap:0;margin-bottom:18px;box-shadow:var(--shadow-lg)}
+.search-box input{flex:1;padding:17px 22px;border:1px solid rgba(200,169,110,.3);border-right:none;background:rgba(255,255,255,.06);color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:var(--transition)}
+.search-box input::placeholder{color:rgba(255,255,255,.4)}
+.search-box input:focus{border-color:var(--gold);background:rgba(255,255,255,.1)}
+.search-box button{padding:17px 30px;background:var(--gold);color:#fff;border:none;font-weight:500;font-size:13px;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;letter-spacing:1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.search-box button:hover{background:var(--gold-dark)}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 16px;border:1px solid rgba(200,169,110,.3);color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;transition:var(--transition);letter-spacing:.5px}
+.chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,169,110,.08)}
+.results-section{max-width:960px;margin:0 auto;padding:40px 5% 70px}
+.result-card{background:var(--card-bg);border:1px solid var(--border-color);margin-bottom:24px;overflow:hidden;transition:var(--transition)}
+body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
+.result-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
+.rc-header{background:var(--navy);padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(200,169,110,.2)}
+.rc-location{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#fff}
+.rc-region{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+.rc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border-color)}
+.rc-stat{padding:20px;text-align:center;border-right:1px solid var(--border-color)}
+.rc-stat:last-child{border-right:none}
+.rc-stat-label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px}
+.rc-stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--gold)}
+.rc-stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+.rc-body{padding:24px 28px}
+.rc-desc{font-size:14px;color:var(--gray);line-height:1.75;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border-color)}
+.rc-taxes-title{font-size:11px;font-weight:600;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.taxes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px}
+.tax-row{padding:14px 18px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;transition:var(--transition)}
+body.dark-mode .tax-row{border-color:#2a3f58}
+.tax-row:hover{border-color:var(--gold)}
+.tax-name{font-size:13px;color:var(--gray)}
+.tax-amount{font-size:14px;font-weight:600;color:var(--text-color);font-family:'Cormorant Garamond',serif}
+.tax-total{background:var(--navy);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(200,169,110,.2)}
+.tax-total .tax-name{color:rgba(255,255,255,.7);font-weight:500}
+.tax-total .tax-amount{font-size:18px;color:var(--gold)}
+.rc-cta{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap}
+.rc-btn{padding:10px 22px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.rc-btn-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.rc-btn-primary:hover{background:var(--gold-dark)}
+.rc-btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.rc-btn-outline:hover{background:var(--gold);color:#fff}
+.empty-state{text-align:center;padding:70px 20px;border:1px solid rgba(200,169,110,.15)}
+.empty-state i{font-size:48px;color:var(--gold);margin-bottom:20px;display:block}
+.empty-state h3{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--text-color);margin-bottom:12px}
+.empty-state p{color:var(--gray);font-size:14px;line-height:1.7}
+.disclaimer-box{margin:0 auto;max-width:960px;padding:0 5% 40px}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+@media(max-width:768px){
   .search-box{flex-direction:column}
   .search-box button{width:100%;justify-content:center}
-  .footer-content{text-align:center}.footer-social{justify-content:center}
-  .footer-bottom{flex-direction:column;text-align:center}
+  .rc-stats{grid-template-columns:1fr}
+  .rc-stat{border-right:none;border-bottom:1px solid var(--border-color)}
+  .rc-stat:last-child{border-bottom:none}
 }
 
 </style>
 </head>
 <body>
+
 <div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
@@ -218,15 +224,59 @@ body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
   </div>
 </div>
 
+<div class="page-hero">
+  <span class="eyebrow">Tools &amp; Resources</span>
+  <h1>BIR Zonal Value Lookup</h1>
+  <p>Search estimated zonal values for properties across Luzon and calculate your tax obligations</p>
+</div>
+
+<div class="search-section">
+  <div class="search-wrap">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search city or province (e.g., Makati, BGC, Tagaytay, Baguio)..." onkeydown="if(event.key==='Enter')searchZonal()" oninput="liveSearch(this.value)">
+      <button onclick="searchZonal()"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div class="chip-row">
+      <span class="chip" onclick="quickSearch('Makati')">Makati</span>
+      <span class="chip" onclick="quickSearch('BGC')">BGC, Taguig</span>
+      <span class="chip" onclick="quickSearch('Quezon City')">Quezon City</span>
+      <span class="chip" onclick="quickSearch('Pasig')">Pasig</span>
+      <span class="chip" onclick="quickSearch('Tagaytay')">Tagaytay</span>
+      <span class="chip" onclick="quickSearch('Baguio')">Baguio</span>
+      <span class="chip" onclick="quickSearch('Clark')">Clark</span>
+      <span class="chip" onclick="quickSearch('Nuvali')">Nuvali</span>
+      <span class="chip" onclick="quickSearch('Subic')">Subic</span>
+      <span class="chip" onclick="quickSearch('Palawan')">Palawan</span>
+    </div>
+  </div>
+</div>
+
+<div class="results-section" id="resultsSection">
+  <div class="empty-state" id="emptyState">
+    <i class="fas fa-map-marked-alt"></i>
+    <h3>Search for a Location</h3>
+    <p>Enter a city, municipality, or province above to view estimated BIR zonal values and calculate your tax implications.</p>
+  </div>
+  <div id="resultsContainer"></div>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>Disclaimer:</strong> Zonal values shown are estimates based on general BIR data and market information. Actual BIR zonal values may vary by specific street, barangay, and classification. Always verify with the official <a href="https://www.bir.gov.ph" target="_blank" style="color:var(--gold)">BIR website</a> or your local Revenue District Office before any transaction. Use our <a href="/calculator.html" style="color:var(--gold)">Transaction Calculator</a> for full fee computation.</div>
+  </div>
+</div>
+
+
 <footer>
   <div class="footer-content">
     <div class="footer-col">
       <h4>GLRA Realty</h4>
-      <p>Licensed Real Estate Broker<br>Metro Manila & Luzon, Philippines</p>
+      <p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
-        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-        <a href="https://m.me/glrarealty" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a>
-        <a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a>
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
     <div class="footer-col">
@@ -251,10 +301,12 @@ body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
       <ul>
         <li><a href="/about.html">About Us</a></li>
         <li><a href="/testimonials.html">Testimonials</a></li>
+        <li><a href="/#contact">Contact</a></li>
       </ul>
       <h4 style="margin-top:18px">Contact</h4>
       <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+      <p><i class="fas fa-map-marker-alt" style="color:var(--gold);margin-right:6px"></i>17F, 252 Sen. Gil J. Puyat Ave., Makati</p>
     </div>
   </div>
   <hr class="footer-divider">
@@ -267,319 +319,141 @@ body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
   </div>
 </footer>
 <div class="floating-buttons">
-  <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
-  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a>
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
-<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <script>
 
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';}
-if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML='<i class="fas fa-sun"></i>';}
-function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('active');document.body.style.overflow='hidden';}
-function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('active');document.body.style.overflow='';}
-function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast';t.style.borderLeftColor=isErr?'#ef4444':'var(--gold)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
-window.addEventListener('load',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',500);}});
-window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(b)b.classList[window.scrollY>120?'add':'remove']('show');});
+function escapeHtml(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast';t.style.borderLeftColor=isErr?'#ef4444':'var(--gold)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>'}
+if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML='<i class="fas fa-sun"></i>'}
+function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('active');document.body.style.overflow='hidden'}
+function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('active');document.body.style.overflow=''}
+window.addEventListener('load',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',500)}});
+window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(b)b.classList[window.scrollY>120?'add':'remove']('show')});
 
 
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';}
-if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML='<i class="fas fa-sun"></i>';}
-function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('active');document.body.style.overflow='hidden';}
-function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('active');document.body.style.overflow='';}
-window.addEventListener('load',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',500);}});
-window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(b)b.classList[window.scrollY>120?'add':'remove']('show');});
-function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast';t.style.borderLeftColor=isErr?'#ef4444':'var(--gold)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
-
-
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "BIR Zonal Value Lookup",
-  "description": "Look up BIR Zonal Values for properties in Luzon",
-  "applicationCategory": "Real Estate Tool",
-  "url": "https://glrarealty.com/zonal.html",
-  "creator": {
-    "@type": "RealEstateAgent",
-    "name": "GLRA Realty"
-  }
-}
-
-
-// ============ PWA SERVICE WORKER REGISTRATION ============
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js').then(function(registration) {
-      console.log('ServiceWorker registered successfully:', registration.scope);
-    }, function(err) {
-      console.log('ServiceWorker registration failed:', err);
-    });
-  });
-}
-
-// ============ GO HOME FUNCTION ============
-function goHome() {
-  window.location.href = '/';
-}
-
-// ============ LIVE SEARCH ============
-function liveSearch() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (searchTerm.length < 2) return;
-  searchZonalValue();
-}
-
-// ============ ZONAL VALUE DATABASE ============
-const zonalDatabase = [
-  { location: "Makati City", region: "Metro Manila", avg: 150000, min: 80000, max: 300000, description: "Premier CBD, financial district, high-end residential" },
-  { location: "BGC, Taguig", region: "Metro Manila", avg: 180000, min: 150000, max: 250000, description: "Bonifacio Global City, modern CBD" },
-  { location: "Taguig City", region: "Metro Manila", avg: 100000, min: 50000, max: 220000, description: "Includes BGC, McKinley, and residential areas" },
-  { location: "Quezon City", region: "Metro Manila", avg: 60000, min: 30000, max: 120000, description: "Largest city, diverse areas from Cubao to Diliman" },
-  { location: "Pasig City", region: "Metro Manila", avg: 70000, min: 40000, max: 120000, description: "Includes Ortigas Center, Kapitolyo, Bridgetowne" },
-  { location: "Mandaluyong City", region: "Metro Manila", avg: 65000, min: 40000, max: 100000, description: "Includes Ortigas CBD, commercial areas" },
-  { location: "Manila City", region: "Metro Manila", avg: 60000, min: 30000, max: 150000, description: "Capital city, Binondo, Malate, Ermita" },
-  { location: "Parañaque City", region: "Metro Manila", avg: 50000, min: 30000, max: 80000, description: "Baclaran, Bicutan, Sucat, near airport" },
-  { location: "Pasay City", region: "Metro Manila", avg: 60000, min: 40000, max: 90000, description: "MOA Complex, Bay Area, Airport" },
-  { location: "Muntinlupa City", region: "Metro Manila", avg: 65000, min: 40000, max: 150000, description: "Alabang, Filinvest, Ayala Alabang" },
-  { location: "Las Piñas City", region: "Metro Manila", avg: 35000, min: 25000, max: 55000, description: "Residential, BF Resort, Almanza" },
-  { location: "Marikina City", region: "Metro Manila", avg: 40000, min: 25000, max: 60000, description: "Shoe capital, residential areas" },
-  { location: "San Juan City", region: "Metro Manila", avg: 55000, min: 40000, max: 100000, description: "Greenhills, residential-commercial" },
-  { location: "Caloocan City", region: "Metro Manila", avg: 30000, min: 20000, max: 50000, description: "North and South Caloocan" },
-  { location: "Valenzuela City", region: "Metro Manila", avg: 25000, min: 15000, max: 35000, description: "Industrial and residential" },
-  { location: "Tagaytay City", region: "Calabarzon", avg: 45000, min: 25000, max: 80000, description: "Tourist destination, Taal view, cool climate" },
-  { location: "Nuvali, Laguna", region: "Calabarzon", avg: 50000, min: 35000, max: 80000, description: "Ayala eco-city, Sta. Rosa" },
-  { location: "Sta. Rosa, Laguna", region: "Calabarzon", avg: 40000, min: 25000, max: 70000, description: "Industrial parks, Nuvali, Enchanted Kingdom" },
-  { location: "Biñan, Laguna", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Industrial, residential" },
-  { location: "Calamba, Laguna", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Rizal's birthplace, industrial" },
-  { location: "Dasmariñas, Cavite", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Largest city in Cavite" },
-  { location: "Imus, Cavite", region: "Calabarzon", avg: 32000, min: 20000, max: 55000, description: "Cavite provincial capital" },
-  { location: "Bacoor, Cavite", region: "Calabarzon", avg: 30000, min: 18000, max: 50000, description: "Gateway to Cavite" },
-  { location: "Antipolo, Rizal", region: "Calabarzon", avg: 35000, min: 20000, max: 60000, description: "Hilltop city, Metro Manila suburb" },
-  { location: "Cainta, Rizal", region: "Calabarzon", avg: 32000, min: 20000, max: 55000, description: "East of Metro Manila" },
-  { location: "Clark Freeport, Pampanga", region: "Central Luzon", avg: 45000, min: 25000, max: 80000, description: "Former US base, now economic zone" },
-  { location: "Angeles City, Pampanga", region: "Central Luzon", avg: 35000, min: 20000, max: 60000, description: "Adjacent to Clark, entertainment hub" },
-  { location: "San Fernando, Pampanga", region: "Central Luzon", avg: 30000, min: 18000, max: 50000, description: "Capital of Pampanga" },
-  { location: "Subic Bay Freeport", region: "Central Luzon", avg: 40000, min: 25000, max: 70000, description: "Former US naval base, economic zone" },
-  { location: "Olongapo City", region: "Central Luzon", avg: 30000, min: 18000, max: 50000, description: "Adjacent to Subic Bay" },
-  { location: "Baguio City", region: "Cordillera", avg: 50000, min: 30000, max: 90000, description: "Summer capital, highly urbanized" },
-  { location: "La Trinidad, Benguet", region: "Cordillera", avg: 30000, min: 18000, max: 50000, description: "Strawberry fields, near Baguio" },
-  { location: "Vigan City, Ilocos Sur", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "UNESCO World Heritage Site" },
-  { location: "Laoag City, Ilocos Norte", region: "Ilocos", avg: 20000, min: 12000, max: 35000, description: "Capital of Ilocos Norte" },
-  { location: "Dagupan City, Pangasinan", region: "Ilocos", avg: 22000, min: 12000, max: 38000, description: "Commercial center" },
-  { location: "Tuguegarao City", region: "Cagayan Valley", avg: 18000, min: 10000, max: 30000, description: "Capital of Cagayan Valley" },
-  { location: "Legazpi City", region: "Bicol", avg: 22000, min: 12000, max: 38000, description: "Capital of Albay, Mayon Volcano" },
-  { location: "Naga City", region: "Bicol", avg: 22000, min: 12000, max: 38000, description: "Commercial center of Bicol" },
-  { location: "Puerto Princesa", region: "Mimaropa", avg: 25000, min: 15000, max: 45000, description: "Capital of Palawan, Underground River" },
-  { location: "El Nido, Palawan", region: "Mimaropa", avg: 30000, min: 18000, max: 50000, description: "Tourist destination" }
+const DB = [
+  {location:"Makati City",region:"Metro Manila",avg:150000,min:80000,max:300000,desc:"Premier CBD, financial district, Ayala Triangle, high-end residential (Salcedo, Legaspi)"},
+  {location:"BGC, Taguig",region:"Metro Manila",avg:180000,min:150000,max:280000,desc:"Bonifacio Global City — modern CBD, luxury towers, Uptown, McKinley Hill"},
+  {location:"Taguig City",region:"Metro Manila",avg:95000,min:45000,max:220000,desc:"Includes BGC, McKinley, Fort Bonifacio and southern residential areas"},
+  {location:"Quezon City",region:"Metro Manila",avg:58000,min:28000,max:130000,desc:"Largest city in Metro Manila — Cubao, Diliman, Katipunan, Novaliches"},
+  {location:"Pasig City",region:"Metro Manila",avg:68000,min:38000,max:130000,desc:"Ortigas Center, Kapitolyo, Bridgetowne, C5 corridor"},
+  {location:"Mandaluyong City",region:"Metro Manila",avg:62000,min:38000,max:105000,desc:"Ortigas CBD, Shaw, Pioneer, Wack-Wack"},
+  {location:"Manila City",region:"Metro Manila",avg:58000,min:28000,max:150000,desc:"Capital city — Binondo, Malate, Ermita, Intramuros, Port Area"},
+  {location:"Parañaque City",region:"Metro Manila",avg:48000,min:28000,max:82000,desc:"Baclaran, Bicutan, Sucat, BF Homes, Entertainment City, near NAIA"},
+  {location:"Pasay City",region:"Metro Manila",avg:58000,min:38000,max:95000,desc:"MOA Complex, Bay City, SM Mall of Asia area, near airport"},
+  {location:"Muntinlupa City",region:"Metro Manila",avg:62000,min:38000,max:160000,desc:"Alabang, Filinvest, Ayala Alabang Village, South Triangle"},
+  {location:"Las Piñas City",region:"Metro Manila",avg:34000,min:22000,max:58000,desc:"BF Resort, Almanza, CAA Road, residential suburbs"},
+  {location:"Marikina City",region:"Metro Manila",avg:38000,min:24000,max:62000,desc:"Shoe capital of the Philippines, riverfront developments"},
+  {location:"San Juan City",region:"Metro Manila",avg:52000,min:38000,max:105000,desc:"Greenhills Shopping Center, Wack Wack, San Juan River area"},
+  {location:"Caloocan City",region:"Metro Manila",avg:28000,min:18000,max:48000,desc:"North and South Caloocan — Monumento, EDSA, residential areas"},
+  {location:"Valenzuela City",region:"Metro Manila",avg:24000,min:14000,max:38000,desc:"Industrial and residential, close to North Luzon expressway"},
+  {location:"Malabon City",region:"Metro Manila",avg:22000,min:14000,max:36000,desc:"Fishponds, riverine communities, light industry"},
+  {location:"Navotas City",region:"Metro Manila",avg:20000,min:12000,max:32000,desc:"Fishing industry hub, fish port complex"},
+  {location:"Pateros",region:"Metro Manila",avg:26000,min:16000,max:40000,desc:"Smallest LGU in Metro Manila, duck egg (balut) industry"},
+  {location:"Tagaytay City",region:"Calabarzon",avg:46000,min:24000,max:85000,desc:"Popular highland destination, Taal Lake & Volcano view, cool climate"},
+  {location:"Nuvali, Sta. Rosa",region:"Calabarzon",avg:52000,min:35000,max:85000,desc:"Ayala eco-city township, lakeside developments, tech park"},
+  {location:"Sta. Rosa, Laguna",region:"Calabarzon",avg:40000,min:24000,max:72000,desc:"Industrial parks, Nuvali, Enchanted Kingdom, Balibago"},
+  {location:"Biñan, Laguna",region:"Calabarzon",avg:34000,min:18000,max:58000,desc:"Industrial estates, SM City Calamba area"},
+  {location:"Calamba, Laguna",region:"Calabarzon",avg:30000,min:16000,max:52000,desc:"Jose Rizal's birthplace, hot springs, industrial zone"},
+  {location:"Dasmariñas, Cavite",region:"Calabarzon",avg:34000,min:18000,max:58000,desc:"Largest city in Cavite — mixed residential and commercial"},
+  {location:"Imus, Cavite",region:"Calabarzon",avg:30000,min:18000,max:52000,desc:"Fast-growing suburban city, gateway to Cavite"},
+  {location:"Bacoor, Cavite",region:"Calabarzon",avg:28000,min:16000,max:48000,desc:"Coastal city adjacent to Las Piñas"},
+  {location:"Antipolo, Rizal",region:"Calabarzon",avg:34000,min:18000,max:62000,desc:"Hilltop city, Madonna statue, nature parks, Metro Manila suburb"},
+  {location:"Cainta, Rizal",region:"Calabarzon",avg:30000,min:18000,max:52000,desc:"East of Pasig, Ortigas extension area"},
+  {location:"Clark Freeport, Pampanga",region:"Central Luzon",avg:46000,min:24000,max:82000,desc:"Former US air base, Clark International Airport, economic zone"},
+  {location:"Angeles City, Pampanga",region:"Central Luzon",avg:34000,min:18000,max:62000,desc:"Adjacent to Clark, culinary city, entertainment hub"},
+  {location:"San Fernando, Pampanga",region:"Central Luzon",avg:28000,min:16000,max:48000,desc:"Capital of Pampanga, commercial center"},
+  {location:"Subic Bay Freeport, Zambales",region:"Central Luzon",avg:40000,min:22000,max:72000,desc:"Former US naval base, freeport zone, beachfront"},
+  {location:"Olongapo City",region:"Central Luzon",avg:28000,min:16000,max:48000,desc:"Adjacent to Subic Bay, gateway to Zambales"},
+  {location:"Baguio City",region:"Cordillera",avg:52000,min:30000,max:95000,desc:"Summer capital of the Philippines, cool climate, SM City Baguio"},
+  {location:"La Trinidad, Benguet",region:"Cordillera",avg:30000,min:18000,max:52000,desc:"Strawberry fields, provincial capital of Benguet, near Baguio"},
+  {location:"Vigan City, Ilocos Sur",region:"Ilocos",avg:22000,min:12000,max:38000,desc:"UNESCO World Heritage Site, colonial heritage, tourism hub"},
+  {location:"Laoag City, Ilocos Norte",region:"Ilocos",avg:20000,min:12000,max:36000,desc:"Capital of Ilocos Norte, Paoay Church, sand dunes"},
+  {location:"Dagupan City, Pangasinan",region:"Ilocos",avg:22000,min:12000,max:38000,desc:"Bangus (milkfish) capital, commercial center of Pangasinan"},
+  {location:"San Carlos City, Pangasinan",region:"Ilocos",avg:18000,min:10000,max:30000,desc:"Agricultural city, Hundred Islands nearby"},
+  {location:"Tuguegarao City",region:"Cagayan Valley",avg:18000,min:10000,max:30000,desc:"Capital of Cagayan Valley region, Callao Caves gateway"},
+  {location:"Legazpi City, Albay",region:"Bicol",avg:22000,min:12000,max:38000,desc:"Capital of Albay, Mayon Volcano views, tourism destination"},
+  {location:"Naga City, Camarines Sur",region:"Bicol",avg:22000,min:12000,max:38000,desc:"Regional center of Bicol, Peñafrancia Festival"},
+  {location:"Puerto Princesa, Palawan",region:"Mimaropa",avg:26000,min:15000,max:48000,desc:"Capital of Palawan, Underground River World Heritage Site"},
+  {location:"El Nido, Palawan",region:"Mimaropa",avg:32000,min:18000,max:55000,desc:"Premium tourism destination, island hopping, luxury resorts"}
 ];
 
-function searchZonalValue() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (!searchTerm) {
-    showToast('Please enter a city or province', true);
-    return;
-  }
-  
-  const results = zonalDatabase.filter(item => 
-    item.location.toLowerCase().includes(searchTerm) ||
-    item.region.toLowerCase().includes(searchTerm)
-  );
-  
-  if (results.length > 0) {
-    displayResults(searchTerm, results);
-  } else {
-    displayNotFound(searchTerm);
-  }
+function fmt(n){return '₱'+Math.round(n).toLocaleString('en-US')}
+
+function liveSearch(val){if(val.length>=2)searchZonal()}
+
+function searchZonal(){
+  const term=document.getElementById('searchInput').value.toLowerCase().trim();
+  if(!term){showToast('Please enter a city or province',true);return}
+  const hits=DB.filter(r=>r.location.toLowerCase().includes(term)||r.region.toLowerCase().includes(term));
+  document.getElementById('emptyState').style.display='none';
+  if(hits.length===0){noResults(term);return}
+  renderResults(hits);
 }
 
-function displayResults(searchTerm, results) {
-  const container = document.getElementById('resultsContainer');
-  
-  let html = '';
-  
-  results.forEach(result => {
-    const avgPerSqm = result.avg;
-    const typicalSqm = 100;
-    const typicalValue = avgPerSqm * typicalSqm;
-    const typicalCGT = typicalValue * 0.06;
-    const typicalDST = typicalValue * 0.015;
-    
-    html += `
-      <div class="result-card">
-        <div class="result-header">
-          <h2><i class="fas fa-city"></i> ${result.location}</h2>
-          <p>${result.region} | Estimated Zonal Values</p>
-        </div>
-        <div class="result-body">
-          <div class="zonal-value-display">
-            <div class="label">Estimated Zonal Value per Square Meter</div>
-            <div class="value">₱${avgPerSqm.toLocaleString()}<span style="font-size: 18px;">/sqm</span></div>
-            <div class="per-sqm">Range: ₱${result.min.toLocaleString()} - ₱${result.max.toLocaleString()} per sqm</div>
-          </div>
-          
-          <div class="location-details">
-            <span class="location-detail"><i class="fas fa-map-marker-alt"></i> ${result.location}</span>
-            <span class="location-detail"><i class="fas fa-globe"></i> ${result.region}</span>
-          </div>
-          
-          <div class="info-grid">
-            <div class="info-card">
-              <h4><i class="fas fa-info-circle"></i> Location Description</h4>
-              <p>${result.description}</p>
-            </div>
-            <div class="info-card">
-              <h4><i class="fas fa-chart-line"></i> Zonal Value Range</h4>
-              <p>Minimum: ₱${result.min.toLocaleString()}/sqm<br>Maximum: ₱${result.max.toLocaleString()}/sqm<br>Average: ₱${avgPerSqm.toLocaleString()}/sqm</p>
-            </div>
-          </div>
-          
-          <div class="tax-calc">
-            <h4><i class="fas fa-calculator"></i> Tax Implications (For a ${typicalSqm} sqm property)</h4>
-            <div class="tax-row">
-              <span class="tax-label">Estimated Property Value (based on zonal)</span>
-              <span class="tax-value">₱${typicalValue.toLocaleString()}</span>
-            </div>
-            <div class="tax-row">
-              <span class="tax-label">Capital Gains Tax (6%)</span>
-              <span class="tax-value">₱${typicalCGT.toLocaleString()}</span>
-            </div>
-            <div class="tax-row">
-              <span class="tax-label">Documentary Stamp Tax (1.5%)</span>
-              <span class="tax-value">₱${typicalDST.toLocaleString()}</span>
-            </div>
-            <div class="tax-row" style="margin-top: 10px; padding-top: 10px; border-top: 2px solid var(--border-color);">
-              <span class="tax-label"><strong>Total BIR Taxes</strong></span>
-              <span class="tax-value highlight">₱${(typicalCGT + typicalDST).toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div class="info-card" style="margin-top: 15px; background: var(--orange-light);">
-            <h4><i class="fas fa-external-link-alt"></i> Need Exact Zonal Value?</h4>
-            <p>For exact street-level zonal values, visit the official BIR website or contact us directly.</p>
-            <a href="https://www.bir.gov.ph/index.php/zonal-value.html" target="_blank" style="display: inline-block; margin-top: 10px; color: var(--gold); text-decoration: none;">View BIR Official Zonal Values →</a>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-  
-  container.innerHTML = html;
+function quickSearch(loc){
+  document.getElementById('searchInput').value=loc;
+  searchZonal();
 }
 
-function displayNotFound(searchTerm) {
-  const container = document.getElementById('resultsContainer');
-  container.innerHTML = `
-    <div class="empty-state">
-      <i class="fas fa-search"></i>
-      <h3>No Results Found</h3>
-      <p>We couldn't find zonal value data for "${escapeHtml(searchTerm)}".</p>
-      <p style="margin-top: 15px;">Try searching for:</p>
-      <div class="suggestions" style="margin-top: 10px; justify-content: center;">
-        <span class="suggestion-chip" onclick="quickSearch('Makati')">Makati</span>
-        <span class="suggestion-chip" onclick="quickSearch('BGC')">BGC, Taguig</span>
-        <span class="suggestion-chip" onclick="quickSearch('Quezon City')">Quezon City</span>
-        <span class="suggestion-chip" onclick="quickSearch('Tagaytay')">Tagaytay</span>
-        <span class="suggestion-chip" onclick="quickSearch('Baguio')">Baguio</span>
-        <span class="suggestion-chip" onclick="quickSearch('Clark')">Clark, Pampanga</span>
-        <span class="suggestion-chip" onclick="quickSearch('Subic')">Subic</span>
-        <span class="suggestion-chip" onclick="quickSearch('Nuvali')">Nuvali, Laguna</span>
+function renderResults(hits){
+  document.getElementById('resultsContainer').innerHTML=hits.map(r=>{
+    const sqm=100;
+    const basis=r.avg*sqm;
+    const cgt=basis*0.06;
+    const dst=basis*0.015;
+    return `<div class="result-card">
+      <div class="rc-header">
+        <div>
+          <div class="rc-location"><i class="fas fa-city" style="font-size:18px;margin-right:10px;color:var(--gold)"></i>${r.location}</div>
+          <div class="rc-region">${r.region}</div>
+        </div>
+        <a href="https://www.bir.gov.ph/index.php/zonal-value.html" target="_blank" class="rc-btn rc-btn-outline" style="font-size:11px"><i class="fas fa-external-link-alt"></i> Official BIR</a>
       </div>
-      <div class="info-card" style="margin-top: 30px; text-align: left;">
-        <h4><i class="fas fa-envelope"></i> Can't find your location?</h4>
-        <p>Contact us directly and we'll help you find the zonal value for your property.</p>
-        <a href="/#contact" style="display: inline-block; margin-top: 10px; background: var(--gold); color: white; padding: 10px 20px; border-radius: 40px; text-decoration: none;">Contact Us</a>
+      <div class="rc-stats">
+        <div class="rc-stat"><span class="rc-stat-label">Average / sqm</span><div class="rc-stat-value">${fmt(r.avg)}</div><div class="rc-stat-sub">estimated</div></div>
+        <div class="rc-stat"><span class="rc-stat-label">Minimum / sqm</span><div class="rc-stat-value">${fmt(r.min)}</div><div class="rc-stat-sub">lower range</div></div>
+        <div class="rc-stat"><span class="rc-stat-label">Maximum / sqm</span><div class="rc-stat-value">${fmt(r.max)}</div><div class="rc-stat-sub">upper range</div></div>
       </div>
+      <div class="rc-body">
+        <div class="rc-desc">${r.desc}</div>
+        <div class="rc-taxes-title"><i class="fas fa-calculator"></i> &nbsp;Tax Estimate for ${sqm} sqm at Average Zonal Value</div>
+        <div class="taxes-grid">
+          <div class="tax-row"><span class="tax-name">Zonal Value Basis (${sqm} sqm)</span><span class="tax-amount">${fmt(basis)}</span></div>
+          <div class="tax-row"><span class="tax-name">Capital Gains Tax (6%)</span><span class="tax-amount">${fmt(cgt)}</span></div>
+          <div class="tax-row"><span class="tax-name">Documentary Stamp Tax (1.5%)</span><span class="tax-amount">${fmt(dst)}</span></div>
+        </div>
+        <div class="tax-total"><span class="tax-name">Total BIR Taxes (CGT + DST)</span><span class="tax-amount">${fmt(cgt+dst)}</span></div>
+        <div class="rc-cta">
+          <a href="/calculator.html" class="rc-btn rc-btn-primary"><i class="fas fa-calculator"></i> Full Calculator</a>
+          <a href="/#contact" class="rc-btn rc-btn-outline"><i class="fas fa-envelope"></i> Ask Our Broker</a>
+        </div>
+      </div>
+    </div>`}).join('');
+}
+
+function noResults(term){
+  document.getElementById('resultsContainer').innerHTML=`<div class="empty-state">
+    <i class="fas fa-search"></i>
+    <h3>No Results for "${escapeHtml(term)}"</h3>
+    <p>We don't have data for that location yet. Try one of these:</p>
+    <div class="chip-row" style="justify-content:center;margin-top:16px">
+      <span class="chip" onclick="quickSearch('Makati')">Makati</span>
+      <span class="chip" onclick="quickSearch('BGC')">BGC</span>
+      <span class="chip" onclick="quickSearch('Quezon City')">Quezon City</span>
+      <span class="chip" onclick="quickSearch('Tagaytay')">Tagaytay</span>
+      <span class="chip" onclick="quickSearch('Baguio')">Baguio</span>
     </div>
-  `;
+    <p style="margin-top:24px">Or <a href="/#contact" style="color:var(--gold)">contact us</a> and we'll help you find the exact zonal value.</p>
+  </div>`;
 }
-
-function quickSearch(location) {
-  document.getElementById('searchInput').value = location;
-  searchZonalValue();
-}
-
-function handleKeyPress(event) {
-  if (event.key === 'Enter') {
-    searchZonalValue();
-  }
-}
-
-function showToast(message, isError = false) {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.style.background = isError ? '#dc3545' : '#28a745';
-  toast.innerHTML = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-// ============ DARK MODE ============
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  const isDarkMode = document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkMode', isDarkMode);
-  const btn = document.getElementById('floatingDarkModeToggle');
-  if (isDarkMode) {
-    btn.innerHTML = '<i class="fas fa-sun"></i>';
-    btn.style.background = '#2a2a3a';
-    btn.style.color = '#c8a96e';
-  } else {
-    btn.innerHTML = '<i class="fas fa-moon"></i>';
-    btn.style.background = '#1e1e2e';
-    btn.style.color = 'white';
-  }
-}
-
-if (localStorage.getItem('darkMode') === 'true') {
-  document.body.classList.add('dark-mode');
-  const btn = document.getElementById('floatingDarkModeToggle');
-  if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
-}
-
-// ============ MOBILE MENU ============
-function openMobileMenu() {
-  document.getElementById('mobileOverlay').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeMobileMenu() {
-  document.getElementById('mobileOverlay').classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-// Navbar scroll effect
-window.addEventListener('scroll', function() {
-  const navbar = document.getElementById('navbar');
-  const backToTop = document.getElementById('backToTop');
-  if (window.scrollY > 50) {
-    navbar.classList.add('scrolled');
-    backToTop.classList.add('show');
-  } else {
-    navbar.classList.remove('scrolled');
-    backToTop.classList.remove('show');
-  }
-});
-
-// Hide loader
-window.addEventListener('load', function() {
-  const loader = document.getElementById('loader');
-  loader.classList.add('hide');
-  setTimeout(() => { loader.style.display = 'none'; }, 500);
-});
-
 
 </script>
 </body>
