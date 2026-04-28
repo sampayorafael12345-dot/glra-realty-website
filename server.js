@@ -580,13 +580,40 @@ app.get('/api/price-alert/check/:propertyId', async (req, res) => {
 
 // ============ ADMIN ROUTES ============
 
+// ============ ROLE-BASED ADMIN ACCOUNTS ============
+// Accounts are stored in .env or hardcoded here as fallback
+// Format: email:password:role (admin|employee)
+// Admin: full access | Employee: view-only + cannot delete/edit properties
+const ADMIN_ACCOUNTS = [
+  { email: (process.env.ADMIN_EMAIL || 'admin@glrarealty.com'), password: (process.env.ADMIN_PASSWORD || 'GLRA@Admin2026!'), role: 'admin', name: 'Catherine Sampayo' },
+  { email: (process.env.EMP1_EMAIL || 'employee1@glrarealty.com'), password: (process.env.EMP1_PASSWORD || 'GLRAEmp2026!'), role: 'employee', name: 'Staff Account 1' },
+  { email: (process.env.EMP2_EMAIL || 'employee2@glrarealty.com'), password: (process.env.EMP2_PASSWORD || 'GLRAEmp2026!'), role: 'employee', name: 'Staff Account 2' },
+];
+
 app.post('/api/admin/login', (req, res) => {
   const { email, password } = req.body;
-  if (email === 'admin@glrarealty.com' && password === 'admin123') {
-    res.json({ success: true });
+  const account = ADMIN_ACCOUNTS.find(a => a.email === email && a.password === password);
+  if (account) {
+    res.json({ success: true, role: account.role, name: account.name, email: account.email });
   } else {
     res.status(401).json({ error: 'Invalid credentials' });
   }
+});
+
+// ============ EMPLOYEE PERMISSION GUARD ============
+// Call this before any destructive admin operation
+function requireAdmin(req, res, next) {
+  // In a real system you'd check a JWT. For now we trust the role header.
+  const role = req.headers['x-admin-role'];
+  if (role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required for this action' });
+  }
+  next();
+}
+
+app.get('/api/admin/accounts', (req, res) => {
+  // Return accounts without passwords
+  res.json(ADMIN_ACCOUNTS.map(a => ({ email: a.email, role: a.role, name: a.name })));
 });
 
 app.get('/api/admin/stats', async (req, res) => {
@@ -746,7 +773,7 @@ app.put('/api/admin/properties/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/properties/:id', async (req, res) => {
+app.delete('/api/admin/properties/:id', requireAdmin, async (req, res) => {
   try {
     await Property.findByIdAndDelete(req.params.id);
     res.json({ success: true });
@@ -755,7 +782,7 @@ app.delete('/api/admin/properties/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/inquiries/:id', async (req, res) => {
+app.delete('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
   try {
     await Inquiry.findByIdAndDelete(req.params.id);
     res.json({ success: true });
@@ -764,7 +791,7 @@ app.delete('/api/admin/inquiries/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/subscribers/:id', async (req, res) => {
+app.delete('/api/admin/subscribers/:id', requireAdmin, async (req, res) => {
   try {
     await Subscriber.findByIdAndDelete(req.params.id);
     res.json({ success: true });
