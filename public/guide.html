@@ -61,14 +61,57 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
 .disclosure-form p{font-size:13px;color:var(--gray);margin-bottom:8px;line-height:1.7}
 .timeline-box{margin-top:16px;padding:18px;border:1px solid rgba(200,169,110,0.3);background:rgba(200,169,110,0.06);font-size:13px;line-height:1.8;color:var(--text-color)}
 .timeline-box strong{color:var(--gold)}
-@media print{.navbar,.floating-buttons,.back-to-top,.print-button-wrapper,footer{display:none !important}body{color:#000}h2,h4{color:#c8a96e}th{background:#0d1b2a}}
+
+/* ── PRINT BUTTON ── */
+.print-button-wrapper{text-align:center;margin:28px auto 0;max-width:1100px;padding:0 5%}
+.print-btn{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:12px 28px;font-weight:500;font-size:13px;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.print-btn:hover{background:var(--gold);color:#fff}
+
+/* ── PRINT EMAIL MODAL ── */
+.email-print-modal{display:none;position:fixed;inset:0;background:rgba(5,12,22,0.88);z-index:3000;align-items:center;justify-content:center}
+.email-print-content{background:var(--white);max-width:400px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
+.email-print-content>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
+.email-print-content h3{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
+.email-print-content p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.7}
+.email-print-content input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
+.email-print-content input:focus{outline:none;border-color:var(--gold)}
+.email-print-content button{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.email-print-content button:hover{background:var(--gold)}
+.close-print-modal{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
+
+/* ── PRINT-ONLY HEADER WITH LOGO (hidden on screen, shown when printing) ── */
+.print-only-header{display:none}
+
+/* ── PRINT STYLES ── */
+@media print{
+  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,footer,.cta-strip{display:none !important}
+  body{background:#fff;color:#000}
+  .page-hero{display:none}
+  .print-only-header{display:block;text-align:center;margin:0 auto 28px;padding:0 0 22px;border-bottom:2px solid #c8a96e;max-width:1100px}
+  .print-only-header img{height:70px;width:auto;margin-bottom:14px}
+  .print-only-header h1{font-family:'Cormorant Garamond',serif;font-size:26px;color:#0d1b2a;margin-bottom:6px;font-weight:600}
+  .print-only-header .print-subtitle{font-size:12px;color:#555;letter-spacing:1px}
+  .print-only-header .print-meta{font-size:10px;color:#888;margin-top:8px;letter-spacing:.5px}
+  .content-container{margin:0 auto;padding:0 5%;max-width:none}
+  .section-card{border:1px solid #ccc;page-break-inside:avoid;margin-bottom:18px}
+  .section-header{background:#0d1b2a;padding:12px 18px}
+  .section-header h2{font-size:16px;color:#fff}
+  .section-header h2 i{color:#c8a96e}
+  .section-content{padding:16px}
+  .doc-item,.checklist li,.warning-box,.timeline-box{background:#fff;border:1px solid #e0e0e0;page-break-inside:avoid}
+  .doc-item h3{color:#0d1b2a}
+  .doc-item p,.checklist li,.timeline-box,.warning-box{color:#333;font-size:11px}
+  .doc-table th{background:#0d1b2a;color:#c8a96e;font-size:10px}
+  .doc-table td{font-size:11px;color:#333}
+  .checklist li::before{color:#c8a96e}
+  .warning-box i{color:#c8a96e}
+  .timeline-box strong{color:#c8a96e}
+  a{color:#0d1b2a;text-decoration:none}
+  @page{margin:1.5cm}
+}
+
 @media(max-width:768px){
-  .nav-links{display:none}.mobile-menu-btn{display:block}
-  .logo{position:absolute;left:50%;transform:translateX(-50%)}.logo img{height:42px}
-  .page-hero h1{font-size:32px}
   .doc-list{grid-template-columns:1fr}.checklist{grid-template-columns:1fr}
-  .footer-content{text-align:center}.footer-social{justify-content:center}
-  .footer-bottom{flex-direction:column;text-align:center}
 }
 
 
@@ -119,6 +162,21 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
   <span class="eyebrow">Documentation Reference</span>
   <h1>Real Estate Documentation Guide</h1>
   <p>A complete checklist of the documents, fees, and steps involved in buying, selling, and leasing property in the Philippines.</p>
+</div>
+
+<!-- This header is hidden on screen — only appears when printing/saving as PDF -->
+<div class="print-only-header">
+  <img src="/logo.png" alt="GLRA Realty">
+  <h1>Real Estate Documentation Guide</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com · 0917 177 4572 · glrarealty@gmail.com</div>
+</div>
+
+<!-- Print Button -->
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="showPrintEmailModal()">
+    <i class="fas fa-print"></i> Save as PDF / Print Guide
+  </button>
 </div>
 
 <div class="content-container">
@@ -253,6 +311,20 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<!-- Email Modal for Print -->
+<div id="emailPrintModal" class="email-print-modal">
+  <div class="email-print-content">
+    <button class="close-print-modal" onclick="closeEmailPrintModal()">&times;</button>
+    <i class="fas fa-envelope"></i>
+    <h3>Enter Your Email</h3>
+    <p>Please enter your email address to download/print the documentation guide.</p>
+    <input type="email" id="printEmail" placeholder="Your email address">
+    <button onclick="verifyEmailAndPrint()">Continue to Print</button>
+    <p style="font-size:11px;margin-top:15px;color:var(--gray)">We'll send a copy to your email for reference.</p>
+  </div>
+</div>
+
 <script src="/main.js"></script>
 <script>
 function toggleTab(btn,tabId){
@@ -261,6 +333,48 @@ function toggleTab(btn,tabId){
   btn.classList.add('active');
   const el=document.getElementById(tabId);
   if(el)el.classList.add('active');
+}
+
+/* ── PRINT / SAVE AS PDF ── */
+function showPrintEmailModal(){
+  const saved = sessionStorage.getItem('guideEmail');
+  if(saved){
+    document.getElementById('printEmail').value = saved;
+  }
+  document.getElementById('emailPrintModal').style.display = 'flex';
+}
+
+function closeEmailPrintModal(){
+  document.getElementById('emailPrintModal').style.display = 'none';
+}
+
+async function verifyEmailAndPrint(){
+  const email = document.getElementById('printEmail').value.trim();
+  if(!email || !email.includes('@')){
+    showToast('Please enter a valid email address', true);
+    return;
+  }
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  btn.disabled = true;
+  try {
+    sessionStorage.setItem('guideEmail', email);
+    // Best-effort send to server; don't block the print if the request fails
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, source: 'guide_print' })
+    }).catch(() => {});
+    closeEmailPrintModal();
+    showToast('Thank you! Preparing print...');
+    setTimeout(() => window.print(), 500);
+  } catch(err){
+    showToast('Something went wrong. Please try again.', true);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
