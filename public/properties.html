@@ -23,38 +23,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/styles.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);--navy:#0d1b2a;--navy-mid:#1a2d42;--gray:#7f8c8d;--gray-light:#f5f6f7;--white:#fff;--card-bg:#fff;--border-color:#e8eaed;--text-color:#1a2332;--shadow-sm:0 2px 12px rgba(0,0,0,0.06);--shadow-md:0 8px 30px rgba(0,0,0,0.10);--shadow-lg:0 20px 50px rgba(0,0,0,0.14);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
-body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white);overflow-x:hidden;transition:background .3s,color .3s}
-*{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
-*::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-thumb{background:var(--gold)}
-/* NAV */
-.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 5%;background:var(--navy);border-bottom:1px solid rgba(200,169,110,0.2);z-index:1000;transition:var(--transition)}
-body.dark-mode .navbar{background:#0a1520}
-.logo{cursor:pointer;display:flex;align-items:center;flex-shrink:0}
-.logo img{height:48px;width:auto;display:block}
-.nav-links{display:flex;gap:28px;align-items:center}
-.nav-links a{text-decoration:none;color:rgba(255,255,255,0.75);font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
-.nav-links a:hover,.nav-links a.active{color:var(--gold)}
-.contact-btn-nav{border:1px solid var(--gold);padding:8px 22px;border-radius:2px;color:var(--gold) !important}
-.contact-btn-nav:hover{background:var(--gold);color:#fff !important}
-.mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff}
-.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;justify-content:center;align-items:center}
-.mobile-overlay.active{left:0}
-.mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:#fff;cursor:pointer}
-.mobile-overlay-links{display:flex;flex-direction:column;gap:28px;text-align:center}
-.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
-.mobile-overlay-links a:hover{color:var(--gold)}
-.nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
-/* PAGE HERO */
-.page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,0.15);position:relative;overflow:hidden}
-.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,0.07) 0%,transparent 65%);pointer-events:none}
-.page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
-.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:50px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
-.page-hero p{color:rgba(255,255,255,0.55);font-size:15px;position:relative}
+/* ── PAGE-SPECIFIC ── */
 /* SEARCH */
 .search-float{padding:0 5%;position:relative;z-index:10}
 .search-card{background:var(--navy);border-top:2px solid var(--gold);padding:28px 35px;max-width:1300px;margin:0 auto;box-shadow:0 20px 50px rgba(0,0,0,0.2)}
@@ -185,55 +156,13 @@ body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
 .email-modal-content .submit-btn:hover{background:var(--gold)}
 .close-modal-btn{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 .close-modal-btn:hover{color:var(--gold)}
-/* FLOATING */
-.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100}
-.floating-btn{width:46px;height:46px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--shadow-md);transition:var(--transition);cursor:pointer;border:none;font-size:16px}
-.floating-btn:hover{transform:scale(1.08)}
-.btn-call{background:#25d366;color:#fff}.btn-messenger{background:#0084ff;color:#fff}
-.btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf);color:#fff}
-.btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
-body.dark-mode .btn-darkmode{background:var(--gold);color:#fff}
-.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:100;font-size:13px}
-.back-to-top.show{opacity:1;visibility:visible}
-/* TOAST + LOADER */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold)}
-.toast.err{border-left-color:#ef4444}
-@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
-.loader{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
-.loader.hide{opacity:0;visibility:hidden}
-.loader-content{text-align:center}
-.loader-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);letter-spacing:8px;margin-bottom:18px}
-.loader-bar{width:100px;height:1px;background:rgba(200,169,110,0.2);margin:0 auto;position:relative;overflow:hidden}
-.loader-bar::after{content:'';position:absolute;left:-50%;width:50%;height:100%;background:var(--gold);animation:loading 1.2s infinite}
-@keyframes loading{0%{left:-50%}100%{left:150%}}
-/* FOOTER */
-footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;margin-top:20px}
-.footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:38px;margin-bottom:38px}
-.footer-col h4{color:var(--gold);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-.footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;transition:var(--transition)}
-.footer-col ul li a:hover{color:var(--gold)}
-.footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,0.4)}
-.footer-social{display:flex;gap:10px;margin-top:14px}
-.footer-social a{width:34px;height:34px;border:1px solid rgba(200,169,110,0.3);display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,0.4);font-size:13px}
-.footer-social a:hover{border-color:var(--gold);background:var(--gold);color:#fff}
-.footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);max-width:1100px;margin:0 auto 20px}
-.footer-bottom{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.22);letter-spacing:1px}
-.footer-bottom-links{display:flex;gap:20px}
-.footer-bottom-links a{font-size:11px;color:rgba(255,255,255,0.22);text-decoration:none;transition:var(--transition)}
-.footer-bottom-links a:hover{color:var(--gold)}
 /* RESPONSIVE */
 @media(max-width:768px){
-  .nav-links{display:none}.mobile-menu-btn{display:block}
-  .logo{position:absolute;left:50%;transform:translateX(-50%)}.logo img{height:42px}
   .page-hero h1{font-size:34px}
   .search-card{padding:20px}.search-row{flex-direction:column;gap:10px}
   .search-field-wrapper,.search-btn-main,.filter-toggle-btn{width:100%;justify-content:center}
   .filter-group{min-width:100%}.price-range-group{gap:8px}
   .grid{grid-template-columns:1fr}.modal-body{margin:16px;padding:20px}
-  .footer-content{text-align:center}.footer-social{justify-content:center}
-  .footer-bottom{flex-direction:column;text-align:center}
   .category-tabs{justify-content:flex-start}
 }
 </style>
@@ -409,21 +338,11 @@ footer{background:var(--navy);color:rgba(255,255,255,0.4);padding:56px 5% 24px;m
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+<script src="/main.js"></script>
 <script>
-window.addEventListener('DOMContentLoaded',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',400)}});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-/* ---- DARK MODE ---- */
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';}
-if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('floatingDarkModeToggle');if(b)b.innerHTML='<i class="fas fa-sun"></i>';}
-/* ---- LOADER & SCROLL ---- */
-window.addEventListener('load',()=>{const l=document.getElementById('loader');if(l){l.classList.add('hide');setTimeout(()=>l.style.display='none',500);}initLazyLoading();});
-window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(b)b.classList[window.scrollY>120?'add':'remove']('show');});
-/* ---- MOBILE MENU ---- */
-function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('active');document.body.style.overflow='hidden';}
-function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('active');document.body.style.overflow='';}
+/* ---- LAZY LOADING TRIGGER ---- */
+window.addEventListener('load',()=>{initLazyLoading();});
 /* ---- UTILS ---- */
-function escapeHtml(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function showToast(msg,err=false){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 function fmtPrice(input){let v=input.value.replace(/,/g,'');if(!v)return;const n=parseFloat(v);if(!isNaN(n))input.value=n.toLocaleString('en-US');}
 function getRaw(id){const i=document.getElementById(id);if(!i||!i.value)return 0;return parseFloat(i.value.replace(/,/g,''))||0;}
 function getParam(n){return new URLSearchParams(location.search).get(n);}
