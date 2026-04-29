@@ -120,7 +120,46 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 }
 
 /* ── PAGE-SPECIFIC ── */
+.section-header{text-align:center;max-width:680px;margin:0 auto 36px;padding:0 5%}
+.section-header .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:10px}
+.section-header h2{font-family:'Cormorant Garamond',serif;font-size:38px;color:var(--text-color);font-weight:600;margin-bottom:10px}
+.section-header p{color:var(--gray);font-size:14px;line-height:1.7}
 
+.about-intro{max-width:1100px;margin:60px auto;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.about-intro img{width:100%;height:auto;max-height:480px;object-fit:cover;box-shadow:var(--shadow-lg);border-radius:2px}
+.about-intro .about-text .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:10px}
+.about-intro .about-text h2{font-family:'Cormorant Garamond',serif;font-size:38px;color:var(--text-color);font-weight:600;margin-bottom:18px;line-height:1.2}
+.about-intro .about-text p{color:var(--gray);font-size:14px;line-height:1.85;margin-bottom:14px}
+
+.values-bg{background:var(--gray-light);padding:70px 0}
+.values-grid{max-width:1100px;margin:0 auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.value-card{background:var(--card-bg);border:1px solid var(--border-color);padding:32px 26px;text-align:center;transition:var(--transition)}
+.value-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md);transform:translateY(-4px)}
+.value-icon{width:62px;height:62px;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:22px;color:var(--gold)}
+.value-card h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text-color);margin-bottom:10px;font-weight:600}
+.value-card p{font-size:13px;color:var(--gray);line-height:1.75}
+
+.coverage-section{background:var(--navy);padding:70px 5%;text-align:center}
+.coverage-grid{max-width:1100px;margin:36px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.coverage-item{padding:18px 14px;border:1px solid rgba(200,169,110,.25);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;letter-spacing:.5px;transition:var(--transition)}
+.coverage-item i{color:var(--gold);font-size:14px}
+.coverage-item:hover{background:rgba(200,169,110,.08);border-color:var(--gold)}
+
+.cta-strip{padding:70px 5%;text-align:center;background:var(--gray-light)}
+.cta-strip h2{font-family:'Cormorant Garamond',serif;font-size:36px;color:var(--text-color);margin-bottom:12px;font-weight:600}
+.cta-strip p{color:var(--gray);font-size:14px;margin-bottom:26px;max-width:560px;margin-left:auto;margin-right:auto}
+.btn-gold,.btn-outline{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;text-decoration:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;transition:var(--transition);margin:0 6px;font-weight:500}
+.btn-gold{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.btn-gold:hover{background:var(--gold-dark);border-color:var(--gold-dark)}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.btn-outline:hover{background:var(--gold);color:#fff}
+
+@media(max-width:768px){
+  .about-intro{grid-template-columns:1fr;gap:30px;margin:40px auto}
+  .about-intro .about-text h2,.section-header h2,.cta-strip h2{font-size:28px}
+  .coverage-section h2{font-size:28px!important}
+  .btn-gold,.btn-outline{margin:6px 0;display:flex;justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -160,10 +199,23 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
-<div class="loader-bar"></div></div></div>
 
+<div class="page-hero">
+  <span class="eyebrow">Get to Know Us</span>
+  <h1>About GLRA Realty</h1>
+  <p>Catherine SB Sampayo — a licensed real estate broker with over a decade of experience guiding buyers, sellers and investors across Metro Manila and Luzon.</p>
+</div>
 
-
+<div class="about-intro">
+  <img src="/agent-photo.jpg" alt="Catherine SB Sampayo, Licensed Real Estate Broker">
+  <div class="about-text">
+    <span class="eyebrow">Meet Catherine</span>
+    <h2>10+ Years of Trusted Real Estate Expertise</h2>
+    <p>Catherine SB Sampayo is the licensed broker behind GLRA Realty. With more than 10 years of hands-on experience in the Philippine property market, she has helped hundreds of clients — from first-time homebuyers to seasoned investors — find the right property at the right price.</p>
+    <p>Her approach is simple: full transparency, deep market knowledge, and a relentless focus on the client's goals. No pressure tactics, no shortcuts — just honest guidance from start to finish.</p>
+    <p>Based in Makati and serving all of Metro Manila and Luzon, Catherine specializes in residential condos, house and lot, commercial leases, and investment properties.</p>
+  </div>
+</div>
 
 
 <div class="values-bg">

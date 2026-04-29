@@ -120,7 +120,32 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 }
 
 /* ── PAGE-SPECIFIC ── */
+.blog-grid{max-width:1100px;margin:50px auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:26px}
+.blog-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;transition:var(--transition);display:flex;flex-direction:column}
+.blog-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md);transform:translateY(-4px)}
+.blog-card-image{height:170px;background:linear-gradient(135deg,var(--navy),var(--navy-mid));display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:46px;border-bottom:1px solid var(--border-color)}
+.blog-card-body{padding:24px;display:flex;flex-direction:column;flex:1}
+.blog-card-tag{font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+.blog-card-body h3{font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--text-color);font-weight:600;margin-bottom:10px;line-height:1.3}
+.blog-card-body p{font-size:13px;color:var(--gray);line-height:1.7;flex:1;margin-bottom:16px}
+.blog-card-meta{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gray);letter-spacing:.5px}
+.blog-card-meta .read-more{color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
 
+.newsletter{max-width:760px;margin:50px auto;padding:50px 5%;text-align:center;background:var(--gray-light);border:1px solid var(--border-color)}
+.newsletter h2{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--text-color);margin-bottom:10px;font-weight:600}
+.newsletter p{color:var(--gray);font-size:14px;margin-bottom:24px;line-height:1.7}
+.newsletter-form{display:flex;max-width:480px;margin:0 auto;box-shadow:var(--shadow-sm)}
+.newsletter-form input{flex:1;padding:14px 18px;border:1px solid var(--border-color);border-right:none;background:var(--card-bg);color:var(--text-color);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:var(--transition)}
+.newsletter-form input:focus{border-color:var(--gold)}
+.newsletter-form button{padding:14px 26px;background:var(--gold);color:#fff;border:none;font-weight:500;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;white-space:nowrap}
+.newsletter-form button:hover:not(:disabled){background:var(--gold-dark)}
+.newsletter-form button:disabled{opacity:.6;cursor:not-allowed}
+
+@media(max-width:768px){
+  .newsletter-form{flex-direction:column}
+  .newsletter-form input{border-right:1px solid var(--border-color);border-bottom:none}
+  .newsletter h2{font-size:26px}
+}
 </style>
 </head>
 <body>
@@ -160,24 +185,68 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
-<div class="loader-bar"></div></div></div>
 
-
-
-<div class="mobile-overlay" id="mobileOverlay">
-  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
-  <div class="mobile-overlay-links">
-    <a href="/" onclick="closeMobileMenu()">Home</a>
-    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
-    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
-    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
-    <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
-    <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
-    <a href="/guide.html" onclick="closeMobileMenu()">Guide</a>
-    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
-  </div>
+<div class="page-hero">
+  <span class="eyebrow">Insights & Updates</span>
+  <h1>GLRA Realty Blog</h1>
+  <p>Market trends, buying tips, legal guidance, and Philippine real estate insights — straight from a licensed broker with 10+ years of experience.</p>
 </div>
+
+<section class="blog-grid">
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-chart-line"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">Market Trends</span>
+      <h3>Metro Manila Property Outlook 2026</h3>
+      <p>Where condo and house prices are heading in Makati, BGC, and Quezon City this year — and which corridors offer the strongest growth potential for investors.</p>
+      <div class="blog-card-meta"><span>5 min read</span><a href="/#contact" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-file-signature"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">Buyer Guide</span>
+      <h3>First-Time Homebuyer Checklist</h3>
+      <p>Documents, deposits, and the step-by-step process for buying your first property in the Philippines — from reservation fee to title transfer.</p>
+      <div class="blog-card-meta"><span>7 min read</span><a href="/guide.html" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-calculator"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">Tax & Fees</span>
+      <h3>Understanding BIR Zonal Values</h3>
+      <p>How zonal values affect your Capital Gains Tax and Documentary Stamp Tax — and how to compute the actual fees you will pay at closing.</p>
+      <div class="blog-card-meta"><span>4 min read</span><a href="/zonal.html" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-globe-asia"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">OFW Tips</span>
+      <h3>Buying Property Remotely as an OFW</h3>
+      <p>How overseas Filipinos can safely purchase property back home — SPA requirements, video walkthroughs, and avoiding common scams.</p>
+      <div class="blog-card-meta"><span>6 min read</span><a href="/#contact" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-handshake"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">Selling</span>
+      <h3>How to Sell Your Property Faster</h3>
+      <p>Pricing strategy, staging tips, and the marketing channels that actually move properties in today's Metro Manila market.</p>
+      <div class="blog-card-meta"><span>5 min read</span><a href="/#contact" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
+  <div class="blog-card">
+    <div class="blog-card-image"><i class="fas fa-shield-alt"></i></div>
+    <div class="blog-card-body">
+      <span class="blog-card-tag">Legal</span>
+      <h3>Title Verification & Due Diligence</h3>
+      <p>Why every buyer should verify a Transfer Certificate of Title before paying — and the simple steps to do it through the Registry of Deeds.</p>
+      <div class="blog-card-meta"><span>6 min read</span><a href="/guide.html" class="read-more">Read More <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+  </div>
 </section>
 
 <div class="newsletter">
