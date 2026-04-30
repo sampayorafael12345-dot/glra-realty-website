@@ -165,6 +165,55 @@ body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
 .email-modal-content .submit-btn:hover{background:var(--gold)}
 .close-modal-btn{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 .close-modal-btn:hover{color:var(--gold)}
+
+/* ---- COMPARE PROPERTIES ---- */
+.compare-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);padding:14px 5%;display:none;align-items:center;gap:14px;flex-wrap:wrap;z-index:1500;box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+.compare-bar.active{display:flex}
+.compare-bar-label{font-size:12px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;flex-shrink:0}
+.compare-bar-thumbs{display:flex;gap:10px;flex:1;flex-wrap:wrap}
+.compare-thumb{position:relative;width:54px;height:54px;border:1px solid rgba(200,169,110,.3);overflow:hidden}
+.compare-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.compare-thumb .remove{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#ef4444;color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.compare-thumb-empty{width:54px;height:54px;border:1px dashed rgba(200,169,110,.25);display:flex;align-items:center;justify-content:center;color:rgba(200,169,110,.4);font-size:18px}
+.compare-bar-actions{display:flex;gap:8px;flex-shrink:0}
+.compare-bar-btn{padding:10px 20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:var(--transition)}
+.compare-bar-btn.primary{background:var(--gold);color:#fff}
+.compare-bar-btn.primary:hover{background:var(--gold-dark)}
+.compare-bar-btn.primary:disabled{opacity:.5;cursor:not-allowed}
+.compare-bar-btn.outline{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}
+.compare-bar-btn.outline:hover{border-color:var(--gold);color:var(--gold)}
+.card-action-btn.compare-active{background:var(--gold) !important;border-color:var(--gold) !important}
+.prop-card.compare-selected{box-shadow:0 0 0 2px var(--gold), var(--shadow-md)}
+
+#compareModal{position:fixed;inset:0;background:rgba(5,12,22,0.96);display:none;z-index:2500;overflow-y:auto;padding:30px 0}
+#compareModal.show{display:block}
+.compare-modal-content{max-width:1100px;margin:0 auto;padding:0 5%}
+.compare-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.compare-modal-head h2{font-family:'Cormorant Garamond',serif;font-size:30px;color:#fff;font-weight:600}
+.compare-modal-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:var(--transition)}
+.compare-modal-close:hover{background:var(--gold)}
+.compare-grid{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.compare-row{display:grid;border-bottom:1px solid var(--border-color)}
+.compare-row:last-child{border-bottom:none}
+.compare-row.heading-row{background:var(--navy)}
+.compare-cell{padding:14px 16px;font-size:13px;color:var(--text-color);display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-color);min-width:0;word-wrap:break-word}
+.compare-cell:last-child{border-right:none}
+.compare-cell.label-cell{background:var(--gray-light);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:600}
+body.dark-mode .compare-cell.label-cell{background:#0a1520}
+.compare-cell.heading-cell{padding:0;border-right:1px solid rgba(200,169,110,.2)}
+.compare-cell.heading-cell:last-child{border-right:none}
+.compare-card-head{position:relative;display:flex;flex-direction:column;text-align:center;color:#fff}
+.compare-card-head img{width:100%;height:140px;object-fit:cover}
+.compare-card-head .remove-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.compare-card-head .remove-btn:hover{background:#ef4444}
+.compare-card-head h4{font-family:'Cormorant Garamond',serif;font-size:18px;padding:12px 12px 4px;color:#fff;line-height:1.2}
+.compare-card-head .loc{font-size:11px;color:rgba(255,255,255,.6);padding:0 12px 12px}
+.compare-cell.cta-cell{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;padding:12px 14px}
+.compare-cta{flex:1;min-width:0;padding:8px 6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;text-align:center;cursor:pointer;border:1px solid var(--gold);background:transparent;color:var(--gold);font-family:'DM Sans',sans-serif;transition:var(--transition)}
+.compare-cta:hover{background:var(--gold);color:#fff}
+.compare-cta.wa{background:#25d366;color:#fff;border-color:#25d366}
+.compare-cta.wa:hover{filter:brightness(1.1)}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .page-hero h1{font-size:34px}
@@ -267,6 +316,25 @@ body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
       </div>
       <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
     </div>
+    <!-- Currency Switcher -->
+    <div style="margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase">Show prices in:</span>
+      <label class="currency-switcher">
+        <i class="fas fa-money-bill-wave"></i>
+        <select id="currencySelect" onchange="changeCurrency(this.value)">
+          <option value="PHP">PHP &mdash; Philippine Peso (&#8369;)</option>
+          <option value="USD">USD &mdash; US Dollar ($)</option>
+          <option value="AED">AED &mdash; UAE Dirham (د.إ)</option>
+          <option value="SGD">SGD &mdash; Singapore Dollar (S$)</option>
+          <option value="GBP">GBP &mdash; British Pound (&pound;)</option>
+          <option value="EUR">EUR &mdash; Euro (&euro;)</option>
+          <option value="JPY">JPY &mdash; Japanese Yen (&yen;)</option>
+          <option value="CAD">CAD &mdash; Canadian Dollar (C$)</option>
+          <option value="AUD">AUD &mdash; Australian Dollar (A$)</option>
+        </select>
+      </label>
+      <span class="currency-rate-note" id="currencyRateNote"></span>
+    </div>
   </div>
 </div>
 <!-- Category Tabs -->
@@ -317,6 +385,79 @@ body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
   <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
   <div id="modal-content" class="modal-body"></div>
 </div>
+
+<!-- COMPARE BAR (fixed at bottom when properties are selected) -->
+<div id="compareBar" class="compare-bar">
+  <span class="compare-bar-label"><i class="fas fa-balance-scale"></i> Compare (<span id="compareCount">0</span>/3)</span>
+  <div class="compare-bar-thumbs" id="compareThumbs"></div>
+  <div class="compare-bar-actions">
+    <button class="compare-bar-btn outline" onclick="clearCompare()"><i class="fas fa-times"></i> Clear</button>
+    <button class="compare-bar-btn primary" id="compareViewBtn" onclick="showCompareModal()" disabled>Compare Now</button>
+  </div>
+</div>
+
+<!-- COMPARE MODAL -->
+<div id="compareModal">
+  <div class="compare-modal-content">
+    <div class="compare-modal-head">
+      <h2><i class="fas fa-balance-scale" style="color:var(--gold)"></i> Compare Properties</h2>
+      <button class="compare-modal-close" onclick="closeCompareModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="compareGrid" class="compare-grid"></div>
+  </div>
+</div>
+
+<!-- SCHEDULE A VIEWING MODAL -->
+<div id="scheduleModal" class="email-modal">
+  <div class="email-modal-content" style="max-width:480px">
+    <button class="close-modal-btn" onclick="closeScheduleModal()"><i class="fas fa-times"></i></button>
+    <i class="far fa-calendar-check modal-icon"></i>
+    <h3>Schedule a Viewing</h3>
+    <p id="scheduleSubtitle" style="margin-bottom:18px">For: <strong>—</strong></p>
+    <div style="display:grid;gap:12px;text-align:left">
+      <div>
+        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Your Name</label>
+        <input type="text" id="schedName" placeholder="Full name" required>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Email</label>
+          <input type="email" id="schedEmail" placeholder="you@example.com" required>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Phone</label>
+          <input type="tel" id="schedPhone" placeholder="0917 ..." required>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Preferred Date</label>
+          <input type="date" id="schedDate" required>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Preferred Time</label>
+          <select id="schedTime">
+            <option value="9:00 AM">9:00 AM</option>
+            <option value="10:00 AM">10:00 AM</option>
+            <option value="11:00 AM">11:00 AM</option>
+            <option value="1:00 PM" selected>1:00 PM</option>
+            <option value="2:00 PM">2:00 PM</option>
+            <option value="3:00 PM">3:00 PM</option>
+            <option value="4:00 PM">4:00 PM</option>
+            <option value="5:00 PM">5:00 PM</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Message (optional)</label>
+        <textarea id="schedMessage" rows="3" placeholder="Anything Catherine should know in advance?" style="width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color);resize:vertical"></textarea>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitScheduleViewing()" style="margin-top:16px"><i class="far fa-calendar-check"></i> &nbsp;Request Viewing</button>
+    <p style="font-size:11px;margin-top:12px;color:var(--gray)">Catherine will confirm the appointment via your preferred channel.</p>
+  </div>
+</div>
+
 <footer>
   <div class="footer-content">
     <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p>
@@ -390,15 +531,295 @@ function shareProperty(platform,property){const url=encodeURIComponent(`${locati
 /* ---- PROPERTIES DATA ---- */
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null,currentCategory='all';
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE';}
-function getDisplayPrice(p){if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString();}
+
+/* ---- CURRENCY SWITCHER ---- */
+// Approximate exchange rates from PHP (updated April 2026 — for display only)
+const CURRENCY_RATES = {
+  PHP:{rate:1,         symbol:'₱',  decimals:0, label:'Philippine Peso'},
+  USD:{rate:0.0175,    symbol:'$',       decimals:0, label:'US Dollar'},
+  AED:{rate:0.0645,    symbol:'AED ',    decimals:0, label:'UAE Dirham'},
+  SGD:{rate:0.0238,    symbol:'S$',      decimals:0, label:'Singapore Dollar'},
+  GBP:{rate:0.0139,    symbol:'£',  decimals:0, label:'British Pound'},
+  EUR:{rate:0.0161,    symbol:'€',  decimals:0, label:'Euro'},
+  JPY:{rate:2.65,      symbol:'¥',  decimals:0, label:'Japanese Yen'},
+  CAD:{rate:0.024,     symbol:'C$',      decimals:0, label:'Canadian Dollar'},
+  AUD:{rate:0.027,     symbol:'A$',      decimals:0, label:'Australian Dollar'}
+};
+let currentCurrency = localStorage.getItem('glraCurrency') || 'PHP';
+
+function changeCurrency(code){
+  currentCurrency = code;
+  localStorage.setItem('glraCurrency', code);
+  updateCurrencyNote();
+  // Re-render listings if loaded
+  if(cachedProperties) applyFilters(currentCategory, cachedProperties);
+  // Refresh open detail modal price too
+  if(currentProperty && document.getElementById('modal').style.display==='block'){
+    openDetail(currentProperty._id);
+  }
+}
+
+function updateCurrencyNote(){
+  const note = document.getElementById('currencyRateNote');
+  if(!note) return;
+  if(currentCurrency==='PHP'){
+    note.textContent = '';
+  } else {
+    const r = CURRENCY_RATES[currentCurrency];
+    const phpPerUnit = (1 / r.rate).toFixed(2);
+    note.textContent = '≈ 1 ' + currentCurrency + ' = ₱' + Number(phpPerUnit).toLocaleString();
+  }
+}
+
+function formatPrice(phpAmount){
+  const c = CURRENCY_RATES[currentCurrency] || CURRENCY_RATES.PHP;
+  const converted = phpAmount * c.rate;
+  // For non-PHP currencies on small amounts (< 1), display 2 decimals
+  const decimals = (currentCurrency!=='PHP' && converted < 1000) ? 2 : c.decimals;
+  return c.symbol + converted.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+}
+
+function getDisplayPrice(p){
+  const isLease = isForLease(p);
+  const phpAmount = isLease ? (p.monthlyRental||p.price||0) : (p.price||0);
+  return formatPrice(phpAmount) + (isLease ? '/mo' : '');
+}
+
+/* ---- WHATSAPP CLICK-TO-CHAT WITH PROPERTY CONTEXT ---- */
+function whatsappPropertyUrl(prop){
+  const isLease = isForLease(prop);
+  const price = getDisplayPrice(prop);
+  const url = location.origin + '/properties.html?property=' + prop._id;
+  const message = `Hi Catherine! I'm interested in this property listed on GLRA Realty:\n\n` +
+    `${prop.title}\n` +
+    `Location: ${prop.location}\n` +
+    `Price: ${price}\n` +
+    `Type: ${prop.propertyType || 'Property'} ${isLease ? '(For Lease)' : '(For Sale)'}\n` +
+    `Link: ${url}\n\n` +
+    `Could you please send more details / arrange a viewing?`;
+  return 'https://wa.me/639171774572?text=' + encodeURIComponent(message);
+}
+
+function inquireWhatsApp(propId){
+  const prop = (cachedProperties || []).find(p => p._id === propId) || currentProperty;
+  if(!prop) return;
+  window.open(whatsappPropertyUrl(prop), '_blank', 'noopener');
+}
+
+/* ---- COMPARE PROPERTIES ---- */
+let compareList = JSON.parse(sessionStorage.getItem('glraCompare') || '[]');
+const COMPARE_MAX = 3;
+
+function openCompare(propId){
+  const idx = compareList.indexOf(propId);
+  if(idx >= 0){
+    compareList.splice(idx, 1);
+    showToast('Removed from compare');
+  } else if(compareList.length >= COMPARE_MAX){
+    showToast('You can compare up to ' + COMPARE_MAX + ' properties at a time', true);
+    return;
+  } else {
+    compareList.push(propId);
+    showToast('Added to compare (' + compareList.length + '/' + COMPARE_MAX + ')');
+  }
+  sessionStorage.setItem('glraCompare', JSON.stringify(compareList));
+  renderCompareBar();
+  // Refresh card states
+  document.querySelectorAll('.prop-card').forEach(c => {
+    const btn = c.querySelector('[data-compare-id]');
+    if(btn){ refreshCompareCardState(c, btn.dataset.compareId); }
+  });
+}
+
+function refreshCompareCardState(cardEl, propId){
+  const inList = compareList.includes(propId);
+  cardEl.classList.toggle('compare-selected', inList);
+  const btn = cardEl.querySelector('[data-compare-id="'+propId+'"]');
+  if(btn) btn.classList.toggle('compare-active', inList);
+}
+
+function clearCompare(){
+  compareList = [];
+  sessionStorage.removeItem('glraCompare');
+  renderCompareBar();
+  document.querySelectorAll('.prop-card').forEach(c => {
+    c.classList.remove('compare-selected');
+    c.querySelectorAll('.card-action-btn.compare-active').forEach(b => b.classList.remove('compare-active'));
+  });
+  closeCompareModal();
+}
+
+function renderCompareBar(){
+  const bar = document.getElementById('compareBar');
+  const thumbs = document.getElementById('compareThumbs');
+  const count = document.getElementById('compareCount');
+  const btn = document.getElementById('compareViewBtn');
+  if(!bar) return;
+
+  count.textContent = compareList.length;
+  btn.disabled = compareList.length < 2;
+
+  if(compareList.length === 0){
+    bar.classList.remove('active');
+    thumbs.innerHTML = '';
+    return;
+  }
+  bar.classList.add('active');
+
+  const props = (cachedProperties || []).filter(p => compareList.includes(p._id));
+  let html = '';
+  props.forEach(p => {
+    html += '<div class="compare-thumb"><img src="' + (p.mainImage || '') + '" alt="' + escapeHtml(p.title) + '" title="' + escapeHtml(p.title) + '"><button class="remove" onclick="openCompare(\'' + p._id + '\')" title="Remove"><i class="fas fa-times"></i></button></div>';
+  });
+  // Empty placeholders
+  for(let i = props.length; i < COMPARE_MAX; i++){
+    html += '<div class="compare-thumb-empty"><i class="fas fa-plus"></i></div>';
+  }
+  thumbs.innerHTML = html;
+}
+
+function showCompareModal(){
+  if(compareList.length < 2){
+    showToast('Please select at least 2 properties to compare', true);
+    return;
+  }
+  const props = (cachedProperties || []).filter(p => compareList.includes(p._id));
+  const cols = props.length + 1; // +1 for label column
+  const colsCSS = '180px ' + props.map(() => '1fr').join(' ');
+  const grid = document.getElementById('compareGrid');
+
+  const headRow = '<div class="compare-row heading-row" style="grid-template-columns:' + colsCSS + '">' +
+    '<div class="compare-cell label-cell" style="background:var(--navy);color:#fff">Property</div>' +
+    props.map(p => `
+      <div class="compare-cell heading-cell">
+        <div class="compare-card-head">
+          <button class="remove-btn" onclick="openCompare('${p._id}')" title="Remove"><i class="fas fa-times"></i></button>
+          <img src="${p.mainImage || ''}" alt="${escapeHtml(p.title)}">
+          <h4>${escapeHtml(p.title)}</h4>
+          <div class="loc"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.location)}</div>
+        </div>
+      </div>`).join('') + '</div>';
+
+  function row(label, getter){
+    return '<div class="compare-row" style="grid-template-columns:' + colsCSS + '">' +
+      '<div class="compare-cell label-cell">' + label + '</div>' +
+      props.map(p => '<div class="compare-cell">' + getter(p) + '</div>').join('') +
+      '</div>';
+  }
+
+  const ctaRow = '<div class="compare-row" style="grid-template-columns:' + colsCSS + '">' +
+    '<div class="compare-cell label-cell">Action</div>' +
+    props.map(p => `
+      <div class="compare-cell cta-cell">
+        <button class="compare-cta wa" onclick="inquireWhatsApp('${p._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        <button class="compare-cta" onclick="closeCompareModal();openScheduleViewing('${p._id}')"><i class="far fa-calendar-check"></i> Schedule</button>
+      </div>`).join('') + '</div>';
+
+  grid.innerHTML = headRow +
+    row('Status', p => p.listingType === 'FOR SALE' ? '<span style="color:var(--gold);font-weight:600">For Sale</span>' : '<span style="color:var(--gold);font-weight:600">For Lease</span>') +
+    row('Price', p => '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600;color:var(--gold)">' + getDisplayPrice(p) + '</span>') +
+    row('Type', p => escapeHtml(p.propertyType || 'Property')) +
+    row('Bedrooms', p => p.bedrooms || '0') +
+    row('Bathrooms', p => p.bathrooms || '0') +
+    row('Floor Area', p => (p.sqm || '0') + ' sqm') +
+    row('Parking', p => p.parking > 0 ? p.parking + ' slot' + (p.parking > 1 ? 's' : '') : 'None') +
+    row('Featured', p => p.featured ? '<i class="fas fa-star" style="color:var(--gold)"></i> Yes' : '—') +
+    row('Price per sqm', p => p.sqm > 0 ? formatPrice(Math.round((p.price || 0) / p.sqm)) + '/sqm' : '—') +
+    ctaRow;
+
+  document.getElementById('compareModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCompareModal(){
+  document.getElementById('compareModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+/* ---- SCHEDULE A VIEWING ---- */
+let schedulingPropertyId = null;
+
+function openScheduleViewing(propId){
+  const prop = (cachedProperties || []).find(p => p._id === propId) || currentProperty;
+  if(!prop){ showToast('Property not found', true); return; }
+  schedulingPropertyId = propId;
+  document.getElementById('scheduleSubtitle').innerHTML =
+    'For: <strong>' + escapeHtml(prop.title) + '</strong> &middot; ' + escapeHtml(prop.location);
+  // Default to a date 2 days from now
+  const def = new Date();
+  def.setDate(def.getDate() + 2);
+  const yyyy = def.getFullYear();
+  const mm = String(def.getMonth() + 1).padStart(2, '0');
+  const dd = String(def.getDate()).padStart(2, '0');
+  document.getElementById('schedDate').value = yyyy + '-' + mm + '-' + dd;
+  document.getElementById('schedDate').min = new Date().toISOString().slice(0, 10);
+  document.getElementById('scheduleModal').style.display = 'flex';
+}
+
+function closeScheduleModal(){
+  document.getElementById('scheduleModal').style.display = 'none';
+}
+
+async function submitScheduleViewing(){
+  const name = document.getElementById('schedName').value.trim();
+  const email = document.getElementById('schedEmail').value.trim();
+  const phone = document.getElementById('schedPhone').value.trim();
+  const date = document.getElementById('schedDate').value;
+  const time = document.getElementById('schedTime').value;
+  const message = document.getElementById('schedMessage').value.trim();
+
+  if(!name || !email.includes('@') || !phone || !date){
+    showToast('Please fill in name, email, phone and date', true);
+    return;
+  }
+
+  const prop = (cachedProperties || []).find(p => p._id === schedulingPropertyId);
+  const propTitle = prop ? prop.title : '';
+  const propLoc = prop ? prop.location : '';
+
+  const fullMessage = `[VIEWING REQUEST]\n\n` +
+    `Property: ${propTitle}\n` +
+    `Location: ${propLoc}\n` +
+    `Preferred Date: ${date}\n` +
+    `Preferred Time: ${time}\n\n` +
+    `Note: ${message || '(none)'}`;
+
+  const btn = event.target;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, email, phone, message: fullMessage,
+        propertyId: schedulingPropertyId, propertyTitle: propTitle,
+        type: 'viewing-request'
+      })
+    });
+    if(r.ok){
+      closeScheduleModal();
+      showToast('Viewing request sent. Catherine will confirm shortly.');
+      ['schedName','schedEmail','schedPhone','schedMessage'].forEach(id => document.getElementById(id).value = '');
+    } else {
+      showToast('Could not send. Please try WhatsApp or call directly.', true);
+    }
+  } catch {
+    showToast('Network error. Please try again.', true);
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
 async function loadProperties(){if(cachedProperties){initFromUrl(cachedProperties);return;}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);initFromUrl(cachedProperties);}catch(e){console.error(e);showToast('Failed to load properties',true);}}
 function initFromUrl(properties){const cat=getParam('category');const search=getParam('search');const pt=getParam('propertyType');const br=getParam('bedrooms');const ba=getParam('baths');const mn=getParam('minPrice');const mx=getParam('maxPrice');const propId=getParam('property');let cat2='all';if(cat==='FOR SALE')cat2='FOR SALE';else if(cat==='FOR LEASE')cat2='FOR LEASE';else if(cat==='featured')cat2='featured';currentCategory=cat2;document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.category===cat2);});const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat2]||'All Properties';if(search)document.getElementById('locationInput').value=search;if(pt)document.getElementById('propertyTypeSelect').value=pt;if(br)document.getElementById('bedroomsSelect').value=br;if(ba)document.getElementById('bathsSelect').value=ba;if(mn)document.getElementById('minPriceInput').value=parseInt(mn).toLocaleString();if(mx)document.getElementById('maxPriceInput').value=parseInt(mx).toLocaleString();applyFilters(cat2,properties);if(propId){setTimeout(()=>{const p=cachedProperties.find(x=>x._id===propId);if(p)openDetail(p._id);},600);}}
 function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&p.propertyType!==pt)return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;const price=isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);if(mn>0&&price<mn)return false;if(mx>0&&price>mx)return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>p.listingType==='FOR SALE');else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);renderProperties(f);document.getElementById('resultsCount').innerHTML=`${f.length} ${f.length===1?'property':'properties'} found`;allProperties=f;}
 function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.innerHTML='';if(!properties.length){c.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>No properties match your search.<br><br><a href="/properties.html">Clear filters</a></p></div>';return;}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,80);}
-function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'https://via.placeholder.com/400x300?text=No+Image';card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" title="Save to wishlist"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title">${escapeHtml(prop.title)}</h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span><span><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${parking}</div><div class="prop-price">${price}</div></div>`;return card;}
+function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'https://via.placeholder.com/400x300?text=No+Image';card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openCompare('${prop._id}')" title="Add to compare" data-compare-id="${prop._id}"><i class="fas fa-balance-scale"></i></button><button class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${prop._id}')" title="Ask on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" title="Save to wishlist"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title">${escapeHtml(prop.title)}</h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span><span><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${parking}</div><div class="prop-price">${price}</div></div>`;refreshCompareCardState(card, prop._id);return card;}
 /* ---- DETAIL MODAL ---- */
 function openDetail(id){const prop=allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;galleryImages=[prop.mainImage,...(prop.gallery||[])].filter(Boolean);let thumbs=galleryImages.map((img,i)=>`<img src="${img}" onclick="changeImg(${i})" class="${i===0?'active':''}" alt="Photo ${i+1}">`).join('');const mapQ=encodeURIComponent((prop.mapLocation||prop.location)+', Philippines');const mapEmbed=`https://www.google.com/maps?q=${mapQ}&output=embed`;const isSale=prop.listingType==='FOR SALE';const price=getDisplayPrice(prop);const pp=prop.price||0;document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]||''}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label>Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--gold)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label>Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label>Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% — Promo</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% — Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% — Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only — for estimation purposes.</p></div>`:''}
-<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div><button class="modal-inquire-btn" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> &nbsp;Inquire About This Property</button></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
+<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff;margin-top:0" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> &nbsp;WhatsApp</button><button class="modal-inquire-btn" style="margin-top:0" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> &nbsp;Schedule Viewing</button><button class="modal-inquire-btn" style="background:transparent;color:var(--gold);margin-top:0" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> &nbsp;Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
 function calcMortgage(price){const dp=parseFloat(document.getElementById('dpSlider')?.value)||20;const term=parseFloat(document.getElementById('loanTerm')?.value)||20;const rate=parseFloat(document.getElementById('intRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageAmt');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:16px">/mo</span>`;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=dp+'%';}
 function updateDP(val,price){const el=document.getElementById('dpSlider');if(el)el.value=val;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=val+'%';calcMortgage(price);}
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i));}}
@@ -406,6 +827,19 @@ function closeModal(){document.getElementById('modal').style.display='none';docu
 /* ---- CATEGORY TABS ---- */
 document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');const cat=this.dataset.category;currentCategory=cat;const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat]||'All Properties';applyFilters(cat,cachedProperties);const url=new URL(location.href);if(cat==='all')url.searchParams.delete('category');else url.searchParams.set('category',cat);history.pushState({},'',url);});});
 /* ---- INIT ---- */
+// Restore saved currency choice and compare list
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('currencySelect');
+  if(sel){ sel.value = currentCurrency; }
+  updateCurrencyNote();
+  renderCompareBar();
+});
+// Close compare modal on Esc
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && document.getElementById('compareModal').classList.contains('show')){
+    closeCompareModal();
+  }
+});
 loadProperties();
 </script>
 </body>

@@ -963,8 +963,16 @@ async function verifyEmailAndPrint() {
     btn.disabled = false;
     // Open the print dialog. Browsers offer "Save as PDF" as a destination,
     // so the same flow handles both downloading and printing.
-    // Don't show a toast here — toasts are hidden in print but we want the modal closed cleanly first.
-    setTimeout(() => window.print(), 200);
+    // Temporarily blank the document title so the browser doesn't auto-inject
+    // it into the printed page header.
+    const originalTitle = document.title;
+    document.title = ' ';
+    setTimeout(() => {
+      window.print();
+      // Restore title after a short delay (most browsers fire afterprint promptly)
+      setTimeout(() => { document.title = originalTitle; }, 500);
+    }, 200);
+    window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
   } catch (error) {
     btn.innerHTML = originalText;
     btn.disabled = false;
