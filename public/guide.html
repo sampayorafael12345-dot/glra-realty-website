@@ -60,7 +60,7 @@ body.dark-mode .doc-item{background:#111b27;border-color:#2a3f58}
 .checklist{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:0}
 .checklist li{padding:12px 16px;border:1px solid var(--border-color);font-size:13px;color:var(--text-color);line-height:1.6;display:flex;gap:10px;align-items:flex-start;background:var(--gray-light)}
 body.dark-mode .checklist li{background:#111b27;border-color:#2a3f58}
-.checklist li::before{content:'✓';color:var(--gold);font-weight:600;flex-shrink:0;margin-top:1px}
+.checklist li::before{content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;color:var(--gold);flex-shrink:0;margin-top:1px}
 .warning-box{margin-top:20px;padding:16px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--text-color);line-height:1.7}
 .warning-box i{color:var(--gold);flex-shrink:0;margin-top:2px}
 .disclosure-form{border:1px solid var(--border-color);padding:24px;background:var(--gray-light)}
@@ -93,9 +93,10 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
 
 /* ── PRINT STYLES ── */
 @media print{
-  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,footer,.cta-strip{display:none !important}
-  body{background:#fff;color:#000}
+  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,footer,.cta-strip,.toast{display:none !important}
+  body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page-hero{display:none}
+  @page{margin:1.5cm;size:A4 portrait}
   .print-only-header{display:block;text-align:center;margin:0 auto 28px;padding:0 0 22px;border-bottom:2px solid #c8a96e;max-width:1100px}
   .print-only-header img{height:70px;width:auto;margin-bottom:14px}
   .print-only-header h1{font-family:'Cormorant Garamond',serif;font-size:26px;color:#0d1b2a;margin-bottom:6px;font-weight:600}
@@ -192,7 +193,7 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
 <!-- Print Button -->
 <div class="print-button-wrapper">
   <button class="print-btn" onclick="showPrintEmailModal()">
-    <i class="fas fa-print"></i> Save as PDF / Print Guide
+    <i class="fas fa-download"></i> Download as PDF / Print
   </button>
 </div>
 
@@ -337,10 +338,10 @@ body.dark-mode .disclosure-form{background:#111b27;border-color:#2a3f58}
     <button class="close-print-modal" onclick="closeEmailPrintModal()">&times;</button>
     <i class="fas fa-envelope"></i>
     <h3>Enter Your Email</h3>
-    <p>Please enter your email address to download/print the documentation guide.</p>
+    <p>Enter your email to continue. The print dialog will open — choose <strong>"Save as PDF"</strong> as the destination to download a copy, or pick a printer to print on paper.</p>
     <input type="email" id="printEmail" placeholder="Your email address">
-    <button onclick="verifyEmailAndPrint()">Continue to Print</button>
-    <p style="font-size:11px;margin-top:15px;color:var(--gray)">We'll send a copy to your email for reference.</p>
+    <button onclick="verifyEmailAndPrint()">Continue</button>
+    <p style="font-size:11px;margin-top:15px;color:var(--gray)">We will email you a copy for your reference.</p>
   </div>
 </div>
 
@@ -386,13 +387,14 @@ async function verifyEmailAndPrint(){
       body: JSON.stringify({ email, source: 'guide_print' })
     }).catch(() => {});
     closeEmailPrintModal();
-    showToast('Thank you! Preparing print...');
-    setTimeout(() => window.print(), 500);
-  } catch(err){
-    showToast('Something went wrong. Please try again.', true);
-  } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
+    // Toast suppressed because it would briefly appear on the printed page
+    setTimeout(() => window.print(), 200);
+  } catch(err){
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    showToast('Something went wrong. Please try again.', true);
   }
 }
 </script>

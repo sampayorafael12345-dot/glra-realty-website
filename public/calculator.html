@@ -153,16 +153,30 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
 .email-print-content button{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
 .email-print-content button:hover{background:var(--gold)}
 .close-print-modal{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
+
+/* ---- PRINT-ONLY HEADER (hidden on screen, visible only when printing) ---- */
+.print-only-header{display:none}
+
 /* ---- PRINT STYLES ---- */
 @media print{
-  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal{display:none !important}
-  body{background:#fff;color:#000}
-  .page-hero{padding:20px;border:none}
-  .page-hero h1{color:#0d1b2a;font-size:24px}
-  .page-hero p{color:#555}
-  .summary-banner{border:1px solid #ccc}
-  .summary-item .amount{color:#c8a96e}
+  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,.toast,.disclaimer{display:none !important}
+  body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page-hero{display:none}
+  .print-only-header{display:block;text-align:center;margin:0 auto 24px;padding:0 0 18px;border-bottom:2px solid #c8a96e;max-width:100%}
+  .print-only-header img{height:60px;width:auto;margin-bottom:10px}
+  .print-only-header h1{font-family:'Cormorant Garamond',serif;font-size:22px;color:#0d1b2a;margin-bottom:4px;font-weight:600}
+  .print-only-header .print-subtitle{font-size:11px;color:#555;letter-spacing:1px}
+  .print-only-header .print-meta{font-size:10px;color:#888;margin-top:6px;letter-spacing:.5px}
+  .summary-banner,.calc-section,.schedule-card,.calc-card{page-break-inside:avoid;break-inside:avoid;border:1px solid #ccc !important}
+  .summary-banner{background:#f9f9f9 !important}
+  .summary-item .amount{color:#c8a96e !important}
+  .fee-row,.fee-label,.fee-value{color:#000 !important}
+  .fee-value{color:#c8a96e !important}
+  table{page-break-inside:avoid;break-inside:avoid;width:100% !important}
+  .inputs-wrapper,.results-wrapper{display:block !important}
+  .inputs-wrapper>*,.results-wrapper>*{margin-bottom:14px !important;page-break-inside:avoid;break-inside:avoid}
   footer{display:none}
+  @page{margin:1.5cm;size:A4 portrait}
 }
 /* ---- RESPONSIVE ---- */
 @media(max-width:1024px){.inputs-wrapper{grid-template-columns:1fr 1fr}.results-wrapper{grid-template-columns:1fr}}
@@ -220,17 +234,21 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
 <div class="page-hero">
   <span class="eyebrow">Tools & Resources</span>
   <h1>Sales Closing Fees Calculator</h1>
-  <p>Calculate all taxes and fees for property transactions in the Philippines — includes BIR Zonal Value lookup, broker commission with VAT, and desired net proceed calculator</p>
+  <p>Calculate all taxes and fees for property transactions in the Philippines — includes BIR Zonal Value lookup, broker commission, and desired net proceed calculator</p>
 </div>
 
-
-<!-- page hero already rendered -->
-  
+<!-- This header is hidden on screen — only appears when printing or saving as PDF -->
+<div class="print-only-header">
+  <img src="/logo.png" alt="GLRA Realty">
+  <h1>Sales Closing Fees Calculator</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
 
 <!-- Print Button -->
 <div class="print-button-wrapper">
   <button class="print-btn" onclick="showPrintEmailModal()">
-    <i class="fas fa-print"></i> Save as PDF / Print Calculator
+    <i class="fas fa-download"></i> Download as PDF / Print
   </button>
 </div>
 
@@ -268,11 +286,11 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
       <div class="radio-group" id="assetTypeGroup">
         <div class="radio-option selected" data-value="capital" onclick="selectAssetType('capital')">
           <input type="radio" name="assetType" value="capital" checked> 
-          <span>🏠 Capital Asset <small>(Individual, never rented)</small><br><strong style="color:var(--gold);">→ CGT 6%</strong></span>
+          <span><i class="fas fa-home" style="color:var(--gold);margin-right:6px"></i> Capital Asset <small>(Individual, never rented)</small><br><strong style="color:var(--gold);">CGT 6%</strong></span>
         </div>
         <div class="radio-option" data-value="ordinary" onclick="selectAssetType('ordinary')">
           <input type="radio" name="assetType" value="ordinary"> 
-          <span>🏢 Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--gold);">→ VAT 12% + EWT 6% (Total 18%)</strong></span>
+          <span><i class="fas fa-building" style="color:var(--gold);margin-right:6px"></i> Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--gold);">VAT 12% + EWT 6% (Total 18%)</strong></span>
         </div>
       </div>
     </div>
@@ -410,7 +428,7 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
           <span class="fee-value" id="netBeforeCommission">₱0</span>
         </div>
         <div class="fee-row">
-          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>% + 12% VAT)</span>
+          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%)</span>
           <span class="fee-value" id="brokerCommission">₱0</span>
         </div>
         <div class="total-row">
@@ -501,10 +519,10 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
     <span class="close-print-modal" onclick="closeEmailPrintModal()">&times;</span>
     <i class="fas fa-envelope"></i>
     <h3>Enter Your Email</h3>
-    <p>Please enter your email address to download/print the calculator results.</p>
+    <p>Enter your email to continue. The print dialog will open — choose <strong>"Save as PDF"</strong> as the destination to download a copy, or pick a printer to print on paper.</p>
     <input type="email" id="printEmail" placeholder="Your email address">
-    <button onclick="verifyEmailAndPrint()">Continue to Print</button>
-    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll send a copy to your email for reference.</p>
+    <button onclick="verifyEmailAndPrint()">Continue</button>
+    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We will email you a copy for your reference.</p>
   </div>
 </div>
 
@@ -808,9 +826,7 @@ function calculateAll() {
   }
   
   const netBeforeCommission = sellingPrice - sellerTax;
-  const commBase = sellingPrice * (commissionRate / 100);
-  const commVAT = commBase * 0.12;
-  const brokerCommission = commBase + commVAT;
+  const brokerCommission = sellingPrice * (commissionRate / 100);
   const netProceed = netBeforeCommission - brokerCommission;
   
   const dstTax = taxBasis * 0.015;
@@ -837,7 +853,7 @@ function calculateAll() {
   document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
   document.getElementById('commissionDisplay').innerHTML = commissionRate;
   document.getElementById('commissionDisplay').innerHTML = commissionRate;
-  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission) + '<span style="font-size:11px;color:var(--gray);margin-left:6px">(incl. VAT)</span>';
+  document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
   document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
   
   document.getElementById('dstTax').innerHTML = formatCurrency(dstTax);
@@ -884,12 +900,24 @@ function calculateFromDesiredProceed() {
 }
 
 function calculateRegistrationFee(price) {
-  if (price <= 500000) return price * 0.01;
-  if (price <= 1000000) return 5000 + (price - 500000) * 0.008;
-  if (price <= 2000000) return 9000 + (price - 1000000) * 0.006;
-  if (price <= 5000000) return 15000 + (price - 2000000) * 0.004;
-  if (price <= 10000000) return 27000 + (price - 5000000) * 0.003;
-  return 42000 + (price - 10000000) * 0.0025;
+  // LRA / Registry of Deeds tiered schedule
+  // Same brackets as the dedicated ERCF calculator (/ercf.html)
+  let baseFee = 0;
+  if (price <= 0) return 0;
+  else if (price <= 1700)    baseFee = 22;
+  else if (price <= 8000)    baseFee = 22    + Math.ceil((price - 1700)    / 500)   * 3.50;
+  else if (price <= 20000)   baseFee = 66    + Math.ceil((price - 8000)    / 500)   * 3.00;
+  else if (price <= 50000)   baseFee = 138   + Math.ceil((price - 20000)   / 500)   * 5.50;
+  else if (price <= 100000)  baseFee = 468   + Math.ceil((price - 50000)   / 500)   * 5.50;
+  else if (price <= 200000)  baseFee = 1018  + Math.ceil((price - 100000)  / 1000)  * 11;
+  else if (price <= 500000)  baseFee = 2118  + Math.ceil((price - 200000)  / 1000)  * 13;
+  else if (price <= 1000000) baseFee = 6018  + Math.ceil((price - 500000)  / 1000)  * 11;
+  else if (price <= 1700000) baseFee = 11518 + Math.ceil((price - 1000000) / 5000)  * 32;
+  else                       baseFee = 16000 + Math.ceil((price - 1700000) / 20000) * 90;
+  // Plus Legal Research Fund (1% of base fee, minimum P10) and IT Service Fee (P40)
+  const lrf = Math.max(10, baseFee * 0.01);
+  const itFee = 40;
+  return baseFee + lrf + itFee;
 }
 
 function calculateNotarialFee(price) {
@@ -931,16 +959,16 @@ async function verifyEmailAndPrint() {
     });
     
     closeEmailPrintModal();
-    showToast('Thank you! Preparing print...');
-    
-    setTimeout(() => {
-      window.print();
-    }, 500);
-  } catch (error) {
-    showToast('Something went wrong. Please try again.', true);
-  } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
+    // Open the print dialog. Browsers offer "Save as PDF" as a destination,
+    // so the same flow handles both downloading and printing.
+    // Don't show a toast here — toasts are hidden in print but we want the modal closed cleanly first.
+    setTimeout(() => window.print(), 200);
+  } catch (error) {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    showToast('Something went wrong. Please try again.', true);
   }
 }
 

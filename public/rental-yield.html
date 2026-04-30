@@ -67,7 +67,7 @@ body.dark-mode .metric-mini{background:#111b27;border-color:#2a3f58}
 
 .rating-box{padding:18px;border:1px solid var(--border-color);background:rgba(200,169,110,.06);margin-bottom:14px;text-align:center}
 .rating-box .label{font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px;font-weight:600}
-.rating-stars{font-size:22px;color:var(--gold);letter-spacing:6px;line-height:1}
+.rating-stars{font-size:18px;color:var(--gold);line-height:1;display:flex;justify-content:center;gap:5px}
 .rating-stars .empty{color:rgba(200,169,110,.25)}
 .rating-text{font-size:13px;color:var(--text-color);margin-top:8px;font-style:italic}
 
@@ -240,7 +240,7 @@ body.dark-mode .metric-mini{background:#111b27;border-color:#2a3f58}
 
       <div class="rating-box">
         <span class="label">Investment Quality</span>
-        <div class="rating-stars" id="ratingStars">★★★★★</div>
+        <div class="rating-stars" id="ratingStars"></div>
         <div class="rating-text" id="ratingText">—</div>
       </div>
 
@@ -402,7 +402,13 @@ function recalc(){
   else if(netYield >= 2){ stars = 2; text = 'Below average — review expenses or rent assumptions.'; }
   else if(netYield > 0){ stars = 1; text = 'Weak — barely cash-flowing.'; }
   else { stars = 0; text = 'Negative — losing money on operations.'; }
-  document.getElementById('ratingStars').innerHTML = '★'.repeat(stars) + '<span class="empty">' + '★'.repeat(5-stars) + '</span>';
+  let starsHtml = '';
+  for(let i = 0; i < 5; i++){
+    starsHtml += i < stars
+      ? '<i class="fas fa-star"></i>'
+      : '<i class="fas fa-star empty"></i>';
+  }
+  document.getElementById('ratingStars').innerHTML = starsHtml;
   document.getElementById('ratingText').textContent = text;
 }
 
