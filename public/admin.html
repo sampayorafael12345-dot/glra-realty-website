@@ -446,9 +446,9 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 
       <!-- AUDIT LOG TAB (admin only) -->
       <div id="tab-auditlog" style="display:none">
-        <div class="filter-bar" style="margin-bottom:16px">
-          <div class="filter-search"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or property..." oninput="filterAuditLog()"></div>
-          <select class="filter-sel" id="auditActionFilter" onchange="filterAuditLog()">
+        <div class="filter-bar">
+          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or property..." oninput="filterAuditLog()"></div>
+          <select class="fsel" id="auditActionFilter" onchange="filterAuditLog()">
             <option value="">All Actions</option>
             <option value="LOGIN">Login</option>
             <option value="CREATE">Create</option>
@@ -456,17 +456,9 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
             <option value="DELETE">Delete</option>
           </select>
           <button class="hdr-btn" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          <div class="res-count" id="auditCount"></div>
         </div>
-        <div class="panel">
-          <div class="panel-body" style="padding:0">
-            <div class="tbl-wrap">
-              <table>
-                <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>What</th><th>Details</th></tr></thead>
-                <tbody id="auditBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>What</th><th>Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
       </div>
     </div><!-- /page-content -->
   </div><!-- /main-content -->
