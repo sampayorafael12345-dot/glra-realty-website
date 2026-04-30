@@ -151,7 +151,7 @@ body.dark-mode .stats-section{background:#111b27}
 .prop-specs i{color:var(--gold);font-size:10px}
 .prop-price{color:var(--gold);font-weight:600;font-size:20px;font-family:'Cormorant Garamond',serif;margin:12px 0 0}
 .resources-section{background:var(--navy);padding:80px 5%}
-.resources-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:900px;margin:0 auto}
+.resources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:1100px;margin:0 auto}
 .resource-card{background:rgba(255,255,255,0.05);border-radius:0;padding:40px 30px;text-align:center;transition:var(--transition);border:1px solid rgba(200,169,110,0.2);text-decoration:none;display:block}
 .resource-card:hover{background:rgba(200,169,110,0.1);border-color:var(--gold);transform:translateY(-4px)}
 .resource-icon{width:64px;height:64px;background:rgba(200,169,110,0.15);border-radius:0;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:1px solid rgba(200,169,110,0.3)}
@@ -357,6 +357,10 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog & Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/affordability.html">Affordability Calculator</a>
+        <a href="/rental-yield.html">Rental Yield Calculator</a>
+        <a href="/amortization.html">Amortization Schedule</a>
+        <a href="/ercf.html">Registration Fee (ERCF)</a>
       </div>
     </div>
     <a href="#contact" class="contact-btn-nav">CONTACT</a>
@@ -375,6 +379,10 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
     <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
     <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
     <a href="/guide.html" onclick="closeMobileMenu()">Guide</a>
+    <a href="/affordability.html" onclick="closeMobileMenu()">Affordability</a>
+    <a href="/rental-yield.html" onclick="closeMobileMenu()">Rental Yield</a>
+    <a href="/amortization.html" onclick="closeMobileMenu()">Amortization</a>
+    <a href="/ercf.html" onclick="closeMobileMenu()">Registration Fee</a>
     <a href="#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
@@ -434,9 +442,13 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
 <section class="resources-section">
   <div class="section-header"><span class="section-eyebrow" style="color:var(--gold)">Tools & Guides</span><h2 style="color:#fff">Resources</h2><p style="color:rgba(255,255,255,0.6)">Everything you need to make a confident real estate decision</p></div>
   <div class="resources-grid">
+    <a href="/affordability.html" class="resource-card"><div class="resource-icon"><i class="fas fa-home"></i></div><h3>Affordability</h3><p>Find out how much house you can afford based on your income.</p><span class="resource-btn">Calculate <i class="fas fa-arrow-right"></i></span></a>
+    <a href="/calculator.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calculator"></i></div><h3>Closing Fees</h3><p>Calculate all taxes and fees for property transactions.</p><span class="resource-btn">Calculate <i class="fas fa-arrow-right"></i></span></a>
+    <a href="/amortization.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calendar-alt"></i></div><h3>Amortization</h3><p>Monthly payment schedule and factor rate reference table.</p><span class="resource-btn">View Schedule <i class="fas fa-arrow-right"></i></span></a>
+    <a href="/rental-yield.html" class="resource-card"><div class="resource-icon"><i class="fas fa-chart-line"></i></div><h3>Rental Yield</h3><p>Investor ROI: gross yield, net yield, and cash-on-cash return.</p><span class="resource-btn">Analyze <i class="fas fa-arrow-right"></i></span></a>
+    <a href="/zonal.html" class="resource-card"><div class="resource-icon"><i class="fas fa-map-marked-alt"></i></div><h3>BIR Zonal Value</h3><p>Look up zonal values for any city or province in the PH.</p><span class="resource-btn">Look Up <i class="fas fa-arrow-right"></i></span></a>
+    <a href="/ercf.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-invoice-dollar"></i></div><h3>Registration Fee</h3><p>Estimate the LRA / Registry of Deeds title transfer fee.</p><span class="resource-btn">Estimate <i class="fas fa-arrow-right"></i></span></a>
     <a href="/guide.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-alt"></i></div><h3>Documentation Guide</h3><p>Complete guide to property documents in the Philippines.</p><span class="resource-btn">View Guide <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/calculator.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calculator"></i></div><h3>Transaction Calculator</h3><p>Calculate all taxes and fees for property transactions.</p><span class="resource-btn">Calculate Now <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/testimonials.html" class="resource-card"><div class="resource-icon"><i class="fas fa-star"></i></div><h3>Client Testimonials</h3><p>Real stories from satisfied clients who found their dream homes.</p><span class="resource-btn">Read Stories <i class="fas fa-arrow-right"></i></span></a>
     <a href="/blog.html" class="resource-card"><div class="resource-icon"><i class="fas fa-newspaper"></i></div><h3>Real Estate Blog</h3><p>Expert tips, market insights, and guides for property buyers.</p><span class="resource-btn">Read Blog <i class="fas fa-arrow-right"></i></span></a>
   </div>
 </section>
@@ -484,10 +496,12 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
   <div class="footer-bottom"><p>&copy; 2026 GLRA Realty Group. All rights reserved.</p><div class="footer-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="/sitemap.xml">Sitemap</a></div></div>
 </footer>
 <div class="floating-buttons">
-  <a href="tel:+639171774572" class="floating-btn btn-call"><i class="fas fa-phone-alt"></i></a>
-  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a>
-  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()"><i class="fas fa-robot"></i></button>
 <div class="chatbot-window" id="chatbotWindow">
