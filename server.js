@@ -305,12 +305,53 @@ const auditLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
-// Account schema with bcrypt hashing
+// ============ PERMISSIONS ============
+// Master list of every granular permission key in the system.
+const PERMISSION_KEYS = [
+  'properties_create',
+  'properties_edit',
+  'properties_delete',
+  'properties_upload_image',
+  'inquiries_delete',
+  'subscribers_delete',
+  'hero_upload',
+  'hero_edit',
+  'hero_delete',
+  'accounts_manage',  // create/edit/delete staff accounts — admin role always has this regardless
+  'audit_view'
+];
+
+// Sensible defaults per role.
+function defaultPermissionsForRole(role) {
+  if (role === 'admin') {
+    // Admins start with everything on; the role itself bypasses checks anyway.
+    const all = {};
+    PERMISSION_KEYS.forEach(k => { all[k] = true; });
+    return all;
+  }
+  // Employees default: can manage properties (the most common day-to-day task) but not delete or manage hero/accounts.
+  return {
+    properties_create: true,
+    properties_edit: true,
+    properties_delete: false,
+    properties_upload_image: true,
+    inquiries_delete: false,
+    subscribers_delete: false,
+    hero_upload: false,
+    hero_edit: false,
+    hero_delete: false,
+    accounts_manage: false,
+    audit_view: false
+  };
+}
+
+// Account schema with bcrypt hashing + granular permissions
 const accountSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   name: { type: String, default: '' },
   role: { type: String, enum: ['admin', 'employee'], default: 'employee' },
+  permissions: { type: mongoose.Schema.Types.Mixed, default: () => defaultPermissionsForRole('employee') },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },
   isActive: { type: Boolean, default: true }
@@ -397,6 +438,32 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Granular permission middleware. Usage: requirePermission('properties_delete')
+// Admins bypass the check (they always have everything).
+// For employees, looks up the live account record so permission changes take effect
+// immediately without forcing them to log out.
+function requirePermission(key) {
+  return async (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+    if (req.user.role === 'admin') return next();
+    try {
+      const account = await Account.findById(req.user.sub).select('permissions isActive role').lean();
+      if (!account || account.isActive === false) {
+        return res.status(403).json({ error: 'Account is inactive' });
+      }
+      if (account.role === 'admin') return next();
+      const granted = account.permissions && account.permissions[key] === true;
+      if (!granted) {
+        return res.status(403).json({ error: `You don't have permission to perform this action (${key}).` });
+      }
+      next();
+    } catch (e) {
+      console.error('Permission check error:', e);
+      res.status(500).json({ error: 'Permission check failed' });
+    }
+  };
+}
+
 // ============ AUDIT HELPER (uses verified JWT, not headers) ============
 async function logAudit(req, action, target, targetId, targetTitle, changes) {
   try {
@@ -432,7 +499,8 @@ async function seedDefaultAdmin() {
         email: seedEmail,
         password: seedPassword, // hashed by pre-save hook
         name: 'GLRA Admin',
-        role: 'admin'
+        role: 'admin',
+        permissions: defaultPermissionsForRole('admin')
       });
       console.log(`✅ Default admin account created: ${seedEmail}`);
       console.log('⚠️  Change this password immediately after first login.');
@@ -824,13 +892,19 @@ app.post('/api/admin/login',
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'LOGIN', 'Session', '', '', null);
 
+      // Compute effective permissions: admins always get all, employees get their stored object
+      const effectivePerms = account.role === 'admin'
+        ? defaultPermissionsForRole('admin')
+        : (account.permissions || defaultPermissionsForRole('employee'));
+
       res.json({
         success: true,
         token,
         role: account.role,
         name: account.name,
         email: account.email,
-        id: account._id
+        id: account._id,
+        permissions: effectivePerms
       });
     } catch (e) {
       console.error('Login error:', e);
@@ -842,8 +916,24 @@ app.post('/api/admin/login',
 // ============ PROTECTED ADMIN ROUTES ============
 // All routes below require a valid JWT.
 
-app.get('/api/admin/me', verifyToken, (req, res) => {
-  res.json({ email: req.user.email, name: req.user.name, role: req.user.role });
+app.get('/api/admin/me', verifyToken, async (req, res) => {
+  try {
+    const account = await Account.findById(req.user.sub).select('email name role permissions isActive').lean();
+    if (!account || account.isActive === false) {
+      return res.status(401).json({ error: 'Account inactive' });
+    }
+    const effectivePerms = account.role === 'admin'
+      ? defaultPermissionsForRole('admin')
+      : (account.permissions || defaultPermissionsForRole('employee'));
+    res.json({
+      email: account.email,
+      name: account.name,
+      role: account.role,
+      permissions: effectivePerms
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.post('/api/admin/logout', verifyToken, async (req, res) => {
@@ -858,23 +948,38 @@ app.get('/api/admin/accounts', verifyToken, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Helper: take a raw permissions object from the request and only keep known keys (boolean coerced).
+function sanitizePermissions(input) {
+  const out = {};
+  if (!input || typeof input !== 'object') return out;
+  PERMISSION_KEYS.forEach(k => {
+    if (k in input) out[k] = input[k] === true;
+  });
+  return out;
+}
+
 app.post('/api/admin/accounts',
   verifyToken, requireAdmin,
   body('email').isEmail().normalizeEmail(),
   body('password').isString().isLength({ min: 8, max: 200 }),
   body('name').optional().isString().trim().isLength({ max: 200 }),
   body('role').optional().isIn(['admin', 'employee']),
+  body('permissions').optional().isObject(),
   handleValidation,
   async (req, res) => {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, permissions } = req.body;
     try {
+      const finalRole = role || 'employee';
+      // Merge defaults with whatever the admin specified (admin's choices win)
+      const finalPerms = { ...defaultPermissionsForRole(finalRole), ...sanitizePermissions(permissions) };
       const account = await Account.create({
         email, password,
         name: name || email.split('@')[0],
-        role: role || 'employee'
+        role: finalRole,
+        permissions: finalPerms
       });
-      await logAudit(req, 'CREATE', 'Account', account._id, email, { role });
-      res.json({ success: true, account: { email: account.email, name: account.name, role: account.role, _id: account._id } });
+      await logAudit(req, 'CREATE', 'Account', account._id, email, { role: finalRole, permissions: finalPerms });
+      res.json({ success: true, account: { email: account.email, name: account.name, role: account.role, permissions: account.permissions, _id: account._id } });
     } catch (e) {
       if (e.code === 11000) return res.status(400).json({ error: 'Email already exists' });
       res.status(500).json({ error: 'Server error' });
@@ -889,9 +994,10 @@ app.put('/api/admin/accounts/:id',
   body('name').optional().isString().trim().isLength({ max: 200 }),
   body('role').optional().isIn(['admin', 'employee']),
   body('isActive').optional().isBoolean(),
+  body('permissions').optional().isObject(),
   handleValidation,
   async (req, res) => {
-    const { email, password, name, role, isActive } = req.body;
+    const { email, password, name, role, isActive, permissions } = req.body;
     try {
       const before = await Account.findById(req.params.id, { password: 0 });
       if (!before) return res.status(404).json({ error: 'Account not found' });
@@ -902,9 +1008,16 @@ app.put('/api/admin/accounts/:id',
       if (name) update.name = name;
       if (role) update.role = role;
       if (isActive !== undefined) update.isActive = isActive;
+      if (permissions) {
+        // Merge: keep current values for any keys not in the request
+        update.permissions = { ...(before.permissions || defaultPermissionsForRole(before.role)), ...sanitizePermissions(permissions) };
+      }
 
       const account = await Account.findByIdAndUpdate(req.params.id, update, { new: true, select: '-password' });
-      await logAudit(req, 'UPDATE', 'Account', req.params.id, account.email, { before, after: { ...update, password: password ? '[REDACTED]' : undefined } });
+      await logAudit(req, 'UPDATE', 'Account', req.params.id, account.email, {
+        before,
+        after: { ...update, password: password ? '[REDACTED]' : undefined }
+      });
       res.json({ success: true, account });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
   }
@@ -919,7 +1032,7 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.get('/api/admin/audit-log', verifyToken, requireAdmin, async (req, res) => {
+app.get('/api/admin/audit-log', verifyToken, requirePermission('audit_view'), async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 500, 2000);
     const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(limit);
@@ -928,7 +1041,7 @@ app.get('/api/admin/audit-log', verifyToken, requireAdmin, async (req, res) => {
 });
 
 // Quick stats for the audit dashboard
-app.get('/api/admin/audit-stats', verifyToken, requireAdmin, async (req, res) => {
+app.get('/api/admin/audit-stats', verifyToken, requirePermission('audit_view'), async (req, res) => {
   try {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1016,7 +1129,7 @@ app.get('/api/admin/inquiries', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.post('/api/admin/properties', verifyToken, requireAdmin, async (req, res) => {
+app.post('/api/admin/properties', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
     const property = new Property(req.body);
     await property.save();
@@ -1028,7 +1141,7 @@ app.post('/api/admin/properties', verifyToken, requireAdmin, async (req, res) =>
   }
 });
 
-app.put('/api/admin/properties/:id', verifyToken, requireAdmin, async (req, res) => {
+app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_edit'), async (req, res) => {
   try {
     const oldProperty = await Property.findById(req.params.id);
     if (!oldProperty) return res.status(404).json({ error: 'Property not found' });
@@ -1083,7 +1196,7 @@ app.put('/api/admin/properties/:id', verifyToken, requireAdmin, async (req, res)
   }
 });
 
-app.delete('/api/admin/properties/:id', verifyToken, requireAdmin, async (req, res) => {
+app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properties_delete'), async (req, res) => {
   try {
     const property = await Property.findByIdAndDelete(req.params.id);
     if (property) await logAudit(req, 'DELETE', 'Property', req.params.id, property.title, null);
@@ -1091,7 +1204,7 @@ app.delete('/api/admin/properties/:id', verifyToken, requireAdmin, async (req, r
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.delete('/api/admin/inquiries/:id', verifyToken, requireAdmin, async (req, res) => {
+app.delete('/api/admin/inquiries/:id', verifyToken, requirePermission('inquiries_delete'), async (req, res) => {
   try {
     const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
     if (inquiry) await logAudit(req, 'DELETE', 'Inquiry', req.params.id, inquiry.email, null);
@@ -1099,7 +1212,7 @@ app.delete('/api/admin/inquiries/:id', verifyToken, requireAdmin, async (req, re
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.delete('/api/admin/subscribers/:id', verifyToken, requireAdmin, async (req, res) => {
+app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscribers_delete'), async (req, res) => {
   try {
     const sub = await Subscriber.findByIdAndDelete(req.params.id);
     if (sub) await logAudit(req, 'DELETE', 'Subscriber', req.params.id, sub.email, null);
@@ -1107,7 +1220,7 @@ app.delete('/api/admin/subscribers/:id', verifyToken, requireAdmin, async (req, 
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.post('/api/admin/properties/bulk', verifyToken, requireAdmin, async (req, res) => {
+app.post('/api/admin/properties/bulk', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
     const properties = req.body;
     if (!Array.isArray(properties)) return res.status(400).json({ error: 'Expected an array' });
@@ -1124,8 +1237,8 @@ app.post('/api/admin/properties/bulk', verifyToken, requireAdmin, async (req, re
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Property image upload (admin only, hashed-by-token)
-app.post('/api/admin/upload-property-image', verifyToken, upload.single('image'), async (req, res) => {
+// Property image upload — gated by properties_upload_image permission
+app.post('/api/admin/upload-property-image', verifyToken, requirePermission('properties_upload_image'), upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image file provided' });
 
@@ -1154,7 +1267,7 @@ app.get('/api/admin/hero-images', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.post('/api/admin/hero-images/upload', verifyToken, requireAdmin, upload.single('image'), async (req, res) => {
+app.post('/api/admin/hero-images/upload', verifyToken, requirePermission('hero_upload'), upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image file provided' });
 
@@ -1179,7 +1292,7 @@ app.post('/api/admin/hero-images/upload', verifyToken, requireAdmin, upload.sing
   }
 });
 
-app.post('/api/admin/hero-images/reorder', verifyToken, requireAdmin, async (req, res) => {
+app.post('/api/admin/hero-images/reorder', verifyToken, requirePermission('hero_edit'), async (req, res) => {
   try {
     const { images } = req.body;
     if (!Array.isArray(images)) return res.status(400).json({ error: 'Expected images array' });
@@ -1191,7 +1304,7 @@ app.post('/api/admin/hero-images/reorder', verifyToken, requireAdmin, async (req
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.put('/api/admin/hero-images/:id/default', verifyToken, requireAdmin, async (req, res) => {
+app.put('/api/admin/hero-images/:id/default', verifyToken, requirePermission('hero_edit'), async (req, res) => {
   try {
     const images = await HeroImage.find().sort({ order: 1 });
     let newOrder = 0;
@@ -1209,7 +1322,7 @@ app.put('/api/admin/hero-images/:id/default', verifyToken, requireAdmin, async (
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.delete('/api/admin/hero-images/:id', verifyToken, requireAdmin, async (req, res) => {
+app.delete('/api/admin/hero-images/:id', verifyToken, requirePermission('hero_delete'), async (req, res) => {
   try {
     await HeroImage.findByIdAndDelete(req.params.id);
     await logAudit(req, 'DELETE', 'HeroImage', req.params.id, '', null);
