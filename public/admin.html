@@ -446,19 +446,49 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 
       <!-- AUDIT LOG TAB (admin only) -->
       <div id="tab-auditlog" style="display:none">
+        <!-- Summary cards -->
+        <div class="stats-row" id="auditStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px">
+          <div class="stat-card"><div class="stat-label">Actions Today</div><div class="stat-value" id="auditToday">—</div></div>
+          <div class="stat-card"><div class="stat-label">Last 7 Days</div><div class="stat-value" id="auditWeek">—</div></div>
+          <div class="stat-card"><div class="stat-label">All Time</div><div class="stat-value" id="auditTotal">—</div></div>
+          <div class="stat-card"><div class="stat-label">Most Active (7d)</div><div class="stat-value" id="auditTopUser" style="font-size:18px">—</div></div>
+        </div>
+        <!-- Activity by user (last 7 days) -->
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-hd"><i class="fas fa-users"></i> Activity by User (Last 7 Days)</div>
+          <div class="panel-body" id="auditByUser" style="padding:14px 22px"><div style="color:var(--gray);font-size:12px">Loading…</div></div>
+        </div>
+        <!-- Filters -->
         <div class="filter-bar">
-          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or property..." oninput="filterAuditLog()"></div>
+          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or what..." oninput="filterAuditLog()"></div>
           <select class="fsel" id="auditActionFilter" onchange="filterAuditLog()">
             <option value="">All Actions</option>
             <option value="LOGIN">Login</option>
+            <option value="LOGOUT">Logout</option>
             <option value="CREATE">Create</option>
             <option value="UPDATE">Update / Edit</option>
             <option value="DELETE">Delete</option>
+            <option value="UPLOAD">Upload</option>
+            <option value="REORDER">Reorder</option>
+            <option value="SET_DEFAULT">Set Default</option>
+            <option value="BULK_CREATE">Bulk Create</option>
           </select>
+          <select class="fsel" id="auditUserFilter" onchange="filterAuditLog()">
+            <option value="">All Users</option>
+          </select>
+          <select class="fsel" id="auditRangeFilter" onchange="filterAuditLog()">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray);cursor:pointer">
+            <input type="checkbox" id="auditAutoRefresh" onchange="toggleAuditAutoRefresh()" style="cursor:pointer"> Auto-refresh
+          </label>
           <button class="hdr-btn" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
           <div class="res-count" id="auditCount"></div>
         </div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>What</th><th>Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Description</th><th>Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
       </div>
     </div><!-- /page-content -->
   </div><!-- /main-content -->
@@ -643,6 +673,11 @@ async function login(){
 }
 
 function logout(){
+  // Tell the server to record a LOGOUT in the audit log (best-effort, fire-and-forget).
+  // We do this BEFORE clearing the token, so apiFetch still has a valid Authorization header.
+  if(getToken()){
+    apiFetch('/api/admin/logout', { method: 'POST' }).catch(()=>{});
+  }
   CU=null;
   setToken(null);
   // Apply role UI BEFORE anything else to hide admin-only elements
@@ -997,28 +1032,142 @@ async function deleteAccount(id, name){
 }
 
 // ── AUDIT LOG ─────────────────────────────────────────────
+let auditAutoRefreshTimer = null;
+
 async function loadAuditLog(){
   if(!isAdmin())return;
   try{
-    const data = await apiFetch('/api/admin/audit-log').then(r=>r.json());
-    allAuditLogs = data;
-    renderAuditLog(data);
+    const [logs, stats] = await Promise.all([
+      apiFetch('/api/admin/audit-log').then(r=>r.json()),
+      apiFetch('/api/admin/audit-stats').then(r=>r.json()).catch(()=>null)
+    ]);
+    allAuditLogs = Array.isArray(logs) ? logs : [];
+
+    // Populate user filter dropdown
+    const userSel = document.getElementById('auditUserFilter');
+    if(userSel){
+      const currentVal = userSel.value;
+      const users = [...new Map(allAuditLogs.map(l => [l.actor, l.actorName || l.actor])).entries()];
+      userSel.innerHTML = '<option value="">All Users</option>' + users.map(([email, name]) =>
+        `<option value="${esc(email)}">${esc(name)} (${esc(email)})</option>`).join('');
+      userSel.value = currentVal;
+    }
+
+    if(stats) renderAuditStats(stats);
+    renderAuditLog(allAuditLogs);
+    filterAuditLog(); // apply any active filters
   }catch(e){
     console.error('Audit log error',e);
     document.getElementById('auditBody').innerHTML='<tr><td colspan="6"><div class="empty-st"><i class="fas fa-history"></i><p>Could not load audit log</p></div></td></tr>';
   }
 }
 
+function renderAuditStats(s){
+  const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  setText('auditToday', (s.todayCount || 0).toLocaleString());
+  setText('auditWeek',  (s.weekCount  || 0).toLocaleString());
+  setText('auditTotal', (s.totalCount || 0).toLocaleString());
+
+  const top = (s.byUser && s.byUser[0]) || null;
+  setText('auditTopUser', top ? `${top._id.actorName || top._id.actor} (${top.count})` : '—');
+
+  // Render the by-user breakdown
+  const wrap = document.getElementById('auditByUser');
+  if(!wrap) return;
+  if(!s.byUser || !s.byUser.length){
+    wrap.innerHTML = '<div style="color:var(--gray);font-size:12px">No activity in the last 7 days.</div>';
+    return;
+  }
+  const max = s.byUser[0].count || 1;
+  wrap.innerHTML = s.byUser.map(u => {
+    const pct = Math.max(2, Math.round((u.count / max) * 100));
+    const role = u._id.actorRole || 'unknown';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+        <span><strong>${esc(u._id.actorName || u._id.actor)}</strong> <span style="color:var(--gray)">· ${esc(u._id.actor)}</span> <span class="badge ${role==='admin'?'b-admin':'b-emp'}" style="margin-left:6px">${esc(role)}</span></span>
+        <span style="color:var(--gold);font-weight:600">${u.count} action${u.count===1?'':'s'}</span>
+      </div>
+      <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:var(--gold)"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAuditAutoRefresh(){
+  const cb = document.getElementById('auditAutoRefresh');
+  if(auditAutoRefreshTimer){ clearInterval(auditAutoRefreshTimer); auditAutoRefreshTimer = null; }
+  if(cb && cb.checked){
+    auditAutoRefreshTimer = setInterval(() => {
+      // Only refresh if still on the audit log tab
+      const tab = document.getElementById('tab-auditlog');
+      if(tab && tab.style.display !== 'none') loadAuditLog();
+    }, 30000);
+  }
+}
+
+// Plain-English description for each action
+function describeAuditAction(l){
+  const target = l.target || '';
+  const title  = l.targetTitle || '';
+  const action = l.action || '';
+  switch(action){
+    case 'LOGIN':       return 'Signed in';
+    case 'LOGOUT':      return 'Signed out';
+    case 'CREATE':      return target === 'Account' ? `Created account: ${title}` :
+                               target === 'Property' ? `Added property: ${title}` :
+                               target === 'HeroImage' ? 'Added a hero image' :
+                               `Created ${target}: ${title}`;
+    case 'UPDATE':      return target === 'Account' ? `Edited account: ${title}` :
+                               target === 'Property' ? `Edited property: ${title}` :
+                               `Updated ${target}: ${title}`;
+    case 'DELETE':      return target === 'Account' ? `Deleted account: ${title}` :
+                               target === 'Property' ? `Deleted property: ${title}` :
+                               target === 'Inquiry' ? `Deleted inquiry from: ${title}` :
+                               target === 'Subscriber' ? `Removed subscriber: ${title}` :
+                               target === 'HeroImage' ? 'Deleted a hero image' :
+                               `Deleted ${target}: ${title}`;
+    case 'UPLOAD':      return target === 'PropertyImage' ? `Uploaded property image${title ? ': ' + title : ''}` :
+                               `Uploaded ${target}`;
+    case 'REORDER':     return `Reordered hero images (${title})`;
+    case 'SET_DEFAULT': return 'Set a hero image as default';
+    case 'BULK_CREATE': return `Bulk-added properties (${title})`;
+    default:            return `${action} ${target}${title ? ': ' + title : ''}`;
+  }
+}
+
+function inDateRange(timestamp, range){
+  if(!range || range === 'all') return true;
+  const t = new Date(timestamp).getTime();
+  const now = Date.now();
+  if(range === 'today'){
+    const start = new Date(); start.setHours(0,0,0,0);
+    return t >= start.getTime();
+  }
+  if(range === '7d')  return t >= now - 7*24*60*60*1000;
+  if(range === '30d') return t >= now - 30*24*60*60*1000;
+  return true;
+}
+
 function filterAuditLog(){
   const search = document.getElementById('auditSearch')?.value.toLowerCase()||'';
   const action = document.getElementById('auditActionFilter')?.value||'';
+  const userF  = document.getElementById('auditUserFilter')?.value||'';
+  const range  = document.getElementById('auditRangeFilter')?.value||'all';
   const filtered = allAuditLogs.filter(l=>{
-    if(action && !l.action.startsWith(action)) return false;
-    if(search && !l.actor.toLowerCase().includes(search) && 
-       !l.targetTitle?.toLowerCase().includes(search) &&
-       !(l.action||'').toLowerCase().includes(search)) return false;
+    if(action && !((l.action||'').startsWith(action))) return false;
+    if(userF && l.actor !== userF) return false;
+    if(!inDateRange(l.timestamp, range)) return false;
+    if(search){
+      const desc = describeAuditAction(l).toLowerCase();
+      const hay = [l.actor, l.actorName, l.target, l.targetTitle, l.action, desc]
+        .filter(Boolean).join(' ').toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
     return true;
   });
+  const cnt = document.getElementById('auditCount');
+  if(cnt) cnt.textContent = `${filtered.length} ${filtered.length === 1 ? 'entry' : 'entries'}`;
   renderAuditLog(filtered);
 }
 
@@ -1026,19 +1175,24 @@ function renderAuditLog(logs){
   const body = document.getElementById('auditBody');
   if(!body) return;
   if(!logs.length){
-    body.innerHTML='<tr><td colspan="6"><div class="empty-st"><i class="fas fa-history"></i><p>No activity recorded yet</p></div></td></tr>';
+    body.innerHTML='<tr><td colspan="6"><div class="empty-st"><i class="fas fa-history"></i><p>No matching activity</p></div></td></tr>';
     return;
   }
-  const actionColor = {LOGIN:'#3b82f6',CREATE:'#10b981',UPDATE:'#f59e0b',DELETE:'#ef4444'};
+  const actionColor = {
+    LOGIN:'#3b82f6', LOGOUT:'#6b7280',
+    CREATE:'#10b981', UPDATE:'#f59e0b', DELETE:'#ef4444',
+    UPLOAD:'#8b5cf6', REORDER:'#06b6d4', SET_DEFAULT:'#06b6d4', BULK_CREATE:'#10b981'
+  };
   body.innerHTML = logs.map(l=>{
     const color = actionColor[l.action] || 'var(--gray)';
     const changes = l.changes ? `<details style="cursor:pointer"><summary style="font-size:11px;color:var(--gold)">View changes</summary><pre style="font-size:10px;color:var(--gray);white-space:pre-wrap;max-width:300px;margin-top:6px;background:var(--gray-light);padding:8px;overflow:auto">${esc(JSON.stringify(l.changes,null,2))}</pre></details>` : '—';
+    const desc = describeAuditAction(l);
     return `<tr>
       <td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateTime(l.timestamp)}</td>
       <td><div style="font-size:13px;font-weight:500">${esc(l.actorName||l.actor)}</div><div style="font-size:11px;color:var(--gray)">${esc(l.actor)}</div></td>
-      <td><span class="badge ${l.actorRole==='admin'?'b-admin':'b-emp'}">${l.actorRole||'—'}</span></td>
+      <td><span class="badge ${l.actorRole==='admin'?'b-admin':'b-emp'}">${esc(l.actorRole||'—')}</span></td>
       <td><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;background:${color}18;color:${color};border:1px solid ${color}40">${esc(l.action)}</span></td>
-      <td style="font-size:12px"><div style="font-weight:500">${esc(l.target||'—')}</div><div style="font-size:11px;color:var(--gray);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.targetTitle||'')}</div></td>
+      <td style="font-size:12px;max-width:280px"><div style="font-weight:500;line-height:1.4">${esc(desc)}</div></td>
       <td style="font-size:12px">${changes}</td>
     </tr>`;
   }).join('');
@@ -1103,8 +1257,15 @@ function switchTab(name){
   // Hero upload button — admin only
   const heroBtn=document.getElementById('heroUploadBtn');
   if(heroBtn)heroBtn.style.display=(name==='hero'&&isAdmin())?'':'none';
-  // Load audit log on visit
-  if(name==='auditlog')loadAuditLog();
+  // Load audit log on visit; stop auto-refresh when leaving the tab
+  if(name==='auditlog'){
+    loadAuditLog();
+  } else if(auditAutoRefreshTimer){
+    clearInterval(auditAutoRefreshTimer);
+    auditAutoRefreshTimer = null;
+    const cb = document.getElementById('auditAutoRefresh');
+    if(cb) cb.checked = false;
+  }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
 }
