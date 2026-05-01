@@ -80,6 +80,32 @@ body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
 body.dark-mode .floating-buttons .btn-darkmode{background:var(--gold);color:#fff}
 .floating-buttons .floating-btn i{display:inline-block;line-height:1}
 
+/* Mobile FAB toggle — JS injects this as the LAST child so it sits at the bottom */
+.floating-buttons .fab-toggle{display:none;background:var(--gold);color:#fff;font-size:18px}
+.floating-buttons .fab-toggle.is-open{background:var(--navy);color:#fff;transform:rotate(90deg)}
+@media(max-width:768px){
+  .floating-buttons{bottom:18px;right:18px;gap:8px}
+  /* Hide every real button by default; only the FAB shows */
+  .floating-buttons > :not(.fab-toggle){display:none}
+  .floating-buttons .fab-toggle{display:flex;animation:fabPulse 2.5s ease-in-out 1s 2}
+  /* When expanded, reveal the rest with a staggered pop-in */
+  .floating-buttons.expanded > :not(.fab-toggle){display:flex;animation:fabPopIn .28s cubic-bezier(.34,1.56,.64,1) both}
+  .floating-buttons.expanded > :nth-last-child(2){animation-delay:.04s}
+  .floating-buttons.expanded > :nth-last-child(3){animation-delay:.08s}
+  .floating-buttons.expanded > :nth-last-child(4){animation-delay:.12s}
+  .floating-buttons.expanded > :nth-last-child(5){animation-delay:.16s}
+  .floating-buttons.expanded > :nth-last-child(6){animation-delay:.2s}
+  .floating-buttons.expanded > :nth-last-child(7){animation-delay:.24s}
+}
+@keyframes fabPopIn{
+  from{opacity:0;transform:translateY(12px) scale(.7)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes fabPulse{
+  0%,100%{box-shadow:var(--shadow-md)}
+  50%{box-shadow:0 0 0 8px rgba(200,169,110,.3),var(--shadow-md)}
+}
+
 /* ── BACK TO TOP ── */
 .back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:500;font-size:13px}
 .back-to-top.show{opacity:1;visibility:visible}

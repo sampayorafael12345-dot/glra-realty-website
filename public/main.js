@@ -83,6 +83,56 @@ window.addEventListener('scroll', () => {
   if (b) b.classList[window.scrollY > 120 ? 'add' : 'remove']('show');
 });
 
+// ── Mobile FAB toggle for floating buttons ───────────────
+// On mobile, all the contact buttons (call, WhatsApp, Viber, etc.) are hidden by
+// default and a single FAB appears at the bottom. Tapping it reveals the rest
+// with a staggered animation. Desktop is unaffected (CSS @media handles that).
+(function setupFabToggle() {
+  function init() {
+    document.querySelectorAll('.floating-buttons').forEach(container => {
+      // Idempotent — don't inject twice if main.js runs again
+      if (container.querySelector('.fab-toggle')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'floating-btn fab-toggle';
+      btn.setAttribute('aria-label', 'Open contact options');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML = '<i class="fas fa-comment-dots"></i>';
+      btn.addEventListener('click', () => {
+        const isOpen = container.classList.toggle('expanded');
+        btn.classList.toggle('is-open', isOpen);
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        btn.setAttribute('aria-label', isOpen ? 'Close contact options' : 'Open contact options');
+        btn.innerHTML = isOpen
+          ? '<i class="fas fa-times"></i>'
+          : '<i class="fas fa-comment-dots"></i>';
+      });
+      // Append as the LAST child so the FAB sits at the bottom of the visible stack
+      container.appendChild(btn);
+    });
+    // Tap outside to close (mobile only)
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.floating-buttons.expanded').forEach(c => {
+        if (!c.contains(e.target)) {
+          c.classList.remove('expanded');
+          const t = c.querySelector('.fab-toggle');
+          if (t) {
+            t.classList.remove('is-open');
+            t.setAttribute('aria-expanded', 'false');
+            t.setAttribute('aria-label', 'Open contact options');
+            t.innerHTML = '<i class="fas fa-comment-dots"></i>';
+          }
+        }
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
 // ── Email-gated print/download (shared by all calculators) ──
 // Usage: <button onclick="glraOpenPrintGate('Affordability Calculator')">Print</button>
 // Requires: a `.print-only-header` div on the page for the branded print header.

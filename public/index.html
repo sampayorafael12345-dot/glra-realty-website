@@ -277,42 +277,6 @@ body.dark-mode .empty-state{background:#111b27}
 .empty-state i{font-size:36px;margin-bottom:12px;color:var(--gold)}
 .empty-state p{color:var(--gray);font-size:14px}
 .nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
-.chatbot-toggle{position:fixed;bottom:24px;left:72px;width:46px;height:46px;background:var(--navy);border:1px solid var(--gold);border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:100;box-shadow:var(--shadow-md);transition:var(--transition);color:var(--gold)}
-.chatbot-toggle:hover{background:var(--gold);color:#fff}
-.chatbot-window{position:fixed;bottom:80px;left:24px;width:360px;height:520px;background:var(--white);border:1px solid var(--border-color);box-shadow:var(--shadow-lg);z-index:999;display:none;flex-direction:column;border-top:2px solid var(--gold)}
-.chatbot-window.open{display:flex}
-.chatbot-header{background:var(--navy);padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-.chatbot-header h4{color:#fff;font-size:14px;letter-spacing:1px;font-weight:500;display:flex;align-items:center;gap:8px}
-.chatbot-header h4::before{content:'';width:8px;height:8px;background:#25d366;border-radius:50%;display:inline-block}
-.chatbot-close{color:rgba(255,255,255,0.6);cursor:pointer;font-size:18px;transition:var(--transition);background:none;border:none}
-.chatbot-close:hover{color:var(--gold)}
-.chatbot-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--gray-light)}
-body.dark-mode .chatbot-messages{background:#111b27}
-.chat-msg{max-width:85%}
-.chat-msg.bot{align-self:flex-start}
-.chat-msg.user{align-self:flex-end}
-.chat-bubble{padding:10px 14px;font-size:13px;line-height:1.6}
-.bot .chat-bubble{background:var(--white);color:var(--text-color);border:1px solid var(--border-color);border-left:2px solid var(--gold)}
-body.dark-mode .bot .chat-bubble{background:#1a2840;border-color:#2a3f58}
-.user .chat-bubble{background:var(--navy);color:#fff;border:1px solid rgba(200,169,110,0.3)}
-.chat-sender{font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
-.chatbot-input-area{padding:12px 16px;border-top:1px solid var(--border-color);display:flex;gap:8px;background:var(--white)}
-body.dark-mode .chatbot-input-area{background:#1a2840;border-color:#2a3f58}
-.chatbot-input{flex:1;padding:10px 14px;border:1px solid var(--border-color);border-radius:0;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
-body.dark-mode .chatbot-input{background:#111b27;border-color:#2a3f58;color:#e8edf2}
-.chatbot-input:focus{outline:none;border-color:var(--gold)}
-.chatbot-send{background:var(--gold);color:#fff;border:none;padding:10px 16px;border-radius:0;cursor:pointer;font-size:12px;transition:var(--transition)}
-.chatbot-send:hover{background:var(--gold-dark)}
-.chat-typing{display:flex;gap:4px;padding:8px 12px;background:var(--white);border:1px solid var(--border-color);border-left:2px solid var(--gold);width:fit-content}
-body.dark-mode .chat-typing{background:#1a2840;border-color:#2a3f58}
-.typing-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:typingBounce 1.2s infinite}
-.typing-dot:nth-child(2){animation-delay:0.2s}
-.typing-dot:nth-child(3){animation-delay:0.4s}
-@keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
-.chat-quick-btns{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-top:1px solid var(--border-color);background:var(--gray-light)}
-body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
-.quick-btn{padding:5px 12px;border:1px solid var(--gold);border-radius:0;background:transparent;color:var(--gold);font-size:11px;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif}
-.quick-btn:hover{background:var(--gold);color:#fff}
 @media(max-width:768px){
 .nav-links{display:none}.mobile-menu-btn{display:block}
 .logo{position:absolute;left:50%;transform:translateX(-50%)}
@@ -334,8 +298,7 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
 .footer-content{text-align:center}.social-links{justify-content:center}
 .grid{grid-template-columns:1fr}.modal-body{margin:16px;padding:20px}
 .form-row{grid-template-columns:1fr}
-.chatbot-window{width:calc(100vw - 32px);left:16px;bottom:80px}
-.footer-bottom{flex-direction:column;text-align:center}.chatbot-toggle{left:68px}
+.footer-bottom{flex-direction:column;text-align:center}
 }
 </style>
 </head>
@@ -421,15 +384,7 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
     </div>
   </div>
 </div>
-<div class="stats-section">
-  <div class="stats-grid">
-    <div class="stat-item"><div class="stat-number" id="statProperties">0</div><div class="stat-label">Properties Available</div></div>
-    <div class="stat-item"><div class="stat-number">10+</div><div class="stat-label">Years Experience</div></div>
-    <div class="stat-item"><div class="stat-number">5.0</div><div class="stat-label">Client Rating</div></div>
-  </div>
-</div>
-
-<!-- TRUST BADGES STRIP -->
+<!-- COMBINED TRUST + STATS STRIP -->
 <section class="trust-strip" aria-label="Credentials and trust signals">
   <div class="trust-grid">
     <div class="trust-item">
@@ -451,6 +406,10 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
     <div class="trust-item">
       <div class="trust-icon"><i class="fas fa-handshake"></i></div>
       <div class="trust-text"><span class="trust-label">100+ Clients</span><span class="trust-sub">Successfully Served</span></div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon"><i class="fas fa-building"></i></div>
+      <div class="trust-text"><span class="trust-label"><span id="statProperties">0</span> Properties</span><span class="trust-sub">Currently Available</span></div>
     </div>
   </div>
 </section>
@@ -533,22 +492,6 @@ body.dark-mode .chat-quick-btns{background:#111b27;border-color:#2a3f58}
   <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
-<button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()"><i class="fas fa-robot"></i></button>
-<div class="chatbot-window" id="chatbotWindow">
-  <div class="chatbot-header"><h4>GLRA Property Assistant</h4><button class="chatbot-close" onclick="toggleChatbot()"><i class="fas fa-times"></i></button></div>
-  <div class="chatbot-messages" id="chatMessages">
-    <div class="chat-msg bot"><div class="chat-sender">GLRA Assistant</div><div class="chat-bubble">Hello! I'm your GLRA Realty AI assistant. I can help you find properties, answer questions about buying or leasing in the Philippines. How can I help?</div></div>
-  </div>
-  <div class="chat-quick-btns" id="quickBtns">
-    <button class="quick-btn" onclick="sendQuick('What properties are available?')">Available properties</button>
-    <button class="quick-btn" onclick="sendQuick('How does the buying process work in the Philippines?')">Buying process</button>
-    <button class="quick-btn" onclick="sendQuick('What documents do I need to buy a property?')">Documents needed</button>
-  </div>
-  <div class="chatbot-input-area">
-    <input type="text" class="chatbot-input" id="chatInput" placeholder="Ask about properties..." onkeydown="if(event.key==='Enter')sendMessage()">
-    <button class="chatbot-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
-  </div>
-</div>
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
 <div id="emailModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeEmailModal()">&times;</span><i class="fas fa-bell" style="font-size:44px;color:var(--gold);margin-bottom:14px;display:block"></i><h3>Price Drop Alert</h3><p id="modalPropertyName">Get notified when price drops</p><input type="email" id="modalEmail" placeholder="Your email address"><input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice"><button onclick="submitPriceAlert()">Notify Me When Price Drops</button><p style="font-size:11px;margin-top:12px;color:var(--gray)">We'll only email you when price changes.</p></div></div>
 <div id="wishlistModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeWishlistModal()">&times;</span><i class="fas fa-heart" style="font-size:44px;color:var(--gold);margin-bottom:14px;display:block"></i><h3>Save to Wishlist</h3><p>Enter your email to save this property</p><input type="email" id="wishlistEmail" placeholder="Your email address"><input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle"><input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage"><button onclick="submitWishlist()">Save to Wishlist</button></div></div>
@@ -597,13 +540,6 @@ function updateDownPayment(val,price){document.getElementById('downPaymentPercen
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i))}}
 function closeModal(){document.getElementById('modal').style.display='none';document.body.style.overflow='auto'}
 document.getElementById('contactForm')?.addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.submit-btn');const orig=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';btn.disabled=true;try{const r=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:this.querySelector('[name="name"]').value,email:this.querySelector('[name="email"]').value,phone:this.querySelector('[name="phone"]')?.value||'',message:this.querySelector('[name="message"]').value,propertyId:currentProperty?._id||null,propertyTitle:currentProperty?.title||null})});if(r.ok){showToast("Thank you! We'll get back to you soon.");this.reset()}else showToast('Something went wrong.',true)}catch{showToast('Network error.',true)}finally{btn.innerHTML=orig;btn.disabled=false}});
-let chatHistory=[],propertiesContext='';
-function toggleChatbot(){const w=document.getElementById('chatbotWindow');w.classList.toggle('open');if(w.classList.contains('open')){document.getElementById('chatInput').focus();if(cachedProperties&&!propertiesContext){propertiesContext=cachedProperties.slice(0,20).map(p=>`- ${p.title} in ${p.location}, ${p.listingType}, ₱${Number(p.price).toLocaleString()}, ${p.bedrooms}BR/${p.bathrooms}TB, ${p.sqm}sqm`).join('\n')}}}
-function sendQuick(msg){document.getElementById('quickBtns').style.display='none';document.getElementById('chatInput').value=msg;sendMessage()}
-async function sendMessage(){const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;input.value='';appendMessage('user',msg);chatHistory.push({role:'user',content:msg});showTyping();try{const systemPrompt=`You are a helpful AI assistant for GLRA Realty, a licensed real estate brokerage in Metro Manila and Luzon, Philippines.\n\nBroker: Catherine SB Sampayo — Licensed Real Estate Broker\nContact: 0917 177 4572 | glrarealty@gmail.com | Messenger: m.me/glrarealty\nAddress: 17F, 252 Senator Gil J. Puyat Avenue, Makati City\n\nCurrent available properties:\n${propertiesContext||'Loading properties...'}\n\nYour role:\n- Help users find suitable properties\n- Explain buying/leasing process in the Philippines\n- Answer questions about Pag-IBIG, bank loans, taxes, transfer fees\n- Explain property documents (TCT, CCT, etc.)\n- Be friendly, professional, and concise (under 150 words)\n- Always encourage contacting Catherine for personalized help`;const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemPrompt,messages:chatHistory.slice(-10)})});const data=await response.json();const reply=data.reply||data.message||"I'm having trouble. Please contact us at 0917 177 4572.";removeTyping();appendMessage('bot',reply);chatHistory.push({role:'assistant',content:reply})}catch{removeTyping();appendMessage('bot',"I'm having trouble connecting. Please call us at 0917 177 4572 or message on Messenger.")}}
-function appendMessage(role,text){const msgs=document.getElementById('chatMessages');const div=document.createElement('div');div.className=`chat-msg ${role}`;div.innerHTML=`${role==='bot'?'<div class="chat-sender">GLRA Assistant</div>':''}<div class="chat-bubble">${escapeHtml(text)}</div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
-function showTyping(){const msgs=document.getElementById('chatMessages');const div=document.createElement('div');div.className='chat-msg bot';div.id='typingIndicator';div.innerHTML=`<div class="chat-sender">GLRA Assistant</div><div class="chat-typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
-function removeTyping(){const t=document.getElementById('typingIndicator');if(t)t.remove()}
 loadHeroImages();loadProperties();
 </script>
 </body>
