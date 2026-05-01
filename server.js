@@ -846,6 +846,11 @@ app.get('/api/admin/me', verifyToken, (req, res) => {
   res.json({ email: req.user.email, name: req.user.name, role: req.user.role });
 });
 
+app.post('/api/admin/logout', verifyToken, async (req, res) => {
+  await logAudit(req, 'LOGOUT', 'Session', '', '', null);
+  res.json({ success: true });
+});
+
 app.get('/api/admin/accounts', verifyToken, async (req, res) => {
   try {
     const accounts = await Account.find({}, { password: 0 }).sort({ createdAt: 1 });
@@ -916,9 +921,41 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
 
 app.get('/api/admin/audit-log', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(200);
+    const limit = Math.min(parseInt(req.query.limit) || 500, 2000);
+    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(limit);
     res.json(logs);
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Quick stats for the audit dashboard
+app.get('/api/admin/audit-stats', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOf7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [todayCount, weekCount, totalCount, byUser, byAction] = await Promise.all([
+      AuditLog.countDocuments({ timestamp: { $gte: startOfToday } }),
+      AuditLog.countDocuments({ timestamp: { $gte: startOf7d } }),
+      AuditLog.countDocuments(),
+      AuditLog.aggregate([
+        { $match: { timestamp: { $gte: startOf7d } } },
+        { $group: { _id: { actor: '$actor', actorName: '$actorName', actorRole: '$actorRole' }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 }
+      ]),
+      AuditLog.aggregate([
+        { $match: { timestamp: { $gte: startOf7d } } },
+        { $group: { _id: '$action', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ])
+    ]);
+
+    res.json({ todayCount, weekCount, totalCount, byUser, byAction });
+  } catch (e) {
+    console.error('Audit stats error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.get('/api/admin/stats', verifyToken, async (req, res) => {
@@ -1098,6 +1135,7 @@ app.post('/api/admin/upload-property-image', verifyToken, upload.single('image')
     });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    await logAudit(req, 'UPLOAD', 'PropertyImage', '', req.file.originalname || '', { url: result.secure_url, sizeBytes: result.bytes });
     res.json({ url: result.secure_url, size: result.bytes });
   } catch (err) {
     console.error('Upload error:', err);
@@ -1148,6 +1186,7 @@ app.post('/api/admin/hero-images/reorder', verifyToken, requireAdmin, async (req
     for (const img of images) {
       await HeroImage.findByIdAndUpdate(img._id, { order: img.order });
     }
+    await logAudit(req, 'REORDER', 'HeroImage', '', `${images.length} images`, null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -1165,6 +1204,7 @@ app.put('/api/admin/hero-images/:id/default', verifyToken, requireAdmin, async (
       }
       await img.save();
     }
+    await logAudit(req, 'SET_DEFAULT', 'HeroImage', req.params.id, '', null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
