@@ -548,6 +548,30 @@ let allProps = [];
 let galleryUrls = [];
 let editPropId = null;
 
+// ── AUTH TOKEN MANAGEMENT ─────────────────────────────────
+const TOKEN_KEY = 'glra_admin_token';
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function setToken(t){ if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
+
+// Auth-aware fetch wrapper. Auto-attaches Bearer token, handles 401 by logging out.
+async function apiFetch(url, opts = {}){
+  const token = getToken();
+  const headers = new Headers(opts.headers || {});
+  if(token) headers.set('Authorization', 'Bearer ' + token);
+  // Set JSON content-type if body is a string and content-type wasn't specified.
+  if(opts.body && typeof opts.body === 'string' && !headers.has('Content-Type')){
+    headers.set('Content-Type', 'application/json');
+  }
+  const res = await fetch(url, { ...opts, headers });
+  if(res.status === 401){
+    setToken(null);
+    CU = null;
+    if(typeof logout === 'function') logout();
+    throw new Error('Session expired. Please log in again.');
+  }
+  return res;
+}
+
 // ── UTILS ─────────────────────────────────────────────────
 const esc = s => {if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML};
 const fmt = n => '₱'+(n||0).toLocaleString('en-PH');
@@ -601,8 +625,9 @@ async function login(){
   try{
     const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await res.json();
-    if(res.ok&&d.success){
-      CU=d;
+    if(res.ok&&d.success&&d.token){
+      setToken(d.token);
+      CU={email:d.email,name:d.name,role:d.role,id:d.id};
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('adminShell').classList.add('visible');
       document.getElementById('userName').textContent=d.name||email;
@@ -619,6 +644,7 @@ async function login(){
 
 function logout(){
   CU=null;
+  setToken(null);
   // Apply role UI BEFORE anything else to hide admin-only elements
   applyRoleUI();
   // Reset all tab content to prevent stale data showing
@@ -643,7 +669,7 @@ function refreshAll(){loadAll();showToast('Data refreshed')}
 
 async function loadStats(){
   try{
-    const s=await fetch('/api/admin/stats').then(r=>r.json());
+    const s=await apiFetch('/api/admin/stats').then(r=>r.json());
     document.getElementById('st-props').textContent=s.totalProperties||0;
     document.getElementById('st-avail').textContent=s.availableProperties||0;
     document.getElementById('st-inq').textContent=s.totalInquiries||0;
@@ -656,7 +682,7 @@ async function loadStats(){
 
 async function loadAllProps(){
   try{
-    allProps=await fetch('/api/admin/all-properties').then(r=>r.json());
+    allProps=await apiFetch('/api/admin/all-properties').then(r=>r.json());
     renderProps(allProps);
   }catch(e){console.error(e)}
 }
@@ -750,8 +776,7 @@ document.getElementById('propForm').addEventListener('submit',async function(e){
     };
     const url=editPropId?`/api/admin/properties/${editPropId}`:'/api/admin/properties';
     const method=editPropId?'PUT':'POST';
-    const headers={'Content-Type':'application/json','x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''};
-    const res=await fetch(url,{method,headers,body:JSON.stringify(data)});
+    const res=await apiFetch(url,{method,body:JSON.stringify(data)});
     if(res.ok){showToast(editPropId?'Property updated!':'Property added!');closePropModal();await loadAllProps();showRefresh()}
     else{const e=await res.json();showToast('Save failed: '+(e.error||'error'),true)}
   }catch(err){showToast('Network error',true)}
@@ -763,7 +788,7 @@ async function deleteProp(id,title){
   if(!confirm(`Delete "${title}"?\n\nThis CANNOT be undone.`))return;
   showLoad('Deleting...');
   try{
-    const res=await fetch(`/api/admin/properties/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});
+    const res=await apiFetch(`/api/admin/properties/${id}`,{method:'DELETE'});
     if(res.ok){showToast('Property deleted');await loadAllProps()}
     else showToast('Delete failed',true)
   }catch{showToast('Error',true)}finally{hideLoad()}
@@ -776,7 +801,7 @@ async function uploadMain(inp){
   prog.style.display='block';fill.style.width='20%';
   try{
     const fd=new FormData();fd.append('image',file);fill.style.width='60%';
-    const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:fd});
+    const res=await apiFetch('/api/admin/upload-property-image',{method:'POST',body:fd});
     fill.style.width='100%';const d=await res.json();
     if(d.url){
       document.getElementById('pMainImg').value=d.url;
@@ -792,7 +817,7 @@ async function uploadGallery(inp){
   try{
     for(const file of files){
       const fd=new FormData();fd.append('image',file);
-      const res=await fetch('/api/admin/upload-property-image',{method:'POST',body:fd});
+      const res=await apiFetch('/api/admin/upload-property-image',{method:'POST',body:fd});
       const d=await res.json();if(d.url)galleryUrls.push(d.url);
     }
     document.getElementById('pGallery').value=JSON.stringify(galleryUrls);
@@ -807,7 +832,7 @@ async function uploadHeroImgs(files){
   try{
     for(const file of files){
       const fd=new FormData();fd.append('image',file);
-      await fetch('/api/admin/hero-images/upload',{method:'POST',body:fd});
+      await apiFetch('/api/admin/hero-images/upload',{method:'POST',body:fd});
     }
     await loadHeroImages();showToast('Hero images uploaded!');
   }catch{showToast('Upload error',true)}finally{hideLoad()}
@@ -816,7 +841,7 @@ async function uploadHeroImgs(files){
 // ── INQUIRIES ─────────────────────────────────────────────
 async function loadInquiries(){
   try{
-    const data=await fetch('/api/admin/inquiries').then(r=>r.json());
+    const data=await apiFetch('/api/admin/inquiries').then(r=>r.json());
     // Dashboard
     document.getElementById('dashInq').innerHTML=data.length?
       `<table><thead><tr><th>Name</th><th>Email</th><th>Property</th><th>Date</th></tr></thead><tbody>${data.slice(0,6).map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(i.propertyTitle||'General')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td></tr>`).join('')}</tbody></table>`:
@@ -831,13 +856,13 @@ async function loadInquiries(){
 async function delInq(id){
   if(!isAdmin()){showToast('Admin access required',true);return}
   if(!confirm('Delete this inquiry?'))return;
-  try{await fetch(`/api/admin/inquiries/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});showToast('Deleted');loadInquiries()}catch{showToast('Error',true)}
+  try{await apiFetch(`/api/admin/inquiries/${id}`,{method:'DELETE'});showToast('Deleted');loadInquiries()}catch{showToast('Error',true)}
 }
 
 // ── SUBSCRIBERS ───────────────────────────────────────────
 async function loadSubscribers(){
   try{
-    const data=await fetch('/api/admin/subscribers').then(r=>r.json());
+    const data=await apiFetch('/api/admin/subscribers').then(r=>r.json());
     document.getElementById('subTbody').innerHTML=data.length?
       data.map(s=>`<tr><td style="font-size:13px">${esc(s.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDateShort(s.subscribedAt||s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="act-btns">${isAdmin()?`<button class="act act-del" onclick="delSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
       `<tr><td colspan="5"><div class="empty-st"><i class="fas fa-users"></i><p>No subscribers</p></div></td></tr>`;
@@ -847,13 +872,13 @@ async function loadSubscribers(){
 async function delSub(id){
   if(!isAdmin()){showToast('Admin access required',true);return}
   if(!confirm('Remove this subscriber?'))return;
-  try{await fetch(`/api/admin/subscribers/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});showToast('Removed');loadSubscribers()}catch{showToast('Error',true)}
+  try{await apiFetch(`/api/admin/subscribers/${id}`,{method:'DELETE'});showToast('Removed');loadSubscribers()}catch{showToast('Error',true)}
 }
 
 // ── ALERTS ────────────────────────────────────────────────
 async function loadAlerts(){
   try{
-    const data=await fetch('/api/admin/price-alerts').then(r=>r.json());
+    const data=await apiFetch('/api/admin/price-alerts').then(r=>r.json());
     document.getElementById('alertTbody').innerHTML=data.length?
       data.map(a=>`<tr><td style="font-size:13px">${esc(a.email)}</td><td style="font-size:12px">${esc(a.propertyTitle||'—')}</td><td style="font-size:13px;color:var(--gold);font-family:'Cormorant Garamond',serif">${fmt(a.propertyPrice)}</td><td><span class="badge ${!a.isNotified?'b-avail':'b-sold'}">${a.isNotified?'Notified':'Watching'}</span></td></tr>`).join(''):
       `<tr><td colspan="4"><div class="empty-st"><i class="fas fa-bell"></i><p>No price alerts</p></div></td></tr>`;
@@ -863,15 +888,15 @@ async function loadAlerts(){
 // ── HERO IMAGES ───────────────────────────────────────────
 async function loadHeroImages(){
   try{
-    const data=await fetch('/api/admin/hero-images').then(r=>r.json());
+    const data=await apiFetch('/api/admin/hero-images').then(r=>r.json());
     document.getElementById('heroGrid').innerHTML=data.length?
       data.map(img=>`<div class="hero-card"><img src="${img.url}" alt="Hero" loading="lazy"><div class="hero-foot">${img.isDefault?'<span class="hero-def"><i class="fas fa-star"></i> Default</span>':`<button class="hero-btn" onclick="setHeroDef('${img._id}')">Set Default</button>`}<div class="hero-acts">${isAdmin()?`<button class="hero-btn danger" onclick="delHero('${img._id}')"><i class="fas fa-trash"></i></button>`:''}</div></div></div>`).join(''):
       `<div class="empty-st"><i class="fas fa-images"></i><p>No hero images yet. Upload images to display in the homepage slider.</p></div>`;
   }catch(e){console.error(e)}
 }
 
-async function setHeroDef(id){try{await fetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});showToast('Default set');loadHeroImages()}catch{showToast('Error',true)}}
-async function delHero(id){if(!isAdmin()){showToast('Admin access required',true);return}if(!confirm('Delete this hero image?'))return;try{await fetch(`/api/admin/hero-images/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin'}});showToast('Deleted');loadHeroImages()}catch{showToast('Error',true)}}
+async function setHeroDef(id){try{await apiFetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});showToast('Default set');loadHeroImages()}catch{showToast('Error',true)}}
+async function delHero(id){if(!isAdmin()){showToast('Admin access required',true);return}if(!confirm('Delete this hero image?'))return;try{await apiFetch(`/api/admin/hero-images/${id}`,{method:'DELETE'});showToast('Deleted');loadHeroImages()}catch{showToast('Error',true)}}
 
 // ── ACCOUNTS ──────────────────────────────────────────────
 let allAuditLogs = [];
@@ -880,7 +905,7 @@ let editAccId = null;
 async function loadAccounts(){
   if(!isAdmin())return;
   try{
-    const data = await fetch('/api/admin/accounts').then(r=>r.json());
+    const data = await apiFetch('/api/admin/accounts').then(r=>r.json());
     const list = document.getElementById('accountsList');
     if(!list) return;
     if(!data.length){
@@ -950,7 +975,7 @@ async function saveAccount(){
     if(pass) body.password = pass;
     const url = editAccId ? `/api/admin/accounts/${editAccId}` : '/api/admin/accounts';
     const method = editAccId ? 'PUT' : 'POST';
-    const res = await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''},body:JSON.stringify(body)});
+    const res = await apiFetch(url,{method,body:JSON.stringify(body)});
     const d = await res.json();
     if(res.ok){
       showToast(editAccId ? 'Account updated!' : 'Account created!');
@@ -965,7 +990,7 @@ async function saveAccount(){
 async function deleteAccount(id, name){
   if(!confirm(`Remove account for "${name}"?\n\nThey will no longer be able to log in.`)) return;
   try{
-    const res = await fetch(`/api/admin/accounts/${id}`,{method:'DELETE',headers:{'x-admin-role':'admin','x-admin-email':CU?.email||'','x-admin-name':CU?.name||''}});
+    const res = await apiFetch(`/api/admin/accounts/${id}`,{method:'DELETE'});
     if(res.ok){showToast('Account removed');loadAccounts()}
     else showToast('Delete failed',true);
   }catch{showToast('Error',true)}
@@ -975,7 +1000,7 @@ async function deleteAccount(id, name){
 async function loadAuditLog(){
   if(!isAdmin())return;
   try{
-    const data = await fetch('/api/admin/audit-log',{headers:{'x-admin-role':'admin'}}).then(r=>r.json());
+    const data = await apiFetch('/api/admin/audit-log').then(r=>r.json());
     allAuditLogs = data;
     renderAuditLog(data);
   }catch(e){
@@ -1042,6 +1067,28 @@ function logAuditLocally(action, target, title){
   setTimeout(()=>{ if(isAdmin()) loadAuditLog(); }, 1500);
 }
 
+// ── SESSION RESTORE ───────────────────────────────────────
+async function restoreSession(){
+  if(!getToken()) return false;
+  try{
+    const res = await apiFetch('/api/admin/me');
+    if(!res.ok) return false;
+    const d = await res.json();
+    CU = { email: d.email, name: d.name, role: d.role };
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminShell').classList.add('visible');
+    document.getElementById('userName').textContent = d.name || d.email;
+    document.getElementById('userRole').textContent = d.role === 'admin' ? 'Administrator' : 'Staff Employee';
+    document.getElementById('userAv').textContent = (d.name || d.email)[0].toUpperCase();
+    document.getElementById('pageSub').textContent = `Welcome back, ${(d.name || '').split(' ')[0] || d.email}`;
+    applyRoleUI();
+    loadAll();
+    return true;
+  }catch(e){ return false; }
+}
+// Try restore on page load
+window.addEventListener('DOMContentLoaded', () => { restoreSession(); });
+
 // ── TABS ──────────────────────────────────────────────────
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
@@ -1057,7 +1104,7 @@ function switchTab(name){
   const heroBtn=document.getElementById('heroUploadBtn');
   if(heroBtn)heroBtn.style.display=(name==='hero'&&isAdmin())?'':'none';
   // Load audit log on visit
-  if(name==='auditlog')loadAudit();
+  if(name==='auditlog')loadAuditLog();
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
 }
