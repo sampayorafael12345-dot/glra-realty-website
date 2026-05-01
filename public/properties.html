@@ -537,7 +537,9 @@ let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE';}
 
 /* ---- CURRENCY SWITCHER ---- */
-// Approximate exchange rates from PHP (updated April 2026 — for display only)
+// ============ LIVE CURRENCY RATES ============
+// Fallback rates (used before the live fetch completes or if the API is down).
+// Live rates come from fawazahmed0/currency-api (free, no key, daily ECB+BOC sources).
 const CURRENCY_RATES = {
   PHP:{rate:1,         symbol:'₱',  decimals:0, label:'Philippine Peso'},
   USD:{rate:0.0175,    symbol:'$',       decimals:0, label:'US Dollar'},
@@ -550,6 +552,77 @@ const CURRENCY_RATES = {
   AUD:{rate:0.027,     symbol:'A$',      decimals:0, label:'Australian Dollar'}
 };
 let currentCurrency = localStorage.getItem('glraCurrency') || 'PHP';
+let liveRatesDate = null;
+
+const FX_CACHE_KEY = 'glraFxRates';
+const FX_TTL_MS = 12 * 60 * 60 * 1000;       // hard expiry: 12h
+const FX_REFRESH_MS = 6 * 60 * 60 * 1000;    // background refresh after 6h
+const FX_PRIMARY = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/php.json';
+const FX_FALLBACK = 'https://latest.currency-api.pages.dev/v1/currencies/php.json';
+
+async function loadLiveRates(){
+  // 1. Try cache first
+  try{
+    const cached = JSON.parse(localStorage.getItem(FX_CACHE_KEY) || 'null');
+    if(cached && cached.timestamp && (Date.now() - cached.timestamp < FX_TTL_MS) && cached.rates){
+      applyLiveRates(cached.rates, cached.date);
+      // Refresh quietly in the background if cache is getting stale
+      if(Date.now() - cached.timestamp > FX_REFRESH_MS){
+        fetchAndApplyRates().catch(()=>{});
+      }
+      return;
+    }
+  }catch{}
+  // 2. No usable cache — fetch live
+  fetchAndApplyRates().catch(err => console.warn('FX rates: using static fallback.', err.message));
+}
+
+async function fetchAndApplyRates(){
+  let data;
+  try{
+    const r = await fetch(FX_PRIMARY);
+    if(!r.ok) throw new Error('primary');
+    data = await r.json();
+  }catch{
+    const r = await fetch(FX_FALLBACK);
+    if(!r.ok) throw new Error('FX API unavailable');
+    data = await r.json();
+  }
+  const phpRates = data.php || {};
+  const clean = {};
+  Object.keys(CURRENCY_RATES).forEach(code => {
+    if(code === 'PHP') return;
+    const v = phpRates[code.toLowerCase()];
+    if(typeof v === 'number' && v > 0) clean[code] = v;
+  });
+  if(!Object.keys(clean).length) throw new Error('FX response missing rates');
+
+  try{
+    localStorage.setItem(FX_CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      date: data.date || new Date().toISOString().slice(0,10),
+      rates: clean
+    }));
+  }catch{}
+
+  applyLiveRates(clean, data.date);
+}
+
+function applyLiveRates(rates, dateStr){
+  Object.keys(rates).forEach(code => {
+    if(CURRENCY_RATES[code]) CURRENCY_RATES[code].rate = rates[code];
+  });
+  liveRatesDate = dateStr || null;
+  // Re-render any prices currently on screen
+  if(typeof updateCurrencyNote === 'function') updateCurrencyNote();
+  if(window.cachedProperties && typeof applyFilters === 'function'){
+    applyFilters(currentCategory, cachedProperties);
+  }
+  const modal = document.getElementById('modal');
+  if(currentProperty && modal && modal.style.display === 'block'){
+    openDetail(currentProperty._id);
+  }
+}
 
 function changeCurrency(code){
   currentCurrency = code;
@@ -567,11 +640,13 @@ function updateCurrencyNote(){
   const note = document.getElementById('currencyRateNote');
   if(!note) return;
   if(currentCurrency==='PHP'){
-    note.textContent = '';
+    note.textContent = liveRatesDate ? 'Live rates as of ' + liveRatesDate : '';
   } else {
     const r = CURRENCY_RATES[currentCurrency];
     const phpPerUnit = (1 / r.rate).toFixed(2);
-    note.textContent = '≈ 1 ' + currentCurrency + ' = ₱' + Number(phpPerUnit).toLocaleString();
+    let txt = '≈ 1 ' + currentCurrency + ' = ₱' + Number(phpPerUnit).toLocaleString();
+    if(liveRatesDate) txt += ' · live, as of ' + liveRatesDate;
+    note.textContent = txt;
   }
 }
 
@@ -837,6 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sel){ sel.value = currentCurrency; }
   updateCurrencyNote();
   renderCompareBar();
+  loadLiveRates(); // fetch live FX rates in background, refresh prices when ready
 });
 // Close compare modal on Esc
 document.addEventListener('keydown', e => {
