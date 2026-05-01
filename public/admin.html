@@ -119,6 +119,36 @@ body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--g
 .panel-title i{color:var(--gold)}
 .panel-body{padding:20px}
 
+/* ── PERMISSION GRID (account modal) ────────────────── */
+.perm-grid{display:grid;grid-template-columns:1fr;gap:8px;background:var(--gray-light);padding:14px;border:1px solid var(--border-color);border-radius:4px;max-height:340px;overflow-y:auto}
+.perm-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border-color);transition:.15s}
+.perm-row:hover{border-color:var(--gold)}
+.perm-row label{cursor:pointer;flex:1;display:flex;align-items:flex-start;gap:10px}
+.perm-row input[type=checkbox]{margin-top:3px;cursor:pointer;accent-color:var(--gold);width:16px;height:16px;flex-shrink:0}
+.perm-row .perm-meta{flex:1;min-width:0}
+.perm-row .perm-name{font-size:13px;font-weight:600;color:var(--text-color)}
+.perm-row .perm-desc{font-size:11px;color:var(--gray);margin-top:2px;line-height:1.4}
+.perm-grid.disabled{opacity:.55;pointer-events:none}
+.perm-admin-notice{background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.3);padding:10px 14px;font-size:12px;color:var(--gold);margin-bottom:10px;display:none}
+.perm-admin-notice.show{display:block}
+
+/* ── ACTIVITY BY USER ROW ───────────────────────────── */
+.audit-user-row{display:grid;grid-template-columns:minmax(200px,1.4fr) minmax(150px,2fr) auto;align-items:center;gap:18px;padding:12px 0;border-bottom:1px solid var(--border-color)}
+.audit-user-row:last-child{border-bottom:none}
+.audit-user-info{display:flex;align-items:center;gap:10px;min-width:0}
+.audit-user-av{width:32px;height:32px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;border:1px solid rgba(200,169,110,.3);flex-shrink:0}
+.audit-user-meta{min-width:0;flex:1}
+.audit-user-name{font-size:13px;font-weight:600;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.audit-user-email{font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.audit-user-bar-wrap{height:8px;background:var(--gray-light);border-radius:4px;overflow:hidden;width:100%}
+.audit-user-bar{height:100%;background:linear-gradient(90deg,var(--gold) 0%,var(--gold-dark,#a98a4f) 100%);border-radius:4px;transition:width .4s ease}
+.audit-user-count{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;text-align:right;min-width:90px}
+.audit-user-count span{font-size:11px;color:var(--gray);font-weight:400}
+@media(max-width:768px){
+  .audit-user-row{grid-template-columns:1fr;gap:8px}
+  .audit-user-count{text-align:left}
+}
+
 /* ── TABLE ──────────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
@@ -337,7 +367,7 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
-      <a class="nav-item admin-only" onclick="switchTab('auditlog')" style="display:none"><i class="fas fa-history"></i> Audit Log</a>
+      <a class="nav-item" data-perm="audit_view" onclick="switchTab('auditlog')" style="display:none"><i class="fas fa-history"></i> Audit Log</a>
       <div class="sb-section" style="margin-top:6px">Links</div>
       <a class="nav-item" href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Website</a>
     </nav>
@@ -447,16 +477,16 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
       <!-- AUDIT LOG TAB (admin only) -->
       <div id="tab-auditlog" style="display:none">
         <!-- Summary cards -->
-        <div class="stats-row" id="auditStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px">
-          <div class="stat-card"><div class="stat-label">Actions Today</div><div class="stat-value" id="auditToday">—</div></div>
-          <div class="stat-card"><div class="stat-label">Last 7 Days</div><div class="stat-value" id="auditWeek">—</div></div>
-          <div class="stat-card"><div class="stat-label">All Time</div><div class="stat-value" id="auditTotal">—</div></div>
-          <div class="stat-card"><div class="stat-label">Most Active (7d)</div><div class="stat-value" id="auditTopUser" style="font-size:18px">—</div></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-ico ico-blue"><i class="fas fa-bolt"></i></div><div><div class="stat-num" id="auditToday">—</div><div class="stat-lbl">Actions Today</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-gold"><i class="fas fa-calendar-week"></i></div><div><div class="stat-num" id="auditWeek">—</div><div class="stat-lbl">Last 7 Days</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-green"><i class="fas fa-database"></i></div><div><div class="stat-num" id="auditTotal">—</div><div class="stat-lbl">All Time</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-purple"><i class="fas fa-trophy"></i></div><div><div class="stat-num" id="auditTopUser" style="font-size:20px;line-height:1.2">—</div><div class="stat-lbl">Most Active (7d)</div></div></div>
         </div>
         <!-- Activity by user (last 7 days) -->
-        <div class="panel" style="margin-bottom:14px">
-          <div class="panel-hd"><i class="fas fa-users"></i> Activity by User (Last 7 Days)</div>
-          <div class="panel-body" id="auditByUser" style="padding:14px 22px"><div style="color:var(--gray);font-size:12px">Loading…</div></div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-users"></i> Activity by User (Last 7 Days)</div></div>
+          <div class="panel-body" id="auditByUser"><div style="color:var(--gray);font-size:12px">Loading…</div></div>
         </div>
         <!-- Filters -->
         <div class="filter-bar">
@@ -556,8 +586,19 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
         <div class="fg full"><label>Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
         <div class="fg full"><label>Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
         <div class="fg full"><label>Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint">Leave blank when editing to keep existing password.</div></div>
-        <div class="fg full"><label>Role</label><select id="accRole"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins have full access. Employees can only view data.</div></div>
+        <div class="fg full"><label>Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
         <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
+        <!-- Granular permissions (only relevant for employees; ignored for admins) -->
+        <div class="fg full" id="accPermsWrap">
+          <label>Permissions</label>
+          <div class="field-hint" style="margin-bottom:10px">Tick what this employee is allowed to do. Changes apply immediately on save.</div>
+          <div id="accPermsGrid" class="perm-grid"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="hdr-btn" onclick="permsToggleAll(true)"><i class="fas fa-check-double"></i> Select All</button>
+            <button type="button" class="hdr-btn" onclick="permsToggleAll(false)"><i class="fas fa-times-circle"></i> Clear All</button>
+            <button type="button" class="hdr-btn" onclick="permsApplyDefault()"><i class="fas fa-undo"></i> Reset to Defaults</button>
+          </div>
+        </div>
       </div>
       <div class="form-actions">
         <button class="fbtn primary" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
@@ -573,10 +614,41 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // ── STATE ─────────────────────────────────────────────────
-let CU = null; // current user {name,role,email,id}
+let CU = null; // current user {name,role,email,permissions}
 let allProps = [];
 let galleryUrls = [];
 let editPropId = null;
+
+// ── PERMISSION DEFINITIONS ────────────────────────────────
+// Single source of truth for the modal's checkboxes + the hasPerm() lookups.
+const PERM_DEFS = [
+  { key: 'properties_create',       name: 'Add Properties',         desc: 'Can add new property listings' },
+  { key: 'properties_edit',         name: 'Edit Properties',        desc: 'Can edit existing property listings' },
+  { key: 'properties_delete',       name: 'Delete Properties',      desc: 'Can permanently delete listings' },
+  { key: 'properties_upload_image', name: 'Upload Property Images', desc: 'Can upload main + gallery photos' },
+  { key: 'inquiries_delete',        name: 'Delete Inquiries',       desc: 'Can remove customer inquiries' },
+  { key: 'subscribers_delete',      name: 'Remove Subscribers',     desc: 'Can remove newsletter subscribers' },
+  { key: 'hero_upload',             name: 'Upload Hero Images',     desc: 'Can upload homepage slider images' },
+  { key: 'hero_edit',               name: 'Reorder Hero Images',    desc: 'Can reorder + set default hero image' },
+  { key: 'hero_delete',             name: 'Delete Hero Images',     desc: 'Can delete homepage slider images' },
+  { key: 'accounts_manage',         name: 'Manage Accounts',        desc: 'Create/edit/delete staff accounts (admin role only)' },
+  { key: 'audit_view',              name: 'View Audit Log',         desc: 'Can view who did what across the system' }
+];
+
+const DEFAULT_EMPLOYEE_PERMS = {
+  properties_create: true, properties_edit: true, properties_delete: false,
+  properties_upload_image: true, inquiries_delete: false, subscribers_delete: false,
+  hero_upload: false, hero_edit: false, hero_delete: false,
+  accounts_manage: false, audit_view: false
+};
+
+// Check if the currently logged-in user has a permission.
+// Admins always pass. Server is the real authority — this is just for UI hide/show.
+function hasPerm(key){
+  if(!CU) return false;
+  if(CU.role === 'admin') return true;
+  return !!(CU.permissions && CU.permissions[key]);
+}
 
 // ── AUTH TOKEN MANAGEMENT ─────────────────────────────────
 const TOKEN_KEY = 'glra_admin_token';
@@ -631,17 +703,79 @@ function getNum(id){return parseFloat((document.getElementById(id).value||'').re
 function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('dmBtn');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme'}
 if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('dmBtn');if(b)b.innerHTML='<i class="fas fa-sun"></i> Theme'}
 
-// ── ROLE-BASED UI ─────────────────────────────────────────
+// ── ROLE & PERMISSION-BASED UI ────────────────────────────
 function applyRoleUI(){
-  // Show/hide ALL elements with class admin-only based on current role
-  // This must work even when CU is null (after logout)
   const admin = isAdmin();
+  // Legacy admin-only class (used for accounts/auditlog tabs etc.) — admin-role-gated
   document.querySelectorAll('.admin-only').forEach(el=>{
     el.style.display = admin ? '' : 'none';
   });
-  // Also reset the add property button
+  // New: data-perm attribute. Element is shown only if the user has that permission.
+  // Multiple permissions: data-perm="properties_create properties_edit" (any-of).
+  document.querySelectorAll('[data-perm]').forEach(el=>{
+    const keys = (el.getAttribute('data-perm') || '').split(/\s+/).filter(Boolean);
+    const allowed = keys.length === 0 || keys.some(k => hasPerm(k));
+    el.style.display = allowed ? '' : 'none';
+  });
+  // Reset the add property button (switchTab controls the actual visibility)
   const addBtn = document.getElementById('addPropBtn');
-  if(addBtn) addBtn.style.display = 'none'; // Always hide on tab switch, switchTab controls it
+  if(addBtn) addBtn.style.display = 'none';
+}
+
+// ── PERMISSION CHECKBOX GRID (in account modal) ───────────
+function renderPermsGrid(currentPerms){
+  const wrap = document.getElementById('accPermsGrid');
+  if(!wrap) return;
+  wrap.innerHTML = PERM_DEFS.map(p => {
+    const checked = currentPerms && currentPerms[p.key] === true ? 'checked' : '';
+    return `<div class="perm-row">
+      <label>
+        <input type="checkbox" data-perm-key="${p.key}" ${checked}>
+        <div class="perm-meta">
+          <div class="perm-name">${p.name}</div>
+          <div class="perm-desc">${p.desc}</div>
+        </div>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function readPermsGrid(){
+  const out = {};
+  document.querySelectorAll('#accPermsGrid input[data-perm-key]').forEach(cb => {
+    out[cb.getAttribute('data-perm-key')] = cb.checked;
+  });
+  return out;
+}
+
+function permsToggleAll(state){
+  document.querySelectorAll('#accPermsGrid input[data-perm-key]').forEach(cb => { cb.checked = !!state; });
+}
+
+function permsApplyDefault(){
+  renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS });
+}
+
+function onRoleChange(){
+  // When role flips to admin in the modal, gray out the perm grid (admins always have all)
+  const role = document.getElementById('accRole')?.value;
+  const grid = document.getElementById('accPermsGrid');
+  const wrap = document.getElementById('accPermsWrap');
+  if(!wrap) return;
+  let notice = wrap.querySelector('.perm-admin-notice');
+  if(!notice){
+    notice = document.createElement('div');
+    notice.className = 'perm-admin-notice';
+    notice.innerHTML = '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.';
+    wrap.insertBefore(notice, grid);
+  }
+  if(role === 'admin'){
+    grid.classList.add('disabled');
+    notice.classList.add('show');
+  } else {
+    grid.classList.remove('disabled');
+    notice.classList.remove('show');
+  }
 }
 
 // ── AUTH ──────────────────────────────────────────────────
@@ -657,7 +791,7 @@ async function login(){
     const d=await res.json();
     if(res.ok&&d.success&&d.token){
       setToken(d.token);
-      CU={email:d.email,name:d.name,role:d.role,id:d.id};
+      CU={email:d.email,name:d.name,role:d.role,id:d.id,permissions:d.permissions||{}};
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('adminShell').classList.add('visible');
       document.getElementById('userName').textContent=d.name||email;
@@ -698,7 +832,7 @@ function logout(){
 function loadAll(){
   loadStats();loadAllProps();loadInquiries();loadSubscribers();loadAlerts();loadHeroImages();
   if(isAdmin()){loadAccounts();}
-  if(name==='auditlog'&&isAdmin())loadAuditLog();
+  if(name==='auditlog'&&hasPerm('audit_view'))loadAuditLog();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
 
@@ -749,8 +883,8 @@ function renderProps(props){
     <td style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);font-weight:600">${fmt(p.price)}</td>
     <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
     <td><div class="act-btns">
-      ${isAdmin()?`<button class="act act-edit" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
-      ${isAdmin()?`<button class="act act-del" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
+      ${hasPerm('properties_edit')?`<button class="act act-edit" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
+      ${hasPerm('properties_delete')?`<button class="act act-del" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
       <button class="act act-view" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
     </div></td>
   </tr>`).join('');
@@ -758,7 +892,7 @@ function renderProps(props){
 
 // ── PROPERTY FORM ─────────────────────────────────────────
 function openAddProperty(){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('properties_create')){showToast('You don\'t have permission to add properties',true);return}
   editPropId=null;galleryUrls=[];
   document.getElementById('propForm').reset();
   document.getElementById('pMainImg').value='';document.getElementById('pGallery').value='';
@@ -768,7 +902,7 @@ function openAddProperty(){
 }
 
 function openEditProp(id){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('properties_edit')){showToast('You don\'t have permission to edit properties',true);return}
   const p=allProps.find(x=>x._id===id);if(!p)return;
   editPropId=id;galleryUrls=[...(p.gallery||[])];
   document.getElementById('editId').value=id;
@@ -795,7 +929,9 @@ function rmGall(i){galleryUrls.splice(i,1);document.getElementById('pGallery').v
 
 document.getElementById('propForm').addEventListener('submit',async function(e){
   e.preventDefault();
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  // Saving is allowed if creating + has create perm, OR editing + has edit perm.
+  const requiredPerm = editPropId ? 'properties_edit' : 'properties_create';
+  if(!hasPerm(requiredPerm)){showToast('You don\'t have permission for this action',true);return}
   const btn=this.querySelector('.fbtn.primary');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';showLoad('Saving property...');
   try{
@@ -819,7 +955,7 @@ document.getElementById('propForm').addEventListener('submit',async function(e){
 });
 
 async function deleteProp(id,title){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('properties_delete')){showToast('You don\'t have permission to delete properties',true);return}
   if(!confirm(`Delete "${title}"?\n\nThis CANNOT be undone.`))return;
   showLoad('Deleting...');
   try{
@@ -862,7 +998,7 @@ async function uploadGallery(inp){
 }
 
 async function uploadHeroImgs(files){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('hero_upload')){showToast('You don\'t have permission to upload hero images',true);return}
   if(!files.length)return;showLoad(`Uploading ${files.length} hero image${files.length>1?'s':''}...`);
   try{
     for(const file of files){
@@ -883,13 +1019,13 @@ async function loadInquiries(){
       `<div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div>`;
     // Full
     document.getElementById('inqTbody').innerHTML=data.length?
-      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((i.message||'').substring(0,100))}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td><td><div class="act-btns">${isAdmin()?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((i.message||'').substring(0,100))}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td><td><div class="act-btns">${hasPerm('inquiries_delete')?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
   }catch(e){console.error(e)}
 }
 
 async function delInq(id){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('inquiries_delete')){showToast('You don\'t have permission to delete inquiries',true);return}
   if(!confirm('Delete this inquiry?'))return;
   try{await apiFetch(`/api/admin/inquiries/${id}`,{method:'DELETE'});showToast('Deleted');loadInquiries()}catch{showToast('Error',true)}
 }
@@ -899,13 +1035,13 @@ async function loadSubscribers(){
   try{
     const data=await apiFetch('/api/admin/subscribers').then(r=>r.json());
     document.getElementById('subTbody').innerHTML=data.length?
-      data.map(s=>`<tr><td style="font-size:13px">${esc(s.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDateShort(s.subscribedAt||s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="act-btns">${isAdmin()?`<button class="act act-del" onclick="delSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      data.map(s=>`<tr><td style="font-size:13px">${esc(s.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDateShort(s.subscribedAt||s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="act-btns">${hasPerm('subscribers_delete')?`<button class="act act-del" onclick="delSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
       `<tr><td colspan="5"><div class="empty-st"><i class="fas fa-users"></i><p>No subscribers</p></div></td></tr>`;
   }catch(e){console.error(e)}
 }
 
 async function delSub(id){
-  if(!isAdmin()){showToast('Admin access required',true);return}
+  if(!hasPerm('subscribers_delete')){showToast('You don\'t have permission to remove subscribers',true);return}
   if(!confirm('Remove this subscriber?'))return;
   try{await apiFetch(`/api/admin/subscribers/${id}`,{method:'DELETE'});showToast('Removed');loadSubscribers()}catch{showToast('Error',true)}
 }
@@ -925,29 +1061,33 @@ async function loadHeroImages(){
   try{
     const data=await apiFetch('/api/admin/hero-images').then(r=>r.json());
     document.getElementById('heroGrid').innerHTML=data.length?
-      data.map(img=>`<div class="hero-card"><img src="${img.url}" alt="Hero" loading="lazy"><div class="hero-foot">${img.isDefault?'<span class="hero-def"><i class="fas fa-star"></i> Default</span>':`<button class="hero-btn" onclick="setHeroDef('${img._id}')">Set Default</button>`}<div class="hero-acts">${isAdmin()?`<button class="hero-btn danger" onclick="delHero('${img._id}')"><i class="fas fa-trash"></i></button>`:''}</div></div></div>`).join(''):
+      data.map(img=>`<div class="hero-card"><img src="${img.url}" alt="Hero" loading="lazy"><div class="hero-foot">${img.isDefault?'<span class="hero-def"><i class="fas fa-star"></i> Default</span>':(hasPerm('hero_edit')?`<button class="hero-btn" onclick="setHeroDef('${img._id}')">Set Default</button>`:'')}<div class="hero-acts">${hasPerm('hero_delete')?`<button class="hero-btn danger" onclick="delHero('${img._id}')"><i class="fas fa-trash"></i></button>`:''}</div></div></div>`).join(''):
       `<div class="empty-st"><i class="fas fa-images"></i><p>No hero images yet. Upload images to display in the homepage slider.</p></div>`;
   }catch(e){console.error(e)}
 }
 
-async function setHeroDef(id){try{await apiFetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});showToast('Default set');loadHeroImages()}catch{showToast('Error',true)}}
-async function delHero(id){if(!isAdmin()){showToast('Admin access required',true);return}if(!confirm('Delete this hero image?'))return;try{await apiFetch(`/api/admin/hero-images/${id}`,{method:'DELETE'});showToast('Deleted');loadHeroImages()}catch{showToast('Error',true)}}
+async function setHeroDef(id){if(!hasPerm('hero_edit')){showToast('You don\'t have permission to reorder hero images',true);return}try{await apiFetch(`/api/admin/hero-images/${id}/default`,{method:'PUT'});showToast('Default set');loadHeroImages()}catch{showToast('Error',true)}}
+async function delHero(id){if(!hasPerm('hero_delete')){showToast('You don\'t have permission to delete hero images',true);return}if(!confirm('Delete this hero image?'))return;try{await apiFetch(`/api/admin/hero-images/${id}`,{method:'DELETE'});showToast('Deleted');loadHeroImages()}catch{showToast('Error',true)}}
 
 // ── ACCOUNTS ──────────────────────────────────────────────
 let allAuditLogs = [];
 let editAccId = null;
 
+// Cache of accounts so the edit modal can pre-fill from the full object (incl. permissions).
+let allAccounts = [];
+
 async function loadAccounts(){
   if(!isAdmin())return;
   try{
     const data = await apiFetch('/api/admin/accounts').then(r=>r.json());
+    allAccounts = Array.isArray(data) ? data : [];
     const list = document.getElementById('accountsList');
     if(!list) return;
-    if(!data.length){
+    if(!allAccounts.length){
       list.innerHTML='<div class="empty-st"><i class="fas fa-users"></i><p>No accounts yet. Add your first team member.</p></div>';
       return;
     }
-    list.innerHTML = data.map(a=>`
+    list.innerHTML = allAccounts.map(a=>`
       <div class="panel" style="margin-bottom:14px">
         <div style="padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:46px;height:46px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:600;flex-shrink:0;border:1px solid rgba(200,169,110,.3)">${(a.name||a.email)[0].toUpperCase()}</div>
@@ -961,7 +1101,7 @@ async function loadAccounts(){
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
-            <button class="act act-edit" onclick="openEditAccount('${a._id}','${esc(a.email)}','${esc(a.name||'')}','${a.role}',${a.isActive!==false})"><i class="fas fa-edit"></i> Edit</button>
+            <button class="act act-edit" onclick="openEditAccountById('${a._id}')"><i class="fas fa-edit"></i> Edit</button>
             ${a.email !== CU?.email ? `<button class="act act-del" onclick="deleteAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--gold)">You</span>'}
           </div>
         </div>
@@ -977,19 +1117,34 @@ function openAddAccount(){
   document.getElementById('accPass').value = '';
   document.getElementById('accRole').value = 'employee';
   document.getElementById('accActive').checked = true;
-  document.getElementById('accPassHelp').textContent = 'Required for new accounts';
+  const help = document.getElementById('accPassHelp');
+  if(help) help.textContent = 'Required for new accounts';
+  renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS });
+  onRoleChange();
   document.getElementById('accModal').classList.add('open');
 }
 
-function openEditAccount(id, email, name, role, isActive){
+// Helper to look up a cached account by id, then call openEditAccount with the full object.
+function openEditAccountById(id){
+  const a = (allAccounts || []).find(x => String(x._id) === String(id));
+  if(!a){ showToast('Account not found', true); return; }
+  openEditAccount(id, a);
+}
+
+function openEditAccount(id, accountObj){
+  // Accepts the full account object so we can pre-fill permissions accurately.
   editAccId = id;
+  const a = accountObj || {};
   document.getElementById('accModalTitle').textContent = 'Edit Account';
-  document.getElementById('accEmail').value = email;
-  document.getElementById('accName').value = name;
+  document.getElementById('accEmail').value = a.email || '';
+  document.getElementById('accName').value = a.name || '';
   document.getElementById('accPass').value = '';
-  document.getElementById('accRole').value = role;
-  document.getElementById('accActive').checked = isActive;
-  document.getElementById('accPassHelp').textContent = 'Leave blank to keep current password';
+  document.getElementById('accRole').value = a.role || 'employee';
+  document.getElementById('accActive').checked = a.isActive !== false;
+  const help = document.getElementById('accPassHelp');
+  if(help) help.textContent = 'Leave blank to keep current password';
+  renderPermsGrid(a.permissions || DEFAULT_EMPLOYEE_PERMS);
+  onRoleChange();
   document.getElementById('accModal').classList.add('open');
 }
 
@@ -1006,7 +1161,7 @@ async function saveAccount(){
   const btn = document.getElementById('saveAccBtn');
   const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
   try{
-    const body = {email,name,role,isActive};
+    const body = {email,name,role,isActive,permissions: readPermsGrid()};
     if(pass) body.password = pass;
     const url = editAccId ? `/api/admin/accounts/${editAccId}` : '/api/admin/accounts';
     const method = editAccId ? 'PUT' : 'POST';
@@ -1035,7 +1190,7 @@ async function deleteAccount(id, name){
 let auditAutoRefreshTimer = null;
 
 async function loadAuditLog(){
-  if(!isAdmin())return;
+  if(!hasPerm('audit_view'))return;
   try{
     const [logs, stats] = await Promise.all([
       apiFetch('/api/admin/audit-log').then(r=>r.json()),
@@ -1082,14 +1237,20 @@ function renderAuditStats(s){
   wrap.innerHTML = s.byUser.map(u => {
     const pct = Math.max(2, Math.round((u.count / max) * 100));
     const role = u._id.actorRole || 'unknown';
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span><strong>${esc(u._id.actorName || u._id.actor)}</strong> <span style="color:var(--gray)">· ${esc(u._id.actor)}</span> <span class="badge ${role==='admin'?'b-admin':'b-emp'}" style="margin-left:6px">${esc(role)}</span></span>
-        <span style="color:var(--gold);font-weight:600">${u.count} action${u.count===1?'':'s'}</span>
+    const initial = (u._id.actorName || u._id.actor || '?')[0].toUpperCase();
+    return `<div class="audit-user-row">
+      <div class="audit-user-info">
+        <div class="audit-user-av">${esc(initial)}</div>
+        <div class="audit-user-meta">
+          <div class="audit-user-name">${esc(u._id.actorName || u._id.actor)}</div>
+          <div class="audit-user-email">${esc(u._id.actor)}</div>
+        </div>
+        <span class="badge ${role==='admin'?'b-admin':'b-emp'}">${esc(role)}</span>
       </div>
-      <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden">
-        <div style="width:${pct}%;height:100%;background:var(--gold)"></div>
+      <div class="audit-user-bar-wrap">
+        <div class="audit-user-bar" style="width:${pct}%"></div>
       </div>
+      <div class="audit-user-count">${u.count} <span>action${u.count===1?'':'s'}</span></div>
     </div>`;
   }).join('');
 }
@@ -1218,7 +1379,7 @@ function toggleAccActive(){
 
 function logAuditLocally(action, target, title){
   // Just refresh the audit log after a short delay
-  setTimeout(()=>{ if(isAdmin()) loadAuditLog(); }, 1500);
+  setTimeout(()=>{ if(hasPerm('audit_view')) loadAuditLog(); }, 1500);
 }
 
 // ── SESSION RESTORE ───────────────────────────────────────
@@ -1228,7 +1389,7 @@ async function restoreSession(){
     const res = await apiFetch('/api/admin/me');
     if(!res.ok) return false;
     const d = await res.json();
-    CU = { email: d.email, name: d.name, role: d.role };
+    CU = { email: d.email, name: d.name, role: d.role, permissions: d.permissions || {} };
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminShell').classList.add('visible');
     document.getElementById('userName').textContent = d.name || d.email;
@@ -1253,10 +1414,10 @@ function switchTab(name){
   document.getElementById('pageTitle').textContent=titles[name]||name;
   // Add property button only on properties tab for admins
   const addBtn=document.getElementById('addPropBtn');
-  if(addBtn)addBtn.style.display=(name==='properties'&&isAdmin())?'':'none';
-  // Hero upload button — admin only
+  if(addBtn)addBtn.style.display=(name==='properties'&&hasPerm('properties_create'))?'':'none';
+  // Hero upload button — gated by hero_upload permission
   const heroBtn=document.getElementById('heroUploadBtn');
-  if(heroBtn)heroBtn.style.display=(name==='hero'&&isAdmin())?'':'none';
+  if(heroBtn)heroBtn.style.display=(name==='hero'&&hasPerm('hero_upload'))?'':'none';
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();

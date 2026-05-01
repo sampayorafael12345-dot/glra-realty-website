@@ -149,3 +149,34 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
   .footer-social{justify-content:center}
   .footer-bottom{flex-direction:column;text-align:center}
 }
+
+/* ── EMAIL-GATED PRINT/DOWNLOAD BUTTON & MODAL (used by all calculators) ── */
+.print-button-wrapper{text-align:center;margin:28px auto 0;max-width:1400px;padding:0 5%}
+.print-btn{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:12px 28px;font-weight:500;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.print-btn:hover{background:var(--gold);color:#fff}
+.glra-print-gate{display:none;position:fixed;inset:0;background:rgba(5,12,22,.88);z-index:3000;align-items:center;justify-content:center}
+.glra-print-gate.show{display:flex}
+.glra-print-gate-card{background:#fff;max-width:420px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
+.glra-print-gate-card>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
+.glra-print-gate-card h3{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
+.glra-print-gate-card p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.7}
+.glra-print-gate-card input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:#fff;color:#0d1b2a}
+.glra-print-gate-card input:focus{outline:none;border-color:var(--gold)}
+.glra-print-gate-submit{width:100%;padding:14px;background:#0d1b2a;color:#fff;border:none;font-weight:500;cursor:pointer;transition:.2s;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.glra-print-gate-submit:hover{background:var(--gold)}
+.glra-print-gate-submit:disabled{opacity:.7;cursor:not-allowed}
+.glra-print-gate-close{position:absolute;top:12px;right:18px;font-size:22px;cursor:pointer;color:#999;background:none;border:none;line-height:1}
+.glra-print-gate-fine{font-size:11px;margin-top:15px;color:#888}
+
+/* ── PRINT-ONLY HEADER (branded letterhead when printing) ── */
+.print-only-header{display:none}
+@media print{
+  .navbar,.floating-buttons,.back-to-top,.toast,.disclaimer,.glra-print-gate,.print-button-wrapper,.no-print,footer{display:none !important}
+  body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-only-header{display:block;text-align:center;margin:0 auto 24px;padding:0 0 18px;border-bottom:2px solid #c8a96e;max-width:100%}
+  .print-only-header img{height:60px;width:auto;margin-bottom:10px}
+  .print-only-header h1{font-family:'Cormorant Garamond',serif;font-size:22px;color:#0d1b2a;margin-bottom:4px;font-weight:600}
+  .print-only-header .print-subtitle{font-size:11px;color:#555;letter-spacing:1px}
+  .print-only-header .print-meta{font-size:10px;color:#888;margin-top:6px;letter-spacing:.5px}
+  @page{size:A4;margin:1.5cm}
+}
