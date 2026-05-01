@@ -19,11 +19,14 @@ const { body, validationResult } = require('express-validator');
 const app = express();
 
 // ============ FAIL FAST ON MISSING REQUIRED ENV VARS ============
-const REQUIRED_ENV = ['MONGODB_URL', 'JWT_SECRET'];
-const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+// Accept either MONGODB_URL or MONGODB_URI (both names are common conventions).
+const MONGODB_CONNECTION = process.env.MONGODB_URL || process.env.MONGODB_URI;
+const missing = [];
+if (!MONGODB_CONNECTION) missing.push('MONGODB_URL (or MONGODB_URI)');
+if (!process.env.JWT_SECRET) missing.push('JWT_SECRET');
 if (missing.length) {
   console.error(`\n❌ Missing required environment variables: ${missing.join(', ')}`);
-  console.error('Create a .env file based on .env.example before starting the server.\n');
+  console.error('Set these in your Render dashboard (Environment tab) or in a local .env file.\n');
   process.exit(1);
 }
 if (process.env.JWT_SECRET.length < 32) {
@@ -197,7 +200,7 @@ const upload = multer({
 });
 
 // ============ MONGOOSE ============
-const MONGODB_URI = process.env.MONGODB_URL;
+const MONGODB_URI = MONGODB_CONNECTION;
 
 const propertySchema = new mongoose.Schema({
   title: { type: String, default: '' },
