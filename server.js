@@ -151,14 +151,6 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const chatLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 15,
-  message: { error: 'Too many chat requests. Slow down.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const publicWriteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 30,
@@ -1339,61 +1331,6 @@ app.get('/sitemap.xml', (req, res) => {
     res.status(404).send('Sitemap not found');
   }
 });
-
-// ============ AI CHATBOT PROXY ============
-app.post('/api/chat',
-  chatLimiter,
-  body('messages').optional().isArray({ max: 50 }),
-  body('systemPrompt').optional().isString().isLength({ max: 5000 }),
-  handleValidation,
-  async (req, res) => {
-    try {
-      const { messages, systemPrompt } = req.body;
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-
-      if (!apiKey) {
-        return res.status(503).json({
-          error: 'AI service not configured',
-          message: "I'm not available right now. Please contact us at 0917 177 4572 or message us on Messenger."
-        });
-      }
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 500,
-          system: systemPrompt || 'You are a helpful real estate assistant for GLRA Realty in the Philippines.',
-          messages: messages || []
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error('Anthropic API error:', err);
-        return res.status(502).json({
-          error: 'AI service error',
-          message: "I'm having trouble right now. Please call us at 0917 177 4572."
-        });
-      }
-
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || "I couldn't process that. Please contact us directly.";
-      res.json({ reply });
-    } catch (error) {
-      console.error('Chat proxy error:', error);
-      res.status(500).json({
-        error: 'Server error',
-        message: "Something went wrong. Please call us at 0917 177 4572."
-      });
-    }
-  }
-);
 
 // ============ ERROR HANDLER ============
 // Catches multer errors and other middleware errors
