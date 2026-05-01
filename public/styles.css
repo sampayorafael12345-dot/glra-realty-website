@@ -41,12 +41,12 @@ body.dark-mode .navbar{background:#0a1520}
 .mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff}
 
 /* ── MOBILE OVERLAY MENU ── */
-.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:78px 20px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .mobile-overlay.active{left:0}
-.mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:#fff;cursor:pointer}
-.mobile-overlay-links{display:flex;flex-direction:column;gap:28px;text-align:center}
-.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px;transition:var(--transition)}
-.mobile-overlay-links a:hover{color:var(--gold)}
+.mobile-overlay .close-menu{position:fixed;top:20px;right:24px;font-size:26px;color:#fff;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-radius:50%;z-index:2}
+.mobile-overlay-links{display:flex;flex-direction:column;gap:18px;text-align:center;width:100%;max-width:320px;padding:8px 0 24px}
+.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1.5px;transition:var(--transition);padding:6px 0}
+.mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--gold)}
 
 /* ── NAV DROPDOWN (More menu) ── */
 .nav-dropdown{position:relative}
@@ -83,23 +83,26 @@ body.dark-mode .floating-buttons .btn-darkmode{background:var(--gold);color:#fff
 /* Mobile FAB toggle — JS injects this as the LAST child so it sits at the bottom */
 .floating-buttons .fab-toggle{display:none;background:var(--gold);color:#fff;font-size:18px}
 .floating-buttons .fab-toggle.is-open{background:var(--navy);color:#fff;transform:rotate(90deg)}
+.floating-buttons .floating-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 @media(max-width:768px){
   .floating-buttons{bottom:18px;right:18px;gap:8px}
-  /* Hide every real button by default; only the FAB shows */
-  .floating-buttons > :not(.fab-toggle){display:none}
+  /* Keep buttons rendered (display:flex) but hide them; transitions can't animate display.
+     Using opacity+visibility+transform+pointer-events keeps them fully clickable as soon as expanded. */
+  .floating-buttons > :not(.fab-toggle){
+    display:flex;
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(10px) scale(.85);
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease, visibility .18s;
+  }
+  .floating-buttons.expanded > :not(.fab-toggle){
+    opacity:1;
+    visibility:visible;
+    transform:none;
+    pointer-events:auto;
+  }
   .floating-buttons .fab-toggle{display:flex;animation:fabPulse 2.5s ease-in-out 1s 2}
-  /* When expanded, reveal the rest with a staggered pop-in */
-  .floating-buttons.expanded > :not(.fab-toggle){display:flex;animation:fabPopIn .28s cubic-bezier(.34,1.56,.64,1) both}
-  .floating-buttons.expanded > :nth-last-child(2){animation-delay:.04s}
-  .floating-buttons.expanded > :nth-last-child(3){animation-delay:.08s}
-  .floating-buttons.expanded > :nth-last-child(4){animation-delay:.12s}
-  .floating-buttons.expanded > :nth-last-child(5){animation-delay:.16s}
-  .floating-buttons.expanded > :nth-last-child(6){animation-delay:.2s}
-  .floating-buttons.expanded > :nth-last-child(7){animation-delay:.24s}
-}
-@keyframes fabPopIn{
-  from{opacity:0;transform:translateY(12px) scale(.7)}
-  to{opacity:1;transform:translateY(0) scale(1)}
 }
 @keyframes fabPulse{
   0%,100%{box-shadow:var(--shadow-md)}
@@ -153,14 +156,17 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 /* ── TRUST BADGES STRIP ── */
 .trust-strip{background:var(--gray-light);padding:36px 5%;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color)}
 body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
-.trust-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;align-items:center}
-.trust-item{display:flex;align-items:center;gap:12px;padding:10px}
-.trust-item .trust-icon{width:44px;height:44px;flex-shrink:0;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:18px}
-.trust-item .trust-text{display:flex;flex-direction:column;line-height:1.3}
-.trust-item .trust-label{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text-color)}
-.trust-item .trust-sub{font-size:11px;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.trust-grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:16px;align-items:center;justify-items:center}
+.trust-item{display:flex;align-items:center;gap:12px;padding:8px;width:100%;max-width:220px;justify-content:flex-start}
+.trust-item .trust-icon{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:17px}
+.trust-item .trust-text{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.trust-item .trust-label{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text-color);white-space:nowrap}
+.trust-item .trust-sub{font-size:10.5px;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+@media(max-width:1100px){.trust-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){
-  .trust-item{justify-content:center;text-align:left}
+  .trust-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .trust-item{justify-content:center;text-align:left;padding:6px}
+  .trust-item .trust-label{font-size:15px}
 }
 
 /* ── MOBILE RESPONSIVE BASE ── */
@@ -177,7 +183,7 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
 }
 
 /* ── EMAIL-GATED PRINT/DOWNLOAD BUTTON & MODAL (used by all calculators) ── */
-.print-button-wrapper{text-align:center;margin:28px auto 0;max-width:1400px;padding:0 5%}
+.print-button-wrapper{text-align:center;margin:36px auto 28px;max-width:1400px;padding:0 5%}
 .print-btn{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:12px 28px;font-weight:500;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
 .print-btn:hover{background:var(--gold);color:#fff}
 .glra-print-gate{display:none;position:fixed;inset:0;background:rgba(5,12,22,.88);z-index:3000;align-items:center;justify-content:center}

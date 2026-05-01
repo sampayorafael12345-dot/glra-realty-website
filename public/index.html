@@ -64,12 +64,12 @@ body.dark-mode .navbar.scrolled .logo img{content:url('/hero-logo.png')}
 .contact-btn-nav:hover{background:var(--gold);color:#fff !important;border-color:var(--gold)}
 .mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff;z-index:1001}
 .navbar.scrolled .mobile-menu-btn{color:var(--text-color)}
-.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left 0.4s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;justify-content:center;align-items:center}
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left 0.4s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:78px 20px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .mobile-overlay.active{left:0}
-.mobile-overlay .close-menu{position:absolute;top:24px;right:28px;font-size:26px;color:var(--white);cursor:pointer}
-.mobile-overlay-links{display:flex;flex-direction:column;gap:28px;text-align:center}
-.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:2px}
-.mobile-overlay-links a:hover{color:var(--gold)}
+.mobile-overlay .close-menu{position:fixed;top:20px;right:24px;font-size:26px;color:var(--white);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-radius:50%;z-index:2}
+.mobile-overlay-links{display:flex;flex-direction:column;gap:18px;text-align:center;width:100%;max-width:320px;padding:8px 0 24px}
+.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1.5px;padding:6px 0}
+.mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--gold)}
 .hero-slider{height:100vh;min-height:650px;position:relative}
 .swiper-slide{position:relative;background-size:cover;background-position:center}
 .swiper-slide::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,20,35,0.55) 0%,rgba(10,20,35,0.35) 60%,rgba(10,20,35,0.7) 100%)}
