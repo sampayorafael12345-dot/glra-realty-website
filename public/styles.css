@@ -43,7 +43,8 @@ body.dark-mode .navbar{background:#0a1520}
 /* ── MOBILE OVERLAY MENU ── */
 .mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:78px 20px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .mobile-overlay.active{left:0}
-.mobile-overlay .close-menu{position:fixed;top:20px;right:24px;font-size:26px;color:#fff;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-radius:50%;z-index:2}
+.mobile-overlay .close-menu{position:fixed;top:20px;right:24px;font-size:26px;color:#fff;cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-radius:50%;z-index:2;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility .25s}
+.mobile-overlay.active .close-menu,.mobile-overlay.open .close-menu{visibility:visible;opacity:1}
 .mobile-overlay-links{display:flex;flex-direction:column;gap:18px;text-align:center;width:100%;max-width:320px;padding:8px 0 24px}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1.5px;transition:var(--transition);padding:6px 0}
 .mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--gold)}
