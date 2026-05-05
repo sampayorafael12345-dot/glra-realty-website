@@ -302,55 +302,30 @@ body.dark-mode .empty-state{background:#111b27}
 .footer-bottom{flex-direction:column;text-align:center}
 }
 /* ============================================
-   POLISH PASS V1 — 2026-05-05
+   DRAMATIC PASS V2 — 2026-05-05
    Removable: delete this whole block to revert.
    ============================================ */
 
-/* (1) Glass navbar — premium frosted backdrop when scrolled */
+/* (A) SCROLL PROGRESS BAR */
+.scroll-progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--gold) 0%,#f0d9a8 100%);
+  z-index:1500;will-change:width;box-shadow:0 0 12px rgba(200,169,110,0.6);
+  transition:width .08s linear;
+}
+
+/* (B) GLASS NAVBAR + UNDERLINE LINKS */
 .navbar.scrolled{
   background:rgba(255,255,255,0.72) !important;
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+  backdrop-filter:blur(22px) saturate(180%);
   border-bottom:1px solid rgba(200,169,110,0.18) !important;
   box-shadow:0 1px 30px rgba(13,27,42,0.06) !important;
 }
 body.dark-mode .navbar.scrolled{
-  background:rgba(13,27,42,0.70) !important;
+  background:rgba(13,27,42,0.72) !important;
   border-bottom-color:rgba(200,169,110,0.18) !important;
 }
-
-/* (2) Cinematic hero — slow Ken Burns + stronger gradient + logo lift */
-.hero-slider .swiper-slide-active{animation:glraKenBurns 14s ease-out forwards}
-@keyframes glraKenBurns{0%{transform:scale(1)}100%{transform:scale(1.06)}}
-.hero-slider .swiper-slide::before{background:linear-gradient(180deg,rgba(10,20,35,0.55) 0%,rgba(10,20,35,0.25) 50%,rgba(10,20,35,0.85) 100%) !important}
-.slide-content img{
-  filter:drop-shadow(0 10px 40px rgba(0,0,0,0.5)) !important;
-  animation:glraFadeUp 1.2s cubic-bezier(.2,.7,.2,1) both;
-}
-@keyframes glraFadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
-
-/* (3) Scroll-reveal — sections fade up as user scrolls */
-.reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
-.reveal.in{opacity:1;transform:none}
-
-/* (4) Refined property cards — gold border glow + slower image zoom */
-.prop-card{position:relative;transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s cubic-bezier(.2,.7,.2,1) !important}
-.prop-card:hover{transform:translateY(-8px) !important;box-shadow:0 0 0 1px var(--gold),0 30px 60px -20px rgba(200,169,110,0.45),0 14px 28px rgba(13,27,42,0.18) !important}
-.prop-card-image img{transition:transform 1s cubic-bezier(.2,.7,.2,1) !important}
-.prop-card:hover .prop-card-image img{transform:scale(1.09) !important}
-
-/* (5) Typography rhythm — bigger editorial headlines */
-.section-header h2{font-size:48px !important;letter-spacing:-0.012em}
-.cta-section h2{font-size:54px !important;letter-spacing:-0.012em}
-.broker-info h2{font-size:46px !important;letter-spacing:-0.012em}
-.section-eyebrow,.broker-info .eyebrow{letter-spacing:4px !important}
-@media(max-width:768px){
-  .section-header h2{font-size:32px !important}
-  .cta-section h2{font-size:34px !important}
-  .broker-info h2{font-size:32px !important}
-}
-
-/* (6) Animated gold underline on nav links */
 .nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown > a{position:relative}
 .nav-links > a:not(.contact-btn-nav)::after,.nav-links > .nav-dropdown > a::after{
   content:'';position:absolute;left:50%;bottom:-6px;width:0;height:1px;background:var(--gold);
@@ -358,33 +333,228 @@ body.dark-mode .navbar.scrolled{
 }
 .nav-links > a:not(.contact-btn-nav):hover::after,.nav-links > .nav-dropdown:hover > a::after{width:100%;left:0}
 
-/* (7) Button shimmer — light sweep across primary CTAs on hover */
+/* (C) HERO — CINEMATIC EDITORIAL */
+.hero-slider{height:100vh;min-height:680px;position:relative;overflow:hidden}
+.hero-slider .swiper-slide-active{animation:glraKenBurns 18s ease-out forwards}
+@keyframes glraKenBurns{0%{transform:scale(1)}100%{transform:scale(1.08)}}
+.hero-slider .swiper-slide::before{background:linear-gradient(180deg,rgba(10,20,35,0.40) 0%,rgba(10,20,35,0.18) 30%,rgba(10,20,35,0.55) 70%,rgba(10,20,35,0.92) 100%) !important}
+/* Hide the JS-injected logo (replaced by hero-overlay editorial copy) */
+.slide-content{display:none !important}
+
+.hero-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:0 6%;z-index:5;pointer-events:none;
+}
+.hero-overlay > *{pointer-events:auto}
+
+.hero-eyebrow{
+  color:rgba(255,255,255,0.85);font-size:11px;letter-spacing:5px;text-transform:uppercase;
+  margin-bottom:32px;font-weight:500;font-family:'DM Sans',sans-serif;
+  position:relative;padding:0 38px;
+  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.2s both;
+}
+.hero-eyebrow::before,.hero-eyebrow::after{
+  content:'';position:absolute;top:50%;width:24px;height:1px;background:var(--gold);
+}
+.hero-eyebrow::before{left:0}.hero-eyebrow::after{right:0}
+
+.hero-headline{
+  font-family:'Cormorant Garamond',serif;color:#fff;font-weight:500;
+  font-size:clamp(48px,8.5vw,124px);line-height:0.96;letter-spacing:-0.025em;
+  margin:0 auto 36px;max-width:1200px;
+}
+.hero-headline .line{display:block;overflow:hidden;padding:0 0 0.06em}
+.hero-headline .line-inner{display:inline-block;animation:glraLineUp 1.2s cubic-bezier(.2,.7,.2,1) both}
+.hero-headline .line:nth-child(1) .line-inner{animation-delay:.4s}
+.hero-headline .line:nth-child(2) .line-inner{animation-delay:.65s}
+.hero-headline em{color:var(--gold);font-style:italic;font-weight:600}
+@keyframes glraLineUp{0%{opacity:0;transform:translateY(110%) skewY(2deg)}100%{opacity:1;transform:translateY(0) skewY(0)}}
+
+.hero-sub{
+  color:rgba(255,255,255,0.78);font-size:16px;max-width:580px;line-height:1.7;
+  margin:0 auto 40px;font-family:'DM Sans',sans-serif;
+  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.95s both;
+}
+
+.hero-cta{
+  display:inline-flex;align-items:center;gap:14px;padding:18px 44px;
+  background:var(--gold);color:#fff;text-decoration:none;
+  font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:600;
+  font-family:'DM Sans',sans-serif;border-radius:0;
+  transition:all .35s cubic-bezier(.2,.7,.2,1);
+  position:relative;overflow:hidden;
+  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 1.15s both;
+  box-shadow:0 14px 40px rgba(200,169,110,0.35);
+}
+.hero-cta:hover{background:var(--gold-dark);transform:translateY(-3px);box-shadow:0 20px 50px rgba(200,169,110,0.5)}
+.hero-cta::before{
+  content:'';position:absolute;top:0;left:-130%;width:100%;height:100%;pointer-events:none;
+  background:linear-gradient(120deg,transparent 0%,transparent 35%,rgba(255,255,255,0.4) 50%,transparent 65%,transparent 100%);
+  transition:left .8s cubic-bezier(.2,.7,.2,1);
+}
+.hero-cta:hover::before{left:130%}
+
+@keyframes glraFadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+
+.hero-scroll-hint{bottom:42px !important}
+.hero-scroll-hint span{font-size:10px !important;letter-spacing:4px !important;color:rgba(255,255,255,0.7) !important}
+.scroll-line{height:48px !important}
+
+@media(max-width:768px){
+  .hero-slider{min-height:620px}
+  .hero-headline{font-size:clamp(40px,13vw,76px)}
+  .hero-sub{font-size:14px;max-width:90%}
+  .hero-eyebrow{padding:0;font-size:10px;letter-spacing:3px}
+  .hero-eyebrow::before,.hero-eyebrow::after{display:none}
+  .hero-cta{padding:15px 32px;font-size:10px}
+}
+
+/* (D) SEARCH CARD — soft luxury depth */
+.search-card{box-shadow:0 30px 80px rgba(0,0,0,0.30),0 0 0 1px rgba(200,169,110,0.08) inset !important}
+
+/* (E) TRUST STRIP */
+.trust-strip{padding:50px 5% !important}
+.trust-item .trust-label{font-size:18px !important}
+
+/* (F) NEIGHBORHOODS MARQUEE */
+.neighborhoods-marquee{
+  background:var(--navy);padding:24px 0;overflow:hidden;
+  border-top:1px solid rgba(200,169,110,0.15);border-bottom:1px solid rgba(200,169,110,0.15);
+  position:relative;
+}
+.neighborhoods-marquee::before,.neighborhoods-marquee::after{
+  content:'';position:absolute;top:0;bottom:0;width:140px;z-index:2;pointer-events:none;
+}
+.neighborhoods-marquee::before{left:0;background:linear-gradient(90deg,var(--navy) 0%,transparent 100%)}
+.neighborhoods-marquee::after{right:0;background:linear-gradient(-90deg,var(--navy) 0%,transparent 100%)}
+.marquee-track{
+  display:flex;gap:42px;align-items:center;
+  animation:glraMarquee 65s linear infinite;
+  white-space:nowrap;width:max-content;will-change:transform;
+}
+.marquee-track:hover{animation-play-state:paused}
+.marquee-track span{
+  font-family:'Cormorant Garamond',serif;font-size:24px;
+  color:rgba(255,255,255,0.45);letter-spacing:5px;text-transform:uppercase;font-weight:500;
+}
+.marquee-track .dot{font-size:30px;color:var(--gold);letter-spacing:0;font-weight:400}
+@keyframes glraMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* (G) BRAND STATEMENT */
+.brand-statement{padding:140px 5%;background:var(--white);position:relative;overflow:hidden}
+body.dark-mode .brand-statement{background:#0d1b2a}
+.brand-statement::before{
+  content:'';position:absolute;top:80px;left:50%;transform:translateX(-50%);
+  width:1px;height:48px;background:var(--gold);
+}
+.brand-statement-inner{max-width:920px;margin:0 auto;text-align:center;position:relative}
+.brand-statement .eyebrow{
+  font-size:11px;color:var(--gold);letter-spacing:5px;text-transform:uppercase;
+  margin-bottom:36px;display:block;font-weight:500;
+}
+.statement-text{
+  font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.2vw,50px);
+  line-height:1.28;color:var(--text-color);font-weight:500;letter-spacing:-0.008em;
+  margin-bottom:40px;
+}
+.statement-text em{color:var(--gold);font-style:normal;font-weight:600}
+.statement-divider{width:50px;height:1px;background:var(--gold);margin:0 auto 28px}
+.attribution{font-size:11px;color:var(--gray);letter-spacing:3px;text-transform:uppercase;font-weight:500}
+@media(max-width:768px){
+  .brand-statement{padding:80px 5%}
+  .brand-statement::before{top:48px;height:32px}
+}
+
+/* (H) SECTION HEADERS — bigger editorial */
+.section-header{margin-bottom:60px !important}
+.section-header h2{font-size:clamp(36px,5vw,56px) !important;letter-spacing:-0.015em !important;line-height:1.08 !important}
+.cta-section h2{font-size:clamp(40px,5.5vw,64px) !important;letter-spacing:-0.015em !important;line-height:1.05 !important}
+.broker-info h2{font-size:clamp(36px,4.5vw,54px) !important;letter-spacing:-0.012em !important;line-height:1.1 !important}
+.section-eyebrow,.broker-info .eyebrow{letter-spacing:5px !important;font-weight:500 !important}
+
+/* (I) PROPERTY CARDS — cinematic */
+.prop-card{
+  position:relative;border-radius:0 !important;
+  transition:transform .55s cubic-bezier(.2,.7,.2,1),box-shadow .55s cubic-bezier(.2,.7,.2,1) !important;
+}
+.prop-card:hover{
+  transform:translateY(-10px) !important;
+  box-shadow:0 0 0 1px var(--gold),0 40px 80px -25px rgba(200,169,110,0.5),0 18px 36px rgba(13,27,42,0.20) !important;
+}
+.prop-card-image img{transition:transform 1.2s cubic-bezier(.2,.7,.2,1) !important}
+.prop-card:hover .prop-card-image img{transform:scale(1.10) !important}
+.prop-card-image::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(200,169,110,0) 0%,rgba(200,169,110,0.20) 100%);
+  opacity:0;transition:opacity .55s cubic-bezier(.2,.7,.2,1);mix-blend-mode:overlay;
+}
+.prop-card:hover .prop-card-image::after{opacity:1}
+
+/* (J) RESOURCE CARDS */
+.resource-card{transition:all .5s cubic-bezier(.2,.7,.2,1) !important}
+.resource-card:hover{transform:translateY(-8px) !important;box-shadow:0 35px 70px -25px rgba(200,169,110,0.35) !important}
+
+/* (K) BROKER SPOTLIGHT — image polish */
+.broker-image{position:relative;overflow:hidden}
+.broker-image::before{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(135deg,transparent 50%,rgba(200,169,110,0.15) 100%);
+}
+.broker-image img{transition:transform 1.2s cubic-bezier(.2,.7,.2,1) !important}
+.broker-image:hover img{transform:scale(1.04)}
+
+/* (L) CTA SECTION — dramatic */
+.cta-section{padding:140px 5% !important;position:relative;overflow:hidden}
+.cta-section::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(200,169,110,0.12) 0%,transparent 60%);
+}
+.cta-section h2{margin-bottom:18px !important}
+.cta-section > *{position:relative;z-index:1}
+
+/* (M) BUTTON SHIMMER */
 .cta-btn,.search-btn-main,.submit-btn,.broker-btn-primary,.view-all-btn{position:relative;overflow:hidden}
 .cta-btn::before,.search-btn-main::before,.submit-btn::before,.broker-btn-primary::before,.view-all-btn::before{
   content:'';position:absolute;top:0;left:-130%;width:100%;height:100%;pointer-events:none;
   background:linear-gradient(120deg,transparent 0%,transparent 35%,rgba(255,255,255,0.32) 50%,transparent 65%,transparent 100%);
-  transition:left .7s cubic-bezier(.2,.7,.2,1);
+  transition:left .8s cubic-bezier(.2,.7,.2,1);
 }
 .cta-btn:hover::before,.search-btn-main:hover::before,.submit-btn:hover::before,.broker-btn-primary:hover::before,.view-all-btn:hover::before{left:130%}
 
-/* Bonus polish */
-.search-card{box-shadow:0 30px 80px rgba(0,0,0,0.30),0 0 0 1px rgba(200,169,110,0.08) inset !important}
-.resource-card{transition:all .45s cubic-bezier(.2,.7,.2,1) !important}
-.resource-card:hover{transform:translateY(-6px) !important;box-shadow:0 30px 60px -20px rgba(200,169,110,0.30) !important}
+/* (N) FLOATING BUTTONS */
 .floating-btn{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s !important}
-.floating-btn:hover{transform:translateY(-3px) scale(1.05) !important;box-shadow:0 10px 25px rgba(0,0,0,0.30) !important}
+.floating-btn:hover{transform:translateY(-3px) scale(1.06) !important;box-shadow:0 12px 28px rgba(0,0,0,0.30) !important}
 
-/* Respect users who prefer reduced motion */
+/* (O) SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(50px);transition:opacity 1s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+.reveal.in{opacity:1;transform:none}
+
+/* (P) FORM POLISH */
+.contact-form-section{padding:120px 5% 80px !important;max-width:900px !important}
+.contact-form{padding:48px !important}
+.form-input{padding:16px 18px !important;font-size:14px !important}
+.form-input:focus{border-color:var(--gold) !important;box-shadow:0 0 0 3px rgba(200,169,110,0.12) !important}
+.submit-btn{padding:16px !important;font-size:11px !important;letter-spacing:3px !important}
+
+/* (Q) FOOTER POLISH */
+footer{padding:80px 5% 30px !important}
+.footer-col h4{font-weight:600 !important;letter-spacing:3px !important}
+
+/* (R) LOADER refinement */
+.loader-logo{font-size:42px !important;letter-spacing:14px !important}
+
+/* (S) RESPECT REDUCED MOTION */
 @media(prefers-reduced-motion:reduce){
-  .reveal{opacity:1;transform:none;transition:none}
+  .reveal,.hero-overlay > *,.hero-headline .line-inner{opacity:1 !important;transform:none !important;animation:none !important;transition:none !important}
   .hero-slider .swiper-slide-active{animation:none}
-  .slide-content img{animation:none}
-  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important}
+  .marquee-track{animation:none !important}
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
 }
-/* ===== END POLISH PASS V1 ===== */
+/* ===== END DRAMATIC PASS V2 ===== */
 </style>
 </head>
 <body>
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 <div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
@@ -442,6 +612,15 @@ body.dark-mode .navbar.scrolled{
       <div class="slide-content"><img src="/hero-logo.png" alt="GLRA Realty"></div>
     </div>
   </div>
+  <div class="hero-overlay">
+    <span class="hero-eyebrow">Catherine SB Sampayo · Licensed Broker</span>
+    <h1 class="hero-headline">
+      <span class="line"><span class="line-inner">Find the place</span></span>
+      <span class="line"><span class="line-inner">you'll <em>never</em> leave.</span></span>
+    </h1>
+    <p class="hero-sub">A curated portfolio of homes across Metro Manila and Luzon — for buyers who recognize the difference between a house and a home.</p>
+    <a href="#featured" class="hero-cta">Explore Listings <i class="fas fa-arrow-right"></i></a>
+  </div>
   <div class="swiper-pagination"></div>
   <div class="hero-scroll-hint"><span>Scroll</span><div class="scroll-line"></div></div>
 </div>
@@ -494,6 +673,48 @@ body.dark-mode .navbar.scrolled{
       <div class="trust-icon"><i class="fas fa-building"></i></div>
       <div class="trust-text"><span class="trust-label"><span id="statProperties">0</span> Properties</span><span class="trust-sub">Currently Available</span></div>
     </div>
+  </div>
+</section>
+<!-- NEIGHBORHOODS MARQUEE -->
+<section class="neighborhoods-marquee" aria-label="Service areas">
+  <div class="marquee-track">
+    <span>Makati</span><span class="dot">·</span>
+    <span>Bonifacio Global City</span><span class="dot">·</span>
+    <span>Alabang</span><span class="dot">·</span>
+    <span>Ortigas</span><span class="dot">·</span>
+    <span>Rockwell</span><span class="dot">·</span>
+    <span>Quezon City</span><span class="dot">·</span>
+    <span>Taguig</span><span class="dot">·</span>
+    <span>Mandaluyong</span><span class="dot">·</span>
+    <span>Muntinlupa</span><span class="dot">·</span>
+    <span>Parañaque</span><span class="dot">·</span>
+    <span>Pasig</span><span class="dot">·</span>
+    <span>Cavite</span><span class="dot">·</span>
+    <span>Laguna</span><span class="dot">·</span>
+    <span>Batangas</span><span class="dot">·</span>
+    <span>Makati</span><span class="dot">·</span>
+    <span>Bonifacio Global City</span><span class="dot">·</span>
+    <span>Alabang</span><span class="dot">·</span>
+    <span>Ortigas</span><span class="dot">·</span>
+    <span>Rockwell</span><span class="dot">·</span>
+    <span>Quezon City</span><span class="dot">·</span>
+    <span>Taguig</span><span class="dot">·</span>
+    <span>Mandaluyong</span><span class="dot">·</span>
+    <span>Muntinlupa</span><span class="dot">·</span>
+    <span>Parañaque</span><span class="dot">·</span>
+    <span>Pasig</span><span class="dot">·</span>
+    <span>Cavite</span><span class="dot">·</span>
+    <span>Laguna</span><span class="dot">·</span>
+    <span>Batangas</span><span class="dot">·</span>
+  </div>
+</section>
+<!-- BRAND STATEMENT -->
+<section class="brand-statement">
+  <div class="brand-statement-inner">
+    <span class="eyebrow">The GLRA Promise</span>
+    <p class="statement-text">Ten years guiding buyers through the most consequential purchase of their lives <em>—</em> with discretion, transparency, and a portfolio worthy of the search.</p>
+    <div class="statement-divider"></div>
+    <p class="attribution">Catherine SB Sampayo · Licensed Real Estate Broker</p>
   </div>
 </section>
 <section class="section" id="featured">
@@ -629,15 +850,74 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const targets = document.querySelectorAll('section');
   if(!targets.length) return;
-  targets.forEach(el => el.classList.add('reveal'));
+  targets.forEach(el => { if(!el.classList.contains('neighborhoods-marquee')) el.classList.add('reveal'); });
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
     });
   }, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
-  targets.forEach(el => io.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
   /* Safety net — reveal anything still hidden after 3.5s */
   setTimeout(() => document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in')), 3500);
+})();
+
+/* Scroll progress bar */
+(function(){
+  const sp = document.getElementById('scrollProgress');
+  if(!sp) return;
+  let ticking = false;
+  const update = () => {
+    const h = document.documentElement;
+    const max = (h.scrollHeight - h.clientHeight) || 1;
+    sp.style.width = ((h.scrollTop / max) * 100) + '%';
+    ticking = false;
+  };
+  window.addEventListener('scroll', () => {
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
+
+/* Animated number counters in trust strip */
+(function(){
+  const items = document.querySelectorAll('.trust-label');
+  items.forEach(el => {
+    if(el.children.length > 0) return; /* skip ones with nested spans, e.g. statProperties */
+    const text = el.textContent.trim();
+    const m = text.match(/^([\d.]+)/);
+    if(!m) return;
+    const target = parseFloat(m[1]);
+    const decimals = (m[1].split('.')[1]||'').length;
+    const rest = text.slice(m[0].length);
+    el.dataset.target = target;
+    el.dataset.decimals = decimals;
+    el.dataset.rest = rest;
+    el.textContent = (decimals ? '0.'+'0'.repeat(decimals) : '0') + rest;
+  });
+  if(!('IntersectionObserver' in window)){
+    items.forEach(el => { if(el.dataset.target) el.textContent = el.dataset.target + (el.dataset.rest||''); });
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseFloat(el.dataset.target);
+      const decimals = parseInt(el.dataset.decimals);
+      const rest = el.dataset.rest || '';
+      const duration = 1800;
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = (eased * target).toFixed(decimals) + rest;
+        if(t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      observer.unobserve(el);
+    });
+  }, {threshold:0.5});
+  document.querySelectorAll('.trust-label[data-target]').forEach(el => observer.observe(el));
 })();
 loadHeroImages();loadProperties();
 </script>
