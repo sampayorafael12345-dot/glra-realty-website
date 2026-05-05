@@ -191,6 +191,28 @@ const upload = multer({
   }
 });
 
+// Task attachments accept the document types brokers + lawyers actually use.
+const ALLOWED_TASK_ATTACHMENT_MIMES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain', 'text/csv'
+]);
+const uploadAttachment = multer({
+  storage: storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_TASK_ATTACHMENT_MIMES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not allowed. Use images, PDF, Word, Excel, or text files.'));
+    }
+  }
+});
+
 // ============ MONGOOSE ============
 const MONGODB_URI = MONGODB_CONNECTION;
 
@@ -297,6 +319,49 @@ const auditLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+// ============ TASKS (Monday-style internal task board) ============
+// Generic across businesses (real estate / law firm / etc.) — `category` and
+// `reference` are free-form so the same board can hold listing follow-ups,
+// case milestones, marketing TODOs, anything.
+const taskSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true, maxlength: 200 },
+  description: { type: String, default: '', maxlength: 5000 },
+  category: { type: String, default: '', trim: true, maxlength: 60, index: true },
+  status: {
+    type: String,
+    enum: ['todo', 'in_progress', 'stuck', 'done'],
+    default: 'todo',
+    index: true
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    default: 'medium'
+  },
+  assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Account', index: true }],
+  dueDate: { type: Date, default: null },
+  reference: { type: String, default: '', trim: true, maxlength: 200 },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  completedAt: { type: Date, default: null },
+  updates: [{
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
+    authorName: { type: String, default: '' },
+    authorEmail: { type: String, default: '' },
+    text: { type: String, required: true, maxlength: 2000 },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  attachments: [{
+    url: { type: String, required: true },
+    publicId: { type: String, required: true },
+    filename: { type: String, default: '' },
+    size: { type: Number, default: 0 },
+    resourceType: { type: String, default: 'image' },
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
+    uploadedByName: { type: String, default: '' },
+    uploadedAt: { type: Date, default: Date.now }
+  }]
+}, { timestamps: true });
+
 // ============ PERMISSIONS ============
 // Master list of every granular permission key in the system.
 const PERMISSION_KEYS = [
@@ -310,7 +375,11 @@ const PERMISSION_KEYS = [
   'hero_edit',
   'hero_delete',
   'accounts_manage',  // create/edit/delete staff accounts — admin role always has this regardless
-  'audit_view'
+  'audit_view',
+  'tasks_view',     // see the tasks tab at all
+  'tasks_create',   // create new tasks and assign them
+  'tasks_edit',     // reassign / change due-date / edit any task (assignees can always change status of their own)
+  'tasks_delete'    // permanently delete tasks (managers only)
 ];
 
 // Sensible defaults per role.
@@ -322,6 +391,7 @@ function defaultPermissionsForRole(role) {
     return all;
   }
   // Employees default: can manage properties (the most common day-to-day task) but not delete or manage hero/accounts.
+  // Tasks: by default they can see the board and post comments on their own tasks; only managers create/edit/delete.
   return {
     properties_create: true,
     properties_edit: true,
@@ -333,7 +403,11 @@ function defaultPermissionsForRole(role) {
     hero_edit: false,
     hero_delete: false,
     accounts_manage: false,
-    audit_view: false
+    audit_view: false,
+    tasks_view: true,
+    tasks_create: false,
+    tasks_edit: false,
+    tasks_delete: false
   };
 }
 
@@ -384,6 +458,7 @@ const Wishlist = mongoose.model('Wishlist', wishlistSchema);
 const AlertLog = mongoose.model('AlertLog', alertLogSchema);
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 const Account = mongoose.model('Account', accountSchema);
+const Task = mongoose.model('Task', taskSchema);
 
 // ============ CONNECT TO MONGODB ============
 mongoose.connect(MONGODB_URI, {
@@ -1319,6 +1394,294 @@ app.delete('/api/admin/hero-images/:id', verifyToken, requirePermission('hero_de
     await HeroImage.findByIdAndDelete(req.params.id);
     await logAudit(req, 'DELETE', 'HeroImage', req.params.id, '', null);
     res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ============ TASKS (Monday-style internal task board) ============
+// Visibility: admins see all; employees only see tasks where they are assigned or were the creator.
+async function buildTaskVisibilityFilter(user) {
+  if (user && user.role === 'admin') return {};
+  // Re-check live account in case role changed since token issue
+  const account = await Account.findById(user.sub).select('role').lean();
+  if (account && account.role === 'admin') return {};
+  return {
+    $or: [
+      { assignedTo: user.sub },
+      { createdBy: user.sub }
+    ]
+  };
+}
+
+// List tasks (visibility-filtered, with optional filters)
+app.get('/api/admin/tasks', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const { status, assignee, category, search } = req.query;
+    const filter = { ...visibility };
+    if (status && ['todo','in_progress','stuck','done'].includes(status)) filter.status = status;
+    if (assignee && mongoose.isValidObjectId(assignee)) filter.assignedTo = assignee;
+    if (category) filter.category = category;
+    if (search) {
+      const safe = String(search).slice(0, 80).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rx = { $regex: safe, $options: 'i' };
+      filter.$and = [{ $or: [{ title: rx }, { description: rx }, { reference: rx }] }];
+    }
+    const tasks = await Task.find(filter)
+      .populate('assignedTo', 'name email role')
+      .populate('createdBy', 'name email')
+      .sort({ updatedAt: -1 })
+      .limit(500)
+      .lean();
+    res.json(tasks);
+  } catch (err) {
+    console.error('Tasks list error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Stats for the dashboard cards (open / overdue / by status / by assignee)
+app.get('/api/admin/tasks-stats', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const all = await Task.find(visibility).select('status assignedTo dueDate').lean();
+    const now = new Date();
+    const counts = { total: all.length, todo: 0, in_progress: 0, stuck: 0, done: 0, overdue: 0 };
+    const byAssignee = {};
+    all.forEach(t => {
+      counts[t.status] = (counts[t.status] || 0) + 1;
+      if (t.status !== 'done' && t.dueDate && new Date(t.dueDate) < now) counts.overdue++;
+      (t.assignedTo || []).forEach(aid => {
+        const k = aid.toString();
+        if (!byAssignee[k]) byAssignee[k] = { todo: 0, in_progress: 0, stuck: 0, done: 0 };
+        byAssignee[k][t.status] = (byAssignee[k][t.status] || 0) + 1;
+      });
+    });
+    res.json({ ...counts, byAssignee });
+  } catch (err) {
+    console.error('Tasks stats error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Distinct categories — for autocomplete
+app.get('/api/admin/tasks-categories', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const cats = await Task.distinct('category', visibility);
+    res.json(cats.filter(c => c && c.trim()).sort());
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Active employees — for the assignee dropdown
+app.get('/api/admin/tasks-assignees', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const accounts = await Account.find({ isActive: true }).select('email name role').sort({ name: 1 }).lean();
+    res.json(accounts);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Get a single task (visibility-checked)
+app.get('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility })
+      .populate('assignedTo', 'name email role')
+      .populate('createdBy', 'name email')
+      .lean();
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    res.json(task);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Create — requires tasks_create
+app.post('/api/admin/tasks', verifyToken, requirePermission('tasks_create'), async (req, res) => {
+  try {
+    const { title, description, category, status, priority, assignedTo, dueDate, reference } = req.body;
+    if (!title || !String(title).trim()) return res.status(400).json({ error: 'Title is required' });
+    const task = await Task.create({
+      title: String(title).trim(),
+      description: description ? String(description) : '',
+      category: category ? String(category).trim() : '',
+      status: ['todo','in_progress','stuck','done'].includes(status) ? status : 'todo',
+      priority: ['low','medium','high','critical'].includes(priority) ? priority : 'medium',
+      assignedTo: Array.isArray(assignedTo) ? assignedTo.filter(id => mongoose.isValidObjectId(id)) : [],
+      dueDate: dueDate ? new Date(dueDate) : null,
+      reference: reference ? String(reference).trim() : '',
+      createdBy: req.user.sub
+    });
+    await logAudit(req, 'CREATE', 'Task', task._id, task.title, null);
+    res.json(task);
+  } catch (err) {
+    console.error('Task create error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update — visibility-checked. Assignees + creator can change status/description/comments.
+// Reassigning, changing due date, or editing other people's tasks requires tasks_edit.
+app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const existing = await Task.findOne({ _id: req.params.id, ...visibility });
+    if (!existing) return res.status(404).json({ error: 'Task not found' });
+
+    const account = await Account.findById(req.user.sub).select('role permissions').lean();
+    const isAdmin = req.user.role === 'admin' || (account && account.role === 'admin');
+    const hasEdit = isAdmin || (account && account.permissions && account.permissions.tasks_edit === true);
+    const isParticipant = existing.createdBy.toString() === req.user.sub
+      || (existing.assignedTo || []).some(a => a.toString() === req.user.sub);
+    if (!hasEdit && !isParticipant) {
+      return res.status(403).json({ error: 'You cannot edit this task' });
+    }
+
+    const allowed = ['title','description','category','status','priority','assignedTo','dueDate','reference'];
+    const update = {};
+    allowed.forEach(k => {
+      if (req.body[k] !== undefined) update[k] = req.body[k];
+    });
+    if (update.status && !['todo','in_progress','stuck','done'].includes(update.status)) delete update.status;
+    if (update.priority && !['low','medium','high','critical'].includes(update.priority)) delete update.priority;
+    // Non-managers cannot reassign or rename
+    if (!hasEdit) {
+      delete update.assignedTo;
+      delete update.title;
+      delete update.dueDate;
+      delete update.reference;
+      delete update.category;
+    }
+    if (update.assignedTo) {
+      update.assignedTo = Array.isArray(update.assignedTo)
+        ? update.assignedTo.filter(id => mongoose.isValidObjectId(id))
+        : [];
+    }
+    if (update.dueDate !== undefined) {
+      update.dueDate = update.dueDate ? new Date(update.dueDate) : null;
+    }
+    if (update.title) update.title = String(update.title).trim().slice(0, 200);
+    if (update.description !== undefined) update.description = String(update.description).slice(0, 5000);
+    if (update.category) update.category = String(update.category).trim().slice(0, 60);
+    if (update.reference) update.reference = String(update.reference).trim().slice(0, 200);
+    // Auto-manage completedAt
+    if (update.status === 'done' && existing.status !== 'done') update.completedAt = new Date();
+    else if (update.status && update.status !== 'done' && existing.status === 'done') update.completedAt = null;
+
+    const task = await Task.findByIdAndUpdate(req.params.id, update, { new: true });
+    await logAudit(req, 'UPDATE', 'Task', task._id, task.title, update);
+    res.json(task);
+  } catch (err) {
+    console.error('Task update error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete — requires tasks_delete. Cleans Cloudinary attachments.
+app.delete('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_delete'), async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    for (const att of (task.attachments || [])) {
+      try { await cloudinary.uploader.destroy(att.publicId, { resource_type: att.resourceType || 'image' }); } catch {}
+    }
+    await Task.findByIdAndDelete(req.params.id);
+    await logAudit(req, 'DELETE', 'Task', req.params.id, task.title, null);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Task delete error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add an update / comment to a task
+app.post('/api/admin/tasks/:id/updates', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const { text } = req.body;
+    if (!text || !String(text).trim()) return res.status(400).json({ error: 'Update text is required' });
+    task.updates.push({
+      author: req.user.sub,
+      authorName: req.user.name || '',
+      authorEmail: req.user.email || '',
+      text: String(text).trim().slice(0, 2000),
+      createdAt: new Date()
+    });
+    await task.save();
+    await logAudit(req, 'COMMENT', 'Task', task._id, task.title, { text: String(text).trim().slice(0, 200) });
+    res.json(task);
+  } catch (err) {
+    console.error('Task comment error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a comment (own comment, or admin)
+app.delete('/api/admin/tasks/:id/updates/:updateId', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const upd = task.updates.id(req.params.updateId);
+    if (!upd) return res.status(404).json({ error: 'Update not found' });
+    const isAdmin = req.user.role === 'admin';
+    if (!isAdmin && upd.author.toString() !== req.user.sub) {
+      return res.status(403).json({ error: 'You can only delete your own comments' });
+    }
+    upd.deleteOne();
+    await task.save();
+    res.json(task);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Upload an attachment (PDF, Word, image, etc.)
+app.post('/api/admin/tasks/:id/attachments', verifyToken, requirePermission('tasks_view'), uploadAttachment.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file provided' });
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility });
+    if (!task) {
+      if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'glra_realty/tasks',
+      resource_type: 'auto'
+    });
+    if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+    task.attachments.push({
+      url: result.secure_url,
+      publicId: result.public_id,
+      filename: req.file.originalname || '',
+      size: result.bytes || 0,
+      resourceType: result.resource_type || 'image',
+      uploadedBy: req.user.sub,
+      uploadedByName: req.user.name || req.user.email || '',
+      uploadedAt: new Date()
+    });
+    await task.save();
+    await logAudit(req, 'UPLOAD', 'TaskAttachment', task._id, req.file.originalname || '', { size: result.bytes });
+    res.json(task);
+  } catch (err) {
+    console.error('Task upload error:', err);
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+    }
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+// Remove an attachment
+app.delete('/api/admin/tasks/:id/attachments/:attId', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const att = task.attachments.id(req.params.attId);
+    if (!att) return res.status(404).json({ error: 'Attachment not found' });
+    try { await cloudinary.uploader.destroy(att.publicId, { resource_type: att.resourceType || 'image' }); } catch {}
+    att.deleteOne();
+    await task.save();
+    res.json(task);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
