@@ -194,3 +194,195 @@ window.glraOpenPrintGate = function (label) {
   modal.classList.add('show');
   setTimeout(() => modal.querySelector('input').focus(), 50);
 };
+
+/* ============================================
+   DRAMATIC PASS V2 — interactive helpers
+   Applied to all pages via main.js.
+   Removable: delete from the START marker to END marker.
+   ============================================ */
+/* DRAMATIC-V2-HELPERS-START */
+(function glraDramaticV2(){
+  if (typeof document === 'undefined') return;
+
+  var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var IS_HOVER = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  /* 1) Scroll progress bar — inject once, then track scroll */
+  ready(function(){
+    if (!document.getElementById('scrollProgress')) {
+      var sp = document.createElement('div');
+      sp.id = 'scrollProgress';
+      sp.className = 'scroll-progress';
+      sp.setAttribute('aria-hidden', 'true');
+      document.body.insertAdjacentElement('afterbegin', sp);
+    }
+    var sp = document.getElementById('scrollProgress');
+    var ticking = false;
+    var update = function(){
+      var h = document.documentElement;
+      var max = (h.scrollHeight - h.clientHeight) || 1;
+      sp.style.width = ((h.scrollTop / max) * 100) + '%';
+      ticking = false;
+    };
+    window.addEventListener('scroll', function(){
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+    update();
+  });
+
+  /* 2) Navbar — auto-add .scrolled past 50px (idempotent with index.html's own listener) */
+  ready(function(){
+    var navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    var ticking = false;
+    var update = function(){
+      navbar.classList[window.scrollY > 50 ? 'add' : 'remove']('scrolled');
+      ticking = false;
+    };
+    window.addEventListener('scroll', function(){
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+    update();
+  });
+
+  /* 3) Scroll reveal — auto-apply to common content elements */
+  if (!RM) {
+    ready(function(){
+      if (!('IntersectionObserver' in window)) return;
+      var candidates = document.querySelectorAll(
+        'section, .blog-card, .prop-card, .resource-card, .value-card, .testimonial-card, ' +
+        '.neighborhood-card, .about-intro, .values-bg, .stats-section, .calculator-container'
+      );
+      if (!candidates.length) return;
+      candidates.forEach(function(el){
+        /* Skip elements managed by index.html's own observer */
+        if (el.classList.contains('reveal') || el.classList.contains('neighborhoods-marquee')) return;
+        el.classList.add('gl-reveal');
+      });
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.gl-reveal').forEach(function(el){ io.observe(el); });
+      /* Safety net — reveal anything still hidden after 4s */
+      setTimeout(function(){
+        document.querySelectorAll('.gl-reveal:not(.in)').forEach(function(el){ el.classList.add('in'); });
+      }, 4000);
+    });
+  }
+
+  /* 4) Animated number counters in trust-strip and stat-numbers */
+  ready(function(){
+    if (!('IntersectionObserver' in window)) return;
+    var items = document.querySelectorAll('.trust-label, .stat-number');
+    items.forEach(function(el){
+      if (el.children.length > 0) return; /* skip nested-content labels */
+      var text = el.textContent.trim();
+      var m = text.match(/^([\d.]+)/);
+      if (!m) return;
+      var target = parseFloat(m[1]);
+      var decimals = (m[1].split('.')[1] || '').length;
+      var rest = text.slice(m[0].length);
+      el.dataset.glTarget = target;
+      el.dataset.glDecimals = decimals;
+      el.dataset.glRest = rest;
+      el.textContent = (decimals ? '0.' + '0'.repeat(decimals) : '0') + rest;
+    });
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var el = e.target;
+        var target = parseFloat(el.dataset.glTarget);
+        var decimals = parseInt(el.dataset.glDecimals);
+        var rest = el.dataset.glRest || '';
+        var duration = RM ? 0 : 1800;
+        if (duration === 0) {
+          el.textContent = target.toFixed(decimals) + rest;
+        } else {
+          var start = performance.now();
+          var tick = function(now){
+            var t = Math.min((now - start) / duration, 1);
+            var eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = (eased * target).toFixed(decimals) + rest;
+            if (t < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+        observer.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-gl-target]').forEach(function(el){ observer.observe(el); });
+  });
+
+  /* 5) Cursor follower — desktop with fine pointer only */
+  if (IS_HOVER && !RM) {
+    ready(function(){
+      if (document.querySelector('.gl-cursor')) return;
+      var c = document.createElement('div');
+      c.className = 'gl-cursor';
+      document.body.appendChild(c);
+      var mx = 0, my = 0, x = 0, y = 0;
+      document.addEventListener('mousemove', function(e){
+        mx = e.clientX; my = e.clientY;
+        document.body.classList.add('gl-cursor-active');
+      });
+      document.addEventListener('mouseleave', function(){
+        document.body.classList.remove('gl-cursor-active');
+      });
+      var loop = function(){
+        x += (mx - x) * 0.18;
+        y += (my - y) * 0.18;
+        c.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0) translate(-50%,-50%)';
+        requestAnimationFrame(loop);
+      };
+      loop();
+      var lastTarget = null;
+      document.addEventListener('mouseover', function(e){
+        var hov = e.target.closest('a, button, .prop-card, .resource-card, .blog-card, .value-card, .neighborhood-card, [role="button"], input, select, textarea');
+        if (hov !== lastTarget) {
+          c.classList.toggle('grow', !!hov);
+          lastTarget = hov;
+        }
+      });
+    });
+  }
+
+  /* 6) Magnetic primary buttons — subtle pull toward cursor (desktop) */
+  if (IS_HOVER && !RM) {
+    ready(function(){
+      var buttons = document.querySelectorAll(
+        '.cta-btn, .submit-btn, .search-btn-main, .hero-cta, .broker-btn-primary, .print-btn'
+      );
+      buttons.forEach(function(btn){
+        if (btn.classList.contains('gl-magnetic')) return;
+        btn.classList.add('gl-magnetic');
+        var raf = null;
+        btn.addEventListener('mousemove', function(e){
+          var rect = btn.getBoundingClientRect();
+          var cx = rect.left + rect.width / 2;
+          var cy = rect.top + rect.height / 2;
+          var dx = (e.clientX - cx) * 0.18;
+          var dy = (e.clientY - cy) * 0.18;
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(function(){
+            btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+          });
+        });
+        btn.addEventListener('mouseleave', function(){
+          if (raf) cancelAnimationFrame(raf);
+          btn.style.transform = '';
+        });
+      });
+    });
+  }
+})();
+/* DRAMATIC-V2-HELPERS-END */
