@@ -159,6 +159,23 @@ const publicWriteLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Stricter limit for public property-submission endpoints.
+// 5 submissions per IP per hour, 25 image uploads per IP per hour.
+const submissionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many submissions from this address. Please try again in an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const submissionUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 25,
+  message: { error: 'Too many image uploads. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ============ UPLOADS ============
 const uploadsDir = path.join(__dirname, 'public/uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -362,6 +379,45 @@ const taskSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+// ============ PROPERTY SUBMISSIONS (public listing form) ============
+// Owners fill out a public form to list their property. Each submission stays
+// in this collection (separate from the live `properties` collection) until an
+// admin reviews and clicks "Import" — which copies the data into a real Property.
+const propertySubmissionSchema = new mongoose.Schema({
+  // Submitter contact info
+  submitterName: { type: String, required: true, trim: true, maxlength: 100 },
+  submitterEmail: { type: String, required: true, trim: true, lowercase: true, maxlength: 120 },
+  submitterPhone: { type: String, default: '', trim: true, maxlength: 30 },
+  submitterMessage: { type: String, default: '', maxlength: 1000 },
+
+  // Property details (mirrors Property schema)
+  title: { type: String, required: true, trim: true, maxlength: 200 },
+  description: { type: String, default: '', maxlength: 5000 },
+  location: { type: String, required: true, trim: true, maxlength: 200 },
+  mapLocation: { type: String, default: '', trim: true, maxlength: 200 },
+  propertyType: { type: String, default: 'Condominium', maxlength: 60 },
+  listingType: { type: String, default: 'FOR SALE', maxlength: 30 },
+  price: { type: Number, default: 0 },
+  monthlyRental: { type: Number, default: 0 },
+  bedrooms: { type: Number, default: 0 },
+  bathrooms: { type: Number, default: 0 },
+  sqm: { type: Number, default: 0 },
+  landArea: { type: Number, default: 0 },
+  parking: { type: Number, default: 0 },
+  developer: { type: String, default: '', maxlength: 120 },
+  mainImage: { type: String, default: '' },
+  gallery: { type: [String], default: [] },
+
+  // Workflow / admin fields
+  status: { type: String, enum: ['pending','imported','rejected'], default: 'pending', index: true },
+  importedPropertyId: { type: String, default: null },
+  reviewedBy: { type: String, default: '' },
+  reviewedAt: { type: Date, default: null },
+  adminNotes: { type: String, default: '', maxlength: 2000 },
+  ip: { type: String, default: '' },
+  userAgent: { type: String, default: '' }
+}, { timestamps: true });
+
 // ============ PERMISSIONS ============
 // Master list of every granular permission key in the system.
 const PERMISSION_KEYS = [
@@ -379,7 +435,10 @@ const PERMISSION_KEYS = [
   'tasks_view',     // see the tasks tab at all
   'tasks_create',   // create new tasks and assign them
   'tasks_edit',     // reassign / change due-date / edit any task (assignees can always change status of their own)
-  'tasks_delete'    // permanently delete tasks (managers only)
+  'tasks_delete',   // permanently delete tasks (managers only)
+  'submissions_view',    // see the property-submissions tab
+  'submissions_import',  // convert a submission into a live Property listing
+  'submissions_delete'   // permanently delete a submission
 ];
 
 // Sensible defaults per role.
@@ -407,7 +466,10 @@ function defaultPermissionsForRole(role) {
     tasks_view: true,
     tasks_create: false,
     tasks_edit: false,
-    tasks_delete: false
+    tasks_delete: false,
+    submissions_view: true,
+    submissions_import: false,
+    submissions_delete: false
   };
 }
 
@@ -459,6 +521,7 @@ const AlertLog = mongoose.model('AlertLog', alertLogSchema);
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 const Account = mongoose.model('Account', accountSchema);
 const Task = mongoose.model('Task', taskSchema);
+const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 
 // ============ CONNECT TO MONGODB ============
 mongoose.connect(MONGODB_URI, {
@@ -1683,6 +1746,267 @@ app.delete('/api/admin/tasks/:id/attachments/:attId', verifyToken, requirePermis
     await task.save();
     res.json(task);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ============ PROPERTY SUBMISSIONS (public listing form) ============
+// Public: image upload (rate-limited, no auth). Goes to a separate Cloudinary
+// folder so we can sweep orphans later without touching live property images.
+app.post('/api/property-submissions/upload-image',
+  submissionUploadLimiter,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'glra_realty/submissions',
+        transformation: [{ width: 1600, height: 1200, crop: 'limit' }, { quality: 'auto' }]
+      });
+      if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+      res.json({ url: result.secure_url, size: result.bytes });
+    } catch (err) {
+      console.error('Submission upload error:', err);
+      if (req.file && fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+      res.status(500).json({ error: 'Upload failed' });
+    }
+  }
+);
+
+// Public: submit the property listing form
+app.post('/api/property-submissions',
+  submissionLimiter,
+  [
+    body('submitterName').trim().notEmpty().isLength({ max: 100 }).withMessage('Your name is required'),
+    body('submitterEmail').trim().isEmail().normalizeEmail().withMessage('A valid email is required'),
+    body('submitterPhone').optional({ checkFalsy: true }).isLength({ max: 30 }),
+    body('title').trim().notEmpty().isLength({ max: 200 }).withMessage('Property title is required'),
+    body('location').trim().notEmpty().isLength({ max: 200 }).withMessage('Location is required'),
+    body('listingType').trim().isIn(['FOR SALE', 'FOR LEASE', 'SALE AND LEASE']).withMessage('Invalid listing type'),
+    body('propertyType').trim().isLength({ max: 60 }),
+    body('description').optional({ checkFalsy: true }).isLength({ max: 5000 }),
+    body('mainImage').optional({ checkFalsy: true }).isURL(),
+    body('gallery').optional({ checkFalsy: true }).isArray({ max: 20 })
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: errors.array()[0].msg });
+      }
+      const b = req.body || {};
+      // Reject submissions that don't include at least one image — gives admin
+      // some signal that the submitter is serious.
+      if (!b.mainImage && (!Array.isArray(b.gallery) || b.gallery.length === 0)) {
+        return res.status(400).json({ error: 'Please upload at least one photo of the property.' });
+      }
+      const sub = await PropertySubmission.create({
+        submitterName: b.submitterName,
+        submitterEmail: b.submitterEmail,
+        submitterPhone: b.submitterPhone || '',
+        submitterMessage: b.submitterMessage || '',
+        title: b.title,
+        description: b.description || '',
+        location: b.location,
+        mapLocation: b.mapLocation || '',
+        propertyType: b.propertyType || 'Condominium',
+        listingType: b.listingType || 'FOR SALE',
+        price: parseFloat(b.price) || 0,
+        monthlyRental: parseFloat(b.monthlyRental) || 0,
+        bedrooms: parseInt(b.bedrooms) || 0,
+        bathrooms: parseInt(b.bathrooms) || 0,
+        sqm: parseFloat(b.sqm) || 0,
+        landArea: parseFloat(b.landArea) || 0,
+        parking: parseInt(b.parking) || 0,
+        developer: b.developer || '',
+        mainImage: b.mainImage || (Array.isArray(b.gallery) && b.gallery[0]) || '',
+        gallery: Array.isArray(b.gallery) ? b.gallery.slice(0, 20) : [],
+        ip: req.ip || req.connection?.remoteAddress || '',
+        userAgent: req.headers?.['user-agent'] || ''
+      });
+
+      // Confirmation email to the submitter
+      try {
+        const safeName = (b.submitterName || '').replace(/[<>]/g, '');
+        const safeTitle = (b.title || '').replace(/[<>]/g, '');
+        const userHtml = `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f8fafc">
+            <div style="background:#0d1b2a;color:#fff;padding:24px;text-align:center">
+              <h2 style="margin:0;font-family:Georgia,serif;color:#c8a96e">GLRA Realty</h2>
+              <p style="margin:6px 0 0;font-size:13px;opacity:.7">Submission received</p>
+            </div>
+            <div style="background:#fff;padding:24px;border:1px solid #e2e8f0">
+              <p>Hi ${safeName},</p>
+              <p>Thank you for submitting <strong>${safeTitle}</strong> to GLRA Realty. Our team will review your listing within 1–2 business days and reach out to you at this email.</p>
+              <p>If you have additional details or photos, simply reply to this email.</p>
+              <p style="margin-top:18px">— The GLRA Realty team</p>
+            </div>
+          </div>`;
+        await sendEmail(b.submitterEmail, 'We received your property listing — GLRA Realty', userHtml);
+      } catch (e) { console.error('Submitter confirmation email error:', e.message); }
+
+      // Notification email to admin
+      try {
+        const safeName = (b.submitterName || '').replace(/[<>]/g, '');
+        const safeTitle = (b.title || '').replace(/[<>]/g, '');
+        const safeLoc = (b.location || '').replace(/[<>]/g, '');
+        const safeEmail = (b.submitterEmail || '').replace(/[<>]/g, '');
+        const safePhone = (b.submitterPhone || '').replace(/[<>]/g, '');
+        const adminHtml = `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px">
+            <h2 style="color:#0d1b2a;border-bottom:2px solid #c8a96e;padding-bottom:8px">New Property Submission</h2>
+            <p><strong>${safeTitle}</strong> · ${safeLoc}</p>
+            <p>Listing type: <strong>${(b.listingType||'').replace(/[<>]/g,'')}</strong> · Property type: ${(b.propertyType||'').replace(/[<>]/g,'')}</p>
+            <p>Price: ₱${(parseFloat(b.price)||0).toLocaleString()} · Rental: ₱${(parseFloat(b.monthlyRental)||0).toLocaleString()}/mo</p>
+            <hr>
+            <p>Submitted by: <strong>${safeName}</strong></p>
+            <p>Email: ${safeEmail}</p>
+            <p>Phone: ${safePhone || '—'}</p>
+            <p style="margin-top:20px">Open the admin dashboard → Submissions tab to review and import.</p>
+          </div>`;
+        await sendEmail('glrarealty@gmail.com', `New Listing Submission: ${safeTitle}`, adminHtml);
+      } catch (e) { console.error('Admin notification email error:', e.message); }
+
+      res.json({ success: true, id: sub._id });
+    } catch (err) {
+      console.error('Submission create error:', err);
+      res.status(500).json({ error: 'Could not save submission. Please try again.' });
+    }
+  }
+);
+
+// Admin: list all submissions (filter by status, search)
+app.get('/api/admin/property-submissions', verifyToken, requirePermission('submissions_view'), async (req, res) => {
+  try {
+    const { status, search } = req.query;
+    const filter = {};
+    if (status && ['pending','imported','rejected'].includes(status)) filter.status = status;
+    if (search) {
+      const safe = String(search).slice(0, 80).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rx = { $regex: safe, $options: 'i' };
+      filter.$or = [
+        { title: rx }, { location: rx }, { submitterName: rx }, { submitterEmail: rx }
+      ];
+    }
+    const subs = await PropertySubmission.find(filter).sort({ createdAt: -1 }).limit(500).lean();
+    res.json(subs);
+  } catch (err) {
+    console.error('Submissions list error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Admin: stats (badge count etc.)
+app.get('/api/admin/property-submissions-stats', verifyToken, requirePermission('submissions_view'), async (req, res) => {
+  try {
+    const [pending, imported, rejected, total] = await Promise.all([
+      PropertySubmission.countDocuments({ status: 'pending' }),
+      PropertySubmission.countDocuments({ status: 'imported' }),
+      PropertySubmission.countDocuments({ status: 'rejected' }),
+      PropertySubmission.countDocuments({})
+    ]);
+    res.json({ pending, imported, rejected, total });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Admin: get a single submission
+app.get('/api/admin/property-submissions/:id', verifyToken, requirePermission('submissions_view'), async (req, res) => {
+  try {
+    const sub = await PropertySubmission.findById(req.params.id).lean();
+    if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    res.json(sub);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Admin: update notes / status (without importing — e.g. mark rejected, save notes)
+app.put('/api/admin/property-submissions/:id', verifyToken, requirePermission('submissions_view'), async (req, res) => {
+  try {
+    const allowed = ['adminNotes', 'status'];
+    const update = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
+    if (update.status && !['pending','imported','rejected'].includes(update.status)) delete update.status;
+    if (update.status && update.status !== 'pending') {
+      update.reviewedBy = req.user.email || '';
+      update.reviewedAt = new Date();
+    }
+    const sub = await PropertySubmission.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    await logAudit(req, 'UPDATE', 'PropertySubmission', sub._id, sub.title, update);
+    res.json(sub);
+  } catch (err) {
+    console.error('Submission update error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Admin: IMPORT submission → create a live Property listing
+// This is the one-click "no manual re-typing" button.
+app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermission('submissions_import'), async (req, res) => {
+  try {
+    const sub = await PropertySubmission.findById(req.params.id);
+    if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    if (sub.status === 'imported' && sub.importedPropertyId) {
+      return res.status(409).json({ error: 'This submission has already been imported.' });
+    }
+    // Optional overrides admin can pass when importing (e.g. "save as featured", correct title)
+    const o = req.body || {};
+    const property = await Property.create({
+      title: (o.title || sub.title || '').trim(),
+      location: (o.location || sub.location || '').trim(),
+      mapLocation: o.mapLocation !== undefined ? o.mapLocation : (sub.mapLocation || ''),
+      description: o.description !== undefined ? o.description : (sub.description || ''),
+      propertyType: o.propertyType || sub.propertyType || 'Condominium',
+      listingType: o.listingType || sub.listingType || 'FOR SALE',
+      price: o.price !== undefined ? Number(o.price) : (sub.price || 0),
+      monthlyRental: o.monthlyRental !== undefined ? Number(o.monthlyRental) : (sub.monthlyRental || 0),
+      bedrooms: o.bedrooms !== undefined ? Number(o.bedrooms) : (sub.bedrooms || 0),
+      bathrooms: o.bathrooms !== undefined ? Number(o.bathrooms) : (sub.bathrooms || 0),
+      sqm: o.sqm !== undefined ? Number(o.sqm) : (sub.sqm || 0),
+      landArea: o.landArea !== undefined ? Number(o.landArea) : (sub.landArea || 0),
+      parking: o.parking !== undefined ? Number(o.parking) : (sub.parking || 0),
+      developer: o.developer !== undefined ? o.developer : (sub.developer || ''),
+      mainImage: sub.mainImage || '',
+      gallery: Array.isArray(sub.gallery) ? sub.gallery : [],
+      featured: !!o.featured,
+      status: 'available',
+      notes: `Imported from submission by ${sub.submitterName} <${sub.submitterEmail}>${sub.submitterPhone ? ' / ' + sub.submitterPhone : ''}.${sub.submitterMessage ? ' Message: ' + sub.submitterMessage : ''}`
+    });
+    sub.status = 'imported';
+    sub.importedPropertyId = property._id.toString();
+    sub.reviewedBy = req.user.email || '';
+    sub.reviewedAt = new Date();
+    await sub.save();
+    await logAudit(req, 'IMPORT', 'PropertySubmission', sub._id, sub.title, { propertyId: property._id });
+    await logAudit(req, 'CREATE', 'Property', property._id, property.title, { source: 'submission', submissionId: sub._id });
+    res.json({ success: true, propertyId: property._id, submission: sub });
+  } catch (err) {
+    console.error('Submission import error:', err);
+    res.status(500).json({ error: 'Could not import submission. Please try again.' });
+  }
+});
+
+// Admin: delete submission (also removes Cloudinary images that aren't shared with a live Property)
+app.delete('/api/admin/property-submissions/:id', verifyToken, requirePermission('submissions_delete'), async (req, res) => {
+  try {
+    const sub = await PropertySubmission.findById(req.params.id);
+    if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    // Best-effort cleanup: only delete images from Cloudinary if this submission
+    // was NOT yet imported. Once imported, the live Property uses the same URLs.
+    if (sub.status !== 'imported') {
+      const all = [sub.mainImage, ...(sub.gallery || [])].filter(Boolean);
+      for (const url of all) {
+        try {
+          // Extract public_id from a Cloudinary URL — works for the standard format.
+          const m = url.match(/\/glra_realty\/submissions\/([^/.]+)/);
+          if (m) await cloudinary.uploader.destroy('glra_realty/submissions/' + m[1]);
+        } catch {}
+      }
+    }
+    await PropertySubmission.findByIdAndDelete(req.params.id);
+    await logAudit(req, 'DELETE', 'PropertySubmission', req.params.id, sub.title, null);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Submission delete error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // ============ STATIC + SITEMAP ============
