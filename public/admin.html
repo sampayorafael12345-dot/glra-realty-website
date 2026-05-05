@@ -565,6 +565,44 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
   .task-panel-meta{grid-template-columns:1fr}
   .task-panel-meta dt{margin-top:8px}
 }
+
+/* ════════════════════════════════════════════════════════
+   PROPERTY SUBMISSIONS (public-form pipeline)
+   ════════════════════════════════════════════════════════ */
+.subs-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:900px){.subs-stats-grid{grid-template-columns:repeat(2,1fr)}}
+.sub-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;border-radius:2px;white-space:nowrap}
+.sub-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.sub-status.s-pending{background:rgba(245,158,11,.14);color:#b45309}
+.sub-status.s-imported{background:rgba(16,185,129,.14);color:#065f46}
+.sub-status.s-rejected{background:rgba(239,68,68,.14);color:#b91c1c}
+body.dark-mode .sub-status.s-pending{color:#fbbf24}
+body.dark-mode .sub-status.s-imported{color:#86efac}
+body.dark-mode .sub-status.s-rejected{color:#fca5a5}
+
+.subs-table .sub-thumb{width:54px;height:42px;object-fit:cover;border:1px solid var(--border-color);background:var(--gray-light)}
+.subs-table .sub-noimg{width:54px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--gray-light);color:var(--gray);font-size:14px}
+
+/* Submission detail panel — reuses task-panel styles */
+.sub-panel-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px}
+.sub-panel-photos a{display:block;aspect-ratio:4/3;background:var(--gray-light);overflow:hidden;border:1px solid var(--border-color);position:relative}
+.sub-panel-photos a img{width:100%;height:100%;object-fit:cover;display:block;transition:var(--transition)}
+.sub-panel-photos a:hover img{transform:scale(1.04)}
+.sub-panel-photos .photo-main{position:absolute;top:6px;left:6px;background:var(--gold);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;font-weight:600;z-index:2}
+
+.sub-spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.sub-spec{background:var(--gray-light);padding:10px 12px;border:1px solid var(--border-color)}
+.sub-spec .lbl{font-size:9.5px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:3px}
+.sub-spec .val{font-size:14px;color:var(--text-color);font-weight:600;font-family:'Cormorant Garamond',serif}
+
+.sub-import-btn{background:var(--success);color:#fff;border:none;padding:11px 22px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:var(--transition)}
+.sub-import-btn:hover{background:#059669}
+.sub-import-btn:disabled{opacity:.6;cursor:not-allowed}
+.sub-imported-banner{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#065f46;padding:11px 14px;font-size:12px;display:flex;align-items:center;gap:10px}
+body.dark-mode .sub-imported-banner{color:#86efac}
+.sub-imported-banner a{color:inherit;text-decoration:underline;font-weight:600}
+.sub-rejected-banner{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#b91c1c;padding:11px 14px;font-size:12px}
+body.dark-mode .sub-rejected-banner{color:#fca5a5}
 </style>
 </head>
 <body>
@@ -599,6 +637,7 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
       <a class="nav-item" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inqBadge" style="display:none">0</span></a>
       <a class="nav-item" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
       <a class="nav-item" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
+      <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <!-- Admin only section — hidden for employees via JS -->
@@ -711,6 +750,9 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
               <tr><td>Create new tasks &amp; assign</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>Edit / reassign tasks</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>Delete tasks</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>View property submissions</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
+              <tr><td>Import submissions to live listings</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
+              <tr><td>Delete submissions</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
             </tbody></table></div>
           </div>
         </div>
@@ -761,6 +803,33 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
           <div class="res-count" id="auditCount"></div>
         </div>
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Description</th><th>Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- PROPERTY SUBMISSIONS (public form pipeline) -->
+      <div id="tab-submissions" style="display:none">
+        <!-- Stats cards (clickable to filter) -->
+        <div class="subs-stats-grid">
+          <div class="tasks-stat t-all active" data-sub-filter=""><div><div class="ts-num" id="subTotal">—</div><div class="ts-lbl">All Submissions</div></div><i class="fas fa-inbox ts-icn"></i></div>
+          <div class="tasks-stat t-progress" data-sub-filter="pending"><div><div class="ts-num" id="subPending">—</div><div class="ts-lbl">Pending Review</div></div><i class="fas fa-clock ts-icn"></i></div>
+          <div class="tasks-stat t-done" data-sub-filter="imported"><div><div class="ts-num" id="subImported">—</div><div class="ts-lbl">Imported</div></div><i class="fas fa-check-double ts-icn"></i></div>
+          <div class="tasks-stat t-stuck" data-sub-filter="rejected"><div><div class="ts-num" id="subRejected">—</div><div class="ts-lbl">Rejected</div></div><i class="fas fa-times-circle ts-icn"></i></div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="subSearch" placeholder="Search by title, location, name, or email..." oninput="renderSubmissions()"></div>
+          <button class="hdr-btn" onclick="loadSubmissions()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          <div class="res-count" id="subCount"></div>
+        </div>
+
+        <div class="panel"><div class="panel-body" style="padding:0">
+          <div class="tbl-wrap">
+            <table class="subs-table">
+              <thead><tr><th>Photo</th><th>Property</th><th>Submitted by</th><th>Type</th><th>Price</th><th>Status</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead>
+              <tbody id="subTbody"></tbody>
+            </table>
+          </div>
+        </div></div>
       </div>
 
       <!-- TASKS (Monday-style internal task board) -->
@@ -991,6 +1060,74 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
   </div>
 </div>
 
+<!-- SUBMISSION DETAIL PANEL (slide-in from right, reuses task-panel styles) -->
+<div class="task-panel-overlay" id="spOverlay" onclick="closeSubPanel()"></div>
+<aside class="task-panel" id="subPanel" aria-hidden="true">
+  <div class="task-panel-head">
+    <div class="tp-head-main">
+      <div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1.4px;font-weight:600">Property Submission</div>
+      <div class="task-panel-title readonly" id="spTitle"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+        <span id="spStatusPill"></span>
+        <span id="spListingType" style="font-size:10.5px;color:var(--gray)"></span>
+      </div>
+    </div>
+    <button class="task-panel-close" onclick="closeSubPanel()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="task-panel-body">
+
+    <!-- Photos -->
+    <div class="task-panel-section">
+      <h4><i class="fas fa-images"></i> Photos <span id="spPhotoCount" style="color:var(--gray);font-weight:400;margin-left:6px"></span></h4>
+      <div class="sub-panel-photos" id="spPhotos"></div>
+    </div>
+
+    <!-- Specs -->
+    <div class="task-panel-section">
+      <h4><i class="fas fa-list-ul"></i> Property Details</h4>
+      <div class="sub-spec-grid" id="spSpecs"></div>
+    </div>
+
+    <!-- Description -->
+    <div class="task-panel-section">
+      <h4><i class="fas fa-align-left"></i> Description</h4>
+      <div id="spDescription" style="font-size:13px;line-height:1.7;color:var(--text-color);white-space:pre-wrap;word-break:break-word"></div>
+    </div>
+
+    <!-- Submitter -->
+    <div class="task-panel-section">
+      <h4><i class="fas fa-user"></i> Submitter</h4>
+      <dl class="task-panel-meta" style="padding:0;border:none;grid-template-columns:130px 1fr">
+        <dt>Name</dt><dd id="spSubName">—</dd>
+        <dt>Email</dt><dd id="spSubEmail">—</dd>
+        <dt>Phone</dt><dd id="spSubPhone">—</dd>
+        <dt>Message</dt><dd id="spSubMsg" style="white-space:pre-wrap">—</dd>
+        <dt>Submitted</dt><dd id="spSubDate" style="color:var(--gray);font-size:12px">—</dd>
+      </dl>
+    </div>
+
+    <!-- Admin notes -->
+    <div class="task-panel-section">
+      <h4><i class="fas fa-sticky-note"></i> Internal Notes</h4>
+      <textarea id="spNotes" rows="3" placeholder="Optional notes for your team — not visible to the submitter."></textarea>
+      <button class="hdr-btn" onclick="saveSubNotes()" style="margin-top:8px"><i class="fas fa-save"></i> Save Notes</button>
+    </div>
+
+    <!-- Status banner (if imported / rejected) -->
+    <div class="task-panel-section" id="spStatusBanner" style="display:none"></div>
+
+    <!-- Actions -->
+    <div class="task-panel-section" style="display:flex;justify-content:space-between;align-items:center;border-bottom:none;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="sub-import-btn" id="spImportBtn" onclick="importSubmission()"><i class="fas fa-file-import"></i> Import to Properties</button>
+        <button class="hdr-btn" id="spRejectBtn" onclick="rejectSubmission()" style="background:rgba(239,68,68,.08);color:#ef4444;border-color:#ef4444"><i class="fas fa-ban"></i> Mark Rejected</button>
+      </div>
+      <button class="hdr-btn" id="spDeleteBtn" onclick="deleteSubmission()" style="background:rgba(239,68,68,.1);color:#ef4444;border-color:#ef4444"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+
+  </div>
+</aside>
+
 <!-- TASK DETAIL PANEL (slide-in from right) -->
 <div class="task-panel-overlay" id="tpOverlay" onclick="closeTaskPanel()"></div>
 <aside class="task-panel" id="taskPanel" aria-hidden="true">
@@ -1114,7 +1251,10 @@ const PERM_DEFS = [
   { key: 'tasks_view',              name: 'View Tasks',              desc: 'Can see the tasks tab (only their assigned/created tasks)' },
   { key: 'tasks_create',            name: 'Create Tasks',            desc: 'Can create new tasks and assign them to others' },
   { key: 'tasks_edit',              name: 'Edit / Reassign Tasks',   desc: 'Can rename, reassign, change due dates on any task they can see' },
-  { key: 'tasks_delete',            name: 'Delete Tasks',            desc: 'Can permanently delete tasks (managers only)' }
+  { key: 'tasks_delete',            name: 'Delete Tasks',            desc: 'Can permanently delete tasks (managers only)' },
+  { key: 'submissions_view',        name: 'View Submissions',        desc: 'Can see the property submissions tab (public form pipeline)' },
+  { key: 'submissions_import',      name: 'Import Submissions',      desc: 'Can convert a submission into a live Property listing' },
+  { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -1122,7 +1262,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   properties_upload_image: true, inquiries_delete: false, subscribers_delete: false,
   hero_upload: false, hero_edit: false, hero_delete: false,
   accounts_manage: false, audit_view: false,
-  tasks_view: true, tasks_create: false, tasks_edit: false, tasks_delete: false
+  tasks_view: true, tasks_create: false, tasks_edit: false, tasks_delete: false,
+  submissions_view: true, submissions_import: false, submissions_delete: false
 };
 
 // Check if the currently logged-in user has a permission.
@@ -1316,6 +1457,7 @@ function loadAll(){
   loadStats();loadAllProps();loadInquiries();loadSubscribers();loadAlerts();loadHeroImages();
   if(isAdmin()){loadAccounts();}
   if(hasPerm('tasks_view')) loadTasksData();
+  if(hasPerm('submissions_view')) loadSubmissionStats();
   if(name==='auditlog'&&hasPerm('audit_view'))loadAuditLog();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
@@ -1887,6 +2029,265 @@ async function restoreSession(){
 }
 // Try restore on page load
 window.addEventListener('DOMContentLoaded', () => { restoreSession(); });
+
+// ════════════════════════════════════════════════════════════
+// PROPERTY SUBMISSIONS — public-form pipeline
+// ════════════════════════════════════════════════════════════
+let allSubmissions = [];
+let activeSubId = null;
+
+async function loadSubmissionStats(){
+  if(!hasPerm('submissions_view')) return;
+  try{
+    const s = await apiFetch('/api/admin/property-submissions-stats').then(r=>r.json());
+    document.getElementById('subTotal').textContent = s.total ?? 0;
+    document.getElementById('subPending').textContent = s.pending ?? 0;
+    document.getElementById('subImported').textContent = s.imported ?? 0;
+    document.getElementById('subRejected').textContent = s.rejected ?? 0;
+    const badge = document.getElementById('subBadge');
+    if(badge){
+      if(s.pending > 0){ badge.textContent = s.pending; badge.style.display = ''; }
+      else badge.style.display = 'none';
+    }
+  }catch(e){ console.error('Sub stats error:', e); }
+}
+
+async function loadSubmissions(){
+  if(!hasPerm('submissions_view')) return;
+  try{
+    const subs = await apiFetch('/api/admin/property-submissions').then(r=>r.json());
+    allSubmissions = Array.isArray(subs) ? subs : [];
+    renderSubmissions();
+    loadSubmissionStats();
+  }catch(e){ console.error('Submissions load error:', e); }
+}
+
+function getFilteredSubs(){
+  const search = (document.getElementById('subSearch')?.value || '').toLowerCase().trim();
+  const statusCardActive = document.querySelector('#tab-submissions .tasks-stat.active')?.dataset.subFilter || '';
+  return allSubmissions.filter(s => {
+    if(statusCardActive && s.status !== statusCardActive) return false;
+    if(search){
+      const hay = `${s.title||''} ${s.location||''} ${s.submitterName||''} ${s.submitterEmail||''}`.toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function renderSubmissions(){
+  const tbody = document.getElementById('subTbody');
+  const cnt = document.getElementById('subCount');
+  if(!tbody) return;
+  const filtered = getFilteredSubs();
+  if(cnt) cnt.textContent = `${filtered.length} ${filtered.length===1?'submission':'submissions'}`;
+  if(filtered.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8"><div class="tasks-empty"><i class="fas fa-inbox"></i><p>No submissions yet</p><small>Owners who fill in the public form at <code>/list-property.html</code> will appear here.</small></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(s => {
+    const thumb = s.mainImage
+      ? `<img class="sub-thumb" src="${esc(s.mainImage)}" alt="" loading="lazy">`
+      : `<div class="sub-noimg"><i class="fas fa-image"></i></div>`;
+    const priceLabel = s.listingType === 'FOR LEASE'
+      ? (s.monthlyRental ? `${fmt(s.monthlyRental)}/mo` : '—')
+      : (s.price ? fmt(s.price) : (s.monthlyRental ? `${fmt(s.monthlyRental)}/mo` : '—'));
+    const statusLabel = { pending: 'Pending', imported: 'Imported', rejected: 'Rejected' }[s.status] || s.status;
+    const canImport = s.status === 'pending' && hasPerm('submissions_import');
+    const canDelete = hasPerm('submissions_delete');
+    return `<tr onclick="openSubPanel('${s._id}')" style="cursor:pointer">
+      <td>${thumb}</td>
+      <td><div style="font-weight:600;font-size:13px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(s.title)}">${esc(s.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.location||'')}</div></td>
+      <td><div style="font-size:12.5px">${esc(s.submitterName||'')}</div><div style="font-size:11px;color:var(--gray)">${esc(s.submitterEmail||'')}</div></td>
+      <td><span class="badge ${s.listingType==='FOR LEASE'?'b-lease':'b-sale'}">${esc(s.listingType||'—')}</span></td>
+      <td style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--gold);font-weight:600;white-space:nowrap">${priceLabel}</td>
+      <td><span class="sub-status s-${s.status}">${statusLabel}</span></td>
+      <td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(s.createdAt)}</td>
+      <td class="t-actions" onclick="event.stopPropagation()" style="text-align:right">
+        <button onclick="openSubPanel('${s._id}')" title="Open"><i class="fas fa-external-link-alt"></i></button>
+        ${canImport?`<button onclick="quickImportSubmission('${s._id}')" title="Import" style="border-color:#10b981;color:#10b981"><i class="fas fa-file-import"></i></button>`:''}
+        ${canDelete?`<button class="danger" onclick="quickDeleteSubmission('${s._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Stat-card click → filter
+document.addEventListener('click', e => {
+  const card = e.target.closest('#tab-submissions .tasks-stat');
+  if(!card) return;
+  document.querySelectorAll('#tab-submissions .tasks-stat').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  renderSubmissions();
+});
+
+async function openSubPanel(id){
+  activeSubId = id;
+  document.getElementById('spOverlay').classList.add('open');
+  document.getElementById('subPanel').classList.add('open');
+  document.getElementById('subPanel').setAttribute('aria-hidden','false');
+  try{
+    const sub = await apiFetch('/api/admin/property-submissions/'+id).then(r=>r.json());
+    if(!sub || sub.error) throw new Error(sub?.error||'Not found');
+    const idx = allSubmissions.findIndex(x => x._id === id);
+    if(idx >= 0) allSubmissions[idx] = sub; else allSubmissions.unshift(sub);
+    renderSubPanel(sub);
+  }catch(e){ showToast(e.message||'Could not load submission', true); closeSubPanel(); }
+}
+function closeSubPanel(){
+  document.getElementById('spOverlay').classList.remove('open');
+  document.getElementById('subPanel').classList.remove('open');
+  document.getElementById('subPanel').setAttribute('aria-hidden','true');
+  activeSubId = null;
+}
+
+function renderSubPanel(s){
+  document.getElementById('spTitle').textContent = s.title || '';
+  const statusLabel = { pending: 'Pending Review', imported: 'Imported', rejected: 'Rejected' }[s.status] || s.status;
+  document.getElementById('spStatusPill').outerHTML = `<span id="spStatusPill" class="sub-status s-${s.status}">${statusLabel}</span>`;
+  document.getElementById('spListingType').textContent = `· ${s.listingType||'—'} · ${s.propertyType||'—'} · ${esc(s.location||'')}`;
+
+  // Photos
+  const photos = [s.mainImage, ...(s.gallery||[])].filter((v,i,a) => v && a.indexOf(v) === i);
+  document.getElementById('spPhotoCount').textContent = photos.length ? `(${photos.length})` : '';
+  document.getElementById('spPhotos').innerHTML = photos.length
+    ? photos.map((url, i) => `<a href="${esc(url)}" target="_blank" rel="noopener">${i===0?'<span class="photo-main">Main</span>':''}<img src="${esc(url)}" alt="" loading="lazy"></a>`).join('')
+    : '<small style="color:var(--gray)">No photos uploaded.</small>';
+
+  // Specs
+  const specs = [];
+  if(s.price) specs.push({ lbl: 'Selling Price', val: fmt(s.price) });
+  if(s.monthlyRental) specs.push({ lbl: 'Monthly Rental', val: fmt(s.monthlyRental) });
+  if(s.bedrooms) specs.push({ lbl: 'Bedrooms', val: s.bedrooms });
+  if(s.bathrooms) specs.push({ lbl: 'Bathrooms', val: s.bathrooms });
+  if(s.sqm) specs.push({ lbl: 'Floor Area', val: s.sqm + ' sqm' });
+  if(s.landArea) specs.push({ lbl: 'Land Area', val: s.landArea + ' sqm' });
+  if(s.parking) specs.push({ lbl: 'Parking', val: s.parking });
+  if(s.developer) specs.push({ lbl: 'Developer', val: s.developer });
+  if(s.mapLocation) specs.push({ lbl: 'Map Pin', val: s.mapLocation });
+  document.getElementById('spSpecs').innerHTML = specs.length
+    ? specs.map(sp => `<div class="sub-spec"><div class="lbl">${esc(sp.lbl)}</div><div class="val">${esc(String(sp.val))}</div></div>`).join('')
+    : '<small style="color:var(--gray)">No specifications provided.</small>';
+
+  // Description
+  document.getElementById('spDescription').textContent = s.description || '— No description provided —';
+
+  // Submitter
+  document.getElementById('spSubName').textContent = s.submitterName || '—';
+  const emailEl = document.getElementById('spSubEmail');
+  emailEl.innerHTML = s.submitterEmail ? `<a href="mailto:${esc(s.submitterEmail)}" style="color:var(--gold)">${esc(s.submitterEmail)}</a>` : '—';
+  const phoneEl = document.getElementById('spSubPhone');
+  phoneEl.innerHTML = s.submitterPhone ? `<a href="tel:${esc(s.submitterPhone)}" style="color:var(--gold)">${esc(s.submitterPhone)}</a>` : '—';
+  document.getElementById('spSubMsg').textContent = s.submitterMessage || '—';
+  document.getElementById('spSubDate').textContent = s.createdAt ? new Date(s.createdAt).toLocaleString('en-PH',{dateStyle:'medium',timeStyle:'short'}) : '—';
+
+  // Notes
+  document.getElementById('spNotes').value = s.adminNotes || '';
+
+  // Status banner + action buttons
+  const banner = document.getElementById('spStatusBanner');
+  const importBtn = document.getElementById('spImportBtn');
+  const rejectBtn = document.getElementById('spRejectBtn');
+  const delBtn = document.getElementById('spDeleteBtn');
+  if(s.status === 'imported'){
+    banner.style.display = '';
+    banner.innerHTML = `<div class="sub-imported-banner"><i class="fas fa-check-circle"></i> <div>Imported on ${s.reviewedAt ? new Date(s.reviewedAt).toLocaleString('en-PH',{dateStyle:'medium',timeStyle:'short'}) : '—'} by ${esc(s.reviewedBy||'admin')}.${s.importedPropertyId?` <a href="/properties.html?property=${esc(s.importedPropertyId)}" target="_blank">View live listing →</a>`:''}</div></div>`;
+    importBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+  } else if(s.status === 'rejected'){
+    banner.style.display = '';
+    banner.innerHTML = `<div class="sub-rejected-banner"><i class="fas fa-ban"></i> Marked rejected on ${s.reviewedAt ? new Date(s.reviewedAt).toLocaleString('en-PH',{dateStyle:'medium',timeStyle:'short'}) : '—'} by ${esc(s.reviewedBy||'admin')}.</div>`;
+    importBtn.style.display = hasPerm('submissions_import') ? '' : 'none';
+    rejectBtn.style.display = 'none';
+  } else {
+    banner.style.display = 'none';
+    importBtn.style.display = hasPerm('submissions_import') ? '' : 'none';
+    rejectBtn.style.display = hasPerm('submissions_view') ? '' : 'none';
+  }
+  delBtn.style.display = hasPerm('submissions_delete') ? '' : 'none';
+}
+
+async function importSubmission(){
+  if(!activeSubId || !hasPerm('submissions_import')) return;
+  if(!confirm('Import this submission into Properties? This creates a new live listing using the submitted data and photos.')) return;
+  const btn = document.getElementById('spImportBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+activeSubId+'/import', { method:'POST', body: JSON.stringify({}) });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.error||'Import failed');
+    showToast('Imported! New property created.');
+    // Refresh both lists
+    await loadAllProps();
+    await loadSubmissions();
+    // Re-open with fresh data
+    openSubPanel(activeSubId);
+  }catch(e){
+    showToast(e.message||'Could not import', true);
+    btn.disabled = false; btn.innerHTML = original;
+  }
+}
+async function quickImportSubmission(id){
+  if(!hasPerm('submissions_import')) return;
+  if(!confirm('Import this submission into Properties?')) return;
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+id+'/import', { method:'POST', body: JSON.stringify({}) });
+    if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.error||'Import failed'); }
+    showToast('Imported successfully');
+    await loadSubmissions();
+    await loadAllProps();
+  }catch(e){ showToast(e.message||'Could not import', true); }
+}
+
+async function rejectSubmission(){
+  if(!activeSubId) return;
+  if(!confirm('Mark this submission as rejected? It stays visible here but will not be imported.')) return;
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+activeSubId, { method:'PUT', body: JSON.stringify({ status: 'rejected' }) });
+    if(!res.ok) throw new Error();
+    showToast('Marked rejected');
+    await loadSubmissions();
+    openSubPanel(activeSubId);
+  }catch(e){ showToast('Could not update', true); }
+}
+
+async function saveSubNotes(){
+  if(!activeSubId) return;
+  const adminNotes = document.getElementById('spNotes').value;
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+activeSubId, { method:'PUT', body: JSON.stringify({ adminNotes }) });
+    if(!res.ok) throw new Error();
+    showToast('Notes saved');
+  }catch(e){ showToast('Could not save notes', true); }
+}
+
+async function deleteSubmission(){
+  if(!activeSubId || !hasPerm('submissions_delete')) return;
+  const sub = allSubmissions.find(x => x._id === activeSubId);
+  if(!sub) return;
+  const warning = sub.status === 'imported'
+    ? `Delete this submission record? The live property listing it created will NOT be deleted.`
+    : `Delete this submission and its uploaded photos? This cannot be undone.`;
+  if(!confirm(warning)) return;
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+activeSubId, { method:'DELETE' });
+    if(!res.ok) throw new Error();
+    showToast('Submission deleted');
+    closeSubPanel();
+    await loadSubmissions();
+  }catch(e){ showToast('Could not delete', true); }
+}
+async function quickDeleteSubmission(id){
+  if(!hasPerm('submissions_delete')) return;
+  if(!confirm('Delete this submission?')) return;
+  try{
+    const res = await apiFetch('/api/admin/property-submissions/'+id, { method:'DELETE' });
+    if(!res.ok) throw new Error();
+    showToast('Deleted');
+    await loadSubmissions();
+  }catch(e){ showToast('Could not delete', true); }
+}
 
 // ════════════════════════════════════════════════════════════
 // TASKS — Monday-style internal task board
@@ -2788,6 +3189,7 @@ document.addEventListener('keydown', e => {
     if(hasPerm('tasks_create')){ e.preventDefault(); openNewTask(); }
   } else if(e.key === 'Escape'){
     if(document.getElementById('taskPanel').classList.contains('open')) closeTaskPanel();
+    else if(document.getElementById('subPanel').classList.contains('open')) closeSubPanel();
     else if(document.getElementById('taskModal').classList.contains('open')) closeTaskModal();
     else if(document.getElementById('bulkAssignModal').classList.contains('open')) closeBulkAssignModal();
   }
@@ -2807,8 +3209,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks'};
-  const subs={tasks:'See what your team is working on'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -2832,6 +3234,10 @@ function switchTab(name){
   // Refresh tasks on tab visit
   if(name==='tasks' && hasPerm('tasks_view')){
     loadTasksData();
+  }
+  // Refresh submissions on tab visit
+  if(name==='submissions' && hasPerm('submissions_view')){
+    loadSubmissions();
   }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
