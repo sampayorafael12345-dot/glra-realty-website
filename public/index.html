@@ -301,6 +301,87 @@ body.dark-mode .empty-state{background:#111b27}
 .form-row{grid-template-columns:1fr}
 .footer-bottom{flex-direction:column;text-align:center}
 }
+/* ============================================
+   POLISH PASS V1 — 2026-05-05
+   Removable: delete this whole block to revert.
+   ============================================ */
+
+/* (1) Glass navbar — premium frosted backdrop when scrolled */
+.navbar.scrolled{
+  background:rgba(255,255,255,0.72) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid rgba(200,169,110,0.18) !important;
+  box-shadow:0 1px 30px rgba(13,27,42,0.06) !important;
+}
+body.dark-mode .navbar.scrolled{
+  background:rgba(13,27,42,0.70) !important;
+  border-bottom-color:rgba(200,169,110,0.18) !important;
+}
+
+/* (2) Cinematic hero — slow Ken Burns + stronger gradient + logo lift */
+.hero-slider .swiper-slide-active{animation:glraKenBurns 14s ease-out forwards}
+@keyframes glraKenBurns{0%{transform:scale(1)}100%{transform:scale(1.06)}}
+.hero-slider .swiper-slide::before{background:linear-gradient(180deg,rgba(10,20,35,0.55) 0%,rgba(10,20,35,0.25) 50%,rgba(10,20,35,0.85) 100%) !important}
+.slide-content img{
+  filter:drop-shadow(0 10px 40px rgba(0,0,0,0.5)) !important;
+  animation:glraFadeUp 1.2s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes glraFadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+
+/* (3) Scroll-reveal — sections fade up as user scrolls */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+.reveal.in{opacity:1;transform:none}
+
+/* (4) Refined property cards — gold border glow + slower image zoom */
+.prop-card{position:relative;transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s cubic-bezier(.2,.7,.2,1) !important}
+.prop-card:hover{transform:translateY(-8px) !important;box-shadow:0 0 0 1px var(--gold),0 30px 60px -20px rgba(200,169,110,0.45),0 14px 28px rgba(13,27,42,0.18) !important}
+.prop-card-image img{transition:transform 1s cubic-bezier(.2,.7,.2,1) !important}
+.prop-card:hover .prop-card-image img{transform:scale(1.09) !important}
+
+/* (5) Typography rhythm — bigger editorial headlines */
+.section-header h2{font-size:48px !important;letter-spacing:-0.012em}
+.cta-section h2{font-size:54px !important;letter-spacing:-0.012em}
+.broker-info h2{font-size:46px !important;letter-spacing:-0.012em}
+.section-eyebrow,.broker-info .eyebrow{letter-spacing:4px !important}
+@media(max-width:768px){
+  .section-header h2{font-size:32px !important}
+  .cta-section h2{font-size:34px !important}
+  .broker-info h2{font-size:32px !important}
+}
+
+/* (6) Animated gold underline on nav links */
+.nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown > a{position:relative}
+.nav-links > a:not(.contact-btn-nav)::after,.nav-links > .nav-dropdown > a::after{
+  content:'';position:absolute;left:50%;bottom:-6px;width:0;height:1px;background:var(--gold);
+  transition:width .35s cubic-bezier(.2,.7,.2,1),left .35s cubic-bezier(.2,.7,.2,1);
+}
+.nav-links > a:not(.contact-btn-nav):hover::after,.nav-links > .nav-dropdown:hover > a::after{width:100%;left:0}
+
+/* (7) Button shimmer — light sweep across primary CTAs on hover */
+.cta-btn,.search-btn-main,.submit-btn,.broker-btn-primary,.view-all-btn{position:relative;overflow:hidden}
+.cta-btn::before,.search-btn-main::before,.submit-btn::before,.broker-btn-primary::before,.view-all-btn::before{
+  content:'';position:absolute;top:0;left:-130%;width:100%;height:100%;pointer-events:none;
+  background:linear-gradient(120deg,transparent 0%,transparent 35%,rgba(255,255,255,0.32) 50%,transparent 65%,transparent 100%);
+  transition:left .7s cubic-bezier(.2,.7,.2,1);
+}
+.cta-btn:hover::before,.search-btn-main:hover::before,.submit-btn:hover::before,.broker-btn-primary:hover::before,.view-all-btn:hover::before{left:130%}
+
+/* Bonus polish */
+.search-card{box-shadow:0 30px 80px rgba(0,0,0,0.30),0 0 0 1px rgba(200,169,110,0.08) inset !important}
+.resource-card{transition:all .45s cubic-bezier(.2,.7,.2,1) !important}
+.resource-card:hover{transform:translateY(-6px) !important;box-shadow:0 30px 60px -20px rgba(200,169,110,0.30) !important}
+.floating-btn{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s !important}
+.floating-btn:hover{transform:translateY(-3px) scale(1.05) !important;box-shadow:0 10px 25px rgba(0,0,0,0.30) !important}
+
+/* Respect users who prefer reduced motion */
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .hero-slider .swiper-slide-active{animation:none}
+  .slide-content img{animation:none}
+  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important}
+}
+/* ===== END POLISH PASS V1 ===== */
 </style>
 </head>
 <body>
@@ -542,6 +623,22 @@ function updateDownPayment(val,price){document.getElementById('downPaymentPercen
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i))}}
 function closeModal(){document.getElementById('modal').style.display='none';document.body.style.overflow='auto'}
 document.getElementById('contactForm')?.addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.submit-btn');const orig=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';btn.disabled=true;try{const r=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:this.querySelector('[name="name"]').value,email:this.querySelector('[name="email"]').value,phone:this.querySelector('[name="phone"]')?.value||'',message:this.querySelector('[name="message"]').value,propertyId:currentProperty?._id||null,propertyTitle:currentProperty?.title||null})});if(r.ok){showToast("Thank you! We'll get back to you soon.");this.reset()}else showToast('Something went wrong.',true)}catch{showToast('Network error.',true)}finally{btn.innerHTML=orig;btn.disabled=false}});
+/* Scroll-reveal — fade sections up as they enter the viewport */
+(function(){
+  if(!('IntersectionObserver' in window)) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const targets = document.querySelectorAll('section');
+  if(!targets.length) return;
+  targets.forEach(el => el.classList.add('reveal'));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
+  targets.forEach(el => io.observe(el));
+  /* Safety net — reveal anything still hidden after 3.5s */
+  setTimeout(() => document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in')), 3500);
+})();
 loadHeroImages();loadProperties();
 </script>
 </body>
