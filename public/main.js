@@ -323,38 +323,8 @@ window.glraOpenPrintGate = function (label) {
     document.querySelectorAll('[data-gl-target]').forEach(function(el){ observer.observe(el); });
   });
 
-  /* 5) Cursor follower — desktop with fine pointer only */
-  if (IS_HOVER && !RM) {
-    ready(function(){
-      if (document.querySelector('.gl-cursor')) return;
-      var c = document.createElement('div');
-      c.className = 'gl-cursor';
-      document.body.appendChild(c);
-      var mx = 0, my = 0, x = 0, y = 0;
-      document.addEventListener('mousemove', function(e){
-        mx = e.clientX; my = e.clientY;
-        document.body.classList.add('gl-cursor-active');
-      });
-      document.addEventListener('mouseleave', function(){
-        document.body.classList.remove('gl-cursor-active');
-      });
-      var loop = function(){
-        x += (mx - x) * 0.18;
-        y += (my - y) * 0.18;
-        c.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0) translate(-50%,-50%)';
-        requestAnimationFrame(loop);
-      };
-      loop();
-      var lastTarget = null;
-      document.addEventListener('mouseover', function(e){
-        var hov = e.target.closest('a, button, .prop-card, .resource-card, .blog-card, .value-card, .neighborhood-card, [role="button"], input, select, textarea');
-        if (hov !== lastTarget) {
-          c.classList.toggle('grow', !!hov);
-          lastTarget = hov;
-        }
-      });
-    });
-  }
+  /* 5) Cursor follower — REMOVED per user request (was distracting) */
+
 
   /* 6) Magnetic primary buttons — subtle pull toward cursor (desktop) */
   if (IS_HOVER && !RM) {

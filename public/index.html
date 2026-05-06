@@ -335,8 +335,8 @@ body.dark-mode .navbar.scrolled{
 
 /* (C) HERO — CINEMATIC EDITORIAL */
 .hero-slider{height:100vh;min-height:680px;position:relative;overflow:hidden}
-.hero-slider .swiper-slide-active{animation:glraKenBurns 18s ease-out forwards}
-@keyframes glraKenBurns{0%{transform:scale(1)}100%{transform:scale(1.08)}}
+/* Ken Burns removed — was conflicting with Swiper's fade transform after one cycle */
+.hero-slider,.hero-slider .swiper-wrapper{background:var(--navy)}
 .hero-slider .swiper-slide::before{background:linear-gradient(180deg,rgba(10,20,35,0.40) 0%,rgba(10,20,35,0.18) 30%,rgba(10,20,35,0.55) 70%,rgba(10,20,35,0.92) 100%) !important}
 /* Hide the JS-injected logo (replaced by hero-overlay editorial copy) */
 .slide-content{display:none !important}
