@@ -386,3 +386,140 @@ window.glraOpenPrintGate = function (label) {
   }
 })();
 /* DRAMATIC-V2-HELPERS-END */
+
+/* ============================================
+   USABILITY PASS V3 — interactive helpers
+   Stunning + user-friendly. Removable: delete from
+   START to END marker.
+   ============================================ */
+/* USABILITY-V3-HELPERS-START */
+(function glraUsabilityV3(){
+  if (typeof document === 'undefined') return;
+
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  /* 1) Skip-to-content link — inject if missing, target <main> or first <section> */
+  ready(function(){
+    if (document.querySelector('.skip-to-content')) return;
+    var main = document.querySelector('main') || document.querySelector('section') || document.querySelector('.page-hero');
+    if (!main) return;
+    if (!main.id) main.id = 'main-content';
+    var link = document.createElement('a');
+    link.className = 'skip-to-content';
+    link.href = '#' + main.id;
+    link.textContent = 'Skip to content';
+    document.body.insertAdjacentElement('afterbegin', link);
+  });
+
+  /* 2) Active nav state — flag the current page in nav links */
+  ready(function(){
+    var path = location.pathname.toLowerCase();
+    var pathFile = path.split('/').pop() || '';
+    var atRoot = (path === '/' || pathFile === '' || pathFile === 'index.html');
+
+    function matches(href){
+      if (!href) return false;
+      try {
+        var url = new URL(href, location.origin);
+        if (url.origin !== location.origin) return false;
+        var hp = url.pathname.toLowerCase();
+        var hf = hp.split('/').pop() || '';
+        if (atRoot) return (hp === '/' || hf === '' || hf === 'index.html');
+        return hf === pathFile;
+      } catch(_){ return false; }
+    }
+
+    document.querySelectorAll('.nav-links > a, .nav-links > .nav-dropdown > a, .nav-dropdown-menu a, .mobile-overlay-links a').forEach(function(a){
+      if (matches(a.getAttribute('href'))) {
+        a.classList.add('gl-active');
+        var dd = a.closest('.nav-dropdown');
+        if (dd) dd.classList.add('gl-active');
+      }
+    });
+  });
+
+  /* 3) Skeleton loaders — pre-fill known property containers so users don't see a blank gap */
+  ready(function(){
+    var ids = ['featured-list','sale-list','lease-list','properties-grid','properties-list'];
+    var skeletonHtml = '<div class="prop-card-skeleton"></div>';
+    ids.forEach(function(id){
+      var c = document.getElementById(id);
+      if (!c || c.children.length > 0) return;
+      var html = '';
+      for (var i = 0; i < 6; i++) html += skeletonHtml;
+      c.innerHTML = html;
+    });
+  });
+
+  /* 4) Keyboard-only focus rings — only show outline when user is tabbing */
+  (function(){
+    var keyboardEvents = ['Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' ','Escape'];
+    document.addEventListener('keydown', function(e){
+      if (keyboardEvents.indexOf(e.key) !== -1) document.body.classList.add('gl-keyboard');
+    });
+    document.addEventListener('mousedown', function(){
+      document.body.classList.remove('gl-keyboard');
+    });
+    document.addEventListener('touchstart', function(){
+      document.body.classList.remove('gl-keyboard');
+    }, { passive: true });
+  })();
+
+  /* 5) Page transition fade — fade out on internal navigation */
+  (function(){
+    var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (RM) return;
+    document.addEventListener('click', function(e){
+      var a = e.target.closest('a[href]');
+      if (!a) return;
+      if (e.defaultPrevented) return;
+      if (e.button !== 0) return; /* ignore right-click, middle-click */
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; /* let modifier-clicks open in new tab etc. */
+      if (a.target && a.target !== '_self') return;
+      var href = a.getAttribute('href');
+      if (!href) return;
+      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') ||
+          href.startsWith('javascript:') || href.startsWith('viber:') || href.startsWith('whatsapp:')) return;
+      try {
+        var url = new URL(href, location.origin);
+        if (url.origin !== location.origin) return;
+        if (url.pathname === location.pathname && url.hash) return; /* in-page anchor */
+        e.preventDefault();
+        document.body.classList.add('gl-leaving');
+        setTimeout(function(){ window.location.href = href; }, 220);
+      } catch(_){}
+    });
+    /* Reset on back/forward navigation */
+    window.addEventListener('pageshow', function(e){
+      if (e.persisted) document.body.classList.remove('gl-leaving');
+    });
+  })();
+
+  /* 6) Image blur-up — when lazy images load, remove blur smoothly */
+  ready(function(){
+    if (!('MutationObserver' in window)) return;
+    function clearBlur(img){
+      if (img.complete && img.naturalWidth > 0) {
+        img.classList.remove('lazy');
+      } else {
+        img.addEventListener('load', function(){ img.classList.remove('lazy'); }, { once: true });
+        img.addEventListener('error', function(){ img.classList.remove('lazy'); }, { once: true });
+      }
+    }
+    document.querySelectorAll('img.lazy').forEach(clearBlur);
+    var mo = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if (n.nodeType !== 1) return;
+          if (n.matches && n.matches('img.lazy')) clearBlur(n);
+          if (n.querySelectorAll) n.querySelectorAll('img.lazy').forEach(clearBlur);
+        });
+      });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+/* USABILITY-V3-HELPERS-END */

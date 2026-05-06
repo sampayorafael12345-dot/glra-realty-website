@@ -400,3 +400,105 @@ body.gl-cursor-active .gl-cursor{opacity:0.85}
   *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
 }
 /* ===== END DRAMATIC PASS V2 SHARED ===== */
+
+/* ============================================
+   USABILITY PASS V3 — 2026-05-06
+   Stunning is good — usable is better. This block
+   adds a11y, perceived-performance, and orientation
+   features. Removable: delete to revert.
+   ============================================ */
+
+/* (V3-A) SKIP TO CONTENT — invisible until keyboard-focused */
+.skip-to-content{
+  position:fixed;top:-100px;left:8px;
+  background:var(--gold);color:#fff;
+  padding:14px 22px;z-index:9999;
+  font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
+  text-decoration:none;border-radius:0;
+  transition:top .25s cubic-bezier(.2,.7,.2,1);
+  font-family:'DM Sans',sans-serif;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+}
+.skip-to-content:focus{top:8px;outline:2px solid #fff;outline-offset:2px}
+
+/* (V3-B) ACTIVE NAV STATE — current page highlighted */
+.nav-links > a.gl-active:not(.contact-btn-nav),
+.nav-links > .nav-dropdown.gl-active > a{
+  color:var(--gold) !important;
+}
+.nav-links > a.gl-active:not(.contact-btn-nav)::after,
+.nav-links > .nav-dropdown.gl-active > a::after{
+  width:100% !important;left:0 !important;
+}
+.mobile-overlay-links a.gl-active{color:var(--gold) !important}
+/* Inner pages: nav-dropdown menu items can also flag active */
+.nav-dropdown-menu a.gl-active{color:var(--gold) !important;background:rgba(200,169,110,0.05)}
+
+/* (V3-C) SKELETON LOADERS — show while properties load */
+.prop-card-skeleton{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  height:380px;position:relative;overflow:hidden;
+  border-radius:0;
+}
+.prop-card-skeleton::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(200,169,110,0.10) 50%,transparent 100%);
+  animation:glraSkeleton 1.6s cubic-bezier(.2,.7,.2,1) infinite;
+}
+.prop-card-skeleton::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:120px;
+  background:linear-gradient(180deg,transparent 0%,var(--card-bg) 100%);
+}
+@keyframes glraSkeleton{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* (V3-D) FOCUS-VISIBLE — only show outline when keyboard navigating */
+*:focus{outline:none}
+body.gl-keyboard *:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+  border-radius:2px;
+}
+body.gl-keyboard a:focus-visible,
+body.gl-keyboard button:focus-visible{
+  outline-offset:4px;
+}
+/* Skip link override — always visible focus ring */
+.skip-to-content:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* (V3-E) PAGE TRANSITION FADE */
+body{transition:opacity .25s ease-out}
+body.gl-leaving{opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){
+  body{transition:none}
+  body.gl-leaving{opacity:1}
+}
+
+/* (V3-F) ANCHOR SCROLL OFFSET — anchor links don't hide under navbar */
+section[id],div[id]:not(.search-float):not(.swiper-wrapper){scroll-margin-top:90px}
+:target{scroll-margin-top:90px}
+
+/* (V3-G) MOBILE TAP TARGETS — 44×44 minimum */
+@media(max-width:768px){
+  .nav-links a,.mobile-overlay-links a,.footer-col ul li a{min-height:44px;display:inline-flex;align-items:center}
+  .floating-buttons .floating-btn,.btn-call,.btn-whatsapp,.btn-viber,.btn-messenger,.btn-instagram{min-width:48px;min-height:48px}
+  .card-action-btn{min-width:40px;min-height:40px}
+  .pagination-btn,.filter-pill,.tag-chip{min-height:40px}
+}
+
+/* (V3-H) IMAGE BLUR-UP — soft fade-in for lazy-loaded images */
+img.lazy{filter:blur(20px);transition:filter .6s cubic-bezier(.2,.7,.2,1),opacity .6s}
+img:not(.lazy){filter:none}
+
+/* (V3-I) DARK MODE TRANSITION smoother (avoid flicker) */
+body,body *{transition:background-color .35s ease,color .35s ease,border-color .35s ease}
+/* Don't transition transforms on body change */
+.swiper-slide,.swiper-wrapper,.gl-cursor,.scroll-progress,
+.prop-card,.blog-card,.resource-card,
+.cta-btn,.submit-btn,.search-btn-main,.print-btn,.broker-btn-primary{
+  transition-property:transform,opacity,box-shadow,background-color,color,border-color !important;
+}
+
+/* (V3-J) IMPROVED SCROLL HINT VISIBILITY ON LOADER */
+.loader.hide{pointer-events:none}
+/* ===== END USABILITY PASS V3 ===== */

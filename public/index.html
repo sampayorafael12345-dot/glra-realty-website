@@ -551,6 +551,122 @@ footer{padding:80px 5% 30px !important}
   *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
 }
 /* ===== END DRAMATIC PASS V2 ===== */
+
+/* ============================================
+   CONTENT SECTIONS V4 — 2026-05-06
+   New homepage sections: How It Works, Testimonials, FAQ.
+   Removable: delete this block + the matching HTML sections.
+   ============================================ */
+
+/* (V4-A) HOW IT WORKS — process steps */
+.how-it-works{padding:120px 5%;background:var(--gray-light);position:relative;overflow:hidden}
+body.dark-mode .how-it-works{background:#0a1520}
+.how-it-works::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(200,169,110,0.4) 50%,transparent 100%)}
+.how-inner{max-width:1300px;margin:0 auto}
+.how-it-works .section-header{margin-bottom:60px}
+.how-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:24px;position:relative}
+.how-steps::before{
+  content:'';position:absolute;top:108px;left:12.5%;right:12.5%;height:1px;
+  background:linear-gradient(90deg,transparent 0%,var(--gold) 25%,var(--gold) 75%,transparent 100%);
+  opacity:0.4;z-index:1;
+}
+.how-step{padding:30px 24px;text-align:center;position:relative;z-index:2;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.how-step:hover{transform:translateY(-6px)}
+.how-step-num{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);letter-spacing:6px;font-weight:600;margin-bottom:24px}
+.how-step-icon{
+  width:84px;height:84px;border-radius:50%;background:var(--white);
+  border:1px solid rgba(200,169,110,0.3);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 28px;
+  position:relative;transition:all .5s cubic-bezier(.2,.7,.2,1);
+  box-shadow:0 8px 30px rgba(13,27,42,0.06);
+}
+body.dark-mode .how-step-icon{background:var(--card-bg)}
+.how-step-icon i{color:var(--gold);font-size:28px;transition:all .5s cubic-bezier(.2,.7,.2,1)}
+.how-step:hover .how-step-icon{background:var(--gold);border-color:var(--gold);box-shadow:0 18px 40px rgba(200,169,110,0.4);transform:scale(1.05)}
+.how-step:hover .how-step-icon i{color:#fff}
+.how-step h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--text-color);margin-bottom:14px;letter-spacing:-0.01em}
+.how-step p{font-size:13px;line-height:1.7;color:var(--gray);max-width:230px;margin:0 auto}
+@media(max-width:900px){
+  .how-steps{grid-template-columns:repeat(2,1fr);gap:30px}
+  .how-steps::before{display:none}
+}
+@media(max-width:520px){
+  .how-steps{grid-template-columns:1fr;gap:0}
+  .how-it-works{padding:80px 5%}
+  .how-step{padding:20px 12px}
+}
+
+/* (V4-B) TESTIMONIALS */
+.testimonials{padding:120px 5%;max-width:1400px;margin:0 auto}
+.testimonials .section-header{margin-bottom:60px}
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1300px;margin:0 auto}
+.testimonial-card{
+  background:var(--card-bg);border:1px solid var(--border-color);padding:42px 36px;position:relative;
+  transition:all .55s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;gap:22px;
+}
+.testimonial-card::before{
+  content:'\201C';position:absolute;top:18px;right:32px;
+  font-family:'Cormorant Garamond',serif;font-size:96px;line-height:0.6;
+  color:var(--gold);opacity:0.15;font-weight:600;
+}
+.testimonial-card:hover{
+  transform:translateY(-8px);border-color:var(--gold);
+  box-shadow:0 30px 70px -25px rgba(200,169,110,0.4),0 12px 24px rgba(13,27,42,0.10);
+}
+.testimonial-rating{display:flex;gap:4px;color:var(--gold);font-size:13px}
+.testimonial-quote{
+  font-family:'Cormorant Garamond',serif;font-size:19px;line-height:1.55;
+  color:var(--text-color);font-weight:500;font-style:italic;flex:1;letter-spacing:-0.005em;
+  position:relative;z-index:1;
+}
+.testimonial-author{display:flex;align-items:center;gap:14px;padding-top:18px;border-top:1px solid var(--border-color)}
+.testimonial-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 100%);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:1px;flex-shrink:0;
+  box-shadow:0 6px 16px rgba(200,169,110,0.35);
+}
+.testimonial-name{font-size:14px;font-weight:600;color:var(--text-color);margin-bottom:3px}
+.testimonial-role{font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase}
+@media(max-width:900px){
+  .testimonials-grid{grid-template-columns:1fr;gap:20px}
+  .testimonials{padding:80px 5%}
+}
+
+/* (V4-C) FAQ ACCORDION */
+.faq-section{padding:120px 5%;background:var(--white);position:relative}
+.faq-inner{max-width:880px;margin:0 auto}
+.faq-section .section-header{margin-bottom:50px}
+.faq-list{display:flex;flex-direction:column}
+.faq-item{border-bottom:1px solid var(--border-color);transition:background .35s cubic-bezier(.2,.7,.2,1)}
+.faq-item:first-child{border-top:1px solid var(--border-color)}
+.faq-item summary{
+  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text-color);
+  padding:24px 0;cursor:pointer;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:24px;
+  transition:color .25s cubic-bezier(.2,.7,.2,1);letter-spacing:-0.005em;
+}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{
+  content:'';flex-shrink:0;width:32px;height:32px;
+  border:1px solid var(--gold);border-radius:50%;
+  background-image:linear-gradient(var(--gold),var(--gold)),linear-gradient(var(--gold),var(--gold));
+  background-size:12px 1px,1px 12px;background-position:center;background-repeat:no-repeat;
+  transition:transform .35s cubic-bezier(.2,.7,.2,1),background-size .35s;
+}
+.faq-item[open] summary::after{transform:rotate(45deg);background-size:12px 1px,0 0}
+.faq-item summary:hover{color:var(--gold)}
+.faq-answer{padding:0 0 28px 0;animation:glraFaqOpen .4s cubic-bezier(.2,.7,.2,1)}
+.faq-answer p{font-size:15px;line-height:1.75;color:var(--gray);max-width:720px}
+.faq-answer p a{color:var(--gold);text-decoration:underline}
+@keyframes glraFaqOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media(max-width:768px){
+  .faq-section{padding:80px 5%}
+  .faq-item summary{font-size:18px;padding:20px 0}
+  .faq-answer p{font-size:14px}
+}
+/* ===== END CONTENT SECTIONS V4 ===== */
 </style>
 </head>
 <body>
@@ -717,6 +833,42 @@ footer{padding:80px 5% 30px !important}
     <p class="attribution">Catherine SB Sampayo · Licensed Real Estate Broker</p>
   </div>
 </section>
+<!-- HOW IT WORKS -->
+<section class="how-it-works">
+  <div class="how-inner">
+    <div class="section-header">
+      <span class="section-eyebrow">The Process</span>
+      <h2>How It Works</h2>
+      <p>Four steps from finding your dream home to receiving the keys.</p>
+    </div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step-num">01</div>
+        <div class="how-step-icon"><i class="fas fa-search"></i></div>
+        <h3>Discover</h3>
+        <p>Browse our curated portfolio. We narrow it to listings that fit your life and your budget.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">02</div>
+        <div class="how-step-icon"><i class="fas fa-calendar-check"></i></div>
+        <h3>Schedule</h3>
+        <p>Book a private viewing — at your pace, no pressure. In person or virtually for clients abroad.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">03</div>
+        <div class="how-step-icon"><i class="fas fa-handshake"></i></div>
+        <h3>Negotiate</h3>
+        <p>Expert guidance through offer, due diligence, and paperwork. Every fee, every clause, explained.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">04</div>
+        <div class="how-step-icon"><i class="fas fa-key"></i></div>
+        <h3>Move In</h3>
+        <p>Closing day. Keys in your hand. We're with you long after — for whatever questions come next.</p>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="section" id="featured">
   <div class="section-header"><span class="section-eyebrow">Handpicked For You</span><h2>Featured Listings</h2><p>Discover our most exceptional properties across Metro Manila and Luzon</p></div>
   <div id="featured-list" class="grid"></div>
@@ -745,6 +897,55 @@ footer{padding:80px 5% 30px !important}
     <a href="/blog.html" class="resource-card"><div class="resource-icon"><i class="fas fa-newspaper"></i></div><h3>Real Estate Blog</h3><p>Expert tips, market insights, and guides for property buyers.</p><span class="resource-btn">Read Blog <i class="fas fa-arrow-right"></i></span></a>
   </div>
 </section>
+<!-- TESTIMONIALS -->
+<section class="testimonials" aria-label="Client testimonials">
+  <div class="section-header">
+    <span class="section-eyebrow">What Clients Say</span>
+    <h2>Trusted by Hundreds</h2>
+    <p>Stories from clients who found their perfect property with GLRA Realty.</p>
+  </div>
+  <div class="testimonials-grid">
+    <article class="testimonial-card">
+      <div class="testimonial-rating" aria-label="5 out of 5 stars">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+      </div>
+      <p class="testimonial-quote">Catherine guided us through every detail of our first home purchase. Her expertise made what felt overwhelming feel completely manageable.</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">MA</div>
+        <div>
+          <div class="testimonial-name">Maria & Antonio</div>
+          <div class="testimonial-role">Bought a condo in BGC</div>
+        </div>
+      </div>
+    </article>
+    <article class="testimonial-card">
+      <div class="testimonial-rating" aria-label="5 out of 5 stars">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+      </div>
+      <p class="testimonial-quote">Honest, transparent, and genuinely cared about finding the right property — not just closing a deal. Our search took six months and she never once rushed us.</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">JR</div>
+        <div>
+          <div class="testimonial-name">Jonathan Reyes</div>
+          <div class="testimonial-role">Investment property in Makati</div>
+        </div>
+      </div>
+    </article>
+    <article class="testimonial-card">
+      <div class="testimonial-rating" aria-label="5 out of 5 stars">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+      </div>
+      <p class="testimonial-quote">As an OFW, I needed someone I could trust remotely. Catherine handled everything — from viewings to paperwork — like family.</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">SC</div>
+        <div>
+          <div class="testimonial-name">Sarah Cruz</div>
+          <div class="testimonial-role">House and lot in Alabang</div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 <section class="broker-spotlight" id="broker">
   <div class="broker-container">
     <div class="broker-image"><img src="/agent-photo.jpg" alt="Catherine SB Sampayo — Licensed Real Estate Broker GLRA Realty" loading="lazy"></div>
@@ -758,6 +959,54 @@ footer{padding:80px 5% 30px !important}
         <a href="tel:+639171774572" class="broker-btn broker-btn-secondary"><i class="fas fa-phone-alt"></i> Call Now</a>
         <a href="/about.html" class="broker-btn broker-btn-secondary"><i class="fas fa-user"></i> About</a>
       </div>
+    </div>
+  </div>
+</section>
+<!-- FAQ -->
+<section class="faq-section" id="faq">
+  <div class="faq-inner">
+    <div class="section-header">
+      <span class="section-eyebrow">Common Questions</span>
+      <h2>Frequently Asked</h2>
+      <p>Answers to the questions clients ask most often. Don't see yours? Reach out below.</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>How long does it take to buy a property in the Philippines?</summary>
+        <div class="faq-answer">
+          <p>From offer to closing typically takes 30–90 days, depending on whether you're paying cash or financing. Bank financing adds 30–45 days for loan approval and appraisal. Pre-selling units can take longer — turnover dates vary by developer.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Can foreigners buy property in the Philippines?</summary>
+        <div class="faq-answer">
+          <p>Foreigners cannot own land outright, but they CAN own condominium units (up to 40% of a building's total floor area). Foreigners can also lease land long-term (up to 50 years, renewable). Filipino spouses can hold land titles. We'll walk you through the legal options.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>What documents do I need as a buyer?</summary>
+        <div class="faq-answer">
+          <p>Government ID (passport or driver's license), TIN (Tax Identification Number), proof of income (last 3 months payslips or ITR), and proof of billing. For foreigners, add visa + Bureau of Immigration certification. We provide a complete checklist once we identify your shortlist.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>What fees should I expect beyond the purchase price?</summary>
+        <div class="faq-answer">
+          <p>Standard buyer-side fees in the Philippines: documentary stamp tax (1.5%), transfer tax (0.5–0.75%), registration fee (~0.25%), notarial fees, and broker's commission (usually paid by the seller). Total closing costs typically run 4–6% of the purchase price. Try our <a href="/calculator.html">closing fees calculator</a> for a precise estimate.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>How do I schedule a property viewing?</summary>
+        <div class="faq-answer">
+          <p>The fastest way is through Messenger (link below) or by calling 0917 177 4572. Most viewings can be arranged within 24–48 hours. Virtual tours and recorded walk-throughs are also available for clients abroad.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Do you charge buyers a fee?</summary>
+        <div class="faq-answer">
+          <p>No. Brokerage commission is paid by the seller, so our service comes at no cost to you as a buyer. We work for you, with no hidden fees and full transparency on every transaction.</p>
+        </div>
+      </details>
     </div>
   </div>
 </section>
