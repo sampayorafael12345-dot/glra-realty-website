@@ -2,7 +2,7 @@
 // Strategy:
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v10';
+const CACHE_VERSION = 'glra-cache-v11';
 const STATIC_ASSETS = [
   '/logo.png',
   '/hero-logo.png',
