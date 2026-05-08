@@ -1733,6 +1733,49 @@ app.post('/api/admin/tasks/:id/attachments', verifyToken, requirePermission('tas
   }
 });
 
+// Per-task activity log — pulls from existing AuditLog filtered to this Task.
+// Visibility-checked so employees see history of tasks they participate in.
+app.get('/api/admin/tasks/:id/activity', verifyToken, requirePermission('tasks_view'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const task = await Task.findOne({ _id: req.params.id, ...visibility }).select('_id').lean();
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    const logs = await AuditLog.find({
+      target: { $in: ['Task', 'TaskAttachment'] },
+      targetId: req.params.id
+    }).sort({ timestamp: -1 }).limit(200).lean();
+    res.json(logs);
+  } catch (err) {
+    console.error('Task activity error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Duplicate a task — creates a new task with copied fields. Requires tasks_create.
+app.post('/api/admin/tasks/:id/duplicate', verifyToken, requirePermission('tasks_create'), async (req, res) => {
+  try {
+    const visibility = await buildTaskVisibilityFilter(req.user);
+    const src = await Task.findOne({ _id: req.params.id, ...visibility }).lean();
+    if (!src) return res.status(404).json({ error: 'Task not found' });
+    const copy = await Task.create({
+      title: (src.title || 'Untitled') + ' (copy)',
+      description: src.description || '',
+      category: src.category || '',
+      status: 'todo',
+      priority: src.priority || 'medium',
+      assignedTo: Array.isArray(src.assignedTo) ? src.assignedTo : [],
+      dueDate: null,
+      reference: src.reference || '',
+      createdBy: req.user.sub
+    });
+    await logAudit(req, 'CREATE', 'Task', copy._id, copy.title, { duplicatedFrom: src._id });
+    res.json(copy);
+  } catch (err) {
+    console.error('Task duplicate error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Remove an attachment
 app.delete('/api/admin/tasks/:id/attachments/:attId', verifyToken, requirePermission('tasks_view'), async (req, res) => {
   try {
