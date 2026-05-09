@@ -467,6 +467,173 @@ footer{background:var(--be-ink) !important;color:var(--be-paper) !important;padd
 
 /* hide hero scroll hint */
 .hero-scroll-hint{display:none}
+
+/* ════════════════════════════════════════════════════════════
+   COMPACT MODE — tighten all vertical rhythm (~40-50% shorter page)
+   Layered last so it overrides every spacing value above.
+   ════════════════════════════════════════════════════════════ */
+/* Masthead — quieter, smaller crest title */
+.be-mast{padding:18px 28px 16px !important}
+.be-mast-body{padding:0 !important;margin-top:6px}
+.be-mast-crest{font-size:12px !important;letter-spacing:6px !important;margin-bottom:8px !important}
+.be-mast-crest::before{font-size:11px !important;margin-bottom:4px !important}
+.be-mast-body h1{font-size:clamp(36px,5.2vw,58px) !important;margin:0 0 6px !important;letter-spacing:-1.4px !important}
+.be-mast-tag{font-size:12.5px !important;margin-top:2px !important;gap:10px !important}
+
+/* Refined nav — slimmer */
+.be-nav-inner{padding:9px 28px !important}
+.be-nav-inner > a{padding:5px 18px !important;font-size:13px !important}
+
+/* Hero — much tighter */
+.be-hero{padding:48px 28px 44px !important}
+@media(max-width:980px){.be-hero{padding:32px 20px 36px !important}}
+.be-hero-inner{gap:50px !important}
+@media(max-width:980px){.be-hero-inner{gap:30px !important}}
+.be-hero-text::before{height:48px !important}
+.be-hero-meta{margin-bottom:14px !important}
+.be-hero-text h1{font-size:clamp(38px,5.5vw,72px) !important;line-height:.98 !important;letter-spacing:-2px !important;margin-bottom:16px !important}
+.be-hero-text .deck{font-size:18px !important;margin-bottom:18px !important;line-height:1.5 !important}
+.be-hero-body{font-size:15px !important;line-height:1.7 !important}
+.be-hero-body p{margin-bottom:8px !important}
+.be-hero-body p:first-child::first-letter{font-size:64px !important;padding:4px 10px 0 0 !important}
+.be-hero-actions{margin-top:18px !important}
+.be-hero-actions a{padding:11px 22px !important;font-size:14px !important}
+.be-hero-photo{padding:14px !important}
+.be-hero-photo .hero-slider{aspect-ratio:1/1 !important}
+.be-hero-photo .badge{padding:9px 16px !important;font-size:15px !important;top:-22px !important}
+.be-hero-photo .cap{margin-top:14px !important;font-size:12.5px !important}
+
+/* Decorative rule — slim */
+.be-rule{padding:18px 24px !important}
+.be-rule .o{font-size:13px !important;letter-spacing:18px !important}
+
+/* Search */
+.search-card{padding:22px 28px !important}
+.search-card::before{top:6px !important;font-size:10px !important;letter-spacing:11px !important}
+
+/* Trust strip — compact */
+.trust-grid{padding:30px 28px !important;gap:24px !important}
+@media(max-width:1100px){.trust-grid{gap:28px !important}}
+.trust-label{font-size:24px !important;letter-spacing:-.6px !important}
+.trust-icon{font-size:15px !important}
+.trust-sub{font-size:9px !important}
+
+/* Marquee — slim */
+.marquee-track{padding:14px 0 !important;font-size:17px !important}
+
+/* Brand statement — slim */
+.brand-statement{padding:60px 32px !important}
+.brand-statement::before{font-size:480px !important}
+.brand-statement-inner .eyebrow{margin-bottom:16px !important}
+.brand-statement-inner .statement-text{font-size:clamp(22px,2.8vw,36px) !important;margin-bottom:18px !important;line-height:1.25 !important}
+.brand-statement-inner .statement-divider{margin:20px auto !important}
+
+/* How it works — slim */
+.how-inner{padding:60px 32px 60px !important}
+.how-it-works .section-header{margin-bottom:32px !important;padding-bottom:20px !important;gap:32px !important}
+.how-it-works .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.how-it-works .section-eyebrow{margin-bottom:6px !important}
+.how-it-works h2{font-size:clamp(28px,4vw,50px) !important;margin-bottom:6px !important}
+.how-it-works .section-header > p{font-size:15px !important;line-height:1.5 !important}
+.how-steps{gap:18px !important}
+.how-step{padding:22px 22px 24px !important}
+.how-step-num{font-size:46px !important;margin-bottom:10px !important}
+.how-step h3{font-size:21px !important;margin-bottom:8px !important}
+.how-step p{font-size:14px !important;line-height:1.55 !important}
+
+/* Listings (Featured / Sale / Lease) — slim */
+.section .section-header{padding:50px 32px 22px !important;gap:32px !important}
+@media(max-width:880px){.section .section-header{padding:36px 24px 18px !important}}
+.section .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.section .section-header h2{font-size:clamp(28px,4vw,52px) !important}
+.section .section-header > p{font-size:15px !important}
+.section .grid{padding:28px 32px 50px !important;gap:24px !important}
+@media(max-width:980px){.section .grid{padding:22px 24px 40px !important}}
+.view-all-wrapper{padding-bottom:50px !important}
+.section .prop-info{padding:18px 12px 12px !important}
+.section .prop-title{font-size:21px !important;margin-bottom:6px !important}
+.section .prop-specs{padding:10px 0 !important;margin:10px 0 12px !important}
+.section .prop-price{font-size:26px !important}
+
+/* Resources — slim */
+.resources-section .section-header{padding:50px 32px 26px !important;gap:32px !important}
+@media(max-width:760px){.resources-section .section-header{padding:36px 24px 20px !important}}
+.resources-section .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.resources-section h2{font-size:clamp(28px,4vw,52px) !important}
+.resources-section .section-header > p{font-size:15px !important}
+.resources-grid{padding:30px 32px 50px !important;gap:16px !important}
+@media(max-width:1100px){.resources-grid{padding:24px 24px 40px !important}}
+.resource-card{padding:18px 18px 18px !important;gap:10px !important}
+.resource-icon{width:36px !important;height:36px !important;font-size:14px !important}
+.resource-card h3{font-size:20px !important}
+.resource-card p{font-size:13.5px !important;line-height:1.5 !important}
+
+/* Testimonials — slim */
+.testimonials .section-header{padding:50px 32px 26px !important;gap:32px !important}
+@media(max-width:760px){.testimonials .section-header{padding:36px 24px 20px !important}}
+.testimonials .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.testimonials h2{font-size:clamp(28px,4vw,52px) !important}
+.testimonials .section-header > p{font-size:15px !important}
+.testimonials-grid{padding:30px 32px 50px !important;gap:18px !important}
+@media(max-width:980px){.testimonials-grid{padding:24px 24px 40px !important}}
+.testimonial-card{padding:26px 24px 22px !important}
+.testimonial-card::before{font-size:80px !important;top:24px !important;left:22px !important}
+.testimonial-quote{font-size:18px !important;line-height:1.4 !important}
+.testimonial-author{padding-top:14px !important;margin-top:14px !important}
+.testimonial-avatar{width:38px !important;height:38px !important;font-size:15px !important}
+
+/* Broker spotlight — slim */
+.broker-spotlight{padding:60px 32px !important}
+@media(max-width:980px){.broker-spotlight{padding:44px 24px !important}}
+.broker-container{gap:50px !important}
+@media(max-width:980px){.broker-container{gap:32px !important}}
+.broker-image{padding:14px !important}
+.broker-image::after{padding:6px 14px !important;font-size:12.5px !important;bottom:-18px !important}
+.broker-info h2{font-size:clamp(34px,5vw,62px) !important;margin-bottom:18px !important;line-height:.95 !important}
+.broker-info p{font-size:15.5px !important;margin-bottom:10px !important;line-height:1.65 !important}
+.broker-info p:first-of-type{font-size:18px !important;padding-left:18px !important}
+.broker-contact-buttons{margin-top:20px !important}
+.broker-btn{padding:11px 22px !important;font-size:14px !important}
+
+/* FAQ — slim */
+.faq-inner{padding:50px 32px 56px !important}
+@media(max-width:760px){.faq-inner{padding:40px 24px 44px !important}}
+.faq-section .section-header{margin-bottom:24px !important;padding-bottom:20px !important;gap:32px !important}
+.faq-section .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.faq-section h2{font-size:clamp(28px,4vw,52px) !important}
+.faq-section .section-header > p{font-size:15px !important}
+.faq-item summary{padding:16px 32px 16px 0 !important;font-size:18px !important;gap:14px !important}
+.faq-item summary::before{font-size:13px !important;min-width:64px !important;padding-top:4px !important}
+.faq-item summary::after{font-size:24px !important}
+.faq-answer{padding:0 32px 16px 80px !important}
+@media(max-width:760px){.faq-answer{padding:0 0 16px 0 !important}}
+.faq-answer p{font-size:15.5px !important;line-height:1.65 !important}
+
+/* Final CTA — slim */
+.cta-section{padding:70px 32px 70px !important}
+@media(max-width:880px){.cta-section{padding:50px 24px 50px !important}}
+.cta-section::after{inset:18px !important}
+.cta-section h2{font-size:clamp(34px,5vw,72px) !important;margin-bottom:14px !important}
+.cta-section p{font-size:18px !important;margin-bottom:24px !important;line-height:1.55 !important}
+.cta-section .cta-btn{padding:13px 26px !important;font-size:16px !important}
+
+/* Contact form — slim */
+.contact-form-section .section-header{padding:50px 32px 22px !important;gap:32px !important}
+@media(max-width:760px){.contact-form-section .section-header{padding:36px 24px 18px !important}}
+.contact-form-section .section-header::before{font-size:72px !important;letter-spacing:-3.5px !important}
+.contact-form-section h2{font-size:clamp(28px,4vw,52px) !important}
+.contact-form{padding:30px 32px 56px !important}
+@media(max-width:760px){.contact-form{padding:24px 24px 44px !important}}
+.contact-form .form-input{padding:13px 16px !important;font-size:15px !important;margin-bottom:10px !important}
+.contact-form .submit-btn{padding:14px 24px !important;font-size:16px !important}
+
+/* Footer — slim */
+footer{padding:50px 32px 28px !important}
+.footer-content{gap:36px !important}
+.footer-brand h4{font-size:34px !important;margin-bottom:10px !important}
+.footer-col h4{font-size:18px !important;margin-bottom:12px !important}
+.footer-col ul{gap:8px !important}
+.footer-bottom{margin-top:30px !important;padding-top:18px !important}
 </style>
 </head>
 <body>
