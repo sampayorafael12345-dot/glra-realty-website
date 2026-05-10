@@ -794,6 +794,82 @@ footer{padding:24px 32px 16px !important}
 
 /* Hero photo final tune — give it a subtle inner shadow when image is loading */
 .be-hero-photo .swiper-slide{background-color:#3a2620}
+
+/* ════════════════════════════════════════════════════════════
+   STRUCTURAL CUTS — collapse 3 listing sections into 1 tabbed.
+   Hide decorative filler that adds height without value.
+   ════════════════════════════════════════════════════════════ */
+/* Hide three low-value sections that bloat the page */
+.be-rule{display:none !important}
+.brand-statement{display:none !important}
+.neighborhoods-marquee{display:none !important}
+
+/* Listings tab bar */
+.listings-tabs{
+  display:flex;justify-content:center;gap:0;
+  max-width:1320px;margin:0 auto;padding:6px 32px 18px;
+  border-bottom:1px solid var(--be-line);
+}
+.listings-tab{
+  background:transparent;border:0;padding:12px 28px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;color:var(--be-ink-soft);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:.2s;
+}
+.listings-tab:hover{color:var(--be-ink)}
+.listings-tab.active{color:var(--be-accent);border-bottom-color:var(--be-accent)}
+.listings-pane{min-height:0 !important}
+.listings-pane.active{display:grid !important}
+@media(max-width:560px){
+  .listings-tabs{gap:0;padding:6px 18px 14px}
+  .listings-tab{padding:10px 14px;font-size:10px;letter-spacing:1.4px}
+}
+
+/* Squeeze the broker spotlight even more */
+.broker-spotlight{padding:24px 32px !important}
+.broker-container{gap:36px !important}
+.broker-info h2{font-size:clamp(28px,4.2vw,52px) !important;margin-bottom:12px !important}
+.broker-info p{font-size:14.5px !important;margin-bottom:8px !important}
+
+/* Resources — denser grid, tighter cards */
+.resources-grid{padding:8px 32px 22px !important;gap:12px !important}
+.resource-card{padding:14px !important}
+.resource-icon{width:32px !important;height:32px !important;font-size:13px !important;margin-bottom:6px !important}
+.resource-card h3{font-size:17px !important;margin-bottom:4px !important}
+.resource-card p{font-size:12.5px !important;line-height:1.45 !important}
+
+/* Testimonials — slimmer cards */
+.testimonial-card{padding:18px 18px 16px !important}
+.testimonial-quote{font-size:15px !important;line-height:1.45 !important}
+
+/* FAQ — slimmer items */
+.faq-item summary{padding:14px 28px 14px 0 !important;font-size:17px !important}
+.faq-item summary::before{font-size:12px !important;min-width:54px !important}
+.faq-answer{padding:0 28px 14px 70px !important}
+.faq-answer p{font-size:14.5px !important;line-height:1.55 !important;margin-bottom:8px !important}
+
+/* CTA — much slimmer */
+.cta-section{padding:30px 32px !important}
+.cta-section h2{font-size:clamp(28px,4vw,56px) !important;margin-bottom:10px !important}
+.cta-section p{font-size:15px !important;margin-bottom:18px !important}
+
+/* Trust strip — even denser */
+.trust-grid{padding:14px 28px !important;gap:18px !important}
+.trust-icon{width:30px !important;height:30px !important;font-size:12px !important;margin-bottom:4px !important}
+.trust-label{font-size:15px !important}
+.trust-sub{font-size:9.5px !important}
+
+/* How it works — minimal */
+.how-it-works .section-header{margin-bottom:14px !important;padding-bottom:10px !important}
+.how-step{padding:12px 12px !important}
+
+/* Hero text — pull tighter */
+.be-hero{padding:24px 28px 22px !important}
+.be-hero-inner{gap:30px !important}
+.be-hero-photo .hero-slider{height:340px !important}
+@media(max-width:1200px){.be-hero-photo .hero-slider{height:300px !important}}
+@media(max-width:980px){.be-hero-photo .hero-slider{height:240px !important}}
 </style>
 </head>
 <body>
@@ -1027,24 +1103,24 @@ footer{padding:24px 32px 16px !important}
 </section>
 
 <!-- FEATURED LISTINGS -->
+<!-- COMBINED LISTINGS — Featured / For Sale / For Lease in one tabbed section -->
 <section class="section" id="featured">
-  <div class="section-header"><span class="section-eyebrow">— The Edit · 24 Listings —</span><h2>Featured <em>residences.</em></h2><p>Our most exceptional properties across Metro Manila and Luzon — each visited, photographed, and vetted in person.</p></div>
-  <div id="featured-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=all" class="view-all-btn">View All Properties →</a></div>
-</section>
-
-<!-- FOR SALE -->
-<section class="section" id="properties">
-  <div class="section-header"><span class="section-eyebrow">— For Sale · The Collection —</span><h2>Properties <em>for sale.</em></h2><p>Find your perfect home from our exclusive listings. Honest pricing, complete documents, the long view.</p></div>
-  <div id="sale-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=FOR SALE" class="view-all-btn">Browse For Sale →</a></div>
-</section>
-
-<!-- FOR LEASE -->
-<section class="section">
-  <div class="section-header"><span class="section-eyebrow">— For Lease · Curated —</span><h2>Properties <em>for lease.</em></h2><p>Flexible leasing options tailored to your lifestyle. Vetted owners, clean titles, transparent terms.</p></div>
-  <div id="lease-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=FOR LEASE" class="view-all-btn">Browse For Lease →</a></div>
+  <div class="section-header">
+    <span class="section-eyebrow">— The Listings · Curated —</span>
+    <h2>Properties <em>on offer.</em></h2>
+    <p>Each visited, photographed, and vetted in person — across Metro Manila and Luzon.</p>
+  </div>
+  <div class="listings-tabs" role="tablist" aria-label="Listing categories">
+    <button class="listings-tab active" role="tab" data-tab="featured-list" onclick="switchListingTab(this)">Featured</button>
+    <button class="listings-tab" role="tab" data-tab="sale-list" onclick="switchListingTab(this)">For Sale</button>
+    <button class="listings-tab" role="tab" data-tab="lease-list" onclick="switchListingTab(this)">For Lease</button>
+  </div>
+  <div id="featured-list" class="grid listings-pane active" role="tabpanel"></div>
+  <div id="sale-list" class="grid listings-pane" role="tabpanel" style="display:none"></div>
+  <div id="lease-list" class="grid listings-pane" role="tabpanel" style="display:none"></div>
+  <div class="view-all-wrapper" id="viewAllWrapper">
+    <a href="/properties.html?category=all" class="view-all-btn" id="viewAllBtn">View All Properties →</a>
+  </div>
 </section>
 
 <!-- RESOURCES -->
@@ -1250,7 +1326,22 @@ let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}
 async function loadProperties(){if(cachedProperties){renderAllSections(cachedProperties);return}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);renderAllSections(cachedProperties)}catch(e){console.error(e);showToast('Failed to load properties',true)}}
-function renderAllSections(properties){document.getElementById('statProperties').innerText=properties.length;renderProperties(properties.filter(p=>p.featured).slice(0,3),'featured-list');renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,3),'sale-list');renderProperties(properties.filter(p=>isForLease(p)).slice(0,3),'lease-list');allProperties=properties;setTimeout(initLazyLoading,100)}
+function renderAllSections(properties){document.getElementById('statProperties').innerText=properties.length;renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');allProperties=properties;setTimeout(initLazyLoading,100)}
+function switchListingTab(btn){
+  document.querySelectorAll('.listings-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.listings-pane').forEach(p=>{p.classList.remove('active');p.style.display='none'});
+  btn.classList.add('active');
+  const target=document.getElementById(btn.dataset.tab);
+  if(target){target.classList.add('active');target.style.display='grid'}
+  // Update view-all link based on tab
+  const link=document.getElementById('viewAllBtn');
+  if(link){
+    if(btn.dataset.tab==='sale-list'){link.href='/properties.html?category=FOR SALE';link.textContent='Browse For Sale →'}
+    else if(btn.dataset.tab==='lease-list'){link.href='/properties.html?category=FOR LEASE';link.textContent='Browse For Lease →'}
+    else{link.href='/properties.html?category=all';link.textContent='View All Properties →'}
+  }
+  setTimeout(initLazyLoading,50);
+}
 function renderProperties(properties,containerId){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';if(properties.length===0){c.innerHTML='<div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div>';return}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,100)}
 function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'https://via.placeholder.com/400x300?text=No+Image';card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" title="Save"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title">${escapeHtml(prop.title)}</h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span><span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span><span><i class="fas fa-building"></i> ${prop.propertyType||'Property'}</span>${parking}</div><div class="prop-price">${price}</div></div>`;return card}
 function openDetail(id){const prop=allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;galleryImages=[prop.mainImage,...(prop.gallery||[])];let thumbs=galleryImages.map((img,i)=>`<img src="${img}" onclick="changeImg(${i})" class="${i===0?'active':''}">`).join('');const mapAddr=prop.mapLocation||prop.location;const mapEmbed=`https://www.google.com/maps?q=${encodeURIComponent(mapAddr+', Philippines')}&output=embed`;const isSale=prop.listingType==='FOR SALE';const price=getDisplayPrice(prop);const pp=prop.price||0;document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button onclick="openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" style="background:transparent;border:1px solid var(--be-accent);color:var(--be-accent);padding:7px 14px;border-radius:0;font-size:11px;cursor:pointer;letter-spacing:1px"><i class="far fa-heart"></i> Save</button><button onclick="openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" style="background:transparent;border:1px solid var(--be-accent);color:var(--be-accent);padding:7px 14px;border-radius:0;font-size:11px;cursor:pointer;letter-spacing:1px"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span class="modal-spec"><i class="fas fa-building"></i> ${prop.propertyType||'Property'}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="modal-mortgage-controls"><div class="modal-mortgage-control"><label>Down Payment</label><input type="range" id="downPaymentPercent" min="10" max="30" step="5" value="20" oninput="updateDownPayment(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--be-gray)">10%</span><span id="downPaymentValue" style="font-size:11px;color:var(--be-accent)">20%</span><span style="font-size:10px;color:var(--be-gray)">30%</span></div></div><div class="modal-mortgage-control"><label>Loan Term</label><select id="loanTermYears" onchange="calculateMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="modal-mortgage-control"><label>Interest Rate</label><select id="interestRate" onchange="calculateMortgage(${pp})"><option value="6">6%</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5%</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="modal-mortgage-result"><div class="label">Estimated Monthly Payment</div><div class="amount" id="mortgageResult">₱0<span style="font-size:15px">/mo</span></div></div><div style="font-size:10px;color:var(--be-gray);text-align:center;margin-top:8px">*For estimation purposes only.</div></div>`:''}  <div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="modal-share-buttons"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-btn-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-btn-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-btn-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-btn-copy"><i class="fas fa-link"></i> Copy</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details.')}</div><div class="map-container" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Location map"></iframe></div><button class="modal-inquire-btn" onclick="closeModal();document.getElementById('contact-form').scrollIntoView({behavior:'smooth'})"><i class="fas fa-paper-plane"></i> Inquire About This Property</button></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calculateMortgage(pp)}
