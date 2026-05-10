@@ -737,6 +737,63 @@ footer{padding:50px 32px 28px !important}
 
 /* Footer — slimmer */
 footer{padding:36px 32px 22px !important}
+
+/* ════════════════════════════════════════════════════════════
+   ULTRA-COMPACT FINAL PASS — cut whitespace between sections.
+   Listings section was: 50px top + 22px header bottom + 28px grid top + 50px grid bottom = 150px.
+   Now: 22px + 8px + 8px + 22px = 60px (saves ~90px × 3 sections = ~270px).
+   ════════════════════════════════════════════════════════════ */
+.section .section-header{padding:22px 32px 8px !important}
+.section .grid{padding:8px 32px 22px !important;min-height:0 !important}
+.view-all-wrapper{padding:0 32px 22px !important}
+.view-all-wrapper .view-all-btn{padding:10px 22px !important;font-size:13px !important}
+
+.resources-section .section-header{padding:22px 32px 8px !important}
+.resources-grid{padding:8px 32px 22px !important}
+
+.testimonials .section-header{padding:22px 32px 8px !important}
+.testimonials-grid{padding:8px 32px 22px !important}
+
+.brand-statement{padding:28px 32px !important}
+.how-inner{padding:28px 32px 30px !important}
+.broker-spotlight{padding:30px 32px !important}
+.faq-inner{padding:24px 32px 28px !important}
+.cta-section{padding:36px 32px !important}
+.contact-form-section .section-header{padding:22px 32px 8px !important}
+.contact-form{padding:8px 32px 28px !important}
+footer{padding:24px 32px 16px !important}
+
+/* Decorative ❦❦❦ rule between hero and search — even slimmer */
+.be-rule{padding:6px 24px !important}
+.be-rule .o{font-size:11px !important;letter-spacing:6px !important}
+
+/* Trust strip — tighter rows */
+.trust-grid{padding:18px 28px !important;gap:22px !important}
+@media(max-width:1100px){.trust-grid{gap:24px !important}}
+.trust-icon{width:36px !important;height:36px !important;font-size:14px !important;margin-bottom:6px !important}
+.trust-label{font-size:18px !important}
+.trust-sub{font-size:10.5px !important}
+
+/* Marquee — slimmer band */
+.marquee-track{padding:7px 0 !important;font-size:14px !important}
+
+/* Search float — pull tighter to hero */
+.search-float{margin-top:-30px !important}
+
+/* Brand statement — minimal */
+.brand-statement-inner{padding:0 !important}
+.brand-statement-inner .statement-text{font-size:clamp(18px,2.2vw,28px) !important;line-height:1.35 !important}
+.brand-statement-inner .statement-attr{margin-top:10px !important;font-size:11px !important}
+
+/* How it works — minimal */
+.how-it-works .section-header{margin-bottom:24px !important;padding-bottom:14px !important}
+.how-step{padding:16px 14px !important}
+.how-step-num{font-size:34px !important;margin-bottom:6px !important}
+.how-step h3{font-size:17px !important;margin-bottom:5px !important}
+.how-step p{font-size:13px !important;line-height:1.5 !important}
+
+/* Hero photo final tune — give it a subtle inner shadow when image is loading */
+.be-hero-photo .swiper-slide{background-color:#3a2620}
 </style>
 </head>
 <body>
@@ -824,7 +881,7 @@ footer{padding:36px 32px 22px !important}
       <span class="badge">Featured · ₱62.0M</span>
       <div class="hero-slider swiper" id="heroSlider">
         <div class="swiper-wrapper" id="heroSliderWrapper">
-          <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d')">
+          <div class="swiper-slide" style="background-image:linear-gradient(135deg,#2a1a14 0%,#5a3a28 45%,#8b1a1a 100%),url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1100&q=75&auto=format&fit=crop');background-size:cover;background-position:center;background-blend-mode:overlay">
             <div class="slide-content"><img src="/hero-logo.png" alt="GLRA Realty"></div>
           </div>
         </div>
