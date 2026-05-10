@@ -32,6 +32,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/brutalist-theme.css">
 <style>
 :root{--orange:#c8a96e;--orange-dark:#a8894e;--orange-light:rgba(200,169,110,0.12)}
 /* ── PAGE-SPECIFIC ── */
@@ -319,15 +320,25 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
         <button onclick="openZonalLookup()"><i class="fas fa-external-link-alt"></i> BIR Website</button>
       </div>
       <input type="text" id="zonalValuePerSqm" placeholder="Or enter zonal value per sqm manually" oninput="handleNumberInput(this, 'zonal')">
-      
+
       <div id="totalZonalValueDisplay" class="zonal-hint" style="margin-top: 8px;">
-        <span>Total Zonal Value: <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
+        <span>Total Zonal Value (Land): <strong id="totalZonalValue" class="tax-basis">₱0</strong></span>
         <span id="areaCalculationHint" style="font-size: 10px;"></span>
       </div>
-      
+
+      <label style="margin-top: 16px;">Improvements (FMV from Tax Declaration)</label>
+      <input type="text" id="improvementsValue" placeholder="Building / house value — ₱0 for raw land" oninput="handleNumberInput(this, 'improvements')">
+      <div class="input-hint" style="margin-top: 6px; font-size: 11px;">
+        <i class="fas fa-info-circle"></i> The assessed value of the structure built on the land (house, building, fence, pool) per the local Assessor's Tax Declaration. Per <strong>Sec. 6(E) NIRC</strong>, BIR computes CGT &amp; DST on the higher of Selling Price OR <em>Land Zonal Value + Improvements</em>. Use ₱0 for vacant lots.
+      </div>
+
+      <div id="totalAssessedDisplay" class="zonal-hint" style="margin-top: 10px;">
+        <span>Total BIR FMV (Land + Improvements): <strong id="totalAssessedValue" class="tax-basis">₱0</strong></span>
+      </div>
+
       <div class="zonal-hint" id="taxBasisHint" style="margin-top: 8px;">
         <span>Tax will be based on: <strong class="tax-basis" id="taxBasisValue">Selling Price</strong></span>
-        <span>(Higher of Selling Price or Total Zonal Value)</span>
+        <span>(Higher of Selling Price or Land Zonal + Improvements)</span>
       </div>
     </div>
 
@@ -590,6 +601,9 @@ function handleNumberInput(input, type) {
   } else if (type === 'zonal') {
     updateTotalZonalValueDisplay();
     calculateAll();
+  } else if (type === 'improvements') {
+    updateTotalZonalValueDisplay();
+    calculateAll();
   }
 }
 
@@ -627,14 +641,23 @@ function calculateTotalZonalValue() {
   return area * zonalPerSqm;
 }
 
+function getTotalAssessedValue() {
+  // BIR Fair Market Value = Land (Zonal × area) + Improvements (per Tax Declaration)
+  return calculateTotalZonalValue() + getRawValue('improvementsValue');
+}
+
 function updateTotalZonalValueDisplay() {
   const totalZv = calculateTotalZonalValue();
+  const improvements = getRawValue('improvementsValue');
+  const totalAssessed = totalZv + improvements;
   const area = getRawValue('areaSqm');
   const zonalPerSqm = getRawValue('zonalValuePerSqm');
-  
+
   document.getElementById('totalZonalValue').innerHTML = formatCurrency(totalZv);
   document.getElementById('totalZonalValueResult').innerHTML = formatCurrency(totalZv);
-  
+  const totalAssessedEl = document.getElementById('totalAssessedValue');
+  if (totalAssessedEl) totalAssessedEl.innerHTML = formatCurrency(totalAssessed);
+
   if (area > 0 && zonalPerSqm > 0) {
     document.getElementById('areaCalculationHint').innerHTML = `${area.toLocaleString()} sqm × ₱${zonalPerSqm.toLocaleString()} = ${formatCurrency(totalZv)}`;
   } else {
@@ -813,12 +836,15 @@ function calculateAll() {
   
   const sellingPrice = getRawValue('propertyValue');
   const totalZv = calculateTotalZonalValue();
-  const taxBasis = Math.max(sellingPrice, totalZv);
+  const improvements = getRawValue('improvementsValue');
+  const totalAssessed = totalZv + improvements; // BIR FMV = Land Zonal + Improvements
+  const taxBasis = Math.max(sellingPrice, totalAssessed);
   const commissionRate = currentCommission;
   const transferTaxRate = currentTransferTaxRate;
-  
+
   const taxBasisHint = document.getElementById('taxBasisValue');
   if (taxBasis === sellingPrice) taxBasisHint.innerHTML = 'Selling Price';
+  else if (improvements > 0) taxBasisHint.innerHTML = 'Land Zonal + Improvements (higher)';
   else taxBasisHint.innerHTML = 'Total Zonal Value (higher)';
   
   let sellerTax = 0, sellerTaxLabel = '';
@@ -881,7 +907,9 @@ function calculateFromDesiredProceed() {
   let iterations = 0;
   while (iterations < 50) {
     const totalZv = calculateTotalZonalValue();
-    const taxBasis = Math.max(sellingPrice, totalZv);
+    const improvements = getRawValue('improvementsValue');
+    const totalAssessed = totalZv + improvements;
+    const taxBasis = Math.max(sellingPrice, totalAssessed);
     let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
     const brokerCommission = sellingPrice * (currentCommission / 100);
     const netProceed = sellingPrice - sellerTax - brokerCommission;
@@ -989,5 +1017,6 @@ document.addEventListener('DOMContentLoaded', function() {
   calculateAll();
 });
 </script>
+<script src="/brutalist-shell.js" defer></script>
 </body>
 </html>

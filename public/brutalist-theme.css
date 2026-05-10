@@ -1,0 +1,395 @@
+/* ════════════════════════════════════════════════════════════
+   GLRA — ARCHITECTURAL BRUTALIST THEME
+   Single-file override of styles.css for all inner pages.
+   Add ONE <link rel="stylesheet" href="/brutalist-theme.css"> to
+   each page after the existing styles.css link, plus the small
+   brutalist-shell.js script to upgrade the nav/footer.
+   ════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* ── Hijack the CSS variables: anything using --gold/--navy etc. flips automatically ── */
+:root{
+  --gold:#ff3d00 !important;
+  --gold-dark:#cc2f00 !important;
+  --gold-light:rgba(255,61,0,0.08) !important;
+  --navy:#0a0a0a !important;
+  --navy-mid:#1a1a17 !important;
+  --gray-light:#e8e4dd !important;
+  --white:#f1eee9 !important;
+  --card-bg:#f1eee9 !important;
+  --border-color:#0a0a0a !important;
+  --text-color:#0a0a0a !important;
+  --gray:#6a6a6a !important;
+  --shadow-sm:6px 6px 0 #0a0a0a !important;
+  --shadow-md:6px 6px 0 #0a0a0a !important;
+  --shadow-lg:8px 8px 0 #0a0a0a !important;
+  --transition:all .15s ease !important;
+  /* Brutalist tokens */
+  --ab-paper:#f1eee9;
+  --ab-paper-2:#e8e4dd;
+  --ab-ink:#0a0a0a;
+  --ab-ink-soft:#2a2a2a;
+  --ab-gray:#6a6a6a;
+  --ab-line:#0a0a0a;
+  --ab-hot:#ff3d00;
+  --ab-hot-deep:#cc2f00;
+}
+body.dark-mode{
+  --gold:#ff3d00 !important;
+  --gold-dark:#cc2f00 !important;
+  --gold-light:rgba(255,61,0,0.12) !important;
+  --navy:#0a0a0a !important;
+  --gray-light:#1a1a17 !important;
+  --white:#0e0e0c !important;
+  --card-bg:#0e0e0c !important;
+  --border-color:#3a3a36 !important;
+  --text-color:#f1eee9 !important;
+  --gray:#9a9082 !important;
+  --ab-paper:#0e0e0c;
+  --ab-paper-2:#1a1a17;
+  --ab-ink:#f1eee9;
+  --ab-ink-soft:#cfc7b6;
+  --ab-line:#3a3a36;
+}
+
+/* ── BASE ── */
+html,body{font-family:'Inter','Segoe UI',sans-serif !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;line-height:1.4 !important}
+*{border-radius:0 !important}
+::selection{background:var(--ab-hot);color:#fff}
+
+/* concrete texture overlay */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── HEADINGS ── */
+h1,h2,h3,h4,h5,h6{font-family:'Inter','Segoe UI',sans-serif !important;font-weight:900 !important;letter-spacing:-1.5px !important;text-transform:uppercase !important;color:var(--ab-ink) !important;line-height:.95 !important}
+h1{font-size:clamp(40px,5.5vw,72px) !important;letter-spacing:-2.5px !important}
+h2{font-size:clamp(32px,4.5vw,56px) !important;letter-spacing:-2px !important}
+h3{font-size:clamp(22px,2.5vw,30px) !important;letter-spacing:-.8px !important}
+h4{font-size:18px !important;letter-spacing:-.4px !important}
+
+/* ── LINKS ── */
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--ab-hot)}
+
+/* ── LEGACY NAVBAR (.navbar from styles.css) → BRUTALIST NAV ── */
+.navbar{
+  position:sticky !important;top:0 !important;width:100% !important;
+  background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important;
+  padding:14px 24px !important;z-index:1000 !important;
+  display:flex !important;align-items:center !important;justify-content:space-between !important;gap:20px !important;
+  transition:none !important;
+}
+.navbar .logo img{height:78px !important;width:auto !important;filter:none !important}
+@media(max-width:560px){.navbar .logo img{height:58px !important}}
+.navbar .logo{position:static !important;transform:none !important}
+.nav-links{display:flex !important;gap:0 !important;align-items:stretch !important}
+.nav-links a{
+  color:var(--ab-ink) !important;font-family:'Inter',sans-serif !important;
+  font-weight:800 !important;font-size:13px !important;letter-spacing:.2px !important;
+  text-transform:uppercase !important;padding:14px 18px !important;
+  border-left:1px solid var(--ab-line) !important;display:flex !important;align-items:center !important;gap:6px !important;
+  transition:.15s !important;
+}
+.nav-links a:hover,.nav-links a.active{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+.contact-btn-nav,a.contact-btn-nav{
+  background:var(--ab-hot) !important;color:#fff !important;
+  border:0 !important;border-left:1px solid var(--ab-line) !important;border-radius:0 !important;
+  padding:14px 22px !important;
+}
+.contact-btn-nav:hover,a.contact-btn-nav:hover{background:var(--ab-ink) !important;color:#fff !important}
+.mobile-menu-btn{font-size:22px !important;color:var(--ab-ink) !important;background:transparent !important;border:0 !important;cursor:pointer !important}
+@media(max-width:980px){
+  .navbar{padding:12px 18px !important}
+  .nav-links{display:none !important}
+}
+
+/* Nav dropdown (existing class .nav-dropdown from styles.css) */
+.nav-dropdown{position:relative !important}
+.nav-dropdown-menu{
+  position:absolute !important;top:100% !important;left:0 !important;transform:none !important;
+  background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-top:0 !important;
+  min-width:240px !important;padding:0 !important;display:none;z-index:1500;box-shadow:6px 6px 0 var(--ab-ink) !important;
+}
+.nav-dropdown:hover .nav-dropdown-menu{display:block !important}
+.nav-dropdown-menu a{
+  display:block !important;padding:12px 18px !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;font-weight:700 !important;
+  letter-spacing:1.5px !important;text-transform:uppercase !important;
+  color:var(--ab-ink) !important;border-bottom:1px solid var(--ab-line) !important;
+}
+.nav-dropdown-menu a:last-child{border-bottom:0 !important}
+.nav-dropdown-menu a:hover{background:var(--ab-hot) !important;color:#fff !important;padding-left:18px !important}
+
+/* ── MOBILE OVERLAY ── */
+.mobile-overlay{background:var(--ab-ink) !important;padding:60px 24px 40px !important;z-index:5000 !important}
+.mobile-overlay.active,.mobile-overlay.open{left:0 !important}
+.mobile-overlay .close-menu{background:transparent !important;border:1px solid rgba(241,238,233,.3) !important;border-radius:0 !important;color:#fff !important}
+.mobile-overlay-links{gap:0 !important;border-top:1px solid rgba(241,238,233,.2) !important;max-width:none !important;padding:20px 0 0 !important;text-align:left !important}
+.mobile-overlay-links a{
+  font-family:'Inter',sans-serif !important;font-size:18px !important;font-weight:800 !important;
+  letter-spacing:-.5px !important;text-transform:uppercase !important;color:#fff !important;
+  padding:16px 4px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
+}
+.mobile-overlay-links a:hover{color:var(--ab-hot) !important;padding-left:14px !important}
+
+/* ── PAGE HERO ── */
+.page-hero{
+  background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important;
+  padding:60px 24px 40px !important;text-align:left !important;
+  max-width:none !important;
+}
+.page-hero::before{display:none !important}
+.page-hero .eyebrow{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;
+  text-transform:uppercase !important;color:var(--ab-hot) !important;font-weight:700 !important;
+  margin-bottom:14px !important;display:block !important;
+}
+.page-hero h1{
+  font-family:'Inter',sans-serif !important;color:var(--ab-ink) !important;
+  font-size:clamp(40px,7vw,90px) !important;font-weight:900 !important;
+  letter-spacing:-3px !important;text-transform:uppercase !important;line-height:.9 !important;
+  margin-bottom:14px !important;max-width:1480px;margin-left:auto !important;margin-right:auto !important;
+}
+.page-hero p{
+  color:var(--ab-ink-soft) !important;font-size:16px !important;line-height:1.5 !important;
+  max-width:720px !important;margin-left:0 !important;font-weight:500 !important;
+}
+
+/* ── INPUTS / FORMS / SELECTS ── */
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],input[type="password"],input[type="search"],
+textarea,select,
+.form-input,.zonal-search-input{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  padding:13px 16px !important;font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:500 !important;
+  transition:border-color .15s,background .15s !important;box-shadow:none !important;
+}
+input:focus,textarea:focus,select:focus,
+.form-input:focus,.zonal-search-input:focus{
+  outline:0 !important;border-color:var(--ab-hot) !important;background:var(--ab-paper-2) !important;
+}
+::placeholder{color:var(--ab-gray) !important;text-transform:uppercase;letter-spacing:1.2px;font-size:11px;font-weight:600}
+label{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.8px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:700 !important;display:block !important;margin-bottom:6px !important}
+
+/* ── BUTTONS (broad coverage) ── */
+button,
+.btn,.cta-btn,.print-btn,.submit-btn,.search-btn-main,.broker-btn,.broker-btn-primary,.broker-btn-secondary,
+.contact-btn-nav,.view-all-btn,.view-listings-btn,.calculate-btn,.reset-filters-btn,.modal-inquire-btn,
+input[type="submit"],input[type="button"]{
+  background:var(--ab-ink) !important;color:var(--ab-paper) !important;
+  border:0 !important;border-radius:0 !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;font-weight:700 !important;
+  padding:14px 24px !important;cursor:pointer !important;transition:.15s !important;
+  text-decoration:none !important;display:inline-flex !important;align-items:center !important;gap:8px !important;
+  box-shadow:none !important;
+}
+button:hover,.btn:hover,.cta-btn:hover,.print-btn:hover,.submit-btn:hover,.search-btn-main:hover,
+.broker-btn:hover,.broker-btn-primary:hover,.view-all-btn:hover,.view-listings-btn:hover,
+.calculate-btn:hover,.reset-filters-btn:hover,.modal-inquire-btn:hover,
+input[type="submit"]:hover,input[type="button"]:hover{
+  background:var(--ab-hot) !important;color:#fff !important;transform:none !important;
+}
+.broker-btn-secondary{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
+.broker-btn-secondary:hover{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+
+/* Smaller / inline buttons */
+.comm-btn,.zonal-row button,.print-btn{padding:11px 16px !important;font-size:10.5px !important}
+.comm-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:1px solid var(--ab-line) !important}
+.comm-btn.active,.comm-btn:hover{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+
+/* ── CARDS (input-card, blog-card, resource-card, value-card, testimonial-card, etc.) ── */
+.input-card,.blog-card,.resource-card,.value-card,.testimonial-card,.prop-card,.amort-card,.fee-card,
+.mortgage-card,.rental-card,.zonal-card,.guide-card,.neighborhood-card,.list-card,.about-card,.affordability-card{
+  background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  box-shadow:none !important;padding:24px !important;transition:background .15s !important;
+}
+.input-card:hover,.blog-card:hover,.resource-card:hover,.value-card:hover,.testimonial-card:hover,
+.prop-card:hover,.guide-card:hover,.neighborhood-card:hover{
+  background:var(--ab-paper-2) !important;transform:none !important;box-shadow:none !important;border-color:var(--ab-line) !important;
+}
+body.dark-mode .input-card,body.dark-mode .blog-card,body.dark-mode .resource-card,body.dark-mode .value-card,
+body.dark-mode .testimonial-card,body.dark-mode .prop-card,body.dark-mode .amort-card,body.dark-mode .fee-card,
+body.dark-mode .mortgage-card,body.dark-mode .rental-card,body.dark-mode .zonal-card,body.dark-mode .guide-card,
+body.dark-mode .neighborhood-card,body.dark-mode .list-card,body.dark-mode .about-card,body.dark-mode .affordability-card{
+  background:var(--ab-paper) !important;border-color:var(--ab-line) !important;
+}
+body.dark-mode .input-card:hover,body.dark-mode .blog-card:hover,body.dark-mode .resource-card:hover{background:var(--ab-paper-2) !important}
+
+/* ── FOOTER ── */
+footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padding:60px 40px 28px !important;margin-top:0 !important}
+.footer-content{
+  max-width:1480px !important;margin:0 auto 28px !important;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important;gap:36px !important;
+  padding-bottom:32px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
+}
+.footer-col h4{
+  font-family:'JetBrains Mono',monospace !important;color:var(--ab-hot) !important;
+  font-size:10px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;margin-bottom:14px !important;
+}
+.footer-col p,.footer-col a,.footer-col ul li a{
+  color:rgba(241,238,233,.85) !important;font-size:13px !important;font-weight:600 !important;
+  font-family:'Inter',sans-serif !important;line-height:1.6 !important;
+}
+.footer-col a:hover,.footer-col ul li a:hover{color:var(--ab-hot) !important}
+.footer-col ul{gap:8px !important}
+.footer-social{margin-top:16px !important;gap:10px !important}
+.footer-social a{
+  width:36px !important;height:36px !important;border:1px solid rgba(241,238,233,.3) !important;
+  color:var(--ab-paper) !important;border-radius:0 !important;font-size:14px !important;
+}
+.footer-social a:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important;color:#fff !important}
+.footer-divider{display:none !important}
+.footer-bottom{
+  font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;color:rgba(241,238,233,.5) !important;font-weight:500 !important;
+  max-width:1480px !important;margin:24px auto 0 !important;border-top:0 !important;
+}
+.footer-bottom p{color:rgba(241,238,233,.5) !important;font-size:10px !important;letter-spacing:1.5px !important}
+.footer-bottom-links a{color:rgba(241,238,233,.5) !important;font-size:10px !important;letter-spacing:1.5px !important}
+.footer-bottom-links a:hover{color:var(--ab-hot) !important}
+
+/* ── FLOATING BUTTONS ── */
+.floating-buttons .floating-btn{border-radius:0 !important;box-shadow:none !important;border:0 !important;width:46px !important;height:46px !important}
+.floating-buttons .floating-btn:hover{transform:none !important;background:var(--ab-hot) !important;color:#fff !important}
+.floating-buttons .btn-darkmode{background:var(--ab-hot) !important;color:#fff !important;border:0 !important}
+.floating-buttons .fab-toggle{background:var(--ab-hot) !important;color:#fff !important}
+.floating-buttons .fab-toggle.is-open{background:var(--ab-ink) !important;color:#fff !important}
+
+/* ── BACK TO TOP ── */
+.back-to-top{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-radius:0 !important;width:46px !important;height:46px !important}
+.back-to-top:hover{background:var(--ab-hot) !important}
+
+/* ── LOADER ── */
+.loader{background:var(--ab-paper) !important}
+.loader-logo{font-family:'Inter',sans-serif !important;color:var(--ab-ink) !important;font-weight:900 !important;letter-spacing:-2px !important;font-size:54px !important;text-transform:uppercase}
+.loader-bar{background:var(--ab-paper-2) !important}
+.loader-bar::after{background:var(--ab-hot) !important}
+
+/* ── TOAST ── */
+.toast{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:0 !important;border-left:4px solid var(--ab-hot) !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important}
+
+/* ── TRUST STRIP ── */
+.trust-strip{background:var(--ab-paper) !important;border-color:var(--ab-line) !important;padding:0 !important}
+body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
+.trust-grid{
+  max-width:1480px !important;display:grid !important;grid-template-columns:repeat(6,1fr) !important;
+  gap:0 !important;padding:0 !important;align-items:stretch !important;
+}
+.trust-item{
+  padding:22px 18px !important;border-right:1px solid var(--ab-line) !important;
+  display:flex !important;flex-direction:column !important;gap:6px !important;
+  max-width:none !important;justify-content:flex-start !important;text-align:left !important;
+}
+.trust-item:last-child{border-right:0 !important}
+@media(max-width:1100px){.trust-grid{grid-template-columns:repeat(3,1fr) !important}.trust-item:nth-child(3n){border-right:0 !important}}
+@media(max-width:600px){.trust-grid{grid-template-columns:1fr 1fr !important}.trust-item:nth-child(2n){border-right:0 !important}}
+.trust-item .trust-icon{
+  background:transparent !important;color:var(--ab-hot) !important;
+  width:auto !important;height:auto !important;font-size:14px !important;border-radius:0 !important;margin-bottom:4px !important;
+}
+.trust-item .trust-label{
+  font-family:'Inter',sans-serif !important;font-size:22px !important;font-weight:900 !important;
+  letter-spacing:-.8px !important;color:var(--ab-ink) !important;text-transform:none !important;line-height:1 !important;white-space:nowrap !important;
+}
+.trust-item .trust-sub{
+  font-family:'JetBrains Mono',monospace !important;font-size:9.5px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:600 !important;
+}
+
+/* ── DARK-MODE EXPLICIT FALLBACKS ── */
+body.dark-mode{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
+body.dark-mode .navbar{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
+body.dark-mode .nav-links a{color:var(--ab-ink) !important}
+body.dark-mode .nav-links a:hover{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important}
+body.dark-mode .nav-dropdown-menu{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
+body.dark-mode .nav-dropdown-menu a{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important}
+body.dark-mode .page-hero{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
+body.dark-mode .page-hero h1{color:var(--ab-ink) !important}
+body.dark-mode .page-hero p{color:var(--ab-ink-soft) !important}
+body.dark-mode footer{background:#000 !important}
+body.dark-mode input,body.dark-mode textarea,body.dark-mode select,
+body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border-color:var(--ab-line) !important}
+
+/* ── CALC / PROPERTY DETAIL TABLES ── */
+.fee-row,.cost-row,.amort-row,.rental-row{
+  border-bottom:1px solid var(--ab-line) !important;padding:12px 0 !important;
+  display:flex !important;justify-content:space-between !important;align-items:center !important;
+}
+.fee-label,.cost-label{font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:600 !important;color:var(--ab-ink) !important}
+.fee-value,.cost-value{font-family:'Inter',sans-serif !important;font-size:16px !important;font-weight:900 !important;color:var(--ab-ink) !important;letter-spacing:-.5px !important}
+.fee-row.total,.cost-row.total{border-top:2px solid var(--ab-line) !important;border-bottom:0 !important;padding-top:16px !important;margin-top:8px !important}
+.fee-row.total .fee-value,.cost-row.total .cost-value{color:var(--ab-hot) !important;font-size:24px !important}
+.tax-basis,strong.tax-basis{color:var(--ab-hot) !important}
+
+/* Section / card titles inside calculator pages */
+.input-card h3,.results-card h3,.summary-card h3{
+  font-family:'Inter',sans-serif !important;font-size:18px !important;font-weight:900 !important;
+  letter-spacing:-.5px !important;text-transform:uppercase !important;color:var(--ab-ink) !important;
+  margin-bottom:18px !important;padding-bottom:14px !important;border-bottom:2px solid var(--ab-line) !important;
+  display:flex !important;align-items:center !important;gap:10px !important;
+}
+.input-card h3 i,.results-card h3 i,.summary-card h3 i{color:var(--ab-hot) !important}
+
+/* Hint text under inputs */
+.input-hint,.zonal-hint{
+  font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1px !important;
+  color:var(--ab-gray) !important;font-weight:600 !important;text-transform:none !important;
+}
+.input-hint i,.zonal-hint i{color:var(--ab-hot) !important}
+
+/* Asset selector cards */
+.asset-option,.option-card{
+  padding:16px !important;border:2px solid var(--ab-line) !important;
+  background:var(--ab-paper) !important;cursor:pointer;transition:.15s;
+}
+.asset-option:hover,.option-card:hover{background:var(--ab-paper-2) !important}
+.asset-option.selected,.option-card.selected{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+.asset-option.selected *,.option-card.selected *{color:#fff !important}
+
+/* Search field on inner pages */
+.search-field{background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important}
+.dropdown-selected{padding:13px 16px !important;font-family:'Inter',sans-serif !important;font-weight:600 !important;font-size:14px !important;color:var(--ab-ink) !important}
+.city-dropdown-list,.zonal-dropdown{
+  background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-top:0 !important;
+  box-shadow:6px 6px 0 var(--ab-ink) !important;border-radius:0 !important;
+}
+.city-dropdown-item,.zonal-dropdown-item{
+  padding:11px 16px !important;font-size:13px !important;font-weight:600 !important;
+  border-bottom:1px solid var(--ab-line) !important;color:var(--ab-ink) !important;
+}
+.city-dropdown-item:hover,.zonal-dropdown-item:hover{background:var(--ab-hot) !important;color:#fff !important;padding-left:20px !important}
+.city-dropdown-item:hover *,.zonal-dropdown-item:hover *{color:#fff !important}
+
+/* Mortgage / closing fees results card */
+.results-card,.summary-card{
+  background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  padding:30px !important;box-shadow:none !important;
+}
+.summary-result,.summary-amount{
+  font-family:'Inter',sans-serif !important;font-size:36px !important;font-weight:900 !important;
+  letter-spacing:-1.5px !important;color:var(--ab-hot) !important;line-height:1 !important;
+}
+
+/* Section eyebrow used across pages */
+.eyebrow,.section-eyebrow{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;
+  text-transform:uppercase !important;color:var(--ab-hot) !important;font-weight:700 !important;
+}
+
+/* Brutalist top-strip injected by brutalist-shell.js */
+.ab-top-strip{
+  background:var(--ab-ink);color:var(--ab-paper);padding:11px 24px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;
+  display:flex;justify-content:space-between;align-items:center;border-bottom:0;
+}
+.ab-top-strip .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot);margin-right:8px;animation:abpulse 1.5s infinite}
+@keyframes abpulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:640px){.ab-top-strip{font-size:9.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
+
+/* Scrollbar */
+*::-webkit-scrollbar{width:6px !important;height:6px !important}
+*::-webkit-scrollbar-track{background:transparent !important}
+*::-webkit-scrollbar-thumb{background:var(--ab-hot) !important;border-radius:0 !important}
