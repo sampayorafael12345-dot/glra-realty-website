@@ -796,6 +796,28 @@ footer{padding:24px 32px 16px !important}
 .be-hero-photo .swiper-slide{background-color:#3a2620}
 
 /* ════════════════════════════════════════════════════════════
+   KILL THE HERO PHOTO — it was breaking the layout.
+   Convert hero to a centered editorial text-only block.
+   ════════════════════════════════════════════════════════════ */
+.be-hero-photo{display:none !important}
+.be-hero-inner{
+  grid-template-columns:1fr !important;
+  max-width:920px !important;
+  gap:0 !important;
+  text-align:center !important;
+}
+.be-hero-text{padding-right:0 !important;text-align:center !important}
+.be-hero-text::before{display:none !important}
+.be-hero-meta{justify-content:center !important;padding-left:0 !important}
+.be-hero-text h1{padding-left:0 !important;font-size:clamp(38px,5.6vw,76px) !important;letter-spacing:-2px !important}
+.be-hero-text .deck{padding-left:0 !important;margin-left:auto !important;margin-right:auto !important;text-align:center !important}
+.be-hero-body{padding-left:0 !important;margin-left:auto !important;margin-right:auto !important;text-align:left !important}
+.be-hero-body p:first-child::first-letter{font-size:62px !important;float:left !important}
+.be-hero-actions{padding-left:0 !important;justify-content:center !important;margin-top:18px !important}
+.be-hero{padding:30px 28px 28px !important;border-bottom:1px solid var(--be-line) !important}
+@media(max-width:980px){.be-hero{padding:24px 20px 24px !important}}
+
+/* ════════════════════════════════════════════════════════════
    STRUCTURAL CUTS — collapse 3 listing sections into 1 tabbed.
    Hide decorative filler that adds height without value.
    ════════════════════════════════════════════════════════════ */
