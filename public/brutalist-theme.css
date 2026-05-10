@@ -786,3 +786,141 @@ html body.dark-mode footer *{color:#f1eee9 !important}
 html body.dark-mode footer .footer-col h4{color:var(--ab-hot) !important}
 html body.dark-mode footer .footer-col a,html body.dark-mode footer .footer-col p,html body.dark-mode footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
 html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.5) !important}
+
+/* ════════════════════════════════════════════════════════════
+   CALCULATOR / TOOL CARDS — make calc-card-header consistent with
+   the cream brutalist theme (was using var(--navy) = black with hard-
+   to-read white text). Now: cream bg + dark uppercase title + hot accent.
+   Same for input-group labels, hints, and inputs across every tool.
+   ════════════════════════════════════════════════════════════ */
+.calc-card,
+html body.dark-mode .calc-card{
+  background:var(--ab-paper) !important;
+  border:2px solid var(--ab-line) !important;
+  border-radius:0 !important;overflow:hidden;margin-bottom:24px !important;
+}
+.calc-body,
+html body.dark-mode .calc-body{
+  background:var(--ab-paper) !important;
+  padding:22px !important;
+}
+.calc-card-header,
+html body.dark-mode .calc-card-header{
+  background:var(--ab-paper) !important;
+  border-bottom:2px solid var(--ab-line) !important;
+  padding:16px 22px !important;
+}
+.calc-card-header h2,
+html body.dark-mode .calc-card-header h2{
+  color:var(--ab-ink) !important;
+  font-family:'Inter','Segoe UI',sans-serif !important;
+  font-weight:900 !important;text-transform:uppercase !important;
+  letter-spacing:-.5px !important;font-size:17px !important;line-height:1 !important;
+  display:flex !important;align-items:center !important;gap:10px !important;
+}
+.calc-card-header h2 i{color:var(--ab-hot) !important;font-size:16px !important}
+.calc-card-header p,
+html body.dark-mode .calc-card-header p{
+  color:var(--ab-gray) !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:11px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;font-weight:600 !important;margin-top:8px !important;
+}
+.input-group{margin-bottom:14px !important}
+.input-group label,
+html body.dark-mode .input-group label{
+  color:var(--ab-gray) !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:10.5px !important;letter-spacing:1.8px !important;
+  text-transform:uppercase !important;font-weight:700 !important;
+  margin-bottom:6px !important;display:block !important;
+}
+.input-group input,.input-group select,
+html body.dark-mode .input-group input,html body.dark-mode .input-group select{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  padding:12px 14px !important;font-family:'Inter',sans-serif !important;
+  font-size:14px !important;font-weight:600 !important;
+}
+.input-group input:focus,.input-group select:focus{border-color:var(--ab-hot) !important;outline:0 !important}
+.input-hint,
+html body.dark-mode .input-hint{
+  color:var(--ab-gray) !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:10.5px !important;letter-spacing:.5px !important;
+  text-transform:none !important;font-weight:600 !important;
+  margin-top:6px !important;line-height:1.5 !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RESULT HEADLINES & DARK-FEATURE BOXES across all tool pages —
+   keep the dramatic black box but force ALL text to light cream
+   in BOTH modes (was using var(--gold)/var(--navy) which inverts).
+   ════════════════════════════════════════════════════════════ */
+.result-headline,.result-summary,.headline-total,.yield-headline,
+.yield-headline.net,.tax-total,
+html body.dark-mode .result-headline,html body.dark-mode .result-summary,
+html body.dark-mode .headline-total,html body.dark-mode .yield-headline,
+html body.dark-mode .tax-total{
+  background:var(--ab-ink) !important;color:#f1eee9 !important;
+  border:0 !important;border-radius:0 !important;
+}
+.result-headline *,.result-summary *,.headline-total *,.yield-headline *,.tax-total *,
+html body.dark-mode .result-headline *,html body.dark-mode .result-summary *,
+html body.dark-mode .headline-total *,html body.dark-mode .yield-headline *,
+html body.dark-mode .tax-total *{color:#f1eee9 !important}
+.result-headline .value,.result-summary .value,.headline-total .value,
+.headline-total .amount,.yield-headline .value,.yield-headline .rate,
+.result-headline strong,.tax-total .amount{
+  color:var(--ab-hot) !important;
+  font-family:'Inter','Segoe UI',sans-serif !important;
+  font-weight:900 !important;letter-spacing:-1px !important;
+}
+.result-headline .label,.result-headline .sub,
+.result-summary .label,.headline-total .label{
+  color:rgba(241,238,233,.7) !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:11px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;font-weight:700 !important;
+}
+
+/* Tables (amortization schedule, ercf brackets, breakdown tables) */
+.schedule-table th,.factors-table th,.breakdown-table th,.brackets-table th,
+.factors-table tr td:first-child,.breakdown-table tr.total td,
+.breakdown-table tr.total-row td,
+html body.dark-mode .schedule-table th,html body.dark-mode .factors-table th,
+html body.dark-mode .breakdown-table th,html body.dark-mode .brackets-table th,
+html body.dark-mode .factors-table tr td:first-child,
+html body.dark-mode .breakdown-table tr.total td,
+html body.dark-mode .breakdown-table tr.total-row td{
+  background:var(--ab-ink) !important;color:#f1eee9 !important;
+  font-family:'JetBrains Mono',monospace !important;
+  font-size:10.5px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;font-weight:700 !important;
+}
+.schedule-table td,.factors-table td,.breakdown-table td,.brackets-table td{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border-color:var(--ab-line) !important;font-family:'Inter',sans-serif !important;
+}
+
+/* Zonal page specifics */
+.search-section,html body.dark-mode .search-section{
+  background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important;
+}
+.search-section *,html body.dark-mode .search-section *{color:var(--ab-ink) !important}
+.search-section input{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
+.rc-header,html body.dark-mode .rc-header{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border-bottom:2px solid var(--ab-line) !important;
+}
+.rc-header *,html body.dark-mode .rc-header *{color:var(--ab-ink) !important}
+
+/* Result-mini cards in light mode (affordability bottom grid) */
+.result-mini,html body.dark-mode .result-mini{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border:1px solid var(--ab-line) !important;
+}
+.result-mini .label{color:var(--ab-gray) !important;font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-weight:700 !important}
+.result-mini .value{color:var(--ab-ink) !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.5px !important;font-size:20px !important}
+.result-mini.gold .value{color:var(--ab-hot) !important}
+.result-mini .sub{color:var(--ab-gray) !important;font-size:11px !important;font-weight:500 !important}
