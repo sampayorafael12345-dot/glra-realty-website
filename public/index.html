@@ -90,11 +90,10 @@ nav.navbar{display:none !important}
 /* ── MASSIVE NAV ── */
 .ab-nav{background:var(--ab-paper);border-bottom:2px solid var(--ab-line);position:sticky;top:0;z-index:50}
 .ab-nav-inner{max-width:1480px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.ab-brand{display:flex;align-items:center;gap:12px;cursor:pointer}
-.ab-brand img{height:40px;filter:brightness(0)}
+.ab-brand{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
+.ab-brand img{height:62px;width:auto;display:block}
 body.dark-mode .ab-brand img{filter:brightness(0) invert(1)}
-.ab-brand-name{font-weight:900;font-size:22px;letter-spacing:-1px;line-height:.9;text-transform:uppercase}
-.ab-brand-name small{display:block;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;color:var(--ab-gray)}
+@media(max-width:560px){.ab-brand img{height:50px}}
 .ab-nav-links{display:flex;gap:0;align-items:stretch}
 .ab-nav-links a{font-weight:800;font-size:13px;letter-spacing:.2px;text-transform:uppercase;padding:14px 18px;transition:.15s;border-left:1px solid var(--ab-line)}
 .ab-nav-links a:hover{background:var(--ab-ink);color:var(--ab-paper)}
@@ -623,22 +622,26 @@ body{counter-reset:secnum}
 .contact-form{
   max-width:1480px !important;margin:0 auto !important;padding:32px 40px 56px !important;
   background:transparent !important;border:0 !important;border-radius:0 !important;
+  display:flex !important;flex-direction:column !important;gap:14px !important;
 }
 @media(max-width:760px){.contact-form{padding:24px 24px 44px !important}}
-.contact-form .form-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:0 !important;margin-bottom:0 !important;border:2px solid var(--ab-line) !important;border-bottom:0 !important}
-@media(max-width:560px){.contact-form .form-row{grid-template-columns:1fr !important}}
-.contact-form .form-input{
-  width:100% !important;padding:18px 20px !important;
-  background:var(--ab-paper) !important;border:0 !important;
-  border-bottom:0 !important;border-radius:0 !important;
-  font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:500 !important;
-  color:var(--ab-ink) !important;letter-spacing:.2px !important;
+.contact-form .form-row{
+  display:grid !important;grid-template-columns:1fr 1fr !important;
+  gap:14px !important;margin-bottom:0 !important;border:0 !important;
 }
-.contact-form .form-row > .form-input:first-child{border-right:1px solid var(--ab-line) !important}
-.contact-form input[name="phone"]{border:2px solid var(--ab-line) !important;border-bottom:0 !important;margin-bottom:0 !important}
-.contact-form textarea{border:2px solid var(--ab-line) !important;margin-bottom:18px !important;resize:vertical;min-height:120px}
+@media(max-width:560px){.contact-form .form-row{grid-template-columns:1fr !important;gap:14px !important}}
+.contact-form .form-input{
+  width:100% !important;padding:16px 18px !important;
+  background:var(--ab-paper) !important;
+  border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:500 !important;
+  color:var(--ab-ink) !important;letter-spacing:.2px !important;margin:0 !important;
+  transition:background .15s,border-color .15s !important;
+}
+.contact-form textarea.form-input{resize:vertical;min-height:130px}
 .contact-form .form-input::placeholder{color:var(--ab-gray);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:600}
-.contact-form .form-input:focus{outline:none !important;background:var(--ab-paper-2) !important}
+.contact-form .form-input:focus{outline:none !important;background:var(--ab-paper-2) !important;border-color:var(--ab-hot) !important}
+.contact-form .form-input:hover{background:var(--ab-paper-2) !important}
 .contact-form .submit-btn{
   display:inline-block !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;
   padding:18px 32px !important;font-family:'JetBrains Mono',monospace !important;
@@ -811,9 +814,8 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 <!-- MASSIVE NAV -->
 <nav class="ab-nav">
   <div class="ab-nav-inner">
-    <a href="/" class="ab-brand" onclick="scrollToTop();return false;">
-      <img src="/logo.png" alt="GLRA">
-      <div class="ab-brand-name">GLRA<small>Catherine SB Sampayo</small></div>
+    <a href="/" class="ab-brand" onclick="scrollToTop();return false;" aria-label="GLRA Realty home">
+      <img src="/logo.png" alt="GLRA Realty">
     </a>
     <div class="ab-nav-links">
       <a href="#featured">Listings</a>
@@ -1228,7 +1230,41 @@ function calculateMortgage(price){const dp=parseFloat(document.getElementById('d
 function updateDownPayment(val,price){document.getElementById('downPaymentPercent').value=val;document.getElementById('downPaymentValue').innerText=val+'%';calculateMortgage(price)}
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i))}}
 function closeModal(){document.getElementById('modal').style.display='none';document.body.style.overflow='auto'}
-document.getElementById('contactForm')?.addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.submit-btn');const orig=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';btn.disabled=true;try{const r=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:this.querySelector('[name="name"]').value,email:this.querySelector('[name="email"]').value,phone:this.querySelector('[name="phone"]')?.value||'',message:this.querySelector('[name="message"]').value,propertyId:currentProperty?._id||null,propertyTitle:currentProperty?.title||null})});if(r.ok){showToast("Thank you! We'll get back to you soon.");this.reset()}else showToast('Something went wrong.',true)}catch{showToast('Network error.',true)}finally{btn.innerHTML=orig;btn.disabled=false}});
+document.getElementById('contactForm')?.addEventListener('submit',async function(e){
+  e.preventDefault();
+  const form=this;
+  const btn=form.querySelector('.submit-btn');
+  const orig=btn.innerHTML;
+  const name=form.querySelector('[name="name"]').value.trim();
+  const email=form.querySelector('[name="email"]').value.trim();
+  const phone=form.querySelector('[name="phone"]')?.value.trim()||'';
+  const message=form.querySelector('[name="message"]').value.trim();
+  if(!name||!email||!message){showToast('Please fill in name, email, and message',true);return}
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> &nbsp;Sending...';
+  btn.disabled=true;
+  try{
+    const r=await fetch('/api/inquiries',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,email,phone,message,propertyId:currentProperty?._id||null,propertyTitle:currentProperty?.title||null})
+    });
+    if(r.ok){
+      showToast("Thank you! We'll get back to you soon.");
+      form.reset();
+    }else{
+      // Server responded with error — offer Messenger fallback
+      const proceed=confirm("Form couldn't be submitted right now. Open Messenger to reach Catherine directly?");
+      if(proceed)window.open('https://m.me/glrarealty','_blank');
+    }
+  }catch(err){
+    // Network failure — offer Messenger fallback
+    const proceed=confirm("Connection error. Open Messenger to reach Catherine directly?");
+    if(proceed)window.open('https://m.me/glrarealty','_blank');
+  }finally{
+    btn.innerHTML=orig;
+    btn.disabled=false;
+  }
+});
 (function(){
   if(!('IntersectionObserver' in window)) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
