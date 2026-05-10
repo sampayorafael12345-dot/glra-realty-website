@@ -796,6 +796,35 @@ footer{padding:24px 32px 16px !important}
 .be-hero-photo .swiper-slide{background-color:#3a2620}
 
 /* ════════════════════════════════════════════════════════════
+   THE ACTUAL FIX — listing card images had no width/height/
+   object-fit rule, so they rendered at their natural pixel size
+   and blew out the card to thousands of pixels tall. Constrain.
+   ════════════════════════════════════════════════════════════ */
+.section .prop-card-image{
+  position:relative !important;
+  width:100% !important;
+  aspect-ratio:16/10 !important;
+  overflow:hidden !important;
+  background:#0d1b2a !important;
+}
+.section .prop-card-image img{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
+.section .prop-card{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+/* Make sure cards in a row are equal-height (cleaner look) */
+.section .grid{align-items:start !important}
+.section .prop-info{flex:1}
+
+/* ════════════════════════════════════════════════════════════
    KILL THE HERO PHOTO — it was breaking the layout.
    Convert hero to a centered editorial text-only block.
    ════════════════════════════════════════════════════════════ */
