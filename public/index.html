@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="/favicon.ico.png">
 <link rel="apple-touch-icon" href="/logo.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#c8a96e">
+<meta name="theme-color" content="#ff3d00">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/">
 <meta property="og:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
@@ -35,711 +35,851 @@
 <link rel="preload" href="/logo.png" as="image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 <link rel="stylesheet" href="/styles.css">
+
 <style>
+/* ════════════════════════════════════════════════════════════
+   ARCHITECTURAL BRUTALIST — homepage style system
+   Heavy borders, hot orange accents, mono labels, uppercase.
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --ab-paper:#f1eee9;
+  --ab-paper-2:#e8e4dd;
+  --ab-ink:#0a0a0a;
+  --ab-ink-soft:#2a2a2a;
+  --ab-gray:#6a6a6a;
+  --ab-line:#0a0a0a;
+  --ab-hot:#ff3d00;
+  --ab-hot-deep:#cc2f00;
+  --ab-concrete:#bdb6ab;
+}
+body.dark-mode{
+  --ab-paper:#0e0e0c;
+  --ab-paper-2:#1a1a17;
+  --ab-ink:#f1eee9;
+  --ab-ink-soft:#cfc7b6;
+  --ab-gray:#8a8170;
+  --ab-line:#f1eee9;
+  --ab-concrete:#3a3a36;
+}
+html,body{font-family:'Inter',sans-serif;background:var(--ab-paper);color:var(--ab-ink);line-height:1.4;-webkit-font-smoothing:antialiased;font-weight:500}
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#c8a96e;--gold-dark:#a8894e;--gold-light:#f9f3e9;--navy:#0d1b2a;--navy-mid:#1a2d42;--charcoal:#2c3e50;--gray:#7f8c8d;--gray-light:#f0f2f5;--white:#ffffff;--card-bg:#ffffff;--border-color:#cfd4da;--text-color:#1a2332;--shadow-sm:0 1px 4px rgba(0,0,0,0.08), 0 2px 12px rgba(0,0,0,0.06);--shadow-md:0 4px 14px rgba(0,0,0,0.10), 0 8px 30px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12), 0 20px 50px rgba(0,0,0,0.10);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
-body.dark-mode{--gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;--border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--white);overflow-x:hidden;transition:background 0.3s,color 0.3s}
-*{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
-*::-webkit-scrollbar{width:4px}
-*::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
-.navbar{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:20px 5%;background:transparent;transition:var(--transition);z-index:1000}
-.navbar.scrolled{background:var(--white);padding:12px 5%;box-shadow:0 1px 20px rgba(0,0,0,0.08);border-bottom:1px solid var(--border-color)}
-body.dark-mode .navbar.scrolled{background:#0d1b2a}
-.logo{opacity:0;visibility:hidden;transition:var(--transition);cursor:pointer}
-.navbar.scrolled .logo{opacity:1;visibility:visible}
-.logo img{height:52px;width:auto;display:block}
-body.dark-mode .navbar.scrolled .logo img{content:url('/hero-logo.png')}
-.nav-links{display:flex;gap:28px;align-items:center}
-.nav-links a{text-decoration:none;color:#fff !important;font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
-.navbar.scrolled .nav-links a{color:var(--text-color) !important}
-.nav-links a:hover{color:var(--gold) !important}
-.contact-btn-nav{background:transparent;border:1px solid rgba(255,255,255,0.6);padding:8px 22px;border-radius:2px;color:#fff !important;letter-spacing:2px}
-.navbar.scrolled .contact-btn-nav{color:var(--gold) !important;border-color:var(--gold)}
-.contact-btn-nav:hover{background:var(--gold);color:#fff !important;border-color:var(--gold)}
-.mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff;z-index:1001}
-.navbar.scrolled .mobile-menu-btn{color:var(--text-color)}
-.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--navy);z-index:2000;transition:left 0.4s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:78px 20px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.mobile-overlay.active{left:0}
-.mobile-overlay .close-menu{position:fixed;top:20px;right:24px;font-size:26px;color:var(--white);cursor:pointer;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-radius:50%;z-index:2;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility .25s}
-.mobile-overlay.active .close-menu,.mobile-overlay.open .close-menu{visibility:visible;opacity:1}
-.mobile-overlay-links{display:flex;flex-direction:column;gap:18px;text-align:center;width:100%;max-width:320px;padding:8px 0 24px}
-.mobile-overlay-links a{color:#fff;text-decoration:none;font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1.5px;padding:6px 0}
-.mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--gold)}
-.hero-slider{height:100vh;min-height:650px;position:relative}
-.swiper-slide{position:relative;background-size:cover;background-position:center}
-.swiper-slide::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,20,35,0.55) 0%,rgba(10,20,35,0.35) 60%,rgba(10,20,35,0.7) 100%)}
-.slide-content{position:absolute;bottom:50%;transform:translateY(50%);left:0;right:0;text-align:center;z-index:10}
-.slide-content img{max-width:320px;width:75%;height:auto;margin:0 auto;display:block;filter:drop-shadow(0 4px 20px rgba(0,0,0,0.3))}
-.hero-scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:8px}
-.hero-scroll-hint span{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;text-transform:uppercase}
-.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,rgba(200,169,110,0.8),transparent);animation:scrollPulse 2s infinite}
-@keyframes scrollPulse{0%,100%{opacity:0.4}50%{opacity:1}}
-.swiper-pagination-bullet{background:rgba(255,255,255,0.5) !important;width:6px !important;height:6px !important}
-.swiper-pagination-bullet-active{background:var(--gold) !important;width:24px !important;border-radius:3px !important}
-.search-float{position:relative;z-index:10;margin-top:-60px;margin-bottom:0;padding:0 5%}
-.search-card{background:var(--navy);border-radius:0;padding:28px 35px;max-width:1200px;margin:0 auto;box-shadow:0 30px 60px rgba(0,0,0,0.25);border-top:2px solid var(--gold)}
-.search-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
-.search-field-wrapper{flex:2;min-width:200px;position:relative}
-.search-field-wrapper .search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:13px;z-index:2}
-.search-field-wrapper input{width:100%;padding:14px 18px 14px 46px;border:1px solid rgba(255,255,255,0.12);border-radius:2px;font-size:14px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.07);color:#fff;transition:var(--transition)}
-.search-field-wrapper input:focus{outline:none;border-color:var(--gold)}
-.search-field-wrapper input::placeholder{color:rgba(255,255,255,0.4)}
-.search-suggestions{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border-radius:2px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;z-index:100;display:none;border:1px solid var(--border-color)}
-body.dark-mode .search-suggestions{background:#1a2840;border-color:#2a3f58}
-.search-suggestions div{padding:12px 18px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border-color);color:var(--text-color);transition:var(--transition)}
-.search-suggestions div:hover{background:var(--gold);color:#fff}
-.search-btn-main{background:var(--gold);color:#fff;border:none;padding:14px 32px;border-radius:2px;font-weight:500;font-size:13px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:8px;letter-spacing:1px}
-.search-btn-main:hover{background:var(--gold-dark)}
-.filter-toggle-btn{background:transparent;border:1px solid rgba(255,255,255,0.25);color:#fff;padding:12px 24px;border-radius:2px;font-size:13px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:8px}
-.filter-toggle-btn:hover,.filter-toggle-btn.active{border-color:var(--gold);color:var(--gold)}
-.advanced-filters{display:none;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1)}
+*{scrollbar-width:thin;scrollbar-color:var(--ab-hot) transparent}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.ab-mono{font-family:'JetBrains Mono',monospace}
+
+/* concrete texture overlay */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* hide the legacy navbar/marquee/brand-statement that the JS expects to exist */
+nav.navbar{display:none !important}
+.neighborhoods-marquee,.brand-statement{display:none !important}
+
+/* ── TOP STRIP ── */
+.ab-top{background:var(--ab-ink);color:var(--ab-paper);padding:0;border-bottom:0;position:relative;z-index:5}
+.ab-top-inner{max-width:1480px;margin:0 auto;padding:11px 24px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px}
+.ab-top-inner span{display:flex;align-items:center;gap:10px}
+.ab-top-inner .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot);border-radius:0;animation:abblink 1.5s infinite}
+@keyframes abblink{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:640px){.ab-top-inner{font-size:9.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-inner span:last-child{display:none}}
+
+/* ── MASSIVE NAV ── */
+.ab-nav{background:var(--ab-paper);border-bottom:2px solid var(--ab-line);position:sticky;top:0;z-index:50}
+.ab-nav-inner{max-width:1480px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.ab-brand{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
+.ab-brand img{height:62px;width:auto;display:block}
+body.dark-mode .ab-brand img{filter:brightness(0) invert(1)}
+@media(max-width:560px){.ab-brand img{height:50px}}
+.ab-nav-links{display:flex;gap:0;align-items:stretch}
+.ab-nav-links a{font-weight:800;font-size:13px;letter-spacing:.2px;text-transform:uppercase;padding:14px 18px;transition:.15s;border-left:1px solid var(--ab-line)}
+.ab-nav-links a:hover{background:var(--ab-ink);color:var(--ab-paper)}
+.ab-nav-links a.cta{background:var(--ab-hot);color:#fff;border-left:1px solid var(--ab-line)}
+.ab-nav-links a.cta:hover{background:var(--ab-ink)}
+.ab-nav-mobile-btn{display:none;background:transparent;border:0;font-size:22px;color:var(--ab-ink);cursor:pointer;padding:8px}
+@media(max-width:980px){.ab-nav-links a:not(.cta){display:none}.ab-nav-mobile-btn{display:block}.ab-nav-links a.cta{padding:11px 14px;font-size:11px}}
+
+/* ── HERO ── */
+.ab-hero{padding:0;border-bottom:2px solid var(--ab-line);position:relative;z-index:2}
+.ab-hero-inner{max-width:1480px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:0;align-items:stretch}
+@media(max-width:980px){.ab-hero-inner{grid-template-columns:1fr}}
+.ab-hero-text{padding:48px 40px 48px;display:flex;flex-direction:column;justify-content:space-between;border-right:2px solid var(--ab-line);position:relative;min-height:580px}
+@media(max-width:980px){.ab-hero-text{border-right:0;border-bottom:2px solid var(--ab-line);padding:36px 24px;min-height:0}}
+.ab-hero-text::before{content:'01 / 09';position:absolute;top:24px;right:24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--ab-gray);font-weight:500}
+.ab-hero-meta{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-ink);font-weight:600;margin-bottom:24px;padding:8px 0;border-top:2px solid var(--ab-line);border-bottom:1px solid var(--ab-line);display:flex;justify-content:space-between}
+.ab-hero-text h1{font-size:clamp(48px,8.5vw,150px);font-weight:900;line-height:.86;letter-spacing:-5px;margin:14px 0;text-transform:uppercase}
+.ab-hero-text h1 .accent{color:var(--ab-hot);font-style:normal;display:inline-block}
+.ab-hero-text h1 .underline{text-decoration:underline;text-decoration-thickness:6px;text-underline-offset:8px}
+.ab-hero-text .deck{font-size:17px;font-weight:500;color:var(--ab-ink-soft);max-width:480px;line-height:1.5;margin-top:auto;padding-top:24px;border-top:1px solid var(--ab-line)}
+.ab-hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--ab-line);margin-top:24px}
+.ab-hero-stats > div{padding:16px 14px;border-right:1px solid var(--ab-line)}
+.ab-hero-stats > div:last-child{border-right:none}
+.ab-hero-stats .v{font-size:32px;font-weight:900;line-height:.95;letter-spacing:-1.5px}
+.ab-hero-stats .l{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--ab-gray);margin-top:4px;font-weight:600}
+
+.ab-hero-photo{position:relative;background:#000;min-height:580px;overflow:hidden}
+@media(max-width:980px){.ab-hero-photo{min-height:380px}}
+.ab-hero-photo .hero-slider{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.ab-hero-photo .swiper-wrapper,
+.ab-hero-photo .swiper-slide{width:100% !important;height:100% !important}
+.ab-hero-photo .swiper-slide{background-size:cover;background-position:center;background-color:#1a1a1a;filter:contrast(1.05) saturate(.9)}
+.ab-hero-photo .swiper-slide::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(10,10,10,.45) 100%);pointer-events:none}
+.ab-hero-photo .swiper-pagination{bottom:130px !important;text-align:left !important;left:24px !important;right:auto !important;width:auto !important}
+.ab-hero-photo .swiper-pagination-bullet{background:rgba(255,255,255,.35) !important;width:10px !important;height:10px !important;border-radius:0 !important;opacity:1;margin:0 4px 0 0 !important}
+.ab-hero-photo .swiper-pagination-bullet-active{background:var(--ab-hot) !important;width:30px !important}
+.ab-hero-photo .photo-tag{position:absolute;top:24px;left:24px;background:var(--ab-hot);color:#fff;padding:11px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;z-index:3}
+.ab-hero-photo .photo-card{position:absolute;bottom:0;left:0;right:0;background:var(--ab-paper);border-top:2px solid var(--ab-line);padding:18px 24px;display:flex;justify-content:space-between;align-items:end;gap:20px;z-index:3}
+.photo-card .pc-title{font-weight:900;font-size:20px;letter-spacing:-.6px;line-height:1;text-transform:uppercase}
+.photo-card .pc-title small{display:block;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ab-gray);margin-top:6px}
+.photo-card .pc-price{font-weight:900;font-size:24px;letter-spacing:-1px;color:var(--ab-hot);text-align:right;line-height:1}
+.photo-card .pc-price small{display:block;font-family:'JetBrains Mono',monospace;color:var(--ab-gray);font-weight:500;font-size:10px;letter-spacing:1.5px;margin-top:5px;text-transform:uppercase}
+@media(max-width:560px){.photo-card .pc-title{font-size:16px}.photo-card .pc-price{font-size:18px}.ab-hero-photo .swiper-pagination{bottom:110px !important}}
+
+/* ── SEARCH (overrides styles.css) ── */
+.search-float{margin:0 !important;padding:0 !important;background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
+.search-card{max-width:1480px !important;margin:0 auto !important;padding:24px 32px !important;background:transparent !important;border:0 !important;border-radius:0 !important;box-shadow:none !important}
+.search-row{display:grid !important;grid-template-columns:1fr auto auto !important;gap:0 !important;align-items:stretch !important;border:2px solid var(--ab-line) !important}
+@media(max-width:760px){.search-row{grid-template-columns:1fr !important}}
+.search-field-wrapper{position:relative;border-right:1px solid var(--ab-line)}
+@media(max-width:760px){.search-field-wrapper{border-right:0;border-bottom:1px solid var(--ab-line)}}
+.search-field-wrapper input{width:100% !important;padding:18px 18px 18px 48px !important;border:0 !important;background:var(--ab-paper) !important;font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:600 !important;color:var(--ab-ink) !important;letter-spacing:.2px !important;border-radius:0 !important}
+.search-field-wrapper input::placeholder{color:var(--ab-gray);text-transform:uppercase;letter-spacing:1px;font-size:12px;font-weight:600}
+.search-field-wrapper input:focus{outline:none !important;background:var(--ab-paper-2) !important}
+.search-icon{position:absolute !important;left:18px;top:50%;transform:translateY(-50%);color:var(--ab-ink) !important;font-size:14px}
+.search-btn-main{padding:18px 26px !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:0 !important;border-right:1px solid var(--ab-line) !important;border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;font-weight:700 !important;cursor:pointer;transition:.15s}
+.search-btn-main:hover{background:var(--ab-hot) !important;color:#fff !important}
+.filter-toggle-btn{padding:18px 22px !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:0 !important;border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;font-weight:700 !important;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px}
+.filter-toggle-btn:hover{background:var(--ab-paper-2) !important}
+.filter-toggle-btn.active{background:var(--ab-hot) !important;color:#fff !important}
+.advanced-filters{display:none;background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;border-top:0 !important;padding:22px !important;border-radius:0 !important}
 .advanced-filters.show{display:block}
-.filter-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:flex-end}
-.filter-group{flex:1;min-width:150px;display:flex;flex-direction:column;gap:6px}
-.filter-group label{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}
-.filter-group select{padding:12px 14px;border:1px solid rgba(255,255,255,0.15);border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.07);color:#fff;cursor:pointer;width:100%;transition:var(--transition)}
-.filter-group select:focus{outline:none;border-color:var(--gold)}
-.filter-group select option{background:#1a2840;color:#e8edf2}
-.price-range-group{display:flex;gap:8px;width:100%}
-.price-range-group input{flex:1;min-width:0;padding:12px 14px;border:1px solid rgba(255,255,255,0.15);border-radius:2px;font-size:13px;background:rgba(255,255,255,0.07);color:#fff;transition:var(--transition);font-family:'DM Sans',sans-serif}
-.price-range-group input:focus{outline:none;border-color:var(--gold)}
-.price-range-group input::placeholder{color:rgba(255,255,255,0.35)}
-.reset-filters-btn{background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);padding:12px 24px;border-radius:2px;font-size:13px;cursor:pointer;transition:var(--transition);width:100%}
-.reset-filters-btn:hover{border-color:var(--gold);color:var(--gold)}
-@media(min-width:769px){.advanced-filters{display:block !important}.filter-toggle-btn{display:none}}
-.stats-section{padding:60px 5% 50px;background:var(--gray-light);margin-top:60px}
-body.dark-mode .stats-section{background:#111b27}
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;max-width:900px;margin:0 auto;text-align:center}
-.stat-item{padding:30px;position:relative}
-.stat-item:not(:last-child)::after{content:'';position:absolute;right:0;top:20%;height:60%;width:1px;background:var(--border-color)}
-.stat-number{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--gold);margin-bottom:6px;line-height:1}
-.stat-label{font-size:11px;color:var(--gray);letter-spacing:2px;text-transform:uppercase}
-.section{padding:80px 5%;max-width:1400px;margin:0 auto}
-.section-header{text-align:center;margin-bottom:50px}
-.section-eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:block}
-.section-header h2{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;margin-bottom:14px;color:var(--text-color);line-height:1.15}
-.section-header p{color:var(--gray);font-size:15px;max-width:500px;margin:0 auto}
-.view-all-wrapper{text-align:center;margin-top:40px}
-.view-all-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 32px;background:transparent;border:1px solid var(--gold);color:var(--gold);text-decoration:none;font-weight:500;border-radius:2px;font-size:12px;letter-spacing:2px;text-transform:uppercase;transition:var(--transition)}
-.view-all-btn:hover{background:var(--gold);color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:28px}
-.prop-card{background:var(--card-bg);border-radius:0;overflow:hidden;cursor:pointer;transition:var(--transition);box-shadow:var(--shadow-sm);border:1px solid var(--border-color)}
-.prop-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--gold)}
-.prop-card-image{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--gray-light)}
-.prop-card-image img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1)}
-.prop-card-image img.lazy{filter:blur(4px)}
-.prop-card:hover .prop-card-image img{transform:scale(1.07)}
-.prop-badge{position:absolute;top:14px;left:14px;padding:5px 14px;border-radius:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;z-index:2}
-.badge-sale{background:#1a2332;color:var(--gold);border:1px solid var(--gold)}
-.badge-lease{background:var(--gold);color:#fff}
-.badge-featured{position:absolute;top:14px;right:14px;background:rgba(10,20,35,0.85);color:var(--gold);padding:5px 14px;border-radius:0;font-size:10px;font-weight:600;letter-spacing:1px;z-index:2;border:1px solid rgba(200,169,110,0.4)}
-.card-actions{position:absolute;bottom:14px;right:14px;display:flex;gap:8px;z-index:10}
-.card-action-btn{width:36px;height:36px;border-radius:0;background:rgba(10,20,35,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);color:#fff;border:1px solid rgba(200,169,110,0.3)}
-.card-action-btn:hover{background:var(--gold);border-color:var(--gold)}
-.prop-info{padding:20px}
-.prop-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;margin-bottom:6px;line-height:1.25;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prop-location{color:var(--gray);font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:5px}
-.prop-location i{color:var(--gold);font-size:11px}
-.prop-divider{height:1px;background:var(--border-color);margin:12px 0}
-.prop-specs{display:flex;gap:16px;font-size:11px;color:var(--gray);flex-wrap:wrap;letter-spacing:0.5px}
-.prop-specs span{display:flex;align-items:center;gap:5px}
-.prop-specs i{color:var(--gold);font-size:10px}
-.prop-price{color:var(--gold);font-weight:600;font-size:20px;font-family:'Cormorant Garamond',serif;margin:12px 0 0}
-.resources-section{background:var(--navy);padding:80px 5%}
-.resources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:1100px;margin:0 auto}
-.resource-card{background:rgba(255,255,255,0.05);border-radius:0;padding:40px 30px;text-align:center;transition:var(--transition);border:1px solid rgba(200,169,110,0.2);text-decoration:none;display:block}
-.resource-card:hover{background:rgba(200,169,110,0.1);border-color:var(--gold);transform:translateY(-4px)}
-.resource-icon{width:64px;height:64px;background:rgba(200,169,110,0.15);border-radius:0;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:1px solid rgba(200,169,110,0.3)}
-.resource-icon i{font-size:28px;color:var(--gold)}
-.resource-card h3{font-size:22px;font-weight:600;color:#fff;margin-bottom:10px;font-family:'Cormorant Garamond',serif}
-.resource-card p{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.7}
-.resource-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:0;font-size:11px;letter-spacing:2px;text-transform:uppercase}
-.resource-card:hover .resource-btn{background:var(--gold);color:#fff}
-.broker-spotlight{background:var(--gray-light);padding:80px 5%}
-body.dark-mode .broker-spotlight{background:#111b27}
-.broker-container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.broker-image{position:relative;overflow:hidden}
-.broker-image img{width:100%;height:auto;display:block;border:1px solid var(--border-color)}
-.broker-info .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;display:block}
-.broker-info h2{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;margin-bottom:16px;color:var(--text-color)}
-.broker-info p{line-height:1.8;font-size:14px;color:var(--gray);max-width:420px}
-.broker-contact-buttons{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
-.broker-btn{padding:12px 24px;border-radius:0;text-decoration:none;font-weight:500;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;transition:var(--transition)}
-.broker-btn-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
-.broker-btn-primary:hover{background:var(--gold-dark)}
-.broker-btn-secondary{border:1px solid var(--gold);color:var(--gold)}
-.broker-btn-secondary:hover{background:var(--gold);color:#fff}
-.cta-section{padding:80px 5%;text-align:center;background:var(--navy);position:relative;overflow:hidden}
-.cta-section h2{font-family:'Cormorant Garamond',serif;font-size:48px;margin-bottom:14px;color:#fff;position:relative}
-.cta-section p{font-size:14px;margin-bottom:32px;color:rgba(255,255,255,0.6);position:relative}
-.cta-btn{display:inline-flex;align-items:center;gap:10px;padding:14px 36px;background:var(--gold);color:#fff;text-decoration:none;font-weight:500;border-radius:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;transition:var(--transition)}
-.cta-btn:hover{background:var(--gold-dark)}
-.contact-form-section{padding:80px 5%;max-width:800px;margin:0 auto}
-.contact-form{background:var(--card-bg);padding:40px;border:1px solid var(--border-color);transition:var(--transition)}
-.contact-form:hover{box-shadow:var(--shadow-lg);border-color:var(--gold)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-input{width:100%;padding:14px 16px;border:1px solid var(--border-color);border-radius:0;font-size:13px;transition:var(--transition);background:var(--white);color:var(--text-color);font-family:'DM Sans',sans-serif}
-.form-input:focus{outline:none;border-color:var(--gold)}
-.form-input::placeholder{color:var(--gray);font-size:13px}
-.submit-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:0;font-weight:500;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:var(--transition)}
-.submit-btn:hover{background:var(--gold)}
-footer{background:var(--navy);color:#888;padding:60px 5% 24px}
-.footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:40px;margin-bottom:40px}
-.footer-brand p{font-size:13px;line-height:1.8;color:rgba(255,255,255,0.45);margin-top:12px}
-.footer-col h4{color:var(--gold);margin-bottom:16px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-.footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.45);text-decoration:none;transition:var(--transition)}
-.footer-col ul li a:hover{color:var(--gold)}
-.footer-col p{font-size:13px;line-height:2;color:rgba(255,255,255,0.45)}
-.social-links{display:flex;gap:10px;margin-top:16px}
-.social-links a{width:34px;height:34px;border:1px solid rgba(200,169,110,0.3);border-radius:0;display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,0.5);font-size:13px}
-.social-links a:hover{border-color:var(--gold);background:var(--gold);color:#fff}
-.footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);margin:0 0 20px}
-.footer-bottom{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:1px}
-.footer-links{display:flex;gap:20px}
-.footer-links a{font-size:11px;color:rgba(255,255,255,0.25);text-decoration:none;transition:var(--transition)}
-.footer-links a:hover{color:var(--gold)}
-.floating-buttons{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100}
-.floating-btn{width:46px;height:46px;border-radius:0;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:var(--shadow-md);transition:var(--transition);cursor:pointer;border:none}
-.floating-btn:hover{transform:scale(1.08)}
-.btn-call{background:#25d366;color:#fff}
-.btn-messenger{background:#0084ff;color:#fff}
-.btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf);color:#fff}
-.btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
-body.dark-mode .btn-darkmode{background:var(--gold);color:#fff}
-.back-to-top{position:fixed;bottom:24px;left:24px;width:38px;height:38px;background:var(--gold);color:#fff;border-radius:0;display:flex;align-items:center;justify-content:center;text-decoration:none;opacity:0;visibility:hidden;transition:var(--transition);z-index:100;font-size:13px}
-.back-to-top.show{opacity:1;visibility:visible}
-#modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,12,22,0.97);display:none;z-index:2000;overflow-y:auto}
-.modal-body{max-width:900px;margin:40px auto;padding:32px;background:var(--white);border:1px solid var(--border-color)}
-.close{position:fixed;top:24px;right:28px;font-size:24px;cursor:pointer;color:rgba(255,255,255,0.7);z-index:2001;transition:var(--transition);width:44px;height:44px;background:rgba(255,255,255,0.1);border-radius:0;display:flex;align-items:center;justify-content:center}
-.close:hover{color:var(--gold)}
-.gallery-main{width:100%;aspect-ratio:4/3;object-fit:cover;margin-bottom:12px;border:1px solid var(--border-color)}
-.thumb-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:24px}
-.thumb-row img{width:68px;height:68px;object-fit:cover;cursor:pointer;opacity:0.55;transition:var(--transition);border:2px solid transparent;border-radius:0}
-.thumb-row img:hover{opacity:0.85}
-.thumb-row img.active{opacity:1;border-color:var(--gold)}
-.map-container iframe{width:100%;height:240px;border:0;border:1px solid var(--border-color)}
-.modal-details h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin:12px 0 6px;color:var(--text-color)}
-.modal-description{white-space:pre-wrap;word-wrap:break-word;line-height:1.8;font-size:14px;color:var(--gray);margin:16px 0;padding:16px;background:var(--gray-light);border-left:3px solid var(--gold)}
-body.dark-mode .modal-description{background:#111b27}
-.modal-specs{display:flex;flex-wrap:wrap;gap:20px;margin:14px 0;padding:14px 0;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color)}
-.modal-spec{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-color)}
-.modal-spec i{color:var(--gold);width:16px}
-.modal-price{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--gold);margin:12px 0 16px}
-.modal-mortgage{margin:16px 0;padding:22px;background:var(--gray-light);border:1px solid var(--border-color)}
-body.dark-mode .modal-mortgage{background:#111b27;border-color:#2a3f58}
-.modal-mortgage-title{font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--gold);font-size:13px;letter-spacing:1px;text-transform:uppercase}
-.modal-mortgage-controls{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
-.modal-mortgage-control{flex:1;min-width:120px}
-.modal-mortgage-control label{font-size:10px;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
-.modal-mortgage-control input,.modal-mortgage-control select{width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:0;background:var(--white);color:var(--text-color);font-size:13px}
-.modal-mortgage-control input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--border-color);outline:none;padding:0}
-.modal-mortgage-control input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--gold);border-radius:0;cursor:pointer}
-.modal-mortgage-result{background:var(--navy);padding:16px;text-align:center;border:1px solid rgba(200,169,110,0.2)}
-.modal-mortgage-result .label{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase}
-.modal-mortgage-result .amount{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--gold)}
-.modal-share{margin:16px 0;padding:16px 0;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color)}
-.modal-share-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;color:var(--gray)}
-.modal-share-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.share-btn{padding:8px 14px;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;display:inline-flex;align-items:center;gap:6px;letter-spacing:1px;text-transform:uppercase}
-.share-btn-fb{background:#1877f2;color:#fff}.share-btn-msgr{background:#0084ff;color:#fff}.share-btn-email{background:#ea4335;color:#fff}.share-btn-copy{background:var(--charcoal);color:#fff}
-.share-btn:hover{filter:brightness(1.15)}
-.modal-inquire-btn{margin-top:20px;padding:14px;background:var(--navy);border:1px solid var(--gold);color:var(--gold);border-radius:0;cursor:pointer;font-weight:500;font-size:11px;letter-spacing:2px;text-transform:uppercase;transition:var(--transition);width:100%}
-.modal-inquire-btn:hover{background:var(--gold);color:#fff}
-.email-modal{display:none;position:fixed;inset:0;background:rgba(5,12,22,0.85);z-index:3000;align-items:center;justify-content:center}
-.email-modal-content{background:var(--white);max-width:400px;width:90%;padding:36px;position:relative;animation:modalIn 0.3s ease;border:1px solid var(--border-color)}
-@keyframes modalIn{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
-.email-modal-content h3{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);margin-bottom:8px}
-.email-modal-content p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.7}
-.email-modal-content input{width:100%;padding:14px;border:1px solid var(--border-color);border-radius:0;font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
-.email-modal-content input:focus{outline:none;border-color:var(--gold)}
-.email-modal-content button{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:0;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase}
-.email-modal-content button:hover{background:var(--gold)}
-.close-modal{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray)}
-.close-modal:hover{color:var(--gold)}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border:1px solid rgba(200,169,110,0.3);z-index:3000;animation:toastIn 0.3s ease;font-size:13px;border-left:3px solid var(--gold)}
-@keyframes toastIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
-.loader{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s}
-.loader.hide{opacity:0;visibility:hidden}
-.loader-content{text-align:center}
-.loader-logo{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);letter-spacing:8px;margin-bottom:20px}
-.loader-bar{width:120px;height:1px;background:rgba(200,169,110,0.2);margin:0 auto;position:relative;overflow:hidden}
-.loader-bar::after{content:'';position:absolute;left:-50%;width:50%;height:100%;background:var(--gold);animation:loading 1.2s infinite}
-@keyframes loading{0%{left:-50%}100%{left:150%}}
-.empty-state{text-align:center;padding:50px;background:var(--gray-light);border:1px solid var(--border-color)}
-body.dark-mode .empty-state{background:#111b27}
-.empty-state i{font-size:36px;margin-bottom:12px;color:var(--gold)}
-.empty-state p{color:var(--gray);font-size:14px}
-.nav-dropdown{position:relative}.nav-dropdown>a,.nav-dropdown>span{cursor:pointer}.nav-dropdown-menu{  position:absolute;top:100%;left:50%;transform:translateX(-50%);  background:var(--white);border:1px solid var(--border-color);  min-width:200px;padding:8px 0;display:none;z-index:300;  box-shadow:var(--shadow-lg);}/* Invisible upward bridge fills gap so mouse moving down doesn't close menu */.nav-dropdown-menu::before{  content:'';position:absolute;bottom:100%;left:0;right:0;height:20px;  background:transparent;}body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}.nav-dropdown:hover .nav-dropdown-menu{display:block}.nav-dropdown-menu a{  display:block;padding:10px 20px;font-size:13px;  color:var(--text-color)!important;text-decoration:none;  transition:var(--transition);border-bottom:1px solid var(--border-color);  text-transform:none;letter-spacing:.5px;}.nav-dropdown-menu a:last-child{border-bottom:none}.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
-@media(max-width:768px){
-.nav-links{display:none}.mobile-menu-btn{display:block}
-.logo{position:absolute;left:50%;transform:translateX(-50%)}
-.navbar.scrolled .logo{left:50%;transform:translateX(-50%)}
-.logo img{height:42px}.hero-slider{height:85vh;min-height:500px}
-.slide-content img{max-width:200px}.search-float{margin-top:-40px}
-.search-card{padding:20px}.search-row{flex-direction:column;gap:10px}
-.search-field-wrapper{width:100%}
-.search-btn-main,.filter-toggle-btn{width:100%;justify-content:center}
-.filter-group{min-width:100%}.price-range-group{gap:8px}
-.stats-grid{grid-template-columns:1fr;gap:0}
-.stat-item::after{display:none}.stat-item{border-bottom:1px solid var(--border-color)}
-.stats-section{margin-top:50px}.section-header h2{font-size:32px}
-.resources-grid{grid-template-columns:1fr}
-.broker-container{grid-template-columns:1fr;gap:36px;text-align:center}
-.broker-info h2{font-size:32px}.broker-info p{max-width:none}
-.broker-contact-buttons{justify-content:center}.cta-section h2{font-size:36px}
-.gallery-main{aspect-ratio:1/1}.thumb-row img{width:56px;height:56px}
-.footer-content{text-align:center}.social-links{justify-content:center}
-.grid{grid-template-columns:1fr}.modal-body{margin:16px;padding:20px}
-.form-row{grid-template-columns:1fr}
-.footer-bottom{flex-direction:column;text-align:center}
-}
-/* ============================================
-   DRAMATIC PASS V2 — 2026-05-05
-   Removable: delete this whole block to revert.
-   ============================================ */
+.filter-grid{display:grid !important;grid-template-columns:repeat(4,1fr) !important;gap:0 !important;border:1px solid var(--ab-line) !important;margin-bottom:16px !important}
+@media(max-width:760px){.filter-grid{grid-template-columns:1fr 1fr !important}}
+@media(max-width:480px){.filter-grid{grid-template-columns:1fr !important}}
+.filter-group{padding:14px 16px;border-right:1px solid var(--ab-line)}
+.filter-group:last-child{border-right:0}
+.filter-group label{display:block;font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:2px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:700 !important;margin-bottom:6px !important}
+.filter-group select,.filter-group input{width:100% !important;padding:8px 0 !important;background:transparent !important;border:0 !important;border-bottom:1px solid var(--ab-line) !important;border-radius:0 !important;font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:700 !important;color:var(--ab-ink) !important}
+.price-range-group{display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important}
+.reset-filters-btn{padding:12px 22px !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:0 !important;border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:2px !important;text-transform:uppercase !important;font-weight:700 !important;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.reset-filters-btn:hover{background:var(--ab-hot) !important}
+.search-suggestions{position:absolute;top:100%;left:0;right:0;background:var(--ab-paper);border:2px solid var(--ab-line);border-top:0;z-index:30;max-height:280px;overflow-y:auto;box-shadow:6px 6px 0 var(--ab-ink)}
+.search-suggestions div{padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:1px solid var(--ab-line);transition:.15s}
+.search-suggestions div:last-child{border-bottom:0}
+.search-suggestions div:hover{background:var(--ab-hot);color:#fff}
 
-/* (A) SCROLL PROGRESS BAR */
-.scroll-progress{
-  position:fixed;top:0;left:0;height:2px;width:0;
-  background:linear-gradient(90deg,var(--gold) 0%,#f0d9a8 100%);
-  z-index:1500;will-change:width;box-shadow:0 0 12px rgba(200,169,110,0.6);
-  transition:width .08s linear;
+/* ── TICKER ── */
+.ab-ticker{background:var(--ab-ink);color:var(--ab-paper);overflow:hidden;border-bottom:2px solid var(--ab-line);position:relative;z-index:2}
+.ab-ticker-track{display:flex;gap:60px;padding:14px 0;animation:abtick 28s linear infinite;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.ab-ticker-track span{display:inline-flex;align-items:center;gap:60px}
+.ab-ticker-track span::after{content:'■';color:var(--ab-hot);font-size:9px}
+@keyframes abtick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── TRUST STRIP (override) ── */
+.trust-strip{background:var(--ab-paper);border-bottom:2px solid var(--ab-line) !important;position:relative;z-index:2}
+.trust-grid{display:grid !important;grid-template-columns:repeat(6,1fr) !important;gap:0 !important;max-width:1480px !important;margin:0 auto !important;padding:0 !important;border:0 !important}
+@media(max-width:1100px){.trust-grid{grid-template-columns:repeat(3,1fr) !important}}
+@media(max-width:600px){.trust-grid{grid-template-columns:1fr 1fr !important}}
+.trust-item{padding:22px 18px !important;border-right:1px solid var(--ab-line) !important;text-align:left !important;display:flex !important;flex-direction:column !important;gap:6px !important}
+.trust-item:last-child{border-right:0 !important}
+@media(max-width:1100px){.trust-item:nth-child(3n){border-right:0 !important}}
+@media(max-width:600px){.trust-item:nth-child(2n){border-right:0 !important}}
+.trust-icon{width:auto !important;height:auto !important;background:transparent !important;color:var(--ab-hot) !important;font-size:14px !important;margin:0 0 4px !important;display:block !important;border:0 !important}
+.trust-text{display:flex !important;flex-direction:column !important;gap:2px !important}
+.trust-label{font-size:22px !important;font-weight:900 !important;letter-spacing:-.8px !important;color:var(--ab-ink) !important;text-transform:none !important;line-height:1 !important;font-family:'Inter',sans-serif !important}
+.trust-sub{font-family:'JetBrains Mono',monospace !important;font-size:9.5px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:600 !important}
+
+/* ── SECTION HEADER (universal) ── */
+.section{border-bottom:2px solid var(--ab-line);position:relative;z-index:2;background:var(--ab-paper)}
+.section .section-header,
+.resources-section .section-header,
+.testimonials .section-header,
+.contact-form-section .section-header,
+.faq-section .section-header,
+.how-it-works .section-header{
+  max-width:1480px !important;margin:0 auto !important;padding:48px 40px 32px !important;
+  display:grid !important;grid-template-columns:auto 1fr auto !important;gap:30px !important;
+  align-items:end !important;border-bottom:1px solid var(--ab-line) !important;
+  background:transparent !important;text-align:left !important;
+}
+@media(max-width:880px){.section .section-header,.resources-section .section-header,.testimonials .section-header,.contact-form-section .section-header,.faq-section .section-header,.how-it-works .section-header{grid-template-columns:1fr !important;gap:14px !important;padding:32px 24px 22px !important}}
+.section .section-header::before,
+.resources-section .section-header::before,
+.testimonials .section-header::before,
+.contact-form-section .section-header::before,
+.faq-section .section-header::before,
+.how-it-works .section-header::before{
+  content:counter(secnum,decimal-leading-zero) '.' !important;
+  font-size:96px !important;font-weight:900 !important;line-height:.85 !important;
+  letter-spacing:-4px !important;color:var(--ab-ink) !important;
+  font-family:'Inter',sans-serif !important;display:block !important;
+  position:static !important;
+}
+body{counter-reset:secnum}
+.section,.resources-section,.testimonials,.contact-form-section,.faq-section,.how-it-works{counter-increment:secnum}
+.section h2,
+.resources-section h2,
+.testimonials h2,
+.contact-form-section h2,
+.faq-section h2,
+.how-it-works h2{
+  font-family:'Inter',sans-serif !important;
+  font-size:clamp(34px,5.5vw,72px) !important;font-weight:900 !important;
+  line-height:.9 !important;letter-spacing:-2.5px !important;
+  text-transform:uppercase !important;color:var(--ab-ink) !important;
+  margin:0 !important;
+}
+.section h2 em,
+.resources-section h2 em,
+.testimonials h2 em,
+.contact-form-section h2 em,
+.faq-section h2 em,
+.how-it-works h2 em{color:var(--ab-hot) !important;font-style:normal !important;font-weight:900 !important}
+.section .section-eyebrow,
+.resources-section .section-eyebrow,
+.testimonials .section-eyebrow,
+.contact-form-section .section-eyebrow,
+.faq-section .section-eyebrow,
+.how-it-works .section-eyebrow{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
+  letter-spacing:2px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;
+  font-weight:600 !important;text-align:right !important;line-height:1.6 !important;
+  background:transparent !important;padding:0 !important;border:0 !important;
+}
+.section .section-header > p,
+.resources-section .section-header > p,
+.testimonials .section-header > p,
+.contact-form-section .section-header > p,
+.faq-section .section-header > p,
+.how-it-works .section-header > p{
+  grid-column:2/-1 !important;font-size:14px !important;font-weight:500 !important;
+  color:var(--ab-ink-soft) !important;line-height:1.55 !important;margin-top:14px !important;
+  font-family:'Inter',sans-serif !important;
 }
 
-/* (B) GLASS NAVBAR + UNDERLINE LINKS */
-.navbar.scrolled{
-  background:rgba(255,255,255,0.72) !important;
-  -webkit-backdrop-filter:blur(22px) saturate(180%);
-  backdrop-filter:blur(22px) saturate(180%);
-  border-bottom:1px solid rgba(200,169,110,0.18) !important;
-  box-shadow:0 1px 30px rgba(13,27,42,0.06) !important;
-}
-body.dark-mode .navbar.scrolled{
-  background:rgba(13,27,42,0.72) !important;
-  border-bottom-color:rgba(200,169,110,0.18) !important;
-}
-.nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown > a{position:relative}
-.nav-links > a:not(.contact-btn-nav)::after,.nav-links > .nav-dropdown > a::after{
-  content:'';position:absolute;left:50%;bottom:-6px;width:0;height:1px;background:var(--gold);
-  transition:width .35s cubic-bezier(.2,.7,.2,1),left .35s cubic-bezier(.2,.7,.2,1);
-}
-.nav-links > a:not(.contact-btn-nav):hover::after,.nav-links > .nav-dropdown:hover > a::after{width:100%;left:0}
+/* ── HOW IT WORKS / MANIFESTO ── */
+.how-it-works{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important;position:relative;overflow:hidden}
+.how-it-works::before{content:'';position:absolute;top:-200px;right:-200px;width:480px;height:480px;background:var(--ab-hot);transform:rotate(45deg);z-index:0}
+.how-inner{max-width:1480px;margin:0 auto;padding:60px 40px !important;position:relative;z-index:2}
+.how-it-works .section-header{padding:0 !important;border-bottom:1px solid rgba(241,238,233,.25) !important;padding-bottom:24px !important;margin-bottom:30px !important;background:transparent !important}
+.how-it-works .section-header::before{color:var(--ab-paper) !important}
+.how-it-works h2{color:var(--ab-paper) !important}
+.how-it-works h2 em{color:var(--ab-hot) !important}
+.how-it-works .section-eyebrow{color:rgba(241,238,233,.6) !important}
+.how-it-works .section-header > p{color:rgba(241,238,233,.7) !important}
+.how-steps{display:grid !important;grid-template-columns:repeat(4,1fr) !important;gap:0 !important;border:2px solid var(--ab-paper) !important;background:transparent !important;padding:0 !important;margin:0 !important}
+@media(max-width:980px){.how-steps{grid-template-columns:repeat(2,1fr) !important}}
+@media(max-width:560px){.how-steps{grid-template-columns:1fr !important}}
+.how-step{padding:24px 22px !important;border-right:1px solid var(--ab-paper) !important;background:transparent !important;border-radius:0 !important;border-top:0 !important;border-bottom:0 !important;border-left:0 !important}
+.how-step:last-child{border-right:0 !important}
+@media(max-width:980px){.how-step:nth-child(2n){border-right:0 !important}.how-step:nth-child(-n+2){border-bottom:1px solid var(--ab-paper) !important}}
+@media(max-width:560px){.how-step{border-right:0 !important;border-bottom:1px solid var(--ab-paper) !important}.how-step:last-child{border-bottom:0 !important}}
+.how-step-num{font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;color:var(--ab-hot) !important;font-weight:700 !important;margin-bottom:14px !important;text-transform:uppercase !important}
+.how-step h3{font-size:21px !important;font-weight:900 !important;letter-spacing:-.7px !important;line-height:1.05 !important;margin-bottom:10px !important;text-transform:uppercase !important;color:var(--ab-paper) !important;font-family:'Inter',sans-serif !important}
+.how-step p{font-size:13px !important;color:rgba(241,238,233,.72) !important;line-height:1.55 !important;font-family:'Inter',sans-serif !important}
 
-/* (C) HERO — CINEMATIC EDITORIAL */
-.hero-slider{height:100vh;min-height:680px;position:relative;overflow:hidden}
-/* Ken Burns removed — was conflicting with Swiper's fade transform after one cycle */
-.hero-slider,.hero-slider .swiper-wrapper{background:var(--navy)}
-.hero-slider .swiper-slide::before{background:linear-gradient(180deg,rgba(10,20,35,0.40) 0%,rgba(10,20,35,0.18) 30%,rgba(10,20,35,0.55) 70%,rgba(10,20,35,0.92) 100%) !important}
-/* Hide the JS-injected logo (replaced by hero-overlay editorial copy) */
-.slide-content{display:none !important}
+/* ── LISTINGS GRID + CARDS ── */
+.section .listings-tabs{
+  display:flex;justify-content:flex-start;gap:0;
+  max-width:1480px;margin:0 auto;padding:0 40px;
+  border-bottom:2px solid var(--ab-line);
+}
+@media(max-width:560px){.section .listings-tabs{padding:0 18px}}
+.section .listings-tab{
+  background:transparent;border:0;padding:14px 24px;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--ab-gray);
+  border-right:1px solid var(--ab-line);transition:.15s;
+}
+.section .listings-tab:hover{background:var(--ab-paper-2);color:var(--ab-ink)}
+.section .listings-tab.active{color:#fff;background:var(--ab-hot)}
+@media(max-width:560px){.section .listings-tab{padding:11px 14px;font-size:10px;letter-spacing:1.4px}}
 
-.hero-overlay{
-  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
-  text-align:center;padding:0 6%;z-index:5;pointer-events:none;
+.section .grid{
+  max-width:1480px !important;margin:0 auto !important;
+  display:grid !important;grid-template-columns:repeat(3,1fr) !important;
+  gap:0 !important;padding:0 !important;background:transparent !important;
+  align-items:stretch !important;
 }
-.hero-overlay > *{pointer-events:auto}
+@media(max-width:980px){.section .grid{grid-template-columns:repeat(2,1fr) !important}}
+@media(max-width:640px){.section .grid{grid-template-columns:1fr !important}}
+.section .grid.listings-pane{display:none !important;min-height:0 !important}
+.section .grid.listings-pane.active{display:grid !important}
 
-.hero-eyebrow{
-  color:rgba(255,255,255,0.85);font-size:11px;letter-spacing:5px;text-transform:uppercase;
-  margin-bottom:32px;font-weight:500;font-family:'DM Sans',sans-serif;
-  position:relative;padding:0 38px;
-  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.2s both;
+.section .prop-card{
+  position:relative !important;
+  padding:24px !important;
+  border:0 !important;
+  border-right:1px solid var(--ab-line) !important;
+  border-bottom:1px solid var(--ab-line) !important;
+  background:var(--ab-paper) !important;
+  transition:background .15s !important;
+  border-radius:0 !important;
+  cursor:pointer;
+  display:flex !important;
+  flex-direction:column !important;
+  height:100% !important;
+  overflow:hidden !important;
 }
-.hero-eyebrow::before,.hero-eyebrow::after{
-  content:'';position:absolute;top:50%;width:24px;height:1px;background:var(--gold);
-}
-.hero-eyebrow::before{left:0}.hero-eyebrow::after{right:0}
+.section .prop-card:hover{background:var(--ab-paper-2) !important;transform:none !important;box-shadow:none !important}
+.section .prop-card:nth-child(3n){border-right:0 !important}
+@media(max-width:980px){.section .prop-card:nth-child(3n){border-right:1px solid var(--ab-line) !important}.section .prop-card:nth-child(2n){border-right:0 !important}}
+@media(max-width:640px){.section .prop-card{border-right:0 !important}}
 
-.hero-headline{
-  font-family:'Cormorant Garamond',serif;color:#fff;font-weight:500;
-  font-size:clamp(48px,8.5vw,124px);line-height:0.96;letter-spacing:-0.025em;
-  margin:0 auto 36px;max-width:1200px;
+.section .prop-card-image{
+  position:relative !important;
+  width:100% !important;
+  aspect-ratio:5/4 !important;
+  border:1px solid var(--ab-line) !important;
+  background:#0a0a0a !important;
+  margin-bottom:18px !important;
+  overflow:hidden !important;
 }
-.hero-headline .line{display:block;overflow:hidden;padding:0 0 0.06em}
-.hero-headline .line-inner{display:inline-block;animation:glraLineUp 1.2s cubic-bezier(.2,.7,.2,1) both}
-.hero-headline .line:nth-child(1) .line-inner{animation-delay:.4s}
-.hero-headline .line:nth-child(2) .line-inner{animation-delay:.65s}
-.hero-headline em{color:var(--gold);font-style:italic;font-weight:600}
-@keyframes glraLineUp{0%{opacity:0;transform:translateY(110%) skewY(2deg)}100%{opacity:1;transform:translateY(0) skewY(0)}}
-
-.hero-sub{
-  color:rgba(255,255,255,0.78);font-size:16px;max-width:580px;line-height:1.7;
-  margin:0 auto 40px;font-family:'DM Sans',sans-serif;
-  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.95s both;
+.section .prop-card-image img{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+  filter:contrast(1.05) saturate(.9) !important;
+  transition:filter .3s !important;
 }
-
-.hero-cta{
-  display:inline-flex;align-items:center;gap:14px;padding:18px 44px;
-  background:var(--gold);color:#fff;text-decoration:none;
-  font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:600;
-  font-family:'DM Sans',sans-serif;border-radius:0;
-  transition:all .35s cubic-bezier(.2,.7,.2,1);
-  position:relative;overflow:hidden;
-  animation:glraFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 1.15s both;
-  box-shadow:0 14px 40px rgba(200,169,110,0.35);
-}
-.hero-cta:hover{background:var(--gold-dark);transform:translateY(-3px);box-shadow:0 20px 50px rgba(200,169,110,0.5)}
-.hero-cta::before{
-  content:'';position:absolute;top:0;left:-130%;width:100%;height:100%;pointer-events:none;
-  background:linear-gradient(120deg,transparent 0%,transparent 35%,rgba(255,255,255,0.4) 50%,transparent 65%,transparent 100%);
-  transition:left .8s cubic-bezier(.2,.7,.2,1);
-}
-.hero-cta:hover::before{left:130%}
-
-@keyframes glraFadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
-
-.hero-scroll-hint{bottom:42px !important}
-.hero-scroll-hint span{font-size:10px !important;letter-spacing:4px !important;color:rgba(255,255,255,0.7) !important}
-.scroll-line{height:48px !important}
-
-@media(max-width:768px){
-  .hero-slider{min-height:620px}
-  .hero-headline{font-size:clamp(40px,13vw,76px)}
-  .hero-sub{font-size:14px;max-width:90%}
-  .hero-eyebrow{padding:0;font-size:10px;letter-spacing:3px}
-  .hero-eyebrow::before,.hero-eyebrow::after{display:none}
-  .hero-cta{padding:15px 32px;font-size:10px}
-}
-
-/* (D) SEARCH CARD — soft luxury depth */
-.search-card{box-shadow:0 30px 80px rgba(0,0,0,0.30),0 0 0 1px rgba(200,169,110,0.08) inset !important}
-
-/* (E) TRUST STRIP */
-.trust-strip{padding:50px 5% !important}
-.trust-item .trust-label{font-size:18px !important}
-
-/* (F) NEIGHBORHOODS MARQUEE */
-.neighborhoods-marquee{
-  background:var(--navy);padding:24px 0;overflow:hidden;
-  border-top:1px solid rgba(200,169,110,0.15);border-bottom:1px solid rgba(200,169,110,0.15);
-  position:relative;
-}
-.neighborhoods-marquee::before,.neighborhoods-marquee::after{
-  content:'';position:absolute;top:0;bottom:0;width:140px;z-index:2;pointer-events:none;
-}
-.neighborhoods-marquee::before{left:0;background:linear-gradient(90deg,var(--navy) 0%,transparent 100%)}
-.neighborhoods-marquee::after{right:0;background:linear-gradient(-90deg,var(--navy) 0%,transparent 100%)}
-.marquee-track{
-  display:flex;gap:42px;align-items:center;
-  animation:glraMarquee 65s linear infinite;
-  white-space:nowrap;width:max-content;will-change:transform;
-}
-.marquee-track:hover{animation-play-state:paused}
-.marquee-track span{
-  font-family:'Cormorant Garamond',serif;font-size:24px;
-  color:rgba(255,255,255,0.45);letter-spacing:5px;text-transform:uppercase;font-weight:500;
-}
-.marquee-track .dot{font-size:30px;color:var(--gold);letter-spacing:0;font-weight:400}
-@keyframes glraMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-
-/* (G) BRAND STATEMENT */
-.brand-statement{padding:140px 5%;background:var(--white);position:relative;overflow:hidden}
-body.dark-mode .brand-statement{background:#0d1b2a}
-.brand-statement::before{
-  content:'';position:absolute;top:80px;left:50%;transform:translateX(-50%);
-  width:1px;height:48px;background:var(--gold);
-}
-.brand-statement-inner{max-width:920px;margin:0 auto;text-align:center;position:relative}
-.brand-statement .eyebrow{
-  font-size:11px;color:var(--gold);letter-spacing:5px;text-transform:uppercase;
-  margin-bottom:36px;display:block;font-weight:500;
-}
-.statement-text{
-  font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.2vw,50px);
-  line-height:1.28;color:var(--text-color);font-weight:500;letter-spacing:-0.008em;
-  margin-bottom:40px;
-}
-.statement-text em{color:var(--gold);font-style:normal;font-weight:600}
-.statement-divider{width:50px;height:1px;background:var(--gold);margin:0 auto 28px}
-.attribution{font-size:11px;color:var(--gray);letter-spacing:3px;text-transform:uppercase;font-weight:500}
-@media(max-width:768px){
-  .brand-statement{padding:80px 5%}
-  .brand-statement::before{top:48px;height:32px}
+.section .prop-card:hover .prop-card-image img{filter:contrast(1.05) saturate(1) !important;transform:none !important}
+.section .prop-card-image::after{
+  content:'' !important;position:absolute !important;inset:0 !important;
+  background:linear-gradient(180deg,transparent 60%,rgba(10,10,10,.3) 100%) !important;
+  pointer-events:none !important;opacity:1 !important;mix-blend-mode:normal !important;
 }
 
-/* (H) SECTION HEADERS — bigger editorial */
-.section-header{margin-bottom:60px !important}
-.section-header h2{font-size:clamp(36px,5vw,56px) !important;letter-spacing:-0.015em !important;line-height:1.08 !important}
-.cta-section h2{font-size:clamp(40px,5.5vw,64px) !important;letter-spacing:-0.015em !important;line-height:1.05 !important}
-.broker-info h2{font-size:clamp(36px,4.5vw,54px) !important;letter-spacing:-0.012em !important;line-height:1.1 !important}
-.section-eyebrow,.broker-info .eyebrow{letter-spacing:5px !important;font-weight:500 !important}
-
-/* (I) PROPERTY CARDS — cinematic */
-.prop-card{
-  position:relative;border-radius:0 !important;
-  transition:transform .55s cubic-bezier(.2,.7,.2,1),box-shadow .55s cubic-bezier(.2,.7,.2,1) !important;
+.section .prop-badge{
+  position:absolute !important;top:12px !important;left:12px !important;z-index:2 !important;
+  background:var(--ab-ink) !important;color:var(--ab-paper) !important;
+  padding:6px 11px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:10px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;
+  font-weight:700 !important;border-radius:0 !important;
 }
-.prop-card:hover{
-  transform:translateY(-10px) !important;
-  box-shadow:0 0 0 1px var(--gold),0 40px 80px -25px rgba(200,169,110,0.5),0 18px 36px rgba(13,27,42,0.20) !important;
+.section .prop-badge.badge-lease{background:var(--ab-hot) !important;color:#fff !important}
+.section .badge-featured{
+  position:absolute !important;top:12px !important;right:12px !important;z-index:2 !important;
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  padding:6px 11px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:10px !important;letter-spacing:1.5px !important;font-weight:700 !important;
+  border:1px solid var(--ab-line) !important;text-transform:uppercase !important;border-radius:0 !important;
 }
-.prop-card-image img{transition:transform 1.2s cubic-bezier(.2,.7,.2,1) !important}
-.prop-card:hover .prop-card-image img{transform:scale(1.10) !important}
-.prop-card-image::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(135deg,rgba(200,169,110,0) 0%,rgba(200,169,110,0.20) 100%);
-  opacity:0;transition:opacity .55s cubic-bezier(.2,.7,.2,1);mix-blend-mode:overlay;
+.section .card-actions{position:absolute !important;top:12px !important;right:12px !important;display:flex !important;gap:6px !important;z-index:3}
+.section .badge-featured + .card-actions,
+.section .prop-card:has(.badge-featured) .card-actions{top:42px !important}
+.section .card-action-btn{
+  width:32px !important;height:32px !important;border:1px solid var(--ab-paper) !important;
+  background:rgba(10,10,10,.7) !important;color:var(--ab-paper) !important;
+  font-size:12px !important;border-radius:0 !important;cursor:pointer;transition:.15s
 }
-.prop-card:hover .prop-card-image::after{opacity:1}
+.section .card-action-btn:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important}
 
-/* (J) RESOURCE CARDS */
-.resource-card{transition:all .5s cubic-bezier(.2,.7,.2,1) !important}
-.resource-card:hover{transform:translateY(-8px) !important;box-shadow:0 35px 70px -25px rgba(200,169,110,0.35) !important}
-
-/* (K) BROKER SPOTLIGHT — image polish */
-.broker-image{position:relative;overflow:hidden}
-.broker-image::before{
-  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(135deg,transparent 50%,rgba(200,169,110,0.15) 100%);
+.section .prop-info{
+  padding:0 !important;background:transparent !important;
+  flex:1 1 auto !important;display:flex !important;flex-direction:column !important;
 }
-.broker-image img{transition:transform 1.2s cubic-bezier(.2,.7,.2,1) !important}
-.broker-image:hover img{transform:scale(1.04)}
-
-/* (L) CTA SECTION — dramatic */
-.cta-section{padding:140px 5% !important;position:relative;overflow:hidden}
-.cta-section::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(200,169,110,0.12) 0%,transparent 60%);
+.section .prop-location{
+  font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;
+  letter-spacing:1.8px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;
+  margin-bottom:8px !important;font-weight:600 !important;background:transparent !important;
 }
-.cta-section h2{margin-bottom:18px !important}
-.cta-section > *{position:relative;z-index:1}
-
-/* (M) BUTTON SHIMMER */
-.cta-btn,.search-btn-main,.submit-btn,.broker-btn-primary,.view-all-btn{position:relative;overflow:hidden}
-.cta-btn::before,.search-btn-main::before,.submit-btn::before,.broker-btn-primary::before,.view-all-btn::before{
-  content:'';position:absolute;top:0;left:-130%;width:100%;height:100%;pointer-events:none;
-  background:linear-gradient(120deg,transparent 0%,transparent 35%,rgba(255,255,255,0.32) 50%,transparent 65%,transparent 100%);
-  transition:left .8s cubic-bezier(.2,.7,.2,1);
+.section .prop-location i{margin-right:4px !important}
+.section .prop-title{
+  font-family:'Inter',sans-serif !important;
+  font-size:24px !important;font-weight:900 !important;line-height:.98 !important;
+  letter-spacing:-1px !important;margin-bottom:14px !important;
+  text-transform:uppercase !important;color:var(--ab-ink) !important;
 }
-.cta-btn:hover::before,.search-btn-main:hover::before,.submit-btn:hover::before,.broker-btn-primary:hover::before,.view-all-btn:hover::before{left:130%}
-
-/* (N) FLOATING BUTTONS */
-.floating-btn{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s !important}
-.floating-btn:hover{transform:translateY(-3px) scale(1.06) !important;box-shadow:0 12px 28px rgba(0,0,0,0.30) !important}
-
-/* (O) SCROLL REVEAL */
-.reveal{opacity:0;transform:translateY(50px);transition:opacity 1s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
-.reveal.in{opacity:1;transform:none}
-
-/* (P) FORM POLISH */
-.contact-form-section{padding:120px 5% 80px !important;max-width:900px !important}
-.contact-form{padding:48px !important}
-.form-input{padding:16px 18px !important;font-size:14px !important}
-.form-input:focus{border-color:var(--gold) !important;box-shadow:0 0 0 3px rgba(200,169,110,0.12) !important}
-.submit-btn{padding:16px !important;font-size:11px !important;letter-spacing:3px !important}
-
-/* (Q) FOOTER POLISH */
-footer{padding:80px 5% 30px !important}
-.footer-col h4{font-weight:600 !important;letter-spacing:3px !important}
-
-/* (R) LOADER refinement */
-.loader-logo{font-size:42px !important;letter-spacing:14px !important}
-
-/* (S) RESPECT REDUCED MOTION */
-@media(prefers-reduced-motion:reduce){
-  .reveal,.hero-overlay > *,.hero-headline .line-inner{opacity:1 !important;transform:none !important;animation:none !important;transition:none !important}
-  .hero-slider .swiper-slide-active{animation:none}
-  .marquee-track{animation:none !important}
-  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+.section .prop-divider{display:none !important}
+.section .prop-specs{
+  display:flex !important;gap:10px !important;flex-wrap:wrap !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;
+  letter-spacing:1.5px !important;text-transform:uppercase !important;
+  color:var(--ab-ink) !important;font-weight:600 !important;
+  padding:12px 0 !important;border-top:1px solid var(--ab-line) !important;
+  border-bottom:1px solid var(--ab-line) !important;margin:0 0 16px !important;
+  justify-content:flex-start !important;flex:1 1 auto !important;
 }
-/* ===== END DRAMATIC PASS V2 ===== */
-
-/* ============================================
-   CONTENT SECTIONS V4 — 2026-05-06
-   New homepage sections: How It Works, Testimonials, FAQ.
-   Removable: delete this block + the matching HTML sections.
-   ============================================ */
-
-/* (V4-A) HOW IT WORKS — process steps */
-.how-it-works{padding:120px 5%;background:var(--gray-light);position:relative;overflow:hidden}
-body.dark-mode .how-it-works{background:#0a1520}
-.how-it-works::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(200,169,110,0.4) 50%,transparent 100%)}
-.how-inner{max-width:1300px;margin:0 auto}
-.how-it-works .section-header{margin-bottom:60px}
-.how-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:24px;position:relative}
-.how-steps::before{
-  content:'';position:absolute;top:108px;left:12.5%;right:12.5%;height:1px;
-  background:linear-gradient(90deg,transparent 0%,var(--gold) 25%,var(--gold) 75%,transparent 100%);
-  opacity:0.4;z-index:1;
-}
-.how-step{padding:30px 24px;text-align:center;position:relative;z-index:2;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
-.how-step:hover{transform:translateY(-6px)}
-.how-step-num{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);letter-spacing:6px;font-weight:600;margin-bottom:24px}
-.how-step-icon{
-  width:84px;height:84px;border-radius:50%;background:var(--white);
-  border:1px solid rgba(200,169,110,0.3);
-  display:flex;align-items:center;justify-content:center;margin:0 auto 28px;
-  position:relative;transition:all .5s cubic-bezier(.2,.7,.2,1);
-  box-shadow:0 8px 30px rgba(13,27,42,0.06);
-}
-body.dark-mode .how-step-icon{background:var(--card-bg)}
-.how-step-icon i{color:var(--gold);font-size:28px;transition:all .5s cubic-bezier(.2,.7,.2,1)}
-.how-step:hover .how-step-icon{background:var(--gold);border-color:var(--gold);box-shadow:0 18px 40px rgba(200,169,110,0.4);transform:scale(1.05)}
-.how-step:hover .how-step-icon i{color:#fff}
-.how-step h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--text-color);margin-bottom:14px;letter-spacing:-0.01em}
-.how-step p{font-size:13px;line-height:1.7;color:var(--gray);max-width:230px;margin:0 auto}
-@media(max-width:900px){
-  .how-steps{grid-template-columns:repeat(2,1fr);gap:30px}
-  .how-steps::before{display:none}
-}
-@media(max-width:520px){
-  .how-steps{grid-template-columns:1fr;gap:0}
-  .how-it-works{padding:80px 5%}
-  .how-step{padding:20px 12px}
+.section .prop-specs i{margin-right:4px !important;color:var(--ab-hot) !important}
+.section .prop-price{
+  font-family:'Inter',sans-serif !important;
+  font-size:28px !important;font-weight:900 !important;line-height:.95 !important;
+  letter-spacing:-1.2px !important;color:var(--ab-ink) !important;
+  margin-top:auto !important;background:transparent !important;
 }
 
-/* (V4-B) TESTIMONIALS */
-.testimonials{padding:120px 5%;max-width:1400px;margin:0 auto}
-.testimonials .section-header{margin-bottom:60px}
-.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1300px;margin:0 auto}
+.view-all-wrapper{padding:32px 40px !important;text-align:center !important;background:transparent !important;border-top:1px solid var(--ab-line) !important;max-width:1480px;margin:0 auto}
+.view-all-wrapper .view-all-btn{
+  display:inline-block !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;
+  padding:14px 26px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;border-radius:0 !important;border:0 !important;
+  text-decoration:none !important;transition:.15s !important;
+}
+.view-all-wrapper .view-all-btn:hover{background:var(--ab-hot) !important;color:#fff !important}
+
+/* ── RESOURCES ── */
+.resources-section{background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
+.resources-grid{
+  max-width:1480px !important;margin:0 auto !important;
+  display:grid !important;grid-template-columns:repeat(4,1fr) !important;gap:0 !important;
+  padding:0 !important;background:transparent !important;
+}
+@media(max-width:1100px){.resources-grid{grid-template-columns:repeat(2,1fr) !important}}
+@media(max-width:560px){.resources-grid{grid-template-columns:1fr !important}}
+.resource-card{
+  padding:22px 22px !important;background:var(--ab-paper) !important;
+  border:0 !important;border-right:1px solid var(--ab-line) !important;
+  border-bottom:1px solid var(--ab-line) !important;border-radius:0 !important;
+  transition:background .15s !important;
+}
+.resource-card:hover{background:var(--ab-paper-2) !important;transform:none !important;box-shadow:none !important}
+.resource-card:nth-child(4n){border-right:0 !important}
+@media(max-width:1100px){.resource-card:nth-child(4n){border-right:1px solid var(--ab-line) !important}.resource-card:nth-child(2n){border-right:0 !important}}
+@media(max-width:560px){.resource-card{border-right:0 !important}}
+.resource-icon{
+  background:transparent !important;color:var(--ab-hot) !important;
+  width:auto !important;height:auto !important;font-size:18px !important;
+  margin-bottom:10px !important;border:0 !important;display:block !important;
+}
+.resource-card h3{
+  font-family:'Inter',sans-serif !important;font-size:20px !important;font-weight:900 !important;
+  letter-spacing:-.7px !important;margin-bottom:6px !important;
+  text-transform:uppercase !important;color:var(--ab-ink) !important;line-height:1 !important;
+}
+.resource-card p{font-size:13px !important;color:var(--ab-ink-soft) !important;line-height:1.5 !important;margin-bottom:12px !important}
+.resource-btn{
+  font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;
+  letter-spacing:1.6px !important;text-transform:uppercase !important;
+  color:var(--ab-hot) !important;font-weight:700 !important;
+}
+
+/* ── TESTIMONIALS ── */
+.testimonials{background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
+.testimonials-grid{
+  max-width:1480px !important;margin:0 auto !important;
+  display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:0 !important;
+  padding:0 !important;background:transparent !important;
+}
+@media(max-width:980px){.testimonials-grid{grid-template-columns:1fr !important}}
 .testimonial-card{
-  background:var(--card-bg);border:1px solid var(--border-color);padding:42px 36px;position:relative;
-  transition:all .55s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;gap:22px;
+  padding:30px 26px !important;background:var(--ab-paper) !important;
+  border:0 !important;border-right:1px solid var(--ab-line) !important;
+  border-radius:0 !important;
 }
-.testimonial-card::before{
-  content:'\201C';position:absolute;top:18px;right:32px;
-  font-family:'Cormorant Garamond',serif;font-size:96px;line-height:0.6;
-  color:var(--gold);opacity:0.15;font-weight:600;
-}
-.testimonial-card:hover{
-  transform:translateY(-8px);border-color:var(--gold);
-  box-shadow:0 30px 70px -25px rgba(200,169,110,0.4),0 12px 24px rgba(13,27,42,0.10);
-}
-.testimonial-rating{display:flex;gap:4px;color:var(--gold);font-size:13px}
+.testimonial-card:last-child{border-right:0 !important}
+@media(max-width:980px){.testimonial-card{border-right:0 !important;border-bottom:1px solid var(--ab-line) !important}.testimonial-card:last-child{border-bottom:0 !important}}
+.testimonial-card::before{display:none !important}
+.testimonial-rating{color:var(--ab-hot) !important;font-size:14px !important;letter-spacing:3px !important;margin-bottom:14px !important}
 .testimonial-quote{
-  font-family:'Cormorant Garamond',serif;font-size:19px;line-height:1.55;
-  color:var(--text-color);font-weight:500;font-style:italic;flex:1;letter-spacing:-0.005em;
-  position:relative;z-index:1;
+  font-family:'Inter',sans-serif !important;font-size:18px !important;font-weight:600 !important;
+  line-height:1.4 !important;color:var(--ab-ink) !important;margin-bottom:20px !important;
+  font-style:normal !important;letter-spacing:-.4px !important;
 }
-.testimonial-author{display:flex;align-items:center;gap:14px;padding-top:18px;border-top:1px solid var(--border-color)}
+.testimonial-author{display:flex;align-items:center;gap:12px;border-top:1px solid var(--ab-line);padding-top:14px;margin-top:14px}
 .testimonial-avatar{
-  width:48px;height:48px;border-radius:50%;
-  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 100%);
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:1px;flex-shrink:0;
-  box-shadow:0 6px 16px rgba(200,169,110,0.35);
+  width:38px !important;height:38px !important;background:var(--ab-hot) !important;color:#fff !important;
+  border-radius:0 !important;display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace !important;font-weight:700 !important;font-size:13px !important;letter-spacing:1px !important;
 }
-.testimonial-name{font-size:14px;font-weight:600;color:var(--text-color);margin-bottom:3px}
-.testimonial-role{font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase}
-@media(max-width:900px){
-  .testimonials-grid{grid-template-columns:1fr;gap:20px}
-  .testimonials{padding:80px 5%}
-}
+.testimonial-name{font-family:'Inter',sans-serif !important;font-weight:900 !important;font-size:13px !important;text-transform:uppercase !important;color:var(--ab-ink) !important;letter-spacing:-.2px !important}
+.testimonial-role{font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1.4px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;margin-top:3px}
 
-/* (V4-C) FAQ ACCORDION */
-.faq-section{padding:120px 5%;background:var(--white);position:relative}
-.faq-inner{max-width:880px;margin:0 auto}
-.faq-section .section-header{margin-bottom:50px}
-.faq-list{display:flex;flex-direction:column}
-.faq-item{border-bottom:1px solid var(--border-color);transition:background .35s cubic-bezier(.2,.7,.2,1)}
-.faq-item:first-child{border-top:1px solid var(--border-color)}
+/* ── BROKER SPOTLIGHT ── */
+.broker-spotlight{padding:0 !important;background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
+.broker-container{
+  max-width:1480px !important;margin:0 auto !important;
+  display:grid !important;grid-template-columns:1fr 1.4fr !important;gap:0 !important;
+  align-items:stretch !important;background:transparent !important;
+  border-radius:0 !important;overflow:visible !important;padding:0 !important;
+}
+@media(max-width:880px){.broker-container{grid-template-columns:1fr !important}}
+.broker-image{
+  position:relative !important;background:#000 !important;
+  border-right:2px solid var(--ab-line) !important;
+  min-height:560px !important;padding:0 !important;
+  border-radius:0 !important;border-top:0 !important;border-bottom:0 !important;border-left:0 !important;
+  aspect-ratio:auto !important;
+}
+@media(max-width:880px){.broker-image{border-right:0 !important;border-bottom:2px solid var(--ab-line) !important;min-height:420px !important}}
+.broker-image img{width:100% !important;height:100% !important;object-fit:cover !important;position:absolute !important;inset:0 !important;filter:contrast(1.1) grayscale(.05) !important;border-radius:0 !important;aspect-ratio:auto !important}
+.broker-image::after{
+  content:'// BROKER · 2014–';position:absolute;bottom:20px;left:20px;
+  background:var(--ab-hot);color:#fff;padding:11px 18px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;
+  text-transform:uppercase;font-weight:700;z-index:2;
+  display:block !important;border-radius:0 !important;
+}
+.broker-image::before{display:none !important}
+.broker-info{padding:60px 50px !important;display:flex;flex-direction:column;justify-content:center}
+@media(max-width:880px){.broker-info{padding:40px 24px !important}}
+.broker-info .eyebrow{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
+  letter-spacing:2px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;
+  font-weight:600 !important;display:block !important;margin-bottom:16px !important;
+  padding-bottom:12px !important;border-bottom:1px solid var(--ab-line) !important;
+}
+.broker-info h2{
+  font-family:'Inter',sans-serif !important;
+  font-size:clamp(40px,6.5vw,88px) !important;font-weight:900 !important;
+  line-height:.88 !important;letter-spacing:-3px !important;
+  text-transform:uppercase !important;margin-bottom:24px !important;color:var(--ab-ink) !important;
+}
+.broker-info h2 em{color:var(--ab-hot) !important;font-style:normal !important}
+.broker-info p{
+  font-family:'Inter',sans-serif !important;font-size:15.5px !important;font-weight:500 !important;
+  color:var(--ab-ink-soft) !important;line-height:1.6 !important;margin-bottom:12px !important;
+  max-width:540px !important;font-style:normal !important;padding-left:0 !important;border-left:0 !important;
+}
+.broker-info p:first-of-type{font-style:italic;border-left:3px solid var(--ab-hot) !important;padding-left:14px !important;font-size:17px !important}
+.broker-contact-buttons{margin-top:24px !important;display:flex;gap:10px;flex-wrap:wrap}
+.broker-btn{
+  background:var(--ab-ink) !important;color:var(--ab-paper) !important;
+  padding:14px 22px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;border-radius:0 !important;border:0 !important;
+  text-decoration:none !important;transition:.15s !important;display:inline-flex;align-items:center;gap:8px;
+}
+.broker-btn:hover{background:var(--ab-hot) !important;color:#fff !important}
+.broker-btn-secondary{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
+.broker-btn-secondary:hover{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+
+/* ── FAQ ── */
+.faq-section{background:var(--ab-paper-2) !important;border-bottom:2px solid var(--ab-line) !important}
+.faq-inner{max-width:1480px !important;margin:0 auto !important;padding:0 !important}
+.faq-section .section-header{padding:48px 40px 32px !important;background:transparent !important}
+.faq-list{padding:0 40px 48px !important;max-width:none !important}
+@media(max-width:880px){.faq-list{padding:0 24px 36px !important}}
+.faq-item{
+  background:transparent !important;border:0 !important;
+  border-bottom:1px solid var(--ab-line) !important;border-radius:0 !important;
+  margin-bottom:0 !important;
+}
+.faq-item:last-child{border-bottom:0 !important}
 .faq-item summary{
-  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text-color);
-  padding:24px 0;cursor:pointer;list-style:none;
-  display:flex;justify-content:space-between;align-items:center;gap:24px;
-  transition:color .25s cubic-bezier(.2,.7,.2,1);letter-spacing:-0.005em;
+  padding:22px 0 !important;font-family:'Inter',sans-serif !important;
+  font-size:19px !important;font-weight:800 !important;letter-spacing:-.6px !important;
+  line-height:1.25 !important;color:var(--ab-ink) !important;cursor:pointer;list-style:none !important;
+  display:grid !important;grid-template-columns:auto 1fr auto !important;gap:18px !important;
+  align-items:center !important;text-transform:none !important;font-style:normal !important;
 }
 .faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::before{
+  content:counter(faqnum,decimal-leading-zero);
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
+  letter-spacing:2px !important;color:var(--ab-hot) !important;font-weight:700 !important;
+  min-width:40px !important;
+}
+.faq-section{counter-reset:faqnum}
+.faq-item{counter-increment:faqnum}
 .faq-item summary::after{
-  content:'';flex-shrink:0;width:32px;height:32px;
-  border:1px solid var(--gold);border-radius:50%;
-  background-image:linear-gradient(var(--gold),var(--gold)),linear-gradient(var(--gold),var(--gold));
-  background-size:12px 1px,1px 12px;background-position:center;background-repeat:no-repeat;
-  transition:transform .35s cubic-bezier(.2,.7,.2,1),background-size .35s;
+  content:'+';font-family:'JetBrains Mono',monospace !important;
+  font-size:24px !important;color:var(--ab-ink) !important;font-weight:300 !important;transition:.2s
 }
-.faq-item[open] summary::after{transform:rotate(45deg);background-size:12px 1px,0 0}
-.faq-item summary:hover{color:var(--gold)}
-.faq-answer{padding:0 0 28px 0;animation:glraFaqOpen .4s cubic-bezier(.2,.7,.2,1)}
-.faq-answer p{font-size:15px;line-height:1.75;color:var(--gray);max-width:720px}
-.faq-answer p a{color:var(--gold);text-decoration:underline}
-@keyframes glraFaqOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-@media(max-width:768px){
-  .faq-section{padding:80px 5%}
-  .faq-item summary{font-size:18px;padding:20px 0}
-  .faq-answer p{font-size:14px}
+.faq-item[open] summary::after{transform:rotate(45deg)}
+.faq-answer{padding:0 0 22px 58px !important;background:transparent !important;border:0 !important}
+@media(max-width:560px){.faq-answer{padding:0 0 18px 0 !important}}
+.faq-answer p{font-size:14.5px !important;color:var(--ab-ink-soft) !important;line-height:1.6 !important;margin-bottom:8px !important;font-family:'Inter',sans-serif !important}
+.faq-answer a{color:var(--ab-hot) !important;text-decoration:underline}
+
+/* ── FINAL CTA ── */
+.cta-section{
+  background:var(--ab-hot) !important;color:#fff !important;
+  padding:80px 40px !important;border-bottom:2px solid var(--ab-line) !important;
+  text-align:left !important;position:relative;overflow:hidden;
 }
-/* ===== END CONTENT SECTIONS V4 ===== */
+.cta-section::before,.cta-section::after{display:none !important}
+.cta-section h2{
+  font-family:'Inter',sans-serif !important;font-size:clamp(44px,8.5vw,140px) !important;
+  font-weight:900 !important;line-height:.85 !important;letter-spacing:-5px !important;
+  text-transform:uppercase !important;color:#fff !important;margin-bottom:18px !important;
+  max-width:1480px;margin-left:auto !important;margin-right:auto !important;
+}
+.cta-section h2 em{color:#0a0a0a !important;font-style:normal !important;display:inline}
+.cta-section p{
+  max-width:1480px;margin:0 auto 24px !important;font-size:16px !important;font-weight:500 !important;
+  color:rgba(255,255,255,.92) !important;line-height:1.5 !important;font-family:'Inter',sans-serif !important;
+}
+.cta-section .cta-btn{
+  display:inline-block !important;background:var(--ab-ink) !important;color:#fff !important;
+  padding:18px 28px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:12px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;border-radius:0 !important;border:0 !important;text-decoration:none !important;
+  margin:0 auto !important;
+}
+.cta-section .cta-btn:hover{background:#fff !important;color:var(--ab-ink) !important}
+.cta-section{display:flex;flex-direction:column;align-items:flex-start}
+.cta-section > *{max-width:1480px;width:100%;margin-left:auto !important;margin-right:auto !important}
+
+/* ── CONTACT FORM ── */
+.contact-form-section{background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
+.contact-form{
+  max-width:1480px !important;margin:0 auto !important;padding:32px 40px 56px !important;
+  background:transparent !important;border:0 !important;border-radius:0 !important;
+  display:flex !important;flex-direction:column !important;gap:14px !important;
+}
+@media(max-width:760px){.contact-form{padding:24px 24px 44px !important}}
+.contact-form .form-row{
+  display:grid !important;grid-template-columns:1fr 1fr !important;
+  gap:14px !important;margin-bottom:0 !important;border:0 !important;
+}
+@media(max-width:560px){.contact-form .form-row{grid-template-columns:1fr !important;gap:14px !important}}
+.contact-form .form-input{
+  width:100% !important;padding:16px 18px !important;
+  background:var(--ab-paper) !important;
+  border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:500 !important;
+  color:var(--ab-ink) !important;letter-spacing:.2px !important;margin:0 !important;
+  transition:background .15s,border-color .15s !important;
+}
+.contact-form textarea.form-input{resize:vertical;min-height:130px}
+.contact-form .form-input::placeholder{color:var(--ab-gray);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:600}
+.contact-form .form-input:focus{outline:none !important;background:var(--ab-paper-2) !important;border-color:var(--ab-hot) !important}
+.contact-form .form-input:hover{background:var(--ab-paper-2) !important}
+.contact-form .submit-btn{
+  display:inline-block !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;
+  padding:18px 32px !important;font-family:'JetBrains Mono',monospace !important;
+  font-size:12px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;border-radius:0 !important;border:0 !important;cursor:pointer;transition:.15s;
+}
+.contact-form .submit-btn:hover{background:var(--ab-hot) !important}
+
+/* ── FOOTER ── */
+footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padding:60px 40px 28px !important;position:relative;z-index:2}
+.footer-content{
+  max-width:1480px !important;margin:0 auto !important;
+  display:grid !important;grid-template-columns:2fr repeat(3,1fr) !important;gap:36px !important;
+  padding:0 0 32px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
+  text-align:left !important;background:transparent !important;border-top:0 !important;border-left:0 !important;border-right:0 !important;
+}
+@media(max-width:880px){.footer-content{grid-template-columns:1fr 1fr !important}}
+.footer-brand h4{
+  font-family:'Inter',sans-serif !important;font-size:32px !important;font-weight:900 !important;
+  letter-spacing:-1.4px !important;text-transform:uppercase !important;margin-bottom:12px !important;color:var(--ab-paper) !important;
+}
+.footer-brand h4 em{color:var(--ab-hot) !important;font-style:normal !important}
+.footer-brand p{font-size:13px !important;color:rgba(241,238,233,.7) !important;line-height:1.6 !important;max-width:340px !important;font-family:'Inter',sans-serif !important}
+.footer-col h4{
+  font-family:'JetBrains Mono',monospace !important;font-size:10px !important;
+  letter-spacing:2px !important;text-transform:uppercase !important;color:var(--ab-hot) !important;
+  margin-bottom:14px !important;font-weight:700 !important;
+}
+.footer-col ul{list-style:none !important;display:flex !important;flex-direction:column !important;gap:8px !important;padding:0 !important;margin:0 !important}
+.footer-col a,.footer-col p{font-size:13px !important;font-weight:600 !important;color:rgba(241,238,233,.85) !important;transition:.2s !important;font-family:'Inter',sans-serif !important;line-height:1.5}
+.footer-col a:hover{color:var(--ab-hot) !important}
+.social-links{margin-top:16px;display:flex;gap:10px}
+.social-links a{
+  width:36px;height:36px;border:1px solid rgba(241,238,233,.3);
+  display:flex;align-items:center;justify-content:center;color:var(--ab-paper) !important;
+  border-radius:0;font-size:14px;transition:.15s;
+}
+.social-links a:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important;color:#fff !important}
+.footer-divider{display:none !important}
+.footer-bottom{
+  font-family:'JetBrains Mono',monospace !important;font-size:10px !important;
+  letter-spacing:1.5px !important;text-transform:uppercase !important;color:rgba(241,238,233,.5) !important;
+  display:flex !important;justify-content:space-between !important;flex-wrap:wrap !important;gap:14px !important;
+  margin-top:24px !important;padding-top:0 !important;border-top:0 !important;font-weight:500 !important;
+}
+.footer-links{display:flex;gap:18px}
+.footer-bottom a{color:rgba(241,238,233,.5) !important;text-decoration:none}
+.footer-bottom a:hover{color:var(--ab-hot) !important}
+
+/* ── FLOATING + MOBILE ── */
+.floating-buttons{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:10px;z-index:120}
+.floating-buttons .floating-btn{
+  width:44px;height:44px;border-radius:0;background:var(--ab-ink);color:var(--ab-paper);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  border:0;cursor:pointer;text-decoration:none;transition:.15s;
+}
+.floating-buttons .floating-btn:hover{background:var(--ab-hot) !important;color:#fff !important;transform:none !important}
+.btn-call{background:#16a34a !important}
+.btn-whatsapp{background:#25d366 !important}
+.btn-viber{background:#7360f2 !important}
+.btn-messenger{background:#0078ff !important}
+.btn-instagram{background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%) !important}
+.btn-darkmode{background:var(--ab-hot) !important}
+.back-to-top{
+  position:fixed;left:14px;bottom:14px;width:44px;height:44px;
+  background:var(--ab-ink);color:var(--ab-paper);display:none;
+  align-items:center;justify-content:center;text-decoration:none;
+  z-index:120;border-radius:0;transition:.15s;
+}
+.back-to-top:hover{background:var(--ab-hot)}
+.back-to-top.show{display:flex}
+
+/* ── MOBILE OVERLAY (re-styled) ── */
+.mobile-overlay{position:fixed;top:0;left:-100%;width:100%;height:100%;background:var(--ab-ink) !important;z-index:2000;transition:left .35s ease;display:flex;flex-direction:column;padding:60px 24px 40px;overflow-y:auto}
+.mobile-overlay.show{left:0}
+.close-menu{position:absolute;top:18px;right:18px;font-size:26px;color:var(--ab-paper);cursor:pointer;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(241,238,233,.3)}
+.close-menu:hover{background:var(--ab-hot);border-color:var(--ab-hot)}
+.mobile-overlay-links{display:flex;flex-direction:column;gap:0;margin-top:20px;border-top:1px solid rgba(241,238,233,.2)}
+.mobile-overlay-links a{
+  padding:16px 4px;color:var(--ab-paper);text-decoration:none;
+  font-family:'Inter',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.5px;
+  text-transform:uppercase;border-bottom:1px solid rgba(241,238,233,.2);transition:.15s;
+}
+.mobile-overlay-links a:hover{color:var(--ab-hot);padding-left:14px}
+
+/* ── SCROLL PROGRESS ── */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--ab-hot);width:0;z-index:300;transition:width .12s linear}
+
+/* ── LOADER ── */
+.loader{position:fixed;inset:0;background:var(--ab-paper);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+.loader.hidden{opacity:0;pointer-events:none}
+.loader-content{text-align:center}
+.loader-logo{font-family:'Inter',sans-serif;font-size:54px;font-weight:900;letter-spacing:-2px;color:var(--ab-ink);text-transform:uppercase}
+.loader-bar{width:120px;height:3px;background:var(--ab-paper-2);margin:18px auto 0;position:relative;overflow:hidden}
+.loader-bar::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:var(--ab-hot);animation:loadbar 1.2s linear infinite}
+@keyframes loadbar{to{left:100%}}
+
+/* ── REVEAL ANIMATION ── */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ── EMPTY STATE ── */
+.empty-state{padding:60px 40px;text-align:center;color:var(--ab-gray);grid-column:1/-1}
+.empty-state i{font-size:36px;margin-bottom:14px;color:var(--ab-hot)}
+.empty-state p{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+
+/* ── MODALS keep working ── */
+.email-modal,#emailModal,#wishlistModal{display:none;position:fixed;inset:0;background:rgba(10,10,10,.85);z-index:9000;align-items:center;justify-content:center}
+.email-modal-content{background:var(--ab-paper);max-width:440px;width:90%;padding:38px 32px;border:2px solid var(--ab-line);position:relative;text-align:center;box-shadow:8px 8px 0 var(--ab-ink)}
+.email-modal-content h3{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:6px}
+.email-modal-content p{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray);margin-bottom:18px;font-weight:600}
+.email-modal-content input{width:100%;padding:14px 16px;border:2px solid var(--ab-line);background:var(--ab-paper);font-size:14px;margin-bottom:14px;font-family:'Inter',sans-serif}
+.email-modal-content button{width:100%;background:var(--ab-ink);color:var(--ab-paper);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;border:0;cursor:pointer}
+.email-modal-content button:hover{background:var(--ab-hot)}
+.close-modal{position:absolute;top:10px;right:14px;font-size:26px;cursor:pointer;color:var(--ab-ink);background:transparent;border:0}
+#modal{display:none;position:fixed;inset:0;background:rgba(10,10,10,.92);z-index:9000;overflow-y:auto}
+#modal .close{position:fixed;top:14px;right:14px;width:42px;height:42px;background:var(--ab-ink);color:var(--ab-paper);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9100;font-size:18px}
+#modal .close:hover{background:var(--ab-hot)}
+.modal-body{max-width:1100px;margin:32px auto;background:var(--ab-paper);border:2px solid var(--ab-line);padding:24px}
+.gallery-main{width:100%;max-height:560px;object-fit:cover;border:1px solid var(--ab-line);margin-bottom:14px}
+.thumb-row{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;padding-bottom:6px}
+.thumb-row img{width:90px;height:70px;object-fit:cover;border:1px solid var(--ab-line);cursor:pointer;flex-shrink:0}
+.thumb-row img.active{border-color:var(--ab-hot);border-width:2px}
+.modal-details h1{font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:-1.5px;margin-bottom:6px;line-height:.95}
+.modal-specs{display:flex;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--ab-ink);padding:14px 0;border-top:1px solid var(--ab-line);border-bottom:1px solid var(--ab-line);margin:14px 0}
+.modal-spec i{margin-right:5px;color:var(--ab-hot)}
+.modal-price{font-size:36px;font-weight:900;letter-spacing:-1.5px;color:var(--ab-hot);margin:8px 0 18px;line-height:1}
+.modal-mortgage{background:var(--ab-paper-2);padding:18px;margin-bottom:18px;border:1px solid var(--ab-line)}
+.modal-mortgage-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.modal-mortgage-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:560px){.modal-mortgage-controls{grid-template-columns:1fr}}
+.modal-mortgage-control label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray);font-weight:600;margin-bottom:4px}
+.modal-mortgage-control select,.modal-mortgage-control input{width:100%;padding:8px;border:1px solid var(--ab-line);background:var(--ab-paper);font-size:13px;font-family:'Inter',sans-serif}
+.modal-mortgage-result{text-align:center;padding:14px;background:var(--ab-ink);color:var(--ab-paper);margin-top:8px}
+.modal-mortgage-result .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,238,233,.6);font-weight:600}
+.modal-mortgage-result .amount{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1.1}
+.modal-share{margin:14px 0;padding:14px;border:1px solid var(--ab-line);background:var(--ab-paper-2)}
+.modal-share-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+.modal-share-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.share-btn{padding:9px 14px;background:var(--ab-paper);border:1px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;cursor:pointer;color:var(--ab-ink)}
+.share-btn:hover{background:var(--ab-ink);color:var(--ab-paper)}
+.modal-description{padding:14px 0;line-height:1.6;font-size:14px;color:var(--ab-ink-soft)}
+.map-container iframe{width:100%;height:280px;border:1px solid var(--ab-line)}
+.modal-inquire-btn{width:100%;padding:18px;background:var(--ab-hot);color:#fff;border:0;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer}
+.modal-inquire-btn:hover{background:var(--ab-ink)}
+
+/* Toast (created by main.js showToast) */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ab-ink);color:var(--ab-paper);padding:14px 22px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;z-index:9500;border-left:4px solid var(--ab-hot)}
 </style>
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 <div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
-<nav class="navbar" id="navbar">
+
+<!-- Legacy navbar — kept in DOM (hidden via CSS) so main.js's scroll handler doesn't error -->
+<nav class="navbar" id="navbar" aria-hidden="true">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
   <div class="logo" onclick="goHome()"><img src="/logo.png" alt="GLRA Realty Logo"></div>
-  <div class="nav-links">
-    <a href="/" onclick="scrollToTop()">HOME</a>
-    <a href="#featured">FEATURED</a>
-    <a href="/properties.html">PROPERTIES</a><a href="#broker">BROKER</a>
-    <a href="/calculator.html">CALCULATOR</a>
-    <a href="/zonal.html">ZONAL VALUE</a>
-    <div class="nav-dropdown"><a>MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:3px"></i></a>
-      <div class="nav-dropdown-menu">
-        <a href="/list-property.html" style="background:rgba(200,169,110,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(200,169,110,.25)"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
-        <a href="/about.html">About Us</a>
-        <a href="/neighborhoods.html">Neighborhood Guides</a>
-        <a href="/testimonials.html">Testimonials</a>
-        <a href="/blog.html">Blog & Tips</a>
-        <a href="/guide.html">Documentation Guide</a>
-        <a href="/affordability.html">Affordability Calculator</a>
-        <a href="/cost-of-ownership.html">Cost of Ownership</a>
-        <a href="/rental-yield.html">Rental Yield Calculator</a>
-        <a href="/amortization.html">Amortization Schedule</a>
-        <a href="/ercf.html">Registration Fee (ERCF)</a>
-      </div>
+  <div class="nav-links"></div>
+</nav>
+
+<!-- TOP STRIP -->
+<div class="ab-top">
+  <div class="ab-top-inner">
+    <span><span class="live"></span> LIVE — <span id="topCount">24</span> listings open right now</span>
+    <span>EST. MNL · 2014 — 2026</span>
+  </div>
+</div>
+
+<!-- MASSIVE NAV -->
+<nav class="ab-nav">
+  <div class="ab-nav-inner">
+    <a href="/" class="ab-brand" onclick="scrollToTop();return false;" aria-label="GLRA Realty home">
+      <img src="/logo.png" alt="GLRA Realty">
+    </a>
+    <div class="ab-nav-links">
+      <a href="#featured">Listings</a>
+      <a href="/properties.html">Properties</a>
+      <a href="/calculator.html">Tools</a>
+      <a href="/blog.html">Journal</a>
+      <a href="/about.html">About</a>
+      <button class="ab-nav-mobile-btn" onclick="openMobileMenu()" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+      <a href="#contact-form" class="cta">Book →</a>
     </div>
-    <a href="#contact" class="contact-btn-nav">CONTACT</a>
   </div>
 </nav>
+
+<!-- MOBILE OVERLAY -->
 <div class="mobile-overlay" id="mobileOverlay">
   <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
   <div class="mobile-overlay-links">
     <a href="/" onclick="scrollToTopAndClose()">Home</a>
-    <a href="#featured" onclick="closeMobileMenu()">Featured</a>
+    <a href="#featured" onclick="closeMobileMenu()">Listings</a>
     <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
     <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
     <a href="#broker" onclick="closeMobileMenu()">Broker</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Tools</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
-    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About</a>
     <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
     <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
     <a href="/guide.html" onclick="closeMobileMenu()">Guide</a>
-    <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
     <a href="/affordability.html" onclick="closeMobileMenu()">Affordability</a>
-    <a href="/cost-of-ownership.html" onclick="closeMobileMenu()">Cost of Ownership</a>
-    <a href="/rental-yield.html" onclick="closeMobileMenu()">Rental Yield</a>
     <a href="/amortization.html" onclick="closeMobileMenu()">Amortization</a>
-    <a href="/ercf.html" onclick="closeMobileMenu()">Registration Fee</a>
-    <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+    <a href="#contact-form" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
-<div class="hero-slider swiper" id="heroSlider">
-  <div class="swiper-wrapper" id="heroSliderWrapper">
-    <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d')">
-      <div class="slide-content"><img src="/hero-logo.png" alt="GLRA Realty"></div>
+
+<!-- HERO -->
+<header class="ab-hero">
+  <div class="ab-hero-inner">
+    <div class="ab-hero-text">
+      <div class="ab-hero-meta"><span>// FILE 01</span><span>HERO · MAY 2026</span></div>
+      <h1>Real<br>Estate.<br><span class="accent">Real</span><br><span class="underline">honest.</span></h1>
+      <p class="deck">No script. No call center. No hand-offs. One licensed broker in Manila who actually visits the building, checks the documents, and answers the phone on a Sunday.</p>
+      <div class="ab-hero-stats">
+        <div><div class="v">10+</div><div class="l">Years</div></div>
+        <div><div class="v">100+</div><div class="l">Closings</div></div>
+        <div><div class="v">5.0</div><div class="l">Rating</div></div>
+      </div>
+    </div>
+    <div class="ab-hero-photo">
+      <span class="photo-tag" id="heroPhotoTag">Featured · BGC</span>
+      <div class="hero-slider swiper" id="heroSlider">
+        <div class="swiper-wrapper" id="heroSliderWrapper">
+          <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=85&auto=format&fit=crop')"></div>
+        </div>
+        <div class="swiper-pagination"></div>
+      </div>
+      <div class="photo-card" id="heroPhotoCard">
+        <div class="pc-title" id="heroPcTitle">Park Avenue Penthouse<small>3 BR / 142 SQM / Available now</small></div>
+        <div class="pc-price" id="heroPcPrice">₱62.0M<small>BGC, Taguig</small></div>
+      </div>
     </div>
   </div>
-  <div class="hero-overlay">
-    <span class="hero-eyebrow">Catherine SB Sampayo · Licensed Broker</span>
-    <h1 class="hero-headline">
-      <span class="line"><span class="line-inner">Find the place</span></span>
-      <span class="line"><span class="line-inner">you'll <em>never</em> leave.</span></span>
-    </h1>
-    <p class="hero-sub">A curated portfolio of homes across Metro Manila and Luzon — for buyers who recognize the difference between a house and a home.</p>
-    <a href="#featured" class="hero-cta">Explore Listings <i class="fas fa-arrow-right"></i></a>
-  </div>
-  <div class="swiper-pagination"></div>
-  <div class="hero-scroll-hint"><span>Scroll</span><div class="scroll-line"></div></div>
-</div>
+</header>
+
+<!-- SEARCH -->
 <div class="search-float">
   <div class="search-card">
     <div class="search-row">
@@ -749,294 +889,229 @@ body.dark-mode .how-step-icon{background:var(--card-bg)}
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
-      <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()"><i class="fas fa-sliders-h"></i> Filters <i class="fas fa-chevron-down" id="filterIcon"></i></button>
+      <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()"><i class="fas fa-sliders-h"></i> Filters</button>
     </div>
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
-        <div class="filter-group"><label>Property Type</label><select id="propertyTypeSelect" onchange="applyLiveFilters()"><option value="">All Types</option><option value="Condominium">Condominium</option><option value="House and Lot">House and Lot</option><option value="Townhouse">Townhouse</option><option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option></select></div>
+        <div class="filter-group"><label>Type</label><select id="propertyTypeSelect" onchange="applyLiveFilters()"><option value="">All Types</option><option value="Condominium">Condominium</option><option value="House and Lot">House and Lot</option><option value="Townhouse">Townhouse</option><option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option></select></div>
         <div class="filter-group"><label>Bedrooms</label><select id="bedroomsSelect" onchange="applyLiveFilters()"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option></select></div>
-        <div class="filter-group"><label>Bathrooms</label><select id="bathsSelect" onchange="applyLiveFilters()"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></div>
-        <div class="filter-group"><label>Price Range (₱)</label><div class="price-range-group"><input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this);applyLiveFilters();"><input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this);applyLiveFilters();"></div></div>
+        <div class="filter-group"><label>Baths</label><select id="bathsSelect" onchange="applyLiveFilters()"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></div>
+        <div class="filter-group"><label>Price (₱)</label><div class="price-range-group"><input type="text" id="minPriceInput" placeholder="Min" oninput="formatPriceInput(this);applyLiveFilters();"><input type="text" id="maxPriceInput" placeholder="Max" oninput="formatPriceInput(this);applyLiveFilters();"></div></div>
       </div>
-      <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset Filters</button>
+      <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset</button>
     </div>
   </div>
 </div>
-<!-- COMBINED TRUST + STATS STRIP -->
+
+<!-- TICKER -->
+<div class="ab-ticker">
+  <div class="ab-ticker-track">
+    <span>BGC</span><span>MAKATI</span><span>ALABANG</span><span>ORTIGAS</span><span>ROCKWELL</span><span>EASTWOOD</span><span>MCKINLEY HILL</span><span>QUEZON CITY</span><span>TAGAYTAY</span><span>MUNTINLUPA</span>
+    <span>BGC</span><span>MAKATI</span><span>ALABANG</span><span>ORTIGAS</span><span>ROCKWELL</span><span>EASTWOOD</span><span>MCKINLEY HILL</span><span>QUEZON CITY</span><span>TAGAYTAY</span><span>MUNTINLUPA</span>
+  </div>
+</div>
+
+<!-- TRUST STRIP -->
 <section class="trust-strip" aria-label="Credentials and trust signals">
   <div class="trust-grid">
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-id-badge"></i></div>
-      <div class="trust-text"><span class="trust-label">PRC Licensed</span><span class="trust-sub">Real Estate Broker</span></div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-certificate"></i></div>
-      <div class="trust-text"><span class="trust-label">DHSUD Registered</span><span class="trust-sub">Compliant Brokerage</span></div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-award"></i></div>
-      <div class="trust-text"><span class="trust-label">10+ Years</span><span class="trust-sub">Industry Experience</span></div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-star"></i></div>
-      <div class="trust-text"><span class="trust-label">5.0 Star Rated</span><span class="trust-sub">Verified Client Reviews</span></div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-handshake"></i></div>
-      <div class="trust-text"><span class="trust-label">100+ Clients</span><span class="trust-sub">Successfully Served</span></div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-icon"><i class="fas fa-building"></i></div>
-      <div class="trust-text"><span class="trust-label"><span id="statProperties">0</span> Properties</span><span class="trust-sub">Currently Available</span></div>
-    </div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-id-badge"></i></div><div class="trust-text"><span class="trust-label">PRC Licensed</span><span class="trust-sub">Real Estate Broker</span></div></div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-certificate"></i></div><div class="trust-text"><span class="trust-label">DHSUD</span><span class="trust-sub">Compliant Brokerage</span></div></div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-award"></i></div><div class="trust-text"><span class="trust-label">10+ Years</span><span class="trust-sub">Industry Experience</span></div></div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-star"></i></div><div class="trust-text"><span class="trust-label">5.0 ★</span><span class="trust-sub">Verified Rating</span></div></div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-handshake"></i></div><div class="trust-text"><span class="trust-label">100+ Clients</span><span class="trust-sub">Successfully Served</span></div></div>
+    <div class="trust-item"><div class="trust-icon"><i class="fas fa-building"></i></div><div class="trust-text"><span class="trust-label"><span id="statProperties">0</span> Listings</span><span class="trust-sub">Currently Available</span></div></div>
   </div>
 </section>
-<!-- NEIGHBORHOODS MARQUEE -->
-<section class="neighborhoods-marquee" aria-label="Service areas">
-  <div class="marquee-track">
-    <span>Makati</span><span class="dot">·</span>
-    <span>Bonifacio Global City</span><span class="dot">·</span>
-    <span>Alabang</span><span class="dot">·</span>
-    <span>Ortigas</span><span class="dot">·</span>
-    <span>Rockwell</span><span class="dot">·</span>
-    <span>Quezon City</span><span class="dot">·</span>
-    <span>Taguig</span><span class="dot">·</span>
-    <span>Mandaluyong</span><span class="dot">·</span>
-    <span>Muntinlupa</span><span class="dot">·</span>
-    <span>Parañaque</span><span class="dot">·</span>
-    <span>Pasig</span><span class="dot">·</span>
-    <span>Cavite</span><span class="dot">·</span>
-    <span>Laguna</span><span class="dot">·</span>
-    <span>Batangas</span><span class="dot">·</span>
-    <span>Makati</span><span class="dot">·</span>
-    <span>Bonifacio Global City</span><span class="dot">·</span>
-    <span>Alabang</span><span class="dot">·</span>
-    <span>Ortigas</span><span class="dot">·</span>
-    <span>Rockwell</span><span class="dot">·</span>
-    <span>Quezon City</span><span class="dot">·</span>
-    <span>Taguig</span><span class="dot">·</span>
-    <span>Mandaluyong</span><span class="dot">·</span>
-    <span>Muntinlupa</span><span class="dot">·</span>
-    <span>Parañaque</span><span class="dot">·</span>
-    <span>Pasig</span><span class="dot">·</span>
-    <span>Cavite</span><span class="dot">·</span>
-    <span>Laguna</span><span class="dot">·</span>
-    <span>Batangas</span><span class="dot">·</span>
-  </div>
-</section>
-<!-- BRAND STATEMENT -->
-<section class="brand-statement">
-  <div class="brand-statement-inner">
-    <span class="eyebrow">The GLRA Promise</span>
-    <p class="statement-text">Ten years guiding buyers through the most consequential purchase of their lives <em>—</em> with discretion, transparency, and a portfolio worthy of the search.</p>
-    <div class="statement-divider"></div>
-    <p class="attribution">Catherine SB Sampayo · Licensed Real Estate Broker</p>
-  </div>
-</section>
-<!-- HOW IT WORKS -->
+
+<!-- HOW IT WORKS / MANIFESTO -->
 <section class="how-it-works">
   <div class="how-inner">
     <div class="section-header">
-      <span class="section-eyebrow">The Process</span>
-      <h2>How It Works</h2>
-      <p>Four steps from finding your dream home to receiving the keys.</p>
+      <div></div>
+      <h2>How we<br>actually <em>work.</em></h2>
+      <span class="section-eyebrow">// FILE 02<br>THE PRACTICE</span>
+      <p>Four steps from finding your dream home to receiving the keys. No pressure, no rush, no shortcuts.</p>
     </div>
     <div class="how-steps">
       <div class="how-step">
-        <div class="how-step-num">01</div>
-        <div class="how-step-icon"><i class="fas fa-search"></i></div>
-        <h3>Discover</h3>
-        <p>Browse our curated portfolio. We narrow it to listings that fit your life and your budget.</p>
+        <div class="how-step-num">// 01</div>
+        <h3>Visit first.<br>List second.</h3>
+        <p>Every property has been walked, photographed in natural light, and confirmed in person. No "based on developer renderings."</p>
       </div>
       <div class="how-step">
-        <div class="how-step-num">02</div>
-        <div class="how-step-icon"><i class="fas fa-calendar-check"></i></div>
-        <h3>Schedule</h3>
-        <p>Book a private viewing — at your pace, no pressure. In person or virtually for clients abroad.</p>
+        <div class="how-step-num">// 02</div>
+        <h3>Documents<br>checked twice.</h3>
+        <p>CCT, tax declarations, RDO clearance, association statements. We pull them ourselves. If anything's missing the listing doesn't go up.</p>
       </div>
       <div class="how-step">
-        <div class="how-step-num">03</div>
-        <div class="how-step-icon"><i class="fas fa-handshake"></i></div>
-        <h3>Negotiate</h3>
-        <p>Expert guidance through offer, due diligence, and paperwork. Every fee, every clause, explained.</p>
+        <div class="how-step-num">// 03</div>
+        <h3>Negotiate<br>with you.</h3>
+        <p>Every fee, every clause, every contingency explained — no surprises at signing. You always know what you're agreeing to.</p>
       </div>
       <div class="how-step">
-        <div class="how-step-num">04</div>
-        <div class="how-step-icon"><i class="fas fa-key"></i></div>
-        <h3>Move In</h3>
-        <p>Closing day. Keys in your hand. We're with you long after — for whatever questions come next.</p>
+        <div class="how-step-num">// 04</div>
+        <h3>One broker.<br>One number.</h3>
+        <p>You call Catherine — not a team, not a center. Sunday afternoon, Tuesday morning, doesn't matter. The number's the number.</p>
       </div>
     </div>
   </div>
 </section>
+
+<!-- LISTINGS (combined tabbed) -->
 <section class="section" id="featured">
-  <div class="section-header"><span class="section-eyebrow">Handpicked For You</span><h2>Featured Listings</h2><p>Discover our most exceptional properties across Metro Manila and Luzon</p></div>
-  <div id="featured-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=all" class="view-all-btn">View All Properties <i class="fas fa-arrow-right"></i></a></div>
-</section>
-<section class="section" id="properties">
-  <div class="section-header"><span class="section-eyebrow">For Sale</span><h2>Properties For Sale</h2><p>Find your perfect home from our exclusive listings</p></div>
-  <div id="sale-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=FOR SALE" class="view-all-btn">Browse For Sale <i class="fas fa-arrow-right"></i></a></div>
-</section>
-<section class="section">
-  <div class="section-header"><span class="section-eyebrow">For Lease</span><h2>Properties For Lease</h2><p>Flexible leasing options tailored to your lifestyle</p></div>
-  <div id="lease-list" class="grid"></div>
-  <div class="view-all-wrapper"><a href="/properties.html?category=FOR LEASE" class="view-all-btn">Browse For Lease <i class="fas fa-arrow-right"></i></a></div>
-</section>
-<section class="resources-section">
-  <div class="section-header"><span class="section-eyebrow" style="color:var(--gold)">Tools & Guides</span><h2 style="color:#fff">Resources</h2><p style="color:rgba(255,255,255,0.6)">Everything you need to make a confident real estate decision</p></div>
-  <div class="resources-grid">
-    <a href="/affordability.html" class="resource-card"><div class="resource-icon"><i class="fas fa-home"></i></div><h3>Affordability</h3><p>Find out how much house you can afford based on your income.</p><span class="resource-btn">Calculate <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/calculator.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calculator"></i></div><h3>Closing Fees</h3><p>Calculate all taxes and fees for property transactions.</p><span class="resource-btn">Calculate <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/amortization.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calendar-alt"></i></div><h3>Amortization</h3><p>Monthly payment schedule and factor rate reference table.</p><span class="resource-btn">View Schedule <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/rental-yield.html" class="resource-card"><div class="resource-icon"><i class="fas fa-chart-line"></i></div><h3>Rental Yield</h3><p>Investor ROI: gross yield, net yield, and cash-on-cash return.</p><span class="resource-btn">Analyze <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/zonal.html" class="resource-card"><div class="resource-icon"><i class="fas fa-map-marked-alt"></i></div><h3>BIR Zonal Value</h3><p>Look up zonal values for any city or province in the PH.</p><span class="resource-btn">Look Up <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/ercf.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-invoice-dollar"></i></div><h3>Registration Fee</h3><p>Estimate the LRA / Registry of Deeds title transfer fee.</p><span class="resource-btn">Estimate <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/guide.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-alt"></i></div><h3>Documentation Guide</h3><p>Complete guide to property documents in the Philippines.</p><span class="resource-btn">View Guide <i class="fas fa-arrow-right"></i></span></a>
-    <a href="/blog.html" class="resource-card"><div class="resource-icon"><i class="fas fa-newspaper"></i></div><h3>Real Estate Blog</h3><p>Expert tips, market insights, and guides for property buyers.</p><span class="resource-btn">Read Blog <i class="fas fa-arrow-right"></i></span></a>
+  <div class="section-header">
+    <div></div>
+    <h2>Listings.<br><em>Open now.</em></h2>
+    <span class="section-eyebrow">// EDIT 03<br>UPDATED <span id="updateDate">09 MAY</span></span>
+    <p>Each visited, photographed, and vetted in person — across Metro Manila and Luzon.</p>
+  </div>
+  <div class="listings-tabs" role="tablist" aria-label="Listing categories">
+    <button class="listings-tab active" role="tab" data-tab="featured-list" onclick="switchListingTab(this)">Featured</button>
+    <button class="listings-tab" role="tab" data-tab="sale-list" onclick="switchListingTab(this)">For Sale</button>
+    <button class="listings-tab" role="tab" data-tab="lease-list" onclick="switchListingTab(this)">For Lease</button>
+  </div>
+  <div id="featured-list" class="grid listings-pane active" role="tabpanel"></div>
+  <div id="sale-list" class="grid listings-pane" role="tabpanel"></div>
+  <div id="lease-list" class="grid listings-pane" role="tabpanel"></div>
+  <div class="view-all-wrapper" id="viewAllWrapper">
+    <a href="/properties.html?category=all" class="view-all-btn" id="viewAllBtn">View all properties →</a>
   </div>
 </section>
+
+<!-- RESOURCES -->
+<section class="resources-section">
+  <div class="section-header">
+    <div></div>
+    <h2>Tools<br><em>+ guides.</em></h2>
+    <span class="section-eyebrow">// FILE 04<br>RESOURCES</span>
+    <p>Calculators, guides, and market data — everything you need to make a confident real-estate decision.</p>
+  </div>
+  <div class="resources-grid">
+    <a href="/affordability.html" class="resource-card"><div class="resource-icon"><i class="fas fa-home"></i></div><h3>Affordability</h3><p>How much house you can afford based on your income.</p><span class="resource-btn">Calculate →</span></a>
+    <a href="/calculator.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calculator"></i></div><h3>Closing Fees</h3><p>All taxes and fees for property transactions.</p><span class="resource-btn">Calculate →</span></a>
+    <a href="/amortization.html" class="resource-card"><div class="resource-icon"><i class="fas fa-calendar-alt"></i></div><h3>Amortization</h3><p>Monthly payment schedule and factor rate reference.</p><span class="resource-btn">View →</span></a>
+    <a href="/rental-yield.html" class="resource-card"><div class="resource-icon"><i class="fas fa-chart-line"></i></div><h3>Rental Yield</h3><p>Investor ROI: gross yield, net yield, cash-on-cash.</p><span class="resource-btn">Analyze →</span></a>
+    <a href="/zonal.html" class="resource-card"><div class="resource-icon"><i class="fas fa-map-marked-alt"></i></div><h3>Zonal Value</h3><p>Look up BIR zonal values for any city in the PH.</p><span class="resource-btn">Look Up →</span></a>
+    <a href="/ercf.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-invoice-dollar"></i></div><h3>Registration</h3><p>Estimate the LRA / Registry of Deeds title fee.</p><span class="resource-btn">Estimate →</span></a>
+    <a href="/guide.html" class="resource-card"><div class="resource-icon"><i class="fas fa-file-alt"></i></div><h3>Doc Guide</h3><p>Complete guide to property documents in the PH.</p><span class="resource-btn">View →</span></a>
+    <a href="/blog.html" class="resource-card"><div class="resource-icon"><i class="fas fa-newspaper"></i></div><h3>Journal</h3><p>Tips, market insights, and guides for buyers.</p><span class="resource-btn">Read →</span></a>
+  </div>
+</section>
+
 <!-- TESTIMONIALS -->
 <section class="testimonials" aria-label="Client testimonials">
   <div class="section-header">
-    <span class="section-eyebrow">What Clients Say</span>
-    <h2>Trusted by Hundreds</h2>
-    <p>Stories from clients who found their perfect property with GLRA Realty.</p>
+    <div></div>
+    <h2>Trusted by<br><em>hundreds.</em></h2>
+    <span class="section-eyebrow">// FILE 05<br>CLIENT WORDS</span>
+    <p>Stories from clients who found their property with GLRA Realty.</p>
   </div>
   <div class="testimonials-grid">
     <article class="testimonial-card">
-      <div class="testimonial-rating" aria-label="5 out of 5 stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-      </div>
-      <p class="testimonial-quote">Catherine guided us through every detail of our first home purchase. Her expertise made what felt overwhelming feel completely manageable.</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">MA</div>
-        <div>
-          <div class="testimonial-name">Maria & Antonio</div>
-          <div class="testimonial-role">Bought a condo in BGC</div>
-        </div>
-      </div>
+      <div class="testimonial-rating">★★★★★</div>
+      <p class="testimonial-quote">"Catherine guided us through every detail of our first home purchase. Her expertise made what felt overwhelming feel completely manageable."</p>
+      <div class="testimonial-author"><div class="testimonial-avatar">MA</div><div><div class="testimonial-name">Maria &amp; Antonio</div><div class="testimonial-role">Bought a condo in BGC</div></div></div>
     </article>
     <article class="testimonial-card">
-      <div class="testimonial-rating" aria-label="5 out of 5 stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-      </div>
-      <p class="testimonial-quote">Honest, transparent, and genuinely cared about finding the right property — not just closing a deal. Our search took six months and she never once rushed us.</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">JR</div>
-        <div>
-          <div class="testimonial-name">Jonathan Reyes</div>
-          <div class="testimonial-role">Investment property in Makati</div>
-        </div>
-      </div>
+      <div class="testimonial-rating">★★★★★</div>
+      <p class="testimonial-quote">"Honest, transparent, and genuinely cared about finding the right property — not just closing a deal. Our search took six months and she never once rushed us."</p>
+      <div class="testimonial-author"><div class="testimonial-avatar">JR</div><div><div class="testimonial-name">Jonathan Reyes</div><div class="testimonial-role">Investment property in Makati</div></div></div>
     </article>
     <article class="testimonial-card">
-      <div class="testimonial-rating" aria-label="5 out of 5 stars">
-        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-      </div>
-      <p class="testimonial-quote">As an OFW, I needed someone I could trust remotely. Catherine handled everything — from viewings to paperwork — like family.</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">SC</div>
-        <div>
-          <div class="testimonial-name">Sarah Cruz</div>
-          <div class="testimonial-role">House and lot in Alabang</div>
-        </div>
-      </div>
+      <div class="testimonial-rating">★★★★★</div>
+      <p class="testimonial-quote">"As an OFW, I needed someone I could trust remotely. Catherine handled everything — from viewings to paperwork — like family."</p>
+      <div class="testimonial-author"><div class="testimonial-avatar">SC</div><div><div class="testimonial-name">Sarah Cruz</div><div class="testimonial-role">House and lot in Alabang</div></div></div>
     </article>
   </div>
 </section>
+
+<!-- BROKER -->
 <section class="broker-spotlight" id="broker">
   <div class="broker-container">
     <div class="broker-image"><img src="/agent-photo.jpg" alt="Catherine SB Sampayo — Licensed Real Estate Broker GLRA Realty" loading="lazy"></div>
     <div class="broker-info">
-      <span class="eyebrow">Meet Your Broker</span>
-      <h2>Catherine SB Sampayo</h2>
-      <p>Licensed Real Estate Broker helping homeowners sell and buyers find the right home with honest guidance, transparency, and expertise from start to finish.</p>
-      <p style="margin-top:12px">With over 10 years of experience across Metro Manila and Luzon, Catherine brings unparalleled market knowledge and a genuine passion for connecting people with their dream properties.</p>
+      <span class="eyebrow">// FILE 06 · PROFILE</span>
+      <h2>Catherine<br>SB <em>Sampayo.</em></h2>
+      <p>"Real estate is a relationship business pretending to be a transaction business. I work the other way around — fewer clients, deeper care, the long view."</p>
+      <p>Ten years brokering Metro Manila — first condos, family houses, legacy estates. PRC-licensed, REBAP-affiliated, BGC-based. Small client list by design.</p>
+      <p>Every showing is with me. Every document checked twice. The number on this page is mine — and yes, you can call on a Sunday.</p>
       <div class="broker-contact-buttons">
-        <a href="https://m.me/glrarealty" class="broker-btn broker-btn-primary" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i> Messenger</a>
-        <a href="tel:+639171774572" class="broker-btn broker-btn-secondary"><i class="fas fa-phone-alt"></i> Call Now</a>
+        <a href="https://m.me/glrarealty" class="broker-btn" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i> Messenger</a>
+        <a href="tel:+639171774572" class="broker-btn broker-btn-secondary"><i class="fas fa-phone-alt"></i> Call now</a>
         <a href="/about.html" class="broker-btn broker-btn-secondary"><i class="fas fa-user"></i> About</a>
       </div>
     </div>
   </div>
 </section>
+
 <!-- FAQ -->
 <section class="faq-section" id="faq">
   <div class="faq-inner">
     <div class="section-header">
-      <span class="section-eyebrow">Common Questions</span>
-      <h2>Frequently Asked</h2>
+      <div></div>
+      <h2>Common<br><em>questions.</em></h2>
+      <span class="section-eyebrow">// FILE 07<br>FAQ</span>
       <p>Answers to the questions clients ask most often. Don't see yours? Reach out below.</p>
     </div>
     <div class="faq-list">
-      <details class="faq-item">
-        <summary>How long does it take to buy a property in the Philippines?</summary>
-        <div class="faq-answer">
-          <p>From offer to closing typically takes 30–90 days, depending on whether you're paying cash or financing. Bank financing adds 30–45 days for loan approval and appraisal. Pre-selling units can take longer — turnover dates vary by developer.</p>
-        </div>
-      </details>
-      <details class="faq-item">
-        <summary>Can foreigners buy property in the Philippines?</summary>
-        <div class="faq-answer">
-          <p>Foreigners cannot own land outright, but they CAN own condominium units (up to 40% of a building's total floor area). Foreigners can also lease land long-term (up to 50 years, renewable). Filipino spouses can hold land titles. We'll walk you through the legal options.</p>
-        </div>
-      </details>
-      <details class="faq-item">
-        <summary>What documents do I need as a buyer?</summary>
-        <div class="faq-answer">
-          <p>Government ID (passport or driver's license), TIN (Tax Identification Number), proof of income (last 3 months payslips or ITR), and proof of billing. For foreigners, add visa + Bureau of Immigration certification. We provide a complete checklist once we identify your shortlist.</p>
-        </div>
-      </details>
-      <details class="faq-item">
-        <summary>What fees should I expect beyond the purchase price?</summary>
-        <div class="faq-answer">
-          <p>Standard buyer-side fees in the Philippines: documentary stamp tax (1.5%), transfer tax (0.5–0.75%), registration fee (~0.25%), notarial fees, and broker's commission (usually paid by the seller). Total closing costs typically run 4–6% of the purchase price. Try our <a href="/calculator.html">closing fees calculator</a> for a precise estimate.</p>
-        </div>
-      </details>
-      <details class="faq-item">
-        <summary>How do I schedule a property viewing?</summary>
-        <div class="faq-answer">
-          <p>The fastest way is through Messenger (link below) or by calling 0917 177 4572. Most viewings can be arranged within 24–48 hours. Virtual tours and recorded walk-throughs are also available for clients abroad.</p>
-        </div>
-      </details>
-      <details class="faq-item">
-        <summary>Do you charge buyers a fee?</summary>
-        <div class="faq-answer">
-          <p>No. Brokerage commission is paid by the seller, so our service comes at no cost to you as a buyer. We work for you, with no hidden fees and full transparency on every transaction.</p>
-        </div>
-      </details>
+      <details class="faq-item"><summary>How long does it take to buy a property in the Philippines?<span></span></summary><div class="faq-answer"><p>From offer to closing typically takes 30–90 days, depending on whether you're paying cash or financing. Bank financing adds 30–45 days for loan approval and appraisal. Pre-selling units can take longer — turnover dates vary by developer.</p></div></details>
+      <details class="faq-item"><summary>Can foreigners buy property in the Philippines?<span></span></summary><div class="faq-answer"><p>Foreigners cannot own land outright, but they CAN own condominium units (up to 40% of a building's total floor area). Foreigners can also lease land long-term (up to 50 years, renewable). Filipino spouses can hold land titles.</p></div></details>
+      <details class="faq-item"><summary>What documents do I need as a buyer?<span></span></summary><div class="faq-answer"><p>Government ID (passport or driver's license), TIN, proof of income (last 3 months payslips or ITR), and proof of billing. For foreigners, add visa + Bureau of Immigration certification.</p></div></details>
+      <details class="faq-item"><summary>What fees should I expect beyond the purchase price?<span></span></summary><div class="faq-answer"><p>Standard buyer-side fees: documentary stamp tax (1.5%), transfer tax (0.5–0.75%), registration fee (~0.25%), notarial fees, and broker's commission (usually paid by the seller). Total closing costs typically run 4–6% of the purchase price. Try our <a href="/calculator.html">closing fees calculator</a>.</p></div></details>
+      <details class="faq-item"><summary>How do I schedule a property viewing?<span></span></summary><div class="faq-answer"><p>The fastest way is through Messenger (link below) or by calling 0917 177 4572. Most viewings can be arranged within 24–48 hours. Virtual tours and recorded walk-throughs are also available for clients abroad.</p></div></details>
+      <details class="faq-item"><summary>Do you charge buyers a fee?<span></span></summary><div class="faq-answer"><p>No. Brokerage commission is paid by the seller, so our service comes at no cost to you as a buyer. We work for you, with no hidden fees and full transparency on every transaction.</p></div></details>
     </div>
   </div>
 </section>
+
+<!-- FINAL CTA -->
 <section class="cta-section" id="contact">
-  <h2>Ready to Find Your Dream Home?</h2>
-  <p>Let's start your journey to finding the perfect property today.</p>
-  <a href="#contact-form" class="cta-btn">Get In Touch <i class="fas fa-arrow-right"></i></a>
+  <h2>Stop scrolling.<br>Start <em>here.</em></h2>
+  <p>Tell me what you want. Send a message. Within 24 hours I'll come back with three properties worth your time and a frank opinion on each.</p>
+  <a href="#contact-form" class="cta-btn">Get in touch →</a>
 </section>
+
+<!-- CONTACT FORM -->
 <section class="contact-form-section" id="contact-form">
-  <div class="section-header"><span class="section-eyebrow">Reach Out</span><h2>Get In Touch</h2><p>Have questions? We're here to help guide your real estate journey</p></div>
+  <div class="section-header">
+    <div></div>
+    <h2>Reach <em>out.</em></h2>
+    <span class="section-eyebrow">// FILE 08<br>CONTACT</span>
+    <p>Have questions? We're here to help guide your real-estate journey.</p>
+  </div>
   <form class="contact-form" id="contactForm">
-    <div class="form-row" style="margin-bottom:16px">
+    <div class="form-row">
       <input type="text" name="name" class="form-input" placeholder="Full Name" required>
       <input type="email" name="email" class="form-input" placeholder="Email Address" required>
     </div>
-    <input type="tel" name="phone" class="form-input" placeholder="Phone Number" style="margin-bottom:16px">
-    <textarea name="message" class="form-input" placeholder="Tell us about what you're looking for..." rows="4" style="margin-bottom:16px;resize:vertical"></textarea>
-    <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> &nbsp;Send Message</button>
+    <input type="tel" name="phone" class="form-input" placeholder="Phone Number">
+    <textarea name="message" class="form-input" placeholder="Tell us what you're looking for..." rows="4"></textarea>
+    <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> &nbsp;Send Message →</button>
   </form>
 </section>
+
+<!-- FOOTER -->
 <footer>
   <div class="footer-content">
-    <div class="footer-brand footer-col"><h4>GLRA Realty</h4><p>Your trusted licensed real estate broker in Metro Manila and Luzon, Philippines. Connecting people with exceptional properties since 2014.</p><div class="social-links"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a></div></div>
-    <div class="footer-col"><h4>Properties</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li><li><a href="/properties.html?category=all">All Listings</a></li></ul></div>
-    <div class="footer-col"><h4>Resources</h4><ul><li><a href="/guide.html">Documentation Guide</a></li><li><a href="/calculator.html">Transaction Calculator</a></li><li><a href="/zonal.html">Zonal Value Lookup</a></li><li><a href="/blog.html">Real Estate Blog</a></li></ul></div>
-    <div class="footer-col"><h4>Company</h4><ul><li><a href="/about.html">About Us</a></li><li><a href="/testimonials.html">Testimonials</a></li><li><a href="#contact-form">Contact</a></li></ul><h4 style="margin-top:20px">Contact</h4><p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p><p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p></div>
+    <div class="footer-brand footer-col">
+      <h4><em>GLRA</em> Realty</h4>
+      <p>// One licensed broker. Manila. Since 2014. Honest pricing, complete documents, the long view.</p>
+      <div class="social-links">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>// Listings</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li><li><a href="/properties.html?category=all">All Listings</a></li><li><a href="/list-property.html">List a Property</a></li></ul></div>
+    <div class="footer-col"><h4>// Tools</h4><ul><li><a href="/calculator.html">Mortgage</a></li><li><a href="/affordability.html">Affordability</a></li><li><a href="/guide.html">Buyer Guide</a></li><li><a href="/zonal.html">Zonal Value</a></li></ul></div>
+    <div class="footer-col"><h4>// Direct</h4><ul><li><a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a></li><li><a href="tel:+639171774572">+63 917 177 4572</a></li><li><a href="/about.html">About</a></li><li><a href="#contact-form">Book →</a></li></ul></div>
   </div>
-  <hr class="footer-divider">
-  <div class="footer-bottom"><p>&copy; 2026 GLRA Realty Group. All rights reserved.</p><div class="footer-links"><a href="#">Privacy Policy</a><a href="#">Terms of Use</a><a href="/sitemap.xml">Sitemap</a></div></div>
+  <div class="footer-bottom">
+    <span>© MMXXVI · GLRA Realty · All rights reserved</span>
+    <div class="footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
 </footer>
+
 <div class="floating-buttons">
   <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
   <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
@@ -1046,14 +1121,17 @@ body.dark-mode .how-step-icon{background:var(--card-bg)}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
-<div id="emailModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeEmailModal()">&times;</span><i class="fas fa-bell" style="font-size:44px;color:var(--gold);margin-bottom:14px;display:block"></i><h3>Price Drop Alert</h3><p id="modalPropertyName">Get notified when price drops</p><input type="email" id="modalEmail" placeholder="Your email address"><input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice"><button onclick="submitPriceAlert()">Notify Me When Price Drops</button><p style="font-size:11px;margin-top:12px;color:var(--gray)">We'll only email you when price changes.</p></div></div>
-<div id="wishlistModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeWishlistModal()">&times;</span><i class="fas fa-heart" style="font-size:44px;color:var(--gold);margin-bottom:14px;display:block"></i><h3>Save to Wishlist</h3><p>Enter your email to save this property</p><input type="email" id="wishlistEmail" placeholder="Your email address"><input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle"><input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage"><button onclick="submitWishlist()">Save to Wishlist</button></div></div>
+
+<!-- MODALS -->
+<div id="emailModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeEmailModal()">&times;</span><i class="fas fa-bell" style="font-size:32px;color:var(--ab-hot);margin-bottom:10px;display:block"></i><h3>Price Drop Alert</h3><p id="modalPropertyName">Get notified when price drops</p><input type="email" id="modalEmail" placeholder="Your email address"><input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice"><button onclick="submitPriceAlert()">Notify me when price drops →</button><p style="font-size:10px;margin-top:12px;color:var(--ab-gray)">We'll only email you when the price changes.</p></div></div>
+<div id="wishlistModal" class="email-modal"><div class="email-modal-content"><span class="close-modal" onclick="closeWishlistModal()">&times;</span><i class="fas fa-heart" style="font-size:32px;color:var(--ab-hot);margin-bottom:10px;display:block"></i><h3>Save to Wishlist</h3><p>Enter your email to save this property</p><input type="email" id="wishlistEmail" placeholder="Your email address"><input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle"><input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage"><button onclick="submitWishlist()">Save to wishlist →</button></div></div>
 <div id="modal"><span class="close" onclick="closeModal()"><i class="fas fa-times"></i></span><div id="modal-content" class="modal-body"></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="/main.js"></script>
 <script>
 function initLazyLoading(){const io=new IntersectionObserver((e,obs)=>{e.forEach(e=>{if(e.isIntersecting){const i=e.target;if(i.dataset.src){i.src=i.dataset.src;i.classList.remove('lazy')}obs.unobserve(i)}})},{rootMargin:'50px'});document.querySelectorAll('img[data-src]').forEach(i=>io.observe(i))}
-function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters');const b=document.getElementById('advancedFilterBtn');const i=document.getElementById('filterIcon');f.classList.toggle('show');b.classList.toggle('active');if(i)i.style.transform=f.classList.contains('show')?'rotate(180deg)':'rotate(0)'}
+function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters');const b=document.getElementById('advancedFilterBtn');f.classList.toggle('show');b.classList.toggle('active')}
 function performSearch(){const s=document.getElementById('locationInput').value.trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRawPriceValue('minPriceInput');const mx=getRawPriceValue('maxPriceInput');let url='/properties.html?',p=[];if(s)p.push('search='+encodeURIComponent(s));if(pt)p.push('propertyType='+encodeURIComponent(pt));if(br)p.push('bedrooms='+br);if(ba)p.push('baths='+ba);if(mn>0)p.push('minPrice='+mn);if(mx>0)p.push('maxPrice='+mx);window.location.href=url+p.join('&')}
 function formatPriceInput(input){let v=input.value.replace(/,/g,'');if(!v)return;let n=parseFloat(v);if(!isNaN(n))input.value=n.toLocaleString('en-US')}
 function getRawPriceValue(id){const i=document.getElementById(id);if(!i.value)return 0;return parseFloat(i.value.replace(/,/g,''))||0}
@@ -1066,51 +1144,171 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput'].forEach(id=>document.getElementById(id).value='');['propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>document.getElementById(id).value='');applyLiveFilters()}
 function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'})}
 function scrollToTopAndClose(){scrollToTop();closeMobileMenu()}
+function openMobileMenu(){document.getElementById('mobileOverlay').classList.add('show')}
+function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('show')}
 function goHome(){window.location.href='/'}
-window.addEventListener('load',()=>initLazyLoading());
-/* Index-specific: navbar transitions from transparent to solid on scroll */
-window.addEventListener('scroll',()=>{const nb=document.getElementById('navbar');if(nb)nb.classList[window.scrollY>50?'add':'remove']('scrolled')});
-async function loadHeroImages(){try{const r=await fetch('/api/hero-images');const imgs=await r.json();const wrapper=document.getElementById('heroSliderWrapper');if(wrapper&&imgs&&imgs.length>0){wrapper.innerHTML='';imgs.forEach(img=>{const s=document.createElement('div');s.className='swiper-slide';s.style.backgroundImage=`url('${img.url}')`;s.innerHTML=`<div class="slide-content"><img src="/hero-logo.png" alt="GLRA Realty"></div>`;wrapper.appendChild(s)});if(window.heroSwiper)window.heroSwiper.update();else initSwiper()}else initSwiper()}catch{initSwiper()}}
-function initSwiper(){window.heroSwiper=new Swiper('.hero-slider',{loop:true,autoplay:{delay:6000,disableOnInteraction:false},pagination:{el:'.swiper-pagination',clickable:true},effect:'fade',fadeEffect:{crossFade:true}})}
+function escapeHtml(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function showToast(msg,err){const t=document.createElement('div');t.className='toast';t.textContent=msg;if(err)t.style.borderLeftColor='#ef4444';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');try{localStorage.setItem('darkMode',document.body.classList.contains('dark-mode')?'1':'0')}catch{}}
+(function(){try{if(localStorage.getItem('darkMode')==='1')document.body.classList.add('dark-mode')}catch{}})();
+window.addEventListener('load',()=>{initLazyLoading();const l=document.getElementById('loader');if(l){l.classList.add('hidden');setTimeout(()=>l.style.display='none',500)}});
+async function loadHeroImages(){try{const r=await fetch('/api/hero-images');const imgs=await r.json();const wrapper=document.getElementById('heroSliderWrapper');if(wrapper&&imgs&&imgs.length>0){wrapper.innerHTML='';imgs.forEach(img=>{const s=document.createElement('div');s.className='swiper-slide';s.style.backgroundImage=`url('${img.url}')`;wrapper.appendChild(s)});if(window.heroSwiper)window.heroSwiper.update();else initSwiper()}else initSwiper()}catch{initSwiper()}}
+function initSwiper(){if(window.heroSwiper)return;window.heroSwiper=new Swiper('.hero-slider',{loop:true,autoplay:{delay:6000,disableOnInteraction:false},pagination:{el:'.swiper-pagination',clickable:true},effect:'fade',fadeEffect:{crossFade:true}})}
 function applyLiveFilters(){if(!cachedProperties)return;const s=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRawPriceValue('minPriceInput');const mx=getRawPriceValue('maxPriceInput');let f=[...cachedProperties].filter(p=>{if(s&&!p.title.toLowerCase().includes(s)&&!p.location.toLowerCase().includes(s))return false;if(pt&&p.propertyType!==pt)return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;let price=isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);if(mn>0&&price<mn)return false;if(mx>0&&price>mx)return false;return true});renderProperties(f.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(f.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');renderProperties(f.filter(p=>isForLease(p)).slice(0,6),'lease-list');document.getElementById('statProperties').innerText=f.length;allProperties=f}
 function openPriceAlertModal(id,title,price){document.getElementById('modalPropertyId').value=id;document.getElementById('modalPropertyTitle').value=title;document.getElementById('modalPropertyPrice').value=price;document.getElementById('modalPropertyName').innerHTML=`Get notified when <strong>${escapeHtml(title)}</strong> price drops`;document.getElementById('emailModal').style.display='flex'}
 function closeEmailModal(){document.getElementById('emailModal').style.display='none';document.getElementById('modalEmail').value=''}
-async function submitPriceAlert(){const email=document.getElementById('modalEmail').value;const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Subscribing...';btn.disabled=true;try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json();if(d.success){closeEmailModal();showToast('You will be notified when price drops!')}else showToast('Failed to subscribe.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Notify Me When Price Drops';btn.disabled=false}}
+async function submitPriceAlert(){const email=document.getElementById('modalEmail').value;const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Subscribing...';btn.disabled=true;try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json();if(d.success){closeEmailModal();showToast('You will be notified when price drops!')}else showToast('Failed to subscribe.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Notify me when price drops →';btn.disabled=false}}
 function openWishlistModal(id,title,price,location,image){document.getElementById('wishlistPropertyId').value=id;document.getElementById('wishlistPropertyTitle').value=title;document.getElementById('wishlistPropertyPrice').value=price;document.getElementById('wishlistPropertyLocation').value=location;document.getElementById('wishlistPropertyImage').value=image;document.getElementById('wishlistModal').style.display='flex'}
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value=''}
-async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const location=document.getElementById('wishlistPropertyLocation').value;const image=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:location,propertyImage:image})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist!')}else showToast('Failed to save.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Save to Wishlist';btn.disabled=false}}
+async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const location=document.getElementById('wishlistPropertyLocation').value;const image=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:location,propertyImage:image})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist!')}else showToast('Failed to save.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Save to wishlist →';btn.disabled=false}}
 function shareProperty(platform,property){const url=encodeURIComponent(`${window.location.origin}/properties.html?property=${property._id}`);const title=encodeURIComponent(property.title);const price=getDisplayPrice(property);const text=encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${window.location.origin}/properties.html?property=${property._id}`);showToast('Link copied!');return}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400')}
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null;
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}
 async function loadProperties(){if(cachedProperties){renderAllSections(cachedProperties);return}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);renderAllSections(cachedProperties)}catch(e){console.error(e);showToast('Failed to load properties',true)}}
-function renderAllSections(properties){document.getElementById('statProperties').innerText=properties.length;renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');allProperties=properties;setTimeout(initLazyLoading,100)}
+function renderAllSections(properties){
+  document.getElementById('statProperties').innerText=properties.length;
+  const tc=document.getElementById('topCount');if(tc)tc.innerText=properties.length;
+  renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');
+  renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');
+  renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');
+  allProperties=properties;
+  populateHeroFromListings(properties);
+  setTimeout(initLazyLoading,100);
+}
+function populateHeroFromListings(properties){
+  const wrapper=document.getElementById('heroSliderWrapper');
+  if(!wrapper)return;
+  const featured=properties.filter(p=>p.featured&&p.mainImage).slice(0,5);
+  const pool=featured.length?featured:properties.filter(p=>p.mainImage).slice(0,5);
+  if(!pool.length)return;
+  wrapper.innerHTML='';
+  pool.forEach(p=>{
+    const s=document.createElement('div');
+    s.className='swiper-slide';
+    s.style.backgroundImage=`url('${p.mainImage}')`;
+    wrapper.appendChild(s);
+  });
+  // Update photo tag (top-left)
+  const tag=document.getElementById('heroPhotoTag');
+  if(tag&&pool[0]){
+    const isLease=isForLease(pool[0]);
+    tag.textContent=(isLease?'For Lease · ':'Featured · ')+(pool[0].location||'').split(',')[0];
+  }
+  // Update photo card (bottom)
+  const t=document.getElementById('heroPcTitle');
+  const pc=document.getElementById('heroPcPrice');
+  if(t&&pool[0]){
+    t.innerHTML=escapeHtml(pool[0].title)+`<small>${pool[0].bedrooms||0} BR / ${pool[0].sqm||0} SQM / ${escapeHtml(pool[0].propertyType||'Property')}</small>`;
+  }
+  if(pc&&pool[0]){
+    const isLease=isForLease(pool[0]);
+    const price=isLease?'₱'+Number(pool[0].monthlyRental||pool[0].price||0).toLocaleString()+'/mo':'₱'+(((pool[0].price||0)/1000000).toFixed(1))+'M';
+    pc.innerHTML=price+`<small>${escapeHtml(pool[0].location||'')}</small>`;
+  }
+  if(window.heroSwiper){window.heroSwiper.destroy(true,true);window.heroSwiper=null;}
+  initSwiper();
+}
+function switchListingTab(btn){
+  document.querySelectorAll('.listings-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.listings-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const target=document.getElementById(btn.dataset.tab);
+  if(target)target.classList.add('active');
+  const link=document.getElementById('viewAllBtn');
+  if(link){
+    if(btn.dataset.tab==='sale-list'){link.href='/properties.html?category=FOR SALE';link.textContent='Browse for sale →'}
+    else if(btn.dataset.tab==='lease-list'){link.href='/properties.html?category=FOR LEASE';link.textContent='Browse for lease →'}
+    else{link.href='/properties.html?category=all';link.textContent='View all properties →'}
+  }
+  setTimeout(initLazyLoading,50);
+}
 function renderProperties(properties,containerId){const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';if(properties.length===0){c.innerHTML='<div class="empty-state"><i class="fas fa-home"></i><p>No properties found</p></div>';return}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,100)}
-function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'https://via.placeholder.com/400x300?text=No+Image';card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" title="Save"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title">${escapeHtml(prop.title)}</h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span><span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span><span><i class="fas fa-building"></i> ${prop.propertyType||'Property'}</span>${parking}</div><div class="prop-price">${price}</div></div>`;return card}
-function openDetail(id){const prop=allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;galleryImages=[prop.mainImage,...(prop.gallery||[])];let thumbs=galleryImages.map((img,i)=>`<img src="${img}" onclick="changeImg(${i})" class="${i===0?'active':''}">`).join('');const mapAddr=prop.mapLocation||prop.location;const mapEmbed=`https://www.google.com/maps?q=${encodeURIComponent(mapAddr+', Philippines')}&output=embed`;const isSale=prop.listingType==='FOR SALE';const price=getDisplayPrice(prop);const pp=prop.price||0;document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button onclick="openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:7px 14px;border-radius:0;font-size:11px;cursor:pointer;letter-spacing:1px"><i class="far fa-heart"></i> Save</button><button onclick="openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:7px 14px;border-radius:0;font-size:11px;cursor:pointer;letter-spacing:1px"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span class="modal-spec"><i class="fas fa-building"></i> ${prop.propertyType||'Property'}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="modal-mortgage-controls"><div class="modal-mortgage-control"><label>Down Payment</label><input type="range" id="downPaymentPercent" min="10" max="30" step="5" value="20" oninput="updateDownPayment(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="downPaymentValue" style="font-size:11px;color:var(--gold)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="modal-mortgage-control"><label>Loan Term</label><select id="loanTermYears" onchange="calculateMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="modal-mortgage-control"><label>Interest Rate</label><select id="interestRate" onchange="calculateMortgage(${pp})"><option value="6">6%</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5%</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="modal-mortgage-result"><div class="label">Estimated Monthly Payment</div><div class="amount" id="mortgageResult">₱0<span style="font-size:15px">/mo</span></div></div><div style="font-size:10px;color:var(--gray);text-align:center;margin-top:8px">*For estimation purposes only.</div></div>`:''}  <div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="modal-share-buttons"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-btn-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-btn-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-btn-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-btn-copy"><i class="fas fa-link"></i> Copy</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details.')}</div><div class="map-container" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Location map"></iframe></div><button class="modal-inquire-btn" onclick="closeModal();document.getElementById('contact-form').scrollIntoView({behavior:'smooth'})"><i class="fas fa-paper-plane"></i> Inquire About This Property</button></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calculateMortgage(pp)}
-function calculateMortgage(price){const dp=parseFloat(document.getElementById('downPaymentPercent')?.value)||20;const term=parseFloat(document.getElementById('loanTermYears')?.value)||20;const rate=parseFloat(document.getElementById('interestRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageResult');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:15px">/mo</span>`;const dpv=document.getElementById('downPaymentValue');if(dpv)dpv.innerText=dp+'%'}
+function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}P</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'https://via.placeholder.com/400x300?text=No+Image';card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'For Sale':'For Lease'}</span>${prop.featured?'<span class="badge-featured">★ Featured</span>':''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" title="Save"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><div class="prop-location">// ${escapeHtml(prop.location||'')}</div><h3 class="prop-title">${escapeHtml(prop.title)}</h3><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} BA</span><span><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span>${parking}</div><div class="prop-price">${price}</div></div>`;return card}
+function openDetail(id){const prop=allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;galleryImages=[prop.mainImage,...(prop.gallery||[])];let thumbs=galleryImages.map((img,i)=>`<img src="${img}" onclick="changeImg(${i})" class="${i===0?'active':''}">`).join('');const mapAddr=prop.mapLocation||prop.location;const mapEmbed=`https://www.google.com/maps?q=${encodeURIComponent(mapAddr+', Philippines')}&output=embed`;const isSale=prop.listingType==='FOR SALE';const price=getDisplayPrice(prop);const pp=prop.price||0;document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block;position:static;background:${isSale?'var(--ab-ink)':'var(--ab-hot)'};color:#fff;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700">${isSale?'For Sale':'For Lease'}</span><div style="display:flex;gap:8px"><button onclick="openWishlistModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price},'${escapeHtml(prop.location)}','${prop.mainImage||''}')" style="background:transparent;border:1px solid var(--ab-ink);color:var(--ab-ink);padding:7px 14px;border-radius:0;font-size:10px;cursor:pointer;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase"><i class="far fa-heart"></i> Save</button><button onclick="openPriceAlertModal('${prop._id}','${escapeHtml(prop.title)}',${prop.price})" style="background:transparent;border:1px solid var(--ab-ink);color:var(--ab-ink);padding:7px 14px;border-radius:0;font-size:10px;cursor:pointer;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--ab-gray);margin-bottom:8px;font-weight:600">// ${escapeHtml(prop.location||'')}</div><div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} BA</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} SQM</span><span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="modal-mortgage-controls"><div class="modal-mortgage-control"><label>Down Payment</label><input type="range" id="downPaymentPercent" min="10" max="30" step="5" value="20" oninput="updateDownPayment(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:9px;color:var(--ab-gray)">10%</span><span id="downPaymentValue" style="font-size:11px;color:var(--ab-hot);font-weight:700">20%</span><span style="font-size:9px;color:var(--ab-gray)">30%</span></div></div><div class="modal-mortgage-control"><label>Loan Term</label><select id="loanTermYears" onchange="calculateMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="modal-mortgage-control"><label>Interest Rate</label><select id="interestRate" onchange="calculateMortgage(${pp})"><option value="6">6%</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5%</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="modal-mortgage-result"><div class="label">Estimated Monthly Payment</div><div class="amount" id="mortgageResult">₱0<span style="font-size:14px">/mo</span></div></div><div style="font-size:9px;color:var(--ab-gray);text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:1px">// Estimation purposes only.</div></div>`:''}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="modal-share-buttons"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn"><i class="fas fa-link"></i> Copy</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details.')}</div><div class="map-container" style="margin:14px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Location map"></iframe></div><button class="modal-inquire-btn" onclick="closeModal();document.getElementById('contact-form').scrollIntoView({behavior:'smooth'})"><i class="fas fa-paper-plane"></i> Inquire about this property →</button></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calculateMortgage(pp)}
+function calculateMortgage(price){const dp=parseFloat(document.getElementById('downPaymentPercent')?.value)||20;const term=parseFloat(document.getElementById('loanTermYears')?.value)||20;const rate=parseFloat(document.getElementById('interestRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageResult');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:14px">/mo</span>`;const dpv=document.getElementById('downPaymentValue');if(dpv)dpv.innerText=dp+'%'}
 function updateDownPayment(val,price){document.getElementById('downPaymentPercent').value=val;document.getElementById('downPaymentValue').innerText=val+'%';calculateMortgage(price)}
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i))}}
 function closeModal(){document.getElementById('modal').style.display='none';document.body.style.overflow='auto'}
-document.getElementById('contactForm')?.addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.submit-btn');const orig=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';btn.disabled=true;try{const r=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:this.querySelector('[name="name"]').value,email:this.querySelector('[name="email"]').value,phone:this.querySelector('[name="phone"]')?.value||'',message:this.querySelector('[name="message"]').value,propertyId:currentProperty?._id||null,propertyTitle:currentProperty?.title||null})});if(r.ok){showToast("Thank you! We'll get back to you soon.");this.reset()}else showToast('Something went wrong.',true)}catch{showToast('Network error.',true)}finally{btn.innerHTML=orig;btn.disabled=false}});
-/* Scroll-reveal — fade sections up as they enter the viewport */
+document.getElementById('contactForm')?.addEventListener('submit',async function(e){
+  e.preventDefault();
+  const form=this;
+  const btn=form.querySelector('.submit-btn');
+  const orig=btn.innerHTML;
+  const name=form.querySelector('[name="name"]').value.trim();
+  const email=form.querySelector('[name="email"]').value.trim();
+  const phone=form.querySelector('[name="phone"]')?.value.trim()||'';
+  const message=form.querySelector('[name="message"]').value.trim();
+  if(!name||!email||!message){showToast('Please fill in name, email, and message',true);return}
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> &nbsp;Sending...';
+  btn.disabled=true;
+  // Always-working backup: pre-fill a mailto: link the user can use immediately
+  const mailBody=`Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\n${message}`;
+  const mailtoUrl=`mailto:glrarealty@gmail.com?subject=${encodeURIComponent('Website Inquiry from '+name)}&body=${encodeURIComponent(mailBody)}`;
+  // Build the body — omit propertyId/propertyTitle entirely when there's no current property,
+  // because express-validator's .optional() only skips undefined, not null. Sending null
+  // breaks .isString() validation and causes a silent 400 (no Render error log).
+  const payload={name,email,phone,message};
+  if(currentProperty?._id)payload.propertyId=currentProperty._id;
+  if(currentProperty?.title)payload.propertyTitle=currentProperty.title;
+  try{
+    const r=await fetch('/api/inquiries',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    let body={};
+    try{body=await r.json()}catch{}
+    console.log('[inquiry submit]',{status:r.status,statusText:r.statusText,body});
+    if(r.ok){
+      showToast("Thank you! We'll get back to you soon.");
+      form.reset();
+    }else{
+      // Non-2xx — show exact status + server message in the dialog so we can diagnose
+      const serverMsg=(body&&(body.error||body.message))||r.statusText||'Unknown';
+      const detail=body&&body.details&&body.details[0];
+      const validationHint=detail?`\nField: ${detail.path||detail.param} — ${detail.msg||'invalid'}`:'';
+      const choice=confirm(
+        `Form submission failed.\n\n`+
+        `HTTP ${r.status} — ${serverMsg}${validationHint}\n\n`+
+        `Click OK to open Messenger to Catherine, or Cancel to email instead.`
+      );
+      if(choice){
+        window.open('https://m.me/glrarealty','_blank');
+      }else{
+        window.location.href=mailtoUrl;
+      }
+    }
+  }catch(err){
+    console.log('[inquiry submit] network error',err);
+    const choice=confirm(
+      `Couldn't reach the server (network error).\n\n`+
+      `Click OK to open Messenger to Catherine, or Cancel to email instead.`
+    );
+    if(choice){
+      window.open('https://m.me/glrarealty','_blank');
+    }else{
+      window.location.href=mailtoUrl;
+    }
+  }finally{
+    btn.innerHTML=orig;
+    btn.disabled=false;
+  }
+});
 (function(){
   if(!('IntersectionObserver' in window)) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const targets = document.querySelectorAll('section');
   if(!targets.length) return;
-  targets.forEach(el => { if(!el.classList.contains('neighborhoods-marquee')) el.classList.add('reveal'); });
+  targets.forEach(el => el.classList.add('reveal'));
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
     });
   }, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-  /* Safety net — reveal anything still hidden after 3.5s */
   setTimeout(() => document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in')), 3500);
 })();
-
-/* Scroll progress bar */
 (function(){
   const sp = document.getElementById('scrollProgress');
   if(!sp) return;
@@ -1126,47 +1324,21 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   }, {passive:true});
   update();
 })();
-
-/* Animated number counters in trust strip */
 (function(){
-  const items = document.querySelectorAll('.trust-label');
-  items.forEach(el => {
-    if(el.children.length > 0) return; /* skip ones with nested spans, e.g. statProperties */
-    const text = el.textContent.trim();
-    const m = text.match(/^([\d.]+)/);
-    if(!m) return;
-    const target = parseFloat(m[1]);
-    const decimals = (m[1].split('.')[1]||'').length;
-    const rest = text.slice(m[0].length);
-    el.dataset.target = target;
-    el.dataset.decimals = decimals;
-    el.dataset.rest = rest;
-    el.textContent = (decimals ? '0.'+'0'.repeat(decimals) : '0') + rest;
-  });
-  if(!('IntersectionObserver' in window)){
-    items.forEach(el => { if(el.dataset.target) el.textContent = el.dataset.target + (el.dataset.rest||''); });
-    return;
-  }
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if(!e.isIntersecting) return;
-      const el = e.target;
-      const target = parseFloat(el.dataset.target);
-      const decimals = parseInt(el.dataset.decimals);
-      const rest = el.dataset.rest || '';
-      const duration = 1800;
-      const start = performance.now();
-      const tick = (now) => {
-        const t = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - t, 3);
-        el.textContent = (eased * target).toFixed(decimals) + rest;
-        if(t < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-      observer.unobserve(el);
-    });
-  }, {threshold:0.5});
-  document.querySelectorAll('.trust-label[data-target]').forEach(el => observer.observe(el));
+  const btn = document.getElementById('backToTop');
+  if(!btn) return;
+  btn.addEventListener('click', e => { e.preventDefault(); scrollToTop(); });
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('show', window.scrollY > 600);
+  }, {passive:true});
+})();
+// Set update date in section header
+(function(){
+  const ud = document.getElementById('updateDate');
+  if(!ud) return;
+  const d = new Date();
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  ud.textContent = String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()];
 })();
 loadHeroImages();loadProperties();
 </script>
