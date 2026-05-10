@@ -705,9 +705,9 @@ app.post('/api/inquiries',
   body('name').isString().trim().isLength({ min: 1, max: 200 }),
   body('email').isEmail().normalizeEmail(),
   body('message').isString().trim().isLength({ min: 1, max: 5000 }),
-  body('phone').optional().isString().trim().isLength({ max: 50 }),
-  body('propertyId').optional().isString().trim().isLength({ max: 100 }),
-  body('propertyTitle').optional().isString().trim().isLength({ max: 300 }),
+  body('phone').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 50 }),
+  body('propertyId').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 100 }),
+  body('propertyTitle').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 300 }),
   handleValidation,
   async (req, res) => {
     try {
