@@ -149,11 +149,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;opa
 nav.navbar{display:none !important}
 .neighborhoods-marquee,.brand-statement{display:none !important}
 
-/* ── TOP STRIP ── */
-.ab-top{background:var(--ab-ink);color:var(--ab-paper);padding:0;border-bottom:0;position:relative;z-index:5}
-.ab-top-inner{max-width:1480px;margin:0 auto;padding:11px 24px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px}
-.ab-top-inner span{display:flex;align-items:center;gap:10px}
-.ab-top-inner .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot);border-radius:0;animation:abblink 1.5s infinite}
+/* ── TOP STRIP — always dark with light text in BOTH light and dark modes ── */
+.ab-top{background:#0a0a0a !important;color:#f1eee9 !important;padding:0;border-bottom:0;position:relative;z-index:5}
+.ab-top-inner{max-width:1480px;margin:0 auto;padding:11px 24px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:#f1eee9 !important}
+.ab-top-inner span{display:flex;align-items:center;gap:10px;color:#f1eee9 !important}
+.ab-top-inner .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot) !important;border-radius:0;animation:abblink 1.5s infinite}
 @keyframes abblink{0%,100%{opacity:1}50%{opacity:.4}}
 @media(max-width:640px){.ab-top-inner{font-size:9.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-inner span:last-child{display:none}}
 

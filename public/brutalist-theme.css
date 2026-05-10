@@ -379,15 +379,29 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
   text-transform:uppercase !important;color:var(--ab-hot) !important;font-weight:700 !important;
 }
 
-/* Brutalist top-strip injected by brutalist-shell.js */
+/* Brutalist top-strip injected by brutalist-shell.js — ALWAYS dark with light text, both modes */
 .ab-top-strip{
-  background:var(--ab-ink);color:var(--ab-paper);padding:11px 24px;
+  background:#0a0a0a !important;color:#f1eee9 !important;padding:11px 24px;
   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;
   display:flex;justify-content:space-between;align-items:center;border-bottom:0;
 }
-.ab-top-strip .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot);margin-right:8px;animation:abpulse 1.5s infinite}
+.ab-top-strip *{color:#f1eee9 !important}
+.ab-top-strip .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot) !important;margin-right:8px;animation:abpulse 1.5s infinite}
 @keyframes abpulse{0%,100%{opacity:1}50%{opacity:.4}}
 @media(max-width:640px){.ab-top-strip{font-size:9.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
+
+/* Calculator fee-row padding so values don't touch the box edge */
+.fee-row,.cost-row,.amort-row,.rental-row{padding-left:18px !important;padding-right:18px !important}
+.input-card,.results-card,.summary-card{padding:24px 22px !important}
+@media(max-width:560px){
+  .fee-row,.cost-row,.amort-row,.rental-row{padding-left:14px !important;padding-right:14px !important}
+  .input-card,.results-card,.summary-card{padding:18px 16px !important}
+}
+
+/* Trust strip centering — items inside each cell */
+.trust-item{align-items:center !important;text-align:center !important}
+.trust-item .trust-text{align-items:center !important;text-align:center !important}
+.trust-item .trust-icon{margin-left:auto !important;margin-right:auto !important}
 
 /* Scrollbar */
 *::-webkit-scrollbar{width:6px !important;height:6px !important}
@@ -529,3 +543,164 @@ html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
   .navbar .logo img{height:42px !important}
   .contact-btn-nav,a.contact-btn-nav{padding:10px 12px !important;font-size:10px !important;letter-spacing:1px !important}
 }
+
+/* ════════════════════════════════════════════════════════════
+   PRINT / PDF — clean letterhead + results only.
+   Strip everything noisy. Force black-on-white. A4 portrait.
+   Marking elements "print-keep" exempts them from default-hidden.
+   ════════════════════════════════════════════════════════════ */
+@media print{
+  /* Hard white reset: every element becomes white-bg + black-text by default */
+  html,body,*,*::before,*::after{
+    background:#fff !important;background-color:#fff !important;
+    color:#000 !important;
+    box-shadow:none !important;text-shadow:none !important;
+    filter:none !important;
+    border-color:#000 !important;
+  }
+  body::before,body::after{display:none !important;content:'' !important}
+
+  /* Hide all noise — every interactive / decorative element */
+  .navbar,.ab-nav,.ab-top,.ab-top-strip,.ab-top-inner,
+  .be-top,.be-mast,.be-nav,.be-rule,.be-hero,
+  .ab-hero,.ab-hero-text,.ab-hero-photo,.ab-hero-stats,.ab-hero-meta,
+  .ab-ticker,.neighborhoods-marquee,.brand-statement,
+  .floating-buttons,.back-to-top,.toast,.scroll-progress,.skip-to-content,
+  .glra-print-gate,.print-button-wrapper,.no-print,
+  .mobile-overlay,.mobile-menu-btn,.nav-dropdown-menu,
+  footer,.footer-content,.footer-bottom,.footer-divider,
+  .disclaimer,.disclaimer-box,.input-hint,
+  .page-hero,.section-header,.listings-tabs,.view-all-wrapper,
+  .search-card,.search-row,.search-float,.advanced-filters,
+  .input-card,                              /* hide the form inputs */
+  .cta-row,.cta-section,.cta-btn,.cta-primary,.cta-outline,
+  .reset-filters-btn,.calculate-btn,.print-btn,
+  .broker-spotlight,.broker-container,.broker-info,.broker-image,
+  .testimonials,.testimonials-grid,.testimonial-card,
+  .resources-section,.resources-grid,.resource-card,
+  .how-it-works,.how-inner,.how-steps,.how-step,
+  .faq-section,.faq-inner,.faq-list,.faq-item,
+  .contact-form-section,.contact-form,
+  .trust-strip,.trust-grid,
+  button,input[type="button"],input[type="submit"]{
+    display:none !important;
+  }
+
+  /* Layout reset */
+  body{font-family:'Inter','Helvetica',sans-serif !important;font-size:12px !important;line-height:1.45 !important;margin:0 !important;padding:0 !important}
+  *{transform:none !important;animation:none !important;transition:none !important}
+
+  /* ── BRANDED LETTERHEAD ── */
+  .print-only-header{
+    display:block !important;text-align:center !important;
+    margin:0 0 20px !important;padding:0 0 16px !important;
+    border-bottom:2px solid #000 !important;
+  }
+  .print-only-header img{
+    height:60px !important;width:auto !important;
+    margin:0 auto 10px !important;display:block !important;
+    filter:none !important;
+  }
+  .print-only-header h1{
+    font-family:'Inter','Helvetica',sans-serif !important;
+    font-size:20px !important;font-weight:900 !important;
+    letter-spacing:-.5px !important;text-transform:uppercase !important;
+    margin:8px 0 4px !important;color:#000 !important;
+  }
+  .print-only-header .print-subtitle{
+    font-size:11px !important;letter-spacing:1px !important;color:#333 !important;margin:0 !important;
+  }
+  .print-only-header .print-meta{
+    font-size:10px !important;color:#666 !important;letter-spacing:.5px !important;margin-top:6px !important;
+  }
+
+  /* ── RESULTS / OUTPUT — show cleanly with borders ── */
+  .results-card,.summary-card,.result-card,.fee-card,.amort-card,
+  .schedules-wrapper,.schedule-card,.result-grid,.print-keep,.print-section{
+    display:block !important;
+    background:#fff !important;color:#000 !important;
+    border:1px solid #000 !important;border-radius:0 !important;
+    padding:14px 16px !important;margin:0 0 14px !important;
+    page-break-inside:avoid !important;break-inside:avoid !important;
+  }
+  .result-grid{
+    display:grid !important;grid-template-columns:1fr 1fr !important;
+    gap:0 !important;border:1px solid #000 !important;padding:0 !important;
+  }
+  .result-mini{
+    display:block !important;padding:12px 14px !important;
+    border-right:1px solid #000 !important;border-bottom:1px solid #000 !important;
+    background:#fff !important;color:#000 !important;
+  }
+  .result-mini:nth-child(2n){border-right:0 !important}
+  .result-mini:nth-last-child(-n+2){border-bottom:0 !important}
+  .result-mini .label,.result-card .label,.summary-card .label{
+    font-size:9px !important;letter-spacing:1.5px !important;
+    text-transform:uppercase !important;color:#666 !important;
+    font-weight:700 !important;display:block !important;margin-bottom:4px !important;
+  }
+  .result-mini .value,.result-card .value,.summary-card .value,
+  .summary-result,.summary-amount{
+    font-family:'Inter','Helvetica',sans-serif !important;
+    font-size:18px !important;font-weight:900 !important;
+    letter-spacing:-.4px !important;color:#000 !important;display:block !important;
+  }
+  .result-mini .sub,.result-card .sub{
+    font-size:9px !important;color:#666 !important;margin-top:3px !important;font-weight:500 !important;
+  }
+
+  /* Calculator fee/cost rows — clean two-column table look */
+  .fee-row,.cost-row,.amort-row,.rental-row{
+    display:flex !important;justify-content:space-between !important;
+    padding:7px 12px !important;border-bottom:1px solid #ccc !important;
+    background:#fff !important;color:#000 !important;
+  }
+  .fee-row.total,.cost-row.total{
+    border-top:2px solid #000 !important;border-bottom:0 !important;
+    padding-top:10px !important;margin-top:6px !important;font-weight:900 !important;
+  }
+  .fee-label,.cost-label{font-size:11px !important;color:#000 !important;font-weight:600 !important}
+  .fee-value,.cost-value{font-size:12px !important;font-weight:700 !important;color:#000 !important}
+  .fee-row.total .fee-value,.cost-row.total .cost-value{font-size:15px !important;color:#000 !important}
+  .tax-basis,strong.tax-basis{color:#000 !important}
+
+  /* Section / card titles inside printed sections */
+  .results-card h3,.summary-card h3,.result-card h3,.print-keep h3,
+  .results-card h2,.summary-card h2,.print-keep h2{
+    font-family:'Inter','Helvetica',sans-serif !important;
+    font-size:13px !important;font-weight:900 !important;
+    letter-spacing:-.3px !important;text-transform:uppercase !important;
+    color:#000 !important;margin:0 0 10px !important;padding:0 0 8px !important;
+    border-bottom:1px solid #000 !important;
+  }
+  .results-card h3 i,.summary-card h3 i,.result-card h3 i{display:none !important}
+
+  /* Headings outside of cards (page titles for printed reports) */
+  h1,h2{
+    font-family:'Inter','Helvetica',sans-serif !important;
+    color:#000 !important;font-weight:900 !important;
+    letter-spacing:-.5px !important;text-transform:uppercase !important;
+    margin:0 0 8px !important;
+  }
+  h1{font-size:18px !important}
+  h2{font-size:15px !important}
+
+  /* Links — show URL inline so PDF reader can see */
+  a{color:#000 !important;text-decoration:none !important}
+
+  /* Page setup */
+  @page{size:A4 portrait;margin:1.4cm 1.5cm}
+
+  /* Avoid page breaks inside grouped data */
+  table,.print-section,.result-grid,.results-card,.summary-card{page-break-inside:avoid !important}
+
+  /* Force a footer line at the bottom of every printed page */
+  .print-only-footer{
+    display:block !important;
+    margin-top:24px !important;padding-top:12px !important;
+    border-top:1px solid #000 !important;
+    font-size:9px !important;color:#666 !important;letter-spacing:.5px !important;
+    text-align:center !important;
+  }
+}
+.print-only-footer{display:none}
