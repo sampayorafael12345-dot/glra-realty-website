@@ -66,14 +66,24 @@ body.dark-mode{
   --ab-concrete:#3a3a36;
 }
 /* Dark-mode explicit overrides for spots that hardcode colors */
-body.dark-mode .ab-top{background:#000;color:var(--ab-paper)}
-body.dark-mode .how-it-works{background:#000 !important;color:var(--ab-paper) !important}
-body.dark-mode .how-step h3{color:var(--ab-paper) !important}
-body.dark-mode .how-step p{color:rgba(241,238,233,.72) !important}
+/* Always-dark sections (top strip, how-it-works, footer, ticker) MUST keep
+   light cream text in BOTH modes — never use var(--ab-paper) here because it
+   inverts to dark in dark-mode. Hardcode #f1eee9. */
+body.dark-mode .ab-top,body.dark-mode .ab-top *{background:#0a0a0a !important;color:#f1eee9 !important}
+body.dark-mode .how-it-works{background:#000 !important;color:#f1eee9 !important}
+body.dark-mode .how-it-works h2,body.dark-mode .how-it-works h3,body.dark-mode .how-step h3{color:#f1eee9 !important}
+body.dark-mode .how-it-works p,body.dark-mode .how-step p{color:rgba(241,238,233,.72) !important}
+body.dark-mode .how-it-works .section-header,body.dark-mode .how-it-works .section-header > p{color:rgba(241,238,233,.7) !important}
+body.dark-mode .how-it-works .section-header::before{color:#f1eee9 !important}
 body.dark-mode .how-it-works .section-header{border-bottom-color:rgba(241,238,233,.25) !important}
-body.dark-mode .how-steps,body.dark-mode .how-step{border-color:var(--ab-paper) !important}
-body.dark-mode footer{background:#000 !important;color:var(--ab-paper) !important}
-body.dark-mode .ab-ticker{background:#000;color:var(--ab-paper)}
+body.dark-mode .how-steps,body.dark-mode .how-step{border-color:#f1eee9 !important}
+body.dark-mode footer,body.dark-mode footer *{color:#f1eee9 !important}
+body.dark-mode footer{background:#000 !important}
+body.dark-mode .footer-col h4{color:var(--ab-hot) !important}
+body.dark-mode .footer-col a,body.dark-mode .footer-col p{color:rgba(241,238,233,.85) !important}
+body.dark-mode .footer-bottom,body.dark-mode .footer-bottom p,body.dark-mode .footer-bottom a{color:rgba(241,238,233,.5) !important}
+body.dark-mode .ab-ticker,body.dark-mode .ab-ticker *{background-color:#000 !important;color:#f1eee9 !important}
+body.dark-mode .ab-ticker-track span::after{color:var(--ab-hot) !important}
 body.dark-mode .cta-section{background:var(--ab-hot) !important;color:#fff !important}
 body.dark-mode .cta-section h2 em{color:#fff !important;text-decoration:underline;text-decoration-thickness:4px}
 body.dark-mode .cta-section .cta-btn{background:#000 !important;color:#fff !important}

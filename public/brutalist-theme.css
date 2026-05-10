@@ -412,9 +412,9 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
    HIGH-SPECIFICITY DARK-MODE OVERRIDES (beats inline page CSS)
    Inner pages have <style> blocks that hardcode #1a2840/#2a3f58 etc.
    We add `html` to bump specificity above their `body.dark-mode .x` rules.
+   NOTE: do NOT use a universal `background-color:initial` reset here — it
+   nukes hardcoded backgrounds on modals (print gate, etc.) → transparency bug.
    ════════════════════════════════════════════════════════════ */
-html body.dark-mode,
-html body.dark-mode *:not(i):not(.ab-hot){background-color:initial}
 html body.dark-mode{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
 
 html body.dark-mode .input-card,
@@ -704,3 +704,85 @@ html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
   }
 }
 .print-only-footer{display:none}
+
+/* ════════════════════════════════════════════════════════════
+   PRINT-GATE MODAL — immune to dark mode (always white card)
+   The modal that asks for email before printing must look the
+   same in both modes. Hard-coded colors with !important.
+   ════════════════════════════════════════════════════════════ */
+.glra-print-gate{background:rgba(5,12,22,.88) !important}
+.glra-print-gate-card{
+  background:#fff !important;color:#0d1b2a !important;
+  border:2px solid #0a0a0a !important;border-radius:0 !important;
+  box-shadow:8px 8px 0 #ff3d00 !important;
+}
+.glra-print-gate-card *{color:#0d1b2a !important}
+.glra-print-gate-card h3{color:#0a0a0a !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.5px !important}
+.glra-print-gate-card > i{color:#ff3d00 !important}
+.glra-print-gate-card p{color:#555 !important;font-size:13px !important}
+.glra-print-gate-card input{
+  background:#fff !important;color:#0d1b2a !important;
+  border:2px solid #0a0a0a !important;border-radius:0 !important;
+  padding:14px !important;
+}
+.glra-print-gate-card input:focus{border-color:#ff3d00 !important;outline:0 !important}
+.glra-print-gate-submit{
+  background:#0a0a0a !important;color:#fff !important;
+  border:0 !important;border-radius:0 !important;
+  font-family:'JetBrains Mono',monospace !important;
+  letter-spacing:2px !important;text-transform:uppercase !important;font-weight:700 !important;
+}
+.glra-print-gate-submit:hover{background:#ff3d00 !important;color:#fff !important}
+.glra-print-gate-submit *{color:#fff !important}
+.glra-print-gate-close{color:#999 !important;background:transparent !important}
+.glra-print-gate-close:hover{color:#ff3d00 !important}
+.glra-print-gate-fine{color:#888 !important;font-size:11px !important}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE FAB TOGGLE — force expand/collapse with hard !important
+   so any inline page CSS doesn't break it.
+   ════════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+  .floating-buttons{display:flex !important;flex-direction:column !important;gap:8px !important;position:fixed !important;bottom:18px !important;right:18px !important}
+  .floating-buttons > :not(.fab-toggle){display:none !important}
+  .floating-buttons.expanded > :not(.fab-toggle){display:flex !important}
+  .floating-buttons .fab-toggle{display:flex !important;background:var(--ab-hot) !important;color:#fff !important}
+  .floating-buttons .fab-toggle.is-open{background:var(--ab-ink) !important;color:#fff !important}
+  .floating-buttons .fab-toggle:hover{background:var(--ab-ink) !important;color:#fff !important}
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE OVERLAY CLOSE BUTTON — visible whenever overlay is on
+   screen. Supports `.active`, `.open`, AND `.show` class names.
+   ════════════════════════════════════════════════════════════ */
+.mobile-overlay.active,.mobile-overlay.open,.mobile-overlay.show{left:0 !important}
+.mobile-overlay .close-menu{
+  position:fixed !important;top:18px !important;right:18px !important;
+  width:46px !important;height:46px !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  font-size:24px !important;color:#fff !important;
+  background:rgba(255,255,255,.08) !important;border:1px solid rgba(241,238,233,.3) !important;
+  border-radius:0 !important;cursor:pointer !important;z-index:5500 !important;
+  visibility:visible !important;opacity:1 !important;
+}
+.mobile-overlay.active .close-menu,
+.mobile-overlay.open .close-menu,
+.mobile-overlay.show .close-menu{visibility:visible !important;opacity:1 !important}
+.mobile-overlay .close-menu:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important}
+
+/* ════════════════════════════════════════════════════════════
+   ALWAYS-DARK SECTIONS — text must always be light cream in BOTH modes.
+   Never use var(--ab-paper) for text on these — it inverts in dark mode.
+   ════════════════════════════════════════════════════════════ */
+.ab-top-strip,.ab-top-strip *{color:#f1eee9 !important}
+footer,footer p,footer .footer-col p,footer .footer-col a,footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
+footer .footer-col h4{color:var(--ab-hot) !important}
+footer .footer-bottom,footer .footer-bottom p,footer .footer-bottom-links a{color:rgba(241,238,233,.5) !important}
+footer .footer-social a{color:#f1eee9 !important}
+
+/* Dark-mode footer override (was using var(--ab-paper) which inverts to dark) */
+html body.dark-mode footer{background:#000 !important;color:#f1eee9 !important}
+html body.dark-mode footer *{color:#f1eee9 !important}
+html body.dark-mode footer .footer-col h4{color:var(--ab-hot) !important}
+html body.dark-mode footer .footer-col a,html body.dark-mode footer .footer-col p,html body.dark-mode footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
+html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.5) !important}
