@@ -819,32 +819,51 @@ footer{padding:24px 32px 16px !important}
   display:flex !important;
   flex-direction:column !important;
   overflow:hidden !important;
+  height:100% !important;
 }
-/* Make sure cards in a row are equal-height (cleaner look) */
-.section .grid{align-items:start !important}
-.section .prop-info{flex:1}
+/* EQUAL-HEIGHT cards regardless of how many specs each property has.
+   The grid stretches all cards to match the tallest in the row,
+   and the info pane flex-grows so the price always sits at the bottom. */
+.section .grid{align-items:stretch !important}
+.section .prop-info{
+  flex:1 1 auto !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+.section .prop-specs{flex:1 1 auto !important}
+.section .prop-price{margin-top:auto !important}
 
 /* ════════════════════════════════════════════════════════════
-   KILL THE HERO PHOTO — it was breaking the layout.
-   Convert hero to a centered editorial text-only block.
+   HERO PHOTO — restored, properly sized this time.
+   Same listing-image fix applied: object-fit:cover, fixed height,
+   never stretches with the column.
    ════════════════════════════════════════════════════════════ */
-.be-hero-photo{display:none !important}
-.be-hero-inner{
-  grid-template-columns:1fr !important;
-  max-width:920px !important;
-  gap:0 !important;
-  text-align:center !important;
+.be-hero-photo{display:block !important;padding:12px !important}
+.be-hero-photo .hero-slider{
+  position:relative !important;
+  width:100% !important;
+  height:420px !important;
+  aspect-ratio:auto !important;
+  overflow:hidden !important;
+  background:#2a1a14 !important;
 }
-.be-hero-text{padding-right:0 !important;text-align:center !important}
-.be-hero-text::before{display:none !important}
-.be-hero-meta{justify-content:center !important;padding-left:0 !important}
-.be-hero-text h1{padding-left:0 !important;font-size:clamp(38px,5.6vw,76px) !important;letter-spacing:-2px !important}
-.be-hero-text .deck{padding-left:0 !important;margin-left:auto !important;margin-right:auto !important;text-align:center !important}
-.be-hero-body{padding-left:0 !important;margin-left:auto !important;margin-right:auto !important;text-align:left !important}
-.be-hero-body p:first-child::first-letter{font-size:62px !important;float:left !important}
-.be-hero-actions{padding-left:0 !important;justify-content:center !important;margin-top:18px !important}
-.be-hero{padding:30px 28px 28px !important;border-bottom:1px solid var(--be-line) !important}
-@media(max-width:980px){.be-hero{padding:24px 20px 24px !important}}
+@media(max-width:1200px){.be-hero-photo .hero-slider{height:380px !important}}
+@media(max-width:980px){.be-hero-photo .hero-slider{height:280px !important}}
+.be-hero-photo .swiper-wrapper,
+.be-hero-photo .swiper-slide{
+  width:100% !important;
+  height:100% !important;
+}
+.be-hero-photo .swiper-slide{
+  background-size:cover !important;
+  background-position:center !important;
+  background-color:#2a1a14;
+}
+.be-hero-photo .badge{font-size:14px !important;padding:8px 14px !important;top:-20px !important;left:24px !important}
+.be-hero-photo .cap{margin-top:10px !important;font-size:12px !important;line-height:1.5 !important}
+.be-hero{padding:32px 28px 32px !important}
+@media(max-width:980px){.be-hero{padding:24px 20px 28px !important}}
+.be-hero-inner{gap:40px !important}
 
 /* ════════════════════════════════════════════════════════════
    STRUCTURAL CUTS — collapse 3 listing sections into 1 tabbed.
@@ -870,8 +889,10 @@ footer{padding:24px 32px 16px !important}
 }
 .listings-tab:hover{color:var(--be-ink)}
 .listings-tab.active{color:var(--be-accent);border-bottom-color:var(--be-accent)}
-.listings-pane{min-height:0 !important}
-.listings-pane.active{display:grid !important}
+/* Tabs: hide non-active panes. Use class selectors with higher specificity
+   than `.section .grid{display:grid !important}` so the toggle actually works. */
+.section .grid.listings-pane{display:none !important;min-height:0 !important}
+.section .grid.listings-pane.active{display:grid !important}
 @media(max-width:560px){
   .listings-tabs{gap:0;padding:6px 18px 14px}
   .listings-tab{padding:10px 14px;font-size:10px;letter-spacing:1.4px}
@@ -1377,7 +1398,44 @@ let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}
 async function loadProperties(){if(cachedProperties){renderAllSections(cachedProperties);return}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);renderAllSections(cachedProperties)}catch(e){console.error(e);showToast('Failed to load properties',true)}}
-function renderAllSections(properties){document.getElementById('statProperties').innerText=properties.length;renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');allProperties=properties;setTimeout(initLazyLoading,100)}
+function renderAllSections(properties){
+  document.getElementById('statProperties').innerText=properties.length;
+  renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');
+  renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');
+  renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');
+  allProperties=properties;
+  // Auto-populate hero image from the top featured listing (always a real, working photo)
+  populateHeroFromListings(properties);
+  setTimeout(initLazyLoading,100);
+}
+function populateHeroFromListings(properties){
+  const wrapper=document.getElementById('heroSliderWrapper');
+  if(!wrapper)return;
+  const featured=properties.filter(p=>p.featured&&p.mainImage).slice(0,5);
+  const pool=featured.length?featured:properties.filter(p=>p.mainImage).slice(0,5);
+  if(!pool.length)return;
+  wrapper.innerHTML='';
+  pool.forEach(p=>{
+    const s=document.createElement('div');
+    s.className='swiper-slide';
+    s.style.backgroundImage=`url('${p.mainImage}')`;
+    wrapper.appendChild(s);
+  });
+  // Update the hero badge to match the first listing
+  const badge=document.querySelector('.be-hero-photo .badge');
+  if(badge&&pool[0]){
+    const isLease=isForLease(pool[0]);
+    const price=isLease?'₱'+Number(pool[0].monthlyRental||pool[0].price||0).toLocaleString()+'/mo':'₱'+Math.round((pool[0].price||0)/1000000)+'M';
+    badge.textContent='Featured · '+price;
+  }
+  // Update caption
+  const cap=document.querySelector('.be-hero-photo .cap');
+  if(cap&&pool[0]){
+    cap.innerHTML=`<strong>${escapeHtml(pool[0].title)} —</strong> ${pool[0].sqm||0} sqm · ${pool[0].bedrooms||0} bedrooms · ${escapeHtml(pool[0].location||'')}.`;
+  }
+  if(window.heroSwiper){window.heroSwiper.destroy(true,true);window.heroSwiper=null;}
+  initSwiper();
+}
 function switchListingTab(btn){
   document.querySelectorAll('.listings-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.listings-pane').forEach(p=>{p.classList.remove('active');p.style.display='none'});
