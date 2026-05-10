@@ -393,3 +393,139 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 *::-webkit-scrollbar{width:6px !important;height:6px !important}
 *::-webkit-scrollbar-track{background:transparent !important}
 *::-webkit-scrollbar-thumb{background:var(--ab-hot) !important;border-radius:0 !important}
+
+/* ════════════════════════════════════════════════════════════
+   HIGH-SPECIFICITY DARK-MODE OVERRIDES (beats inline page CSS)
+   Inner pages have <style> blocks that hardcode #1a2840/#2a3f58 etc.
+   We add `html` to bump specificity above their `body.dark-mode .x` rules.
+   ════════════════════════════════════════════════════════════ */
+html body.dark-mode,
+html body.dark-mode *:not(i):not(.ab-hot){background-color:initial}
+html body.dark-mode{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
+
+html body.dark-mode .input-card,
+html body.dark-mode .results-card,
+html body.dark-mode .summary-card,
+html body.dark-mode .blog-card,
+html body.dark-mode .resource-card,
+html body.dark-mode .value-card,
+html body.dark-mode .testimonial-card,
+html body.dark-mode .prop-card,
+html body.dark-mode .amort-card,
+html body.dark-mode .fee-card,
+html body.dark-mode .mortgage-card,
+html body.dark-mode .rental-card,
+html body.dark-mode .zonal-card,
+html body.dark-mode .guide-card,
+html body.dark-mode .neighborhood-card,
+html body.dark-mode .list-card,
+html body.dark-mode .about-card,
+html body.dark-mode .affordability-card,
+html body.dark-mode .result-card,
+html body.dark-mode .schedule-card,
+html body.dark-mode .radio-option,
+html body.dark-mode .schedules-wrapper,
+html body.dark-mode .comm-btn,
+html body.dark-mode .zonal-search-input,
+html body.dark-mode .zonal-dropdown,
+html body.dark-mode .zonal-row button,
+html body.dark-mode .search-field,
+html body.dark-mode .city-dropdown-list,
+html body.dark-mode .filter-group,
+html body.dark-mode .filter-grid,
+html body.dark-mode .advanced-filters,
+html body.dark-mode .search-card,
+html body.dark-mode .search-row,
+html body.dark-mode input,
+html body.dark-mode textarea,
+html body.dark-mode select{
+  background:var(--ab-paper) !important;
+  border-color:var(--ab-line) !important;
+  color:var(--ab-ink) !important;
+}
+html body.dark-mode .input-card *:not(i):not(button):not(.tax-basis):not(.fee-value):not(.cost-value){color:var(--ab-ink) !important}
+html body.dark-mode .input-card:hover,
+html body.dark-mode .results-card:hover,
+html body.dark-mode .blog-card:hover,
+html body.dark-mode .resource-card:hover,
+html body.dark-mode .value-card:hover,
+html body.dark-mode .testimonial-card:hover,
+html body.dark-mode .prop-card:hover{background:var(--ab-paper-2) !important}
+html body.dark-mode .comm-btn.active{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+html body.dark-mode .navbar{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
+html body.dark-mode .nav-links a{color:var(--ab-ink) !important}
+html body.dark-mode .nav-links a:hover{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important}
+html body.dark-mode .contact-btn-nav,html body.dark-mode a.contact-btn-nav{background:var(--ab-hot) !important;color:#fff !important}
+html body.dark-mode .nav-dropdown-menu{background:var(--ab-paper) !important;border-color:var(--ab-line) !important;box-shadow:6px 6px 0 var(--ab-paper-2) !important}
+html body.dark-mode .nav-dropdown-menu a{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important;background:transparent !important}
+html body.dark-mode .nav-dropdown-menu a:hover,
+html body.dark-mode .nav-dropdown-menu a.active{background:var(--ab-hot) !important;color:#fff !important}
+html body.dark-mode .nav-dropdown-menu a:hover *,
+html body.dark-mode .nav-dropdown-menu a.active *{color:#fff !important}
+html body.dark-mode .page-hero{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
+html body.dark-mode .page-hero h1{color:var(--ab-ink) !important}
+html body.dark-mode .page-hero p{color:var(--ab-ink-soft) !important}
+html body.dark-mode .page-hero .eyebrow{color:var(--ab-hot) !important}
+html body.dark-mode footer{background:#000 !important;color:var(--ab-paper) !important}
+html body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
+html body.dark-mode .trust-item{border-color:var(--ab-line) !important}
+html body.dark-mode .trust-label{color:var(--ab-ink) !important}
+html body.dark-mode .city-dropdown-item,html body.dark-mode .zonal-dropdown-item{color:var(--ab-ink) !important;border-color:var(--ab-line) !important;background:var(--ab-paper) !important}
+html body.dark-mode .city-dropdown-item:hover,html body.dark-mode .zonal-dropdown-item:hover{background:var(--ab-hot) !important;color:#fff !important}
+html body.dark-mode .fee-row,html body.dark-mode .cost-row{border-bottom-color:var(--ab-line) !important}
+html body.dark-mode .fee-label,html body.dark-mode .cost-label,
+html body.dark-mode .fee-value,html body.dark-mode .cost-value{color:var(--ab-ink) !important}
+html body.dark-mode .fee-row.total .fee-value,html body.dark-mode .cost-row.total .cost-value,
+html body.dark-mode .tax-basis,html body.dark-mode strong.tax-basis{color:var(--ab-hot) !important}
+html body.dark-mode .summary-result,html body.dark-mode .summary-amount{color:var(--ab-hot) !important}
+html body.dark-mode .input-card h3,
+html body.dark-mode .results-card h3,
+html body.dark-mode .summary-card h3{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important}
+html body.dark-mode .input-card h3 i,
+html body.dark-mode .results-card h3 i,
+html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
+
+/* ════════════════════════════════════════════════════════════
+   LOGO COLOR SWAP — black silhouette in light, white in dark
+   ════════════════════════════════════════════════════════════ */
+.navbar .logo img,.ab-brand img{filter:brightness(0) !important;transition:filter .2s !important}
+html body.dark-mode .navbar .logo img,
+html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
+
+/* ════════════════════════════════════════════════════════════
+   TOOLS / GUIDES DROPDOWN — consistent font with rest of nav
+   ════════════════════════════════════════════════════════════ */
+.nav-dropdown-menu a,.ab-nav-dropdown-menu a{
+  font-family:'Inter','Segoe UI',sans-serif !important;
+  font-size:12px !important;font-weight:800 !important;
+  letter-spacing:.5px !important;text-transform:uppercase !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE / TABLET RESPONSIVENESS
+   ════════════════════════════════════════════════════════════ */
+@media(max-width:1100px){
+  .navbar{padding:10px 16px !important}
+  .navbar .logo img{height:60px !important}
+  .nav-links{display:none !important}
+  .mobile-menu-btn{display:block !important}
+}
+@media(max-width:560px){
+  .navbar .logo img{height:50px !important}
+  h1{font-size:clamp(32px,8vw,48px) !important;letter-spacing:-1.5px !important}
+  h2{font-size:clamp(26px,6vw,40px) !important;letter-spacing:-1.2px !important}
+  .page-hero{padding:40px 18px 30px !important}
+  .input-card,.blog-card,.resource-card,.value-card,.testimonial-card,.results-card,.summary-card{padding:18px !important}
+  footer{padding:36px 20px 22px !important}
+  .footer-content{grid-template-columns:1fr !important;gap:24px !important;text-align:left !important}
+  .footer-bottom{flex-direction:column !important;align-items:flex-start !important;gap:8px !important}
+  .floating-buttons{bottom:14px !important;right:14px !important}
+  .floating-buttons .floating-btn,.floating-buttons .fab-toggle{width:42px !important;height:42px !important;font-size:15px !important}
+  .back-to-top{width:40px !important;height:40px !important;left:14px !important;bottom:14px !important}
+  .ab-top-strip{padding:7px 12px !important}
+}
+@media(max-width:400px){
+  .navbar{padding:8px 12px !important}
+  .navbar .logo img{height:42px !important}
+  .contact-btn-nav,a.contact-btn-nav{padding:10px 12px !important;font-size:10px !important;letter-spacing:1px !important}
+}

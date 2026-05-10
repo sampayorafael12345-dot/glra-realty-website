@@ -63,7 +63,7 @@
         +   '</div>'
         + '</div>'
         + '<a href="/about.html">About</a>'
-        + '<a href="#contact" class="contact-btn-nav">Book →</a>';
+        + '<a href="/list-property.html" class="contact-btn-nav">List property →</a>';
       nav.appendChild(links);
 
       // Mark current page's link as active
