@@ -1,495 +1,259 @@
-/* ============================================
-   GLRA Realty — Shared JavaScript
-   Loaded by every page for common behavior:
-   loader hide, dark mode, mobile menu, toast,
-   back-to-top, service worker registration.
-   ============================================ */
+// ============ GEMINI AI CHATBOT WIDGET ============
+(function() {
+  if (document.getElementById('glra-chatbot-root')) return;
 
-// ── Service worker (offline + caching) ────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}
-
-// ── Loader: hide as soon as the page is ready ─────────────
-(function hideLoaderWhenReady() {
-  function hide() {
-    const l = document.getElementById('loader');
-    if (l) {
-      l.classList.add('hide');
-      setTimeout(() => l.style.display = 'none', 500);
-    }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hide);
-  } else {
-    hide();
-  }
-  // Failsafe: never show loader longer than 1 second
-  setTimeout(hide, 1000);
-})();
-
-// ── Dark mode toggle ──────────────────────────────────────
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkMode', isDark);
-  const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
-  if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-}
-
-// Apply saved dark mode preference on load
-if (localStorage.getItem('darkMode') === 'true') {
-  document.body.classList.add('dark-mode');
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
-    if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
-  });
-}
-
-// ── Mobile menu open/close ────────────────────────────────
-function openMobileMenu() {
-  const o = document.getElementById('mobileOverlay');
-  if (o) o.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-function closeMobileMenu() {
-  const o = document.getElementById('mobileOverlay');
-  if (o) o.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-// ── Toast notifications ───────────────────────────────────
-function showToast(message, isError = false) {
-  const t = document.createElement('div');
-  t.className = 'toast' + (isError ? ' err' : '');
-  t.textContent = message;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
-}
-
-// ── HTML escape helper (used by pages that render dynamic text) ──
-function escapeHtml(s) {
-  if (!s) return '';
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-// ── Back-to-top button visibility on scroll ──────────────
-window.addEventListener('scroll', () => {
-  const b = document.getElementById('backToTop');
-  if (b) b.classList[window.scrollY > 120 ? 'add' : 'remove']('show');
-});
-
-// ── Mobile FAB toggle for floating buttons ───────────────
-// On mobile, all the contact buttons (call, WhatsApp, Viber, etc.) are hidden by
-// default and a single FAB appears at the bottom. Tapping it reveals the rest
-// with a staggered animation. Desktop is unaffected (CSS @media handles that).
-(function setupFabToggle() {
-  function init() {
-    document.querySelectorAll('.floating-buttons').forEach(container => {
-      // Idempotent — don't inject twice if main.js runs again
-      if (container.querySelector('.fab-toggle')) return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'floating-btn fab-toggle';
-      btn.setAttribute('aria-label', 'Open contact options');
-      btn.setAttribute('aria-expanded', 'false');
-      btn.innerHTML = '<i class="fas fa-comment-dots"></i>';
-      btn.addEventListener('click', () => {
-        const isOpen = container.classList.toggle('expanded');
-        btn.classList.toggle('is-open', isOpen);
-        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        btn.setAttribute('aria-label', isOpen ? 'Close contact options' : 'Open contact options');
-        btn.innerHTML = isOpen
-          ? '<i class="fas fa-times"></i>'
-          : '<i class="fas fa-comment-dots"></i>';
-      });
-      // Append as the LAST child so the FAB sits at the bottom of the visible stack
-      container.appendChild(btn);
-    });
-    // Tap outside to close (mobile only)
-    document.addEventListener('click', e => {
-      document.querySelectorAll('.floating-buttons.expanded').forEach(c => {
-        if (!c.contains(e.target)) {
-          c.classList.remove('expanded');
-          const t = c.querySelector('.fab-toggle');
-          if (t) {
-            t.classList.remove('is-open');
-            t.setAttribute('aria-expanded', 'false');
-            t.setAttribute('aria-label', 'Open contact options');
-            t.innerHTML = '<i class="fas fa-comment-dots"></i>';
-          }
-        }
-      });
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
-
-// ── Email-gated print/download (shared by all calculators) ──
-// Usage: <button onclick="glraOpenPrintGate('Affordability Calculator')">Print</button>
-// Requires: a `.print-only-header` div on the page for the branded print header.
-window.glraOpenPrintGate = function (label) {
-  let modal = document.getElementById('glraPrintGate');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'glraPrintGate';
-    modal.className = 'glra-print-gate';
-    modal.innerHTML = `
-      <div class="glra-print-gate-card" role="dialog" aria-modal="true">
-        <button class="glra-print-gate-close" type="button" aria-label="Close">&times;</button>
-        <i class="fas fa-envelope"></i>
-        <h3>Enter Your Email</h3>
-        <p>Enter your email to continue. The print dialog will open — choose <strong>"Save as PDF"</strong> to download a copy, or pick a printer to print on paper.</p>
-        <input type="email" placeholder="Your email address" autocomplete="email" />
-        <button class="glra-print-gate-submit" type="button">Continue</button>
-        <p class="glra-print-gate-fine">We'll keep you updated on new listings and market insights.</p>
+  const chatRoot = document.createElement('div');
+  chatRoot.id = 'glra-chatbot-root';
+  chatRoot.innerHTML = `
+    <div id="glra-chat-toggle" class="glra-chat-toggle">
+      <i class="fas fa-comment-dots"></i>
+    </div>
+    <div id="glra-chat-window" class="glra-chat-window" style="display:none;">
+      <div class="glra-chat-header">
+        <span><i class="fas fa-robot"></i> GLRA AI Assistant</span>
+        <button id="glra-chat-close" class="glra-chat-close"><i class="fas fa-times"></i></button>
       </div>
-    `;
-    document.body.appendChild(modal);
-    const input = modal.querySelector('input');
-    const submit = modal.querySelector('.glra-print-gate-submit');
-    const closeBtn = modal.querySelector('.glra-print-gate-close');
-    const close = () => modal.classList.remove('show');
-    closeBtn.addEventListener('click', close);
-    modal.addEventListener('click', e => { if (e.target === modal) close(); });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit.click(); });
-    submit.addEventListener('click', async () => {
-      const email = (input.value || '').trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        if (typeof showToast === 'function') showToast('Please enter a valid email address', true);
-        return;
-      }
-      const orig = submit.innerHTML;
-      submit.disabled = true;
-      submit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-      try {
-        await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, source: 'calculator_print' })
-        });
-      } catch (_) {} // best-effort; don't block printing if subscribe fails
-      submit.disabled = false;
-      submit.innerHTML = orig;
-      close();
-      // Blank the document title briefly so the browser doesn't auto-inject it into the printed page header.
-      const originalTitle = document.title;
-      document.title = ' ';
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => { document.title = originalTitle; }, 500);
-      }, 200);
-      window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
-    });
-  }
-  modal.querySelector('input').value = '';
-  modal.classList.add('show');
-  setTimeout(() => modal.querySelector('input').focus(), 50);
-};
+      <div class="glra-chat-messages" id="glra-chat-messages">
+        <div class="glra-chat-message bot">Hello! I'm Catherine's AI assistant. Ask me anything about buying, selling, or leasing property in the Philippines.</div>
+      </div>
+      <div class="glra-chat-input-area">
+        <textarea id="glra-chat-input" placeholder="Type your question..." rows="1"></textarea>
+        <button id="glra-chat-send"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <div class="glra-chat-footer">Powered by Gemini AI</div>
+    </div>
+  `;
+  document.body.appendChild(chatRoot);
 
-/* ============================================
-   DRAMATIC PASS V2 — interactive helpers
-   Applied to all pages via main.js.
-   Removable: delete from the START marker to END marker.
-   ============================================ */
-/* DRAMATIC-V2-HELPERS-START */
-(function glraDramaticV2(){
-  if (typeof document === 'undefined') return;
-
-  var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var IS_HOVER = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-  function ready(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
-    else fn();
-  }
-
-  /* 1) Scroll progress bar — inject once, then track scroll */
-  ready(function(){
-    if (!document.getElementById('scrollProgress')) {
-      var sp = document.createElement('div');
-      sp.id = 'scrollProgress';
-      sp.className = 'scroll-progress';
-      sp.setAttribute('aria-hidden', 'true');
-      document.body.insertAdjacentElement('afterbegin', sp);
+  const style = document.createElement('style');
+  style.textContent = `
+    #glra-chatbot-root {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10000;
+      font-family: 'DM Sans', sans-serif;
     }
-    var sp = document.getElementById('scrollProgress');
-    var ticking = false;
-    var update = function(){
-      var h = document.documentElement;
-      var max = (h.scrollHeight - h.clientHeight) || 1;
-      sp.style.width = ((h.scrollTop / max) * 100) + '%';
-      ticking = false;
-    };
-    window.addEventListener('scroll', function(){
-      if (!ticking) { requestAnimationFrame(update); ticking = true; }
-    }, { passive: true });
-    update();
-  });
-
-  /* 2) Navbar — auto-add .scrolled past 50px (idempotent with index.html's own listener) */
-  ready(function(){
-    var navbar = document.querySelector('.navbar');
-    if (!navbar) return;
-    var ticking = false;
-    var update = function(){
-      navbar.classList[window.scrollY > 50 ? 'add' : 'remove']('scrolled');
-      ticking = false;
-    };
-    window.addEventListener('scroll', function(){
-      if (!ticking) { requestAnimationFrame(update); ticking = true; }
-    }, { passive: true });
-    update();
-  });
-
-  /* 3) Scroll reveal — auto-apply to common content elements */
-  if (!RM) {
-    ready(function(){
-      if (!('IntersectionObserver' in window)) return;
-      var candidates = document.querySelectorAll(
-        'section, .blog-card, .prop-card, .resource-card, .value-card, .testimonial-card, ' +
-        '.neighborhood-card, .about-intro, .values-bg, .stats-section, .calculator-container'
-      );
-      if (!candidates.length) return;
-      candidates.forEach(function(el){
-        /* Skip elements managed by index.html's own observer */
-        if (el.classList.contains('reveal') || el.classList.contains('neighborhoods-marquee')) return;
-        el.classList.add('gl-reveal');
-      });
-      var io = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){
-          if (e.isIntersecting) {
-            e.target.classList.add('in');
-            io.unobserve(e.target);
-          }
-        });
-      }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-      document.querySelectorAll('.gl-reveal').forEach(function(el){ io.observe(el); });
-      /* Safety net — reveal anything still hidden after 4s */
-      setTimeout(function(){
-        document.querySelectorAll('.gl-reveal:not(.in)').forEach(function(el){ el.classList.add('in'); });
-      }, 4000);
-    });
-  }
-
-  /* 4) Animated number counters in trust-strip and stat-numbers */
-  ready(function(){
-    if (!('IntersectionObserver' in window)) return;
-    var items = document.querySelectorAll('.trust-label, .stat-number');
-    items.forEach(function(el){
-      if (el.children.length > 0) return; /* skip nested-content labels */
-      var text = el.textContent.trim();
-      var m = text.match(/^([\d.]+)/);
-      if (!m) return;
-      var target = parseFloat(m[1]);
-      var decimals = (m[1].split('.')[1] || '').length;
-      var rest = text.slice(m[0].length);
-      el.dataset.glTarget = target;
-      el.dataset.glDecimals = decimals;
-      el.dataset.glRest = rest;
-      el.textContent = (decimals ? '0.' + '0'.repeat(decimals) : '0') + rest;
-    });
-    var observer = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (!e.isIntersecting) return;
-        var el = e.target;
-        var target = parseFloat(el.dataset.glTarget);
-        var decimals = parseInt(el.dataset.glDecimals);
-        var rest = el.dataset.glRest || '';
-        var duration = RM ? 0 : 1800;
-        if (duration === 0) {
-          el.textContent = target.toFixed(decimals) + rest;
-        } else {
-          var start = performance.now();
-          var tick = function(now){
-            var t = Math.min((now - start) / duration, 1);
-            var eased = 1 - Math.pow(1 - t, 3);
-            el.textContent = (eased * target).toFixed(decimals) + rest;
-            if (t < 1) requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
-        }
-        observer.unobserve(el);
-      });
-    }, { threshold: 0.5 });
-    document.querySelectorAll('[data-gl-target]').forEach(function(el){ observer.observe(el); });
-  });
-
-  /* 5) Cursor follower — REMOVED per user request (was distracting) */
-
-
-  /* 6) Magnetic primary buttons — subtle pull toward cursor (desktop) */
-  if (IS_HOVER && !RM) {
-    ready(function(){
-      var buttons = document.querySelectorAll(
-        '.cta-btn, .submit-btn, .search-btn-main, .hero-cta, .broker-btn-primary, .print-btn'
-      );
-      buttons.forEach(function(btn){
-        if (btn.classList.contains('gl-magnetic')) return;
-        btn.classList.add('gl-magnetic');
-        var raf = null;
-        btn.addEventListener('mousemove', function(e){
-          var rect = btn.getBoundingClientRect();
-          var cx = rect.left + rect.width / 2;
-          var cy = rect.top + rect.height / 2;
-          var dx = (e.clientX - cx) * 0.18;
-          var dy = (e.clientY - cy) * 0.18;
-          if (raf) cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(function(){
-            btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-          });
-        });
-        btn.addEventListener('mouseleave', function(){
-          if (raf) cancelAnimationFrame(raf);
-          btn.style.transform = '';
-        });
-      });
-    });
-  }
-})();
-/* DRAMATIC-V2-HELPERS-END */
-
-/* ============================================
-   USABILITY PASS V3 — interactive helpers
-   Stunning + user-friendly. Removable: delete from
-   START to END marker.
-   ============================================ */
-/* USABILITY-V3-HELPERS-START */
-(function glraUsabilityV3(){
-  if (typeof document === 'undefined') return;
-
-  function ready(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
-    else fn();
-  }
-
-  /* 1) Skip-to-content link — inject if missing, target <main> or first <section> */
-  ready(function(){
-    if (document.querySelector('.skip-to-content')) return;
-    var main = document.querySelector('main') || document.querySelector('section') || document.querySelector('.page-hero');
-    if (!main) return;
-    if (!main.id) main.id = 'main-content';
-    var link = document.createElement('a');
-    link.className = 'skip-to-content';
-    link.href = '#' + main.id;
-    link.textContent = 'Skip to content';
-    document.body.insertAdjacentElement('afterbegin', link);
-  });
-
-  /* 2) Active nav state — flag the current page in nav links */
-  ready(function(){
-    var path = location.pathname.toLowerCase();
-    var pathFile = path.split('/').pop() || '';
-    var atRoot = (path === '/' || pathFile === '' || pathFile === 'index.html');
-
-    function matches(href){
-      if (!href) return false;
-      try {
-        var url = new URL(href, location.origin);
-        if (url.origin !== location.origin) return false;
-        var hp = url.pathname.toLowerCase();
-        var hf = hp.split('/').pop() || '';
-        if (atRoot) return (hp === '/' || hf === '' || hf === 'index.html');
-        return hf === pathFile;
-      } catch(_){ return false; }
+    .glra-chat-toggle {
+      width: 56px;
+      height: 56px;
+      background: var(--gold, #c8a96e);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      transition: 0.2s;
+      font-size: 24px;
     }
+    .glra-chat-toggle:hover {
+      transform: scale(1.05);
+      background: var(--gold-dark, #a8894e);
+    }
+    .glra-chat-window {
+      position: absolute;
+      bottom: 70px;
+      right: 0;
+      width: 360px;
+      max-width: 85vw;
+      height: 480px;
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      font-size: 14px;
+    }
+    body.dark-mode .glra-chat-window {
+      background: #1a2840;
+      border-color: #2a3f58;
+    }
+    .glra-chat-header {
+      background: var(--navy, #0d1b2a);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(200,169,110,0.2);
+    }
+    .glra-chat-header span i {
+      margin-right: 8px;
+      color: var(--gold);
+    }
+    .glra-chat-close {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      opacity: 0.7;
+    }
+    .glra-chat-close:hover {
+      opacity: 1;
+    }
+    .glra-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .glra-chat-message {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .glra-chat-message.bot {
+      background: var(--gray-light, #f0f2f5);
+      color: var(--text-color, #1a2332);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .glra-chat-message.user {
+      background: var(--gold, #c8a96e);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    body.dark-mode .glra-chat-message.bot {
+      background: #0a1520;
+      color: #e8edf2;
+    }
+    .glra-chat-input-area {
+      display: flex;
+      border-top: 1px solid var(--border-color, #e2e8f0);
+      padding: 10px;
+      gap: 8px;
+      background: inherit;
+    }
+    .glra-chat-input-area textarea {
+      flex: 1;
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 24px;
+      padding: 8px 14px;
+      resize: none;
+      font-family: inherit;
+      font-size: 13px;
+      background: var(--card-bg, #fff);
+      color: var(--text-color, #1a2332);
+      outline: none;
+    }
+    .glra-chat-input-area textarea:focus {
+      border-color: var(--gold);
+    }
+    .glra-chat-input-area button {
+      background: var(--gold, #c8a96e);
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+    }
+    .glra-chat-input-area button:hover {
+      background: var(--gold-dark, #a8894e);
+    }
+    .glra-chat-footer {
+      font-size: 10px;
+      text-align: center;
+      padding: 6px;
+      color: var(--gray, #7f8c8d);
+      border-top: 1px solid var(--border-color, #e2e8f0);
+    }
+    @media (max-width: 560px) {
+      .glra-chat-window { width: calc(100vw - 32px); right: 0; bottom: 70px; height: 500px; }
+    }
+  `;
+  document.head.appendChild(style);
 
-    document.querySelectorAll('.nav-links > a, .nav-links > .nav-dropdown > a, .nav-dropdown-menu a, .mobile-overlay-links a').forEach(function(a){
-      if (matches(a.getAttribute('href'))) {
-        a.classList.add('gl-active');
-        var dd = a.closest('.nav-dropdown');
-        if (dd) dd.classList.add('gl-active');
-      }
-    });
-  });
+  const toggleBtn = document.getElementById('glra-chat-toggle');
+  const chatWindow = document.getElementById('glra-chat-window');
+  const closeBtn = document.getElementById('glra-chat-close');
+  const sendBtn = document.getElementById('glra-chat-send');
+  const inputField = document.getElementById('glra-chat-input');
+  const messagesContainer = document.getElementById('glra-chat-messages');
 
-  /* 3) Skeleton loaders — pre-fill known property containers so users don't see a blank gap */
-  ready(function(){
-    var ids = ['featured-list','sale-list','lease-list','properties-grid','properties-list'];
-    var skeletonHtml = '<div class="prop-card-skeleton"></div>';
-    ids.forEach(function(id){
-      var c = document.getElementById(id);
-      if (!c || c.children.length > 0) return;
-      var html = '';
-      for (var i = 0; i < 6; i++) html += skeletonHtml;
-      c.innerHTML = html;
-    });
-  });
+  function addMessage(text, isUser) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `glra-chat-message ${isUser ? 'user' : 'bot'}`;
+    msgDiv.textContent = text;
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
 
-  /* 4) Keyboard-only focus rings — only show outline when user is tabbing */
-  (function(){
-    var keyboardEvents = ['Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' ','Escape'];
-    document.addEventListener('keydown', function(e){
-      if (keyboardEvents.indexOf(e.key) !== -1) document.body.classList.add('gl-keyboard');
-    });
-    document.addEventListener('mousedown', function(){
-      document.body.classList.remove('gl-keyboard');
-    });
-    document.addEventListener('touchstart', function(){
-      document.body.classList.remove('gl-keyboard');
-    }, { passive: true });
-  })();
+  let typingIndicator = null;
+  function showTyping() {
+    if (typingIndicator) return;
+    typingIndicator = document.createElement('div');
+    typingIndicator.className = 'glra-chat-message bot';
+    typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i> Typing...';
+    messagesContainer.appendChild(typingIndicator);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+  function hideTyping() {
+    if (typingIndicator) {
+      typingIndicator.remove();
+      typingIndicator = null;
+    }
+  }
 
-  /* 5) Page transition fade — fade out on internal navigation */
-  (function(){
-    var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (RM) return;
-    document.addEventListener('click', function(e){
-      var a = e.target.closest('a[href]');
-      if (!a) return;
-      if (e.defaultPrevented) return;
-      if (e.button !== 0) return; /* ignore right-click, middle-click */
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; /* let modifier-clicks open in new tab etc. */
-      if (a.target && a.target !== '_self') return;
-      var href = a.getAttribute('href');
-      if (!href) return;
-      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') ||
-          href.startsWith('javascript:') || href.startsWith('viber:') || href.startsWith('whatsapp:')) return;
-      try {
-        var url = new URL(href, location.origin);
-        if (url.origin !== location.origin) return;
-        if (url.pathname === location.pathname && url.hash) return; /* in-page anchor */
-        e.preventDefault();
-        document.body.classList.add('gl-leaving');
-        setTimeout(function(){ window.location.href = href; }, 220);
-      } catch(_){}
-    });
-    /* Reset on back/forward navigation */
-    window.addEventListener('pageshow', function(e){
-      if (e.persisted) document.body.classList.remove('gl-leaving');
-    });
-  })();
+  async function sendMessage() {
+    const msg = inputField.value.trim();
+    if (!msg) return;
+    addMessage(msg, true);
+    inputField.value = '';
+    inputField.style.height = 'auto';
+    showTyping();
 
-  /* 6) Image blur-up — when lazy images load, remove blur smoothly */
-  ready(function(){
-    if (!('MutationObserver' in window)) return;
-    function clearBlur(img){
-      if (img.complete && img.naturalWidth > 0) {
-        img.classList.remove('lazy');
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await response.json();
+      hideTyping();
+      if (data.reply) {
+        addMessage(data.reply, false);
       } else {
-        img.addEventListener('load', function(){ img.classList.remove('lazy'); }, { once: true });
-        img.addEventListener('error', function(){ img.classList.remove('lazy'); }, { once: true });
+        addMessage('Sorry, I could not process that request. Please try again later.', false);
       }
+    } catch (err) {
+      hideTyping();
+      addMessage('Network error. Please check your connection.', false);
     }
-    document.querySelectorAll('img.lazy').forEach(clearBlur);
-    var mo = new MutationObserver(function(muts){
-      muts.forEach(function(m){
-        m.addedNodes.forEach(function(n){
-          if (n.nodeType !== 1) return;
-          if (n.matches && n.matches('img.lazy')) clearBlur(n);
-          if (n.querySelectorAll) n.querySelectorAll('img.lazy').forEach(clearBlur);
-        });
-      });
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    chatWindow.style.display = 'flex';
+    inputField.focus();
+  });
+  closeBtn.addEventListener('click', () => {
+    chatWindow.style.display = 'none';
+  });
+  sendBtn.addEventListener('click', sendMessage);
+  inputField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  inputField.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
   });
 })();
-/* USABILITY-V3-HELPERS-END */
