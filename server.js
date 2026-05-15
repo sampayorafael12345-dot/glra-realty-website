@@ -1297,38 +1297,65 @@ ${SITE_MAP}${listingContext}`;
       }
       contents.push({ role: 'user', parts: [{ text: message }] });
 
-      // Model: gemini-2.5-flash is the current free-tier flash model on v1beta.
-      // (gemini-1.5-flash-latest was deprecated/removed → 404.)
-      // Override via env var GEMINI_MODEL if you want to swap models without redeploying code.
-      const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+      // Model selection: gemini-2.0-flash is the most reliable free-tier model
+      // and doesn't have the "thinking budget" complication that 2.5 introduces.
+      // Override via env GEMINI_MODEL if you want to test 2.5 / pro / etc.
+      const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const geminiRes = await fetch(geminiUrl, {
+
+      const baseBody = {
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 1024,
+          topP: 0.9,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+        ],
+      };
+      // Only request thinkingBudget on 2.5 models — passing it to 2.0 returns a 400.
+      if (/^gemini-2\.5/.test(model)) {
+        baseBody.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      }
+
+      let geminiRes = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents,
-          generationConfig: {
-            temperature: 0.6,
-            maxOutputTokens: 1024,
-            topP: 0.9,
-            // Gemini 2.5 spends output tokens on internal "thinking" by default,
-            // which causes truncated visible replies. Disable for chat use.
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-          ],
-        }),
+        body: JSON.stringify(baseBody),
       });
+
+      // If the model rejected the request (most often a 400 due to a config
+      // field it doesn't accept), retry once without thinkingConfig.
+      if (!geminiRes.ok && baseBody.generationConfig.thinkingConfig) {
+        const errText = await geminiRes.text().catch(() => '');
+        console.warn('Gemini ' + geminiRes.status + ' with thinkingConfig; retrying without. Error:', errText.slice(0, 200));
+        delete baseBody.generationConfig.thinkingConfig;
+        geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(baseBody),
+        });
+      }
 
       if (!geminiRes.ok) {
         const errText = await geminiRes.text().catch(() => '');
-        console.error('Gemini API error', geminiRes.status, errText.slice(0, 300));
-        return res.status(502).json({ error: 'Chat service is having trouble. Please try again.' });
+        console.error('Gemini API error', geminiRes.status, 'model=' + model, errText.slice(0, 400));
+        // Surface a useful message based on the actual error.
+        const lower = errText.toLowerCase();
+        let userMsg = 'Chat service is having trouble. Please try again, or message Catherine directly at m.me/glrarealty.';
+        if (geminiRes.status === 404 || lower.includes('not found')) {
+          userMsg = "I can't reach my model right now (404). The site owner may need to update the GEMINI_MODEL env var. In the meantime, message Catherine at m.me/glrarealty.";
+        } else if (geminiRes.status === 403 || lower.includes('permission') || lower.includes('api key')) {
+          userMsg = "My API key isn't authorized for chat right now. Please message Catherine at m.me/glrarealty.";
+        } else if (geminiRes.status === 429 || lower.includes('quota') || lower.includes('rate')) {
+          userMsg = "I'm getting too many requests right now — please try again in a minute, or message Catherine at m.me/glrarealty.";
+        }
+        return res.status(502).json({ error: userMsg });
       }
 
       const data = await geminiRes.json();
