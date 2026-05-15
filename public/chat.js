@@ -8,8 +8,11 @@
 
   // ── 1. STYLES (injected once) ────────────────────────────────────────────
   var css = `
+/* FAB lives on the LEFT side, above the back-to-top button.
+   The right side is reserved for the existing contact stack
+   (call/WhatsApp/Viber/Messenger/Instagram/dark-mode + mobile FAB toggle). */
 .glra-chat-fab{
-  position:fixed;right:14px;bottom:200px;z-index:1100;
+  position:fixed;left:14px;bottom:74px;z-index:1100;
   width:54px;height:54px;border:0;border-radius:0;cursor:pointer;
   background:#ff3d00;color:#fff;font-size:20px;
   display:flex;align-items:center;justify-content:center;
@@ -22,10 +25,10 @@
   border:1px solid #0a0a0a;animation:glraChatPulse 1.5s infinite;
 }
 @keyframes glraChatPulse{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:768px){.glra-chat-fab{right:14px;bottom:78px;width:48px;height:48px;font-size:17px}}
+@media(max-width:768px){.glra-chat-fab{left:14px;bottom:68px;width:48px;height:48px;font-size:17px}}
 
 .glra-chat-panel{
-  position:fixed;right:14px;bottom:74px;width:380px;max-width:calc(100vw - 28px);
+  position:fixed;left:14px;bottom:74px;width:380px;max-width:calc(100vw - 28px);
   height:560px;max-height:calc(100vh - 100px);
   background:#f1eee9;color:#0a0a0a;border:2px solid #0a0a0a;
   z-index:1101;display:none;flex-direction:column;
@@ -35,7 +38,7 @@
 .glra-chat-panel.open{display:flex;animation:glraChatIn .18s ease}
 @keyframes glraChatIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:560px){
-  .glra-chat-panel{right:8px;bottom:8px;left:8px;width:auto;max-width:none;height:80vh;max-height:600px}
+  .glra-chat-panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none;height:80vh;max-height:600px}
 }
 body.dark-mode .glra-chat-panel{background:#0e0e0c;color:#f1eee9;border-color:#3a3a36;box-shadow:8px 8px 0 #ff3d00}
 
