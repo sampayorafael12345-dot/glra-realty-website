@@ -92,21 +92,24 @@ body.dark-mode .ab-nav,body.dark-mode .ab-nav-inner,body.dark-mode .search-float
 body.dark-mode .ab-nav-links a:hover{background:var(--ab-paper-2);color:var(--ab-ink)}
 body.dark-mode .ab-nav-links a.cta{background:var(--ab-hot);color:#fff}
 body.dark-mode .ab-nav-links a.cta:hover{background:var(--ab-paper-2);color:var(--ab-ink)}
-body.dark-mode .search-row{border-color:var(--ab-paper) !important}
-body.dark-mode .search-field-wrapper{border-color:var(--ab-paper) !important}
+/* Borders use --ab-line (#3a3a36) in dark mode so they're visible against the
+   near-black --ab-paper background. Previously these used var(--ab-paper)
+   which made the entire search bar invisible. */
+body.dark-mode .search-row{border-color:var(--ab-ink-soft) !important}
+body.dark-mode .search-field-wrapper{border-color:var(--ab-line) !important}
 body.dark-mode .search-field-wrapper input{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
 body.dark-mode .search-field-wrapper input:focus{background:var(--ab-paper-2) !important}
-body.dark-mode .search-icon{color:var(--ab-ink) !important}
-body.dark-mode .search-btn-main{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border-color:var(--ab-paper) !important;border:1px solid var(--ab-paper) !important}
-body.dark-mode .search-btn-main:hover{background:var(--ab-hot) !important;color:#fff !important}
-body.dark-mode .filter-toggle-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
-body.dark-mode .filter-toggle-btn:hover{background:var(--ab-paper-2) !important}
-body.dark-mode .advanced-filters{background:var(--ab-paper) !important;border-color:var(--ab-paper) !important}
-body.dark-mode .filter-grid{border-color:var(--ab-paper) !important}
-body.dark-mode .filter-group{border-color:var(--ab-paper) !important}
-body.dark-mode .filter-group select,body.dark-mode .filter-group input{color:var(--ab-ink) !important;border-bottom-color:var(--ab-paper) !important}
-body.dark-mode .reset-filters-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
-body.dark-mode .listings-tabs{border-bottom-color:var(--ab-paper) !important}
+body.dark-mode .search-icon{color:var(--ab-hot) !important}
+body.dark-mode .search-btn-main{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:1px solid var(--ab-ink-soft) !important}
+body.dark-mode .search-btn-main:hover{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+body.dark-mode .filter-toggle-btn{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important;border-color:var(--ab-line) !important}
+body.dark-mode .filter-toggle-btn:hover{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+body.dark-mode .advanced-filters{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
+body.dark-mode .filter-grid{border-color:var(--ab-line) !important}
+body.dark-mode .filter-group{border-color:var(--ab-line) !important}
+body.dark-mode .filter-group select,body.dark-mode .filter-group input{color:var(--ab-ink) !important;background:var(--ab-paper-2) !important;border-bottom-color:var(--ab-line) !important}
+body.dark-mode .reset-filters-btn{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important;border:1px solid var(--ab-line) !important}
+body.dark-mode .listings-tabs{border-bottom-color:var(--ab-line) !important}
 body.dark-mode .section .listings-tab{color:var(--ab-gray);border-right-color:var(--ab-paper) !important}
 body.dark-mode .section .listings-tab:hover{background:var(--ab-paper-2);color:var(--ab-ink)}
 body.dark-mode .section .listings-tab.active{background:var(--ab-hot);color:#fff}

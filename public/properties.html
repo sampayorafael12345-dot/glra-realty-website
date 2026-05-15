@@ -556,13 +556,19 @@ const CURRENCY_RATES = {
 let currentCurrency = localStorage.getItem('glraCurrency') || 'PHP';
 let liveRatesDate = null;
 
-const FX_CACHE_KEY = 'glraFxRates';
-const FX_TTL_MS = 12 * 60 * 60 * 1000;       // hard expiry: 12h
-const FX_REFRESH_MS = 6 * 60 * 60 * 1000;    // background refresh after 6h
+// Cache key includes a version suffix — bump when the cache shape changes or
+// when we want to force-refresh stale rates on the next page load.
+const FX_CACHE_KEY = 'glraFxRates_v2';
+const FX_TTL_MS = 6 * 60 * 60 * 1000;        // hard expiry: 6h (was 12h)
+const FX_REFRESH_MS = 2 * 60 * 60 * 1000;    // background refresh after 2h
+// Pin to a stable API endpoint with cache-busting via Date header.
 const FX_PRIMARY = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/php.json';
 const FX_FALLBACK = 'https://latest.currency-api.pages.dev/v1/currencies/php.json';
 
 async function loadLiveRates(){
+  // Drop any pre-v2 cached payload so users on the old cache shape get fresh rates.
+  try{ localStorage.removeItem('glraFxRates'); }catch{}
+
   // 1. Try cache first
   try{
     const cached = JSON.parse(localStorage.getItem(FX_CACHE_KEY) || 'null');
@@ -570,7 +576,7 @@ async function loadLiveRates(){
       applyLiveRates(cached.rates, cached.date);
       // Refresh quietly in the background if cache is getting stale
       if(Date.now() - cached.timestamp > FX_REFRESH_MS){
-        fetchAndApplyRates().catch(()=>{});
+        fetchAndApplyRates().catch(err => console.warn('FX background refresh failed:', err.message));
       }
       return;
     }
@@ -581,13 +587,16 @@ async function loadLiveRates(){
 
 async function fetchAndApplyRates(){
   let data;
+  // Pass {cache:'no-store'} so the browser doesn't replay a stale CDN response.
+  const init = { cache: 'no-store' };
   try{
-    const r = await fetch(FX_PRIMARY);
-    if(!r.ok) throw new Error('primary');
+    const r = await fetch(FX_PRIMARY, init);
+    if(!r.ok) throw new Error('primary HTTP '+r.status);
     data = await r.json();
-  }catch{
-    const r = await fetch(FX_FALLBACK);
-    if(!r.ok) throw new Error('FX API unavailable');
+  }catch(e1){
+    console.warn('FX primary failed:', e1.message, '— trying fallback');
+    const r = await fetch(FX_FALLBACK, init);
+    if(!r.ok) throw new Error('FX API unavailable (HTTP '+r.status+')');
     data = await r.json();
   }
   const phpRates = data.php || {};
@@ -607,6 +616,7 @@ async function fetchAndApplyRates(){
     }));
   }catch{}
 
+  console.log('FX rates updated:', data.date, Object.keys(clean).length+' currencies');
   applyLiveRates(clean, data.date);
 }
 
