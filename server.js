@@ -987,10 +987,9 @@ function buildActions(message, hasMatches, search) {
     out.push(a);
   };
 
-  // 1) Property browse — only when there's actual property intent.
-  if (hasMatches && search && search.url) {
-    push({ label: search.label || 'Browse all matches', url: search.url, kind: 'primary' });
-  }
+  // 1) Property browse is rendered separately as the orange "search CTA" button —
+  //    skip adding a duplicate here. (The frontend renders `search` independently
+  //    of `actions`, so a primary action with the same URL would double up.)
 
   // 2) Calculator / tool intents
   if (/\b(closing|fees|cgt|dst|registration|transfer\s*tax|title transfer|capital gains|documentary stamp)\b/.test(m)) {
@@ -1043,6 +1042,12 @@ function buildActions(message, hasMatches, search) {
   const wantsViewing = /\b(schedul|view(ing)?|tour|visit|see (the|this) (property|unit)|inspect|book(ing)?)\b/.test(m);
   const wantsContact = /\b(contact|talk to|speak (to|with)|reach|call|message|whatsapp|messenger|catherine)\b/.test(m);
   if (wantsViewing || wantsContact) {
+    // Primary path for viewing requests: the inquiry/contact form on the homepage
+    // (id="contact-form"). One click, scrolls straight to the form with their
+    // request pre-loaded in their head.
+    if (wantsViewing) {
+      push({ label: 'Send inquiry / schedule', url: '/#contact-form', kind: 'primary' });
+    }
     if (hasMatches && !out.find(a => a.url.startsWith('/properties.html'))) {
       push({ label: 'Browse listings', url: '/properties.html', kind: 'secondary' });
     }
