@@ -817,6 +817,21 @@ const KNOWN_LOCATIONS = [
 ];
 const KNOWN_TYPES = ['condo','condominium','house','townhouse','lot','apartment','studio','penthouse','duplex','loft','villa','office','commercial'];
 
+// Returns true if the user message looks like a property search of any kind.
+// Used to decide whether we should attach property cards + a search CTA at all.
+// Without this guard, "what are closing costs?" returns featured listings as
+// "relevant" because the featured boost (+1) makes them score > 0.
+function hasPropertyIntent(message) {
+  const m = (message || '').toLowerCase();
+  if (KNOWN_LOCATIONS.some(loc => m.includes(loc))) return true;
+  if (KNOWN_TYPES.some(t => m.includes(t))) return true;
+  if (/\b(propert|listing|listings|unit|home|homes)\b/.test(m)) return true;
+  if (/\b(for sale|for lease|rent|rental|leasing|buying|to buy)\b/.test(m)) return true;
+  if (/\b(\d+)\s*-?\s*(br|bed|bedroom)/.test(m)) return true;
+  if (/\bshow me\b/.test(m) && /\b(in|at|around|near)\b/.test(m)) return true;
+  return false;
+}
+
 function scoreListings(message, listings) {
   const m = (message || '').toLowerCase();
 
@@ -825,12 +840,9 @@ function scoreListings(message, listings) {
   const wantsLease = /\b(rent|rental|lease|leasing|monthly)\b/.test(m);
   const wantsSale  = /\b(buy|buying|purchase|sale|for sale)\b/.test(m);
 
-  // Bedroom request, e.g. "3br", "3 bedroom", "3-bedroom"
   const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
   const wantedBR = brMatch ? parseInt(brMatch[1], 10) : null;
 
-  // Budget: "under 10m", "below 50k", "around 5 million", "30000/mo"
-  // Roughly: number followed by m/million/k/thousand.
   let budget = null;
   const bMatch = m.match(/(\d[\d,.]*)\s*(m|mil|million|k|thousand)?/);
   if (bMatch) {
@@ -864,7 +876,10 @@ function scoreListings(message, listings) {
         if (!isLease && price <= budget * 1.15) s += 4;
       }
     }
-    if (p.featured) s += 1;
+    // Featured is now ONLY a tiebreaker (+0.5), not enough to qualify a listing
+    // as "relevant" on its own. Without this change, a question like
+    // "what are closing costs?" would surface featured listings as cards.
+    if (p.featured) s += 0.5;
     return s;
   }
 
@@ -952,6 +967,91 @@ function deriveSearchFromMessage(message) {
     label = 'Browse all properties';
   }
   return { url: `/properties.html?${qs}`, label };
+}
+
+// Build a list of action buttons (CTAs) to render under the bot reply.
+// Each action is { label, url, kind } — `kind` controls icon/color in the widget.
+//   primary   → big hot-orange button  (the most relevant next step)
+//   secondary → outlined dark button   (alternative paths)
+//   contact   → outlined accent button (reach Catherine)
+// Multiple intents can stack actions (e.g. asking about closing costs +
+// scheduling viewing returns both calculator + Messenger CTAs).
+function buildActions(message, hasMatches, search) {
+  const m = (message || '').toLowerCase();
+  const out = [];
+  const seen = new Set();
+  const push = (a) => {
+    const k = a.url + '|' + a.label;
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push(a);
+  };
+
+  // 1) Property browse — only when there's actual property intent.
+  if (hasMatches && search && search.url) {
+    push({ label: search.label || 'Browse all matches', url: search.url, kind: 'primary' });
+  }
+
+  // 2) Calculator / tool intents
+  if (/\b(closing|fees|cgt|dst|registration|transfer\s*tax|title transfer|capital gains|documentary stamp)\b/.test(m)) {
+    push({ label: 'Closing fees calculator', url: '/calculator.html', kind: 'primary' });
+  }
+  if (/\b(afford|how much can i (?:afford|borrow|pay)|max price|budget)\b/.test(m)) {
+    push({ label: 'Affordability calculator', url: '/affordability.html', kind: 'primary' });
+  }
+  if (/\b(amortization|monthly payment|loan payment|mortgage|installment)\b/.test(m)) {
+    push({ label: 'Amortization calculator', url: '/amortization.html', kind: 'primary' });
+  }
+  if (/\b(rental yield|cap rate|return on investment|roi|gross yield|net yield)\b/.test(m)) {
+    push({ label: 'Rental yield calculator', url: '/rental-yield.html', kind: 'primary' });
+  }
+  if (/\b(zonal|bir zonal|zonal value|fair market value|fmv)\b/.test(m)) {
+    push({ label: 'BIR Zonal Value lookup', url: '/zonal.html', kind: 'primary' });
+  }
+  if (/\b(ercf|registration fee|lra|register of deeds|rd fees)\b/.test(m)) {
+    push({ label: 'Registration fee estimator', url: '/ercf.html', kind: 'primary' });
+  }
+  if (/\b(cost of ownership|annual cost|hoa|association dues|rpt|real property tax|maintenance)\b/.test(m)) {
+    push({ label: 'Cost of ownership calculator', url: '/cost-of-ownership.html', kind: 'primary' });
+  }
+
+  // 3) Guide / docs intents
+  if (/\b(guide|process|how (do|to)|cct|tct|deed|documentation|documents needed|requirements|paperwork)\b/.test(m)) {
+    push({ label: 'Buying & docs guide', url: '/guide.html', kind: 'secondary' });
+  }
+  if (/\b(neighborhood|neighbourhood|area|location guide|where to live|what's it like)\b/.test(m)) {
+    push({ label: 'Neighborhoods overview', url: '/neighborhoods.html', kind: 'secondary' });
+  }
+  if (/\b(bgc|bonifacio)\b/.test(m)) push({ label: 'Living in BGC', url: '/living-in-bgc.html', kind: 'secondary' });
+  if (/\b(makati)\b/.test(m))        push({ label: 'Living in Makati', url: '/living-in-makati.html', kind: 'secondary' });
+  if (/\b(alabang|muntinlupa)\b/.test(m)) push({ label: 'Living in Alabang', url: '/living-in-alabang.html', kind: 'secondary' });
+
+  // 4) Selling / listing intent
+  if (/\b(sell|selling|list (my|a) property|i (have|own) a property|i'?m a seller|i want to lease out|rent out)\b/.test(m)) {
+    push({ label: 'List your property', url: '/list-property.html', kind: 'primary' });
+  }
+
+  // 5) About / testimonials
+  if (/\b(who is catherine|about (you|the broker|catherine)|credentials|prc|license)\b/.test(m)) {
+    push({ label: 'About Catherine', url: '/about.html', kind: 'secondary' });
+  }
+  if (/\b(review|testimonial|client feedback|references)\b/.test(m)) {
+    push({ label: 'Client testimonials', url: '/testimonials.html', kind: 'secondary' });
+  }
+
+  // 6) Schedule a viewing / contact intent  (also triggered by buying intent)
+  const wantsViewing = /\b(schedul|view(ing)?|tour|visit|see (the|this) (property|unit)|inspect|book(ing)?)\b/.test(m);
+  const wantsContact = /\b(contact|talk to|speak (to|with)|reach|call|message|whatsapp|messenger|catherine)\b/.test(m);
+  if (wantsViewing || wantsContact) {
+    if (hasMatches && !out.find(a => a.url.startsWith('/properties.html'))) {
+      push({ label: 'Browse listings', url: '/properties.html', kind: 'secondary' });
+    }
+    push({ label: 'Message Catherine', url: 'https://m.me/glrarealty', kind: 'contact' });
+    push({ label: 'WhatsApp', url: 'https://wa.me/639171774572', kind: 'contact' });
+    push({ label: 'Call now', url: 'tel:+639171774572', kind: 'contact' });
+  }
+
+  return out.slice(0, 5); // cap so the panel doesn't overflow
 }
 
 // Build 3-4 contextual follow-up suggestions based on what the user asked.
@@ -1073,8 +1173,9 @@ app.post('/api/chat',
 
       // ── Build live property context ──────────────────────────────
       let listingContext = '';
-      let topMatches = [];           // Will be returned as structured cards
-      let serverSearchLink = null;   // Will be returned as the "Browse all" CTA
+      let topMatches = [];           // Returned as structured cards
+      let serverSearchLink = null;   // Returned as the "Browse all" CTA
+      const propertyIntent = hasPropertyIntent(message);
       try {
         const allListings = await getAllAvailableListingsCached();
 
@@ -1082,13 +1183,20 @@ app.post('/api/chat',
           const featuredSet = allListings.filter(p => p.featured).slice(0, 12);
 
           // Relevance set: scored against the user's most recent message.
+          // RELEVANCE_THRESHOLD = 4 → at least one substantive match
+          // (location +10, type +4, lease/sale +6, BR +4, budget +4). The
+          // featured boost (+0.5) alone won't qualify a listing as a card.
+          const RELEVANCE_THRESHOLD = 4;
           const scored = scoreListings(message, allListings);
-          const relevant = scored.filter(x => x.s > 0).slice(0, 12).map(x => x.p);
+          const relevant = scored.filter(x => x.s >= RELEVANCE_THRESHOLD).slice(0, 12).map(x => x.p);
 
-          // Top 3 matches → returned as rich cards (only if they actually scored > 0)
-          topMatches = relevant.slice(0, 3);
+          // Top 3 matches → only attached when the user actually had property intent.
+          // This stops featured listings from leaking into "what are closing costs?" answers.
+          topMatches = propertyIntent ? relevant.slice(0, 3) : [];
 
-          // Merge for the prompt context (relevant first, then featured, dedupe).
+          // Prompt context: include featured AND relevant — model needs broad awareness
+          // even when the user isn't asking a property question, so it can answer
+          // "do you have anything in Makati?" honestly later in the same conversation.
           const seen = new Set();
           const merged = [];
           for (const p of [...relevant, ...featuredSet]) {
@@ -1129,8 +1237,10 @@ The frontend will automatically render the top 3 relevant listings as visual car
 LIVE INVENTORY SNAPSHOT: no listings are currently published. Direct the user to message Catherine at m.me/glrarealty so she can source matches.`;
         }
 
-        // Server-side search-link derivation (deterministic, doesn't depend on the model)
-        serverSearchLink = deriveSearchFromMessage(message);
+        // Server-side search-link derivation — only when there's property intent.
+        if (propertyIntent) {
+          serverSearchLink = deriveSearchFromMessage(message);
+        }
       } catch (e) {
         console.error('Chat listing context error:', e?.message);
       }
@@ -1143,11 +1253,15 @@ ROLE:
 - Encourage contacting Catherine for viewings/personal advice (m.me/glrarealty, +63 917 177 4572).
 
 OUTPUT STYLE — IMPORTANT:
-- Keep replies SHORT: 1-3 sentences for the intro, then optional 1-2 brief bullet points. The frontend auto-renders matched listings as visual cards under your reply, so do NOT manually list properties or include URLs to /properties.html — that's done for you.
-- Do NOT repeat property titles, prices, or specs that will appear in the cards below your message.
+- Keep replies SHORT: 1-3 sentences for the intro, then optional 1-2 brief bullet points.
+- The frontend AUTO-RENDERS the following under your reply (so do NOT add them yourself):
+    1. Property cards (image + price + specs) for matched listings
+    2. A "Browse all matches" search button
+    3. Action buttons for the right page/tool (closing-fees calculator, affordability, amortization, message Catherine, schedule viewing, etc.)
+- So do NOT manually list properties, do NOT include /properties.html URLs, and do NOT include URLs to /calculator.html, /affordability.html, /amortization.html, /rental-yield.html, /zonal.html, /ercf.html, /cost-of-ownership.html, /guide.html, /neighborhoods.html, /list-property.html, /about.html, or /testimonials.html. Those will all be rendered as buttons.
+- DO mention by name when relevant ("you can use our closing fees calculator") — just don't link them, the button handles that.
 - Use peso symbol ₱. Use local terms (CCT, TCT, BIR zonal, CGT, DST, RPT, ERCF) when accurate.
 - Use Filipino/Taglish if the user does; default to clear English.
-- For tools/guides, link with relative URLs like [closing fees calculator](/calculator.html).
 - NEVER claim to be human. If pressed: "I'm an AI assistant — Catherine handles the real conversations."
 - For complex legal/tax questions, redirect to Catherine.
 
@@ -1222,14 +1336,20 @@ ${SITE_MAP}${listingContext}`;
       // Strip any /properties.html links the model added — the frontend renders
       // its own server-derived "Browse all" button, so we don't want duplicates.
       finalReply = finalReply.replace(/\[([^\]]+)\]\(\/properties\.html[^\)]*\)\s*/g, '');
+      // Also strip links the model added for any other site page that we'll
+      // already render as an action button (calculator/affordability/etc).
+      // Without this, the user sees the same link twice — once inline, once as a button.
+      finalReply = finalReply.replace(/\[([^\]]+)\]\((\/(?:calculator|affordability|amortization|rental-yield|zonal|ercf|cost-of-ownership|guide|neighborhoods|living-in-bgc|living-in-makati|living-in-alabang|list-property|about|testimonials)\.html[^\)]*)\)/g, '$1');
 
-      // Suggested follow-ups: simple, contextual, deterministic.
+      // Action buttons (CTAs to specific tools/pages) and follow-up suggestions.
+      const actions = buildActions(message, topMatches.length > 0, serverSearchLink);
       const suggestions = buildFollowUps(message, topMatches, serverSearchLink);
 
       res.json({
         reply: finalReply,
         properties: topMatches.map(shapeListingCard),
         search: serverSearchLink,
+        actions,
         suggestions,
       });
     } catch (err) {
