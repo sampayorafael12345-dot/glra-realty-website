@@ -764,10 +764,14 @@ html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
 }
 
 /* ════════════════════════════════════════════════════════════
-   MOBILE OVERLAY CLOSE BUTTON — visible whenever overlay is on
-   screen. Supports `.active`, `.open`, AND `.show` class names.
+   MOBILE OVERLAY CLOSE BUTTON
+   Visibility is GATED by .active/.open/.show on the overlay parent —
+   without this gating, the X stays painted on every page even when the
+   menu is closed (which is what was happening on inner pages).
    ════════════════════════════════════════════════════════════ */
 .mobile-overlay.active,.mobile-overlay.open,.mobile-overlay.show{left:0 !important}
+
+/* Base style of the X — but HIDDEN by default */
 .mobile-overlay .close-menu{
   position:fixed !important;top:18px !important;right:18px !important;
   width:46px !important;height:46px !important;
@@ -775,11 +779,15 @@ html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
   font-size:24px !important;color:#fff !important;
   background:rgba(255,255,255,.08) !important;border:1px solid rgba(241,238,233,.3) !important;
   border-radius:0 !important;cursor:pointer !important;z-index:5500 !important;
-  visibility:visible !important;opacity:1 !important;
+  visibility:hidden !important;opacity:0 !important;pointer-events:none !important;
+  transition:opacity .2s ease, visibility .2s ease !important;
 }
+/* Only revealed when the overlay itself is active/open/show */
 .mobile-overlay.active .close-menu,
 .mobile-overlay.open .close-menu,
-.mobile-overlay.show .close-menu{visibility:visible !important;opacity:1 !important}
+.mobile-overlay.show .close-menu{
+  visibility:visible !important;opacity:1 !important;pointer-events:auto !important;
+}
 .mobile-overlay .close-menu:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important}
 
 /* ════════════════════════════════════════════════════════════

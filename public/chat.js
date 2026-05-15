@@ -1,20 +1,25 @@
 /* GLRA Realty — Brutalist AI chatbot widget
-   Single-file: injects CSS, HTML, and behavior. Talks to /api/chat (Gemini proxy).
+   Single-file: injects CSS, HTML, and behavior. Talks to /api/chat.
    Loaded on every page. Idempotent. Persists conversation across page navigations
    via sessionStorage so navigating between pages doesn't lose context.
+
+   Server response shape (see /api/chat in server.js):
+     { reply: string,
+       properties: [{id,title,location,price,priceLabel,bedrooms,bathrooms,sqm,image,url,...}],
+       search: { url, label } | null,
+       suggestions: string[] }
 */
 (function () {
   if (window.__glraChatLoaded) return;
   window.__glraChatLoaded = true;
 
   // ── 1. STYLES ─────────────────────────────────────────────────
-  // High specificity selectors (button.glra-chat-fab vs button) + !important
-  // are required to beat the brutalist-theme.css global "button { ... !important }"
-  // rule that would otherwise paint every chat button black.
+  // High-specificity selectors + !important required to beat the brutalist-theme.css
+  // global "button { ... !important }" rule on inner pages.
   var css = `
 button.glra-chat-fab{
   position:fixed !important;left:14px !important;bottom:74px !important;z-index:1100 !important;
-  width:56px !important;height:56px !important;
+  width:58px !important;height:58px !important;
   border:0 !important;border-radius:0 !important;cursor:pointer !important;
   background:#ff3d00 !important;color:#fff !important;
   font-size:22px !important;letter-spacing:0 !important;text-transform:none !important;
@@ -29,20 +34,20 @@ button.glra-chat-fab:hover{
   transform:translate(-2px,-2px) !important;
   box-shadow:6px 6px 0 #ff3d00 !important;
 }
-button.glra-chat-fab svg{width:28px;height:28px;display:block;pointer-events:none}
+button.glra-chat-fab svg{width:30px;height:30px;display:block;pointer-events:none}
 button.glra-chat-fab .glra-chat-pulse{
   position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:#fff;
   border:1px solid #0a0a0a;animation:glraChatPulse 1.5s infinite;
 }
 @keyframes glraChatPulse{0%,100%{opacity:1}50%{opacity:.4}}
 @media(max-width:768px){
-  button.glra-chat-fab{left:14px !important;bottom:68px !important;width:50px !important;height:50px !important;font-size:18px !important}
-  button.glra-chat-fab svg{width:24px;height:24px}
+  button.glra-chat-fab{left:14px !important;bottom:68px !important;width:52px !important;height:52px !important}
+  button.glra-chat-fab svg{width:26px;height:26px}
 }
 
 .glra-chat-panel{
-  position:fixed;left:14px;bottom:80px;width:380px;max-width:calc(100vw - 28px);
-  height:560px;max-height:calc(100vh - 100px);
+  position:fixed;left:14px;bottom:84px;width:430px;max-width:calc(100vw - 28px);
+  height:640px;max-height:calc(100vh - 110px);
   background:#f1eee9;color:#0a0a0a;border:2px solid #0a0a0a;
   z-index:1101;display:none;flex-direction:column;
   font-family:'Inter','Segoe UI',sans-serif;
@@ -51,7 +56,7 @@ button.glra-chat-fab .glra-chat-pulse{
 .glra-chat-panel.open{display:flex;animation:glraChatIn .18s ease}
 @keyframes glraChatIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:560px){
-  .glra-chat-panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none;height:80vh;max-height:600px}
+  .glra-chat-panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none;height:88vh;max-height:none}
 }
 body.dark-mode .glra-chat-panel{background:#0e0e0c;color:#f1eee9;border-color:#3a3a36;box-shadow:8px 8px 0 #ff3d00}
 
@@ -62,14 +67,14 @@ body.dark-mode .glra-chat-panel{background:#0e0e0c;color:#f1eee9;border-color:#3
 }
 .glra-chat-head .glra-chat-title{
   font-family:'Inter',sans-serif;font-size:14px;font-weight:900;
-  letter-spacing:-.3px;text-transform:uppercase;display:flex;align-items:center;gap:8px;
+  letter-spacing:-.3px;text-transform:uppercase;display:flex;align-items:center;gap:10px;
 }
 .glra-chat-head .glra-chat-title small{
   display:block;font-family:'JetBrains Mono',monospace;
   font-size:9px;letter-spacing:1.5px;color:rgba(241,238,233,.6);
-  font-weight:600;margin-top:2px;
+  font-weight:600;margin-top:2px;text-transform:uppercase;
 }
-.glra-chat-head .glra-live{display:inline-block;width:7px;height:7px;background:#ff3d00;animation:glraChatPulse 1.5s infinite}
+.glra-chat-head .glra-live{display:inline-block;width:8px;height:8px;background:#ff3d00;animation:glraChatPulse 1.5s infinite}
 .glra-chat-head .glra-chat-actions{display:flex;align-items:center;gap:4px}
 button.glra-chat-iconbtn,button.glra-chat-close{
   background:transparent !important;border:0 !important;color:#f1eee9 !important;
@@ -82,23 +87,19 @@ button.glra-chat-iconbtn:hover,button.glra-chat-close:hover{color:#ff3d00 !impor
 button.glra-chat-close{font-size:22px !important}
 
 .glra-chat-body{
-  flex:1 1 auto;overflow-y:auto;padding:16px;
-  display:flex;flex-direction:column;gap:10px;
+  flex:1 1 auto;overflow-y:auto;padding:16px 16px 8px;
+  display:flex;flex-direction:column;gap:12px;
   scrollbar-width:thin;scrollbar-color:#ff3d00 transparent;
 }
 .glra-chat-body::-webkit-scrollbar{width:5px}
 .glra-chat-body::-webkit-scrollbar-thumb{background:#ff3d00}
 
 .glra-msg{
-  max-width:85%;padding:10px 13px;font-size:13.5px;line-height:1.5;
+  max-width:88%;padding:11px 14px;font-size:13.5px;line-height:1.5;
   border:1px solid #0a0a0a;border-radius:0;word-wrap:break-word;
 }
-.glra-msg.user{
-  align-self:flex-end;background:#ff3d00;color:#fff;border-color:#ff3d00;
-}
-.glra-msg.bot{
-  align-self:flex-start;background:#fff;color:#0a0a0a;
-}
+.glra-msg.user{align-self:flex-end;background:#ff3d00;color:#fff;border-color:#ff3d00}
+.glra-msg.bot{align-self:flex-start;background:#fff;color:#0a0a0a}
 body.dark-mode .glra-msg.bot{background:#1a1a17;color:#f1eee9;border-color:#3a3a36}
 .glra-msg.bot a{color:#ff3d00;text-decoration:underline;font-weight:600}
 .glra-msg.bot strong{font-weight:700}
@@ -106,15 +107,69 @@ body.dark-mode .glra-msg.bot{background:#1a1a17;color:#f1eee9;border-color:#3a3a
 .glra-msg.bot p{margin:0 0 6px 0}
 .glra-msg.bot p:last-child{margin-bottom:0}
 
-/* Inline "Browse all matches" CTA the bot can append after a property answer */
-a.glra-search-cta{
-  display:inline-flex;align-items:center;gap:6px;
-  margin-top:8px;padding:8px 12px;
-  background:#ff3d00;color:#fff !important;text-decoration:none !important;
-  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
-  letter-spacing:1.5px;text-transform:uppercase;border:1px solid #ff3d00;
+/* Property cards rendered under bot messages */
+.glra-cards{align-self:stretch;display:flex;flex-direction:column;gap:8px;margin-top:-4px}
+a.glra-card{
+  display:flex !important;gap:10px;padding:8px;
+  background:#fff;color:#0a0a0a !important;border:1px solid #0a0a0a;
+  text-decoration:none !important;transition:.15s;align-items:stretch;
 }
-a.glra-search-cta:hover{background:#0a0a0a;border-color:#0a0a0a}
+body.dark-mode a.glra-card{background:#1a1a17;color:#f1eee9 !important;border-color:#3a3a36}
+a.glra-card:hover{box-shadow:4px 4px 0 #ff3d00;transform:translate(-2px,-2px)}
+a.glra-card .glra-card-img{
+  flex:0 0 84px;width:84px;height:84px;object-fit:cover;background:#ddd;
+  border-right:1px solid rgba(0,0,0,.08);
+}
+a.glra-card .glra-card-img-fallback{
+  flex:0 0 84px;width:84px;height:84px;background:#0a0a0a;color:#ff3d00;
+  display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:1.5px;
+}
+a.glra-card .glra-card-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
+a.glra-card .glra-card-title{
+  font-family:'Inter',sans-serif;font-size:12.5px;font-weight:800;
+  letter-spacing:-.2px;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+a.glra-card .glra-card-loc{
+  font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;
+  color:#666;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+body.dark-mode a.glra-card .glra-card-loc{color:#9a9a96}
+a.glra-card .glra-card-meta{
+  display:flex;gap:10px;align-items:center;margin-top:2px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;
+}
+a.glra-card .glra-card-price{color:#ff3d00;font-weight:900;font-size:11.5px}
+a.glra-card .glra-card-spec{color:#666}
+body.dark-mode a.glra-card .glra-card-spec{color:#9a9a96}
+
+/* "Browse all" CTA button */
+a.glra-search-cta{
+  align-self:stretch;display:flex !important;align-items:center;justify-content:space-between;
+  padding:10px 14px;
+  background:#ff3d00 !important;color:#fff !important;text-decoration:none !important;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;border:1px solid #ff3d00;
+  transition:.15s;
+}
+a.glra-search-cta:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
+a.glra-search-cta .arr{font-size:14px}
+
+/* Quick contact bar — always-visible "Talk to Catherine" channels */
+.glra-contact-bar{
+  display:flex;gap:6px;padding:8px 16px 0;
+}
+.glra-contact-bar a{
+  flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 6px;text-decoration:none !important;
+  background:transparent;color:#0a0a0a !important;border:1px solid #0a0a0a;
+  font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;transition:.15s;
+}
+body.dark-mode .glra-contact-bar a{color:#f1eee9 !important;border-color:#3a3a36}
+.glra-contact-bar a:hover{background:#ff3d00;color:#fff !important;border-color:#ff3d00}
 
 .glra-typing{
   align-self:flex-start;background:#fff;border:1px solid #0a0a0a;
@@ -130,8 +185,10 @@ body.dark-mode .glra-typing{background:#1a1a17;border-color:#3a3a36}
 @keyframes glraTypeBounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 
 .glra-chat-suggest{
-  display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px;
+  display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;
+  border-top:1px solid rgba(0,0,0,.08);
 }
+body.dark-mode .glra-chat-suggest{border-top-color:rgba(241,238,233,.1)}
 button.glra-chat-suggest-btn{
   background:transparent !important;border:1px solid #0a0a0a !important;color:#0a0a0a !important;
   font-family:'JetBrains Mono',monospace !important;font-size:10px !important;
@@ -143,9 +200,7 @@ button.glra-chat-suggest-btn{
 body.dark-mode button.glra-chat-suggest-btn{border-color:#3a3a36 !important;color:#f1eee9 !important}
 button.glra-chat-suggest-btn:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
 
-.glra-chat-form{
-  display:flex;gap:0;border-top:2px solid #0a0a0a;
-}
+.glra-chat-form{display:flex;gap:0;border-top:2px solid #0a0a0a}
 body.dark-mode .glra-chat-form{border-top-color:#3a3a36}
 input.glra-chat-input{
   flex:1 1 auto;background:#f1eee9 !important;color:#0a0a0a !important;
@@ -170,20 +225,19 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
 
 @media print{button.glra-chat-fab,.glra-chat-panel{display:none !important}}
 `;
-
   var styleEl = document.createElement('style');
   styleEl.textContent = css;
   document.head.appendChild(styleEl);
 
   // ── 2. PERSISTENCE ────────────────────────────────────────────
-  // sessionStorage keeps the conversation across same-tab navigations.
-  // Cleared when the tab closes, which is the right scope for a chat session.
-  var STORAGE_KEY  = 'glraChatHistory';
+  // Conversation now stored as full "turn" objects, not just text — so we can
+  // re-render attached property cards / search CTAs on rehydration.
+  var STORAGE_KEY  = 'glraChatTurns_v2';
   var OPEN_KEY     = 'glraChatOpen';
   var GREETED_KEY  = 'glraChatGreeted';
   var MAX_PERSISTED_TURNS = 30;
 
-  function loadHistory() {
+  function loadTurns() {
     try {
       var raw = sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
@@ -191,20 +245,20 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       return Array.isArray(arr) ? arr : [];
     } catch (e) { return []; }
   }
-  function saveHistory(h) {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(-MAX_PERSISTED_TURNS))); } catch (e) {}
+  function saveTurns(t) {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(t.slice(-MAX_PERSISTED_TURNS))); } catch (e) {}
   }
 
-  // ── 3. SVG bot icon (replaces fa-comments — actually looks like a bot) ──
+  // ── 3. SVG bot icon ───────────────────────────────────────────
   var BOT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">'
-    + '<rect x="4" y="7" width="16" height="12" rx="0"/>'    // body
-    + '<line x1="12" y1="3" x2="12" y2="7"/>'                 // antenna stalk
-    + '<circle cx="12" cy="2.5" r="1" fill="currentColor"/>'  // antenna bulb
-    + '<circle cx="9" cy="12" r="1.5" fill="currentColor"/>'  // left eye
-    + '<circle cx="15" cy="12" r="1.5" fill="currentColor"/>' // right eye
-    + '<line x1="9" y1="16" x2="15" y2="16"/>'                // mouth
-    + '<line x1="2" y1="13" x2="4" y2="13"/>'                 // left ear
-    + '<line x1="20" y1="13" x2="22" y2="13"/>'               // right ear
+    + '<rect x="4" y="7" width="16" height="12" rx="0"/>'
+    + '<line x1="12" y1="3" x2="12" y2="7"/>'
+    + '<circle cx="12" cy="2.5" r="1" fill="currentColor"/>'
+    + '<circle cx="9" cy="12" r="1.5" fill="currentColor"/>'
+    + '<circle cx="15" cy="12" r="1.5" fill="currentColor"/>'
+    + '<line x1="9" y1="16" x2="15" y2="16"/>'
+    + '<line x1="2" y1="13" x2="4" y2="13"/>'
+    + '<line x1="20" y1="13" x2="22" y2="13"/>'
     + '</svg>';
 
   function ready(fn) {
@@ -213,6 +267,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
   }
 
   ready(function () {
+    // Build the FAB
     var fab = document.createElement('button');
     fab.type = 'button';
     fab.className = 'glra-chat-fab';
@@ -220,28 +275,33 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     fab.innerHTML = '<span class="glra-chat-pulse"></span>' + BOT_SVG;
     document.body.appendChild(fab);
 
+    // Build the panel
     var panel = document.createElement('div');
     panel.className = 'glra-chat-panel';
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', 'Chat with GLRA assistant');
-    panel.innerHTML = `
-      <div class="glra-chat-head">
-        <div class="glra-chat-title">
-          <span class="glra-live"></span>
-          <span>GLRA Assistant<small>// Ask about properties, fees, anything</small></span>
-        </div>
-        <div class="glra-chat-actions">
-          <button class="glra-chat-iconbtn" type="button" id="glraChatClear" aria-label="Clear conversation" title="Clear conversation">⟲</button>
-          <button class="glra-chat-close" type="button" aria-label="Close chat">×</button>
-        </div>
-      </div>
-      <div class="glra-chat-body" id="glraChatBody"></div>
-      <div class="glra-chat-suggest" id="glraChatSuggest"></div>
-      <form class="glra-chat-form" id="glraChatForm">
-        <input class="glra-chat-input" id="glraChatInput" type="text" placeholder="Ask anything about Philippine real estate…" maxlength="1500" autocomplete="off" />
-        <button type="submit" class="glra-chat-send" id="glraChatSend">Send</button>
-      </form>
-    `;
+    panel.innerHTML =
+      '<div class="glra-chat-head">' +
+        '<div class="glra-chat-title">' +
+          '<span class="glra-live"></span>' +
+          '<span>GLRA Assistant<small>// Powered by AI · Backed by Catherine</small></span>' +
+        '</div>' +
+        '<div class="glra-chat-actions">' +
+          '<button class="glra-chat-iconbtn" type="button" id="glraChatClear" aria-label="Clear conversation" title="Clear conversation">⟲</button>' +
+          '<button class="glra-chat-close" type="button" aria-label="Close chat">×</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="glra-contact-bar">' +
+        '<a href="https://m.me/glrarealty" target="_blank" rel="noopener" title="Messenger">💬 Messenger</a>' +
+        '<a href="https://wa.me/639171774572" target="_blank" rel="noopener" title="WhatsApp">📱 WhatsApp</a>' +
+        '<a href="tel:+639171774572" title="Call">📞 Call</a>' +
+      '</div>' +
+      '<div class="glra-chat-body" id="glraChatBody"></div>' +
+      '<div class="glra-chat-suggest" id="glraChatSuggest"></div>' +
+      '<form class="glra-chat-form" id="glraChatForm">' +
+        '<input class="glra-chat-input" id="glraChatInput" type="text" placeholder="Ask anything about Philippine real estate…" maxlength="1500" autocomplete="off" />' +
+        '<button type="submit" class="glra-chat-send" id="glraChatSend">Send</button>' +
+      '</form>';
     document.body.appendChild(panel);
 
     // ── 4. STATE & BEHAVIOR ──────────────────────────────────────
@@ -252,7 +312,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     var sendBtn = panel.querySelector('#glraChatSend');
     var closeBtn= panel.querySelector('.glra-chat-close');
     var clearBtn= panel.querySelector('#glraChatClear');
-    var history = loadHistory(); // [{role:'user'|'assistant', text:''}]
+    var turns   = loadTurns(); // [{role, text, properties?, search?}]
 
     function escapeHtml(s) {
       var div = document.createElement('div');
@@ -260,38 +320,79 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       return div.innerHTML;
     }
 
-    // Light Markdown-ish formatter: **bold**, [text](url), bullets, newlines.
-    // Also auto-detects /properties.html search links and styles them as a CTA.
     function formatBot(text) {
       var html = escapeHtml(text);
-      // Auto-link bare URLs
       html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-      // Inline links [text](url)
       html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g, function (_, label, url) {
-        var isSearch = /^\/properties\.html(\?|$)/.test(url);
-        return isSearch
-          ? '<a href="' + url + '" class="glra-search-cta">→ ' + label + '</a>'
-          : '<a href="' + url + '" target="_self">' + label + '</a>';
+        return '<a href="' + url + '" target="_self">' + label + '</a>';
       });
-      // Bold
       html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-      // Bullets
       html = html.replace(/(^|<br>)\s*[-*]\s+([^<\n]+)/g, '$1• $2');
-      // Newlines
       html = html.replace(/\n/g, '<br>');
       return html;
     }
 
-    function addMsg(role, text, persist) {
-      var el = document.createElement('div');
-      el.className = 'glra-msg ' + role;
-      el.innerHTML = role === 'bot' ? formatBot(text) : escapeHtml(text);
-      bodyEl.appendChild(el);
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-      if (persist !== false) {
-        history.push({ role: role === 'bot' ? 'assistant' : 'user', text: text });
-        saveHistory(history);
+    function renderProperty(card) {
+      var img = card.image
+        ? '<img class="glra-card-img" loading="lazy" src="' + escapeHtml(card.image) + '" alt="">'
+        : '<div class="glra-card-img-fallback">' + escapeHtml((card.propertyType || 'GLRA').slice(0, 4).toUpperCase()) + '</div>';
+      return '<a class="glra-card" href="' + escapeHtml(card.url) + '" target="_self">' +
+        img +
+        '<div class="glra-card-body">' +
+          '<div class="glra-card-title">' + escapeHtml(card.title) + '</div>' +
+          '<div class="glra-card-loc">' + escapeHtml(card.location) + '</div>' +
+          '<div class="glra-card-meta">' +
+            '<span class="glra-card-price">' + escapeHtml(card.priceLabel) + '</span>' +
+            '<span class="glra-card-spec">' + (card.bedrooms || 0) + 'BR · ' + (card.bathrooms || 0) + 'BA · ' + (card.sqm || 0) + 'sqm</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }
+
+    function renderTurn(t) {
+      // Bot message bubble
+      if (t.role === 'assistant') {
+        var msg = document.createElement('div');
+        msg.className = 'glra-msg bot';
+        msg.innerHTML = formatBot(t.text);
+        bodyEl.appendChild(msg);
+
+        // Property cards
+        if (t.properties && t.properties.length) {
+          var cards = document.createElement('div');
+          cards.className = 'glra-cards';
+          cards.innerHTML = t.properties.map(renderProperty).join('');
+          bodyEl.appendChild(cards);
+        }
+
+        // Search CTA
+        if (t.search && t.search.url) {
+          var cta = document.createElement('a');
+          cta.className = 'glra-search-cta';
+          cta.href = t.search.url;
+          cta.target = '_self';
+          cta.innerHTML = '<span>' + escapeHtml(t.search.label || 'Browse all matches') + '</span><span class="arr">→</span>';
+          bodyEl.appendChild(cta);
+        }
+      } else {
+        var u = document.createElement('div');
+        u.className = 'glra-msg user';
+        u.textContent = t.text;
+        bodyEl.appendChild(u);
       }
+    }
+
+    function rerender() {
+      bodyEl.innerHTML = '';
+      turns.forEach(renderTurn);
+      bodyEl.scrollTop = bodyEl.scrollHeight;
+    }
+
+    function pushTurn(turn) {
+      turns.push(turn);
+      saveTurns(turns);
+      renderTurn(turn);
+      bodyEl.scrollTop = bodyEl.scrollHeight;
     }
 
     function addTyping() {
@@ -307,16 +408,16 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       if (t) t.remove();
     }
 
-    var SUGGESTIONS = [
+    var DEFAULT_SUGGESTIONS = [
       'Properties in Makati',
       'Condos for lease in BGC',
       'Closing costs estimate',
-      'What can I afford?',
-      'How long does buying take?'
+      'How much can I afford?'
     ];
-    function renderSuggest() {
+    function renderSuggest(list) {
       sug.innerHTML = '';
-      SUGGESTIONS.forEach(function (s) {
+      var items = (list && list.length) ? list : DEFAULT_SUGGESTIONS;
+      items.forEach(function (s) {
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'glra-chat-suggest-btn';
@@ -327,30 +428,16 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
         });
         sug.appendChild(b);
       });
-    }
-
-    // Replay any persisted history into the panel UI so it survives navigation.
-    function rehydrate() {
-      bodyEl.innerHTML = '';
-      if (history.length === 0) return false;
-      history.forEach(function (turn) {
-        var el = document.createElement('div');
-        el.className = 'glra-msg ' + (turn.role === 'assistant' ? 'bot' : 'user');
-        el.innerHTML = turn.role === 'assistant' ? formatBot(turn.text) : escapeHtml(turn.text);
-        bodyEl.appendChild(el);
-      });
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-      sug.style.display = 'none'; // suggestions hidden once a real conversation exists
-      return true;
+      sug.style.display = items.length ? 'flex' : 'none';
     }
 
     function greet() {
-      addMsg(
-        'bot',
-        "Kumusta! I'm Catherine's AI assistant for **GLRA Realty**. Ask me about properties (e.g. *\"3BR condo in Makati under 30M\"*), closing costs, the buying process — I'll surface matching listings and link you to the right page.",
-        true
-      );
-      renderSuggest();
+      var greet = {
+        role: 'assistant',
+        text: "Kumusta! I'm Catherine's AI assistant for **GLRA Realty**.\n\nAsk me about properties, closing costs, or the buying process. Try things like *\"3BR condo in Makati under 30M\"* — I'll surface real listings and link you to a filtered search.",
+      };
+      pushTurn(greet);
+      renderSuggest(DEFAULT_SUGGESTIONS);
       try { sessionStorage.setItem(GREETED_KEY, '1'); } catch (e) {}
     }
 
@@ -358,11 +445,14 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       panel.classList.add('open');
       fab.style.display = 'none';
       try { sessionStorage.setItem(OPEN_KEY, '1'); } catch (e) {}
-      var hadHistory = rehydrate();
-      if (!hadHistory) {
-        // First open ever this session.
+      if (turns.length === 0) {
         if (sessionStorage.getItem(GREETED_KEY) !== '1') greet();
-        else renderSuggest();
+        else renderSuggest(DEFAULT_SUGGESTIONS);
+      } else {
+        rerender();
+        // Reuse the most recent assistant suggestions if they exist.
+        var last = [].concat(turns).reverse().find(function (t) { return t.role === 'assistant' && t.suggestions; });
+        renderSuggest(last ? last.suggestions : DEFAULT_SUGGESTIONS);
       }
       setTimeout(function () { input.focus(); }, 100);
     }
@@ -372,11 +462,10 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       try { sessionStorage.setItem(OPEN_KEY, '0'); } catch (e) {}
     }
     function clearConversation() {
-      history = [];
-      saveHistory(history);
+      turns = [];
+      saveTurns(turns);
       try { sessionStorage.removeItem(GREETED_KEY); } catch (e) {}
       bodyEl.innerHTML = '';
-      sug.style.display = 'flex';
       greet();
     }
 
@@ -387,27 +476,28 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       if (e.key === 'Escape' && panel.classList.contains('open')) close();
     });
 
-    // Auto-restore: if the panel was open on the previous page, open it here too.
     try {
-      if (sessionStorage.getItem(OPEN_KEY) === '1') {
-        // Defer slightly so the page settles first.
-        setTimeout(open, 50);
-      }
+      if (sessionStorage.getItem(OPEN_KEY) === '1') setTimeout(open, 50);
     } catch (e) {}
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
       var msg = (input.value || '').trim();
       if (!msg) return;
-      sug.style.display = 'none';
-      addMsg('user', msg);
+
+      sug.innerHTML = '';
+      pushTurn({ role: 'user', text: msg });
       input.value = '';
       input.disabled = true;
       sendBtn.disabled = true;
       addTyping();
+
+      // Send last 12 plain {role,text} turns (strip card data — server doesn't need it).
+      var sendHistory = turns.slice(0, -1).slice(-12).map(function (t) {
+        return { role: t.role, text: t.text };
+      });
+
       try {
-        // Send the most recent N turns (excluding the one we just appended).
-        var sendHistory = history.slice(0, -1).slice(-12);
         var r = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -416,14 +506,23 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
         removeTyping();
         var data = await r.json().catch(function () { return {}; });
         if (r.ok && data.reply) {
-          addMsg('bot', data.reply);
+          pushTurn({
+            role: 'assistant',
+            text: data.reply,
+            properties: Array.isArray(data.properties) ? data.properties : null,
+            search: data.search || null,
+            suggestions: Array.isArray(data.suggestions) ? data.suggestions : null,
+          });
+          renderSuggest(data.suggestions);
         } else {
           var err = (data && data.error) || "Hmm, I couldn't reach the server. Please try again, or message Catherine directly: [m.me/glrarealty](https://m.me/glrarealty)";
-          addMsg('bot', err);
+          pushTurn({ role: 'assistant', text: err });
+          renderSuggest(DEFAULT_SUGGESTIONS);
         }
       } catch (e) {
         removeTyping();
-        addMsg('bot', "Network error. Please try again, or message Catherine directly: [m.me/glrarealty](https://m.me/glrarealty)");
+        pushTurn({ role: 'assistant', text: "Network error. Please try again, or message Catherine directly: [m.me/glrarealty](https://m.me/glrarealty)" });
+        renderSuggest(DEFAULT_SUGGESTIONS);
       } finally {
         input.disabled = false;
         sendBtn.disabled = false;
