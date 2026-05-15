@@ -251,8 +251,20 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 .footer-bottom-links a{color:rgba(241,238,233,.5) !important;font-size:10px !important;letter-spacing:1.5px !important}
 .footer-bottom-links a:hover{color:var(--ab-hot) !important}
 
-/* ── FLOATING BUTTONS ── */
-.floating-buttons .floating-btn{border-radius:0 !important;box-shadow:none !important;border:0 !important;width:46px !important;height:46px !important}
+/* ── FLOATING BUTTONS ──
+   The global "button { padding:14px 24px !important }" rule above would
+   squash the FAB tap target — these explicit padding + box-sizing overrides
+   keep each circle a clean 46x46 tap target on desktop and mobile. */
+.floating-buttons .floating-btn,.floating-buttons .fab-toggle{
+  box-sizing:border-box !important;
+  padding:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  border:0 !important;
+  width:46px !important;height:46px !important;
+  font-family:inherit !important;letter-spacing:0 !important;text-transform:none !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+}
 .floating-buttons .floating-btn:hover{transform:none !important;background:var(--ab-hot) !important;color:#fff !important}
 .floating-buttons .btn-darkmode{background:var(--ab-hot) !important;color:#fff !important;border:0 !important}
 .floating-buttons .fab-toggle{background:var(--ab-hot) !important;color:#fff !important}
