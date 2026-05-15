@@ -840,7 +840,11 @@ TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.${listingContext}`;
       }
       contents.push({ role: 'user', parts: [{ text: message }] });
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+      // Model: gemini-2.5-flash is the current free-tier flash model on v1beta.
+      // (gemini-1.5-flash-latest was deprecated/removed → 404.)
+      // Override via env var GEMINI_MODEL if you want to swap models without redeploying code.
+      const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const geminiRes = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -868,14 +872,18 @@ TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.${listingContext}`;
       }
 
       const data = await geminiRes.json();
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-                 || data?.candidates?.[0]?.finishReason === 'SAFETY'
-                      ? "Sorry, I can't help with that. Try a property or buying-process question, or message Catherine directly at m.me/glrarealty."
-                      : null;
+      const candidate = data?.candidates?.[0];
+      const text = candidate?.content?.parts?.[0]?.text;
+      const finish = candidate?.finishReason;
 
-      const finalReply = (typeof reply === 'string' && reply.trim())
-        ? reply.trim()
-        : "I didn't catch that. Could you rephrase, or message Catherine directly at m.me/glrarealty?";
+      let finalReply;
+      if (typeof text === 'string' && text.trim()) {
+        finalReply = text.trim();
+      } else if (finish === 'SAFETY') {
+        finalReply = "Sorry, I can't help with that. Try a property or buying-process question, or message Catherine directly at m.me/glrarealty.";
+      } else {
+        finalReply = "I didn't catch that. Could you rephrase, or message Catherine directly at m.me/glrarealty?";
+      }
 
       res.json({ reply: finalReply });
     } catch (err) {
