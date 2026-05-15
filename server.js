@@ -775,6 +775,157 @@ const chatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ── Listings cache for the chatbot ─────────────────────────────
+// Re-pulling every chat message would slam Mongo. We cache the full
+// available-listings set in memory for 60 s. Admin saves invalidate it
+// (see invalidateChatListingsCache() — call it after Property writes).
+const CHAT_LISTING_TTL_MS = 60 * 1000;
+const CHAT_LISTING_LIMIT  = 80;     // Hard cap so the prompt never blows up.
+let _chatListingCache = { at: 0, items: [] };
+
+function invalidateChatListingsCache() { _chatListingCache.at = 0; }
+
+async function getAllAvailableListingsCached() {
+  const now = Date.now();
+  if (now - _chatListingCache.at < CHAT_LISTING_TTL_MS && _chatListingCache.items.length) {
+    return _chatListingCache.items;
+  }
+  try {
+    const items = await Property.find({ status: 'available' })
+      .sort({ featured: -1, createdAt: -1 })
+      .limit(CHAT_LISTING_LIMIT)
+      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm propertyType featured developer')
+      .lean();
+    _chatListingCache = { at: now, items };
+    return items;
+  } catch (e) {
+    return _chatListingCache.items || [];
+  }
+}
+
+// Lightweight keyword scorer. Pulls obvious intents out of the user's message
+// (location, property type, listing type, BR count, budget) and ranks listings
+// so the most relevant ones get included in the prompt — without needing a
+// full vector store. Cheap, deterministic, no extra dependencies.
+const KNOWN_LOCATIONS = [
+  'makati','bgc','taguig','fort','bonifacio','alabang','muntinlupa','manila','quezon','qc',
+  'ortigas','pasig','mandaluyong','san juan','rockwell','salcedo','legazpi','legaspi',
+  'poblacion','greenhills','eastwood','newport','parañaque','paranaque','las piñas','laspinas',
+  'pasay','marikina','antipolo','tagaytay','cavite','laguna','bulacan','nuvali','sucat',
+  'mckinley','uptown','arca','filinvest','ayala','century city','proscenium','one shangri',
+  'shangri-la','solaire','okada','clark','subic','baguio','batangas','nasugbu','laiya'
+];
+const KNOWN_TYPES = ['condo','condominium','house','townhouse','lot','apartment','studio','penthouse','duplex','loft','villa','office','commercial'];
+
+function scoreListings(message, listings) {
+  const m = (message || '').toLowerCase();
+
+  const wantedLocs = KNOWN_LOCATIONS.filter(loc => m.includes(loc));
+  const wantedTypes = KNOWN_TYPES.filter(t => m.includes(t));
+  const wantsLease = /\b(rent|rental|lease|leasing|monthly)\b/.test(m);
+  const wantsSale  = /\b(buy|buying|purchase|sale|for sale)\b/.test(m);
+
+  // Bedroom request, e.g. "3br", "3 bedroom", "3-bedroom"
+  const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
+  const wantedBR = brMatch ? parseInt(brMatch[1], 10) : null;
+
+  // Budget: "under 10m", "below 50k", "around 5 million", "30000/mo"
+  // Roughly: number followed by m/million/k/thousand.
+  let budget = null;
+  const bMatch = m.match(/(\d[\d,.]*)\s*(m|mil|million|k|thousand)?/);
+  if (bMatch) {
+    const raw = parseFloat(bMatch[1].replace(/,/g, ''));
+    const unit = (bMatch[2] || '').toLowerCase();
+    if (!isNaN(raw)) {
+      if (unit === 'm' || unit === 'mil' || unit === 'million') budget = raw * 1_000_000;
+      else if (unit === 'k' || unit === 'thousand') budget = raw * 1_000;
+      else if (raw >= 1000) budget = raw;
+    }
+  }
+
+  function scoreOne(p) {
+    let s = 0;
+    const loc = (p.location || '').toLowerCase();
+    const title = (p.title || '').toLowerCase();
+    const type = (p.propertyType || '').toLowerCase();
+    const lt = (p.listingType || '').toUpperCase();
+    const isLease = lt.includes('LEASE') || lt.includes('RENT');
+
+    for (const w of wantedLocs) if (loc.includes(w) || title.includes(w)) s += 10;
+    for (const t of wantedTypes) if (type.includes(t) || title.includes(t)) s += 4;
+    if (wantsLease && isLease) s += 6;
+    if (wantsSale && !isLease) s += 6;
+    if (wantedBR !== null && p.bedrooms === wantedBR) s += 4;
+
+    if (budget) {
+      const price = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
+      if (price > 0) {
+        if (isLease && price <= budget * 1.25) s += 4;
+        if (!isLease && price <= budget * 1.15) s += 4;
+      }
+    }
+    if (p.featured) s += 1;
+    return s;
+  }
+
+  const scored = listings.map(p => ({ p, s: scoreOne(p) }));
+  scored.sort((a, b) => b.s - a.s);
+  return scored;
+}
+
+function fmtListing(p, i) {
+  const lt = (p.listingType || '').toUpperCase();
+  const isLease = lt.includes('LEASE') || lt.includes('RENT');
+  const price = isLease
+    ? `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`
+    : `₱${Number(p.price || 0).toLocaleString()}`;
+  const dev = p.developer ? `, ${p.developer}` : '';
+  return `${i + 1}. ${p.title} — ${p.location} — ${price} — ${p.bedrooms || 0}BR/${p.bathrooms || 0}BA/${p.sqm || 0}sqm (${p.propertyType || 'Property'}${dev}, ${isLease ? 'For Lease' : 'For Sale'})`;
+}
+
+// Static "site map" the bot can always reference. Update here when pages change.
+const SITE_MAP = `
+SITE MAP & SERVICES (route the user to the right page):
+- /properties.html   → Browse all listings (use filters: location, type, BR, price)
+- /list-property.html → Owner wants to LIST/SELL/LEASE their property (lead form)
+- /about.html        → About Catherine SB Sampayo (PRC #0026736, 10+ yrs)
+- /testimonials.html → Client reviews
+- /blog.html         → Journal / market updates
+- /guide.html        → Buying & documentation guide (CCT/TCT, deeds, taxes)
+- /neighborhoods.html → Area overview (BGC, Makati, Alabang, etc.)
+- /living-in-bgc.html, /living-in-makati.html, /living-in-alabang.html → Neighborhood deep dives
+
+CALCULATORS & TOOLS:
+- /affordability.html → "How much can I afford?" (income → max price)
+- /amortization.html  → Monthly mortgage payment + amortization schedule
+- /calculator.html    → Closing fees / total cash to close (CGT 6%, DST 1.5%, transfer, registration, BIR FMV using Sec 6E NIRC)
+- /cost-of-ownership.html → Recurring annual costs (assoc dues, RPT, insurance)
+- /rental-yield.html  → Gross & net rental yield calculator
+- /zonal.html         → BIR Zonal Value lookup (NCR + key provinces)
+- /ercf.html          → Estimated Registration & Closing Fees (LRA, BIR, RD)
+
+SERVICES OFFERED:
+- Buy-side brokerage (residential & commercial, NCR + key provinces)
+- Seller representation / pocket listings
+- Lease / rental matching
+- Pre-selling project sourcing (major developers)
+- Document review & coordination (deeds, BIR, RD, HOA)
+
+CONTACT CATHERINE DIRECTLY:
+- Messenger: m.me/glrarealty
+- Phone / Viber / WhatsApp: +63 917 177 4572
+- Office: Manila, Philippines
+- Use the "List property →" button (top nav) for sellers/lessors
+- Use the in-page "Schedule a viewing" form for specific listings
+
+KEY FACTS ABOUT GLRA REALTY:
+- Founded by Catherine SB Sampayo, PRC-licensed broker (10+ years experience).
+- Boutique brokerage — Catherine personally handles every client (no junior agents passing leads around).
+- Specializes in NCR (Metro Manila): BGC, Makati, Alabang, Ortigas, Rockwell, etc.
+- Also handles Cavite, Laguna, Tagaytay, Batangas resort properties.
+- Works with both local buyers and OFW / foreign-married buyers (foreigners can own condos up to 40% of the building).
+`;
+
 app.post('/api/chat',
   chatLimiter,
   body('message').isString().trim().isLength({ min: 1, max: 1500 }),
@@ -790,44 +941,92 @@ app.post('/api/chat',
 
       const { message, history = [] } = req.body;
 
-      // Build a focused system prompt with current GLRA context.
-      // Pull a few featured listings so the bot can reference real properties.
+      // ── Build live property context ──────────────────────────────
+      // 1) Pull the full available-listings set (cached 60s).
+      // 2) Score them against the user's message (location/type/BR/budget).
+      // 3) Always include featured + top relevance + a compact summary so the
+      //    bot can answer "do you have anything in Makati?" honestly.
       let listingContext = '';
       try {
-        const featured = await Property.find({ status: 'available', featured: true })
-          .limit(8).select('title location price monthlyRental listingType bedrooms bathrooms sqm propertyType').lean();
-        if (featured.length) {
-          listingContext = '\n\nCURRENTLY FEATURED LISTINGS (mention these when relevant, never invent listings):\n' +
-            featured.map((p, i) => {
-              const isLease = (p.listingType || '').toUpperCase().includes('LEASE');
-              const price = isLease
-                ? `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`
-                : `₱${Number(p.price || 0).toLocaleString()}`;
-              return `${i + 1}. ${p.title} — ${p.location} — ${price} — ${p.bedrooms || 0}BR/${p.bathrooms || 0}BA/${p.sqm || 0}sqm (${p.propertyType || 'Property'}, ${isLease ? 'For Lease' : 'For Sale'})`;
-            }).join('\n');
-        }
-      } catch (e) { /* best-effort */ }
+        const allListings = await getAllAvailableListingsCached();
 
-      const systemPrompt = `You are the helpful assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, established 2014).
+        if (allListings.length) {
+          // Always-include set: every featured listing.
+          const featuredSet = allListings.filter(p => p.featured).slice(0, 12);
+
+          // Relevance set: scored against the user's most recent message.
+          const scored = scoreListings(message, allListings);
+          const relevant = scored.filter(x => x.s > 0).slice(0, 12).map(x => x.p);
+
+          // Merge (relevant first, then featured, dedupe by _id), cap 18.
+          const seen = new Set();
+          const merged = [];
+          for (const p of [...relevant, ...featuredSet]) {
+            const key = String(p._id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(p);
+            if (merged.length >= 18) break;
+          }
+
+          // Compact location index — lets the bot honestly say "yes, we have N in
+          // Makati" or "no, nothing in Quezon City right now" without listing them all.
+          const locCounts = {};
+          for (const p of allListings) {
+            const loc = (p.location || 'Unknown').split(',')[0].trim();
+            locCounts[loc] = (locCounts[loc] || 0) + 1;
+          }
+          const locIndex = Object.entries(locCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([loc, n]) => `${loc} (${n})`)
+            .join(', ');
+
+          const totalSale  = allListings.filter(p => !((p.listingType||'').toUpperCase().includes('LEASE'))).length;
+          const totalLease = allListings.length - totalSale;
+
+          listingContext = `
+
+LIVE INVENTORY SNAPSHOT (do NOT invent listings — only reference what's below):
+- Total available: ${allListings.length} (${totalSale} for sale, ${totalLease} for lease)
+- By area: ${locIndex}
+
+MOST RELEVANT LISTINGS for this query (link the user to /properties.html to browse all):
+${merged.map(fmtListing).join('\n')}
+
+If the user asks about an area not in the "By area" list above, say honestly that there's nothing currently listed there, and offer to have Catherine source one (m.me/glrarealty).`;
+        } else {
+          listingContext = `
+
+LIVE INVENTORY SNAPSHOT: no listings are currently published. Direct the user to message Catherine at m.me/glrarealty so she can source matches.`;
+        }
+      } catch (e) {
+        console.error('Chat listing context error:', e?.message);
+      }
+
+      const systemPrompt = `You are the helpful AI assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, established 2014).
 
 YOUR ROLE:
 - Answer questions about Philippine real estate: buying, selling, leasing, taxes, financing, neighborhoods, documentation.
-- Help users find properties, understand the buying process, calculate costs.
-- ALWAYS recommend the user contact Catherine for personalized advice (Messenger: m.me/glrarealty, phone: +63 917 177 4572, or the Book/Schedule a viewing button on the site).
-- Mention specific tools when relevant: /affordability.html (how much house can I afford), /calculator.html (closing fees), /amortization.html (monthly payments), /rental-yield.html, /zonal.html (BIR zonal value), /ercf.html (registration fee).
-- Mention guides: /guide.html (documentation), /blog.html (journal), /neighborhoods.html.
-- For property viewings: direct to /list-property.html or the contact form.
+- Help users find properties from the LIVE INVENTORY below, understand the buying process, and calculate costs.
+- When recommending properties, only use ones from the LIVE INVENTORY SNAPSHOT — link to /properties.html for the full browse.
+- Recommend the user contact Catherine for personalized advice and viewings (Messenger: m.me/glrarealty, phone/Viber/WhatsApp: +63 917 177 4572).
+- Route the user to the right page using the SITE MAP below — link tools when relevant (affordability, closing fees, amortization, rental yield, BIR zonal, ERCF).
+
+ANSWERING "DO YOU HAVE PROPERTIES IN <AREA>?":
+- Check the "By area" list in LIVE INVENTORY. If the area appears, say yes and show 1-3 matching listings from MOST RELEVANT LISTINGS.
+- If the area is NOT in the inventory, be honest: "We don't have anything currently published in <area>, but Catherine can source one — message her at m.me/glrarealty." Don't make up listings.
 
 CONSTRAINTS:
-- Be CONCISE — 2-4 short sentences typically. Don't lecture.
+- Be CONCISE — 2-4 short sentences typically, plus a bullet list of properties when relevant. Don't lecture.
 - Use Filipino/Taglish naturally if the user does, but default to clear English.
-- NEVER invent listings, prices, or facts. Only reference real listings shown below.
+- NEVER invent listings, prices, developers, or facts. Only reference listings from LIVE INVENTORY.
 - NEVER claim to be human. If pressed: "I'm an AI assistant — Catherine handles the real conversations."
 - For complex/legal questions, redirect to Catherine.
-- Use peso symbol ₱ for prices. Use local terminology (CCT, TCT, BIR zonal value, CGT, DST, etc.) when accurate.
+- Use peso symbol ₱ for prices. Use local terminology (CCT, TCT, BIR zonal value, CGT, DST, RPT, etc.) when accurate.
 - Format with short paragraphs and bullets when helpful. No long essays.
 
-TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.${listingContext}`;
+TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.
+${SITE_MAP}${listingContext}`;
 
       // Convert history to Gemini's conversation format
       const contents = [];
@@ -1393,6 +1592,7 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
     const property = new Property(req.body);
     await property.save();
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
+    invalidateChatListingsCache();
     res.json(property);
   } catch (err) {
     console.error('Add property error:', err);
@@ -1448,6 +1648,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
 
     const property = await Property.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, null);
+    invalidateChatListingsCache();
     res.json(property);
   } catch (err) {
     console.error('Error updating property:', err);
@@ -1459,6 +1660,7 @@ app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properti
   try {
     const property = await Property.findByIdAndDelete(req.params.id);
     if (property) await logAudit(req, 'DELETE', 'Property', req.params.id, property.title, null);
+    invalidateChatListingsCache();
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -1492,6 +1694,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
       }
     }
     await logAudit(req, 'BULK_CREATE', 'Property', '', `${added} added`, null);
+    invalidateChatListingsCache();
     res.json({ success: true, added });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -2148,6 +2351,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     await sub.save();
     await logAudit(req, 'IMPORT', 'PropertySubmission', sub._id, sub.title, { propertyId: property._id });
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, { source: 'submission', submissionId: sub._id });
+    invalidateChatListingsCache();
     res.json({ success: true, propertyId: property._id, submission: sub });
   } catch (err) {
     console.error('Submission import error:', err);
