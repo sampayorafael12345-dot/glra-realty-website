@@ -764,6 +764,127 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// ============ CHATBOT (Gemini proxy) ============
+// Dedicated rate limiter — looser than publicWriteLimiter so the chat feels responsive,
+// but still tight enough to prevent abuse / runaway API spend.
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,        // 1 minute window
+  max: 20,                    // 20 messages / IP / minute
+  message: { error: 'Too many messages. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.post('/api/chat',
+  chatLimiter,
+  body('message').isString().trim().isLength({ min: 1, max: 1500 }),
+  body('history').optional().isArray({ max: 20 }),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.error('GEMINI_API_KEY not set');
+        return res.status(503).json({ error: 'Chat is not configured' });
+      }
+
+      const { message, history = [] } = req.body;
+
+      // Build a focused system prompt with current GLRA context.
+      // Pull a few featured listings so the bot can reference real properties.
+      let listingContext = '';
+      try {
+        const featured = await Property.find({ status: 'available', featured: true })
+          .limit(8).select('title location price monthlyRental listingType bedrooms bathrooms sqm propertyType').lean();
+        if (featured.length) {
+          listingContext = '\n\nCURRENTLY FEATURED LISTINGS (mention these when relevant, never invent listings):\n' +
+            featured.map((p, i) => {
+              const isLease = (p.listingType || '').toUpperCase().includes('LEASE');
+              const price = isLease
+                ? `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`
+                : `₱${Number(p.price || 0).toLocaleString()}`;
+              return `${i + 1}. ${p.title} — ${p.location} — ${price} — ${p.bedrooms || 0}BR/${p.bathrooms || 0}BA/${p.sqm || 0}sqm (${p.propertyType || 'Property'}, ${isLease ? 'For Lease' : 'For Sale'})`;
+            }).join('\n');
+        }
+      } catch (e) { /* best-effort */ }
+
+      const systemPrompt = `You are the helpful assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, established 2014).
+
+YOUR ROLE:
+- Answer questions about Philippine real estate: buying, selling, leasing, taxes, financing, neighborhoods, documentation.
+- Help users find properties, understand the buying process, calculate costs.
+- ALWAYS recommend the user contact Catherine for personalized advice (Messenger: m.me/glrarealty, phone: +63 917 177 4572, or the Book/Schedule a viewing button on the site).
+- Mention specific tools when relevant: /affordability.html (how much house can I afford), /calculator.html (closing fees), /amortization.html (monthly payments), /rental-yield.html, /zonal.html (BIR zonal value), /ercf.html (registration fee).
+- Mention guides: /guide.html (documentation), /blog.html (journal), /neighborhoods.html.
+- For property viewings: direct to /list-property.html or the contact form.
+
+CONSTRAINTS:
+- Be CONCISE — 2-4 short sentences typically. Don't lecture.
+- Use Filipino/Taglish naturally if the user does, but default to clear English.
+- NEVER invent listings, prices, or facts. Only reference real listings shown below.
+- NEVER claim to be human. If pressed: "I'm an AI assistant — Catherine handles the real conversations."
+- For complex/legal questions, redirect to Catherine.
+- Use peso symbol ₱ for prices. Use local terminology (CCT, TCT, BIR zonal value, CGT, DST, etc.) when accurate.
+- Format with short paragraphs and bullets when helpful. No long essays.
+
+TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.${listingContext}`;
+
+      // Convert history to Gemini's conversation format
+      const contents = [];
+      for (const turn of history) {
+        if (!turn || !turn.role || !turn.text) continue;
+        contents.push({
+          role: turn.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: String(turn.text).slice(0, 4000) }]
+        });
+      }
+      contents.push({ role: 'user', parts: [{ text: message }] });
+
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+      const geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 600,
+            topP: 0.9,
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+          ],
+        }),
+      });
+
+      if (!geminiRes.ok) {
+        const errText = await geminiRes.text().catch(() => '');
+        console.error('Gemini API error', geminiRes.status, errText.slice(0, 300));
+        return res.status(502).json({ error: 'Chat service is having trouble. Please try again.' });
+      }
+
+      const data = await geminiRes.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+                 || data?.candidates?.[0]?.finishReason === 'SAFETY'
+                      ? "Sorry, I can't help with that. Try a property or buying-process question, or message Catherine directly at m.me/glrarealty."
+                      : null;
+
+      const finalReply = (typeof reply === 'string' && reply.trim())
+        ? reply.trim()
+        : "I didn't catch that. Could you rephrase, or message Catherine directly at m.me/glrarealty?";
+
+      res.json({ reply: finalReply });
+    } catch (err) {
+      console.error('Chat error:', err);
+      res.status(500).json({ error: 'Chat service error' });
+    }
+  }
+);
+
 // ============ SUBSCRIPTION ROUTES ============
 
 app.post('/api/subscribe',
