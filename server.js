@@ -794,7 +794,7 @@ async function getAllAvailableListingsCached() {
     const items = await Property.find({ status: 'available' })
       .sort({ featured: -1, createdAt: -1 })
       .limit(CHAT_LISTING_LIMIT)
-      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm propertyType featured developer')
+      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm propertyType featured developer mainImage')
       .lean();
     _chatListingCache = { at: now, items };
     return items;
@@ -883,6 +883,136 @@ function fmtListing(p, i) {
   return `${i + 1}. ${p.title} — ${p.location} — ${price} — ${p.bedrooms || 0}BR/${p.bathrooms || 0}BA/${p.sqm || 0}sqm (${p.propertyType || 'Property'}${dev}, ${isLease ? 'For Lease' : 'For Sale'})`;
 }
 
+// ── Server-side derivation of search params from the user's message ──
+// We do NOT trust the model to construct correct URLs — we build them ourselves
+// from the same keyword scoring used to rank listings. The model's job is to
+// describe the matches; the link comes from this function.
+function deriveSearchFromMessage(message) {
+  const m = (message || '').toLowerCase();
+  const params = {};
+  let labelParts = [];
+
+  // Location: take the first match
+  const loc = KNOWN_LOCATIONS.find(l => m.includes(l));
+  if (loc) {
+    // Title-case for display + URL search
+    const display = loc.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+    params.search = display;
+    labelParts.push(display);
+  }
+
+  // Property type
+  if (/\bcondo|condominium|studio|penthouse\b/.test(m)) { params.propertyType = 'Condominium'; labelParts.push('condos'); }
+  else if (/\bhouse|h&l|house and lot\b/.test(m))      { params.propertyType = 'House and Lot'; labelParts.push('houses'); }
+  else if (/\btownhouse|town house\b/.test(m))         { params.propertyType = 'Townhouse'; labelParts.push('townhouses'); }
+  else if (/\bcommercial\b/.test(m))                   { params.propertyType = 'Commercial Lot'; labelParts.push('commercial'); }
+  else if (/\blot|land|residential lot\b/.test(m))     { params.propertyType = 'Residential Lot'; labelParts.push('lots'); }
+
+  // Listing category
+  if (/\b(rent|rental|lease|leasing|monthly|for lease)\b/.test(m)) {
+    params.category = 'FOR LEASE';
+    labelParts.push('for lease');
+  } else if (/\b(buy|buying|purchase|for sale|sale)\b/.test(m)) {
+    params.category = 'FOR SALE';
+    labelParts.push('for sale');
+  }
+
+  // Bedrooms
+  const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
+  if (brMatch) {
+    params.bedrooms = parseInt(brMatch[1], 10);
+    labelParts.unshift(`${brMatch[1]}BR`);
+  }
+
+  // Budget — supports "under 10m", "below 50k", "max 30M", "₱5,000,000"
+  const bMatch = m.match(/(?:under|below|max|less than|≤|<=|<)\s*₱?\s*([\d,.]+)\s*(m|mil|million|k|thousand)?/);
+  if (bMatch) {
+    const raw = parseFloat(bMatch[1].replace(/,/g, ''));
+    const unit = (bMatch[2] || '').toLowerCase();
+    let n = raw;
+    if (unit === 'm' || unit === 'mil' || unit === 'million') n = raw * 1_000_000;
+    else if (unit === 'k' || unit === 'thousand') n = raw * 1_000;
+    if (n > 0) {
+      params.maxPrice = Math.round(n);
+      labelParts.push(`under ₱${Math.round(n).toLocaleString()}`);
+    }
+  }
+
+  // If we found nothing useful, return null (no link).
+  if (Object.keys(params).length === 0) return null;
+
+  const qs = Object.entries(params).map(([k, v]) =>
+    `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
+  ).join('&');
+
+  let label;
+  if (labelParts.length) {
+    label = `Browse all ${labelParts.join(' ')}`;
+  } else {
+    label = 'Browse all properties';
+  }
+  return { url: `/properties.html?${qs}`, label };
+}
+
+// Build 3-4 contextual follow-up suggestions based on what the user asked.
+// Pure heuristics — keeps the chat feeling alive without another model call.
+function buildFollowUps(message, matches, search) {
+  const m = (message || '').toLowerCase();
+  const out = [];
+  const isPropertyQuery = matches && matches.length > 0;
+
+  if (isPropertyQuery) {
+    out.push('What are the closing costs?');
+    if (search && /lease|rent/i.test(search.label || '')) {
+      out.push('How does leasing work?');
+    } else {
+      out.push('How much can I afford?');
+    }
+    out.push('Schedule a viewing');
+  } else if (/afford|loan|mortgage|amortization|monthly/.test(m)) {
+    out.push('Show me condos in Makati');
+    out.push('What are closing costs?');
+    out.push('Schedule a viewing');
+  } else if (/closing|fees|tax|cgt|dst|bir|zonal/.test(m)) {
+    out.push('How much can I afford?');
+    out.push('Show me featured listings');
+    out.push('What documents do I need?');
+  } else if (/foreign|expat|owner|allowed/.test(m)) {
+    out.push('Show me condos in BGC');
+    out.push('What documents do I need?');
+    out.push('Schedule a viewing');
+  } else {
+    out.push('Properties in Makati');
+    out.push('Closing costs estimate');
+    out.push('What can I afford?');
+  }
+  return out.slice(0, 4);
+}
+
+// Project a Mongo Property document down to the minimal payload the chat
+// widget needs to render a rich card. Keeps prompt + response payload small.
+function shapeListingCard(p) {
+  const lt = (p.listingType || '').toUpperCase();
+  const isLease = lt.includes('LEASE') || lt.includes('RENT');
+  const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
+  return {
+    id: String(p._id),
+    title: p.title || 'Untitled',
+    location: p.location || '',
+    propertyType: p.propertyType || '',
+    listingType: isLease ? 'FOR LEASE' : 'FOR SALE',
+    price: priceNum,
+    priceLabel: isLease
+      ? `₱${Number(priceNum).toLocaleString()}/mo`
+      : `₱${Number(priceNum).toLocaleString()}`,
+    bedrooms: p.bedrooms || 0,
+    bathrooms: p.bathrooms || 0,
+    sqm: p.sqm || 0,
+    image: p.mainImage || '',
+    url: `/properties.html?property=${encodeURIComponent(String(p._id))}`,
+  };
+}
+
 // Static "site map" the bot can always reference. Update here when pages change.
 const SITE_MAP = `
 SITE MAP & SERVICES (route the user to the right page):
@@ -942,23 +1072,23 @@ app.post('/api/chat',
       const { message, history = [] } = req.body;
 
       // ── Build live property context ──────────────────────────────
-      // 1) Pull the full available-listings set (cached 60s).
-      // 2) Score them against the user's message (location/type/BR/budget).
-      // 3) Always include featured + top relevance + a compact summary so the
-      //    bot can answer "do you have anything in Makati?" honestly.
       let listingContext = '';
+      let topMatches = [];           // Will be returned as structured cards
+      let serverSearchLink = null;   // Will be returned as the "Browse all" CTA
       try {
         const allListings = await getAllAvailableListingsCached();
 
         if (allListings.length) {
-          // Always-include set: every featured listing.
           const featuredSet = allListings.filter(p => p.featured).slice(0, 12);
 
           // Relevance set: scored against the user's most recent message.
           const scored = scoreListings(message, allListings);
           const relevant = scored.filter(x => x.s > 0).slice(0, 12).map(x => x.p);
 
-          // Merge (relevant first, then featured, dedupe by _id), cap 18.
+          // Top 3 matches → returned as rich cards (only if they actually scored > 0)
+          topMatches = relevant.slice(0, 3);
+
+          // Merge for the prompt context (relevant first, then featured, dedupe).
           const seen = new Set();
           const merged = [];
           for (const p of [...relevant, ...featuredSet]) {
@@ -969,8 +1099,7 @@ app.post('/api/chat',
             if (merged.length >= 18) break;
           }
 
-          // Compact location index — lets the bot honestly say "yes, we have N in
-          // Makati" or "no, nothing in Quezon City right now" without listing them all.
+          // Compact location index
           const locCounts = {};
           for (const p of allListings) {
             const loc = (p.location || 'Unknown').split(',')[0].trim();
@@ -990,60 +1119,41 @@ LIVE INVENTORY SNAPSHOT (do NOT invent listings — only reference what's below)
 - Total available: ${allListings.length} (${totalSale} for sale, ${totalLease} for lease)
 - By area: ${locIndex}
 
-MOST RELEVANT LISTINGS for this query (link the user to /properties.html to browse all):
+MOST RELEVANT LISTINGS for this query:
 ${merged.map(fmtListing).join('\n')}
 
-If the user asks about an area not in the "By area" list above, say honestly that there's nothing currently listed there, and offer to have Catherine source one (m.me/glrarealty).`;
+The frontend will automatically render the top 3 relevant listings as visual cards under your reply, plus a "Browse all" search button. So you do NOT need to repeat the full property details — just write a short, natural intro paragraph (1-3 sentences) like "Yes — here are some matches in Makati right now:" and the cards/button will appear below. If the user's area is not in the "By area" list, say so honestly and suggest contacting Catherine.`;
         } else {
           listingContext = `
 
 LIVE INVENTORY SNAPSHOT: no listings are currently published. Direct the user to message Catherine at m.me/glrarealty so she can source matches.`;
         }
+
+        // Server-side search-link derivation (deterministic, doesn't depend on the model)
+        serverSearchLink = deriveSearchFromMessage(message);
       } catch (e) {
         console.error('Chat listing context error:', e?.message);
       }
 
-      const systemPrompt = `You are the helpful AI assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, established 2014).
+      const systemPrompt = `You are the AI assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, est. 2014).
 
-YOUR ROLE:
+ROLE:
 - Answer questions about Philippine real estate: buying, selling, leasing, taxes, financing, neighborhoods, documentation.
-- Help users find properties from the LIVE INVENTORY below, understand the buying process, and calculate costs.
-- When recommending properties, only use ones from the LIVE INVENTORY SNAPSHOT.
-- ALWAYS append a /properties.html SEARCH LINK at the end of any property-related answer (see "PROPERTY SEARCH LINKS" below) — this acts like a smart search and navigates the user to a pre-filtered listings page.
-- Recommend the user contact Catherine for personalized advice and viewings (Messenger: m.me/glrarealty, phone/Viber/WhatsApp: +63 917 177 4572).
-- Route the user to the right page using the SITE MAP below — link tools when relevant (affordability, closing fees, amortization, rental yield, BIR zonal, ERCF).
+- Help users find properties (from LIVE INVENTORY only — never invent), explain process, point to calculators.
+- Encourage contacting Catherine for viewings/personal advice (m.me/glrarealty, +63 917 177 4572).
 
-PROPERTY SEARCH LINKS (treat /properties.html like a search engine — every property answer should end with one of these):
-Format: [Browse all <description>](/properties.html?<params>)
-Supported params (combine as needed, URL-encode spaces as %20):
-- search=<text>           → searches title + location (e.g. "Makati", "BGC", "Rockwell")
-- propertyType=<type>     → exact value: Condominium | House and Lot | Townhouse | Commercial Lot | Residential Lot
-- category=<cat>          → FOR%20SALE | FOR%20LEASE | featured
-- bedrooms=<n>            → minimum BR (1, 2, 3, 4, 5)
-- baths=<n>               → minimum BA
-- minPrice=<peso>         → minimum (digits only, no commas)
-- maxPrice=<peso>         → maximum (digits only, no commas)
-
-EXAMPLES:
-- User: "properties in Makati"
-  → "Yes, we have N listings in Makati right now: ... [Browse all Makati properties](/properties.html?search=Makati)"
-- User: "3BR condo for lease in BGC under 100k"
-  → "Here are 3BR condos for lease in BGC: ... [See all 3BR condos for lease in BGC](/properties.html?search=BGC&propertyType=Condominium&category=FOR%20LEASE&bedrooms=3&maxPrice=100000)"
-- User: "houses for sale under 20M"
-  → "[Browse houses for sale under ₱20M](/properties.html?propertyType=House%20and%20Lot&category=FOR%20SALE&maxPrice=20000000)"
+OUTPUT STYLE — IMPORTANT:
+- Keep replies SHORT: 1-3 sentences for the intro, then optional 1-2 brief bullet points. The frontend auto-renders matched listings as visual cards under your reply, so do NOT manually list properties or include URLs to /properties.html — that's done for you.
+- Do NOT repeat property titles, prices, or specs that will appear in the cards below your message.
+- Use peso symbol ₱. Use local terms (CCT, TCT, BIR zonal, CGT, DST, RPT, ERCF) when accurate.
+- Use Filipino/Taglish if the user does; default to clear English.
+- For tools/guides, link with relative URLs like [closing fees calculator](/calculator.html).
+- NEVER claim to be human. If pressed: "I'm an AI assistant — Catherine handles the real conversations."
+- For complex legal/tax questions, redirect to Catherine.
 
 ANSWERING "DO YOU HAVE PROPERTIES IN <AREA>?":
-- Check the "By area" list in LIVE INVENTORY. If the area appears, say yes, show 1-3 matching listings from MOST RELEVANT LISTINGS, then end with the search link.
-- If the area is NOT in the inventory, be honest: "We don't have anything currently published in <area>, but Catherine can source one — message her at m.me/glrarealty." Still include the search link so the user can browse what IS available.
-
-CONSTRAINTS:
-- Be CONCISE — 2-4 short sentences typically, plus a bullet list of properties when relevant. Don't lecture.
-- Use Filipino/Taglish naturally if the user does, but default to clear English.
-- NEVER invent listings, prices, developers, or facts. Only reference listings from LIVE INVENTORY.
-- NEVER claim to be human. If pressed: "I'm an AI assistant — Catherine handles the real conversations."
-- For complex/legal questions, redirect to Catherine.
-- Use peso symbol ₱ for prices. Use local terminology (CCT, TCT, BIR zonal value, CGT, DST, RPT, etc.) when accurate.
-- Format with short paragraphs and bullets when helpful. No long essays.
+- Check the "By area" list. If the area appears, say something like: "Yes — here's what's in <area> right now:" (the cards + Browse button render below automatically).
+- If the area is NOT in the list, say honestly: "We don't have anything currently published in <area>. Catherine can source one — message her at m.me/glrarealty." (Cards may still render with closest matches.)
 
 TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.
 ${SITE_MAP}${listingContext}`;
@@ -1071,9 +1181,12 @@ ${SITE_MAP}${listingContext}`;
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents,
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600,
+            temperature: 0.6,
+            maxOutputTokens: 1024,
             topP: 0.9,
+            // Gemini 2.5 spends output tokens on internal "thinking" by default,
+            // which causes truncated visible replies. Disable for chat use.
+            thinkingConfig: { thinkingBudget: 0 },
           },
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
@@ -1100,11 +1213,25 @@ ${SITE_MAP}${listingContext}`;
         finalReply = text.trim();
       } else if (finish === 'SAFETY') {
         finalReply = "Sorry, I can't help with that. Try a property or buying-process question, or message Catherine directly at m.me/glrarealty.";
+      } else if (finish === 'MAX_TOKENS') {
+        finalReply = "I have a longer answer for that — could you ask something more specific, or message Catherine directly at m.me/glrarealty?";
       } else {
         finalReply = "I didn't catch that. Could you rephrase, or message Catherine directly at m.me/glrarealty?";
       }
 
-      res.json({ reply: finalReply });
+      // Strip any /properties.html links the model added — the frontend renders
+      // its own server-derived "Browse all" button, so we don't want duplicates.
+      finalReply = finalReply.replace(/\[([^\]]+)\]\(\/properties\.html[^\)]*\)\s*/g, '');
+
+      // Suggested follow-ups: simple, contextual, deterministic.
+      const suggestions = buildFollowUps(message, topMatches, serverSearchLink);
+
+      res.json({
+        reply: finalReply,
+        properties: topMatches.map(shapeListingCard),
+        search: serverSearchLink,
+        suggestions,
+      });
     } catch (err) {
       console.error('Chat error:', err);
       res.status(500).json({ error: 'Chat service error' });
