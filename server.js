@@ -764,7 +764,111 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// ============ CHATBOT (Gemini proxy) ============
+// ============ CHATBOT (Gemini + Groq fallback) ============
+// LLM provider helpers. Each takes the same { apiKey, systemPrompt, history, message }
+// and returns { text, finish, provider } on success or throws an Error with
+// .status (HTTP code) and .body (error response text) on failure.
+
+// Google Gemini (generativelanguage.googleapis.com)
+async function callGemini({ apiKey, systemPrompt, history, message }) {
+  // Convert our turn shape to Gemini's role/parts format
+  const contents = [];
+  for (const turn of history || []) {
+    if (!turn || !turn.role || !turn.text) continue;
+    contents.push({
+      role: turn.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: String(turn.text).slice(0, 4000) }],
+    });
+  }
+  contents.push({ role: 'user', parts: [{ text: message }] });
+
+  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const body = {
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    generationConfig: { temperature: 0.6, maxOutputTokens: 1024, topP: 0.9 },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+    ],
+  };
+  if (/^gemini-2\.5/.test(model)) {
+    body.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+
+  let r = await fetch(url, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  // Auto-retry once without thinkingConfig if 2.5 rejected it
+  if (!r.ok && body.generationConfig.thinkingConfig) {
+    delete body.generationConfig.thinkingConfig;
+    r = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+  if (!r.ok) {
+    const errText = await r.text().catch(() => '');
+    const err = new Error(`Gemini ${r.status}: ${errText.slice(0, 300)}`);
+    err.status = r.status; err.body = errText;
+    throw err;
+  }
+  const data = await r.json();
+  const cand = data?.candidates?.[0];
+  return {
+    provider: 'gemini',
+    text: cand?.content?.parts?.[0]?.text,
+    finish: cand?.finishReason,
+  };
+}
+
+// Groq (OpenAI-compatible chat completions). Same prompt, different shape.
+// Free tier ≈ 30 RPM / 14,400 RPD — 3× Gemini's free quota and no card required.
+async function callGroq({ apiKey, systemPrompt, history, message }) {
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const messages = [{ role: 'system', content: systemPrompt }];
+  for (const turn of history || []) {
+    if (!turn || !turn.role || !turn.text) continue;
+    messages.push({
+      role: turn.role === 'assistant' ? 'assistant' : 'user',
+      content: String(turn.text).slice(0, 4000),
+    });
+  }
+  messages.push({ role: 'user', content: message });
+
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.6,
+      max_tokens: 1024,
+      top_p: 0.9,
+    }),
+  });
+  if (!r.ok) {
+    const errText = await r.text().catch(() => '');
+    const err = new Error(`Groq ${r.status}: ${errText.slice(0, 300)}`);
+    err.status = r.status; err.body = errText;
+    throw err;
+  }
+  const data = await r.json();
+  const choice = data?.choices?.[0];
+  return {
+    provider: 'groq',
+    text: choice?.message?.content,
+    finish: choice?.finish_reason, // 'stop' | 'length' | 'content_filter' …
+  };
+}
+
 // Dedicated rate limiter — looser than publicWriteLimiter so the chat feels responsive,
 // but still tight enough to prevent abuse / runaway API spend.
 const chatLimiter = rateLimit({
@@ -1221,8 +1325,10 @@ app.post('/api/chat',
   async (req, res) => {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        console.error('GEMINI_API_KEY not set');
+      // Chat is configured if EITHER provider has a key. The route picks Gemini
+      // first by default and falls back to Groq on quota errors.
+      if (!apiKey && !process.env.GROQ_API_KEY) {
+        console.error('No LLM provider configured (set GEMINI_API_KEY and/or GROQ_API_KEY)');
         return res.status(503).json({ error: 'Chat is not configured' });
       }
 
@@ -1340,89 +1446,61 @@ ANSWERING "DO YOU HAVE PROPERTIES IN <AREA>?":
 TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.
 ${SITE_MAP}${listingContext}`;
 
-      // Convert history to Gemini's conversation format
-      const contents = [];
-      for (const turn of history) {
-        if (!turn || !turn.role || !turn.text) continue;
-        contents.push({
-          role: turn.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: String(turn.text).slice(0, 4000) }]
-        });
-      }
-      contents.push({ role: 'user', parts: [{ text: message }] });
+      // ── Provider call: try Gemini, fall back to Groq on quota errors ──
+      // Both providers return {text, finish, provider} or throw an Error
+      // with .status set so the caller can decide whether to fall back.
+      let llmResult;
+      let llmError;
+      const hasGemini = !!apiKey;
+      const hasGroq   = !!process.env.GROQ_API_KEY;
 
-      // Model selection: gemini-2.0-flash is the most reliable free-tier model
-      // and doesn't have the "thinking budget" complication that 2.5 introduces.
-      // Override via env GEMINI_MODEL if you want to test 2.5 / pro / etc.
-      const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      // Preference order — Gemini first (existing config), Groq as fallback.
+      // Override with PRIMARY_LLM=groq to flip the order without removing keys.
+      const primary = process.env.PRIMARY_LLM === 'groq' ? 'groq' : 'gemini';
+      const order = primary === 'groq'
+        ? [hasGroq && 'groq', hasGemini && 'gemini']
+        : [hasGemini && 'gemini', hasGroq && 'groq'];
 
-      const baseBody = {
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents,
-        generationConfig: {
-          temperature: 0.6,
-          maxOutputTokens: 1024,
-          topP: 0.9,
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-        ],
-      };
-      // Only request thinkingBudget on 2.5 models — passing it to 2.0 returns a 400.
-      if (/^gemini-2\.5/.test(model)) {
-        baseBody.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      for (const provider of order.filter(Boolean)) {
+        try {
+          if (provider === 'gemini') {
+            llmResult = await callGemini({ apiKey, systemPrompt, history, message });
+          } else {
+            llmResult = await callGroq({ apiKey: process.env.GROQ_API_KEY, systemPrompt, history, message });
+          }
+          break; // success
+        } catch (e) {
+          llmError = e;
+          const fallbackable = e.status === 429 || e.status === 503 ||
+                               /quota|rate|exceed|unavailable/i.test(e.message || '');
+          console.warn(`[chat] ${provider} failed (${e.status || '?'}): ${(e.message || '').slice(0, 200)}` +
+                       (fallbackable && order.length > 1 ? ' — falling back' : ''));
+          if (!fallbackable) break; // hard error — don't try fallback
+        }
       }
 
-      let geminiRes = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(baseBody),
-      });
-
-      // If the model rejected the request (most often a 400 due to a config
-      // field it doesn't accept), retry once without thinkingConfig.
-      if (!geminiRes.ok && baseBody.generationConfig.thinkingConfig) {
-        const errText = await geminiRes.text().catch(() => '');
-        console.warn('Gemini ' + geminiRes.status + ' with thinkingConfig; retrying without. Error:', errText.slice(0, 200));
-        delete baseBody.generationConfig.thinkingConfig;
-        geminiRes = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(baseBody),
-        });
-      }
-
-      if (!geminiRes.ok) {
-        const errText = await geminiRes.text().catch(() => '');
-        console.error('Gemini API error', geminiRes.status, 'model=' + model, errText.slice(0, 400));
-        // Surface a useful message based on the actual error.
-        const lower = errText.toLowerCase();
+      if (!llmResult) {
+        const status  = llmError?.status || 502;
+        const errText = llmError?.body || llmError?.message || '';
+        const lower   = errText.toLowerCase();
         let userMsg = 'Chat service is having trouble. Please try again, or message Catherine directly at m.me/glrarealty.';
-        if (geminiRes.status === 404 || lower.includes('not found')) {
-          userMsg = "I can't reach my model right now (404). The site owner may need to update the GEMINI_MODEL env var. In the meantime, message Catherine at m.me/glrarealty.";
-        } else if (geminiRes.status === 403 || lower.includes('permission') || lower.includes('api key')) {
-          userMsg = "My API key isn't authorized for chat right now. Please message Catherine at m.me/glrarealty.";
-        } else if (geminiRes.status === 429 || lower.includes('quota') || lower.includes('rate')) {
-          userMsg = "I'm at my hourly limit right now. In the meantime, **message Catherine directly** at [m.me/glrarealty](https://m.me/glrarealty) — she'll get back to you fast.";
+        if (status === 404 || lower.includes('not found')) {
+          userMsg = "I can't reach my model right now (404). The site owner may need to update model env vars. In the meantime, message Catherine at m.me/glrarealty.";
+        } else if (status === 403 || lower.includes('permission') || lower.includes('api key')) {
+          userMsg = "My API key isn't authorized right now. Please message Catherine at m.me/glrarealty.";
+        } else if (status === 429 || lower.includes('quota') || lower.includes('rate')) {
+          userMsg = "I'm at my hourly limit right now. **Message Catherine directly** at [m.me/glrarealty](https://m.me/glrarealty) — she'll get back to you fast.";
         }
         return res.status(502).json({ error: userMsg });
       }
 
-      const data = await geminiRes.json();
-      const candidate = data?.candidates?.[0];
-      const text = candidate?.content?.parts?.[0]?.text;
-      const finish = candidate?.finishReason;
-
+      const { text, finish } = llmResult;
       let finalReply;
       if (typeof text === 'string' && text.trim()) {
         finalReply = text.trim();
       } else if (finish === 'SAFETY') {
         finalReply = "Sorry, I can't help with that. Try a property or buying-process question, or message Catherine directly at m.me/glrarealty.";
-      } else if (finish === 'MAX_TOKENS') {
+      } else if (finish === 'MAX_TOKENS' || finish === 'length') {
         finalReply = "I have a longer answer for that — could you ask something more specific, or message Catherine directly at m.me/glrarealty?";
       } else {
         finalReply = "I didn't catch that. Could you rephrase, or message Catherine directly at m.me/glrarealty?";
