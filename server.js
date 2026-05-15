@@ -825,10 +825,15 @@ function hasPropertyIntent(message) {
   const m = (message || '').toLowerCase();
   if (KNOWN_LOCATIONS.some(loc => m.includes(loc))) return true;
   if (KNOWN_TYPES.some(t => m.includes(t))) return true;
-  if (/\b(propert|listing|listings|unit|home|homes)\b/.test(m)) return true;
+  // \b...\b is too strict — \bpropert\b doesn't match "properties" because
+  // there's no word boundary between 'propert' and 'ies'. Match the full
+  // forms (and their common plurals) instead.
+  if (/\b(property|properties|listing|listings|unit|units|home|homes|condo|condos)\b/.test(m)) return true;
   if (/\b(for sale|for lease|rent|rental|leasing|buying|to buy)\b/.test(m)) return true;
   if (/\b(\d+)\s*-?\s*(br|bed|bedroom)/.test(m)) return true;
-  if (/\bshow me\b/.test(m) && /\b(in|at|around|near)\b/.test(m)) return true;
+  if (/\bshow me\b/.test(m) && /\b(in|at|around|near|under|below)\b/.test(m)) return true;
+  // Budget-only queries like "under 10 million" / "below 50k" — clearly a property search.
+  if (/\b(under|below|less than|max|maximum)\s*₱?\s*\d/.test(m)) return true;
   return false;
 }
 
@@ -870,10 +875,14 @@ function scoreListings(message, listings) {
     if (wantedBR !== null && p.bedrooms === wantedBR) s += 4;
 
     if (budget) {
+      // Budgets of ≥1M are clearly sale prices; anything below is monthly rent.
+      // Without this split, "under 10 million" would also boost every lease
+      // (since ₱30k/mo trivially clears the 10M threshold).
+      const isSaleBudget = budget >= 1_000_000;
       const price = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
       if (price > 0) {
-        if (isLease && price <= budget * 1.25) s += 4;
-        if (!isLease && price <= budget * 1.15) s += 4;
+        if (isLease && !isSaleBudget && price <= budget * 1.25) s += 4;
+        if (!isLease && isSaleBudget && price <= budget * 1.15) s += 4;
       }
     }
     // Featured is now ONLY a tiebreaker (+0.5), not enough to qualify a listing
