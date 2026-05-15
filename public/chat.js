@@ -157,7 +157,11 @@ a.glra-search-cta{
 a.glra-search-cta:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
 a.glra-search-cta .arr{font-size:14px}
 
-/* Action buttons (Calculate / Schedule / Message Catherine etc.) */
+/* Action buttons (Calculate / Schedule / Message Catherine etc.)
+   Two tiers only:
+     primary   → filled orange (the single most-recommended next step)
+     everything else → solid outlined, white in light mode / dark in dark mode
+   Keeps a clear hierarchy without the visual noise of three different styles. */
 .glra-actions{align-self:stretch;display:flex;flex-direction:column;gap:6px;margin-top:2px}
 a.glra-action{
   display:flex !important;align-items:center;justify-content:space-between;gap:8px;
@@ -169,12 +173,20 @@ a.glra-action{
 a.glra-action .arr{font-size:14px;opacity:.7}
 a.glra-action.primary{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00}
 a.glra-action.primary:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
-a.glra-action.secondary{background:#fff !important;color:#0a0a0a !important;border-color:#0a0a0a}
-body.dark-mode a.glra-action.secondary{background:#1a1a17 !important;color:#f1eee9 !important;border-color:#3a3a36}
-a.glra-action.secondary:hover{background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
-a.glra-action.contact{background:transparent !important;color:#0a0a0a !important;border-color:#0a0a0a;border-style:dashed}
-body.dark-mode a.glra-action.contact{color:#f1eee9 !important;border-color:#3a3a36}
-a.glra-action.contact:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00;border-style:solid}
+/* All non-primary actions share the same outlined style. */
+a.glra-action.secondary,
+a.glra-action.contact{
+  background:#fff !important;color:#0a0a0a !important;border:1px solid #0a0a0a !important;
+}
+body.dark-mode a.glra-action.secondary,
+body.dark-mode a.glra-action.contact{
+  background:#1a1a17 !important;color:#f1eee9 !important;border-color:#3a3a36 !important;
+}
+a.glra-action.secondary:hover,
+a.glra-action.contact:hover{
+  background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a !important;
+  transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00;
+}
 
 /* Quick contact bar — always-visible "Talk to Catherine" channels */
 .glra-contact-bar{

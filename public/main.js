@@ -87,10 +87,39 @@ window.addEventListener('scroll', () => {
 // On mobile, all the contact buttons (call, WhatsApp, Viber, etc.) are hidden by
 // default and a single FAB appears at the bottom. Tapping it reveals the rest
 // with a staggered animation. Desktop is unaffected (CSS @media handles that).
+//
+// JS-injected styles (!important) are needed because the inline <style> block
+// in index.html overrides the styles.css mobile-hide rule on specificity.
 (function setupFabToggle() {
+  // 1) Inject CSS so we always win on specificity & load order.
+  if (!document.getElementById('glraFabToggleStyle')) {
+    const css = `
+@media(max-width:768px){
+  .floating-buttons{position:fixed !important;bottom:18px !important;right:18px !important;gap:8px !important;z-index:1000 !important}
+  .floating-buttons > *{display:none !important}
+  .floating-buttons > .fab-toggle{display:flex !important}
+  .floating-buttons.expanded > *{display:flex !important;animation:glraFabIn .15s ease both}
+  .floating-buttons .fab-toggle{
+    width:48px !important;height:48px !important;font-size:18px !important;
+    box-sizing:border-box !important;padding:0 !important;
+    align-items:center !important;justify-content:center !important;
+    border:0 !important;border-radius:0 !important;cursor:pointer !important;
+    background:#ff3d00 !important;color:#fff !important;
+    box-shadow:3px 3px 0 #0a0a0a !important;
+  }
+  .floating-buttons .fab-toggle.is-open{background:#0a0a0a !important;color:#fff !important;box-shadow:3px 3px 0 #ff3d00 !important}
+  .floating-buttons .fab-toggle i{pointer-events:none !important}
+}
+@keyframes glraFabIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}
+`;
+    const s = document.createElement('style');
+    s.id = 'glraFabToggleStyle';
+    s.textContent = css;
+    document.head.appendChild(s);
+  }
+
   function init() {
     document.querySelectorAll('.floating-buttons').forEach(container => {
-      // Idempotent — don't inject twice if main.js runs again
       if (container.querySelector('.fab-toggle')) return;
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -98,7 +127,11 @@ window.addEventListener('scroll', () => {
       btn.setAttribute('aria-label', 'Open contact options');
       btn.setAttribute('aria-expanded', 'false');
       btn.innerHTML = '<i class="fas fa-comment-dots"></i>';
-      btn.addEventListener('click', () => {
+
+      // Use a handler that stops propagation so the document "tap-outside-to-close"
+      // listener can't fire on the same click and immediately un-toggle.
+      const toggle = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         const isOpen = container.classList.toggle('expanded');
         btn.classList.toggle('is-open', isOpen);
         btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -106,10 +139,18 @@ window.addEventListener('scroll', () => {
         btn.innerHTML = isOpen
           ? '<i class="fas fa-times"></i>'
           : '<i class="fas fa-comment-dots"></i>';
+      };
+      btn.addEventListener('click', toggle);
+      // iOS occasionally swallows the first click on dynamically-injected
+      // elements — touchend covers that path.
+      btn.addEventListener('touchend', (e) => {
+        // only act on a tap (no drag), and not on multi-touch
+        if (e.changedTouches && e.changedTouches.length === 1) toggle(e);
       });
-      // Append as the LAST child so the FAB sits at the bottom of the visible stack
+
       container.appendChild(btn);
     });
+
     // Tap outside to close (mobile only)
     document.addEventListener('click', e => {
       document.querySelectorAll('.floating-buttons.expanded').forEach(c => {
