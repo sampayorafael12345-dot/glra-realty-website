@@ -783,7 +783,50 @@ const CHAT_LISTING_TTL_MS = 60 * 1000;
 const CHAT_LISTING_LIMIT  = 80;     // Hard cap so the prompt never blows up.
 let _chatListingCache = { at: 0, items: [] };
 
-function invalidateChatListingsCache() { _chatListingCache.at = 0; }
+function invalidateChatListingsCache() {
+  _chatListingCache.at = 0;
+  // Also wipe the reply cache — cached answers reference now-stale listings.
+  try { chatReplyCacheClear(); } catch (_) { /* defined below */ }
+}
+
+// ── Reply cache for the chatbot ────────────────────────────────
+// Gemini free-tier caps at 10 requests/minute. When several users (or one
+// user clicking starter chips) hit the same canned question, we serve the
+// cached response instead of burning quota. Cache is per-question text only
+// (no history) so it's deterministic and easy to reason about.
+const CHAT_REPLY_TTL_MS = 5 * 60 * 1000;   // 5 minutes
+const CHAT_REPLY_MAX = 200;                // entries before LRU prune
+const _chatReplyCache = new Map();          // normalized message → { at, payload }
+
+function normalizeChatMessage(msg) {
+  return String(msg || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s₱]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function chatReplyCacheGet(msg) {
+  const key = normalizeChatMessage(msg);
+  if (!key) return null;
+  const hit = _chatReplyCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > CHAT_REPLY_TTL_MS) {
+    _chatReplyCache.delete(key);
+    return null;
+  }
+  return hit.payload;
+}
+function chatReplyCacheSet(msg, payload) {
+  const key = normalizeChatMessage(msg);
+  if (!key) return;
+  if (_chatReplyCache.size >= CHAT_REPLY_MAX) {
+    // Drop the oldest entry (Map preserves insertion order)
+    const firstKey = _chatReplyCache.keys().next().value;
+    if (firstKey) _chatReplyCache.delete(firstKey);
+  }
+  _chatReplyCache.set(key, { at: Date.now(), payload });
+}
+function chatReplyCacheClear() { _chatReplyCache.clear(); }
 
 async function getAllAvailableListingsCached() {
   const now = Date.now();
@@ -1185,6 +1228,16 @@ app.post('/api/chat',
 
       const { message, history = [] } = req.body;
 
+      // Serve identical (history-less first-turn) questions from cache when
+      // possible — this is the main mitigation for Gemini's 10 RPM free-tier limit.
+      // Only cache when there's no conversation history (so context is uniform).
+      if (!history || history.length === 0) {
+        const cached = chatReplyCacheGet(message);
+        if (cached) {
+          return res.json(cached);
+        }
+      }
+
       // ── Build live property context ──────────────────────────────
       let listingContext = '';
       let topMatches = [];           // Returned as structured cards
@@ -1211,6 +1264,7 @@ app.post('/api/chat',
           // Prompt context: include featured AND relevant — model needs broad awareness
           // even when the user isn't asking a property question, so it can answer
           // "do you have anything in Makati?" honestly later in the same conversation.
+          // Cap at 8 — fewer tokens = fewer hits on the per-minute quota.
           const seen = new Set();
           const merged = [];
           for (const p of [...relevant, ...featuredSet]) {
@@ -1218,7 +1272,7 @@ app.post('/api/chat',
             if (seen.has(key)) continue;
             seen.add(key);
             merged.push(p);
-            if (merged.length >= 18) break;
+            if (merged.length >= 8) break;
           }
 
           // Compact location index
@@ -1353,7 +1407,7 @@ ${SITE_MAP}${listingContext}`;
         } else if (geminiRes.status === 403 || lower.includes('permission') || lower.includes('api key')) {
           userMsg = "My API key isn't authorized for chat right now. Please message Catherine at m.me/glrarealty.";
         } else if (geminiRes.status === 429 || lower.includes('quota') || lower.includes('rate')) {
-          userMsg = "I'm getting too many requests right now — please try again in a minute, or message Catherine at m.me/glrarealty.";
+          userMsg = "I'm at my hourly limit right now. In the meantime, **message Catherine directly** at [m.me/glrarealty](https://m.me/glrarealty) — she'll get back to you fast.";
         }
         return res.status(502).json({ error: userMsg });
       }
@@ -1386,13 +1440,20 @@ ${SITE_MAP}${listingContext}`;
       const actions = buildActions(message, topMatches.length > 0, serverSearchLink);
       const suggestions = buildFollowUps(message, topMatches, serverSearchLink);
 
-      res.json({
+      const payload = {
         reply: finalReply,
         properties: topMatches.map(shapeListingCard),
         search: serverSearchLink,
         actions,
         suggestions,
-      });
+      };
+
+      // Cache only first-turn replies — keeps the cache deterministic.
+      if (!history || history.length === 0) {
+        chatReplyCacheSet(message, payload);
+      }
+
+      res.json(payload);
     } catch (err) {
       console.error('Chat error:', err);
       res.status(500).json({ error: 'Chat service error' });
