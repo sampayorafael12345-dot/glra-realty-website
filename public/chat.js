@@ -157,6 +157,25 @@ a.glra-search-cta{
 a.glra-search-cta:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
 a.glra-search-cta .arr{font-size:14px}
 
+/* Action buttons (Calculate / Schedule / Message Catherine etc.) */
+.glra-actions{align-self:stretch;display:flex;flex-direction:column;gap:6px;margin-top:2px}
+a.glra-action{
+  display:flex !important;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 14px;text-decoration:none !important;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;
+  transition:.15s;border:1px solid #0a0a0a;
+}
+a.glra-action .arr{font-size:14px;opacity:.7}
+a.glra-action.primary{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00}
+a.glra-action.primary:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
+a.glra-action.secondary{background:#fff !important;color:#0a0a0a !important;border-color:#0a0a0a}
+body.dark-mode a.glra-action.secondary{background:#1a1a17 !important;color:#f1eee9 !important;border-color:#3a3a36}
+a.glra-action.secondary:hover{background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
+a.glra-action.contact{background:transparent !important;color:#0a0a0a !important;border-color:#0a0a0a;border-style:dashed}
+body.dark-mode a.glra-action.contact{color:#f1eee9 !important;border-color:#3a3a36}
+a.glra-action.contact:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00;border-style:solid}
+
 /* Quick contact bar — always-visible "Talk to Catherine" channels */
 .glra-contact-bar{
   display:flex;gap:6px;padding:8px 16px 0;
@@ -349,6 +368,21 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       '</a>';
     }
 
+    function renderActions(actions) {
+      if (!actions || !actions.length) return null;
+      var wrap = document.createElement('div');
+      wrap.className = 'glra-actions';
+      wrap.innerHTML = actions.map(function (a) {
+        var kind = a.kind === 'primary' || a.kind === 'contact' ? a.kind : 'secondary';
+        var external = /^(https?:|tel:|mailto:)/.test(a.url);
+        var attrs = external ? ' target="_blank" rel="noopener"' : ' target="_self"';
+        return '<a class="glra-action ' + kind + '" href="' + escapeHtml(a.url) + '"' + attrs + '>' +
+                 '<span>' + escapeHtml(a.label) + '</span><span class="arr">→</span>' +
+               '</a>';
+      }).join('');
+      return wrap;
+    }
+
     function renderTurn(t) {
       // Bot message bubble
       if (t.role === 'assistant') {
@@ -365,7 +399,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
           bodyEl.appendChild(cards);
         }
 
-        // Search CTA
+        // Search CTA (orange "Browse all <area>" button)
         if (t.search && t.search.url) {
           var cta = document.createElement('a');
           cta.className = 'glra-search-cta';
@@ -374,6 +408,10 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
           cta.innerHTML = '<span>' + escapeHtml(t.search.label || 'Browse all matches') + '</span><span class="arr">→</span>';
           bodyEl.appendChild(cta);
         }
+
+        // Action buttons (Calculate fees, Schedule viewing, Message Catherine, etc.)
+        var actionsEl = renderActions(t.actions);
+        if (actionsEl) bodyEl.appendChild(actionsEl);
       } else {
         var u = document.createElement('div');
         u.className = 'glra-msg user';
@@ -511,6 +549,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
             text: data.reply,
             properties: Array.isArray(data.properties) ? data.properties : null,
             search: data.search || null,
+            actions: Array.isArray(data.actions) ? data.actions : null,
             suggestions: Array.isArray(data.suggestions) ? data.suggestions : null,
           });
           renderSuggest(data.suggestions);
