@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
 <title>GLRA Realty | Find Your Dream Home in the Philippines</title>
 <meta name="description" content="GLRA Realty — Your trusted licensed real estate broker in Metro Manila and Luzon. Browse premium properties for sale and lease. Expert guidance from Catherine SB Sampayo.">
 <meta name="keywords" content="real estate philippines, property for sale manila, property for sale makati, real estate broker philippines, GLRA Realty, condominiums manila, house and lot philippines">
