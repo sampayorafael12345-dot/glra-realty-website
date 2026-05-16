@@ -981,8 +981,22 @@ function hasPropertyIntent(message) {
   if (/\bshow me\b/.test(m) && /\b(in|at|around|near|under|below)\b/.test(m)) return true;
   // Budget-only queries like "under 10 million" / "below 50k" — clearly a property search.
   if (/\b(under|below|less than|max|maximum)\s*₱?\s*\d/.test(m)) return true;
+  // Detail-question patterns: "what is the sqm / price / bedrooms of <name>",
+  // "how many BR in <name>" — let these through so the relevant listing
+  // gets attached as a card too.
+  if (/\b(sqm|square ?meters?|bedrooms?|bathrooms?|br|ba|price|cost|how much)\b/.test(m) &&
+      /\b(of|for|in|at|the)\b/.test(m)) return true;
   return false;
 }
+
+// Stop-words excluded from title-fragment matching. Without this filter, common
+// generics like "city", "residence", "the", "tower" would tag every listing.
+const TITLE_STOPWORDS = new Set([
+  'the','a','an','and','or','of','at','in','on','for','with','to','by',
+  'city','residence','residences','tower','towers','condo','condos','condominium',
+  'house','lot','home','homes','place','village','park','place','complex',
+  'unit','units','floor','floors','property','properties','sqm','br','ba'
+]);
 
 function scoreListings(message, listings) {
   const m = (message || '').toLowerCase();
@@ -991,6 +1005,14 @@ function scoreListings(message, listings) {
   const wantedTypes = KNOWN_TYPES.filter(t => m.includes(t));
   const wantsLease = /\b(rent|rental|lease|leasing|monthly)\b/.test(m);
   const wantsSale  = /\b(buy|buying|purchase|sale|for sale)\b/.test(m);
+
+  // Pull all 4+ letter words from the user message (minus stop-words) so we
+  // can detect when they're naming a specific listing — "gentry", "columns",
+  // "antonio", "proscenium", etc. This lets follow-up questions like
+  // "what is the sqm of the gentry residences" pin the right listing in
+  // the prompt context.
+  const msgWords = (m.match(/[a-z]+/g) || [])
+    .filter(w => w.length >= 4 && !TITLE_STOPWORDS.has(w));
 
   const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
   const wantedBR = brMatch ? parseInt(brMatch[1], 10) : null;
@@ -1020,6 +1042,21 @@ function scoreListings(message, listings) {
     if (wantsLease && isLease) s += 6;
     if (wantsSale && !isLease) s += 6;
     if (wantedBR !== null && p.bedrooms === wantedBR) s += 4;
+
+    // Title-fragment match: if the user named a unique word from the listing's
+    // title (e.g. "gentry", "columns", "proscenium"), boost enough to clear
+    // RELEVANCE_THRESHOLD on its own. This is what makes follow-up questions
+    // about a specific previously-shown listing pin that listing back into
+    // the prompt context.
+    if (msgWords.length) {
+      const titleWords = title.split(/[^a-z0-9]+/).filter(Boolean);
+      for (const w of msgWords) {
+        if (titleWords.some(tw => tw.length >= 4 && (tw === w || tw.includes(w) || w.includes(tw)))) {
+          s += 6;
+          break; // one hit is enough — avoid stacking on partial overlaps
+        }
+      }
+    }
 
     if (budget) {
       // Budgets of ≥1M are clearly sale prices; anything below is monthly rent.
@@ -1051,7 +1088,10 @@ function fmtListing(p, i) {
     ? `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`
     : `₱${Number(p.price || 0).toLocaleString()}`;
   const dev = p.developer ? `, ${p.developer}` : '';
-  return `${i + 1}. ${p.title} — ${p.location} — ${price} — ${p.bedrooms || 0}BR/${p.bathrooms || 0}BA/${p.sqm || 0}sqm (${p.propertyType || 'Property'}${dev}, ${isLease ? 'For Lease' : 'For Sale'})`;
+  // Tag each line with the title in brackets so the model can easily quote
+  // specific listings when the user asks follow-up detail questions
+  // ("what is the sqm of the Gentry Residences?").
+  return `${i + 1}. [${p.title}] — ${p.location} — ${price} — ${p.bedrooms || 0}BR / ${p.bathrooms || 0}BA / ${p.sqm || 0}sqm — ${p.propertyType || 'Property'}${dev} — ${isLease ? 'For Lease' : 'For Sale'}`;
 }
 
 // ── Server-side derivation of search params from the user's message ──
@@ -1432,7 +1472,7 @@ OUTPUT STYLE — IMPORTANT:
     1. Property cards (image + price + specs) for matched listings
     2. A "Browse all matches" search button
     3. Action buttons for the right page/tool (closing-fees calculator, affordability, amortization, message Catherine, schedule viewing, etc.)
-- So do NOT manually list properties, do NOT include /properties.html URLs, and do NOT include URLs to /calculator.html, /affordability.html, /amortization.html, /rental-yield.html, /zonal.html, /ercf.html, /cost-of-ownership.html, /guide.html, /neighborhoods.html, /list-property.html, /about.html, or /testimonials.html. Those will all be rendered as buttons.
+- So do NOT manually list properties as a numbered list, do NOT include /properties.html URLs, and do NOT include URLs to /calculator.html, /affordability.html, /amortization.html, /rental-yield.html, /zonal.html, /ercf.html, /cost-of-ownership.html, /guide.html, /neighborhoods.html, /list-property.html, /about.html, or /testimonials.html. Those will all be rendered as buttons.
 - DO mention by name when relevant ("you can use our closing fees calculator") — just don't link them, the button handles that.
 - Use peso symbol ₱. Use local terms (CCT, TCT, BIR zonal, CGT, DST, RPT, ERCF) when accurate.
 - Use Filipino/Taglish if the user does; default to clear English.
@@ -1442,6 +1482,12 @@ OUTPUT STYLE — IMPORTANT:
 ANSWERING "DO YOU HAVE PROPERTIES IN <AREA>?":
 - Check the "By area" list. If the area appears, say something like: "Yes — here's what's in <area> right now:" (the cards + Browse button render below automatically).
 - If the area is NOT in the list, say honestly: "We don't have anything currently published in <area>. Catherine can source one — message her at m.me/glrarealty." (Cards may still render with closest matches.)
+
+ANSWERING SPECIFIC QUESTIONS ABOUT A LISTED PROPERTY (e.g. "what is the sqm of the Gentry Residences?", "how many bedrooms in The Columns?", "price of San Antonio Residence?"):
+- LOOK UP the listing in the "MOST RELEVANT LISTINGS" block below. Each line has the title in [brackets] followed by location, price, BR/BA/sqm, type, and category.
+- If you find it, answer DIRECTLY with the facts from that line. Example: "Gentry Residences in Makati City is a 2BR / 2BA / 95sqm condominium for ₱30,000,000." Quote only the fields the user asked about — don't dump everything.
+- If the property the user named is NOT in the snapshot, say honestly: "I don't have that one in my live inventory — message Catherine at m.me/glrarealty for the latest details." Do NOT invent numbers.
+- NEVER say "I don't have the specific details" for a property that IS in the snapshot below. The data is right there — use it.
 
 TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.
 ${SITE_MAP}${listingContext}`;
