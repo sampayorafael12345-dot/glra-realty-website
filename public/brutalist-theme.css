@@ -254,21 +254,30 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 /* ── FLOATING BUTTONS ──
    The global "button { padding:14px 24px !important }" rule above would
    squash the FAB tap target — these explicit padding + box-sizing overrides
-   keep each circle a clean 46x46 tap target on desktop and mobile. */
+   keep each circle a clean 46x46 tap target on desktop and mobile.
+   2px ink border + hard shadow so the buttons read as solid against the
+   cream background and don't look like they're floating without an edge. */
 .floating-buttons .floating-btn,.floating-buttons .fab-toggle{
   box-sizing:border-box !important;
   padding:0 !important;
   border-radius:0 !important;
-  box-shadow:none !important;
-  border:0 !important;
+  box-shadow:4px 4px 0 var(--ab-ink) !important;
+  border:2px solid var(--ab-ink) !important;
   width:46px !important;height:46px !important;
   font-family:inherit !important;letter-spacing:0 !important;text-transform:none !important;
   display:flex !important;align-items:center !important;justify-content:center !important;
 }
-.floating-buttons .floating-btn:hover{transform:none !important;background:var(--ab-hot) !important;color:#fff !important}
-.floating-buttons .btn-darkmode{background:var(--ab-hot) !important;color:#fff !important;border:0 !important}
+.floating-buttons .floating-btn:hover,.floating-buttons .fab-toggle:hover{
+  transform:translate(-2px,-2px) !important;
+  box-shadow:6px 6px 0 var(--ab-ink) !important;
+  background:var(--ab-hot) !important;color:#fff !important;
+}
+.floating-buttons .btn-darkmode{background:var(--ab-hot) !important;color:#fff !important;border:2px solid var(--ab-ink) !important}
 .floating-buttons .fab-toggle{background:var(--ab-hot) !important;color:#fff !important}
 .floating-buttons .fab-toggle.is-open{background:var(--ab-ink) !important;color:#fff !important}
+/* In dark mode the cream ink is too soft against the dark page — use hot accent on the shadow */
+html body.dark-mode .floating-buttons .floating-btn,
+html body.dark-mode .floating-buttons .fab-toggle{box-shadow:4px 4px 0 var(--ab-hot) !important}
 
 /* ── BACK TO TOP ── */
 .back-to-top{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-radius:0 !important;width:46px !important;height:46px !important}

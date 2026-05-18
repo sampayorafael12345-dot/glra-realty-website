@@ -842,6 +842,9 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 .loader.hidden{opacity:0;pointer-events:none}
 .loader-content{text-align:center}
 .loader-logo{font-family:'Inter',sans-serif;font-size:54px;font-weight:900;letter-spacing:-2px;color:var(--ab-ink);text-transform:uppercase}
+.loader-logo-img{display:block;margin:0 auto;height:140px;width:auto;animation:loaderPulse 1.6s ease-in-out infinite}
+@keyframes loaderPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(.96)}}
+@media(max-width:560px){.loader-logo-img{height:110px}}
 .loader-bar{width:120px;height:3px;background:var(--ab-paper-2);margin:18px auto 0;position:relative;overflow:hidden}
 .loader-bar::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:var(--ab-hot);animation:loadbar 1.2s linear infinite}
 @keyframes loadbar{to{left:100%}}
@@ -901,7 +904,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
-<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+<div class="loader" id="loader"><div class="loader-content"><img src="/logo.png" alt="GLRA Realty" class="loader-logo-img" data-logo-auto><div class="loader-bar"></div></div></div>
 
 <!-- Legacy navbar — kept in DOM (hidden via CSS) so main.js's scroll handler doesn't error -->
 <nav class="navbar" id="navbar" aria-hidden="true">

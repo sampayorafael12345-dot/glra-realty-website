@@ -31,12 +31,19 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── Dark mode toggle ──────────────────────────────────────
+function syncLogos() {
+  const dark = document.body.classList.contains('dark-mode');
+  document.querySelectorAll('img[data-logo-auto]').forEach(img => {
+    img.src = dark ? '/hero-logo.png' : '/logo.png';
+  });
+}
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   const isDark = document.body.classList.contains('dark-mode');
   localStorage.setItem('darkMode', isDark);
   const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
   if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  syncLogos();
 }
 
 // Apply saved dark mode preference on load
@@ -45,7 +52,10 @@ if (localStorage.getItem('darkMode') === 'true') {
   document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
     if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
+    syncLogos();
   });
+} else {
+  document.addEventListener('DOMContentLoaded', syncLogos);
 }
 
 // ── Mobile menu open/close ────────────────────────────────

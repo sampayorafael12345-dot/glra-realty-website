@@ -776,6 +776,8 @@ body{font-family:'Inter','Segoe UI',sans-serif !important;background:var(--ab-pa
 }
 .login-brand,.login-title{color:#0a0a0a !important}
 .login-brand small{color:rgba(10,10,10,.55) !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:2px !important}
+.login-portal-label{font-family:'JetBrains Mono',monospace !important;font-size:13px !important;letter-spacing:5px !important;text-transform:uppercase !important;color:#ff3d00 !important;font-weight:700 !important;padding:6px 14px !important;border:2px solid #ff3d00 !important}
+.login-title{font-size:36px !important;margin-top:12px !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-1.5px !important;text-transform:uppercase !important}
 .login-sub{color:#6a6a6a !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;text-transform:uppercase !important}
 .login-field label{color:#0a0a0a !important}
 .login-field input{background:#f1eee9 !important;color:#0a0a0a !important;border:2px solid #0a0a0a !important}
@@ -808,20 +810,22 @@ body{font-family:'Inter','Segoe UI',sans-serif !important;background:var(--ab-pa
 .main-header{background:var(--card-bg) !important;border-bottom:2px solid var(--ab-line) !important;box-shadow:none !important}
 .page-title{font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.6px !important;font-size:22px !important;color:var(--ab-ink) !important}
 .page-sub{color:var(--ab-gray) !important;letter-spacing:1.2px !important;text-transform:uppercase !important;font-size:9.5px !important;font-weight:600 !important;margin-top:3px !important}
-.sidebar-toggle{border:2px solid var(--ab-line) !important;color:var(--ab-ink) !important}
-.sidebar-toggle:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.sidebar-toggle{border:2px solid var(--ab-line) !important;color:var(--ab-ink) !important;background:var(--ab-paper) !important}
+.sidebar-toggle:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
 
-/* Header buttons */
+/* Header buttons — bg uses literal #0a0a0a so it doesn't flip in dark mode
+   (var(--ab-ink) becomes cream in dark mode, which collided with white text). */
 .hdr-btn{
-  border:2px solid var(--ab-ink) !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border:2px solid #0a0a0a !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;
   font-family:'JetBrains Mono',monospace !important;letter-spacing:1.2px !important;text-transform:uppercase !important;
   font-weight:700 !important;font-size:10.5px !important;padding:8px 14px !important;
 }
-.hdr-btn:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
-.hdr-btn.primary{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.hdr-btn:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
+.hdr-btn.primary{background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a !important}
 .hdr-btn.primary:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
 .hdr-btn.danger{background:var(--ab-paper) !important;color:#dc2626 !important;border-color:#dc2626 !important}
 .hdr-btn.danger:hover{background:#dc2626 !important;color:#fff !important}
+body.dark-mode .hdr-btn{border-color:#3a3a36 !important}
 
 /* Stat cards */
 .stat-card{
@@ -861,17 +865,21 @@ input:focus,textarea:focus,select:focus{
   font-family:'JetBrains Mono',monospace !important;letter-spacing:1.3px !important;
   text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important;
 }
-.fbtn.primary,.sub-import-btn{background:var(--ab-ink) !important;color:#fff !important;border:0 !important}
+.fbtn.primary,.sub-import-btn{background:#0a0a0a !important;color:#fff !important;border:0 !important}
 .fbtn.primary:hover,.sub-import-btn:hover{background:#ff3d00 !important;color:#fff !important}
 .fbtn.secondary{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
-.fbtn.secondary:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.fbtn.secondary:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
+.hero-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:1px solid var(--ab-line) !important}
+.hero-btn:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
+.hero-btn.danger:hover{background:#dc2626 !important;color:#fff !important;border-color:#dc2626 !important}
+.act-edit:hover{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
 
-/* Tables */
+/* Tables — header row stays dark in both modes (literal #0a0a0a, not --ab-ink). */
 table{font-family:'Inter',sans-serif !important}
-th{background:var(--ab-ink) !important;color:#f1eee9 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;font-size:10px !important;font-weight:700 !important;border-bottom:2px solid var(--ab-ink) !important}
-body.dark-mode th{background:#1a1a17 !important;color:#f1eee9 !important}
+th{background:#0a0a0a !important;color:#f1eee9 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;font-size:10px !important;font-weight:700 !important;border-bottom:2px solid #0a0a0a !important}
 td{border-bottom:1px solid var(--ab-line) !important}
-tr:hover td{background:rgba(255,61,0,.05) !important}
+tr:hover td{background:rgba(255,61,0,.12) !important;color:var(--ab-ink) !important}
+body.dark-mode tr:hover td{background:rgba(255,61,0,.18) !important}
 .tbl-img{border:2px solid var(--ab-line) !important;border-radius:0 !important}
 
 /* Badges */
@@ -885,19 +893,20 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 .act-view{background:rgba(255,61,0,.08) !important;color:#ff3d00 !important;border:1px solid rgba(255,61,0,.3) !important}
 .act-view:hover{background:#ff3d00 !important;color:#fff !important}
 
-/* Modal */
+/* Modal — header always dark (literal #0a0a0a) so the close X stays readable in both modes */
 .modal-ov{background:rgba(10,10,10,.88) !important}
 .modal-box{background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;box-shadow:8px 8px 0 #ff3d00 !important;border-radius:0 !important}
-.modal-hd{background:var(--ab-ink) !important;border-bottom:2px solid #ff3d00 !important}
+.modal-hd{background:#0a0a0a !important;border-bottom:2px solid #ff3d00 !important}
 .modal-title{color:#fff !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.5px !important;font-size:18px !important}
+.modal-close{color:rgba(255,255,255,.6) !important}
 .modal-close:hover{color:#ff3d00 !important}
 
-/* Toast */
-.toast{background:var(--ab-ink) !important;color:#f1eee9 !important;border:0 !important;border-left:4px solid #ff3d00 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;font-size:11px !important;text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important;box-shadow:6px 6px 0 var(--ab-line) !important}
+/* Toast — always dark */
+.toast{background:#0a0a0a !important;color:#f1eee9 !important;border:0 !important;border-left:4px solid #ff3d00 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;font-size:11px !important;text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important;box-shadow:6px 6px 0 var(--ab-line) !important}
 
-/* Loader */
+/* Loader — always dark */
 .load-ov{background:rgba(10,10,10,.85) !important}
-.load-box{background:var(--ab-ink) !important;border:2px solid #ff3d00 !important;border-radius:0 !important}
+.load-box{background:#0a0a0a !important;border:2px solid #ff3d00 !important;border-radius:0 !important}
 .load-spin{border-color:rgba(255,61,0,.2) !important;border-top-color:#ff3d00 !important}
 .load-txt{color:#fff !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-size:11px !important}
 
@@ -906,16 +915,21 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 
 /* Account card */
 .acc-card{background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;box-shadow:none !important}
-.acc-card:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
-.acc-av{background:var(--ab-ink) !important;color:#ff3d00 !important;border:2px solid var(--ab-line) !important;border-radius:0 !important}
+.acc-card:hover{box-shadow:4px 4px 0 var(--ab-line) !important;border-color:#ff3d00 !important}
+.acc-av{background:#0a0a0a !important;color:#ff3d00 !important;border:2px solid var(--ab-line) !important;border-radius:0 !important}
 
 /* Hero card */
 .hero-card{border:2px solid var(--ab-line) !important;border-radius:0 !important;box-shadow:none !important}
 .hero-card:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
 .hero-def{background:rgba(255,61,0,.1) !important;color:#ff3d00 !important;border:1px solid rgba(255,61,0,.3) !important;border-radius:0 !important}
 
-/* Filter bar / search wrapper */
+/* Filter bar / search wrapper — restore left-padding for the magnifier icon
+   (the global "input{padding:13px 16px !important}" rule wipes the original
+   padding-left:36px and the icon ends up stacked over the placeholder). */
+.fsearch{position:relative}
 .fsearch input,.fsel{background:var(--ab-paper) !important}
+.fsearch input{padding-left:38px !important}
+.fsearch > i{position:absolute !important;left:14px !important;top:50% !important;transform:translateY(-50%) !important;color:#ff3d00 !important;font-size:12px !important;z-index:2 !important;pointer-events:none !important}
 
 /* Upload zone */
 .upload-zone{border:2px dashed var(--ab-line) !important;background:var(--ab-paper) !important}
@@ -934,12 +948,34 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 
 /* Tasks (preserve color signals but flatten borders) */
 .tasks-stat{border:2px solid var(--ab-line) !important;border-radius:0 !important;box-shadow:none !important}
-.tasks-stat:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
-.tasks-bulk-bar{background:var(--ab-ink) !important;border-radius:0 !important}
+.tasks-stat:hover{box-shadow:4px 4px 0 var(--ab-line) !important;border-color:#ff3d00 !important}
+.tasks-bulk-bar{background:#0a0a0a !important;border-radius:0 !important}
 .t-status{border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;font-weight:700 !important}
 
 /* Scrollbar */
 *::-webkit-scrollbar-thumb{background:#ff3d00 !important;border-radius:0 !important}
+
+/* ── DARK-MODE HOVER SAFETY-NET ───────────────────────────
+   Any legacy rule that does `:hover{background:var(--gold)}` etc. flips to
+   orange — but unstyled or text-only hovers still inherit cream backgrounds
+   in dark mode. Force-orange the few remaining widgets that were still
+   showing white-on-white. */
+body.dark-mode .nav-item:hover{background:rgba(255,61,0,.18) !important;color:#fff !important}
+body.dark-mode .nav-item:hover i{color:#ff3d00 !important}
+body.dark-mode .stat-card:hover{border-color:#ff3d00 !important;box-shadow:6px 6px 0 #3a3a36 !important}
+body.dark-mode .fsel:hover,
+body.dark-mode .fsearch input:hover{border-color:#ff3d00 !important}
+body.dark-mode .acc-card:hover{border-color:#ff3d00 !important}
+body.dark-mode .hero-card:hover{border-color:#ff3d00 !important}
+body.dark-mode .tasks-stat:hover{border-color:#ff3d00 !important}
+body.dark-mode .perm-row:hover{border-color:#ff3d00 !important;background:rgba(255,61,0,.08) !important}
+body.dark-mode .upload-zone:hover{border-color:#ff3d00 !important;background:rgba(255,61,0,.06) !important}
+body.dark-mode .upload-zone:hover p{color:#ff3d00 !important}
+body.dark-mode .modal-close:hover{color:#ff3d00 !important}
+body.dark-mode .stat-num{color:#f1eee9 !important}
+/* Ensure all hover-able row elements never go cream-on-cream */
+body.dark-mode tr:hover td{background:rgba(255,61,0,.18) !important;color:#f1eee9 !important}
+body.dark-mode tr:hover td *{color:inherit !important}
 
 /* ── BULK EMAIL FEATURE STYLES ────────────────────────── */
 .bm-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
@@ -950,8 +986,8 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 .bm-source-tabs{display:flex;gap:0;margin-bottom:14px;border:2px solid var(--ab-line)}
 .bm-srt{flex:1;padding:10px 12px;background:var(--ab-paper);color:var(--ab-ink);border:0;border-right:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;cursor:pointer;transition:.15s}
 .bm-srt:last-child{border-right:0}
-.bm-srt.active{background:var(--ab-ink);color:#fff}
-.bm-srt:hover:not(.active){background:var(--ab-paper-2);color:#ff3d00}
+.bm-srt.active{background:#0a0a0a;color:#fff}
+.bm-srt:hover:not(.active){background:#ff3d00;color:#fff}
 
 .bm-list-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
 .bm-list{max-height:340px;overflow-y:auto;border:2px solid var(--ab-line);background:var(--ab-paper)}
@@ -993,9 +1029,9 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="login-logo"><img src="/logo.png" alt="GLRA"><div class="login-brand">GLRA Realty<small>Admin Portal</small></div></div>
-    <div class="login-title">Welcome Back</div>
-    <div class="login-sub">Sign in to manage your listings and team</div>
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/logo.png" alt="GLRA" data-logo-auto style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-title" style="text-align:center">Welcome Back</div>
+    <div class="login-sub" style="text-align:center">Sign in to manage your listings and team</div>
     <div class="login-field"><label>Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
     <div class="login-field"><label>Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
@@ -1007,7 +1043,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 <div class="admin-shell" id="adminShell">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sb-head"><img src="/logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
+    <div class="sb-head"><img src="/hero-logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
     <nav class="sb-nav">
       <div class="sb-section">Overview</div>
       <a class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
@@ -1022,7 +1058,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="bulkmail_send" style="margin-top:6px;display:none">Outreach</div>
-      <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Bulk Email</a>
+      <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Email Campaigns</a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
@@ -1808,7 +1844,7 @@ const PERM_DEFS = [
   { key: 'submissions_view',        name: 'View Submissions',        desc: 'Can see the property submissions tab (public form pipeline)' },
   { key: 'submissions_import',      name: 'Import Submissions',      desc: 'Can convert a submission into a live Property listing' },
   { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' },
-  { key: 'bulkmail_send',           name: 'Send Bulk Email',         desc: 'Can compose + send bulk emails to subscribers / pasted lists' }
+  { key: 'bulkmail_send',           name: 'Send Email Campaigns',   desc: 'Can compose + send email campaigns to subscribers / pasted lists' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -1879,8 +1915,15 @@ function fmtField(inp){let v=inp.value.replace(/,/g,'');if(v&&!isNaN(v))inp.valu
 function getNum(id){return parseFloat((document.getElementById(id).value||'').replace(/,/g,''))||0}
 
 // ── DARK MODE ─────────────────────────────────────────────
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('dmBtn');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme'}
+function syncLogos(){
+  const dark = document.body.classList.contains('dark-mode');
+  document.querySelectorAll('img[data-logo-auto]').forEach(img => {
+    img.src = dark ? '/hero-logo.png' : '/logo.png';
+  });
+}
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('dmBtn');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme';syncLogos();}
 if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');const b=document.getElementById('dmBtn');if(b)b.innerHTML='<i class="fas fa-sun"></i> Theme'}
+document.addEventListener('DOMContentLoaded', syncLogos);
 
 // ── ROLE & PERMISSION-BASED UI ────────────────────────────
 function applyRoleUI(){
@@ -4929,8 +4972,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Bulk Email'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to contacts in bulk'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
