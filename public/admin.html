@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -954,9 +955,11 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 
 .bm-list-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
 .bm-list{max-height:340px;overflow-y:auto;border:2px solid var(--ab-line);background:var(--ab-paper)}
-.bm-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-bottom:1px solid var(--ab-line);cursor:pointer;transition:.1s}
+.bm-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px 9px 12px;border-bottom:1px solid var(--ab-line);border-left:3px solid transparent;cursor:pointer;transition:.1s}
 .bm-row:last-child{border-bottom:0}
-.bm-row:hover{background:var(--ab-paper-2)}
+.bm-row:hover{background:rgba(255,61,0,.08)}
+.bm-row:has(input[type=checkbox]:checked){background:rgba(255,61,0,.16) !important;border-left-color:#ff3d00}
+.bm-row:has(input[type=checkbox]:checked) .bm-row-email{color:#ff3d00 !important}
 .bm-row input[type=checkbox]{margin-top:3px;cursor:pointer;accent-color:#ff3d00;width:15px;height:15px;flex-shrink:0}
 .bm-row-main{flex:1;min-width:0}
 .bm-row-email{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--ab-ink);word-break:break-all}
@@ -965,9 +968,11 @@ tr:hover td{background:rgba(255,61,0,.05) !important}
 #bmPaste{width:100%;font-family:'JetBrains Mono',monospace !important;font-size:13px !important;font-weight:500 !important;padding:14px !important;resize:vertical;min-height:200px}
 
 .bm-props-list{max-height:300px;overflow-y:auto;border:2px solid var(--ab-line);background:var(--ab-paper);margin-bottom:6px}
-.bm-prop{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--ab-line);cursor:pointer;transition:.1s}
+.bm-prop{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--ab-line);border-left:3px solid transparent;cursor:pointer;transition:.1s}
 .bm-prop:last-child{border-bottom:0}
-.bm-prop:hover{background:var(--ab-paper-2)}
+.bm-prop:hover{background:rgba(255,61,0,.08)}
+.bm-prop:has(input[type=checkbox]:checked){background:rgba(255,61,0,.16) !important;border-left-color:#ff3d00}
+.bm-prop:has(input[type=checkbox]:checked) .bm-prop-title{color:#ff3d00 !important}
 .bm-prop input[type=checkbox]{accent-color:#ff3d00;width:15px;height:15px;flex-shrink:0}
 .bm-prop img{width:54px;height:42px;object-fit:cover;border:1px solid var(--ab-line);flex-shrink:0}
 .bm-prop > div{flex:1;min-width:0}
@@ -1043,6 +1048,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       </div>
       <div class="hdr-right">
         <button class="hdr-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
+        <button class="hdr-btn admin-only" id="importPropBtn" onclick="impOpen()" style="display:none"><i class="fas fa-file-import"></i> <span>Import</span></button>
         <button class="hdr-btn primary admin-only" id="addPropBtn" onclick="openAddProperty()" style="display:none"><i class="fas fa-plus"></i> <span>Add Property</span></button>
         <button class="hdr-btn primary" id="addTaskBtn" onclick="openNewTask()" style="display:none"><i class="fas fa-plus"></i> <span>New Task</span></button>
       </div>
@@ -1206,7 +1212,6 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
             <div class="bm-send-row">
               <button class="hdr-btn primary" id="bmSendBtn" onclick="bmSend()"><i class="fas fa-paper-plane"></i> <span>Send to <b id="bmSendCount">0</b></span></button>
-              <button class="hdr-btn" id="bmTestBtn" onclick="bmTestSend()"><i class="fas fa-flask"></i> Send test to me</button>
               <button class="hdr-btn" onclick="bmReset()"><i class="fas fa-redo"></i> Reset</button>
               <div class="bm-result" id="bmResult" style="display:none"></div>
             </div>
@@ -4652,33 +4657,6 @@ async function bmSend(){
   }
 }
 
-async function bmTestSend(){
-  if(!CU || !CU.email){ showToast('Could not find your email', true); return; }
-  const subject = (document.getElementById('bmSubject').value || '').trim() || 'GLRA Bulk Email Test';
-  const fromName = (document.getElementById('bmFromName').value || 'GLRA Realty').trim();
-  const body = (document.getElementById('bmBody').value || '').trim();
-  if(!body && !bmState.selectedProps.size){ showToast('Write a message or attach at least one property first', true); return; }
-  const html = bmBuildEmailHtml();
-  const btn = document.getElementById('bmTestBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending test...';
-  try {
-    const res = await apiFetch('/api/admin/bulk-email', {
-      method: 'POST',
-      body: JSON.stringify({ recipients:[CU.email], subject: '[TEST] '+subject, fromName, html, isTest:true })
-    });
-    const d = await res.json();
-    if(res.ok && d.success) showToast(`Test sent to ${CU.email}`);
-    else showToast(d.error || 'Test send failed', true);
-  } catch (e) {
-    showToast('Network error: ' + e.message, true);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-  }
-}
-
 function bmReset(){
   if(!confirm('Clear everything?')) return;
   bmState.selectedSubs.clear();
@@ -4699,6 +4677,252 @@ function bmReset(){
   bmRenderPreview();
 }
 
+// ── PROPERTY IMPORT (XLSX / CSV) ──────────────────────────
+// Spreadsheet column layout (case-insensitive, punctuation-tolerant):
+//   Status · Caption · Property · Location · Listing Type · Property Type
+//   Land Area · Floor Area · BR · TB · P · Price · Monthly Rental
+//   Price Per SQM · Rate · Commission · Fixed Amount · Total Comm.
+//   Parking Price · Add. Prk. Status · Developer / Owner · Note
+const impState = { rows: [] };
+
+function impOpen(){
+  if(typeof XLSX === 'undefined'){ showToast('Spreadsheet parser still loading — try again in a second.', true); return; }
+  if(!hasPerm('properties_create')){ showToast('You don\'t have permission to import properties', true); return; }
+  document.getElementById('impModal').classList.add('open');
+  impReset();
+}
+function impClose(){ document.getElementById('impModal').classList.remove('open'); }
+
+function impReset(){
+  impState.rows = [];
+  document.getElementById('impStep1').style.display = '';
+  document.getElementById('impStep2').style.display = 'none';
+  document.getElementById('impResult').style.display = 'none';
+}
+
+// Normalize a header label so "Property Type", "property_type", "PROP-TYPE " all match.
+function impNorm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+function impFindCol(headers, ...candidates){
+  for(const c of candidates){
+    const target = impNorm(c);
+    const i = headers.findIndex(h => impNorm(h) === target);
+    if(i !== -1) return i;
+  }
+  return -1;
+}
+
+function impNum(v){
+  if(v === '' || v == null || v === false || v === true) return 0;
+  const s = String(v).replace(/[₱,$\s]/g,'');
+  const n = parseFloat(s.replace(/[^\d.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function impPropType(raw){
+  const s = String(raw||'').trim();
+  if(!s) return 'Condominium';
+  // Common variants from the user's sheet ("Condominium - Studio", "Condominium - 1BR" etc.) collapse to the base type.
+  if(/^condominium/i.test(s)) return 'Condominium';
+  if(/^townhouse/i.test(s)) return 'Townhouse';
+  if(/^house\s*(and|&)?\s*lot/i.test(s)) return 'House and Lot';
+  if(/commercial\s*space/i.test(s)) return 'Commercial Space';
+  if(/commercial\s*lot/i.test(s)) return 'Commercial Lot';
+  if(/residential\s*lot/i.test(s)) return 'Residential Lot';
+  if(/agricultural\s*lot/i.test(s)) return 'Residential Lot'; // closest match in the existing taxonomy
+  if(/\blot\b/i.test(s)) return 'Residential Lot';
+  return s;
+}
+
+function impStatus(raw){
+  const s = String(raw||'').trim().toLowerCase();
+  if(!s) return 'available';
+  if(/do\s*not\s*publish|dnp/.test(s)) return 'unpublished';
+  if(/^sold|^leased|sold\s*\/\s*leased/.test(s)) return 'sold';
+  return 'available';
+}
+
+function impListingType(raw, fallbackMonthlyRental){
+  const s = String(raw||'').toUpperCase();
+  if(/LEASE|RENT/.test(s)) return 'FOR LEASE';
+  if(/SALE/.test(s)) return 'FOR SALE';
+  return fallbackMonthlyRental > 0 ? 'FOR LEASE' : 'FOR SALE';
+}
+
+function impReadFile(file){
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){ showToast('Spreadsheet parser not loaded — refresh the page and try again.', true); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      if(!ws){ showToast('No sheet found in file', true); return; }
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', blankrows:false });
+      if(!rows.length){ showToast('Empty file', true); return; }
+
+      // Find the header row by looking for the "Property" + "Location" tokens (scan first 5 rows).
+      let headerIdx = 0;
+      for(let i = 0; i < Math.min(rows.length, 5); i++){
+        const cells = rows[i].map(c => impNorm(c));
+        if(cells.includes('property') && cells.includes('location')){ headerIdx = i; break; }
+      }
+      const headers = rows[headerIdx] || [];
+
+      const c = {
+        status:    impFindCol(headers, 'Status'),
+        caption:   impFindCol(headers, 'Caption', 'Description'),
+        title:     impFindCol(headers, 'Property', 'Title', 'Name'),
+        location:  impFindCol(headers, 'Location', 'Area'),
+        listing:   impFindCol(headers, 'Listing Type', 'Listing'),
+        propType:  impFindCol(headers, 'Property Type', 'Type'),
+        landArea:  impFindCol(headers, 'Land Area', 'Lot Area'),
+        floorArea: impFindCol(headers, 'Floor Area', 'SQM', 'Sqm', 'Sq M'),
+        br:        impFindCol(headers, 'BR', 'Bedrooms', 'Bedroom'),
+        tb:        impFindCol(headers, 'TB', 'Bathrooms', 'Bathroom', 'T&B'),
+        parking:   impFindCol(headers, 'P', 'Parking'),
+        price:     impFindCol(headers, 'Price', 'Selling Price'),
+        rent:      impFindCol(headers, 'Monthly Rental', 'Rental', 'Rent'),
+        ppsqm:     impFindCol(headers, 'Price Per SQM', 'Price/SQM'),
+        rate:      impFindCol(headers, 'Rate'),
+        commission:impFindCol(headers, 'Commission'),
+        fixed:     impFindCol(headers, 'Fixed Amount', 'Fixed'),
+        totalComm: impFindCol(headers, 'Total Comm.', 'Total Comm', 'Total Commission'),
+        parkPrice: impFindCol(headers, 'Parking Price'),
+        addPrk:    impFindCol(headers, 'Add. Prk. Status', 'Additional Parking'),
+        dev:       impFindCol(headers, 'Developer / Owner', 'Developer', 'Owner'),
+        note:      impFindCol(headers, 'Note', 'Notes', 'Remarks')
+      };
+
+      if(c.title === -1 || c.location === -1){
+        showToast('Required columns missing: need "Property" and "Location"', true);
+        return;
+      }
+
+      const includeUnpub = document.getElementById('impIncludeUnpub').checked;
+      const parsed = [];
+      let skipped = 0, forSale = 0, forLease = 0;
+
+      for(let i = headerIdx + 1; i < rows.length; i++){
+        const r = rows[i];
+        if(!r || !r.length) continue;
+        const title = String(r[c.title]||'').trim();
+        if(!title){ skipped++; continue; }
+
+        const stat = impStatus(r[c.status]);
+        if(stat === 'unpublished' && !includeUnpub){ skipped++; continue; }
+
+        const monthlyRental = c.rent !== -1 ? impNum(r[c.rent]) : 0;
+        const listingType = impListingType(c.listing !== -1 ? r[c.listing] : '', monthlyRental);
+        if(listingType === 'FOR LEASE') forLease++; else forSale++;
+
+        const get = (col) => col !== -1 ? r[col] : '';
+
+        parsed.push({
+          title,
+          location: String(get(c.location)||'').trim(),
+          listingType,
+          propertyType: impPropType(get(c.propType)),
+          status: stat === 'unpublished' ? 'available' : stat,
+          description: String(get(c.caption)||'').trim(),
+          landArea: impNum(get(c.landArea)),
+          sqm: impNum(get(c.floorArea)) || impNum(get(c.landArea)),
+          bedrooms: impNum(get(c.br)),
+          bathrooms: impNum(get(c.tb)),
+          parking: impNum(get(c.parking)),
+          price: impNum(get(c.price)),
+          monthlyRental,
+          pricePerSqm: String(get(c.ppsqm)||'').trim(),
+          commission: impNum(get(c.rate)),
+          fixedAmount: impNum(get(c.fixed)),
+          totalCommission: impNum(get(c.totalComm)) || impNum(get(c.commission)),
+          parkingPrice: impNum(get(c.parkPrice)),
+          additionalParkingStatus: String(get(c.addPrk)||'').trim(),
+          developer: String(get(c.dev)||'').trim(),
+          notes: String(get(c.note)||'').trim(),
+          featured: false,
+          gallery: []
+        });
+      }
+
+      impState.rows = parsed;
+      impRenderPreview({ skipped, forSale, forLease });
+    } catch (err) {
+      console.error('xlsx parse error:', err);
+      showToast('Failed to parse file: ' + err.message, true);
+    }
+  };
+  reader.onerror = () => showToast('Failed to read file', true);
+  reader.readAsArrayBuffer(file);
+}
+
+function impRenderPreview({ skipped, forSale, forLease }){
+  document.getElementById('impStep1').style.display = 'none';
+  document.getElementById('impStep2').style.display = '';
+  document.getElementById('impResult').style.display = 'none';
+  document.getElementById('impCountKeep').textContent = impState.rows.length;
+  document.getElementById('impCountSkipped').textContent = skipped || 0;
+  document.getElementById('impCountForSale').textContent = forSale || 0;
+  document.getElementById('impCountForLease').textContent = forLease || 0;
+  document.getElementById('impCount').textContent = impState.rows.length;
+
+  const tb = document.querySelector('#impTable tbody');
+  const slice = impState.rows.slice(0, 200);
+  tb.innerHTML = slice.map(p => {
+    const priceDisplay = p.price ? fmt(p.price) : (p.monthlyRental ? fmt(p.monthlyRental) + '/mo' : '—');
+    const sizeDisplay = `${p.bedrooms||'—'} / ${p.bathrooms||'—'} / ${p.sqm||p.landArea||'—'}`;
+    return `<tr>
+      <td><b>${esc(p.title)}</b></td>
+      <td>${esc(p.location)||'—'}</td>
+      <td>${esc(p.propertyType)}</td>
+      <td><span class="badge ${p.listingType==='FOR LEASE'?'b-lease':'b-sale'}">${esc(p.listingType)}</span></td>
+      <td>${priceDisplay}</td>
+      <td>${sizeDisplay}</td>
+      <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status)}</span></td>
+    </tr>`;
+  }).join('');
+
+  if(impState.rows.length > 200){
+    tb.insertAdjacentHTML('beforeend', `<tr><td colspan="7" style="text-align:center;font-style:italic;color:var(--ab-gray)">… and ${impState.rows.length - 200} more rows (all will be imported)</td></tr>`);
+  } else if(!impState.rows.length){
+    tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--ab-gray)">Nothing to import — all rows were skipped.</td></tr>`;
+  }
+}
+
+async function impDoImport(){
+  if(!impState.rows.length){ showToast('No rows to import', true); return; }
+  if(!confirm(`Import ${impState.rows.length} propert${impState.rows.length===1?'y':'ies'}?\n\nExisting listings with the same title + location will be skipped automatically.`)) return;
+
+  const btn = document.getElementById('impDoBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing…';
+
+  try {
+    const res = await apiFetch('/api/admin/properties/bulk', {
+      method: 'POST',
+      body: JSON.stringify(impState.rows)
+    });
+    const d = await res.json();
+    if(res.ok && d.success){
+      const dup = impState.rows.length - (d.added || 0);
+      const result = document.getElementById('impResult');
+      result.style.display = '';
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:8px"></i> ${d.added} added · ${dup} skipped (duplicates) · ${impState.rows.length} total`;
+      showToast(`Imported ${d.added} of ${impState.rows.length}`);
+      if(typeof loadAllProps === 'function') loadAllProps();
+      if(typeof loadStats === 'function') loadStats();
+    } else {
+      showToast(d.error || 'Import failed', true);
+    }
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
 // ── TABS ──────────────────────────────────────────────────
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
@@ -4712,6 +4936,9 @@ function switchTab(name){
   // Add property button only on properties tab for admins
   const addBtn=document.getElementById('addPropBtn');
   if(addBtn)addBtn.style.display=(name==='properties'&&hasPerm('properties_create'))?'':'none';
+  // Import properties button — same gating
+  const impBtn=document.getElementById('importPropBtn');
+  if(impBtn)impBtn.style.display=(name==='properties'&&hasPerm('properties_create'))?'':'none';
   // Hero upload button — gated by hero_upload permission
   const heroBtn=document.getElementById('heroUploadBtn');
   if(heroBtn)heroBtn.style.display=(name==='hero'&&hasPerm('hero_upload'))?'':'none';
@@ -4777,6 +5004,78 @@ function switchTab(name){
       <div style="display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color)">
         <button id="saveAccBtn" onclick="saveAccount()" style="padding:11px 24px;background:var(--gold);color:#fff;border:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;gap:8px"><i class="fas fa-save"></i> Save Account</button>
         <button onclick="closeAccModal()" style="padding:11px 24px;background:var(--gray-light);color:var(--gray);border:1px solid var(--border-color);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROPERTY IMPORT MODAL -->
+<style>
+.imp-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.imp-tbl th{background:var(--ab-ink) !important;color:#f1eee9 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.3px !important;font-size:9.5px !important;padding:8px 10px !important;text-align:left !important;text-transform:uppercase !important;border-bottom:2px solid var(--ab-ink) !important;position:sticky;top:0;z-index:1}
+.imp-tbl td{padding:8px 10px;border-bottom:1px solid var(--ab-line);color:var(--ab-ink);font-size:12px;vertical-align:top;font-family:'Inter',sans-serif}
+.imp-tbl tr:hover td{background:rgba(255,61,0,.05)}
+.imp-tbl .imp-skip td{opacity:.45}
+.imp-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.imp-summary > div{background:var(--ab-paper-2);border:2px solid var(--ab-line);padding:12px 14px}
+.imp-summary .imp-n{font-family:'Inter',sans-serif;font-weight:900;font-size:24px;letter-spacing:-1px;color:var(--ab-ink);line-height:1}
+.imp-summary .imp-l{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray);font-weight:700;margin-top:4px}
+.imp-summary .imp-n.hot{color:#ff3d00}
+@media(max-width:700px){.imp-summary{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="modal-ov" id="impModal">
+  <div class="modal-box" style="max-width:980px">
+    <div class="modal-hd">
+      <div class="modal-title"><i class="fas fa-file-import"></i> <span style="margin-left:8px">Import Properties</span></div>
+      <button class="modal-close" onclick="impClose()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" style="padding:24px">
+
+      <div id="impStep1">
+        <label class="upload-zone" style="display:block;cursor:pointer">
+          <i class="fas fa-file-excel"></i>
+          <p style="font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:14px;color:var(--ab-ink)">Drop your XLSX, XLS, or CSV file</p>
+          <p style="font-size:11px;color:var(--ab-gray);margin-top:6px;font-family:'JetBrains Mono',monospace;letter-spacing:1px">First sheet · headers expected in row 1 (auto-detected up to row 5)</p>
+          <input type="file" accept=".xlsx,.xls,.csv" onchange="impReadFile(this.files[0])">
+        </label>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+          <label style="cursor:pointer;font-size:13px;color:var(--ab-ink);display:flex;align-items:center;gap:8px"><input type="checkbox" id="impIncludeUnpub" style="accent-color:#ff3d00;width:15px;height:15px"> Include rows with status "Do not Publish"</label>
+        </div>
+        <details style="margin-top:14px">
+          <summary style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-hot);font-weight:700">Expected column headers</summary>
+          <div style="margin-top:8px;padding:12px;background:var(--ab-paper-2);border:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--ab-ink)">
+            <b>Required:</b> Property, Location, Price (or Monthly Rental)<br>
+            <b>Recommended:</b> Status, Caption, Listing Type, Property Type, Land Area, Floor Area, BR, TB, P, Price Per SQM, Rate, Total Comm.<br>
+            <b>Optional:</b> Parking Price, Add. Prk. Status, Developer / Owner, Note<br>
+            <span style="color:var(--ab-gray);font-size:10px">Header matching is case-insensitive. Whitespace and punctuation are tolerated.</span>
+          </div>
+        </details>
+      </div>
+
+      <div id="impStep2" style="display:none">
+        <div class="imp-summary">
+          <div><div class="imp-n" id="impCountKeep">0</div><div class="imp-l">To import</div></div>
+          <div><div class="imp-n hot" id="impCountSkipped">0</div><div class="imp-l">Skipped (status / blank)</div></div>
+          <div><div class="imp-n" id="impCountForSale">0</div><div class="imp-l">For sale</div></div>
+          <div><div class="imp-n" id="impCountForLease">0</div><div class="imp-l">For lease</div></div>
+        </div>
+
+        <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div class="field-hint">Preview shows the first 200 rows. Existing listings with the same <b>title + location</b> are skipped server-side.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="hdr-btn" onclick="impReset()"><i class="fas fa-redo"></i> Choose another file</button>
+            <button class="hdr-btn primary" id="impDoBtn" onclick="impDoImport()"><i class="fas fa-cloud-upload-alt"></i> Import <b id="impCount">0</b></button>
+          </div>
+        </div>
+
+        <div style="max-height:420px;overflow:auto;border:2px solid var(--ab-line);background:var(--ab-paper)">
+          <table class="imp-tbl" id="impTable">
+            <thead><tr><th>Title</th><th>Location</th><th>Type</th><th>Listing</th><th>Price</th><th>BR / BA / sqm</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="impResult" style="display:none;margin-top:14px;padding:12px 16px;background:var(--ab-paper-2);border:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--ab-ink);font-weight:700;text-transform:uppercase"></div>
       </div>
     </div>
   </div>
