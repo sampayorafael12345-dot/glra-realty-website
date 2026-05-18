@@ -431,6 +431,22 @@ const propertySubmissionSchema = new mongoose.Schema({
   userAgent: { type: String, default: '' }
 }, { timestamps: true });
 
+// Scheduled bulk-email — created when the admin schedules a campaign for later.
+// A background worker (see bottom of file) wakes up every minute, finds entries
+// with status 'pending' and sendAt <= now, dispatches them, then marks 'sent'.
+const scheduledEmailSchema = new mongoose.Schema({
+  recipients: { type: [String], default: [] },           // already validated + deduped
+  subject:    { type: String, required: true, maxlength: 300 },
+  fromName:   { type: String, default: 'GLRA Realty', maxlength: 80 },
+  html:       { type: String, required: true },          // pre-rendered HTML
+  sendAt:     { type: Date, required: true, index: true },
+  status:     { type: String, enum: ['pending','sending','sent','failed','cancelled'], default: 'pending', index: true },
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' },
+  sentAt:     { type: Date, default: null },
+  result:     { type: mongoose.Schema.Types.Mixed, default: null }   // { total, sent, failed, errors }
+}, { timestamps: true });
+
 // ============ PERMISSIONS ============
 // Master list of every granular permission key in the system.
 const PERMISSION_KEYS = [
