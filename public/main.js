@@ -31,16 +31,26 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── Dark mode toggle ──────────────────────────────────────
+// Swap `<img src>` between /logo.png (black) and /hero-logo.png (white) on
+// every navbar/brand mark. Covers img[data-logo-auto] for opt-in elements
+// plus the common navbar selectors so inner pages don't need markup changes.
 function syncLogos() {
   const dark = document.body.classList.contains('dark-mode');
-  document.querySelectorAll('img[data-logo-auto]').forEach(img => {
+  document.querySelectorAll('img[data-logo-auto], .ab-brand img, .navbar .logo img, .ab-mast img').forEach(img => {
     img.src = dark ? '/hero-logo.png' : '/logo.png';
   });
+}
+// Keep the early-theme `html.dark-mode-pre` class in sync with the body
+// mode flag — otherwise toggling dark→light leaves dark-mode-pre stuck on
+// <html>, and its `body{color:#f1eee9}` rule makes light-mode text invisible.
+function syncDarkModePre() {
+  document.documentElement.classList.toggle('dark-mode-pre', document.body.classList.contains('dark-mode'));
 }
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   const isDark = document.body.classList.contains('dark-mode');
   localStorage.setItem('darkMode', isDark);
+  syncDarkModePre();
   const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
   if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
   syncLogos();
@@ -50,12 +60,16 @@ function toggleDarkMode() {
 if (localStorage.getItem('darkMode') === 'true') {
   document.body.classList.add('dark-mode');
   document.addEventListener('DOMContentLoaded', () => {
+    syncDarkModePre();
     const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
     if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
     syncLogos();
   });
 } else {
-  document.addEventListener('DOMContentLoaded', syncLogos);
+  document.addEventListener('DOMContentLoaded', () => {
+    syncDarkModePre();
+    syncLogos();
+  });
 }
 
 // ── Mobile menu open/close ────────────────────────────────

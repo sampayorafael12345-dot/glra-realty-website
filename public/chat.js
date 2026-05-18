@@ -20,19 +20,28 @@
 button.glra-chat-fab{
   position:fixed !important;left:14px !important;bottom:74px !important;z-index:1100 !important;
   width:58px !important;height:58px !important;
-  border:0 !important;border-radius:0 !important;cursor:pointer !important;
+  border:2px solid #0a0a0a !important;border-radius:0 !important;cursor:pointer !important;
   background:#ff3d00 !important;color:#fff !important;
   font-size:22px !important;letter-spacing:0 !important;text-transform:none !important;
   padding:0 !important;box-sizing:border-box !important;
   display:flex !important;align-items:center !important;justify-content:center !important;
   box-shadow:4px 4px 0 #0a0a0a !important;
-  transition:transform .15s,background .15s !important;
+  transition:transform .15s,background .15s,box-shadow .15s !important;
   font-family:'Inter','Segoe UI',sans-serif !important;
 }
 button.glra-chat-fab:hover{
   background:#0a0a0a !important;color:#fff !important;
   transform:translate(-2px,-2px) !important;
   box-shadow:6px 6px 0 #ff3d00 !important;
+}
+/* In dark mode the black border + black shadow disappear against the dark page —
+   swap to cream border + orange shadow so the inquiry button reads as a solid edge. */
+body.dark-mode button.glra-chat-fab{
+  border-color:#f1eee9 !important;
+  box-shadow:4px 4px 0 #ff3d00 !important;
+}
+body.dark-mode button.glra-chat-fab:hover{
+  box-shadow:6px 6px 0 #f1eee9 !important;
 }
 button.glra-chat-fab svg{width:30px;height:30px;display:block;pointer-events:none}
 button.glra-chat-fab .glra-chat-pulse{

@@ -534,11 +534,12 @@ html body.dark-mode .results-card h3 i,
 html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
 
 /* ════════════════════════════════════════════════════════════
-   LOGO COLOR SWAP — black silhouette in light, white in dark
+   LOGO COLOR SWAP — handled by syncLogos() in main.js, which swaps
+   the <img src> between /logo.png (black) and /hero-logo.png (white)
+   on every dark-mode toggle. No CSS filter so the actual artwork is
+   preserved (transparency, anti-aliasing, etc.).
    ════════════════════════════════════════════════════════════ */
-.navbar .logo img,.ab-brand img{filter:brightness(0) !important;transition:filter .2s !important}
-html body.dark-mode .navbar .logo img,
-html body.dark-mode .ab-brand img{filter:brightness(0) invert(1) !important}
+.navbar .logo img,.ab-brand img{filter:none !important}
 
 /* ════════════════════════════════════════════════════════════
    TOOLS / GUIDES DROPDOWN — consistent font with rest of nav
