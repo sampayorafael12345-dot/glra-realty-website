@@ -1029,7 +1029,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/logo.png" alt="GLRA" data-logo-auto style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
     <div class="login-title" style="text-align:center">Welcome Back</div>
     <div class="login-sub" style="text-align:center">Sign in to manage your listings and team</div>
     <div class="login-field"><label>Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
@@ -1183,6 +1183,21 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
                   <label class="flbl" style="margin-bottom:6px;display:block">Paste emails (one per line, or separated by commas / spaces / semicolons)</label>
                   <textarea id="bmPaste" rows="9" placeholder="anna@example.com&#10;bob@example.com, carla@example.com&#10;diego@example.com; emma@example.com" oninput="bmParsePasted()"></textarea>
                   <div class="field-hint" id="bmPasteHint">Detected: 0 valid · 0 invalid</div>
+
+                  <div class="bm-saved" style="margin-top:14px;padding-top:14px;border-top:2px solid var(--ab-line)">
+                    <label class="flbl" style="margin-bottom:8px;display:block"><i class="fas fa-bookmark"></i> Saved lists</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                      <select id="bmSavedSel" class="finput" style="flex:1;min-width:160px"><option value="">— Pick a saved list —</option></select>
+                      <button class="hdr-btn" onclick="bmLoadSaved()" title="Load into the paste box"><i class="fas fa-folder-open"></i> Load</button>
+                      <button class="hdr-btn" onclick="bmAppendSaved()" title="Append to current paste box"><i class="fas fa-plus"></i> Append</button>
+                      <button class="hdr-btn danger" onclick="bmDeleteSaved()" title="Delete this saved list"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+                      <input type="text" id="bmSavedName" class="finput" placeholder="Name (e.g. Gmail contacts — May 2026)" style="flex:1;min-width:200px">
+                      <button class="hdr-btn primary" onclick="bmSaveCurrent()"><i class="fas fa-save"></i> Save current</button>
+                    </div>
+                    <div class="field-hint" id="bmSavedHint" style="margin-top:8px">Save the emails currently in the paste box so you can reuse them later.</div>
+                  </div>
                 </div>
 
                 <div id="bmSrc-upload" class="bm-source" style="display:none">
@@ -4387,6 +4402,8 @@ async function bmInit(){
     bmRenderPropPicker();
     bmUpdateCount();
     bmRenderPreview();
+    bmRefreshSavedDropdown();
+    bmRefreshScheduled();
   } catch (e) {
     showToast('Failed to load contacts: ' + e.message, true);
   } finally {
@@ -4489,6 +4506,83 @@ function bmClearSelection(which){
   if(which === 'subs'){ bmState.selectedSubs.clear(); bmRenderSubs(); }
   if(which === 'inq'){ bmState.selectedInq.clear(); bmRenderInq(); }
   bmUpdateCount();
+}
+
+// ── SAVED EMAIL LISTS (localStorage) ─────────────────────
+const BM_SAVED_KEY = 'glra_email_lists_v1';
+
+function bmReadSaved(){
+  try { return JSON.parse(localStorage.getItem(BM_SAVED_KEY) || '{}'); }
+  catch { return {}; }
+}
+function bmWriteSaved(obj){
+  try { localStorage.setItem(BM_SAVED_KEY, JSON.stringify(obj)); } catch {}
+}
+function bmRefreshSavedDropdown(){
+  const sel = document.getElementById('bmSavedSel');
+  if(!sel) return;
+  const saved = bmReadSaved();
+  const names = Object.keys(saved).sort((a,b) => (saved[b].updatedAt||0) - (saved[a].updatedAt||0));
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Pick a saved list —</option>' +
+    names.map(n => {
+      const count = (saved[n].emails || []).length;
+      return `<option value="${esc(n)}">${esc(n)} — ${count} email${count===1?'':'s'}</option>`;
+    }).join('');
+  if(names.includes(current)) sel.value = current;
+}
+function bmSaveCurrent(){
+  const nameInput = document.getElementById('bmSavedName');
+  const name = (nameInput.value || '').trim();
+  if(!name){ showToast('Give the list a name first', true); nameInput.focus(); return; }
+  const emails = bmExtractEmails(document.getElementById('bmPaste').value || '');
+  if(!emails.length){ showToast('Paste box is empty — nothing to save', true); return; }
+  const saved = bmReadSaved();
+  if(saved[name] && !confirm(`Overwrite the existing list "${name}"?`)) return;
+  saved[name] = { emails, updatedAt: Date.now() };
+  bmWriteSaved(saved);
+  nameInput.value = '';
+  bmRefreshSavedDropdown();
+  document.getElementById('bmSavedSel').value = name;
+  document.getElementById('bmSavedHint').textContent = `Saved "${name}" (${emails.length} email${emails.length===1?'':'s'}).`;
+  showToast(`Saved "${name}" — ${emails.length} emails`);
+}
+function bmLoadSaved(){
+  const name = document.getElementById('bmSavedSel').value;
+  if(!name){ showToast('Pick a saved list first', true); return; }
+  const saved = bmReadSaved();
+  const entry = saved[name];
+  if(!entry){ showToast('That list no longer exists', true); bmRefreshSavedDropdown(); return; }
+  document.getElementById('bmPaste').value = (entry.emails || []).join('\n');
+  bmParsePasted();
+  document.getElementById('bmSavedHint').textContent = `Loaded "${name}" — ${(entry.emails||[]).length} emails into the paste box.`;
+  showToast(`Loaded "${name}"`);
+}
+function bmAppendSaved(){
+  const name = document.getElementById('bmSavedSel').value;
+  if(!name){ showToast('Pick a saved list first', true); return; }
+  const saved = bmReadSaved();
+  const entry = saved[name];
+  if(!entry){ showToast('That list no longer exists', true); bmRefreshSavedDropdown(); return; }
+  const ta = document.getElementById('bmPaste');
+  const existing = ta.value || '';
+  const joiner = existing && !/\n\s*$/.test(existing) ? '\n' : '';
+  ta.value = existing + joiner + (entry.emails || []).join('\n');
+  bmParsePasted();
+  document.getElementById('bmSavedHint').textContent = `Appended "${name}" — paste box now has ${bmState.pasted.length} unique email${bmState.pasted.length===1?'':'s'}.`;
+  showToast(`Appended "${name}"`);
+}
+function bmDeleteSaved(){
+  const sel = document.getElementById('bmSavedSel');
+  const name = sel.value;
+  if(!name){ showToast('Pick a saved list first', true); return; }
+  if(!confirm(`Delete the saved list "${name}"? This cannot be undone.`)) return;
+  const saved = bmReadSaved();
+  delete saved[name];
+  bmWriteSaved(saved);
+  bmRefreshSavedDropdown();
+  document.getElementById('bmSavedHint').textContent = `Deleted "${name}".`;
+  showToast(`Deleted "${name}"`);
 }
 
 function bmParsePasted(){
