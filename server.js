@@ -176,6 +176,16 @@ const submissionUploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Bulk email — protects Brevo quota. Authenticated route, but still throttled
+// per-IP to avoid runaway loops if the UI is buggy or a token leaks.
+const bulkEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 12,
+  message: { error: 'Too many bulk-email batches. Wait a bit and try again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ============ UPLOADS ============
 const uploadsDir = path.join(__dirname, 'public/uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -438,7 +448,8 @@ const PERMISSION_KEYS = [
   'tasks_delete',   // permanently delete tasks (managers only)
   'submissions_view',    // see the property-submissions tab
   'submissions_import',  // convert a submission into a live Property listing
-  'submissions_delete'   // permanently delete a submission
+  'submissions_delete',  // permanently delete a submission
+  'bulkmail_send'        // compose + send bulk emails from the admin (admins always have this)
 ];
 
 // Sensible defaults per role.
@@ -469,7 +480,8 @@ function defaultPermissionsForRole(role) {
     tasks_delete: false,
     submissions_view: true,
     submissions_import: false,
-    submissions_delete: false
+    submissions_delete: false,
+    bulkmail_send: false
   };
 }
 
@@ -2173,6 +2185,119 @@ app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscri
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
+
+// ============ BULK EMAIL ============
+// Returns a deduplicated list of subscribers + inquiries (with email) so the
+// admin UI can let the user pick recipients without exposing the full models.
+app.get('/api/admin/contact-list', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try {
+    const subscribersRaw = await Subscriber.find({ isActive: { $ne: false } })
+      .select('email name source subscribedAt')
+      .sort({ subscribedAt: -1 })
+      .lean();
+
+    const seenSubs = new Set();
+    const subscribers = [];
+    for (const s of subscribersRaw) {
+      const e = String(s.email || '').toLowerCase().trim();
+      if (!e || seenSubs.has(e)) continue;
+      seenSubs.add(e);
+      subscribers.push({ email: s.email, name: s.name || '', source: s.source || '', subscribedAt: s.subscribedAt });
+    }
+
+    const inquiriesRaw = await Inquiry.find({ email: { $ne: '' } })
+      .select('email name propertyTitle createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Dedupe by email — keep the most recent record.
+    const seenInq = new Set();
+    const inquiries = [];
+    for (const i of inquiriesRaw) {
+      const e = String(i.email || '').toLowerCase().trim();
+      if (!e || seenInq.has(e) || seenSubs.has(e)) continue;
+      seenInq.add(e);
+      inquiries.push({ email: i.email, name: i.name || '', propertyTitle: i.propertyTitle || '', createdAt: i.createdAt });
+    }
+
+    res.json({ subscribers, inquiries });
+  } catch (err) {
+    console.error('contact-list error:', err);
+    res.status(500).json({ error: 'Failed to load contact list' });
+  }
+});
+
+// Send a single email body to many recipients. Validates + dedupes server-side
+// (never trust the client list), throttles concurrency so Brevo doesn't choke,
+// and writes an audit log entry summarising the batch.
+app.post('/api/admin/bulk-email',
+  bulkEmailLimiter,
+  verifyToken,
+  requirePermission('bulkmail_send'),
+  async (req, res) => {
+    try {
+      const { recipients, subject, fromName, html, isTest } = req.body || {};
+      if (!Array.isArray(recipients) || !recipients.length) return res.status(400).json({ error: 'No recipients provided' });
+      if (!subject || typeof subject !== 'string') return res.status(400).json({ error: 'Subject is required' });
+      if (!html || typeof html !== 'string') return res.status(400).json({ error: 'Email body is required' });
+
+      const HARD_MAX = isTest ? 5 : 1000;
+      if (recipients.length > HARD_MAX) return res.status(400).json({ error: `Maximum ${HARD_MAX} recipients per batch` });
+
+      // Validate + dedupe + lowercase. RFC-ish; matches the client-side regex.
+      const emailRx = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const seen = new Set();
+      const clean = [];
+      for (const r of recipients) {
+        const e = String(typeof r === 'string' ? r : (r?.email || '')).trim().toLowerCase();
+        if (!e || !emailRx.test(e) || seen.has(e)) continue;
+        seen.add(e);
+        clean.push(e);
+      }
+      if (!clean.length) return res.status(400).json({ error: 'No valid email addresses found' });
+      if (!brevoApiInstance && !initBrevo()) return res.status(503).json({ error: 'Email service is not configured (BREVO_API_KEY missing).' });
+
+      const safeFrom = String(fromName || 'GLRA Realty').slice(0, 80);
+      const safeSubject = subject.slice(0, 200);
+
+      // Concurrency-limited dispatch — 5 in flight at once.
+      const CONCURRENCY = 5;
+      let sent = 0, failed = 0;
+      const errors = [];
+      let cursor = 0;
+
+      async function worker() {
+        while (cursor < clean.length) {
+          const idx = cursor++;
+          const to = clean[idx];
+          try {
+            const r = await sendEmail(to, safeSubject, html, safeFrom);
+            if (r && r.success) sent++;
+            else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); }
+          } catch (e) {
+            failed++;
+            errors.push({ to, error: e.message });
+          }
+        }
+      }
+
+      const workers = Array.from({ length: Math.min(CONCURRENCY, clean.length) }, () => worker());
+      await Promise.all(workers);
+
+      await logAudit(req, 'BULK_EMAIL', 'BulkEmail', '', safeSubject, {
+        recipients: clean.length,
+        sent,
+        failed,
+        isTest: !!isTest
+      });
+
+      res.json({ success: true, total: clean.length, sent, failed, errors: errors.slice(0, 10) });
+    } catch (err) {
+      console.error('bulk-email error:', err);
+      res.status(500).json({ error: 'Bulk email failed' });
+    }
+  }
+);
 
 app.post('/api/admin/properties/bulk', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
