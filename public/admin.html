@@ -4495,9 +4495,23 @@ function bmParsePasted(){
   const txt = document.getElementById('bmPaste').value || '';
   const valid = bmExtractEmails(txt);
   bmState.pasted = valid;
-  const tokens = txt.split(/[\s,;]+/).filter(Boolean);
-  const invalid = Math.max(0, tokens.length - valid.length);
-  document.getElementById('bmPasteHint').textContent = `Detected: ${valid.length} valid · ${invalid} invalid/duplicate`;
+  // Only count tokens that actually look like email attempts (contain @).
+  // Display names like "Charmaine Valentin <x@y.com>" or "CRB Mary Jane Zulueta"
+  // were being split into separate tokens and falsely counted as "invalid".
+  const attempts = txt.match(/[^\s,;<>"'()]*@[^\s,;<>"'()]*/g) || [];
+  const seen = new Set();
+  let invalid = 0, duplicates = 0;
+  const strict = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  for (const raw of attempts) {
+    const t = raw.toLowerCase().replace(/^[<"']+|[>"']+$/g, '');
+    if (!strict.test(t)) { invalid++; continue; }
+    if (seen.has(t)) { duplicates++; continue; }
+    seen.add(t);
+  }
+  const parts = [`${valid.length} email${valid.length===1?'':'s'}`];
+  if (duplicates) parts.push(`${duplicates} duplicate${duplicates===1?'':'s'} skipped`);
+  if (invalid) parts.push(`${invalid} malformed`);
+  document.getElementById('bmPasteHint').textContent = 'Detected: ' + parts.join(' · ');
   bmUpdateCount();
 }
 
