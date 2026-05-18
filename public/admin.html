@@ -713,6 +713,272 @@ body.dark-mode .sub-imported-banner{color:#86efac}
 .sub-imported-banner a{color:inherit;text-decoration:underline;font-weight:600}
 .sub-rejected-banner{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#b91c1c;padding:11px 14px;font-size:12px}
 body.dark-mode .sub-rejected-banner{color:#fca5a5}
+
+/* ════════════════════════════════════════════════════════════
+   ADMIN — BRUTALIST SKIN
+   Overrides the legacy gold/navy palette + Cormorant/DM Sans
+   typography so the admin matches the public-facing brutalist site.
+   Loaded last so it wins specificity over every earlier rule.
+   ════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --gold:#ff3d00 !important;--gold-dark:#cc2f00 !important;--gold-light:rgba(255,61,0,.08) !important;
+  --navy:#0a0a0a !important;--navy-mid:#1a1a17 !important;--navy-light:#2a2a2a !important;
+  --gray:#6a6a6a !important;--gray-light:#e8e4dd !important;
+  --white:#f1eee9 !important;--card-bg:#f1eee9 !important;
+  --border-color:#0a0a0a !important;--text-color:#0a0a0a !important;
+  --shadow-sm:4px 4px 0 #0a0a0a !important;
+  --shadow-md:6px 6px 0 #0a0a0a !important;
+  --shadow-lg:8px 8px 0 #0a0a0a !important;
+  --transition:all .15s ease !important;
+  --ab-paper:#f1eee9;--ab-paper-2:#e8e4dd;--ab-ink:#0a0a0a;--ab-hot:#ff3d00;--ab-gray:#6a6a6a;--ab-line:#0a0a0a;
+}
+body.dark-mode{
+  --gold:#ff3d00 !important;--gold-dark:#cc2f00 !important;--gold-light:rgba(255,61,0,.12) !important;
+  --navy:#0a0a0a !important;
+  --gray-light:#1a1a17 !important;
+  --white:#0e0e0c !important;--card-bg:#0e0e0c !important;
+  --border-color:#3a3a36 !important;--text-color:#f1eee9 !important;
+  --gray:#9a9082 !important;
+  --shadow-sm:4px 4px 0 #3a3a36 !important;
+  --shadow-md:6px 6px 0 #3a3a36 !important;
+  --shadow-lg:8px 8px 0 #3a3a36 !important;
+  --ab-paper:#0e0e0c;--ab-paper-2:#1a1a17;--ab-ink:#f1eee9;--ab-line:#3a3a36;
+}
+
+body{font-family:'Inter','Segoe UI',sans-serif !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important}
+.admin-shell,.admin-shell *,.login-screen,.login-screen *{border-radius:0 !important}
+
+/* Headings → Inter heavy */
+.sb-brand,.login-brand,.login-title,.modal-title,.page-title,
+.stat-num,.acc-av,.audit-user-av,.user-av{
+  font-family:'Inter','Segoe UI',sans-serif !important;font-weight:900 !important;
+  letter-spacing:-.5px !important;text-transform:uppercase !important;
+}
+.stat-num{letter-spacing:-2px !important}
+
+/* JetBrains Mono for meta/labels */
+.sb-section,.page-sub,.stat-lbl,.user-rl,.acc-email,
+.flbl,.fg label,.fsec,.field-hint,.empty-st p,.input-hint,
+.toast,.res-count,.badge,.b-sale,.b-lease,.b-avail,.b-sold,.b-admin,.b-emp,.b-feat,
+.audit-action,.pt,.audit-user-count span,.audit-user-email,
+.bm-row-meta,.bm-prop-meta,.bm-count{
+  font-family:'JetBrains Mono',monospace !important;
+}
+
+/* Login screen */
+.login-screen{background:#0a0a0a !important;background-image:none !important}
+.login-card{
+  background:#f1eee9 !important;border:2px solid #0a0a0a !important;
+  box-shadow:8px 8px 0 #ff3d00 !important;backdrop-filter:none !important;
+}
+.login-brand,.login-title{color:#0a0a0a !important}
+.login-brand small{color:rgba(10,10,10,.55) !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:2px !important}
+.login-sub{color:#6a6a6a !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;text-transform:uppercase !important}
+.login-field label{color:#0a0a0a !important}
+.login-field input{background:#f1eee9 !important;color:#0a0a0a !important;border:2px solid #0a0a0a !important}
+.login-field input:focus{border-color:#ff3d00 !important;background:#e8e4dd !important}
+.login-field input::placeholder{color:#9a9082 !important}
+.login-btn{background:#0a0a0a !important;color:#fff !important;border:0 !important;letter-spacing:2px !important}
+.login-btn:hover{background:#ff3d00 !important;color:#fff !important}
+.login-error{border-radius:0 !important}
+
+/* Sidebar (always dark) */
+.sidebar{background:#0a0a0a !important;border-right:2px solid #0a0a0a !important}
+.sb-head{border-bottom:1px solid rgba(255,255,255,.08) !important}
+.sb-brand{color:#fff !important;letter-spacing:-.5px !important;font-size:17px !important}
+.sb-brand small{color:rgba(255,255,255,.4) !important;font-family:'JetBrains Mono',monospace !important;font-size:9px !important;letter-spacing:2px !important;font-weight:600 !important}
+.sb-section{color:rgba(241,238,233,.35) !important;font-weight:700 !important;font-size:9.5px !important;letter-spacing:2px !important}
+.nav-item{font-family:'Inter',sans-serif !important;font-weight:700 !important;letter-spacing:.3px !important;text-transform:uppercase !important;font-size:11.5px !important;color:rgba(255,255,255,.55) !important}
+.nav-item:hover{background:rgba(255,255,255,.05) !important;color:#fff !important}
+.nav-item.active{background:rgba(255,61,0,.12) !important;color:#ff3d00 !important;border-left:3px solid #ff3d00 !important}
+.sb-foot{border-top:1px solid rgba(255,255,255,.08) !important}
+.user-pill{background:rgba(255,255,255,.04) !important;border:1px solid rgba(255,255,255,.08) !important}
+.user-av{background:#ff3d00 !important;color:#fff !important;font-family:'Inter',sans-serif !important;font-weight:900 !important}
+.user-nm{color:#fff !important;font-weight:600 !important}
+.user-rl{color:#ff3d00 !important;font-family:'JetBrains Mono',monospace !important;font-weight:700 !important}
+.sb-btn{border:1px solid rgba(255,255,255,.15) !important;color:rgba(255,255,255,.55) !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.2px !important;font-weight:600 !important;font-size:10px !important;text-transform:uppercase !important}
+.sb-btn:hover{border-color:#ff3d00 !important;color:#ff3d00 !important}
+.sb-btn.danger:hover{border-color:#ff3d00 !important;color:#ff3d00 !important}
+.nav-badge{background:#ff3d00 !important;color:#fff !important;border-radius:0 !important;font-family:'JetBrains Mono',monospace !important}
+
+/* Header bar */
+.main-header{background:var(--card-bg) !important;border-bottom:2px solid var(--ab-line) !important;box-shadow:none !important}
+.page-title{font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.6px !important;font-size:22px !important;color:var(--ab-ink) !important}
+.page-sub{color:var(--ab-gray) !important;letter-spacing:1.2px !important;text-transform:uppercase !important;font-size:9.5px !important;font-weight:600 !important;margin-top:3px !important}
+.sidebar-toggle{border:2px solid var(--ab-line) !important;color:var(--ab-ink) !important}
+.sidebar-toggle:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+
+/* Header buttons */
+.hdr-btn{
+  border:2px solid var(--ab-ink) !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  font-family:'JetBrains Mono',monospace !important;letter-spacing:1.2px !important;text-transform:uppercase !important;
+  font-weight:700 !important;font-size:10.5px !important;padding:8px 14px !important;
+}
+.hdr-btn:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.hdr-btn.primary{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.hdr-btn.primary:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+.hdr-btn.danger{background:var(--ab-paper) !important;color:#dc2626 !important;border-color:#dc2626 !important}
+.hdr-btn.danger:hover{background:#dc2626 !important;color:#fff !important}
+
+/* Stat cards */
+.stat-card{
+  background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;
+  box-shadow:none !important;transition:all .15s ease !important;
+}
+.stat-card:hover{box-shadow:6px 6px 0 var(--ab-line) !important;transform:translate(-2px,-2px);border-color:var(--ab-line) !important}
+.stat-ico{border-radius:0 !important}
+.ico-gold{background:rgba(255,61,0,.1) !important;color:#ff3d00 !important}
+
+/* Panels */
+.panel{background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;box-shadow:none !important}
+.panel-head{background:var(--ab-paper-2) !important;border-bottom:2px solid var(--ab-line) !important}
+.panel-title{font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.3px !important;text-transform:uppercase !important;font-size:13px !important;color:var(--ab-ink) !important}
+.panel-title i{color:#ff3d00 !important}
+body.dark-mode .panel-head{background:var(--ab-paper-2) !important}
+
+/* Inputs / forms */
+.fg input,.fg select,.fg textarea,
+.fsel,.fsearch input,.finput,
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],input[type="password"],input[type="search"],textarea,select{
+  background:var(--ab-paper) !important;color:var(--ab-ink) !important;
+  border:2px solid var(--ab-line) !important;border-radius:0 !important;
+  font-family:'Inter',sans-serif !important;font-weight:500 !important;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus,
+.fsel:focus,.fsearch input:focus,.finput:focus,
+input:focus,textarea:focus,select:focus{
+  border-color:#ff3d00 !important;outline:0 !important;background:var(--ab-paper-2) !important;
+}
+.flbl,.fg label{color:var(--ab-gray) !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.8px !important;font-weight:700 !important;font-size:10px !important;text-transform:uppercase !important}
+.fsec{color:#ff3d00 !important;border-bottom:2px solid var(--ab-line) !important}
+.fsearch i{color:#ff3d00 !important}
+
+/* Buttons (act, fbtn, hero-btn, sub-import-btn) */
+.fbtn,.act,.hero-btn,.sub-import-btn{
+  font-family:'JetBrains Mono',monospace !important;letter-spacing:1.3px !important;
+  text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important;
+}
+.fbtn.primary,.sub-import-btn{background:var(--ab-ink) !important;color:#fff !important;border:0 !important}
+.fbtn.primary:hover,.sub-import-btn:hover{background:#ff3d00 !important;color:#fff !important}
+.fbtn.secondary{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
+.fbtn.secondary:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+
+/* Tables */
+table{font-family:'Inter',sans-serif !important}
+th{background:var(--ab-ink) !important;color:#f1eee9 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;font-size:10px !important;font-weight:700 !important;border-bottom:2px solid var(--ab-ink) !important}
+body.dark-mode th{background:#1a1a17 !important;color:#f1eee9 !important}
+td{border-bottom:1px solid var(--ab-line) !important}
+tr:hover td{background:rgba(255,61,0,.05) !important}
+.tbl-img{border:2px solid var(--ab-line) !important;border-radius:0 !important}
+
+/* Badges */
+.badge,.b-sale,.b-lease,.b-avail,.b-sold,.b-admin,.b-emp,.b-feat,.pt{
+  border-radius:0 !important;letter-spacing:1.2px !important;font-weight:700 !important;
+}
+.b-sale,.b-admin{background:rgba(255,61,0,.1) !important;color:#ff3d00 !important;border:1px solid rgba(255,61,0,.3) !important}
+.b-feat{background:rgba(255,61,0,.1) !important;color:#ff3d00 !important}
+
+/* Action buttons (in tables) */
+.act-view{background:rgba(255,61,0,.08) !important;color:#ff3d00 !important;border:1px solid rgba(255,61,0,.3) !important}
+.act-view:hover{background:#ff3d00 !important;color:#fff !important}
+
+/* Modal */
+.modal-ov{background:rgba(10,10,10,.88) !important}
+.modal-box{background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;box-shadow:8px 8px 0 #ff3d00 !important;border-radius:0 !important}
+.modal-hd{background:var(--ab-ink) !important;border-bottom:2px solid #ff3d00 !important}
+.modal-title{color:#fff !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.5px !important;font-size:18px !important}
+.modal-close:hover{color:#ff3d00 !important}
+
+/* Toast */
+.toast{background:var(--ab-ink) !important;color:#f1eee9 !important;border:0 !important;border-left:4px solid #ff3d00 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;font-size:11px !important;text-transform:uppercase !important;font-weight:700 !important;border-radius:0 !important;box-shadow:6px 6px 0 var(--ab-line) !important}
+
+/* Loader */
+.load-ov{background:rgba(10,10,10,.85) !important}
+.load-box{background:var(--ab-ink) !important;border:2px solid #ff3d00 !important;border-radius:0 !important}
+.load-spin{border-color:rgba(255,61,0,.2) !important;border-top-color:#ff3d00 !important}
+.load-txt{color:#fff !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-size:11px !important}
+
+/* Refresh notice */
+.refresh-notice{background:#ff3d00 !important;color:#fff !important;border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;text-transform:uppercase !important;font-weight:700 !important;font-size:11px !important}
+
+/* Account card */
+.acc-card{background:var(--card-bg) !important;border:2px solid var(--ab-line) !important;box-shadow:none !important}
+.acc-card:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
+.acc-av{background:var(--ab-ink) !important;color:#ff3d00 !important;border:2px solid var(--ab-line) !important;border-radius:0 !important}
+
+/* Hero card */
+.hero-card{border:2px solid var(--ab-line) !important;border-radius:0 !important;box-shadow:none !important}
+.hero-card:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
+.hero-def{background:rgba(255,61,0,.1) !important;color:#ff3d00 !important;border:1px solid rgba(255,61,0,.3) !important;border-radius:0 !important}
+
+/* Filter bar / search wrapper */
+.fsearch input,.fsel{background:var(--ab-paper) !important}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--ab-line) !important;background:var(--ab-paper) !important}
+.upload-zone:hover{border-color:#ff3d00 !important;background:var(--ab-paper-2) !important}
+.upload-zone i{color:#ff3d00 !important}
+
+/* Switch (toggle) */
+.sw input:checked+.sw-sl{background:#ff3d00 !important}
+
+/* Permission grid */
+.perm-row{background:var(--card-bg) !important;border:1px solid var(--ab-line) !important;border-radius:0 !important}
+.perm-row:hover{border-color:#ff3d00 !important}
+.perm-row input[type=checkbox]{accent-color:#ff3d00 !important}
+.perm-grid{background:var(--ab-paper-2) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important}
+.perm-admin-notice{background:rgba(255,61,0,.1) !important;border:1px solid rgba(255,61,0,.4) !important;color:#ff3d00 !important;border-radius:0 !important}
+
+/* Tasks (preserve color signals but flatten borders) */
+.tasks-stat{border:2px solid var(--ab-line) !important;border-radius:0 !important;box-shadow:none !important}
+.tasks-stat:hover{box-shadow:4px 4px 0 var(--ab-line) !important}
+.tasks-bulk-bar{background:var(--ab-ink) !important;border-radius:0 !important}
+.t-status{border-radius:0 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1px !important;font-weight:700 !important}
+
+/* Scrollbar */
+*::-webkit-scrollbar-thumb{background:#ff3d00 !important;border-radius:0 !important}
+
+/* ── BULK EMAIL FEATURE STYLES ────────────────────────── */
+.bm-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+@media(max-width:1100px){.bm-grid{grid-template-columns:1fr}}
+.bm-col{display:flex;flex-direction:column;gap:18px}
+.bm-count{font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;color:#ff3d00 !important;font-weight:700 !important;text-transform:uppercase !important}
+
+.bm-source-tabs{display:flex;gap:0;margin-bottom:14px;border:2px solid var(--ab-line)}
+.bm-srt{flex:1;padding:10px 12px;background:var(--ab-paper);color:var(--ab-ink);border:0;border-right:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;cursor:pointer;transition:.15s}
+.bm-srt:last-child{border-right:0}
+.bm-srt.active{background:var(--ab-ink);color:#fff}
+.bm-srt:hover:not(.active){background:var(--ab-paper-2);color:#ff3d00}
+
+.bm-list-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.bm-list{max-height:340px;overflow-y:auto;border:2px solid var(--ab-line);background:var(--ab-paper)}
+.bm-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-bottom:1px solid var(--ab-line);cursor:pointer;transition:.1s}
+.bm-row:last-child{border-bottom:0}
+.bm-row:hover{background:var(--ab-paper-2)}
+.bm-row input[type=checkbox]{margin-top:3px;cursor:pointer;accent-color:#ff3d00;width:15px;height:15px;flex-shrink:0}
+.bm-row-main{flex:1;min-width:0}
+.bm-row-email{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--ab-ink);word-break:break-all}
+.bm-row-meta{font-size:10px;letter-spacing:1px;color:var(--ab-gray);font-weight:600;text-transform:uppercase;margin-top:2px;overflow:hidden;text-overflow:ellipsis}
+
+#bmPaste{width:100%;font-family:'JetBrains Mono',monospace !important;font-size:13px !important;font-weight:500 !important;padding:14px !important;resize:vertical;min-height:200px}
+
+.bm-props-list{max-height:300px;overflow-y:auto;border:2px solid var(--ab-line);background:var(--ab-paper);margin-bottom:6px}
+.bm-prop{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--ab-line);cursor:pointer;transition:.1s}
+.bm-prop:last-child{border-bottom:0}
+.bm-prop:hover{background:var(--ab-paper-2)}
+.bm-prop input[type=checkbox]{accent-color:#ff3d00;width:15px;height:15px;flex-shrink:0}
+.bm-prop img{width:54px;height:42px;object-fit:cover;border:1px solid var(--ab-line);flex-shrink:0}
+.bm-prop > div{flex:1;min-width:0}
+.bm-prop-title{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;color:var(--ab-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;letter-spacing:-.2px}
+.bm-prop-meta{font-size:10px;letter-spacing:.8px;color:var(--ab-gray);font-weight:600;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.bm-preview-frame{width:100%;height:520px;border:2px solid var(--ab-line);background:#fff;display:block}
+body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
+
+.bm-send-row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.bm-result{padding:10px 14px;background:var(--ab-paper-2);border:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
 </style>
 </head>
 <body>
@@ -750,6 +1016,8 @@ body.dark-mode .sub-rejected-banner{color:#fca5a5}
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
+      <div class="sb-section" data-perm="bulkmail_send" style="margin-top:6px;display:none">Outreach</div>
+      <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Bulk Email</a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
@@ -832,6 +1100,121 @@ body.dark-mode .sub-rejected-banner{color:#fca5a5}
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Property</th><th>Price</th><th>Status</th></tr></thead><tbody id="alertTbody"></tbody></table></div></div></div>
       </div>
 
+      <!-- BULK EMAIL -->
+      <div id="tab-bulkmail" style="display:none">
+        <div class="bm-grid">
+
+          <!-- LEFT COLUMN: Recipients -->
+          <div class="bm-col">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title"><i class="fas fa-users"></i> Recipients</div>
+                <div class="bm-count" id="bmCount">0 recipients</div>
+              </div>
+              <div class="panel-body">
+                <div class="bm-source-tabs">
+                  <button class="bm-srt active" data-src="subs" onclick="bmSwitchSrc('subs')">Subscribers</button>
+                  <button class="bm-srt" data-src="inq" onclick="bmSwitchSrc('inq')">Inquiries</button>
+                  <button class="bm-srt" data-src="paste" onclick="bmSwitchSrc('paste')">Paste</button>
+                  <button class="bm-srt" data-src="upload" onclick="bmSwitchSrc('upload')">Import file</button>
+                </div>
+
+                <div id="bmSrc-subs" class="bm-source">
+                  <div class="bm-list-toolbar">
+                    <div class="fsearch" style="flex:1;min-width:160px"><i class="fas fa-search"></i><input type="text" id="bmSubSearch" placeholder="Search subscribers..." oninput="bmRenderSubs()"></div>
+                    <button class="hdr-btn" onclick="bmToggleAllSubs()">Select all</button>
+                    <button class="hdr-btn" onclick="bmClearSelection('subs')">Clear</button>
+                  </div>
+                  <div class="bm-list" id="bmSubsList"><div class="empty-st"><p>Loading…</p></div></div>
+                </div>
+
+                <div id="bmSrc-inq" class="bm-source" style="display:none">
+                  <div class="bm-list-toolbar">
+                    <div class="fsearch" style="flex:1;min-width:160px"><i class="fas fa-search"></i><input type="text" id="bmInqSearch" placeholder="Search inquiries..." oninput="bmRenderInq()"></div>
+                    <button class="hdr-btn" onclick="bmToggleAllInq()">Select all</button>
+                    <button class="hdr-btn" onclick="bmClearSelection('inq')">Clear</button>
+                  </div>
+                  <div class="bm-list" id="bmInqList"><div class="empty-st"><p>Loading…</p></div></div>
+                </div>
+
+                <div id="bmSrc-paste" class="bm-source" style="display:none">
+                  <label class="flbl" style="margin-bottom:6px;display:block">Paste emails (one per line, or separated by commas / spaces / semicolons)</label>
+                  <textarea id="bmPaste" rows="9" placeholder="anna@example.com&#10;bob@example.com, carla@example.com&#10;diego@example.com; emma@example.com" oninput="bmParsePasted()"></textarea>
+                  <div class="field-hint" id="bmPasteHint">Detected: 0 valid · 0 invalid</div>
+                </div>
+
+                <div id="bmSrc-upload" class="bm-source" style="display:none">
+                  <label class="upload-zone" style="display:block;cursor:pointer">
+                    <i class="fas fa-file-upload"></i>
+                    <p style="font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:13px;color:var(--ab-ink)">Drop a CSV / TXT / TSV file</p>
+                    <p style="font-size:11px;color:var(--ab-gray);margin-top:5px;font-family:'JetBrains Mono',monospace;letter-spacing:1px">Emails are auto-detected anywhere in the file</p>
+                    <input type="file" accept=".csv,.txt,.tsv,text/plain,text/csv" onchange="bmReadFile(this.files[0])">
+                  </label>
+                  <div class="field-hint" id="bmUploadHint" style="margin-top:10px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Compose + Preview + Send -->
+          <div class="bm-col">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><i class="fas fa-pen-fancy"></i> Compose</div></div>
+              <div class="panel-body">
+
+                <div class="fg" style="margin-bottom:14px">
+                  <label class="flbl">Subject</label>
+                  <input type="text" id="bmSubject" class="finput" placeholder="e.g. Premier Listings — May 2026" oninput="bmRenderPreview()">
+                </div>
+
+                <div class="fg" style="margin-bottom:14px">
+                  <label class="flbl">Sender name</label>
+                  <input type="text" id="bmFromName" class="finput" value="GLRA Realty" placeholder="GLRA Realty">
+                </div>
+
+                <div class="fg" style="margin-bottom:14px">
+                  <label class="flbl">Quick template</label>
+                  <select id="bmTemplate" class="finput" onchange="bmApplyTemplate()">
+                    <option value="">— Choose a template —</option>
+                    <option value="featured">Featured Listings showcase</option>
+                    <option value="newlisting">New listing announcement</option>
+                    <option value="pricedrop">Price-drop alert</option>
+                    <option value="custom">Custom — blank slate</option>
+                  </select>
+                </div>
+
+                <div class="fg" style="margin-bottom:14px">
+                  <label class="flbl">Attach property cards (optional)</label>
+                  <div class="fsearch" style="margin-bottom:8px"><i class="fas fa-search"></i><input type="text" id="bmPropSearch" placeholder="Search property..." oninput="bmRenderPropPicker()"></div>
+                  <div class="bm-props-list" id="bmPropsList"><div class="empty-st"><p>Loading…</p></div></div>
+                  <div class="field-hint" id="bmPropsCount">0 properties selected</div>
+                </div>
+
+                <div class="fg">
+                  <label class="flbl">Message body</label>
+                  <textarea id="bmBody" class="finput" rows="9" placeholder="Write your message — blank lines create paragraphs. Selected property cards are inserted after this message." oninput="bmRenderPreview()"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><i class="fas fa-eye"></i> Live preview</div></div>
+              <div class="panel-body" style="padding:0">
+                <iframe id="bmPreview" class="bm-preview-frame" title="Email preview"></iframe>
+              </div>
+            </div>
+
+            <div class="bm-send-row">
+              <button class="hdr-btn primary" id="bmSendBtn" onclick="bmSend()"><i class="fas fa-paper-plane"></i> <span>Send to <b id="bmSendCount">0</b></span></button>
+              <button class="hdr-btn" id="bmTestBtn" onclick="bmTestSend()"><i class="fas fa-flask"></i> Send test to me</button>
+              <button class="hdr-btn" onclick="bmReset()"><i class="fas fa-redo"></i> Reset</button>
+              <div class="bm-result" id="bmResult" style="display:none"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ACCOUNTS (admin only) -->
       <div id="tab-accounts" style="display:none">
         <!-- Add Account Button -->
@@ -896,6 +1279,7 @@ body.dark-mode .sub-rejected-banner{color:#fca5a5}
             <option value="REORDER">Reorder</option>
             <option value="SET_DEFAULT">Set Default</option>
             <option value="BULK_CREATE">Bulk Create</option>
+            <option value="BULK_EMAIL">Bulk Email</option>
           </select>
           <select class="fsel" id="auditUserFilter" onchange="filterAuditLog()">
             <option value="">All Users</option>
@@ -1418,7 +1802,8 @@ const PERM_DEFS = [
   { key: 'tasks_delete',            name: 'Delete Tasks',            desc: 'Can permanently delete tasks (managers only)' },
   { key: 'submissions_view',        name: 'View Submissions',        desc: 'Can see the property submissions tab (public form pipeline)' },
   { key: 'submissions_import',      name: 'Import Submissions',      desc: 'Can convert a submission into a live Property listing' },
-  { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' }
+  { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' },
+  { key: 'bulkmail_send',           name: 'Send Bulk Email',         desc: 'Can compose + send bulk emails to subscribers / pasted lists' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -1427,7 +1812,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   hero_upload: false, hero_edit: false, hero_delete: false,
   accounts_manage: false, audit_view: false,
   tasks_view: true, tasks_create: false, tasks_edit: false, tasks_delete: false,
-  submissions_view: true, submissions_import: false, submissions_delete: false
+  submissions_view: true, submissions_import: false, submissions_delete: false,
+  bulkmail_send: false
 };
 
 // Check if the currently logged-in user has a permission.
@@ -3905,14 +4291,422 @@ window.addEventListener('DOMContentLoaded', () => {
   }, 50);
 });
 
+// ── BULK EMAIL ─────────────────────────────────────────────
+const bmState = {
+  subs: [], inq: [],
+  selectedSubs: new Set(),
+  selectedInq: new Set(),
+  pasted: [],
+  uploaded: [],
+  source: 'subs',
+  props: [],
+  selectedProps: new Set(),
+  loaded: false
+};
+
+const BM_EMAIL_RX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+function bmExtractEmails(text){
+  const matches = (text || '').match(BM_EMAIL_RX) || [];
+  return [...new Set(matches.map(m => m.toLowerCase()))];
+}
+
+function bmAllRecipients(){
+  const set = new Set();
+  bmState.selectedSubs.forEach(e => set.add(e));
+  bmState.selectedInq.forEach(e => set.add(e));
+  bmState.pasted.forEach(e => set.add(e));
+  bmState.uploaded.forEach(e => set.add(e));
+  return [...set];
+}
+
+async function bmInit(){
+  if(bmState.loaded) return;
+  try {
+    showLoad('Loading contacts...');
+    const [contactsRes, propsRes] = await Promise.all([
+      apiFetch('/api/admin/contact-list'),
+      apiFetch('/api/admin/all-properties')
+    ]);
+    const c = await contactsRes.json();
+    const p = await propsRes.json();
+    bmState.subs = Array.isArray(c.subscribers) ? c.subscribers : [];
+    bmState.inq = Array.isArray(c.inquiries) ? c.inquiries : [];
+    bmState.props = Array.isArray(p) ? p : (p.properties || []);
+    bmState.loaded = true;
+    bmRenderSubs();
+    bmRenderInq();
+    bmRenderPropPicker();
+    bmUpdateCount();
+    bmRenderPreview();
+  } catch (e) {
+    showToast('Failed to load contacts: ' + e.message, true);
+  } finally {
+    hideLoad();
+  }
+}
+
+function bmSwitchSrc(src){
+  bmState.source = src;
+  document.querySelectorAll('.bm-srt').forEach(b => b.classList.toggle('active', b.dataset.src === src));
+  ['subs','inq','paste','upload'].forEach(s => {
+    const el = document.getElementById('bmSrc-'+s);
+    if(el) el.style.display = s === src ? '' : 'none';
+  });
+}
+
+function bmRenderSubs(){
+  const q = (document.getElementById('bmSubSearch')?.value || '').toLowerCase();
+  const items = bmState.subs.filter(s =>
+    !q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q)
+  );
+  const wrap = document.getElementById('bmSubsList');
+  if(!wrap) return;
+  if(!items.length){
+    wrap.innerHTML = '<div class="empty-st" style="padding:30px 16px"><p>No subscribers</p></div>';
+    return;
+  }
+  wrap.innerHTML = items.map(s => {
+    const em = (s.email||'').toLowerCase();
+    const checked = bmState.selectedSubs.has(em) ? 'checked' : '';
+    return `<label class="bm-row">
+      <input type="checkbox" ${checked} onchange="bmToggleSub('${esc(em)}', this.checked)">
+      <div class="bm-row-main">
+        <div class="bm-row-email">${esc(s.email||'')}</div>
+        <div class="bm-row-meta">${[esc(s.name||''), esc(s.source||''), s.subscribedAt?fmtDateShort(s.subscribedAt):''].filter(Boolean).join(' · ')}</div>
+      </div>
+    </label>`;
+  }).join('');
+}
+
+function bmRenderInq(){
+  const q = (document.getElementById('bmInqSearch')?.value || '').toLowerCase();
+  const items = bmState.inq.filter(s =>
+    !q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.propertyTitle||'').toLowerCase().includes(q)
+  );
+  const wrap = document.getElementById('bmInqList');
+  if(!wrap) return;
+  if(!items.length){
+    wrap.innerHTML = '<div class="empty-st" style="padding:30px 16px"><p>No inquiries with email</p></div>';
+    return;
+  }
+  wrap.innerHTML = items.map(s => {
+    const em = (s.email||'').toLowerCase();
+    const checked = bmState.selectedInq.has(em) ? 'checked' : '';
+    return `<label class="bm-row">
+      <input type="checkbox" ${checked} onchange="bmToggleInq('${esc(em)}', this.checked)">
+      <div class="bm-row-main">
+        <div class="bm-row-email">${esc(s.email||'')}</div>
+        <div class="bm-row-meta">${[esc(s.name||''), esc(s.propertyTitle||''), s.createdAt?fmtDateShort(s.createdAt):''].filter(Boolean).join(' · ')}</div>
+      </div>
+    </label>`;
+  }).join('');
+}
+
+function bmToggleSub(email, on){
+  email = (email || '').toLowerCase();
+  if(!email) return;
+  if(on) bmState.selectedSubs.add(email); else bmState.selectedSubs.delete(email);
+  bmUpdateCount();
+}
+function bmToggleInq(email, on){
+  email = (email || '').toLowerCase();
+  if(!email) return;
+  if(on) bmState.selectedInq.add(email); else bmState.selectedInq.delete(email);
+  bmUpdateCount();
+}
+
+function bmToggleAllSubs(){
+  const q = (document.getElementById('bmSubSearch')?.value || '').toLowerCase();
+  const visible = bmState.subs.filter(s => s.email && (!q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q)))
+    .map(s => s.email.toLowerCase());
+  const allOn = visible.length && visible.every(e => bmState.selectedSubs.has(e));
+  if(allOn) visible.forEach(e => bmState.selectedSubs.delete(e));
+  else visible.forEach(e => bmState.selectedSubs.add(e));
+  bmRenderSubs();
+  bmUpdateCount();
+}
+function bmToggleAllInq(){
+  const q = (document.getElementById('bmInqSearch')?.value || '').toLowerCase();
+  const visible = bmState.inq.filter(s => s.email && (!q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.propertyTitle||'').toLowerCase().includes(q)))
+    .map(s => s.email.toLowerCase());
+  const allOn = visible.length && visible.every(e => bmState.selectedInq.has(e));
+  if(allOn) visible.forEach(e => bmState.selectedInq.delete(e));
+  else visible.forEach(e => bmState.selectedInq.add(e));
+  bmRenderInq();
+  bmUpdateCount();
+}
+
+function bmClearSelection(which){
+  if(which === 'subs'){ bmState.selectedSubs.clear(); bmRenderSubs(); }
+  if(which === 'inq'){ bmState.selectedInq.clear(); bmRenderInq(); }
+  bmUpdateCount();
+}
+
+function bmParsePasted(){
+  const txt = document.getElementById('bmPaste').value || '';
+  const valid = bmExtractEmails(txt);
+  bmState.pasted = valid;
+  const tokens = txt.split(/[\s,;]+/).filter(Boolean);
+  const invalid = Math.max(0, tokens.length - valid.length);
+  document.getElementById('bmPasteHint').textContent = `Detected: ${valid.length} valid · ${invalid} invalid/duplicate`;
+  bmUpdateCount();
+}
+
+function bmReadFile(file){
+  if(!file) return;
+  if(/\.xlsx?$/i.test(file.name)){
+    showToast('Excel not supported — export to CSV/TXT and re-upload.', true);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = String(e.target.result || '');
+    const emails = bmExtractEmails(text);
+    bmState.uploaded = emails;
+    document.getElementById('bmUploadHint').innerHTML =
+      `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> Found <b>${emails.length}</b> unique email${emails.length===1?'':'s'} in <b>${esc(file.name)}</b>`;
+    bmUpdateCount();
+  };
+  reader.onerror = () => showToast('Failed to read file', true);
+  reader.readAsText(file);
+}
+
+function bmRenderPropPicker(){
+  const q = (document.getElementById('bmPropSearch')?.value || '').toLowerCase();
+  const items = bmState.props.filter(p =>
+    !q || (p.title||'').toLowerCase().includes(q) || (p.location||'').toLowerCase().includes(q)
+  ).slice(0, 80);
+  const wrap = document.getElementById('bmPropsList');
+  if(!wrap) return;
+  if(!items.length){
+    wrap.innerHTML = '<div class="empty-st" style="padding:24px 16px"><p>No properties match</p></div>';
+    return;
+  }
+  wrap.innerHTML = items.map(p => {
+    const checked = bmState.selectedProps.has(p._id) ? 'checked' : '';
+    const img = (p.mainImage || (p.gallery||[])[0] || '/logo.png');
+    return `<label class="bm-prop">
+      <input type="checkbox" ${checked} onchange="bmToggleProp('${p._id}', this.checked)">
+      <img src="${esc(img)}" onerror="this.src='/logo.png'" alt="">
+      <div>
+        <div class="bm-prop-title">${esc(p.title||'Untitled')}</div>
+        <div class="bm-prop-meta">${esc(p.location||'')}${p.price?' · '+fmt(p.price):''}</div>
+      </div>
+    </label>`;
+  }).join('');
+}
+
+function bmToggleProp(id, on){
+  if(on) bmState.selectedProps.add(id); else bmState.selectedProps.delete(id);
+  document.getElementById('bmPropsCount').textContent = `${bmState.selectedProps.size} propert${bmState.selectedProps.size===1?'y':'ies'} selected`;
+  bmRenderPreview();
+}
+
+function bmUpdateCount(){
+  const n = bmAllRecipients().length;
+  const cnt = document.getElementById('bmCount');
+  if(cnt) cnt.textContent = n + ' recipient' + (n===1?'':'s');
+  const sc = document.getElementById('bmSendCount');
+  if(sc) sc.textContent = n;
+}
+
+function bmApplyTemplate(){
+  const t = document.getElementById('bmTemplate').value;
+  const subjEl = document.getElementById('bmSubject');
+  const bodyEl = document.getElementById('bmBody');
+  const fill = (s, b) => {
+    if(!subjEl.value) subjEl.value = s;
+    bodyEl.value = b;
+  };
+  if(t === 'featured'){
+    fill('Premier Listings from GLRA Realty',
+`Dear friend,
+
+We're excited to share our latest selection of premier properties hand-picked by Catherine SB Sampayo, Licensed Real Estate Broker.
+
+Browse the listings below — reply to this email or call us to schedule a private viewing.`);
+  } else if(t === 'newlisting'){
+    fill('New Listing Just Added',
+`A new property has just been added to our portfolio. We expect strong interest, so reach out early if any of these catch your eye.
+
+Tap any listing below to view full details.`);
+  } else if(t === 'pricedrop'){
+    fill('Price Update — Properties You Should See',
+`Some of our listings have been repriced. If you've been waiting for the right moment, this might be it.
+
+Take another look — call or email to lock in a viewing this week.`);
+  } else if(t === 'custom'){
+    bodyEl.value = '';
+  }
+  bmRenderPreview();
+}
+
+function bmEscapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function bmBuildEmailHtml(){
+  const body = (document.getElementById('bmBody').value || '').trim();
+  const subject = document.getElementById('bmSubject').value || 'GLRA Realty';
+  const bodyHtml = body
+    ? body.split(/\n\s*\n/).map(p => `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;color:#0a0a0a">${bmEscapeHtml(p).replace(/\n/g,'<br>')}</p>`).join('')
+    : '<p style="margin:0;color:#9a9082;font-style:italic">Your message will appear here.</p>';
+
+  const selected = bmState.props.filter(p => bmState.selectedProps.has(p._id));
+  const cardsHtml = selected.map(p => {
+    const img = p.mainImage || (p.gallery||[])[0] || '';
+    const url = `https://glrarealty.com/property.html?id=${encodeURIComponent(p._id)}`;
+    const price = p.price ? '₱' + Number(p.price).toLocaleString('en-PH') : '';
+    const specs = [];
+    if(p.bedrooms) specs.push(p.bedrooms + 'BR');
+    if(p.bathrooms) specs.push(p.bathrooms + 'BA');
+    if(p.sqm) specs.push(p.sqm + 'sqm');
+    return `
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:18px 0;border-collapse:collapse;background:#f1eee9;border:2px solid #0a0a0a">
+    <tr>
+      ${img ? `<td width="200" style="vertical-align:top;padding:0;width:200px"><img src="${bmEscapeHtml(img)}" width="200" height="160" style="display:block;width:200px;height:160px;object-fit:cover;border-right:2px solid #0a0a0a"></td>` : ''}
+      <td style="padding:18px 20px;vertical-align:top">
+        <div style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;color:#0a0a0a;text-transform:uppercase;line-height:1.1;margin-bottom:6px">${bmEscapeHtml(p.title||'Untitled')}</div>
+        <div style="font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;color:#6a6a6a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">${bmEscapeHtml(p.location||'')}${specs.length?' · '+specs.join(' / '):''}</div>
+        ${price ? `<div style="font-family:Inter,sans-serif;font-size:22px;font-weight:900;color:#ff3d00;letter-spacing:-.8px;margin-bottom:12px">${price}</div>` : ''}
+        <a href="${url}" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;padding:10px 18px;font-family:'JetBrains Mono',monospace,Consolas;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700">View Listing &rarr;</a>
+      </td>
+    </tr>
+  </table>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${bmEscapeHtml(subject)}</title></head>
+<body style="margin:0;padding:0;background:#e8e4dd;font-family:Inter,Helvetica,Arial,sans-serif;color:#0a0a0a">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#e8e4dd">
+  <tr><td align="center" style="padding:30px 16px">
+    <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#f1eee9;border:2px solid #0a0a0a;border-collapse:collapse">
+      <tr><td style="background:#0a0a0a;padding:24px 28px;border-bottom:4px solid #ff3d00">
+        <div style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:30px;font-weight:900;letter-spacing:-1.5px;color:#ffffff;text-transform:uppercase;line-height:1">GLRA REALTY</div>
+        <div style="font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:2px;color:#ff3d00;text-transform:uppercase;margin-top:6px">Premier Real Estate · Manila</div>
+      </td></tr>
+      <tr><td style="padding:30px 28px">
+        ${bodyHtml}
+        ${cardsHtml}
+        <p style="margin:24px 0 0 0;padding-top:20px;border-top:1px solid #0a0a0a;font-size:13px;line-height:1.6;color:#0a0a0a">
+          Warm regards,<br>
+          <strong style="font-weight:700">Catherine SB Sampayo</strong><br>
+          <span style="color:#6a6a6a;font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:1.5px;text-transform:uppercase">Licensed Real Estate Broker · GLRA Realty</span>
+        </p>
+      </td></tr>
+      <tr><td style="background:#0a0a0a;color:#f1eee9;padding:18px 28px;font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:1.5px;text-transform:uppercase">
+        <a href="https://glrarealty.com" style="color:#ff3d00;text-decoration:none">glrarealty.com</a> &nbsp;·&nbsp;
+        <a href="mailto:hello@glrarealty.com" style="color:#f1eee9;text-decoration:none">hello@glrarealty.com</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+}
+
+function bmRenderPreview(){
+  const iframe = document.getElementById('bmPreview');
+  if(!iframe) return;
+  iframe.srcdoc = bmBuildEmailHtml();
+}
+
+async function bmSend(){
+  const recipients = bmAllRecipients();
+  const subject = (document.getElementById('bmSubject').value || '').trim();
+  const fromName = (document.getElementById('bmFromName').value || 'GLRA Realty').trim();
+  const body = (document.getElementById('bmBody').value || '').trim();
+
+  if(!recipients.length){ showToast('Add at least one recipient', true); return; }
+  if(!subject){ showToast('Enter a subject', true); document.getElementById('bmSubject').focus(); return; }
+  if(!body && !bmState.selectedProps.size){ showToast('Write a message or attach at least one property', true); return; }
+
+  if(!confirm(`Send this email to ${recipients.length} recipient${recipients.length===1?'':'s'}?\n\nThis cannot be undone.`)) return;
+
+  const html = bmBuildEmailHtml();
+  const btn = document.getElementById('bmSendBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  document.getElementById('bmResult').style.display = 'none';
+
+  try {
+    const res = await apiFetch('/api/admin/bulk-email', {
+      method: 'POST',
+      body: JSON.stringify({ recipients, subject, fromName, html })
+    });
+    const d = await res.json();
+    if(res.ok && d.success){
+      showToast(`Sent: ${d.sent} succeeded, ${d.failed} failed`);
+      const result = document.getElementById('bmResult');
+      result.style.display = '';
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total`;
+    } else {
+      showToast(d.error || 'Send failed', true);
+    }
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+    bmUpdateCount();
+  }
+}
+
+async function bmTestSend(){
+  if(!CU || !CU.email){ showToast('Could not find your email', true); return; }
+  const subject = (document.getElementById('bmSubject').value || '').trim() || 'GLRA Bulk Email Test';
+  const fromName = (document.getElementById('bmFromName').value || 'GLRA Realty').trim();
+  const body = (document.getElementById('bmBody').value || '').trim();
+  if(!body && !bmState.selectedProps.size){ showToast('Write a message or attach at least one property first', true); return; }
+  const html = bmBuildEmailHtml();
+  const btn = document.getElementById('bmTestBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending test...';
+  try {
+    const res = await apiFetch('/api/admin/bulk-email', {
+      method: 'POST',
+      body: JSON.stringify({ recipients:[CU.email], subject: '[TEST] '+subject, fromName, html, isTest:true })
+    });
+    const d = await res.json();
+    if(res.ok && d.success) showToast(`Test sent to ${CU.email}`);
+    else showToast(d.error || 'Test send failed', true);
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+function bmReset(){
+  if(!confirm('Clear everything?')) return;
+  bmState.selectedSubs.clear();
+  bmState.selectedInq.clear();
+  bmState.pasted = [];
+  bmState.uploaded = [];
+  bmState.selectedProps.clear();
+  ['bmSubject','bmBody','bmPaste','bmTemplate','bmSubSearch','bmInqSearch','bmPropSearch'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('bmFromName').value = 'GLRA Realty';
+  document.getElementById('bmPasteHint').textContent = 'Detected: 0 valid · 0 invalid';
+  document.getElementById('bmUploadHint').innerHTML = '';
+  document.getElementById('bmPropsCount').textContent = '0 properties selected';
+  document.getElementById('bmResult').style.display = 'none';
+  bmRenderSubs();
+  bmRenderInq();
+  bmRenderPropPicker();
+  bmUpdateCount();
+  bmRenderPreview();
+}
+
 // ── TABS ──────────────────────────────────────────────────
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Bulk Email'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to contacts in bulk'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -3940,6 +4734,10 @@ function switchTab(name){
   // Refresh submissions on tab visit
   if(name==='submissions' && hasPerm('submissions_view')){
     loadSubmissions();
+  }
+  // Lazy-load bulk email data + render preview on first visit
+  if(name==='bulkmail' && hasPerm('bulkmail_send')){
+    bmInit();
   }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
