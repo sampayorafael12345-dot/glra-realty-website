@@ -1020,6 +1020,22 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
 .bm-send-row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
 .bm-result{padding:10px 14px;background:var(--ab-paper-2);border:2px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+
+/* Scheduled-email queue */
+.bm-sched-list{max-height:380px;overflow-y:auto}
+.bm-sched-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 18px;border-bottom:2px solid var(--ab-line);align-items:center}
+.bm-sched-row:last-child{border-bottom:0}
+.bm-sched-row:hover{background:var(--ab-paper-2)}
+.bm-sched-subject{font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;color:var(--ab-ink);letter-spacing:-.2px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
+.bm-sched-meta{display:flex;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--ab-gray);font-weight:600}
+.bm-sched-meta b{color:var(--ab-ink);font-weight:700}
+.bm-sched-actions{display:flex;gap:8px;align-items:center}
+.bm-sched-status{padding:4px 10px;border:2px solid var(--ab-ink);background:var(--ab-paper-2);font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:var(--ab-ink);white-space:nowrap}
+.bm-sched-status.pending{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.bm-sched-status.sending{background:#f59e0b;border-color:#f59e0b;color:#fff}
+.bm-sched-status.sent{background:#10b981;border-color:#10b981;color:#fff}
+.bm-sched-status.failed{background:#ef4444;border-color:#ef4444;color:#fff}
+.bm-sched-status.cancelled{background:transparent;color:var(--ab-gray);border-color:var(--ab-gray)}
 </style>
 </head>
 <body>
@@ -1265,6 +1281,32 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
               <button class="hdr-btn primary" id="bmSendBtn" onclick="bmSend()"><i class="fas fa-paper-plane"></i> <span>Send to <b id="bmSendCount">0</b></span></button>
               <button class="hdr-btn" onclick="bmReset()"><i class="fas fa-redo"></i> Reset</button>
               <div class="bm-result" id="bmResult" style="display:none"></div>
+            </div>
+
+            <!-- SCHEDULE FOR LATER -->
+            <div class="panel" style="margin-top:18px">
+              <div class="panel-head"><div class="panel-title"><i class="fas fa-clock"></i> Schedule for later</div></div>
+              <div class="panel-body">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+                  <div class="fg" style="flex:1;min-width:220px;margin:0">
+                    <label class="flbl">Send at (your local time)</label>
+                    <input type="datetime-local" id="bmSendAt" class="finput">
+                  </div>
+                  <button class="hdr-btn primary" id="bmScheduleBtn" onclick="bmSchedule()"><i class="fas fa-calendar-plus"></i> Schedule</button>
+                </div>
+                <div class="field-hint" style="margin-top:8px">Schedules at least 1 minute in the future. The server checks every minute and dispatches due campaigns automatically.</div>
+              </div>
+            </div>
+
+            <!-- SCHEDULED QUEUE -->
+            <div class="panel" style="margin-top:18px">
+              <div class="panel-head">
+                <div class="panel-title"><i class="fas fa-list-ol"></i> Scheduled queue</div>
+                <button class="hdr-btn" onclick="bmRefreshScheduled()"><i class="fas fa-sync"></i> Refresh</button>
+              </div>
+              <div class="panel-body" style="padding:0">
+                <div id="bmScheduledList" class="bm-sched-list"><div class="empty-st" style="padding:30px 16px"><p>Loading…</p></div></div>
+              </div>
             </div>
           </div>
 
@@ -4404,11 +4446,26 @@ async function bmInit(){
     bmRenderPreview();
     bmRefreshSavedDropdown();
     bmRefreshScheduled();
+    bmInitSendAtDefault();
+    bmStartScheduledPolling();
   } catch (e) {
     showToast('Failed to load contacts: ' + e.message, true);
   } finally {
     hideLoad();
   }
+}
+
+// Set the datetime-local input to "now + 1 hour" as a sensible starting suggestion.
+function bmInitSendAtDefault(){
+  const el = document.getElementById('bmSendAt');
+  if(!el || el.value) return;
+  const d = new Date(Date.now() + 60 * 60 * 1000);
+  // datetime-local expects "YYYY-MM-DDTHH:MM" in *local* time
+  const pad = n => String(n).padStart(2, '0');
+  el.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // Lock minimum to "now + 1 minute" — datetime-local respects `min` for validation
+  const m = new Date(Date.now() + 60 * 1000);
+  el.min = `${m.getFullYear()}-${pad(m.getMonth()+1)}-${pad(m.getDate())}T${pad(m.getHours())}:${pad(m.getMinutes())}`;
 }
 
 function bmSwitchSrc(src){
@@ -4815,7 +4872,7 @@ function bmReset(){
   bmState.pasted = [];
   bmState.uploaded = [];
   bmState.selectedProps.clear();
-  ['bmSubject','bmBody','bmPaste','bmTemplate','bmSubSearch','bmInqSearch','bmPropSearch'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['bmSubject','bmBody','bmPaste','bmTemplate','bmSubSearch','bmInqSearch','bmPropSearch','bmSendAt'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('bmFromName').value = 'GLRA Realty';
   document.getElementById('bmPasteHint').textContent = 'Detected: 0 valid · 0 invalid';
   document.getElementById('bmUploadHint').innerHTML = '';
@@ -4826,6 +4883,134 @@ function bmReset(){
   bmRenderPropPicker();
   bmUpdateCount();
   bmRenderPreview();
+}
+
+// ── EMAIL SCHEDULING ──────────────────────────────────────
+let bmScheduledTimer = null;
+
+async function bmSchedule(){
+  const recipients = bmAllRecipients();
+  const subject = (document.getElementById('bmSubject').value || '').trim();
+  const fromName = (document.getElementById('bmFromName').value || 'GLRA Realty').trim();
+  const body = (document.getElementById('bmBody').value || '').trim();
+  const sendAtVal = document.getElementById('bmSendAt').value;
+
+  if(!recipients.length){ showToast('Add at least one recipient', true); return; }
+  if(!subject){ showToast('Enter a subject', true); document.getElementById('bmSubject').focus(); return; }
+  if(!body && !bmState.selectedProps.size){ showToast('Write a message or attach at least one property', true); return; }
+  if(!sendAtVal){ showToast('Pick a date and time', true); document.getElementById('bmSendAt').focus(); return; }
+
+  // datetime-local gives a local-time string with no zone — convert to a Date so we send an absolute timestamp
+  const sendAtDate = new Date(sendAtVal);
+  if(isNaN(sendAtDate.getTime())){ showToast('Invalid date/time', true); return; }
+  const minMs = Date.now() + 60 * 1000;
+  if(sendAtDate.getTime() < minMs){ showToast('Schedule must be at least 1 minute in the future', true); return; }
+
+  const when = sendAtDate.toLocaleString();
+  if(!confirm(`Schedule this email to ${recipients.length} recipient${recipients.length===1?'':'s'} for ${when}?`)) return;
+
+  const html = bmBuildEmailHtml();
+  const btn = document.getElementById('bmScheduleBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+
+  try {
+    const res = await apiFetch('/api/admin/scheduled-emails', {
+      method: 'POST',
+      body: JSON.stringify({ recipients, subject, fromName, html, sendAt: sendAtDate.toISOString() })
+    });
+    const d = await res.json();
+    if(res.ok && d.success){
+      showToast(`Scheduled for ${when} — ${d.recipients} recipients`);
+      document.getElementById('bmSendAt').value = '';
+      bmRefreshScheduled();
+    } else {
+      showToast(d.error || 'Schedule failed', true);
+    }
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+function bmFmtScheduled(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return '';
+  const ms = d.getTime() - Date.now();
+  const abs = d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  if(ms > 0){
+    const mins = Math.round(ms / 60000);
+    if(mins < 60) return `${abs} (in ${mins} min)`;
+    const hrs = Math.round(mins / 60);
+    if(hrs < 48) return `${abs} (in ${hrs} hr)`;
+    const days = Math.round(hrs / 24);
+    return `${abs} (in ${days} day${days===1?'':'s'})`;
+  }
+  return abs;
+}
+
+async function bmRefreshScheduled(){
+  const wrap = document.getElementById('bmScheduledList');
+  if(!wrap) return;
+  try {
+    const res = await apiFetch('/api/admin/scheduled-emails');
+    const d = await res.json();
+    const rows = Array.isArray(d.scheduled) ? d.scheduled : [];
+    if(!rows.length){
+      wrap.innerHTML = '<div class="empty-st" style="padding:30px 16px"><p>No scheduled emails yet</p></div>';
+      return;
+    }
+    wrap.innerHTML = rows.map(r => {
+      const status = (r.status || 'pending').toLowerCase();
+      const resultBit = r.result ? ` · <b>${r.result.sent||0}</b>/${r.result.total||0} sent` : '';
+      const who = r.createdByName || r.createdBy || '';
+      const cancelBtn = status === 'pending'
+        ? `<button class="hdr-btn danger" onclick="bmCancelScheduled('${esc(String(r._id))}')" title="Cancel this scheduled send"><i class="fas fa-ban"></i> Cancel</button>`
+        : '';
+      return `<div class="bm-sched-row">
+        <div style="min-width:0">
+          <div class="bm-sched-subject">${esc(r.subject||'(no subject)')}</div>
+          <div class="bm-sched-meta">
+            <span><i class="far fa-clock"></i> ${esc(bmFmtScheduled(r.sendAt))}</span>
+            <span><i class="fas fa-users"></i> <b>${r.recipientCount||0}</b> recipient${r.recipientCount===1?'':'s'}</span>
+            ${who ? `<span><i class="fas fa-user"></i> ${esc(who)}</span>` : ''}
+            ${resultBit ? `<span>${resultBit}</span>` : ''}
+          </div>
+        </div>
+        <div class="bm-sched-actions">
+          <span class="bm-sched-status ${status}">${esc(status)}</span>
+          ${cancelBtn}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    wrap.innerHTML = `<div class="empty-st" style="padding:30px 16px"><p>Failed to load: ${esc(e.message)}</p></div>`;
+  }
+}
+
+async function bmCancelScheduled(id){
+  if(!confirm('Cancel this scheduled email? The campaign will NOT be sent.')) return;
+  try {
+    const res = await apiFetch('/api/admin/scheduled-emails/' + encodeURIComponent(id), { method: 'DELETE' });
+    const d = await res.json();
+    if(res.ok && d.success){ showToast('Cancelled'); bmRefreshScheduled(); }
+    else showToast(d.error || 'Failed to cancel', true);
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  }
+}
+
+// Poll the scheduled queue every 30 seconds while the bulk-email tab is visible.
+function bmStartScheduledPolling(){
+  if(bmScheduledTimer) return;
+  bmScheduledTimer = setInterval(() => {
+    const panel = document.getElementById('tab-bulkmail');
+    if(panel && panel.style.display !== 'none') bmRefreshScheduled();
+  }, 30 * 1000);
 }
 
 // ── PROPERTY IMPORT (XLSX / CSV) ──────────────────────────
