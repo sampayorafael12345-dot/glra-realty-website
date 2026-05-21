@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Admin Dashboard | GLRA Realty</title>
 <meta name="robots" content="noindex,nofollow">
-<link rel="icon" type="image/png" href="/favicon.ico.png">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#c8a96e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1029,7 +1029,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
     <div class="login-title" style="text-align:center">Welcome Back</div>
     <div class="login-sub" style="text-align:center">Sign in to manage your listings and team</div>
     <div class="login-field"><label>Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
@@ -1043,7 +1043,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 <div class="admin-shell" id="adminShell">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sb-head"><img src="/hero-logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
+    <div class="sb-head"><img src="/img/hero-logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
     <nav class="sb-nav">
       <div class="sb-section">Overview</div>
       <a class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
@@ -1933,7 +1933,7 @@ function getNum(id){return parseFloat((document.getElementById(id).value||'').re
 function syncLogos(){
   const dark = document.body.classList.contains('dark-mode');
   document.querySelectorAll('img[data-logo-auto]').forEach(img => {
-    img.src = dark ? '/hero-logo.png' : '/logo.png';
+    img.src = dark ? '/img/hero-logo.png' : '/img/logo.png';
   });
 }
 function toggleDarkMode(){document.body.classList.toggle('dark-mode');const d=document.body.classList.contains('dark-mode');localStorage.setItem('darkMode',d);const b=document.getElementById('dmBtn');if(b)b.innerHTML=d?'<i class="fas fa-sun"></i> Theme':'<i class="fas fa-moon"></i> Theme';syncLogos();}
@@ -4641,10 +4641,10 @@ function bmRenderPropPicker(){
   }
   wrap.innerHTML = items.map(p => {
     const checked = bmState.selectedProps.has(p._id) ? 'checked' : '';
-    const img = (p.mainImage || (p.gallery||[])[0] || '/logo.png');
+    const img = (p.mainImage || (p.gallery||[])[0] || '/img/logo.png');
     return `<label class="bm-prop">
       <input type="checkbox" ${checked} onchange="bmToggleProp('${p._id}', this.checked)">
-      <img src="${esc(img)}" onerror="this.src='/logo.png'" alt="">
+      <img src="${esc(img)}" onerror="this.src='/img/logo.png'" alt="">
       <div>
         <div class="bm-prop-title">${esc(p.title||'Untitled')}</div>
         <div class="bm-prop-meta">${esc(p.location||'')}${p.price?' · '+fmt(p.price):''}</div>
