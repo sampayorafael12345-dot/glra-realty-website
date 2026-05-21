@@ -553,6 +553,7 @@ const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 const Account = mongoose.model('Account', accountSchema);
 const Task = mongoose.model('Task', taskSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
+const ScheduledEmail = mongoose.model('ScheduledEmail', scheduledEmailSchema);
 
 // ============ CONNECT TO MONGODB ============
 mongoose.connect(MONGODB_URI, {
@@ -2264,6 +2265,46 @@ app.get('/api/admin/contact-list', verifyToken, requirePermission('bulkmail_send
   }
 });
 
+// ── Shared helpers for bulk-email (used by immediate send + scheduled worker)
+const BULK_EMAIL_RX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+// Validate, lowercase, dedupe a raw recipients array. Returns { clean: string[] }.
+function cleanBulkRecipients(recipients) {
+  const seen = new Set();
+  const clean = [];
+  for (const r of (recipients || [])) {
+    const e = String(typeof r === 'string' ? r : (r?.email || '')).trim().toLowerCase();
+    if (!e || !BULK_EMAIL_RX.test(e) || seen.has(e)) continue;
+    seen.add(e);
+    clean.push(e);
+  }
+  return clean;
+}
+
+// Concurrency-limited Brevo dispatch. Returns { sent, failed, errors }.
+async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5 }) {
+  let sent = 0, failed = 0;
+  const errors = [];
+  let cursor = 0;
+  async function worker() {
+    while (cursor < clean.length) {
+      const idx = cursor++;
+      const to = clean[idx];
+      try {
+        const r = await sendEmail(to, subject, html, fromName);
+        if (r && r.success) sent++;
+        else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); }
+      } catch (e) {
+        failed++;
+        errors.push({ to, error: e.message });
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, clean.length) }, () => worker());
+  await Promise.all(workers);
+  return { sent, failed, errors };
+}
+
 // Send a single email body to many recipients. Validates + dedupes server-side
 // (never trust the client list), throttles concurrency so Brevo doesn't choke,
 // and writes an audit log entry summarising the batch.
@@ -2281,45 +2322,14 @@ app.post('/api/admin/bulk-email',
       const HARD_MAX = isTest ? 5 : 1000;
       if (recipients.length > HARD_MAX) return res.status(400).json({ error: `Maximum ${HARD_MAX} recipients per batch` });
 
-      // Validate + dedupe + lowercase. RFC-ish; matches the client-side regex.
-      const emailRx = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      const seen = new Set();
-      const clean = [];
-      for (const r of recipients) {
-        const e = String(typeof r === 'string' ? r : (r?.email || '')).trim().toLowerCase();
-        if (!e || !emailRx.test(e) || seen.has(e)) continue;
-        seen.add(e);
-        clean.push(e);
-      }
+      const clean = cleanBulkRecipients(recipients);
       if (!clean.length) return res.status(400).json({ error: 'No valid email addresses found' });
       if (!brevoApiInstance && !initBrevo()) return res.status(503).json({ error: 'Email service is not configured (BREVO_API_KEY missing).' });
 
       const safeFrom = String(fromName || 'GLRA Realty').slice(0, 80);
       const safeSubject = subject.slice(0, 200);
 
-      // Concurrency-limited dispatch — 5 in flight at once.
-      const CONCURRENCY = 5;
-      let sent = 0, failed = 0;
-      const errors = [];
-      let cursor = 0;
-
-      async function worker() {
-        while (cursor < clean.length) {
-          const idx = cursor++;
-          const to = clean[idx];
-          try {
-            const r = await sendEmail(to, safeSubject, html, safeFrom);
-            if (r && r.success) sent++;
-            else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); }
-          } catch (e) {
-            failed++;
-            errors.push({ to, error: e.message });
-          }
-        }
-      }
-
-      const workers = Array.from({ length: Math.min(CONCURRENCY, clean.length) }, () => worker());
-      await Promise.all(workers);
+      const { sent, failed, errors } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html });
 
       await logAudit(req, 'BULK_EMAIL', 'BulkEmail', '', safeSubject, {
         recipients: clean.length,
@@ -2335,6 +2345,162 @@ app.post('/api/admin/bulk-email',
     }
   }
 );
+
+// ── SCHEDULED BULK EMAILS ─────────────────────────────────────
+// Create a scheduled campaign — same payload as /api/admin/bulk-email plus a
+// `sendAt` ISO timestamp. The background worker (below) actually sends it.
+app.post('/api/admin/scheduled-emails',
+  bulkEmailLimiter,
+  verifyToken,
+  requirePermission('bulkmail_send'),
+  async (req, res) => {
+    try {
+      const { recipients, subject, fromName, html, sendAt } = req.body || {};
+      if (!Array.isArray(recipients) || !recipients.length) return res.status(400).json({ error: 'No recipients provided' });
+      if (!subject || typeof subject !== 'string') return res.status(400).json({ error: 'Subject is required' });
+      if (!html || typeof html !== 'string') return res.status(400).json({ error: 'Email body is required' });
+      if (recipients.length > 1000) return res.status(400).json({ error: 'Maximum 1000 recipients per batch' });
+
+      const sendAtDate = new Date(sendAt);
+      if (!sendAt || isNaN(sendAtDate.getTime())) return res.status(400).json({ error: 'sendAt must be a valid date/time' });
+      // Must be at least 1 minute in the future; cap at 1 year out.
+      const now = Date.now();
+      if (sendAtDate.getTime() < now + 60 * 1000) return res.status(400).json({ error: 'sendAt must be at least 1 minute from now' });
+      if (sendAtDate.getTime() > now + 365 * 24 * 60 * 60 * 1000) return res.status(400).json({ error: 'sendAt cannot be more than 1 year in the future' });
+
+      const clean = cleanBulkRecipients(recipients);
+      if (!clean.length) return res.status(400).json({ error: 'No valid email addresses found' });
+
+      const doc = await ScheduledEmail.create({
+        recipients: clean,
+        subject: subject.slice(0, 200),
+        fromName: String(fromName || 'GLRA Realty').slice(0, 80),
+        html,
+        sendAt: sendAtDate,
+        status: 'pending',
+        createdBy: req.user?.email || '',
+        createdByName: req.user?.name || ''
+      });
+
+      await logAudit(req, 'SCHEDULE_EMAIL', 'ScheduledEmail', String(doc._id), doc.subject, {
+        recipients: clean.length,
+        sendAt: sendAtDate.toISOString()
+      });
+
+      res.json({ success: true, id: doc._id, sendAt: sendAtDate, recipients: clean.length });
+    } catch (err) {
+      console.error('schedule-email error:', err);
+      res.status(500).json({ error: 'Failed to schedule email' });
+    }
+  }
+);
+
+// List scheduled emails — newest sendAt first. Strips the heavy `html` field.
+app.get('/api/admin/scheduled-emails',
+  verifyToken,
+  requirePermission('bulkmail_send'),
+  async (req, res) => {
+    try {
+      const docs = await ScheduledEmail.find({}, { html: 0 })
+        .sort({ sendAt: 1 })
+        .limit(200)
+        .lean();
+      const rows = docs.map(d => ({
+        _id: d._id,
+        subject: d.subject,
+        fromName: d.fromName,
+        recipientCount: (d.recipients || []).length,
+        sendAt: d.sendAt,
+        status: d.status,
+        sentAt: d.sentAt,
+        createdAt: d.createdAt,
+        createdBy: d.createdBy,
+        createdByName: d.createdByName,
+        result: d.result
+      }));
+      res.json({ scheduled: rows });
+    } catch (err) {
+      console.error('list scheduled-emails error:', err);
+      res.status(500).json({ error: 'Failed to load scheduled emails' });
+    }
+  }
+);
+
+// Cancel a still-pending scheduled email. Sent / failed campaigns can't be cancelled.
+app.delete('/api/admin/scheduled-emails/:id',
+  verifyToken,
+  requirePermission('bulkmail_send'),
+  async (req, res) => {
+    try {
+      const doc = await ScheduledEmail.findById(req.params.id);
+      if (!doc) return res.status(404).json({ error: 'Not found' });
+      if (doc.status !== 'pending') return res.status(400).json({ error: `Cannot cancel — already ${doc.status}` });
+      doc.status = 'cancelled';
+      await doc.save();
+      await logAudit(req, 'CANCEL_SCHEDULED_EMAIL', 'ScheduledEmail', String(doc._id), doc.subject, {});
+      res.json({ success: true });
+    } catch (err) {
+      console.error('cancel scheduled-email error:', err);
+      res.status(500).json({ error: 'Failed to cancel' });
+    }
+  }
+);
+
+// Background worker — every minute, find pending emails whose sendAt has passed
+// and dispatch them. Uses findOneAndUpdate with status check so two server
+// processes (if you ever scale out) can't double-send the same campaign.
+async function processDueScheduledEmails() {
+  if (mongoose.connection.readyState !== 1) return; // wait for DB connection
+  try {
+    while (true) {
+      // Atomically claim one due pending email by flipping status to 'sending'.
+      const due = await ScheduledEmail.findOneAndUpdate(
+        { status: 'pending', sendAt: { $lte: new Date() } },
+        { $set: { status: 'sending' } },
+        { sort: { sendAt: 1 }, new: true }
+      );
+      if (!due) return;
+
+      console.log(`📧 Dispatching scheduled email ${due._id} → ${due.recipients.length} recipients (subj: "${due.subject}")`);
+
+      if (!brevoApiInstance && !initBrevo()) {
+        // Brevo not configured — kick back to pending so we retry next tick.
+        due.status = 'pending';
+        await due.save();
+        console.warn('Skipping scheduled email — Brevo not configured');
+        return;
+      }
+
+      try {
+        const { sent, failed, errors } = await dispatchBulkEmail({
+          clean: due.recipients,
+          subject: due.subject,
+          fromName: due.fromName,
+          html: due.html
+        });
+        due.status = (failed === due.recipients.length) ? 'failed' : 'sent';
+        due.sentAt = new Date();
+        due.result = { total: due.recipients.length, sent, failed, errors: errors.slice(0, 10) };
+        await due.save();
+        console.log(`📧 Scheduled email ${due._id} done: ${sent} sent / ${failed} failed`);
+      } catch (e) {
+        due.status = 'failed';
+        due.sentAt = new Date();
+        due.result = { total: due.recipients.length, sent: 0, failed: due.recipients.length, errors: [{ error: e.message }] };
+        await due.save();
+        console.error(`Scheduled email ${due._id} failed:`, e.message);
+      }
+    }
+  } catch (err) {
+    console.error('processDueScheduledEmails error:', err.message);
+  }
+}
+
+// Run every 60 seconds. First tick after 30s so the DB has time to connect.
+setTimeout(() => {
+  processDueScheduledEmails();
+  setInterval(processDueScheduledEmails, 60 * 1000);
+}, 30 * 1000);
 
 app.post('/api/admin/properties/bulk', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
