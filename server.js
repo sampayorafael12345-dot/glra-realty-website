@@ -3032,15 +3032,7 @@ app.delete('/api/admin/property-submissions/:id', verifyToken, requirePermission
   }
 });
 
-// ============ STATIC + SITEMAP ============
-app.get('/sitemap.xml', (req, res) => {
-  const sitemapPath = path.join(__dirname, 'sitemap.xml');
-  if (fs.existsSync(sitemapPath)) {
-    res.sendFile(sitemapPath);
-  } else {
-    res.status(404).send('Sitemap not found');
-  }
-});
+// sitemap.xml is now served by express.static('public') — no custom route needed.
 
 // ============ ERROR HANDLER ============
 // Catches multer errors and other middleware errors
