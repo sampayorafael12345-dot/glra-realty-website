@@ -31,13 +31,13 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── Dark mode toggle ──────────────────────────────────────
-// Swap `<img src>` between /logo.png (black) and /hero-logo.png (white) on
+// Swap `<img src>` between /img/logo.png (black) and /img/hero-logo.png (white) on
 // every navbar/brand mark. Covers img[data-logo-auto] for opt-in elements
 // plus the common navbar selectors so inner pages don't need markup changes.
 function syncLogos() {
   const dark = document.body.classList.contains('dark-mode');
   document.querySelectorAll('img[data-logo-auto], .ab-brand img, .navbar .logo img, .ab-mast img').forEach(img => {
-    img.src = dark ? '/hero-logo.png' : '/logo.png';
+    img.src = dark ? '/img/hero-logo.png' : '/img/logo.png';
   });
 }
 // Keep the early-theme `html.dark-mode-pre` class in sync with the body
