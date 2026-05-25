@@ -56,6 +56,13 @@ function toggleDarkMode() {
   syncLogos();
 }
 
+// Migrate legacy '1'/'0' values written by an older inline script
+try {
+  const legacy = localStorage.getItem('darkMode');
+  if (legacy === '1') localStorage.setItem('darkMode', 'true');
+  else if (legacy === '0') localStorage.setItem('darkMode', 'false');
+} catch (e) {}
+
 // Apply saved dark mode preference on load
 if (localStorage.getItem('darkMode') === 'true') {
   document.body.classList.add('dark-mode');
@@ -68,6 +75,8 @@ if (localStorage.getItem('darkMode') === 'true') {
 } else {
   document.addEventListener('DOMContentLoaded', () => {
     syncDarkModePre();
+    const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-moon"></i>';
     syncLogos();
   });
 }

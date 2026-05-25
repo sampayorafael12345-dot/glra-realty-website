@@ -147,9 +147,9 @@ body.dark-mode .ab-hero-stats{border-color:var(--ab-paper) !important}
 body.dark-mode .ab-hero-stats > div{border-right-color:var(--ab-paper) !important}
 body.dark-mode .ab-hero-photo .photo-card{background:var(--ab-paper) !important;border-top-color:var(--ab-paper) !important}
 body.dark-mode .ab-hero-photo .photo-card .pc-title{color:var(--ab-ink) !important}
-body.dark-mode .contact-form .form-input{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border-color:var(--ab-paper) !important}
+body.dark-mode .contact-form .form-input{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border-color:var(--ab-line) !important}
 body.dark-mode .contact-form .form-input:focus{border-color:var(--ab-hot) !important;background:var(--ab-paper-2) !important}
-body.dark-mode .contact-form .submit-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
+body.dark-mode .contact-form .submit-btn{background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
 body.dark-mode .contact-form .submit-btn:hover{background:var(--ab-hot) !important;color:#fff !important}
 body.dark-mode .section .section-header,body.dark-mode .resources-section .section-header,body.dark-mode .testimonials .section-header,body.dark-mode .contact-form-section .section-header,body.dark-mode .faq-section .section-header,body.dark-mode .how-it-works .section-header{border-bottom-color:var(--ab-paper) !important}
 html,body{font-family:'Inter',sans-serif;background:var(--ab-paper);color:var(--ab-ink);line-height:1.4;-webkit-font-smoothing:antialiased;font-weight:500}
@@ -1279,8 +1279,6 @@ function closeMobileMenu(){document.getElementById('mobileOverlay').classList.re
 function goHome(){window.location.href='/'}
 function escapeHtml(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function showToast(msg,err){const t=document.createElement('div');t.className='toast';t.textContent=msg;if(err)t.style.borderLeftColor='#ef4444';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');try{localStorage.setItem('darkMode',document.body.classList.contains('dark-mode')?'1':'0')}catch{}}
-(function(){try{if(localStorage.getItem('darkMode')==='1')document.body.classList.add('dark-mode')}catch{}})();
 window.addEventListener('load',()=>{initLazyLoading();const l=document.getElementById('loader');if(l){l.classList.add('hidden');setTimeout(()=>l.style.display='none',500)}});
 async function loadHeroImages(){try{const r=await fetch('/api/hero-images');const imgs=await r.json();const wrapper=document.getElementById('heroSliderWrapper');if(wrapper&&imgs&&imgs.length>0){wrapper.innerHTML='';imgs.forEach(img=>{const s=document.createElement('div');s.className='swiper-slide';s.style.backgroundImage=`url('${img.url}')`;wrapper.appendChild(s)});if(window.heroSwiper)window.heroSwiper.update();else initSwiper()}else initSwiper()}catch{initSwiper()}}
 function initSwiper(){if(window.heroSwiper)return;window.heroSwiper=new Swiper('.hero-slider',{loop:true,autoplay:{delay:6000,disableOnInteraction:false},pagination:{el:'.swiper-pagination',clickable:true},effect:'fade',fadeEffect:{crossFade:true}})}
