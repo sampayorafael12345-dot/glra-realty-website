@@ -67,7 +67,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--g
 .sb-brand small{display:block;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1.5px;font-family:'DM Sans',sans-serif;margin-top:0}
 .sb-nav{padding:12px 0;flex:1}
 .sb-section{font-size:10px;color:rgba(255,255,255,.25);letter-spacing:2px;text-transform:uppercase;padding:10px 20px 4px;font-weight:600}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;text-decoration:none;font-weight:400}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;text-decoration:none;font-weight:400;white-space:nowrap}
 .nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}
 .nav-item.active{color:var(--gold);background:rgba(200,169,110,.08);border-left-color:var(--gold)}
 .nav-item i{width:17px;text-align:center;font-size:13px;flex-shrink:0;opacity:.7}
@@ -2300,7 +2300,7 @@ async function loadInquiries(){
       `<div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div>`;
     // Full
     document.getElementById('inqTbody').innerHTML=data.length?
-      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc((i.message||'').substring(0,100))}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td><td><div class="act-btns">${hasPerm('inquiries_delete')?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns">${hasPerm('inquiries_delete')?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
   }catch(e){console.error(e)}
 }
@@ -4738,17 +4738,26 @@ function bmApplyTemplate(){
 
 We're excited to share our latest selection of premier properties hand-picked by Catherine SB Sampayo, Licensed Real Estate Broker.
 
-Browse the listings below — reply to this email or call us to schedule a private viewing.`);
+Browse the listings below — reply to this email or call us to schedule a private viewing.
+
+Visit our website to see all listings:
+https://glrarealty.com`);
   } else if(t === 'newlisting'){
     fill('New Listing Just Added',
 `A new property has just been added to our portfolio. We expect strong interest, so reach out early if any of these catch your eye.
 
-Tap any listing below to view full details.`);
+Tap any listing below to view full details.
+
+See more listings on our website:
+https://glrarealty.com`);
   } else if(t === 'pricedrop'){
     fill('Price Update — Properties You Should See',
 `Some of our listings have been repriced. If you've been waiting for the right moment, this might be it.
 
-Take another look — call or email to lock in a viewing this week.`);
+Take another look — call or email to lock in a viewing this week.
+
+Browse all properties on our website:
+https://glrarealty.com`);
   } else if(t === 'custom'){
     bodyEl.value = '';
   }
@@ -4767,9 +4776,19 @@ function bmBuildEmailHtml(){
     : '<p style="margin:0;color:#9a9082;font-style:italic">Your message will appear here.</p>';
 
   const selected = bmState.props.filter(p => bmState.selectedProps.has(p._id));
+  const siteUrl = 'https://glrarealty.com';
+  // Plain-text link block (large, readable) shown after the property cards.
+  // Older email clients and elderly recipients benefit from visible URLs they
+  // can click directly — not just stylized "View Listing" buttons.
+  const linksHtml = `
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 0 0;border-collapse:collapse;background:#f1eee9;border-top:2px solid #0a0a0a">
+    <tr><td style="padding:18px 4px 6px 4px;font-family:'JetBrains Mono',monospace,Consolas;font-size:11px;letter-spacing:1.5px;color:#0a0a0a;text-transform:uppercase;font-weight:700">Quick links</td></tr>
+    ${selected.map(p => `<tr><td style="padding:4px 4px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5">${bmEscapeHtml(p.title||'Listing')} — <a href="${siteUrl}/properties.html?property=${encodeURIComponent(p._id)}" style="color:#ff3d00;text-decoration:underline;word-break:break-all">${siteUrl}/properties.html?property=${encodeURIComponent(p._id)}</a></td></tr>`).join('')}
+    <tr><td style="padding:4px 4px 8px 4px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5">GLRA Realty website — <a href="${siteUrl}" style="color:#ff3d00;text-decoration:underline">${siteUrl}</a></td></tr>
+  </table>`;
   const cardsHtml = selected.map(p => {
     const img = p.mainImage || (p.gallery||[])[0] || '';
-    const url = `https://glrarealty.com/property.html?id=${encodeURIComponent(p._id)}`;
+    const url = `https://glrarealty.com/properties.html?property=${encodeURIComponent(p._id)}`;
     const price = p.price ? '₱' + Number(p.price).toLocaleString('en-PH') : '';
     const specs = [];
     if(p.bedrooms) specs.push(p.bedrooms + 'BR');
@@ -4801,6 +4820,7 @@ function bmBuildEmailHtml(){
       <tr><td style="padding:30px 28px">
         ${bodyHtml}
         ${cardsHtml}
+        ${linksHtml}
         <p style="margin:24px 0 0 0;padding-top:20px;border-top:1px solid #0a0a0a;font-size:13px;line-height:1.6;color:#0a0a0a">
           Warm regards,<br>
           <strong style="font-weight:700">Catherine SB Sampayo</strong><br>
