@@ -567,3 +567,84 @@ window.glraOpenPrintGate = function (label) {
   });
 })();
 /* USABILITY-V3-HELPERS-END */
+
+/* ============================================
+   OUTREACH + ACCESSIBILITY PASS V4
+   - Microsoft Clarity analytics (skips /admin)
+   - WhatsApp pre-filled greeting
+   - Larger-text accessibility toggle for older visitors
+   Removable: delete from START to END marker.
+   ============================================ */
+/* OUTREACH-V4-START */
+(function glraOutreachV4(){
+  if (typeof document === 'undefined') return;
+
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  /* 1) Microsoft Clarity analytics --------------------------------------
+     PASTE your Clarity project ID below. Get it free at clarity.microsoft.com
+     → create a project for glrarealty.com → Settings → Overview → copy the ID
+     (looks like "abcd1234ef"). Until you paste it, analytics stays OFF so
+     nothing breaks. It never runs on the /admin dashboard. */
+  var CLARITY_ID = 'PASTE_YOUR_CLARITY_ID_HERE';
+  (function loadClarity(){
+    if (!CLARITY_ID || CLARITY_ID === 'PASTE_YOUR_CLARITY_ID_HERE') return;
+    if (location.pathname.toLowerCase().indexOf('/admin') === 0) return;
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, 'clarity', 'script', CLARITY_ID);
+  })();
+
+  /* 2) WhatsApp pre-filled greeting -------------------------------------- */
+  ready(function(){
+    var msg = encodeURIComponent("Hi GLRA Realty! I'm interested in your properties and would like to know more.");
+    document.querySelectorAll('a.btn-whatsapp[href*="wa.me"]').forEach(function(a){
+      if (a.href.indexOf('text=') !== -1) return; /* already has a message */
+      a.href = a.href.split('?')[0] + '?text=' + msg;
+    });
+  });
+
+  /* 3) Larger-text accessibility toggle ---------------------------------- */
+  if (!document.getElementById('glraTextSizeStyle')) {
+    var css =
+      'html.glra-large-text{zoom:1.15}' +
+      '.floating-buttons .btn-textsize{background:#0a0a0a !important;color:#fff !important;font-weight:800 !important;' +
+      'font-family:Inter,system-ui,sans-serif !important;font-size:15px !important;letter-spacing:.5px !important}' +
+      'html.glra-large-text .floating-buttons .btn-textsize{background:#ff3d00 !important;color:#fff !important}';
+    var s = document.createElement('style');
+    s.id = 'glraTextSizeStyle';
+    s.textContent = css;
+    document.head.appendChild(s);
+  }
+  /* Apply saved preference right away (before paint where possible). */
+  try {
+    if (localStorage.getItem('glraLargeText') === '1') document.documentElement.classList.add('glra-large-text');
+  } catch(e){}
+  window.glraToggleTextSize = function(){
+    var on = document.documentElement.classList.toggle('glra-large-text');
+    try { localStorage.setItem('glraLargeText', on ? '1' : '0'); } catch(e){}
+    if (typeof showToast === 'function') showToast(on ? 'Larger text turned on' : 'Larger text turned off');
+  };
+  /* Inject an "A+" button into every floating-buttons cluster, before the dark-mode button. */
+  ready(function(){
+    document.querySelectorAll('.floating-buttons').forEach(function(container){
+      if (container.querySelector('.btn-textsize')) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'floating-btn btn-textsize';
+      btn.setAttribute('aria-label', 'Toggle larger text');
+      btn.setAttribute('title', 'Larger text');
+      btn.textContent = 'A+';
+      btn.addEventListener('click', window.glraToggleTextSize);
+      var dm = container.querySelector('.btn-darkmode');
+      if (dm) container.insertBefore(btn, dm);
+      else container.appendChild(btn);
+    });
+  });
+})();
+/* OUTREACH-V4-END */

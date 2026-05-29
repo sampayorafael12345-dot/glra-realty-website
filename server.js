@@ -298,16 +298,268 @@ function handleValidation(req, res, next) {
 
 app.get('/api/properties', async (req, res) => {
   try {
-    const properties = await Property.find({ status: 'available' }).sort({ createdAt: -1 });
+    const properties = await Property.find({ status: 'available' }).sort({ createdAt: -1 }).lean();
+    properties.forEach(optimizePropertyImages);
     res.json(properties);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
+// Single property as JSON (handy for clients / future use).
+app.get('/api/properties/:id', async (req, res) => {
+  try {
+    const p = await Property.findById(req.params.id).lean();
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json(optimizePropertyImages(p));
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid id' });
+  }
+});
+
+// ── SEO: per-listing pages + dynamic sitemap ──────────────────
+const SITE_URL = 'https://glrarealty.com';
+function absUrl(u) {
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  return SITE_URL + (u.startsWith('/') ? '' : '/') + u;
+}
+
+// Rewrite a Cloudinary delivery URL to auto-pick the best format (WebP/AVIF)
+// and auto-tune quality — large bandwidth savings, especially on mobile, with
+// no quality loss the eye will notice. Non-Cloudinary URLs pass through
+// untouched, and we never double-apply (guard on existing f_/q_ transform).
+function optimizeCloudinary(u) {
+  if (typeof u !== 'string' || u.indexOf('res.cloudinary.com') === -1) return u;
+  if (u.indexOf('/upload/f_') !== -1 || u.indexOf('/upload/q_') !== -1) return u;
+  return u.replace('/upload/', '/upload/f_auto,q_auto/');
+}
+function optimizePropertyImages(p) {
+  if (!p) return p;
+  if (p.mainImage) p.mainImage = optimizeCloudinary(p.mainImage);
+  if (Array.isArray(p.gallery)) p.gallery = p.gallery.map(optimizeCloudinary);
+  return p;
+}
+
+// Build a fully server-rendered, SEO-rich detail page for one property.
+// Crawlers and social-share scrapers get real <title>, meta description,
+// Open Graph image, and JSON-LD; humans get a styled page with an inquiry form.
+function buildPropertyPageHtml(p) {
+  const id = String(p._id);
+  const title = p.title || 'Property';
+  const loc = p.location || '';
+  const lt = String(p.listingType || 'FOR SALE').toUpperCase();
+  const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
+  const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
+  const priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
+  const img = absUrl(optimizeCloudinary(p.mainImage || (p.gallery || [])[0] || '/img/hero-logo.png'));
+  const canonical = `${SITE_URL}/property/${id}`;
+  const descBase = String(p.description || '').replace(/\s+/g, ' ').trim();
+  const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
+  const gallery = (p.gallery || []).filter(Boolean);
+
+  const jsonld = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: title,
+    description: metaDesc,
+    image: img,
+    category: p.propertyType || 'Real Estate',
+    url: canonical,
+    offers: {
+      '@type': 'Offer',
+      price: Number(priceNum) || 0,
+      priceCurrency: 'PHP',
+      availability: 'https://schema.org/InStock',
+      url: canonical
+    }
+  }).replace(/</g, '\\u003c');
+
+  const specRows = [['Type', p.propertyType || '—']]
+    .concat(p.bedrooms ? [['Bedrooms', p.bedrooms]] : [])
+    .concat(p.bathrooms ? [['Bathrooms', p.bathrooms]] : [])
+    .concat(p.sqm ? [['Floor area', p.sqm + ' sqm']] : [])
+    .concat(p.parking ? [['Parking', p.parking]] : []);
+  const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
+  const thumbsHtml = gallery.length
+    ? `<div class="pg-thumbs">${gallery.map(g => `<img src="${esc(absUrl(optimizeCloudinary(g)))}" alt="${esc(title)}" loading="lazy" onclick="pgSwap(this.src)">`).join('')}</div>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<title>${esc(title)}${loc ? ' — ' + esc(loc) : ''} | GLRA Realty</title>
+<meta name="description" content="${esc(metaDesc)}">
+<link rel="canonical" href="${esc(canonical)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${esc(title)} | GLRA Realty">
+<meta property="og:description" content="${esc(metaDesc)}">
+<meta property="og:image" content="${esc(img)}">
+<meta property="og:url" content="${esc(canonical)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)} | GLRA Realty">
+<meta name="twitter:description" content="${esc(metaDesc)}">
+<meta name="twitter:image" content="${esc(img)}">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script type="application/ld+json">${jsonld}</script>
+<style>
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#6a6a6a;--line:#0a0a0a;--hot:#ff3d00}
+body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36}
+html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:'Inter',system-ui,sans-serif;line-height:1.5;font-weight:500}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.pg-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:2px solid var(--line);background:var(--paper)}
+.pg-nav img{height:50px;width:auto}
+.pg-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
+.pg-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
+.pg-wrap{max-width:1100px;margin:0 auto;padding:30px 24px 60px}
+.pg-badge{display:inline-block;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
+.pg-title{font-size:38px;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;line-height:1.05;margin-bottom:8px}
+.pg-loc{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:18px}
+.pg-hero-img{width:100%;height:auto;border:2px solid var(--line);margin-bottom:14px}
+.pg-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.pg-thumbs img{width:92px;height:70px;object-fit:cover;border:2px solid var(--line);cursor:pointer}
+.pg-thumbs img:hover{border-color:var(--hot)}
+.pg-price{font-size:34px;font-weight:900;color:var(--hot);letter-spacing:-1px;margin:6px 0 18px}
+.pg-specs{display:flex;flex-wrap:wrap;border:2px solid var(--line);margin-bottom:26px}
+.pg-specs div{flex:1;min-width:120px;padding:16px 18px;border-right:2px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)}
+.pg-specs div:last-child{border-right:0}
+.pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:20px;font-weight:900;margin-top:5px;letter-spacing:-.5px;color:var(--ink)}
+.pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
+.pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px}
+.pg-form{border:2px solid var(--line);padding:26px;background:var(--paper2)}
+.pg-form h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:16px}
+.pg-form input,.pg-form textarea{width:100%;padding:14px 16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:12px}
+.pg-form textarea{min-height:110px;resize:vertical}
+.pg-form button{background:var(--ink);color:var(--paper);border:0;padding:16px 28px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer}
+.pg-form button:hover{background:var(--hot);color:#fff}
+.pg-foot{background:#0a0a0a;color:#f1eee9;text-align:center;padding:28px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;line-height:1.9}
+.pg-foot a{color:var(--hot)}
+@media(max-width:600px){.pg-title{font-size:27px}.pg-price{font-size:26px}}
+</style>
+</head>
+<body>
+<nav class="pg-nav">
+  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo.png" alt="GLRA Realty" data-logo-auto></a>
+  <a href="/properties.html" class="pg-back">← All listings</a>
+</nav>
+<div class="pg-wrap">
+  <span class="pg-badge">${esc(lt)}</span>
+  <h1 class="pg-title">${esc(title)}</h1>
+  <div class="pg-loc"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>
+  <img id="pgHero" class="pg-hero-img" src="${esc(img)}" alt="${esc(title)}">
+  ${thumbsHtml}
+  <div class="pg-price">${esc(priceText)}</div>
+  ${specsHtml}
+  ${descBase ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descBase)}</div>` : ''}
+  <div class="pg-form">
+    <h2>Inquire about this property</h2>
+    <form id="pgForm" onsubmit="return pgSubmit(event)">
+      <input type="text" id="pgName" placeholder="Full name" required>
+      <input type="email" id="pgEmail" placeholder="Email address" required>
+      <input type="tel" id="pgPhone" placeholder="Phone number">
+      <textarea id="pgMsg" placeholder="Your message">I'm interested in ${esc(title)}${loc ? ' (' + esc(loc) + ')' : ''}. Please send me more details.</textarea>
+      <button type="submit">Send inquiry →</button>
+    </form>
+    <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
+  </div>
+</div>
+<div class="pg-foot">
+  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a>
+</div>
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<script>
+function pgSwap(src){ var h=document.getElementById('pgHero'); if(h) h.src=src; }
+async function pgSubmit(e){
+  e.preventDefault();
+  var btn = e.target.querySelector('button');
+  var result = document.getElementById('pgResult');
+  var payload = {
+    name: document.getElementById('pgName').value.trim(),
+    email: document.getElementById('pgEmail').value.trim(),
+    phone: document.getElementById('pgPhone').value.trim(),
+    message: document.getElementById('pgMsg').value.trim() || ('Inquiry about ' + ${JSON.stringify(title)}),
+    propertyId: ${JSON.stringify(id)},
+    propertyTitle: ${JSON.stringify(title)}
+  };
+  if(!payload.name || !payload.email){ result.style.color='#ff3d00'; result.textContent='Please enter your name and email.'; return false; }
+  btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Sending...';
+  try {
+    var r = await fetch('/api/inquiries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    var d = await r.json().catch(function(){ return {}; });
+    if(r.ok && d.success){ result.style.color='#10b981'; result.textContent='Thank you! We received your inquiry and will respond within 24 hours.'; e.target.reset(); }
+    else { result.style.color='#ff3d00'; result.textContent=(d.error||'Something went wrong. Please call us instead.'); }
+  } catch(_){ result.style.color='#ff3d00'; result.textContent='Network error. Please call or message us.'; }
+  finally { btn.disabled=false; btn.textContent=orig; }
+  return false;
+}
+</script>
+<script src="/js/main.js"></script>
+</body>
+</html>`;
+}
+
+app.get('/property/:id', async (req, res) => {
+  try {
+    const p = await Property.findById(req.params.id);
+    if (!p || p.status !== 'available') return res.redirect(302, '/properties.html');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(buildPropertyPageHtml(p));
+  } catch (err) {
+    return res.redirect(302, '/properties.html');
+  }
+});
+
+// Dynamic sitemap — always fresh. Lists the fixed marketing pages plus a URL
+// for every available listing so Google discovers new properties quickly.
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const staticPages = [
+      ['/', 'daily', '1.0'], ['/properties.html', 'daily', '0.9'],
+      ['/list-property.html', 'monthly', '0.8'], ['/about.html', 'monthly', '0.7'],
+      ['/calculator.html', 'monthly', '0.6'], ['/affordability.html', 'monthly', '0.6'],
+      ['/amortization.html', 'monthly', '0.6'], ['/rental-yield.html', 'monthly', '0.6'],
+      ['/zonal.html', 'monthly', '0.6'], ['/ercf.html', 'monthly', '0.6'],
+      ['/cost-of-ownership.html', 'monthly', '0.6'], ['/guide.html', 'monthly', '0.6'],
+      ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
+      ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
+      ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5']
+    ];
+    const props = await Property.find({ status: 'available' }, { _id: 1, createdAt: 1, priceUpdatedAt: 1 })
+      .sort({ createdAt: -1 }).limit(5000).lean();
+    const urls = staticPages.map(([loc, freq, pri]) =>
+      `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority></url>`);
+    props.forEach(pr => {
+      const lm = new Date(pr.priceUpdatedAt || pr.createdAt || Date.now()).toISOString().slice(0, 10);
+      urls.push(`  <url><loc>${SITE_URL}/property/${pr._id}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
+    });
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`);
+  } catch (err) {
+    console.error('sitemap error:', err);
+    res.status(500).send('');
+  }
+});
+
 app.get('/api/hero-images', async (req, res) => {
   try {
-    const images = await HeroImage.find().sort({ order: 1 });
+    const images = await HeroImage.find().sort({ order: 1 }).lean();
+    images.forEach(i => { if (i.url) i.url = optimizeCloudinary(i.url); });
     res.json(images);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

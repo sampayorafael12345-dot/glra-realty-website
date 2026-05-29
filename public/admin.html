@@ -1145,11 +1145,13 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- INQUIRIES -->
       <div id="tab-inquiries" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="hdr-btn" onclick="exportInquiriesCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div>
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Property</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inqTbody"></tbody></table></div></div></div>
       </div>
 
       <!-- SUBSCRIBERS -->
       <div id="tab-subscribers" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="hdr-btn" onclick="exportSubscribersCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div>
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Source</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody id="subTbody"></tbody></table></div></div></div>
       </div>
 
@@ -2295,6 +2297,7 @@ async function uploadHeroImgs(files){
 async function loadInquiries(){
   try{
     const data=await apiFetch('/api/admin/inquiries').then(r=>r.json());
+    window.lastInquiries = data;
     // Dashboard
     document.getElementById('dashInq').innerHTML=data.length?
       `<table><thead><tr><th>Name</th><th>Email</th><th>Property</th><th>Date</th></tr></thead><tbody>${data.slice(0,6).map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(i.propertyTitle||'General')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td></tr>`).join('')}</tbody></table>`:
@@ -2333,10 +2336,52 @@ async function toggleInqHandled(id, makeHandled){
   }catch(e){ showToast('Error updating inquiry', true); }
 }
 
+// ── CSV EXPORT ────────────────────────────────────────────
+// Builds a CSV from an array of rows (first row = headers) and triggers a
+// download. Adds a UTF-8 BOM so Excel opens accents/peso signs correctly.
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(cell => {
+    const s = (cell === null || cell === undefined) ? '' : String(cell);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportInquiriesCSV(){
+  const data = window.lastInquiries || [];
+  if(!data.length){ showToast('No inquiries to export', true); return; }
+  const rows = [['Name','Email','Phone','Property','Message','Handled','Date']];
+  data.forEach(i => rows.push([
+    i.name||'', i.email||'', i.phone||'', i.propertyTitle||'General',
+    (i.message||'').replace(/\r?\n/g,' '), i.handled?'Yes':'No',
+    i.createdAt ? new Date(i.createdAt).toLocaleString() : ''
+  ]));
+  downloadCSV('glra-inquiries-' + new Date().toISOString().slice(0,10) + '.csv', rows);
+  showToast(`Exported ${data.length} inquir${data.length===1?'y':'ies'}`);
+}
+
+function exportSubscribersCSV(){
+  const data = window.lastSubscribers || [];
+  if(!data.length){ showToast('No subscribers to export', true); return; }
+  const rows = [['Email','Source','Status','Date']];
+  data.forEach(s => rows.push([
+    s.email||'', s.source||'', (s.isActive!==false)?'Active':'Inactive',
+    (s.subscribedAt||s.createdAt) ? new Date(s.subscribedAt||s.createdAt).toLocaleString() : ''
+  ]));
+  downloadCSV('glra-subscribers-' + new Date().toISOString().slice(0,10) + '.csv', rows);
+  showToast(`Exported ${data.length} subscriber${data.length===1?'':'s'}`);
+}
+
 // ── SUBSCRIBERS ───────────────────────────────────────────
 async function loadSubscribers(){
   try{
     const data=await apiFetch('/api/admin/subscribers').then(r=>r.json());
+    window.lastSubscribers = data;
     document.getElementById('subTbody').innerHTML=data.length?
       data.map(s=>`<tr><td style="font-size:13px">${esc(s.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(s.source||'—')}</td><td style="font-size:11px;color:var(--gray)">${fmtDateShort(s.subscribedAt||s.createdAt)}</td><td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td><td><div class="act-btns">${hasPerm('subscribers_delete')?`<button class="act act-del" onclick="delSub('${s._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
       `<tr><td colspan="5"><div class="empty-st"><i class="fas fa-users"></i><p>No subscribers</p></div></td></tr>`;
@@ -4805,12 +4850,12 @@ function bmBuildEmailHtml(){
   const linksHtml = `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 0 0;border-collapse:collapse;background:#f1eee9;border-top:2px solid #0a0a0a">
     <tr><td style="padding:18px 4px 6px 4px;font-family:'JetBrains Mono',monospace,Consolas;font-size:11px;letter-spacing:1.5px;color:#0a0a0a;text-transform:uppercase;font-weight:700">Quick links</td></tr>
-    ${selected.map(p => `<tr><td style="padding:4px 4px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5">${bmEscapeHtml(p.title||'Listing')} — <a href="${siteUrl}/properties.html?property=${encodeURIComponent(p._id)}" style="color:#ff3d00;text-decoration:underline;word-break:break-all">${siteUrl}/properties.html?property=${encodeURIComponent(p._id)}</a></td></tr>`).join('')}
+    ${selected.map(p => `<tr><td style="padding:4px 4px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5">${bmEscapeHtml(p.title||'Listing')} — <a href="${siteUrl}/property/${encodeURIComponent(p._id)}" style="color:#ff3d00;text-decoration:underline;word-break:break-all">${siteUrl}/property/${encodeURIComponent(p._id)}</a></td></tr>`).join('')}
     <tr><td style="padding:4px 4px 8px 4px;font-family:Inter,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5">GLRA Realty website — <a href="${siteUrl}" style="color:#ff3d00;text-decoration:underline">${siteUrl}</a></td></tr>
   </table>`;
   const cardsHtml = selected.map(p => {
     const img = p.mainImage || (p.gallery||[])[0] || '';
-    const url = `https://glrarealty.com/properties.html?property=${encodeURIComponent(p._id)}`;
+    const url = `https://glrarealty.com/property/${encodeURIComponent(p._id)}`;
     const price = p.price ? '₱' + Number(p.price).toLocaleString('en-PH') : '';
     const specs = [];
     if(p.bedrooms) specs.push(p.bedrooms + 'BR');
