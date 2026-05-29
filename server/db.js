@@ -48,6 +48,9 @@ const inquirySchema = new mongoose.Schema({
   message: { type: String, default: '' },
   propertyId: { type: String, default: null },
   propertyTitle: { type: String, default: null },
+  handled: { type: Boolean, default: false },
+  handledAt: { type: Date, default: null },
+  handledBy: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

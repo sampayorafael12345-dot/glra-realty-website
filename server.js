@@ -882,6 +882,24 @@ app.get('/api/admin/inquiries', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Mark an inquiry handled / not-handled. Any logged-in staff member can do this
+// (it's a workflow flag, not a destructive action). Body: { handled: true|false }.
+app.patch('/api/admin/inquiries/:id', verifyToken, async (req, res) => {
+  try {
+    const handled = !!(req.body && req.body.handled);
+    const update = handled
+      ? { handled: true, handledAt: new Date(), handledBy: req.user?.name || req.user?.email || '' }
+      : { handled: false, handledAt: null, handledBy: '' };
+    const inquiry = await Inquiry.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!inquiry) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req, handled ? 'INQUIRY_HANDLED' : 'INQUIRY_REOPENED', 'Inquiry', req.params.id, inquiry.email, null);
+    res.json({ success: true, handled: inquiry.handled });
+  } catch (err) {
+    console.error('update inquiry error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.post('/api/admin/properties', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
     const property = new Property(req.body);
@@ -1194,6 +1212,48 @@ app.delete('/api/admin/scheduled-emails/:id',
     } catch (err) {
       console.error('cancel scheduled-email error:', err);
       res.status(500).json({ error: 'Failed to cancel' });
+    }
+  }
+);
+
+// Resend a cancelled / failed / already-sent campaign without rebuilding it.
+// Creates a NEW pending entry (so the original stays in the history) with
+// sendAt = now, which the background worker picks up on its next tick.
+app.post('/api/admin/scheduled-emails/:id/resend',
+  bulkEmailLimiter,
+  verifyToken,
+  requirePermission('bulkmail_send'),
+  async (req, res) => {
+    try {
+      const orig = await ScheduledEmail.findById(req.params.id);
+      if (!orig) return res.status(404).json({ error: 'Not found' });
+      if (orig.status === 'pending' || orig.status === 'sending') {
+        return res.status(400).json({ error: `This campaign is still ${orig.status} — nothing to resend yet.` });
+      }
+      if (!orig.recipients || !orig.recipients.length) {
+        return res.status(400).json({ error: 'Original campaign has no saved recipients to resend.' });
+      }
+
+      const doc = await ScheduledEmail.create({
+        recipients: orig.recipients,
+        subject: orig.subject,
+        fromName: orig.fromName,
+        html: orig.html,
+        sendAt: new Date(), // due immediately — worker dispatches on next tick (≤60s)
+        status: 'pending',
+        createdBy: req.user?.email || '',
+        createdByName: req.user?.name || ''
+      });
+
+      await logAudit(req, 'RESEND_SCHEDULED_EMAIL', 'ScheduledEmail', String(doc._id), doc.subject, {
+        resentFrom: String(orig._id),
+        recipients: orig.recipients.length
+      });
+
+      res.json({ success: true, id: doc._id, recipients: orig.recipients.length });
+    } catch (err) {
+      console.error('resend scheduled-email error:', err);
+      res.status(500).json({ error: 'Failed to resend' });
     }
   }
 );

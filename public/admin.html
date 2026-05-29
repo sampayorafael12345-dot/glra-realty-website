@@ -1279,6 +1279,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
             <div class="bm-send-row">
               <button class="hdr-btn primary" id="bmSendBtn" onclick="bmSend()"><i class="fas fa-paper-plane"></i> <span>Send to <b id="bmSendCount">0</b></span></button>
+              <button class="hdr-btn" id="bmTestBtn" onclick="bmTestSend()" title="Send this email only to your own inbox so you can check how it looks"><i class="fas fa-vial"></i> Test send to me</button>
               <button class="hdr-btn" onclick="bmReset()"><i class="fas fa-redo"></i> Reset</button>
               <div class="bm-result" id="bmResult" style="display:none"></div>
             </div>
@@ -2300,7 +2301,19 @@ async function loadInquiries(){
       `<div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries yet</p></div>`;
     // Full
     document.getElementById('inqTbody').innerHTML=data.length?
-      data.map(i=>`<tr><td><strong style="font-size:13px">${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns">${hasPerm('inquiries_delete')?`<button class="act act-del" onclick="delInq('${i._id}')"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td></tr>`).join(''):
+      data.map(i=>{
+        const handled = !!i.handled;
+        const replySubject = encodeURIComponent(`Re: Your inquiry${i.propertyTitle ? ' about ' + i.propertyTitle : ''} — GLRA Realty`);
+        const replyBody = encodeURIComponent(`Dear ${i.name || 'there'},\n\nThank you for reaching out to GLRA Realty.\n\n`);
+        const replyHref = `mailto:${encodeURIComponent(i.email||'')}?subject=${replySubject}&body=${replyBody}`;
+        const handledBadge = handled ? ` <span style="display:inline-block;background:#10b981;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle">✓ Handled</span>` : '';
+        const replyBtn = i.email ? `<a class="act act-view" style="text-decoration:none" href="${replyHref}" title="Reply by email"><i class="fas fa-reply"></i></a>` : '';
+        const handledBtn = handled
+          ? `<button class="act" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)" onclick="toggleInqHandled('${i._id}',false)" title="Mark as NOT handled"><i class="fas fa-rotate-left"></i></button>`
+          : `<button class="act act-view" onclick="toggleInqHandled('${i._id}',true)" title="Mark as handled"><i class="fas fa-check"></i></button>`;
+        const delBtn = hasPerm('inquiries_delete') ? `<button class="act act-del" onclick="delInq('${i._id}')" title="Delete"><i class="fas fa-trash"></i></button>` : '';
+        return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${handledBtn}${delBtn}</div></td></tr>`;
+      }).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
   }catch(e){console.error(e)}
 }
@@ -2309,6 +2322,15 @@ async function delInq(id){
   if(!hasPerm('inquiries_delete')){showToast('You don\'t have permission to delete inquiries',true);return}
   if(!confirm('Delete this inquiry?'))return;
   try{await apiFetch(`/api/admin/inquiries/${id}`,{method:'DELETE'});showToast('Deleted');loadInquiries()}catch{showToast('Error',true)}
+}
+
+async function toggleInqHandled(id, makeHandled){
+  try{
+    const res = await apiFetch(`/api/admin/inquiries/${id}`,{method:'PATCH',body:JSON.stringify({handled:makeHandled})});
+    const d = await res.json();
+    if(res.ok && d.success){ showToast(makeHandled?'Marked as handled':'Reopened'); loadInquiries(); }
+    else showToast(d.error||'Update failed', true);
+  }catch(e){ showToast('Error updating inquiry', true); }
 }
 
 // ── SUBSCRIBERS ───────────────────────────────────────────
@@ -4827,9 +4849,10 @@ function bmBuildEmailHtml(){
           <span style="color:#6a6a6a;font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:1.5px;text-transform:uppercase">Licensed Real Estate Broker · GLRA Realty</span>
         </p>
       </td></tr>
-      <tr><td style="background:#0a0a0a;color:#f1eee9;padding:18px 28px;font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:1.5px;text-transform:uppercase">
+      <tr><td style="background:#0a0a0a;color:#f1eee9;padding:18px 28px;font-family:'JetBrains Mono',monospace,Consolas;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;line-height:1.9">
         <a href="https://glrarealty.com" style="color:#ff3d00;text-decoration:none">glrarealty.com</a> &nbsp;·&nbsp;
-        <a href="mailto:hello@glrarealty.com" style="color:#f1eee9;text-decoration:none">hello@glrarealty.com</a>
+        <a href="mailto:glrarealty@gmail.com" style="color:#f1eee9;text-decoration:none">glrarealty@gmail.com</a><br>
+        <a href="tel:+639171774572" style="color:#f1eee9;text-decoration:none">Call / Viber: +63 917 177 4572</a>
       </td></tr>
     </table>
   </td></tr>
@@ -4882,6 +4905,44 @@ async function bmSend(){
     btn.disabled = false;
     btn.innerHTML = original;
     bmUpdateCount();
+  }
+}
+
+// Send the current campaign ONLY to the logged-in admin's own inbox so they can
+// preview exactly what recipients will receive before blasting the whole list.
+async function bmTestSend(){
+  const myEmail = (CU && CU.email) ? CU.email : '';
+  if(!myEmail){ showToast('Could not find your account email — try refreshing', true); return; }
+
+  const subject = (document.getElementById('bmSubject').value || '').trim();
+  const fromName = (document.getElementById('bmFromName').value || 'GLRA Realty').trim();
+  const body = (document.getElementById('bmBody').value || '').trim();
+
+  if(!subject){ showToast('Enter a subject', true); document.getElementById('bmSubject').focus(); return; }
+  if(!body && !bmState.selectedProps.size){ showToast('Write a message or attach at least one property', true); return; }
+
+  const html = bmBuildEmailHtml();
+  const btn = document.getElementById('bmTestBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending test...';
+
+  try {
+    const res = await apiFetch('/api/admin/bulk-email', {
+      method: 'POST',
+      body: JSON.stringify({ recipients: [myEmail], subject: '[TEST] ' + subject, fromName, html, isTest: true })
+    });
+    const d = await res.json();
+    if(res.ok && d.success){
+      showToast(`Test sent to ${myEmail} — check your inbox`);
+    } else {
+      showToast(d.error || 'Test send failed', true);
+    }
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
@@ -4991,6 +5052,9 @@ async function bmRefreshScheduled(){
       const cancelBtn = status === 'pending'
         ? `<button class="hdr-btn danger" onclick="bmCancelScheduled('${esc(String(r._id))}')" title="Cancel this scheduled send"><i class="fas fa-ban"></i> Cancel</button>`
         : '';
+      const resendBtn = (status === 'cancelled' || status === 'failed' || status === 'sent')
+        ? `<button class="hdr-btn" onclick="bmResendScheduled('${esc(String(r._id))}')" title="Send this campaign again"><i class="fas fa-redo"></i> Resend</button>`
+        : '';
       return `<div class="bm-sched-row">
         <div style="min-width:0">
           <div class="bm-sched-subject">${esc(r.subject||'(no subject)')}</div>
@@ -5004,6 +5068,7 @@ async function bmRefreshScheduled(){
         <div class="bm-sched-actions">
           <span class="bm-sched-status ${status}">${esc(status)}</span>
           ${cancelBtn}
+          ${resendBtn}
         </div>
       </div>`;
     }).join('');
@@ -5019,6 +5084,18 @@ async function bmCancelScheduled(id){
     const d = await res.json();
     if(res.ok && d.success){ showToast('Cancelled'); bmRefreshScheduled(); }
     else showToast(d.error || 'Failed to cancel', true);
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  }
+}
+
+async function bmResendScheduled(id){
+  if(!confirm('Send this campaign again to its original recipient list?\n\nIt will go out within about a minute.')) return;
+  try {
+    const res = await apiFetch('/api/admin/scheduled-emails/' + encodeURIComponent(id) + '/resend', { method: 'POST' });
+    const d = await res.json();
+    if(res.ok && d.success){ showToast(`Re-queued for ${d.recipients} recipient${d.recipients===1?'':'s'} — sending shortly`); bmRefreshScheduled(); }
+    else showToast(d.error || 'Failed to resend', true);
   } catch (e) {
     showToast('Network error: ' + e.message, true);
   }
