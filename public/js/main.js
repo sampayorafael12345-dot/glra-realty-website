@@ -589,7 +589,7 @@ window.glraOpenPrintGate = function (label) {
      → create a project for glrarealty.com → Settings → Overview → copy the ID
      (looks like "abcd1234ef"). Until you paste it, analytics stays OFF so
      nothing breaks. It never runs on the /admin dashboard. */
-  var CLARITY_ID = 'PASTE_YOUR_CLARITY_ID_HERE';
+  var CLARITY_ID = 'wyui9wgsdd';
   (function loadClarity(){
     if (!CLARITY_ID || CLARITY_ID === 'PASTE_YOUR_CLARITY_ID_HERE') return;
     if (location.pathname.toLowerCase().indexOf('/admin') === 0) return;
