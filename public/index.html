@@ -21,14 +21,14 @@
 <meta property="og:url" content="https://glrarealty.com/">
 <meta property="og:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
 <meta property="og:description" content="Your trusted licensed real estate broker in Metro Manila and Luzon. Browse exclusive properties for sale and lease.">
-<meta property="og:image" content="https://glrarealty.com/img/hero-logo.png">
+<meta property="og:image" content="https://glrarealty.com/img/agent-photo.jpg">
 <meta property="og:image:alt" content="GLRA Realty — Licensed Real Estate Broker">
 <meta property="og:locale" content="en_PH">
 <meta property="og:site_name" content="GLRA Realty">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="GLRA Realty | Find Your Dream Home in the Philippines">
 <meta name="twitter:description" content="Your trusted licensed real estate broker in Metro Manila and Luzon. Browse exclusive properties for sale and lease.">
-<meta name="twitter:image" content="https://glrarealty.com/img/hero-logo.png">
+<meta name="twitter:image" content="https://glrarealty.com/img/agent-photo.jpg">
 <meta name="geo.region" content="PH-00">
 <meta name="geo.placename" content="Makati City">
 <meta name="geo.position" content="14.5547;121.0244">
@@ -1289,7 +1289,7 @@ async function submitPriceAlert(){const email=document.getElementById('modalEmai
 function openWishlistModal(id,title,price,location,image){document.getElementById('wishlistPropertyId').value=id;document.getElementById('wishlistPropertyTitle').value=title;document.getElementById('wishlistPropertyPrice').value=price;document.getElementById('wishlistPropertyLocation').value=location;document.getElementById('wishlistPropertyImage').value=image;document.getElementById('wishlistModal').style.display='flex'}
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value=''}
 async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const location=document.getElementById('wishlistPropertyLocation').value;const image=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:location,propertyImage:image})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist!')}else showToast('Failed to save.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Save to wishlist →';btn.disabled=false}}
-function shareProperty(platform,property){const url=encodeURIComponent(`${window.location.origin}/properties.html?property=${property._id}`);const title=encodeURIComponent(property.title);const price=getDisplayPrice(property);const text=encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${window.location.origin}/properties.html?property=${property._id}`);showToast('Link copied!');return}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400')}
+function shareProperty(platform,property){const url=encodeURIComponent(`${window.location.origin}/property/${property._id}`);const title=encodeURIComponent(property.title);const price=getDisplayPrice(property);const text=encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${window.location.origin}/property/${property._id}`);showToast('Link copied!');return}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400')}
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null;
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}

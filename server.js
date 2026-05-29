@@ -352,7 +352,9 @@ function buildPropertyPageHtml(p) {
   const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
   const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
   const priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
-  const img = absUrl(optimizeCloudinary(p.mainImage || (p.gallery || [])[0] || '/img/hero-logo.png'));
+  const rawImg = p.mainImage || (p.gallery || [])[0] || '/img/agent-photo.jpg';
+  const ogImg = absUrl(rawImg);                       // original format — most reliable for social-share scrapers
+  const heroImg = absUrl(optimizeCloudinary(rawImg)); // optimized (WebP/AVIF) for fast on-page display
   const canonical = `${SITE_URL}/property/${id}`;
   const descBase = String(p.description || '').replace(/\s+/g, ' ').trim();
   const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
@@ -363,7 +365,7 @@ function buildPropertyPageHtml(p) {
     '@type': 'Product',
     name: title,
     description: metaDesc,
-    image: img,
+    image: ogImg,
     category: p.propertyType || 'Real Estate',
     url: canonical,
     offers: {
@@ -397,12 +399,12 @@ function buildPropertyPageHtml(p) {
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)} | GLRA Realty">
 <meta property="og:description" content="${esc(metaDesc)}">
-<meta property="og:image" content="${esc(img)}">
+<meta property="og:image" content="${esc(ogImg)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)} | GLRA Realty">
 <meta name="twitter:description" content="${esc(metaDesc)}">
-<meta name="twitter:image" content="${esc(img)}">
+<meta name="twitter:image" content="${esc(ogImg)}">
 <link rel="apple-touch-icon" href="/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -456,7 +458,7 @@ a{color:inherit;text-decoration:none}
   <span class="pg-badge">${esc(lt)}</span>
   <h1 class="pg-title">${esc(title)}</h1>
   <div class="pg-loc"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>
-  <img id="pgHero" class="pg-hero-img" src="${esc(img)}" alt="${esc(title)}">
+  <img id="pgHero" class="pg-hero-img" src="${esc(heroImg)}" alt="${esc(title)}">
   ${thumbsHtml}
   <div class="pg-price">${esc(priceText)}</div>
   ${specsHtml}

@@ -20,14 +20,14 @@
 <meta property="og:url" content="https://glrarealty.com/properties.html">
 <meta property="og:title" content="Browse Properties | GLRA Realty Philippines">
 <meta property="og:description" content="Premium properties for sale and lease in Metro Manila and Luzon.">
-<meta property="og:image" content="https://glrarealty.com/img/hero-logo.png">
-<meta property="og:image:alt" content="GLRA Realty — Browse Properties for Sale and Lease">
+<meta property="og:image" content="https://glrarealty.com/img/agent-photo.jpg">
+<meta property="og:image:alt" content="GLRA Realty — Catherine SB Sampayo, Licensed Real Estate Broker">
 <meta property="og:locale" content="en_PH">
 <meta property="og:site_name" content="GLRA Realty">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Browse Properties | GLRA Realty Philippines">
 <meta name="twitter:description" content="Browse premium condos, house and lot, and commercial properties for sale and lease across Metro Manila and Luzon.">
-<meta name="twitter:image" content="https://glrarealty.com/img/hero-logo.png">
+<meta name="twitter:image" content="https://glrarealty.com/img/agent-photo.jpg">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Browse Properties","description":"Premium properties for sale and lease in Metro Manila and Luzon, Philippines.","url":"https://glrarealty.com/properties.html","isPartOf":{"@type":"WebSite","name":"GLRA Realty","url":"https://glrarealty.com"},"about":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Properties","item":"https://glrarealty.com/properties.html"}]}</script>
 <link rel="preload" href="/img/logo.png" as="image">
@@ -537,7 +537,7 @@ function openWishlistModal(id,title,price,location,image){document.getElementByI
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value='';}
 async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const loc=document.getElementById('wishlistPropertyLocation').value;const img=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:loc,propertyImage:img})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist.');}else showToast('Failed to save.',true);}catch{showToast('Network error.',true);}finally{btn.textContent='Save to Wishlist';btn.disabled=false;}}
 /* ---- SHARE ---- */
-function shareProperty(platform,property){const url=encodeURIComponent(`${location.origin}/properties.html?property=${property._id}`);const title=encodeURIComponent(property.title);const text=encodeURIComponent(`${property.title} — ${property.location} — ${getDisplayPrice(property)}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${location.origin}/properties.html?property=${property._id}`);showToast('Link copied!');return;}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400');}
+function shareProperty(platform,property){const url=encodeURIComponent(`${location.origin}/property/${property._id}`);const title=encodeURIComponent(property.title);const text=encodeURIComponent(`${property.title} — ${property.location} — ${getDisplayPrice(property)}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied!');return;}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400');}
 /* ---- PROPERTIES DATA ---- */
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null,currentCategory='all';
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE';}
@@ -684,7 +684,7 @@ function getDisplayPrice(p){
 function whatsappPropertyUrl(prop){
   const isLease = isForLease(prop);
   const price = getDisplayPrice(prop);
-  const url = location.origin + '/properties.html?property=' + prop._id;
+  const url = location.origin + '/property/' + prop._id;
   const message = `Hi Catherine! I'm interested in this property listed on GLRA Realty:\n\n` +
     `${prop.title}\n` +
     `Location: ${prop.location}\n` +
