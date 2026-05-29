@@ -353,11 +353,23 @@ function buildPropertyPageHtml(p) {
   const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
   const priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
   const rawImg = p.mainImage || (p.gallery || [])[0] || '/img/agent-photo.jpg';
-  const ogImg = absUrl(rawImg);                       // original format — most reliable for social-share scrapers
+  const ogIsCloudinary = /res\.cloudinary\.com/.test(rawImg);
+  // Social-card image: for Cloudinary, build a properly-sized 1200x630 JPEG crop so
+  // Facebook / Messenger / Viber render a reliable large preview. The full-res
+  // original (often a big portrait phone photo) is frequently rejected by scrapers.
+  const ogImg = absUrl(ogIsCloudinary
+    ? rawImg.replace('/upload/', '/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/')
+    : rawImg);
   const heroImg = absUrl(optimizeCloudinary(rawImg)); // optimized (WebP/AVIF) for fast on-page display
   const canonical = `${SITE_URL}/property/${id}`;
   const descBase = String(p.description || '').replace(/\s+/g, ' ').trim();
   const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
+  // Display version of the description: keep original line breaks AND put each
+  // emoji-bulleted feature on its own line so long listings read as a tidy list.
+  const descDisplay = String(p.description || '').trim()
+    .replace(/[ \t]*(🔹|🔸|◆|●|•)[ \t]*/gu, '\n$1 ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   const gallery = (p.gallery || []).filter(Boolean);
 
   const jsonld = JSON.stringify({
@@ -399,7 +411,9 @@ function buildPropertyPageHtml(p) {
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)} | GLRA Realty">
 <meta property="og:description" content="${esc(metaDesc)}">
-<meta property="og:image" content="${esc(ogImg)}">
+<meta property="og:image" content="${esc(ogImg)}">${ogIsCloudinary ? `
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">` : ''}
 <meta property="og:url" content="${esc(canonical)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)} | GLRA Realty">
@@ -432,10 +446,9 @@ a{color:inherit;text-decoration:none}
 .pg-thumbs img{width:92px;height:70px;object-fit:cover;border:2px solid var(--line);cursor:pointer}
 .pg-thumbs img:hover{border-color:var(--hot)}
 .pg-price{font-size:34px;font-weight:900;color:var(--hot);letter-spacing:-1px;margin:6px 0 18px}
-.pg-specs{display:flex;flex-wrap:wrap;border:2px solid var(--line);margin-bottom:26px}
-.pg-specs div{flex:1;min-width:120px;padding:16px 18px;border-right:2px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)}
-.pg-specs div:last-child{border-right:0}
-.pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:20px;font-weight:900;margin-top:5px;letter-spacing:-.5px;color:var(--ink)}
+.pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
+.pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
+.pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
 .pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px}
 .pg-form{border:2px solid var(--line);padding:26px;background:var(--paper2)}
@@ -462,7 +475,7 @@ a{color:inherit;text-decoration:none}
   ${thumbsHtml}
   <div class="pg-price">${esc(priceText)}</div>
   ${specsHtml}
-  ${descBase ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descBase)}</div>` : ''}
+  ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
   <div class="pg-form">
     <h2>Inquire about this property</h2>
     <form id="pgForm" onsubmit="return pgSubmit(event)">
