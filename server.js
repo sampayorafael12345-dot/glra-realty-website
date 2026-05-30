@@ -352,7 +352,7 @@ function buildPropertyPageHtml(p) {
   const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
   const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
   const priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
-  const rawImg = p.mainImage || (p.gallery || [])[0] || '/img/agent-photo.jpg';
+  const rawImg = p.mainImage || (p.gallery || [])[0] || '/img/social-card.png';
   const ogIsCloudinary = /res\.cloudinary\.com/.test(rawImg);
   // Social-card image: for Cloudinary, build a properly-sized 1200x630 JPEG crop so
   // Facebook / Messenger / Viber render a reliable large preview. The full-res
