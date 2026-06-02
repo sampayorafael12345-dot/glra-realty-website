@@ -257,7 +257,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
 
 <!-- Print Button -->
 <div class="print-button-wrapper">
-  <button class="print-btn" onclick="showPrintEmailModal()">
+  <button class="print-btn" onclick="glraOpenPrintGate('Sales Closing Fees Calculator', glraClosingFeesData)">
     <i class="fas fa-download"></i> Download PDF
   </button>
 </div>
@@ -963,7 +963,64 @@ function calculateNotarialFee(price) {
   return price * 0.0025;
 }
 
-// ============ PRINT FUNCTION ============
+// ============ PDF DOWNLOAD ============
+// Collects the user's inputs + all results into named sections for the shared
+// PDF builder (glraBuildAndSavePDF in main.js). This is what makes the closing-fees
+// PDF download as a real file like the other calculators AND show the full calculator.
+function glraClosingFeesData() {
+  const txt = el => (el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '');
+  const val = id => { const e = document.getElementById(id); return e ? (e.value || '').trim() : ''; };
+  const money = s => { s = (s || '').trim(); return s ? ('₱' + s.replace(/^₱\s*/, '')) : ''; };
+
+  // 1) Your Information — the user's inputs
+  const info = [];
+  const asset = document.querySelector('input[name="assetType"]:checked');
+  info.push(['Seller / Asset Type', (asset && asset.value === 'ordinary')
+    ? 'Ordinary Asset (VAT 12% + EWT 6%)' : 'Capital Asset (CGT 6%)']);
+  if (val('areaSqm')) info.push(['Area (sqm)', val('areaSqm')]);
+  if (val('propertyValue')) info.push(['Gross Selling Price', money(val('propertyValue'))]);
+  if (val('zonalValuePerSqm')) info.push(['BIR Zonal Value (per sqm)', money(val('zonalValuePerSqm'))]);
+  if (val('improvementsValue')) info.push(['Improvements (FMV)', money(val('improvementsValue'))]);
+  if (val('commissionRate')) info.push(['Broker Commission', val('commissionRate') + '%']);
+  const city = txt(document.getElementById('selectedCity'));
+  if (city && !/select city/i.test(city)) info.push(['Property Location (Transfer Tax)', city]);
+
+  const sections = [{ heading: 'Your Information', rows: info }];
+
+  // 2) Summary — the four headline figures
+  const summary = [];
+  document.querySelectorAll('#summaryBanner .summary-item').forEach(it => {
+    const l = txt(it.querySelector('h4')), v = txt(it.querySelector('.amount'));
+    if (l && v) summary.push([l, v]);
+  });
+  if (summary.length) sections.push({ heading: 'Summary', rows: summary });
+
+  // 3) Seller's + Buyer's tax/fee breakdowns
+  document.querySelectorAll('.results-wrapper .result-card').forEach(card => {
+    const heading = txt(card.querySelector('.result-header h3, .result-header h2')) || 'Details';
+    const rows = [];
+    card.querySelectorAll('.fee-row').forEach(r => {
+      const l = txt(r.querySelector('.fee-label')), v = txt(r.querySelector('.fee-value'));
+      if (l && v) rows.push([l, v]);
+    });
+    if (rows.length) sections.push({ heading, rows });
+  });
+
+  // 4) Rate schedules & reference
+  document.querySelectorAll('.schedules-wrapper .schedule-card').forEach(card => {
+    const heading = txt(card.querySelector('h4')) || 'Reference';
+    const rows = [];
+    card.querySelectorAll('table tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= 2) rows.push([txt(tds[0]), txt(tds[1])]);
+    });
+    if (rows.length) sections.push({ heading, rows });
+  });
+
+  return { title: 'Sales Closing Fees Calculator', bottomTitle: document.title, sections };
+}
+
+// ============ PRINT FUNCTION (legacy browser-print fallback; no longer wired to the button) ============
 function showPrintEmailModal() {
   document.getElementById('emailPrintModal').style.display = 'flex';
 }

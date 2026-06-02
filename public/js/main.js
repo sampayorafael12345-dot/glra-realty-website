@@ -299,8 +299,8 @@ function glraLoadLogo(src, maxPx) {
   });
 }
 
-async function glraBuildAndSavePDF(label) {
-  const data = glraCollectReport();
+async function glraBuildAndSavePDF(label, dataOverride) {
+  const data = dataOverride || glraCollectReport();
   const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const Hh = doc.internal.pageSize.getHeight();
@@ -325,32 +325,52 @@ async function glraBuildAndSavePDF(label) {
   doc.setDrawColor(255, 61, 0); doc.setLineWidth(2.5); doc.line(M, y, W - M, y);
   y += 30;
 
-  // Report title + date
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(10, 10, 10);
-  doc.text(glraPdfText(data.title || label || 'Report'), M, y);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
-  doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y + 16);
-  y += 40;
+  // Report title + date. When data.bottomTitle is set the title is moved to the
+  // FOOTER (closing-fees PDF), so only the date sits up here under the letterhead.
+  if (data.bottomTitle) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+    doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y);
+    y += 26;
+  } else {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(10, 10, 10);
+    doc.text(glraPdfText(data.title || label || 'Report'), M, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+    doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y + 16);
+    y += 40;
+  }
 
   function section(heading, rows) {
-    if (!rows.length) return;
+    if (!rows || !rows.length) return;
     if (y > Hh - 130) { doc.addPage(); y = 58; }
     doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(255, 61, 0);
-    doc.text(heading.toUpperCase(), M, y); y += 8;
+    doc.text(glraPdfText(heading).toUpperCase(), M, y); y += 8;
     doc.setDrawColor(10, 10, 10); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 18;
     rows.forEach(function (pair) {
       if (y > Hh - 70) { doc.addPage(); y = 58; }
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(90, 90, 90);
-      doc.text(glraPdfText(pair[0]), M, y);
-      doc.setFont('helvetica', 'bold'); doc.setTextColor(10, 10, 10);
-      doc.text(glraPdfText(pair[1]), W - M, y, { align: 'right' });
-      y += 19;
+      var value = glraPdfText(pair[1]);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(10, 10, 10);
+      doc.text(value, W - M, y, { align: 'right' });
+      var vw = doc.getTextWidth(value);
+      // Wrap long labels (e.g. the city lists) so they never collide with the value.
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 90, 90);
+      var lines = doc.splitTextToSize(glraPdfText(pair[0]), Math.max(60, (W - 2 * M) - vw - 16));
+      doc.text(lines, M, y);
+      y += Math.max(19, lines.length * 13 + 5);
     });
     y += 16;
   }
-  section('Your Information', data.inputs);
-  section('Results', data.results);
+  if (Array.isArray(data.sections) && data.sections.length) {
+    data.sections.forEach(function (s) { section(s.heading, s.rows); });
+  } else {
+    section('Your Information', data.inputs);
+    section('Results', data.results);
+  }
 
+  // Footer — optional document-title line at the very bottom, then the disclaimer.
+  if (data.bottomTitle) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(10, 10, 10);
+    doc.text(glraPdfText(data.bottomTitle), W / 2, Hh - 48, { align: 'center' });
+  }
   doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
   doc.text('Estimates only - please verify with your broker or bank before deciding. Generated from glrarealty.com.',
     M, Hh - 34, { maxWidth: W - 2 * M });
@@ -389,7 +409,10 @@ function glraPrintFallback() {
   setTimeout(function () { window.print(); }, 150);
 }
 
-window.glraOpenPrintGate = function (label) {
+// Optional page-supplied collector — lets a page (e.g. calculator.html) feed its
+// own inputs/results into the PDF instead of the generic auto-collector.
+let _glraCollectOverride = null;
+window.glraOpenPrintGate = function (label, collectFn) {
   let modal = document.getElementById('glraPrintGate');
   if (!modal) {
     modal = document.createElement('div');
@@ -433,7 +456,8 @@ window.glraOpenPrintGate = function (label) {
       const lbl = modal.dataset.label || '';
       try {
         await glraLoadJsPDF();
-        await glraBuildAndSavePDF(lbl);
+        const customData = (typeof _glraCollectOverride === 'function') ? _glraCollectOverride() : null;
+        await glraBuildAndSavePDF(lbl, customData);
         close();
         if (typeof showToast === 'function') showToast('Your PDF is downloading');
       } catch (e) {
@@ -446,6 +470,7 @@ window.glraOpenPrintGate = function (label) {
     });
   }
   modal.dataset.label = label || '';
+  _glraCollectOverride = (typeof collectFn === 'function') ? collectFn : null;
   modal.querySelector('input').value = '';
   modal.classList.add('show');
   setTimeout(() => modal.querySelector('input').focus(), 50);
