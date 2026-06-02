@@ -114,6 +114,31 @@ body.dark-mode .empty-state{background:#111b27}
 .empty-state i{font-size:40px;margin-bottom:14px;color:var(--gold);display:block}
 .empty-state p{color:var(--gray);font-size:14px}
 .empty-state a{color:var(--gold)}
+
+/* ═══ BRUTALIST PROPERTY CARDS — match index.html look ═══ */
+.prop-card{background:#f1eee9 !important;border:1px solid #0a0a0a !important;box-shadow:none !important;border-radius:0 !important}
+body.dark-mode .prop-card{background:#0e0e0c !important;border-color:#3a3a36 !important}
+.prop-card:hover{transform:none !important;border-color:#0a0a0a !important;box-shadow:5px 5px 0 #0a0a0a !important}
+body.dark-mode .prop-card:hover{box-shadow:5px 5px 0 #ff3d00 !important;border-color:#3a3a36 !important}
+.prop-card-image{border-radius:0 !important;border-bottom:1px solid #0a0a0a !important;background:#0a0a0a !important}
+body.dark-mode .prop-card-image{border-color:#3a3a36 !important}
+.prop-card:hover .prop-card-image img{transform:none !important}
+.prop-badge{border-radius:0 !important;background:#0a0a0a !important;color:#f1eee9 !important;border:0 !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;font-weight:700 !important}
+.badge-sale{background:#0a0a0a !important;color:#f1eee9 !important;border:0 !important}
+.badge-lease{background:#ff3d00 !important;color:#fff !important}
+.badge-featured{border-radius:0 !important;background:#f1eee9 !important;color:#0a0a0a !important;border:1px solid #0a0a0a !important;font-family:'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;font-weight:700 !important}
+.card-action-btn{border-radius:0 !important;width:34px !important;height:34px !important;background:rgba(10,10,10,.72) !important;border:1px solid #f1eee9 !important;backdrop-filter:none !important;color:#fff !important}
+.card-action-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important}
+.prop-title{font-family:'Inter',sans-serif !important;font-size:21px !important;font-weight:900 !important;line-height:1.02 !important;letter-spacing:-.8px !important;text-transform:uppercase !important;color:#0a0a0a !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
+body.dark-mode .prop-title{color:#f1eee9 !important}
+.prop-location{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.6px !important;text-transform:uppercase !important;color:#6a6a6a !important;font-weight:600 !important}
+.prop-location i{color:#ff3d00 !important}
+.prop-divider{display:none !important}
+.prop-specs{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.4px !important;text-transform:uppercase !important;color:#0a0a0a !important;font-weight:600 !important;gap:12px !important;padding:12px 0 !important;border-top:1px solid #0a0a0a !important;border-bottom:1px solid #0a0a0a !important;margin:0 0 14px !important}
+body.dark-mode .prop-specs{color:#f1eee9 !important;border-color:#3a3a36 !important}
+.prop-specs i{color:#ff3d00 !important}
+.prop-price{font-family:'Inter',sans-serif !important;font-weight:900 !important;font-size:23px !important;letter-spacing:-1px !important;color:#0a0a0a !important;line-height:1.1 !important}
+body.dark-mode .prop-price{color:#f1eee9 !important}
 /* MODAL */
 #modal{position:fixed;inset:0;background:rgba(5,12,22,0.97);display:none;z-index:2000;overflow-y:auto}
 .modal-body{max-width:920px;margin:36px auto;padding:34px;background:var(--white);border:1px solid var(--border-color)}
@@ -702,6 +727,14 @@ function formatPrice(phpAmount){
 }
 
 function getDisplayPrice(p){
+  const t = (p.listingType||'').toUpperCase();
+  // Both for sale AND for lease → show both prices.
+  if(t === 'SALE AND LEASE'){
+    const parts = [];
+    if(p.price) parts.push(formatPrice(p.price));
+    if(p.monthlyRental) parts.push(formatPrice(p.monthlyRental) + '/mo');
+    return parts.length ? parts.join('  ·  ') : formatPrice(p.price || p.monthlyRental || 0);
+  }
   const isLease = isForLease(p);
   const phpAmount = isLease ? (p.monthlyRental||p.price||0) : (p.price||0);
   return formatPrice(phpAmount) + (isLease ? '/mo' : '');

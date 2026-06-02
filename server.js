@@ -351,8 +351,15 @@ function buildPropertyPageHtml(p) {
   const loc = p.location || '';
   const lt = String(p.listingType || 'FOR SALE').toUpperCase();
   const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
-  const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
-  const priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
+  const saleP = p.price || 0, leaseP = p.monthlyRental || 0;
+  // For structured data, prefer the sale price on dual listings.
+  const priceNum = (lt === 'SALE AND LEASE') ? (saleP || leaseP) : (isLease ? (leaseP || saleP) : saleP);
+  let priceText;
+  if (lt === 'SALE AND LEASE' && saleP && leaseP) {
+    priceText = '₱' + Number(saleP).toLocaleString('en-PH') + '  ·  ₱' + Number(leaseP).toLocaleString('en-PH') + '/month';
+  } else {
+    priceText = priceNum ? ('₱' + Number(priceNum).toLocaleString('en-PH') + (isLease ? '/month' : '')) : 'Price on request';
+  }
   const rawImg = p.mainImage || (p.gallery || [])[0] || '/img/social-card.png';
   const ogIsCloudinary = /res\.cloudinary\.com/.test(rawImg);
   // Social-card image: for Cloudinary, build a properly-sized 1200x630 JPEG crop so
