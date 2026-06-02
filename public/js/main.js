@@ -242,20 +242,21 @@ function glraPdfText(s) {
 // Pull label/value pairs from the calculator's inputs + results (works across
 // all the calculators since they share these class names).
 function glraCollectReport() {
-  const out = { title: '', inputs: [], results: [] };
+  const out = { title: '', bottomTitle: document.title, inputs: [], results: [] };
   const h1 = document.querySelector('.print-only-header h1');
   out.title = (h1 ? h1.textContent : (document.title || 'Report')).trim();
 
+  // Inputs — the user's entries (all calculators wrap fields in .input-group)
   document.querySelectorAll('.input-group').forEach(function (g) {
     const labelEl = g.querySelector('label');
     const ctrl = g.querySelector('input, select');
-    if (!labelEl || !ctrl) return;
+    if (!labelEl || !ctrl || ctrl.type === 'hidden') return;
     let val = ctrl.tagName === 'SELECT'
       ? ((ctrl.options[ctrl.selectedIndex] || {}).text || ctrl.value)
       : ctrl.value;
     val = (val == null ? '' : String(val)).trim();
     let label = labelEl.textContent.replace(/\s+/g, ' ').trim();
-    if (label.length > 46) label = label.slice(0, 45) + '...';
+    if (label.length > 60) label = label.slice(0, 59) + '...';
     if (label && val) out.inputs.push([label, val]);
   });
 
@@ -264,18 +265,33 @@ function glraCollectReport() {
     label = (label || '').replace(/\s+/g, ' ').trim();
     value = (value || '').replace(/\s+/g, ' ').trim();
     if (!label || !value) return;
-    if (label.length > 46) label = label.slice(0, 45) + '...';
     const k = label + '=' + value;
     if (seen[k]) return; seen[k] = 1;
     out.results.push([label, value]);
   }
-  document.querySelectorAll('.result-headline, .range-bar, .result-mini, .result-card, .summary-card').forEach(function (el) {
-    const l = el.querySelector('.label'), v = el.querySelector('.value, .amount');
+  function pull(box) {
+    const l = box.querySelector('.label, .tax-name, .summary-label');
+    const v = box.querySelector('.value, .amount, .rate, .tax-amount');
     if (l && v) add(l.textContent, v.textContent);
+  }
+  // Headline / summary boxes — some hold several .result-item children.
+  document.querySelectorAll(
+    '.result-headline, .result-summary, .headline-total, .yield-headline, .tax-total, ' +
+    '.range-bar, .result-mini, .metric-mini, .metric, .summary-card, .desired-result'
+  ).forEach(function (box) {
+    const items = box.querySelectorAll('.result-item');
+    if (items.length) { items.forEach(pull); return; }
+    pull(box);
   });
+  // Breakdown rows
   document.querySelectorAll('.fee-row, .cost-row, .amort-row, .rental-row').forEach(function (el) {
     const l = el.querySelector('.fee-label, .cost-label, .label'), v = el.querySelector('.fee-value, .cost-value, .value');
     if (l && v) add(l.textContent, v.textContent);
+  });
+  // Breakdown / component tables (registration-fee components, cost-of-ownership rows)
+  document.querySelectorAll('.breakdown-table tbody tr, .factors-table tbody tr, .brackets-table tbody tr').forEach(function (tr) {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length >= 2) add(cells[0].textContent, cells[cells.length - 1].textContent);
   });
   return out;
 }

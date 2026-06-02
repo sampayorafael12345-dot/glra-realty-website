@@ -202,7 +202,7 @@ body.dark-mode .disclosure-form{background:#0e0e0c;border-color:#3a3a36}
 
 <!-- Print Button -->
 <div class="print-button-wrapper">
-  <button class="print-btn" onclick="showPrintEmailModal()">
+  <button class="print-btn" onclick="glraOpenPrintGate('Real Estate Documentation Guide', glraGuideData)">
     <i class="fas fa-download"></i> Download PDF
   </button>
 </div>
@@ -365,7 +365,39 @@ function toggleTab(btn,tabId){
   if(el)el.classList.add('active');
 }
 
-/* ── PRINT / SAVE AS PDF ── */
+/* ── PDF DOWNLOAD ── collect the guide's sections for the shared PDF builder
+   (real-file download via glraOpenPrintGate in main.js), same as the calculators. */
+function glraGuideData(){
+  const txt = el => (el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '');
+  const sections = [];
+  document.querySelectorAll('.content-container .section-card').forEach(card => {
+    const heading = txt(card.querySelector('.section-header h2')) || 'Section';
+    const rows = [];
+    card.querySelectorAll('.doc-item').forEach(d => {
+      const t = txt(d.querySelector('h3')), p = txt(d.querySelector('p'));
+      if (t) rows.push([t, p]);
+    });
+    card.querySelectorAll('.checklist li').forEach(li => {
+      const t = txt(li); if (t) rows.push([t, '']);
+    });
+    card.querySelectorAll('table tbody tr').forEach(tr => {
+      const tds = Array.from(tr.querySelectorAll('td')).map(td => txt(td));
+      if (tds.length >= 2) rows.push([tds[0], tds.slice(1).join(' - ')]);
+    });
+    card.querySelectorAll('.timeline-box p').forEach(p => {
+      const strong = txt(p.querySelector('strong')), full = txt(p);
+      if (strong) rows.push([strong, full.replace(strong, '').trim()]);
+      else if (full) rows.push([full, '']);
+    });
+    card.querySelectorAll('.warning-box').forEach(w => {
+      const t = txt(w); if (t) rows.push(['Note', t.replace(/^Note:?\s*/i, '')]);
+    });
+    if (rows.length) sections.push({ heading, rows });
+  });
+  return { title: 'Real Estate Documentation Guide', bottomTitle: document.title, sections };
+}
+
+/* ── PRINT / SAVE AS PDF (legacy browser-print; no longer wired to the button) ── */
 function showPrintEmailModal(){
   const saved = sessionStorage.getItem('guideEmail');
   if(saved){

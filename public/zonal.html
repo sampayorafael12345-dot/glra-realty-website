@@ -213,7 +213,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 </div>
 
 <div class="print-button-wrapper">
-  <button class="print-btn" onclick="glraOpenPrintGate('Zonal Value Lookup')">
+  <button class="print-btn" onclick="glraOpenPrintGate('Zonal Value Lookup', glraZonalData)">
     <i class="fas fa-file-pdf"></i> Download PDF
   </button>
 </div>
@@ -393,6 +393,29 @@ const DB=[
   {l:'Tabuk City, Kalinga',r:'Cordillera',a:14000,mn:8000,mx:22000,d:'Capital of Kalinga, gateway to Cordillera interior'},
   {l:'Bangued, Abra',r:'Cordillera',a:12000,mn:7000,mx:20000,d:'Capital of Abra, accessible from Vigan'},
 ];
+
+// ── PDF DOWNLOAD ── collect the looked-up location(s) for the shared PDF builder
+function glraZonalData(){
+  const txt = el => (el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '');
+  const sections = [];
+  document.querySelectorAll('#resultsContainer .result-card').forEach(card => {
+    const loc = txt(card.querySelector('.rc-location'));
+    const region = txt(card.querySelector('.rc-region'));
+    const heading = (loc || 'Location') + (region ? ' - ' + region : '');
+    const rows = [];
+    card.querySelectorAll('.rc-stat').forEach(s => {
+      const l = txt(s.querySelector('.rc-stat-label')), v = txt(s.querySelector('.rc-stat-value'));
+      if (l && v) rows.push([l, v]);
+    });
+    card.querySelectorAll('.tax-row, .tax-total').forEach(r => {
+      const l = txt(r.querySelector('.tax-name')), v = txt(r.querySelector('.tax-amount'));
+      if (l && v) rows.push([l, v]);
+    });
+    if (rows.length) sections.push({ heading, rows });
+  });
+  if (!sections.length) sections.push({ heading: 'Zonal Value Lookup', rows: [['No location selected yet', 'Search a city above, then download again']] });
+  return { title: 'Zonal Value Lookup', bottomTitle: document.title, sections };
+}
 
 // ── SEARCH LOGIC ─────────────────────────────────────────
 let currentRegion = 'All';
