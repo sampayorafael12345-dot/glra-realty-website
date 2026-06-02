@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" href="/img/favicon.ico.png">
 <link rel="apple-touch-icon" href="/img/logo.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#c8a96e">
+<meta name="theme-color" content="#ff3d00">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://glrarealty.com/calculator.html">
 <meta property="og:title" content="Sales Closing Fees Calculator | GLRA Realty">
@@ -38,13 +38,13 @@
 <link rel="stylesheet" href="/css/styles.css">
 <link rel="stylesheet" href="/css/brutalist-theme.css">
 <style>
-:root{--orange:#c8a96e;--orange-dark:#a8894e;--orange-light:rgba(200,169,110,0.12)}
+:root{--orange:#ff3d00;--orange-dark:#a8894e;--orange-light:rgba(255,61,0,0.12)}
 /* ── PAGE-SPECIFIC ── */
 /* ---- PAGE HERO ---- */
-.page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,0.15);position:relative;overflow:hidden}
-.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,0.07) 0%,transparent 65%);pointer-events:none}
+.page-hero{padding:106px 5% 54px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(255,61,0,0.15);position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(255,61,0,0.07) 0%,transparent 65%);pointer-events:none}
 .page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
-.page-hero h1{font-family:'Cormorant Garamond',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
+.page-hero h1{font-family:'Inter',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
 .page-hero p{color:rgba(255,255,255,0.55);font-size:15px;max-width:560px;margin:0 auto;position:relative}
 .hero-line{display:none}
 /* ---- PRINT BUTTON ---- */
@@ -53,12 +53,12 @@
 .print-btn:hover{background:var(--gold);color:#fff}
 /* ---- SUMMARY BANNER ---- */
 .calculator-container{max-width:1400px;margin:0 auto 60px;padding:0 5%}
-.summary-banner{display:flex;background:var(--navy);border:1px solid rgba(200,169,110,0.2);margin:28px 0;flex-wrap:wrap}
+.summary-banner{display:flex;background:var(--navy);border:1px solid rgba(255,61,0,0.2);margin:28px 0;flex-wrap:wrap}
 .summary-item{flex:1;min-width:140px;padding:24px 20px;text-align:center}
 .summary-item h4{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
-.summary-item .amount{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--gold)}
+.summary-item .amount{font-family:'Inter',serif;font-size:26px;font-weight:600;color:var(--gold)}
 .summary-item .percent{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
-.summary-divider{width:1px;background:rgba(200,169,110,0.2)}
+.summary-divider{width:1px;background:rgba(255,61,0,0.2)}
 /* ---- INPUT CARDS ---- */
 .inputs-wrapper{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px}
 .input-card{background:var(--card-bg);padding:24px;border:1px solid var(--border-color);transition:var(--transition)}
@@ -116,22 +116,22 @@ body.dark-mode .city-dropdown-list{background:#1a2840;border-color:#2a3f58}
 .city-dropdown-item:hover{background:var(--gold-light);color:var(--gold)}
 /* ---- DESIRED PROCEED ---- */
 .desired-proceed-card{grid-column:1/-1}
-.desired-result{margin-top:16px;padding:20px;background:var(--navy);border:1px solid rgba(200,169,110,0.2);text-align:center}
+.desired-result{margin-top:16px;padding:20px;background:var(--navy);border:1px solid rgba(255,61,0,0.2);text-align:center}
 .desired-result .label{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
-.desired-result .value{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--gold);margin-bottom:8px}
+.desired-result .value{font-family:'Inter',serif;font-size:30px;font-weight:600;color:var(--gold);margin-bottom:8px}
 /* ---- RESULTS ---- */
 .results-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
 .result-card{background:var(--card-bg);border:1px solid var(--border-color)}
 body.dark-mode .result-card{background:#1a2840;border-color:#2a3f58}
-.result-header{background:var(--navy);padding:16px 20px;border-bottom:1px solid rgba(200,169,110,0.2)}
+.result-header{background:var(--navy);padding:16px 20px;border-bottom:1px solid rgba(255,61,0,0.2)}
 .result-header h3{font-size:13px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:8px;letter-spacing:.5px}
 .result-body{padding:0}
 .fee-row{display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border-color)}
 .fee-row:last-child{border-bottom:none}
 .fee-label{font-size:13px;color:var(--gray)}
 .fee-value{font-size:13px;font-weight:600;color:var(--text-color)}
-.fee-value.highlight{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px}
-.fee-value.danger{color:var(--danger);font-family:'Cormorant Garamond',serif;font-size:18px}
+.fee-value.highlight{color:var(--gold);font-family:'Inter',serif;font-size:18px}
+.fee-value.danger{color:var(--danger);font-family:'Inter',serif;font-size:18px}
 .total-row{background:var(--gray-light)}
 body.dark-mode .total-row{background:#111b27}
 /* ---- SCHEDULES ---- */
@@ -145,13 +145,13 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
 .schedule-card table{width:100%;border-collapse:collapse}
 .schedule-card td{padding:7px 0;font-size:12px;border-bottom:1px solid var(--border-color);color:var(--text-color);line-height:1.4}
 .schedule-card td:last-child{text-align:right;color:var(--gold);font-weight:600;white-space:nowrap;padding-left:10px}
-.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.2);font-size:12px;color:var(--gray);line-height:1.7}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px;background:rgba(255,61,0,0.08);border:1px solid rgba(255,61,0,0.2);font-size:12px;color:var(--gray);line-height:1.7}
 .disclaimer i{color:var(--gold);margin-top:2px;flex-shrink:0}
 /* ---- PRINT MODAL ---- */
-.email-print-modal{display:none;position:fixed;inset:0;background:rgba(5,12,22,0.88);z-index:3000;align-items:center;justify-content:center}
+.email-print-modal{display:none;position:fixed;inset:0;background:rgba(10,10,10,0.88);z-index:3000;align-items:center;justify-content:center}
 .email-print-content{background:var(--white);max-width:400px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
 .email-print-content>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
-.email-print-content h3{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
+.email-print-content h3{font-family:'Inter',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
 .email-print-content p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.7}
 .email-print-content input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
 .email-print-content input:focus{outline:none;border-color:var(--gold)}
@@ -167,16 +167,16 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
   .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,.toast,.disclaimer{display:none !important}
   body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page-hero{display:none}
-  .print-only-header{display:block;text-align:center;margin:0 auto 24px;padding:0 0 18px;border-bottom:2px solid #c8a96e;max-width:100%}
+  .print-only-header{display:block;text-align:center;margin:0 auto 24px;padding:0 0 18px;border-bottom:2px solid #ff3d00;max-width:100%}
   .print-only-header img{height:60px;width:auto;margin-bottom:10px}
-  .print-only-header h1{font-family:'Cormorant Garamond',serif;font-size:22px;color:#0d1b2a;margin-bottom:4px;font-weight:600}
+  .print-only-header h1{font-family:'Inter',serif;font-size:22px;color:#0a0a0a;margin-bottom:4px;font-weight:600}
   .print-only-header .print-subtitle{font-size:11px;color:#555;letter-spacing:1px}
   .print-only-header .print-meta{font-size:10px;color:#888;margin-top:6px;letter-spacing:.5px}
   .summary-banner,.calc-section,.schedule-card,.calc-card{page-break-inside:avoid;break-inside:avoid;border:1px solid #ccc !important}
   .summary-banner{background:#f9f9f9 !important}
-  .summary-item .amount{color:#c8a96e !important}
+  .summary-item .amount{color:#ff3d00 !important}
   .fee-row,.fee-label,.fee-value{color:#000 !important}
-  .fee-value{color:#c8a96e !important}
+  .fee-value{color:#ff3d00 !important}
   table{page-break-inside:avoid;break-inside:avoid;width:100% !important}
   .inputs-wrapper,.results-wrapper{display:block !important}
   .inputs-wrapper>*,.results-wrapper>*{margin-bottom:14px !important;page-break-inside:avoid;break-inside:avoid}
@@ -204,7 +204,7 @@ body.dark-mode .schedule-card{background:#1a2840;border-color:#2a3f58}
     <div class="nav-dropdown">
       <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
       <div class="nav-dropdown-menu">
-        <a href="/list-property.html" style="background:rgba(200,169,110,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(200,169,110,.25)"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/list-property.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
         <a href="/about.html">About Us</a>
         <a href="/neighborhoods.html">Neighborhood Guides</a>
         <a href="/testimonials.html">Testimonials</a>
