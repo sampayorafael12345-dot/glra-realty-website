@@ -207,45 +207,206 @@ window.addEventListener('scroll', () => {
   }
 })();
 
-// ── One-tap clean PDF / print (shared by all calculators) ──
+// ── Email-gated clean PDF DOWNLOAD (shared by all calculators) ──
 // Usage: <button onclick="glraOpenPrintGate('Affordability Calculator')">Download PDF</button>
-// Requires: a `.print-only-header` div on the page for the branded letterhead.
-//
-// Produces a CLEAN, ALWAYS-LIGHT printout/PDF regardless of the page's current
-// theme: it temporarily drops dark mode, sets a tidy document title (which becomes
-// the suggested PDF filename), opens the browser's Save-as-PDF / print dialog,
-// then restores the screen. No email gate — keep it frictionless. The `@media
-// print` rules in brutalist-theme.css strip the nav/chat/etc. and show only the
-// branded letterhead + results. On phones this opens the system "Save as PDF /
-// Save to Files" sheet — a real download.
-window.glraOpenPrintGate = function (label) {
-  const html = document.documentElement;
-  const body = document.body;
+// Asks for an email (lead capture), then generates a real, clean, always-light
+// PDF FILE and downloads it — works on phones (a true file, not a print dialog).
+// Falls back to the browser print dialog only if the PDF library can't load.
+
+// Lazy-load jsPDF (only when the user actually downloads).
+let _glraJsPDFPromise = null;
+function glraLoadJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+  if (_glraJsPDFPromise) return _glraJsPDFPromise;
+  _glraJsPDFPromise = new Promise(function (resolve, reject) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = resolve;
+    s.onerror = function () { _glraJsPDFPromise = null; reject(new Error('jspdf-load-failed')); };
+    document.head.appendChild(s);
+  });
+  return _glraJsPDFPromise;
+}
+
+// jsPDF's built-in fonts can't render ₱ or fancy dashes — swap for safe text.
+function glraPdfText(s) {
+  return String(s == null ? '' : s)
+    .replace(/₱/g, 'PHP ')
+    .replace(/[–—]/g, '-')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/ /g, ' ')
+    .trim();
+}
+
+// Pull label/value pairs from the calculator's inputs + results (works across
+// all the calculators since they share these class names).
+function glraCollectReport() {
+  const out = { title: '', inputs: [], results: [] };
+  const h1 = document.querySelector('.print-only-header h1');
+  out.title = (h1 ? h1.textContent : (document.title || 'Report')).trim();
+
+  document.querySelectorAll('.input-group').forEach(function (g) {
+    const labelEl = g.querySelector('label');
+    const ctrl = g.querySelector('input, select');
+    if (!labelEl || !ctrl) return;
+    let val = ctrl.tagName === 'SELECT'
+      ? ((ctrl.options[ctrl.selectedIndex] || {}).text || ctrl.value)
+      : ctrl.value;
+    val = (val == null ? '' : String(val)).trim();
+    let label = labelEl.textContent.replace(/\s+/g, ' ').trim();
+    if (label.length > 46) label = label.slice(0, 45) + '...';
+    if (label && val) out.inputs.push([label, val]);
+  });
+
+  const seen = {};
+  function add(label, value) {
+    label = (label || '').replace(/\s+/g, ' ').trim();
+    value = (value || '').replace(/\s+/g, ' ').trim();
+    if (!label || !value) return;
+    if (label.length > 46) label = label.slice(0, 45) + '...';
+    const k = label + '=' + value;
+    if (seen[k]) return; seen[k] = 1;
+    out.results.push([label, value]);
+  }
+  document.querySelectorAll('.result-headline, .range-bar, .result-mini, .result-card, .summary-card').forEach(function (el) {
+    const l = el.querySelector('.label'), v = el.querySelector('.value, .amount');
+    if (l && v) add(l.textContent, v.textContent);
+  });
+  document.querySelectorAll('.fee-row, .cost-row, .amort-row, .rental-row').forEach(function (el) {
+    const l = el.querySelector('.fee-label, .cost-label, .label'), v = el.querySelector('.fee-value, .cost-value, .value');
+    if (l && v) add(l.textContent, v.textContent);
+  });
+  return out;
+}
+
+function glraBuildAndSavePDF(label) {
+  const data = glraCollectReport();
+  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const Hh = doc.internal.pageSize.getHeight();
+  const M = 48;
+  let y = 58;
+
+  // Letterhead
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.setTextColor(10, 10, 10);
+  doc.text('GLRA REALTY', M, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+  doc.text('Licensed Real Estate Broker  -  Metro Manila & Luzon, Philippines', M, y + 16);
+  doc.text('glrarealty.com    0917 177 4572    glrarealty@gmail.com', M, y + 30);
+  y += 44;
+  doc.setDrawColor(255, 61, 0); doc.setLineWidth(2.5); doc.line(M, y, W - M, y);
+  y += 30;
+
+  // Report title + date
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(10, 10, 10);
+  doc.text(glraPdfText(data.title || label || 'Report'), M, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+  doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y + 16);
+  y += 40;
+
+  function section(heading, rows) {
+    if (!rows.length) return;
+    if (y > Hh - 130) { doc.addPage(); y = 58; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(255, 61, 0);
+    doc.text(heading.toUpperCase(), M, y); y += 8;
+    doc.setDrawColor(10, 10, 10); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 18;
+    rows.forEach(function (pair) {
+      if (y > Hh - 70) { doc.addPage(); y = 58; }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(90, 90, 90);
+      doc.text(glraPdfText(pair[0]), M, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(10, 10, 10);
+      doc.text(glraPdfText(pair[1]), W - M, y, { align: 'right' });
+      y += 19;
+    });
+    y += 16;
+  }
+  section('Your Information', data.inputs);
+  section('Results', data.results);
+
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+  doc.text('Estimates only - please verify with your broker or bank before deciding. Generated from glrarealty.com.',
+    M, Hh - 34, { maxWidth: W - 2 * M });
+
+  const fname = 'GLRA Realty - ' + String(label || 'Report').replace(/[^\w \-]/g, '') + '.pdf';
+  doc.save(fname);
+}
+
+// Forced-light browser print — fallback only (if the PDF library can't load).
+function glraPrintFallback(label) {
+  const html = document.documentElement, body = document.body;
   const wasDark = body.classList.contains('dark-mode');
   const wasDarkPre = html.classList.contains('dark-mode-pre');
-
-  // Force a clean light layout for the PDF.
   if (wasDark) body.classList.remove('dark-mode');
   if (wasDarkPre) html.classList.remove('dark-mode-pre');
-
-  // A clean title → becomes the suggested PDF filename.
-  const originalTitle = document.title;
-  document.title = 'GLRA Realty' + (label ? ' - ' + label : ' Report');
-
-  let restored = false;
-  const restore = function () {
-    if (restored) return;
-    restored = true;
-    document.title = originalTitle;
-    if (wasDark) body.classList.add('dark-mode');
-    if (wasDarkPre) html.classList.add('dark-mode-pre');
-  };
+  const t = document.title; document.title = 'GLRA Realty - ' + (label || 'Report');
+  let done = false;
+  const restore = function () { if (done) return; done = true; document.title = t; if (wasDark) body.classList.add('dark-mode'); if (wasDarkPre) html.classList.add('dark-mode-pre'); };
   window.addEventListener('afterprint', restore, { once: true });
-  // Fallback restore for browsers that don't fire `afterprint` (some mobile).
   setTimeout(restore, 10000);
-
-  // Let the page repaint in light mode before opening the dialog.
   setTimeout(function () { window.print(); }, 150);
+}
+
+window.glraOpenPrintGate = function (label) {
+  let modal = document.getElementById('glraPrintGate');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'glraPrintGate';
+    modal.className = 'glra-print-gate';
+    modal.innerHTML = `
+      <div class="glra-print-gate-card" role="dialog" aria-modal="true">
+        <button class="glra-print-gate-close" type="button" aria-label="Close">&times;</button>
+        <i class="fas fa-file-pdf"></i>
+        <h3>Download Your PDF</h3>
+        <p>Enter your email and we'll prepare a clean PDF copy of your results to download.</p>
+        <input type="email" placeholder="Your email address" autocomplete="email" />
+        <button class="glra-print-gate-submit" type="button">Download PDF</button>
+        <p class="glra-print-gate-fine">We'll occasionally send new listings &amp; market insights. Unsubscribe anytime.</p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const input = modal.querySelector('input');
+    const submit = modal.querySelector('.glra-print-gate-submit');
+    const closeBtn = modal.querySelector('.glra-print-gate-close');
+    const close = () => modal.classList.remove('show');
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit.click(); });
+    submit.addEventListener('click', async () => {
+      const email = (input.value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (typeof showToast === 'function') showToast('Please enter a valid email address', true);
+        return;
+      }
+      const orig = submit.innerHTML;
+      submit.disabled = true;
+      submit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+      // Lead capture — best-effort, never blocks the download.
+      try {
+        await fetch('/api/subscribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, source: 'calculator_pdf' })
+        });
+      } catch (_) {}
+      const lbl = modal.dataset.label || '';
+      try {
+        await glraLoadJsPDF();
+        glraBuildAndSavePDF(lbl);
+        close();
+        if (typeof showToast === 'function') showToast('Your PDF is downloading');
+      } catch (e) {
+        close();
+        glraPrintFallback(lbl); // PDF library unavailable → clean light print
+      } finally {
+        submit.disabled = false;
+        submit.innerHTML = orig;
+      }
+    });
+  }
+  modal.dataset.label = label || '';
+  modal.querySelector('input').value = '';
+  modal.classList.add('show');
+  setTimeout(() => modal.querySelector('input').focus(), 50);
 };
 
 /* ============================================
