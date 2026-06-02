@@ -1023,3 +1023,18 @@ input[type="range"]::-webkit-slider-thumb{width:16px !important;height:16px !imp
 input[type="range"]::-moz-range-thumb{width:16px !important;height:16px !important;background:#ff3d00 !important;border:2px solid #0a0a0a !important;border-radius:0 !important}
 body.dark-mode input[type="range"]::-webkit-slider-thumb{border-color:#f1eee9 !important}
 body.dark-mode input[type="range"]::-moz-range-thumb{border-color:#f1eee9 !important}
+
+/* 5) Consistent BLACK page header on EVERY page (was cream; now a bold black
+      band that never inverts between modes — same on light & dark). */
+html body .page-hero,html body.dark-mode .page-hero{
+  background:#0a0a0a !important;border-bottom:2px solid #0a0a0a !important;
+}
+html body .page-hero h1,html body.dark-mode .page-hero h1{color:#f1eee9 !important}
+html body .page-hero p,html body.dark-mode .page-hero p{color:rgba(241,238,233,.82) !important}
+html body .page-hero .eyebrow,html body.dark-mode .page-hero .eyebrow{color:#ff3d00 !important}
+
+/* 6) Mobile slide-out menu must stay dark (it used the flipping ink var, so it
+      turned cream in dark mode and hid its white links). */
+html body .mobile-overlay,html body.dark-mode .mobile-overlay{background:#0a0a0a !important}
+html body .mobile-overlay a,html body.dark-mode .mobile-overlay a{color:#f1eee9 !important}
+html body .mobile-overlay .close-menu,html body.dark-mode .mobile-overlay .close-menu{color:#f1eee9 !important}
