@@ -985,3 +985,41 @@ html body.dark-mode .breakdown-table tr.total-row td{
 .result-mini .value{color:var(--ab-ink) !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.5px !important;font-size:20px !important}
 .result-mini.gold .value{color:var(--ab-hot) !important}
 .result-mini .sub{color:var(--ab-gray) !important;font-size:11px !important;font-weight:500 !important}
+
+/* ════════════════════════════════════════════════════════════
+   POLISH FIXES (2026-06-02)
+   ════════════════════════════════════════════════════════════ */
+
+/* 1) Hide the stray blinking text caret on non-input elements (clickable
+      <a>/divs drop a caret on click). Real fields keep their caret. */
+body{caret-color:transparent}
+input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:auto !important}
+
+/* 2) Dark (navy/ink) feature boxes whose <h3>/<h4> titles went invisible in
+      LIGHT mode — the global h1-h6 ink color turned them black-on-black.
+      (Closing-fees result headers, summary banners, desired-proceed boxes.) */
+.result-header h3,.result-header h2,
+.summary-item h4,.summary-item h3,
+.desired-result h3,.desired-result h4{
+  color:#f1eee9 !important;
+  font-family:'Inter','Segoe UI',sans-serif !important;
+  font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.3px !important;
+}
+.result-header h3 i,.summary-item h4 i,.desired-result h3 i{color:var(--ab-hot) !important}
+
+/* 3) CTA buttons (affordability results etc.) — keep text readable on hover.
+      Was turning orange-on-orange (invisible) / the outline one didn't fill. */
+.cta-primary{background:var(--ab-hot) !important;color:#fff !important;border:1px solid var(--ab-hot) !important}
+.cta-primary:hover{background:var(--ab-ink) !important;color:#fff !important;border-color:var(--ab-ink) !important}
+.cta-outline{background:transparent !important;color:var(--ab-hot) !important;border:1px solid var(--ab-hot) !important}
+.cta-outline:hover{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
+
+/* 4) Range sliders — clean light track + small SQUARE orange thumb (refined). */
+input[type="range"]{height:6px !important;background:#d8d0c2 !important;border-radius:0 !important}
+body.dark-mode input[type="range"]{background:#3a3a36 !important}
+input[type="range"]:focus{background:#d8d0c2 !important}
+body.dark-mode input[type="range"]:focus{background:#3a3a36 !important}
+input[type="range"]::-webkit-slider-thumb{width:16px !important;height:16px !important;margin-top:-5px !important;background:#ff3d00 !important;border:2px solid #0a0a0a !important;border-radius:0 !important}
+input[type="range"]::-moz-range-thumb{width:16px !important;height:16px !important;background:#ff3d00 !important;border:2px solid #0a0a0a !important;border-radius:0 !important}
+body.dark-mode input[type="range"]::-webkit-slider-thumb{border-color:#f1eee9 !important}
+body.dark-mode input[type="range"]::-moz-range-thumb{border-color:#f1eee9 !important}

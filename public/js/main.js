@@ -280,21 +280,48 @@ function glraCollectReport() {
   return out;
 }
 
-function glraBuildAndSavePDF(label) {
+// Load + downscale an image to a PNG data URL for embedding in the PDF.
+function glraLoadLogo(src, maxPx) {
+  return new Promise(function (resolve) {
+    const img = new Image();
+    img.onload = function () {
+      try {
+        const sc = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * sc));
+        c.height = Math.max(1, Math.round(img.height * sc));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve({ dataURL: c.toDataURL('image/png'), w: c.width, h: c.height });
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = function () { resolve(null); };
+    img.src = src;
+  });
+}
+
+async function glraBuildAndSavePDF(label) {
   const data = glraCollectReport();
   const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const Hh = doc.internal.pageSize.getHeight();
   const M = 48;
-  let y = 58;
+  let y = 50;
 
-  // Letterhead
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.setTextColor(10, 10, 10);
-  doc.text('GLRA REALTY', M, y);
+  // Letterhead — company logo centered, then tagline + contact.
+  const logo = await glraLoadLogo('/img/logo.png', 240);
+  if (logo) {
+    const dispH = 74, dispW = dispH * (logo.w / logo.h);
+    doc.addImage(logo.dataURL, 'PNG', (W - dispW) / 2, y, dispW, dispH);
+    y += dispH + 8;
+  } else {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.setTextColor(10, 10, 10);
+    doc.text('GLRA REALTY', W / 2, y + 24, { align: 'center' });
+    y += 42;
+  }
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110);
-  doc.text('Licensed Real Estate Broker  -  Metro Manila & Luzon, Philippines', M, y + 16);
-  doc.text('glrarealty.com    0917 177 4572    glrarealty@gmail.com', M, y + 30);
-  y += 44;
+  doc.text('Licensed Real Estate Broker  -  Metro Manila & Luzon, Philippines', W / 2, y, { align: 'center' });
+  doc.text('glrarealty.com     0917 177 4572     glrarealty@gmail.com', W / 2, y + 13, { align: 'center' });
+  y += 26;
   doc.setDrawColor(255, 61, 0); doc.setLineWidth(2.5); doc.line(M, y, W - M, y);
   y += 30;
 
@@ -391,7 +418,7 @@ window.glraOpenPrintGate = function (label) {
       const lbl = modal.dataset.label || '';
       try {
         await glraLoadJsPDF();
-        glraBuildAndSavePDF(lbl);
+        await glraBuildAndSavePDF(lbl);
         close();
         if (typeof showToast === 'function') showToast('Your PDF is downloading');
       } catch (e) {
