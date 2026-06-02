@@ -221,6 +221,33 @@ const scheduledEmailSchema = new mongoose.Schema({
   result:     { type: mongoose.Schema.Types.Mixed, default: null }   // { total, sent, failed, errors }
 }, { timestamps: true });
 
+// ── TITLING CASES (land-title transfer / processing jobs) ───
+// Tracks each title-transfer engagement through the PH government workflow.
+// `status` is the current stage; `documents` holds the names of collected docs.
+const titlingCaseSchema = new mongoose.Schema({
+  clientName:       { type: String, required: true, trim: true, maxlength: 200 },
+  clientPhone:      { type: String, default: '', trim: true, maxlength: 50 },
+  clientEmail:      { type: String, default: '', trim: true, lowercase: true, maxlength: 120 },
+  titleNumber:      { type: String, default: '', trim: true, maxlength: 100 },
+  propertyLocation: { type: String, default: '', trim: true, maxlength: 300 },
+  propertyType:     { type: String, default: '', trim: true, maxlength: 60 },
+  serviceType:      { type: String, default: 'Transfer of Title', trim: true, maxlength: 80 },
+  status: {
+    type: String,
+    enum: ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold'],
+    default: 'documents',
+    index: true
+  },
+  documents:   { type: [String], default: [] },   // names of documents already collected
+  serviceFee:  { type: Number, default: 0 },       // your professional fee
+  govFees:     { type: Number, default: 0 },       // total government fees (CGT/DST/transfer tax/RD)
+  amountPaid:  { type: Number, default: 0 },       // total received from client so far
+  targetDate:  { type: Date, default: null },
+  notes:       { type: String, default: '', maxlength: 5000 },
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' }
+}, { timestamps: true });
+
 // ============================================================================
 // PERMISSIONS
 // ============================================================================
@@ -244,7 +271,9 @@ const PERMISSION_KEYS = [
   'submissions_view',    // see the property-submissions tab
   'submissions_import',  // convert a submission into a live Property listing
   'submissions_delete',  // permanently delete a submission
-  'bulkmail_send'        // compose + send bulk emails from the admin (admins always have this)
+  'bulkmail_send',       // compose + send bulk emails from the admin (admins always have this)
+  'titling_view',        // see the Titling tab
+  'titling_manage'       // add / edit / delete titling jobs
 ];
 
 // Sensible defaults per role.
@@ -276,7 +305,9 @@ function defaultPermissionsForRole(role) {
     submissions_view: true,
     submissions_import: false,
     submissions_delete: false,
-    bulkmail_send: false
+    bulkmail_send: false,
+    titling_view: false,
+    titling_manage: false
   };
 }
 
@@ -336,6 +367,7 @@ const Account           = mongoose.model('Account',           accountSchema);
 const Task              = mongoose.model('Task',              taskSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
+const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
 
 module.exports = {
   // models
@@ -351,6 +383,7 @@ module.exports = {
   Task,
   PropertySubmission,
   ScheduledEmail,
+  TitlingCase,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole

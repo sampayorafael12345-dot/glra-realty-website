@@ -251,6 +251,7 @@ const db = require('./server/db');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
+  TitlingCase,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
 
@@ -1249,6 +1250,74 @@ app.delete('/api/admin/inquiries/:id', verifyToken, requirePermission('inquiries
   try {
     const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
     if (inquiry) await logAudit(req, 'DELETE', 'Inquiry', req.params.id, inquiry.email, null);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── TITLING CASES (land-title transfer / processing tracker) ──
+const TITLING_STATUSES = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold'];
+
+// Validate + clamp an incoming titling payload. Only known fields pass through.
+function sanitizeTitlingBody(b) {
+  const out = {};
+  const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  if (b.clientName !== undefined) out.clientName = str(b.clientName, 200);
+  if (b.clientPhone !== undefined) out.clientPhone = str(b.clientPhone, 50);
+  if (b.clientEmail !== undefined) out.clientEmail = str(b.clientEmail, 120).toLowerCase();
+  if (b.titleNumber !== undefined) out.titleNumber = str(b.titleNumber, 100);
+  if (b.propertyLocation !== undefined) out.propertyLocation = str(b.propertyLocation, 300);
+  if (b.propertyType !== undefined) out.propertyType = str(b.propertyType, 60);
+  if (b.serviceType !== undefined) out.serviceType = str(b.serviceType, 80);
+  if (typeof b.status === 'string' && TITLING_STATUSES.includes(b.status)) out.status = b.status;
+  if (Array.isArray(b.documents)) {
+    out.documents = b.documents.filter(d => typeof d === 'string').map(d => d.slice(0, 120)).slice(0, 40);
+  }
+  ['serviceFee', 'govFees', 'amountPaid'].forEach(k => {
+    if (b[k] !== undefined && b[k] !== null && b[k] !== '') {
+      const n = Number(b[k]);
+      if (!isNaN(n) && n >= 0) out[k] = n;
+    }
+  });
+  if (b.targetDate) { const d = new Date(b.targetDate); if (!isNaN(d.getTime())) out.targetDate = d; }
+  else if (b.targetDate === '' || b.targetDate === null) out.targetDate = null;
+  if (b.notes !== undefined) out.notes = String(b.notes || '').slice(0, 5000);
+  return out;
+}
+
+app.get('/api/admin/titling', verifyToken, requirePermission('titling_view'), async (req, res) => {
+  try {
+    const cases = await TitlingCase.find().sort({ createdAt: -1 }).lean();
+    res.json(cases);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+app.post('/api/admin/titling', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const data = sanitizeTitlingBody(req.body || {});
+    if (!data.clientName) return res.status(400).json({ error: 'Client name is required' });
+    data.createdBy = req.user?.email || '';
+    data.createdByName = req.user?.name || '';
+    const doc = await TitlingCase.create(data);
+    await logAudit(req, 'CREATE', 'TitlingCase', String(doc._id), doc.clientName, null);
+    res.json(doc);
+  } catch (err) { console.error('titling create error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.put('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const data = sanitizeTitlingBody(req.body || {});
+    if (data.clientName !== undefined && !data.clientName) return res.status(400).json({ error: 'Client name is required' });
+    const doc = await TitlingCase.findByIdAndUpdate(req.params.id, data, { new: true });
+    if (!doc) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req, 'UPDATE', 'TitlingCase', String(doc._id), doc.clientName, null);
+    res.json(doc);
+  } catch (err) { console.error('titling update error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.delete('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const doc = await TitlingCase.findByIdAndDelete(req.params.id);
+    if (doc) await logAudit(req, 'DELETE', 'TitlingCase', String(doc._id), doc.clientName, null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });

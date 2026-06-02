@@ -67,7 +67,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--g
 .sb-brand small{display:block;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1.5px;font-family:'DM Sans',sans-serif;margin-top:0}
 .sb-nav{padding:12px 0;flex:1}
 .sb-section{font-size:10px;color:rgba(255,255,255,.25);letter-spacing:2px;text-transform:uppercase;padding:10px 20px 4px;font-weight:600}
-.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;text-decoration:none;font-weight:400;white-space:nowrap}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:var(--transition);border-left:3px solid transparent;text-decoration:none;font-weight:400;white-space:nowrap;user-select:none;-webkit-user-select:none;caret-color:transparent}
 .nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}
 .nav-item.active{color:var(--gold);background:rgba(200,169,110,.08);border-left-color:var(--gold)}
 .nav-item i{width:17px;text-align:center;font-size:13px;flex-shrink:0;opacity:.7}
@@ -1075,6 +1075,8 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="bulkmail_send" style="margin-top:6px;display:none">Outreach</div>
       <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Email Campaigns</a>
+      <div class="sb-section" data-perm="titling_view" style="margin-top:6px;display:none">Titling</div>
+      <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
@@ -1313,6 +1315,65 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- TITLING (land-title transfer tracker) -->
+      <div id="tab-titling" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="titlingSearch" placeholder="Search client, title no., location…" oninput="renderTitling()"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="hdr-btn" onclick="exportTitlingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button class="hdr-btn primary" id="addTitlingBtn" onclick="openTitlingModal()" style="display:none"><i class="fas fa-plus"></i> Add Titling Job</button>
+          </div>
+        </div>
+        <div id="titlingSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
+        <div id="titlingTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
+          <thead><tr><th>Client</th><th>Property / Title No.</th><th>Service</th><th>Status</th><th>Balance</th><th>Target</th><th>Actions</th></tr></thead>
+          <tbody id="titlingTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+        </table></div></div></div>
+      </div>
+
+      <!-- TITLING ADD/EDIT MODAL -->
+      <div class="modal-ov" id="titlingModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:660px;width:97%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="titlingModalTitle">Add Titling Job</div>
+            <button onclick="closeTitlingModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:24px">
+            <input type="hidden" id="tlId">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="fg"><label class="flbl">Client name *</label><input type="text" id="tlClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
+              <div class="fg"><label class="flbl">Phone</label><input type="text" id="tlClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
+              <div class="fg"><label class="flbl">Email</label><input type="email" id="tlClientEmail" class="finput" placeholder="client@email.com"></div>
+              <div class="fg"><label class="flbl">Service type</label><select id="tlServiceType" class="finput">
+                <option>Transfer of Title</option><option>Subdivision of Title</option><option>Consolidation of Titles</option><option>Reconstitution</option><option>Correction / Annotation</option><option>Tax Declaration Transfer</option><option>Other</option>
+              </select></div>
+              <div class="fg"><label class="flbl">Title number (TCT/CCT)</label><input type="text" id="tlTitleNumber" class="finput" placeholder="e.g. TCT 123456"></div>
+              <div class="fg"><label class="flbl">Property type</label><input type="text" id="tlPropertyType" class="finput" placeholder="e.g. Condominium / Lot / House"></div>
+              <div class="fg" style="grid-column:1/-1"><label class="flbl">Property location</label><input type="text" id="tlPropertyLocation" class="finput" placeholder="e.g. Legaspi Village, Makati City"></div>
+              <div class="fg"><label class="flbl">Status / stage</label><select id="tlStatus" class="finput">
+                <option value="documents">Documents collected</option><option value="bir">BIR / eCAR</option><option value="transfer_tax">Transfer Tax</option><option value="registry">Registry of Deeds</option><option value="tax_dec">New Tax Declaration</option><option value="completed">Completed</option><option value="on_hold">On hold</option>
+              </select></div>
+              <div class="fg"><label class="flbl">Target completion</label><input type="date" id="tlTargetDate" class="finput"></div>
+            </div>
+            <div class="fg" style="margin-top:6px"><label class="flbl">Documents collected</label>
+              <div id="tlDocs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px;margin-top:6px"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:6px">
+              <div class="fg"><label class="flbl">Service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
+              <div class="fg"><label class="flbl">Government fees (₱)</label><input type="number" min="0" step="any" id="tlGovFees" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
+              <div class="fg"><label class="flbl">Amount paid (₱)</label><input type="number" min="0" step="any" id="tlAmountPaid" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
+            </div>
+            <div style="margin:6px 0 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray)">Outstanding balance: <strong id="tlBalance" style="color:var(--gold)">₱0</strong></div>
+            <div class="fg"><label class="flbl">Notes</label><textarea id="tlNotes" class="finput" rows="3" placeholder="Updates, follow-ups, reference numbers…"></textarea></div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+              <button class="hdr-btn" onclick="closeTitlingModal()">Cancel</button>
+              <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1904,7 +1965,9 @@ const PERM_DEFS = [
   { key: 'submissions_view',        name: 'View Submissions',        desc: 'Can see the property submissions tab (public form pipeline)' },
   { key: 'submissions_import',      name: 'Import Submissions',      desc: 'Can convert a submission into a live Property listing' },
   { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' },
-  { key: 'bulkmail_send',           name: 'Send Email Campaigns',   desc: 'Can compose + send email campaigns to subscribers / pasted lists' }
+  { key: 'bulkmail_send',           name: 'Send Email Campaigns',   desc: 'Can compose + send email campaigns to subscribers / pasted lists' },
+  { key: 'titling_view',            name: 'View Titling',            desc: 'Can see the Titling tab and titling jobs' },
+  { key: 'titling_manage',          name: 'Manage Titling',          desc: 'Can add, edit, and delete titling jobs' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -2116,6 +2179,7 @@ function loadAll(){
   if(isAdmin()){loadAccounts();}
   if(hasPerm('tasks_view')) loadTasksData();
   if(hasPerm('submissions_view')) loadSubmissionStats();
+  if(hasPerm('titling_view')) loadTitling();
   if(name==='auditlog'&&hasPerm('audit_view'))loadAuditLog();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
@@ -2825,10 +2889,12 @@ function renderSubmissions(){
       <td style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--gold);font-weight:600;white-space:nowrap">${priceLabel}</td>
       <td><span class="sub-status s-${s.status}">${statusLabel}</span></td>
       <td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(s.createdAt)}</td>
-      <td class="t-actions" onclick="event.stopPropagation()" style="text-align:right">
-        <button onclick="openSubPanel('${s._id}')" title="Open"><i class="fas fa-external-link-alt"></i></button>
-        ${canImport?`<button onclick="quickImportSubmission('${s._id}')" title="Import" style="border-color:#10b981;color:#10b981"><i class="fas fa-file-import"></i></button>`:''}
-        ${canDelete?`<button class="danger" onclick="quickDeleteSubmission('${s._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:''}
+      <td onclick="event.stopPropagation()" style="text-align:right">
+        <div class="act-btns" style="display:inline-flex;gap:5px">
+          <button class="act act-view" onclick="openSubPanel('${s._id}')" title="Open"><i class="fas fa-external-link-alt"></i></button>
+          ${canImport?`<button class="act" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)" onclick="quickImportSubmission('${s._id}')" title="Import to Properties"><i class="fas fa-file-import"></i></button>`:''}
+          ${canDelete?`<button class="act act-del" onclick="quickDeleteSubmission('${s._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:''}
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -5402,13 +5468,214 @@ async function impDoImport(){
 }
 
 // ── TABS ──────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// TITLING JOBS — land-title transfer tracker
+// ════════════════════════════════════════════════════════════
+let titlingData = [];
+let titlingFilter = 'all';
+function setTitlingFilter(key){ titlingFilter = (titlingFilter === key) ? 'all' : key; renderTitling(); }
+const TITLING_STAGES = [
+  { key:'documents',    label:'Documents collected', color:'#6a6a6a' },
+  { key:'bir',          label:'BIR / eCAR',          color:'#c8a96e' },
+  { key:'transfer_tax', label:'Transfer Tax',        color:'#d98324' },
+  { key:'registry',     label:'Registry of Deeds',   color:'#3b82f6' },
+  { key:'tax_dec',      label:'New Tax Declaration',  color:'#8b5cf6' },
+  { key:'completed',    label:'Completed',           color:'#10b981' },
+  { key:'on_hold',      label:'On hold',             color:'#ef4444' }
+];
+const TITLING_DOCS = ['Deed of Absolute Sale',"Owner's Duplicate Title",'Latest Tax Declaration','Tax Clearance','BIR eCAR','Transfer Tax Receipt','Valid IDs (buyer & seller)','Vicinity / Lot Plan'];
+function titlingStage(key){ return TITLING_STAGES.find(s=>s.key===key) || TITLING_STAGES[0]; }
+function titlingBalanceOf(t){ return (Number(t.serviceFee)||0)+(Number(t.govFees)||0)-(Number(t.amountPaid)||0); }
+
+async function loadTitling(){
+  if(!hasPerm('titling_view')) return;
+  try{
+    const data = await apiFetch('/api/admin/titling').then(r=>r.json());
+    titlingData = Array.isArray(data) ? data : [];
+    const badge = document.getElementById('titlingBadge');
+    if(badge){ const active = titlingData.filter(t=>t.status!=='completed').length; badge.textContent = active; badge.style.display = active>0?'':'none'; }
+    renderTitling();
+  }catch(e){ console.error('loadTitling', e); }
+}
+
+const TITLING_ADVANCE = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed'];
+
+function renderTitling(){
+  const tbody = document.getElementById('titlingTbody');
+  if(!tbody) return;
+
+  // ── Stage summary cards (click to filter) ──
+  const sum = document.getElementById('titlingSummary');
+  if(sum){
+    const card = (key, label, count, color) => {
+      const active = titlingFilter===key ? `box-shadow:inset 0 0 0 2px ${color}` : '';
+      return `<div onclick="setTitlingFilter('${key}')" title="Filter by ${esc(label)}" style="cursor:pointer;border:1px solid var(--border-color);padding:10px 12px;background:var(--card-bg);${active}"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${esc(label)}</div><div style="font-size:22px;font-weight:700;color:${color}">${count}</div></div>`;
+    };
+    sum.innerHTML = card('all', 'All jobs', titlingData.length, 'var(--gold)')
+      + TITLING_STAGES.map(s => card(s.key, s.label, titlingData.filter(t=>t.status===s.key).length, s.color)).join('');
+  }
+
+  // ── Filter rows by stage + search ──
+  const q = (document.getElementById('titlingSearch')?.value||'').toLowerCase().trim();
+  let rows = titlingData;
+  if(titlingFilter !== 'all') rows = rows.filter(t => t.status === titlingFilter);
+  if(q) rows = rows.filter(t => [t.clientName,t.titleNumber,t.propertyLocation,t.serviceType,t.clientPhone,t.clientEmail].some(v => (v||'').toLowerCase().includes(q)));
+
+  // ── Money totals for the current view ──
+  const totals = document.getElementById('titlingTotals');
+  if(totals){
+    let fees=0, collected=0, outstanding=0;
+    rows.forEach(t => { fees += (Number(t.serviceFee)||0)+(Number(t.govFees)||0); collected += (Number(t.amountPaid)||0); outstanding += Math.max(0, titlingBalanceOf(t)); });
+    const box = (label, val, color) => `<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${label}</div><div style="font-size:18px;font-weight:700;color:${color}">${fmt(val)}</div></div>`;
+    const suffix = (titlingFilter!=='all'||q) ? ' (shown)' : '';
+    totals.innerHTML = box('Total fees'+suffix, fees, 'inherit') + box('Collected'+suffix, collected, '#10b981') + box('Outstanding'+suffix, outstanding, '#ef4444');
+  }
+
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-stamp"></i><p>${titlingData.length?'No jobs match this filter':'No titling jobs yet'}</p></div></td></tr>`;
+    return;
+  }
+
+  const canManage = hasPerm('titling_manage');
+  const now = Date.now();
+  tbody.innerHTML = rows.map(t=>{
+    const st = titlingStage(t.status);
+    const bal = titlingBalanceOf(t);
+    const balColor = bal>0 ? '#ef4444' : '#10b981';
+    const docCount = (t.documents||[]).length;
+    const prop = [t.titleNumber, t.propertyLocation].filter(Boolean).join(' · ') || '—';
+    const overdue = t.targetDate && t.status!=='completed' && new Date(t.targetDate).getTime() < now;
+    const contact = [];
+    if(t.clientPhone) contact.push(`<a href="tel:${esc(t.clientPhone)}" title="Call" style="color:var(--gray)"><i class="fas fa-phone-alt"></i></a>`);
+    if(t.clientEmail) contact.push(`<a href="mailto:${esc(t.clientEmail)}" title="Email" style="color:var(--gray)"><i class="fas fa-envelope"></i></a>`);
+    const idx = TITLING_ADVANCE.indexOf(t.status);
+    const canAdvance = canManage && idx >= 0 && idx < TITLING_ADVANCE.length-1;
+    return `<tr>
+      <td><strong style="font-size:13px">${esc(t.clientName)}</strong>${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td style="font-size:12px;max-width:240px">${esc(prop)}${docCount?`<div style="font-size:10px;color:var(--gray);margin-top:2px"><i class="fas fa-check-circle"></i> ${docCount}/${TITLING_DOCS.length} docs</div>`:''}</td>
+      <td style="font-size:12px">${esc(t.serviceType||'—')}</td>
+      <td><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${st.color}">${esc(st.label)}</span></td>
+      <td style="font-size:12px;font-weight:700;color:${balColor};white-space:nowrap">${fmt(bal)}</td>
+      <td style="font-size:11px;white-space:nowrap;color:${overdue?'#ef4444':'var(--gray)'};font-weight:${overdue?'700':'400'}">${t.targetDate?fmtDateShort(t.targetDate):'—'}${overdue?' &#9888;':''}</td>
+      <td><div class="act-btns" style="display:flex;gap:5px">
+        ${canAdvance?`<button class="act" style="background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)" onclick="advanceTitling('${t._id}')" title="Move to next stage"><i class="fas fa-arrow-right"></i></button>`:''}
+        ${canManage?`<button class="act act-view" onclick="openTitlingModal('${t._id}')" title="Edit"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteTitling('${t._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function advanceTitling(id){
+  if(!hasPerm('titling_manage')) return;
+  const t = titlingData.find(x=>x._id===id); if(!t) return;
+  const idx = TITLING_ADVANCE.indexOf(t.status);
+  if(idx < 0 || idx >= TITLING_ADVANCE.length-1) return;
+  const next = TITLING_ADVANCE[idx+1];
+  try{
+    const res = await apiFetch(`/api/admin/titling/${id}`, { method:'PUT', body: JSON.stringify({ status: next }) });
+    const d = await res.json();
+    if(res.ok && d._id){ showToast('Moved to: ' + titlingStage(next).label); loadTitling(); }
+    else showToast(d.error||'Update failed', true);
+  }catch(e){ showToast('Error updating stage', true); }
+}
+
+function titlingCalcBalance(){
+  const sf = parseFloat(document.getElementById('tlServiceFee').value)||0;
+  const gf = parseFloat(document.getElementById('tlGovFees').value)||0;
+  const ap = parseFloat(document.getElementById('tlAmountPaid').value)||0;
+  const bal = sf+gf-ap;
+  const el = document.getElementById('tlBalance');
+  if(el){ el.textContent = fmt(bal); el.style.color = bal>0 ? '#ef4444' : '#10b981'; }
+}
+
+function openTitlingModal(id){
+  if(!hasPerm('titling_manage')){ showToast('You don\'t have permission to manage titling jobs', true); return; }
+  const t = id ? titlingData.find(x=>x._id===id) : null;
+  document.getElementById('titlingModalTitle').textContent = t ? 'Edit Titling Job' : 'Add Titling Job';
+  document.getElementById('tlId').value = t ? t._id : '';
+  document.getElementById('tlClientName').value = (t&&t.clientName) || '';
+  document.getElementById('tlClientPhone').value = (t&&t.clientPhone) || '';
+  document.getElementById('tlClientEmail').value = (t&&t.clientEmail) || '';
+  document.getElementById('tlTitleNumber').value = (t&&t.titleNumber) || '';
+  document.getElementById('tlPropertyType').value = (t&&t.propertyType) || '';
+  document.getElementById('tlPropertyLocation').value = (t&&t.propertyLocation) || '';
+  document.getElementById('tlServiceType').value = (t&&t.serviceType) || 'Transfer of Title';
+  document.getElementById('tlStatus').value = (t&&t.status) || 'documents';
+  document.getElementById('tlServiceFee').value = (t&&t.serviceFee) || '';
+  document.getElementById('tlGovFees').value = (t&&t.govFees) || '';
+  document.getElementById('tlAmountPaid').value = (t&&t.amountPaid) || '';
+  document.getElementById('tlTargetDate').value = (t&&t.targetDate) ? new Date(t.targetDate).toISOString().slice(0,10) : '';
+  document.getElementById('tlNotes').value = (t&&t.notes) || '';
+  const have = new Set((t&&t.documents) || []);
+  document.getElementById('tlDocs').innerHTML = TITLING_DOCS.map(d=>`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" class="tl-doc" value="${esc(d)}" ${have.has(d)?'checked':''}> ${esc(d)}</label>`).join('');
+  titlingCalcBalance();
+  document.getElementById('titlingModal').style.display='flex';
+}
+function closeTitlingModal(){ document.getElementById('titlingModal').style.display='none'; }
+
+async function saveTitling(){
+  const name = document.getElementById('tlClientName').value.trim();
+  if(!name){ showToast('Client name is required', true); document.getElementById('tlClientName').focus(); return; }
+  const docs = Array.from(document.querySelectorAll('#tlDocs .tl-doc:checked')).map(c=>c.value);
+  const td = document.getElementById('tlTargetDate').value;
+  const payload = {
+    clientName: name,
+    clientPhone: document.getElementById('tlClientPhone').value.trim(),
+    clientEmail: document.getElementById('tlClientEmail').value.trim(),
+    titleNumber: document.getElementById('tlTitleNumber').value.trim(),
+    propertyType: document.getElementById('tlPropertyType').value.trim(),
+    propertyLocation: document.getElementById('tlPropertyLocation').value.trim(),
+    serviceType: document.getElementById('tlServiceType').value,
+    status: document.getElementById('tlStatus').value,
+    serviceFee: parseFloat(document.getElementById('tlServiceFee').value)||0,
+    govFees: parseFloat(document.getElementById('tlGovFees').value)||0,
+    amountPaid: parseFloat(document.getElementById('tlAmountPaid').value)||0,
+    targetDate: td || null,
+    notes: document.getElementById('tlNotes').value,
+    documents: docs
+  };
+  const id = document.getElementById('tlId').value;
+  const btn = document.getElementById('tlSaveBtn');
+  const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try{
+    const res = await apiFetch(id?`/api/admin/titling/${id}`:'/api/admin/titling', { method: id?'PUT':'POST', body: JSON.stringify(payload) });
+    const d = await res.json();
+    if(res.ok && (d._id || d.success)){ showToast(id?'Titling job updated':'Titling job added'); closeTitlingModal(); loadTitling(); }
+    else showToast(d.error||'Save failed', true);
+  }catch(e){ showToast('Network error: '+e.message, true); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+
+async function deleteTitling(id){
+  if(!hasPerm('titling_manage')){ showToast('No permission', true); return; }
+  if(!confirm('Delete this titling job? This cannot be undone.')) return;
+  try{
+    const res = await apiFetch(`/api/admin/titling/${id}`, { method:'DELETE' });
+    const d = await res.json();
+    if(res.ok && d.success){ showToast('Deleted'); loadTitling(); }
+    else showToast(d.error||'Delete failed', true);
+  }catch(e){ showToast('Error deleting', true); }
+}
+
+function exportTitlingCSV(){
+  if(!titlingData.length){ showToast('No titling jobs to export', true); return; }
+  const rows = [['Client','Phone','Email','Title No.','Location','Property Type','Service','Status','Service Fee','Gov Fees','Paid','Balance','Target','Documents','Notes']];
+  titlingData.forEach(t=>rows.push([
+    t.clientName||'', t.clientPhone||'', t.clientEmail||'', t.titleNumber||'', t.propertyLocation||'', t.propertyType||'',
+    t.serviceType||'', titlingStage(t.status).label, t.serviceFee||0, t.govFees||0, t.amountPaid||0, titlingBalanceOf(t),
+    t.targetDate?new Date(t.targetDate).toLocaleDateString('en-PH'):'', (t.documents||[]).join('; '), (t.notes||'').replace(/\r?\n/g,' ')
+  ]));
+  downloadCSV('glra-titling-'+new Date().toISOString().slice(0,10)+'.csv', rows);
+  showToast(`Exported ${titlingData.length} titling job${titlingData.length===1?'':'s'}`);
+}
+
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -5423,6 +5690,9 @@ function switchTab(name){
   // Add task button — gated by tasks_create permission, only on tasks tab
   const addTaskBtn=document.getElementById('addTaskBtn');
   if(addTaskBtn)addTaskBtn.style.display=(name==='tasks'&&hasPerm('tasks_create'))?'':'none';
+  // Add titling button — gated by titling_manage, only on titling tab
+  const addTitlingBtn=document.getElementById('addTitlingBtn');
+  if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();
@@ -5443,6 +5713,10 @@ function switchTab(name){
   // Lazy-load bulk email data + render preview on first visit
   if(name==='bulkmail' && hasPerm('bulkmail_send')){
     bmInit();
+  }
+  // Refresh titling jobs on tab visit
+  if(name==='titling' && hasPerm('titling_view')){
+    loadTitling();
   }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
