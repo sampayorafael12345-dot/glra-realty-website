@@ -1075,6 +1075,49 @@ html body .list-hero .eyebrow{color:var(--ab-hot) !important}
        scroll). 5% side padding both states = no shift. */
 html body .navbar,html body .navbar.scrolled{padding:12px 5% !important}
 
+/* 14) RANGE SLIDER FIX — the `.input-group input` text-input rule (padding:12px 14px
+       + 2px border) was leaking onto `input[type=range]`; with box-sizing:border-box
+       that inflated the 6px track into a ~28px padded BOX with the thumb floating
+       inside (e.g. the affordability DTI slider). These selectors out-specify that
+       rule in BOTH light and dark mode and force a slim track + centered square
+       orange thumb. Fixes every calculator's sliders consistently. */
+html body input[type="range"],
+html body .input-group input[type="range"],
+html body.dark-mode .input-group input[type="range"]{
+  -webkit-appearance:none !important;appearance:none !important;
+  display:block !important;width:100% !important;
+  height:6px !important;min-height:0 !important;
+  margin:14px 0 !important;padding:0 !important;border:0 !important;
+  border-radius:0 !important;background:#d8d0c2 !important;
+  outline:none !important;box-shadow:none !important;cursor:pointer !important;
+}
+html body.dark-mode input[type="range"],
+html body.dark-mode .input-group input[type="range"]{background:#4a4843 !important}
+html body input[type="range"]:focus{background:#d8d0c2 !important}
+html body.dark-mode input[type="range"]:focus{background:#4a4843 !important}
+/* WebKit (Chrome/Edge/Safari) */
+html body input[type="range"]::-webkit-slider-runnable-track{
+  height:6px !important;border:0 !important;background:transparent !important;
+}
+html body input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none !important;appearance:none !important;
+  width:18px !important;height:18px !important;margin-top:-6px !important;
+  background:#ff3d00 !important;border:2px solid #0a0a0a !important;
+  border-radius:0 !important;cursor:pointer !important;
+}
+html body.dark-mode input[type="range"]::-webkit-slider-thumb{border-color:#f1eee9 !important}
+/* Firefox */
+html body input[type="range"]::-moz-range-track{
+  height:6px !important;border:0 !important;border-radius:0 !important;background:#d8d0c2 !important;
+}
+html body.dark-mode input[type="range"]::-moz-range-track{background:#4a4843 !important}
+html body input[type="range"]::-moz-range-progress{height:6px !important;background:#ff3d00 !important}
+html body input[type="range"]::-moz-range-thumb{
+  width:18px !important;height:18px !important;
+  background:#ff3d00 !important;border:2px solid #0a0a0a !important;border-radius:0 !important;cursor:pointer !important;
+}
+html body.dark-mode input[type="range"]::-moz-range-thumb{border-color:#f1eee9 !important}
+
 /* 13) PRINT/PDF fixes — the screen-only "cream text on dark boxes" rules above
        leaked onto the WHITE printout (labels turned invisible). Force them dark
        for print, and enlarge the letterhead logo. Always prints light/black-on-white
