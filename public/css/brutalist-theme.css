@@ -1074,3 +1074,27 @@ html body .list-hero .eyebrow{color:var(--ab-hot) !important}
        times (was sitting at the screen edges at the top, then jumping inward on
        scroll). 5% side padding both states = no shift. */
 html body .navbar,html body .navbar.scrolled{padding:12px 5% !important}
+
+/* 13) PRINT/PDF fixes — the screen-only "cream text on dark boxes" rules above
+       leaked onto the WHITE printout (labels turned invisible). Force them dark
+       for print, and enlarge the letterhead logo. Always prints light/black-on-white
+       regardless of dark mode (the universal print reset handles backgrounds). */
+@media print{
+  /* Force every "cream text on a dark box" color (screen styling) back to solid
+     dark for the WHITE printout — otherwise these labels print invisible. */
+  .summary-item h4,.summary-item h3,.summary-item .percent,
+  .result-header h3,.result-header h2,
+  .desired-result h3,.desired-result h4,
+  .section-header h2,.section-card .section-header h2,
+  .nh-card-image h3,.calc-card-header h2,.list-hero h1,
+  .result-headline,.result-summary,.headline-total,.yield-headline,.tax-total,
+  .result-headline *,.result-summary *,.headline-total *,.yield-headline *,.tax-total *,
+  .result-headline .label,.result-headline .sub,.result-summary .label,
+  .headline-total .label,.result-mini .label{color:#000 !important}
+  /* …but keep the key money figures in GLRA orange */
+  .result-headline .value,.result-summary .value,.headline-total .value,
+  .headline-total .amount,.yield-headline .value,.yield-headline .rate,
+  .result-headline strong,.tax-total .amount,.summary-item .amount{color:#ff3d00 !important}
+  /* Bigger letterhead logo on every printed report */
+  .print-only-header img{height:96px !important;margin-bottom:14px !important}
+}

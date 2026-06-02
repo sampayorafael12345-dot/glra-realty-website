@@ -308,9 +308,9 @@ async function glraBuildAndSavePDF(label) {
   let y = 50;
 
   // Letterhead — company logo centered, then tagline + contact.
-  const logo = await glraLoadLogo('/img/logo.png', 240);
+  const logo = await glraLoadLogo('/img/logo.png', 320);
   if (logo) {
-    const dispH = 74, dispW = dispH * (logo.w / logo.h);
+    const dispH = 96, dispW = dispH * (logo.w / logo.h);
     doc.addImage(logo.dataURL, 'PNG', (W - dispW) / 2, y, dispW, dispH);
     y += dispH + 8;
   } else {
@@ -359,18 +359,33 @@ async function glraBuildAndSavePDF(label) {
   doc.save(fname);
 }
 
-// Forced-light browser print — fallback only (if the PDF library can't load).
-function glraPrintFallback(label) {
-  const html = document.documentElement, body = document.body;
-  const wasDark = body.classList.contains('dark-mode');
-  const wasDarkPre = html.classList.contains('dark-mode-pre');
-  if (wasDark) body.classList.remove('dark-mode');
-  if (wasDarkPre) html.classList.remove('dark-mode-pre');
-  const t = document.title; document.title = 'GLRA Realty - ' + (label || 'Report');
-  let done = false;
-  const restore = function () { if (done) return; done = true; document.title = t; if (wasDark) body.classList.add('dark-mode'); if (wasDarkPre) html.classList.add('dark-mode-pre'); };
-  window.addEventListener('afterprint', restore, { once: true });
-  setTimeout(restore, 10000);
+// ── Force LIGHT mode for any printout (Ctrl/Cmd+P AND our fallback print) ──
+// Drops dark mode while printing so the sheet is always black-on-white, then
+// restores it afterwards. (We deliberately do NOT touch document.title — blanking
+// it makes Chrome stamp the page URL at the top of the page instead.)
+(function () {
+  if (typeof window === 'undefined') return;
+  let saved = null;
+  window.addEventListener('beforeprint', function () {
+    const html = document.documentElement, body = document.body;
+    saved = {
+      dark: body.classList.contains('dark-mode'),
+      darkPre: html.classList.contains('dark-mode-pre')
+    };
+    body.classList.remove('dark-mode');
+    html.classList.remove('dark-mode-pre');
+  });
+  window.addEventListener('afterprint', function () {
+    if (!saved) return;
+    if (saved.dark) document.body.classList.add('dark-mode');
+    if (saved.darkPre) document.documentElement.classList.add('dark-mode-pre');
+    saved = null;
+  });
+})();
+
+// Browser print — fallback only (if the PDF library can't load). The handler
+// above already blanks the title + forces light for the printout.
+function glraPrintFallback() {
   setTimeout(function () { window.print(); }, 150);
 }
 
