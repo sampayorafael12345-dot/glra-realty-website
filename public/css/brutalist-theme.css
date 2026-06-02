@@ -1065,3 +1065,12 @@ html body .listing-toggle .lt-sub{display:block !important;margin-top:3px !impor
        (a flex cell mis-aligned the row borders → "lines not straight"). */
 .breakdown-table td:first-child{display:table-cell !important;vertical-align:middle !important}
 .breakdown-table td:first-child i{margin-right:8px !important;vertical-align:middle !important}
+
+/* 11) list-property hero title — was black-on-black (invisible) in light mode. */
+html body .list-hero h1{color:#f1eee9 !important}
+html body .list-hero .eyebrow{color:var(--ab-hot) !important}
+
+/* 12) Navbar — keep the logo + links in their "scrolled" inset position at ALL
+       times (was sitting at the screen edges at the top, then jumping inward on
+       scroll). 5% side padding both states = no shift. */
+html body .navbar,html body .navbar.scrolled{padding:12px 5% !important}
