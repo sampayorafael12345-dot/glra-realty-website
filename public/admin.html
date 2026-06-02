@@ -35,6 +35,10 @@ html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;color:var(--text-color);background:var(--gray-light);overflow-x:hidden}
 *{scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
 *::-webkit-scrollbar{width:5px}*::-webkit-scrollbar-thumb{background:var(--gold)}
+/* Hide the stray blinking text caret on non-input elements (clickable <a>/divs).
+   Real text fields keep their caret. */
+body{caret-color:transparent}
+input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:auto}
 
 /* ── LOGIN ─────────────────────────────────────────── */
 .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;background-image:radial-gradient(ellipse at 20% 50%,rgba(200,169,110,.08) 0%,transparent 60%)}
@@ -2180,7 +2184,6 @@ function loadAll(){
   if(hasPerm('tasks_view')) loadTasksData();
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
-  if(name==='auditlog'&&hasPerm('audit_view'))loadAuditLog();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
 

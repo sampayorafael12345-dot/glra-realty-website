@@ -374,7 +374,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
 
     function renderProperty(card) {
       var img = card.image
-        ? '<img class="glra-card-img" loading="lazy" src="' + escapeHtml(card.image) + '" alt="">'
+        ? '<img class="glra-card-img" loading="lazy" src="' + escapeHtml(card.image) + '" alt="' + escapeHtml(card.title) + '">'
         : '<div class="glra-card-img-fallback">' + escapeHtml((card.propertyType || 'GLRA').slice(0, 4).toUpperCase()) + '</div>';
       return '<a class="glra-card" href="' + escapeHtml(card.url) + '" target="_self">' +
         img +
