@@ -867,13 +867,13 @@ html body.dark-mode .calc-body{
 }
 .calc-card-header,
 html body.dark-mode .calc-card-header{
-  background:var(--ab-paper) !important;
-  border-bottom:2px solid var(--ab-line) !important;
+  background:#0a0a0a !important;
+  border-bottom:2px solid #0a0a0a !important;
   padding:16px 22px !important;
 }
 .calc-card-header h2,
 html body.dark-mode .calc-card-header h2{
-  color:var(--ab-ink) !important;
+  color:#f1eee9 !important;
   font-family:'Inter','Segoe UI',sans-serif !important;
   font-weight:900 !important;text-transform:uppercase !important;
   letter-spacing:-.5px !important;font-size:17px !important;line-height:1 !important;
@@ -882,7 +882,7 @@ html body.dark-mode .calc-card-header h2{
 .calc-card-header h2 i{color:var(--ab-hot) !important;font-size:16px !important}
 .calc-card-header p,
 html body.dark-mode .calc-card-header p{
-  color:var(--ab-gray) !important;
+  color:rgba(241,238,233,.7) !important;
   font-family:'JetBrains Mono',monospace !important;
   font-size:11px !important;letter-spacing:1.5px !important;
   text-transform:uppercase !important;font-weight:600 !important;margin-top:8px !important;
@@ -1000,12 +1000,14 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:
       (Closing-fees result headers, summary banners, desired-proceed boxes.) */
 .result-header h3,.result-header h2,
 .summary-item h4,.summary-item h3,
-.desired-result h3,.desired-result h4{
+.desired-result h3,.desired-result h4,
+.section-card .section-header h2,.section-header h2,
+.nh-card-image h3{
   color:#f1eee9 !important;
   font-family:'Inter','Segoe UI',sans-serif !important;
   font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.3px !important;
 }
-.result-header h3 i,.summary-item h4 i,.desired-result h3 i{color:var(--ab-hot) !important}
+.result-header h3 i,.summary-item h4 i,.desired-result h3 i,.section-header h2 i{color:var(--ab-hot) !important}
 
 /* 3) CTA buttons (affordability results etc.) — keep text readable on hover.
       Was turning orange-on-orange (invisible) / the outline one didn't fill. */
@@ -1038,3 +1040,28 @@ html body .page-hero .eyebrow,html body.dark-mode .page-hero .eyebrow{color:#ff3
 html body .mobile-overlay,html body.dark-mode .mobile-overlay{background:#0a0a0a !important}
 html body .mobile-overlay a,html body.dark-mode .mobile-overlay a{color:#f1eee9 !important}
 html body .mobile-overlay .close-menu,html body.dark-mode .mobile-overlay .close-menu{color:#f1eee9 !important}
+
+/* 7) Zonal search button — was rendering ink-on-ink (invisible 'Search' text).
+      Force an orange button with white text. */
+.search-section .search-box button,.search-box button{background:#ff3d00 !important;color:#fff !important}
+.search-section .search-box button *,.search-box button *,
+.search-section .search-box button i,.search-box button i{color:#fff !important}
+.search-section .search-box button:hover,.search-box button:hover{background:#0a0a0a !important;color:#fff !important}
+
+/* 8) Top-right nav CTA ("List property" / "Contact") — always orange (it was
+      rendering black on some pages / scroll states). */
+html body .navbar .contact-btn-nav,html body .navbar.scrolled .contact-btn-nav,
+html body .navbar:not(.scrolled) .contact-btn-nav,html body a.contact-btn-nav{
+  background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important;
+}
+html body .navbar .contact-btn-nav:hover,html body a.contact-btn-nav:hover{background:#0a0a0a !important;color:#fff !important}
+
+/* 9) Listing-type radios (list-property) — restore the stacked layout so the
+      title and sub-label don't run together ("For SaleSelling outright"). */
+html body .listing-toggle label{display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important}
+html body .listing-toggle .lt-sub{display:block !important;margin-top:3px !important;line-height:1.3 !important}
+
+/* 10) Cost-of-ownership breakdown table — keep the first cell a normal table-cell
+       (a flex cell mis-aligned the row borders → "lines not straight"). */
+.breakdown-table td:first-child{display:table-cell !important;vertical-align:middle !important}
+.breakdown-table td:first-child i{margin-right:8px !important;vertical-align:middle !important}
