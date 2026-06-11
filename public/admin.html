@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/png" href="/img/favicon.ico.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#c8a96e">
+<meta name="theme-color" content="#ff3d00">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1703,7 +1703,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <div class="form-grid">
         <div class="fg full"><label>Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
         <div class="fg full"><label>Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
-        <div class="fg full"><label>Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint">Leave blank when editing to keep existing password.</div></div>
+        <div class="fg full"><label>Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
         <div class="fg full"><label>Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
         <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
         <!-- Granular permissions (only relevant for employees; ignored for admins) -->
@@ -1719,7 +1719,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
         </div>
       </div>
       <div class="form-actions">
-        <button class="fbtn primary" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
+        <button class="fbtn primary" id="saveAccBtn" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
         <button class="fbtn secondary" onclick="closeAccModal()">Cancel</button>
       </div>
     </div>
@@ -2782,15 +2782,6 @@ function fmtDateTime(d){
 }
 
 // Local audit helper (for immediate feedback even before server responds)
-
-function toggleAccActive(){
-  const cb = document.getElementById('accActive');
-  const slider = document.getElementById('accActiveSlider');
-  const label = document.getElementById('accActiveLabel');
-  cb.checked = !cb.checked;
-  slider.style.background = cb.checked ? 'var(--gold)' : 'var(--border-color)';
-  label.textContent = cb.checked ? 'Active' : 'Inactive';
-}
 
 function logAuditLocally(action, target, title){
   // Just refresh the audit log after a short delay
@@ -5726,43 +5717,7 @@ function switchTab(name){
 }
 </script>
 
-<!-- ACCOUNT ADD/EDIT MODAL -->
-<div class="modal-ov" id="accModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:center;justify-content:center;z-index:2000">
-  <div style="background:var(--card-bg);max-width:480px;width:95%;border:1px solid var(--border-color);animation:modalIn .25s ease">
-    <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="accModalTitle">Add Account</div>
-      <button onclick="closeAccModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
-    </div>
-    <div style="padding:28px">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="fg"><label class="flbl">Full Name</label><input type="text" id="accName" placeholder="e.g. Maria Santos" class="finput"></div>
-        <div class="fg"><label class="flbl">Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com" class="finput"></div>
-        <div class="fg">
-          <label class="flbl">Password</label>
-          <input type="password" id="accPass" placeholder="Enter password" class="finput">
-          <div style="font-size:11px;color:var(--gray);margin-top:5px" id="accPassHelp">Required for new accounts</div>
-        </div>
-        <div class="fg"><label class="flbl">Role *</label>
-          <select id="accRole" class="finput">
-            <option value="employee">Staff Employee — View only, no edits</option>
-            <option value="admin">Administrator — Full access</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="flbl">Status</label>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
-            <label style="position:relative;display:inline-block;width:46px;height:24px"><input type="checkbox" id="accActive" checked style="display:none"><div style="position:absolute;cursor:pointer;inset:0;background:var(--border-color);border-radius:24px;transition:.3s" id="accActiveSlider" onclick="toggleAccActive()"></div></label>
-            <span style="font-size:13px;color:var(--text-color)" id="accActiveLabel">Active</span>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color)">
-        <button id="saveAccBtn" onclick="saveAccount()" style="padding:11px 24px;background:var(--gold);color:#fff;border:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;gap:8px"><i class="fas fa-save"></i> Save Account</button>
-        <button onclick="closeAccModal()" style="padding:11px 24px;background:var(--gray-light);color:var(--gray);border:1px solid var(--border-color);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- (legacy account modal removed — the live ACCOUNT MODAL is defined earlier in this file) -->
 
 <!-- PROPERTY IMPORT MODAL -->
 <style>

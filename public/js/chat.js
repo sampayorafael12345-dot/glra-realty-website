@@ -367,8 +367,10 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
         return '<a href="' + url + '" target="_self">' + label + '</a>';
       });
       html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-      html = html.replace(/(^|<br>)\s*[-*]\s+([^<\n]+)/g, '$1• $2');
       html = html.replace(/\n/g, '<br>');
+      // Bullet conversion must run AFTER newlines become <br>, otherwise only
+      // a bullet on the very first line would be converted to "•".
+      html = html.replace(/(^|<br>)\s*[-*]\s+([^<\n]+)/g, '$1• $2');
       return html;
     }
 

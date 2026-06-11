@@ -1296,13 +1296,14 @@ async function submitWishlist(){const email=document.getElementById('wishlistEma
 function shareProperty(platform,property){const url=encodeURIComponent(`${window.location.origin}/property/${property._id}`);const title=encodeURIComponent(property.title);const price=getDisplayPrice(property);const text=encodeURIComponent(`Check out: ${property.title} in ${property.location} for ${price}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger')shareUrl=`https://www.facebook.com/dialog/send?link=${url}&app_id=123456789&redirect_uri=${url}`;else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${window.location.origin}/property/${property._id}`);showToast('Link copied!');return}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400')}
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null;
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
+function isForSale(p){const t=(p.listingType||'').toUpperCase();return t==='FOR SALE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){const t=(p.listingType||'').toUpperCase();if(t==='SALE AND LEASE'){const parts=[];if(p.price)parts.push('₱'+Number(p.price).toLocaleString());if(p.monthlyRental)parts.push('₱'+Number(p.monthlyRental).toLocaleString()+'/mo');return parts.length?parts.join('  ·  '):'₱'+Number(p.price||p.monthlyRental||0).toLocaleString();}if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}
 async function loadProperties(){if(cachedProperties){renderAllSections(cachedProperties);return}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);renderAllSections(cachedProperties)}catch(e){console.error(e);showToast('Failed to load properties',true)}}
 function renderAllSections(properties){
   document.getElementById('statProperties').innerText=properties.length;
   const tc=document.getElementById('topCount');if(tc)tc.innerText=properties.length;
   renderProperties(properties.filter(p=>p.featured).slice(0,6),'featured-list');
-  renderProperties(properties.filter(p=>p.listingType==='FOR SALE').slice(0,6),'sale-list');
+  renderProperties(properties.filter(p=>isForSale(p)).slice(0,6),'sale-list');
   renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');
   allProperties=properties;
   populateHeroFromListings(properties);

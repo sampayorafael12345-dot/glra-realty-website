@@ -148,23 +148,13 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
 .disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px;background:rgba(255,61,0,0.08);border:1px solid rgba(255,61,0,0.2);font-size:12px;color:var(--gray);line-height:1.7}
 .disclaimer i{color:var(--gold);margin-top:2px;flex-shrink:0}
 /* ---- PRINT MODAL ---- */
-.email-print-modal{display:none;position:fixed;inset:0;background:rgba(10,10,10,0.88);z-index:3000;align-items:center;justify-content:center}
-.email-print-content{background:var(--white);max-width:400px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
-.email-print-content>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
-.email-print-content h3{font-family:'Inter',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
-.email-print-content p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.7}
-.email-print-content input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
-.email-print-content input:focus{outline:none;border-color:var(--gold)}
-.email-print-content button{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
-.email-print-content button:hover{background:var(--gold)}
-.close-print-modal{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 
 /* ---- PRINT-ONLY HEADER (hidden on screen, visible only when printing) ---- */
 .print-only-header{display:none}
 
 /* ---- PRINT STYLES ---- */
 @media print{
-  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,.toast,.disclaimer{display:none !important}
+  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.toast,.disclaimer{display:none !important}
   body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page-hero{display:none}
   .print-only-header{display:block;text-align:center;margin:0 auto 24px;padding:0 0 18px;border-bottom:2px solid #ff3d00;max-width:100%}
@@ -533,18 +523,6 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
   </div>
 </div>
 
-<!-- Email Modal for Print -->
-<div id="emailPrintModal" class="email-print-modal">
-  <div class="email-print-content">
-    <span class="close-print-modal" onclick="closeEmailPrintModal()">&times;</span>
-    <i class="fas fa-envelope"></i>
-    <h3>Enter Your Email</h3>
-    <p>Enter your email to continue. The print dialog will open — choose <strong>"Save as PDF"</strong> as the destination to download a copy, or pick a printer to print on paper.</p>
-    <input type="email" id="printEmail" placeholder="Your email address">
-    <button onclick="verifyEmailAndPrint()">Continue</button>
-    <p style="font-size: 11px; margin-top: 15px; color: var(--gray);">We'll keep you updated on new listings and market insights.</p>
-  </div>
-</div>
 
 
 
@@ -1018,54 +996,6 @@ function glraClosingFeesData() {
   });
 
   return { title: 'Sales Closing Fees Calculator', bottomTitle: document.title, sections };
-}
-
-// ============ PRINT FUNCTION (legacy browser-print fallback; no longer wired to the button) ============
-function showPrintEmailModal() {
-  document.getElementById('emailPrintModal').style.display = 'flex';
-}
-
-function closeEmailPrintModal() {
-  document.getElementById('emailPrintModal').style.display = 'none';
-  document.getElementById('printEmail').value = '';
-}
-
-async function verifyEmailAndPrint() {
-  const email = document.getElementById('printEmail').value;
-  
-  if (!email || !email.includes('@')) {
-    showToast('Please enter a valid email address', true);
-    return;
-  }
-  
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-  btn.disabled = true;
-  
-  try {
-    sessionStorage.setItem('calculatorEmail', email);
-    
-    await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, source: 'calculator_print' })
-    });
-    
-    closeEmailPrintModal();
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    // Open the print dialog (browsers offer "Save as PDF" as a destination).
-    // NOTE: do NOT blank document.title here — a blank title makes Chrome fall
-    // back to stamping the page URL at the TOP of the sheet (the very thing we
-    // want gone). Forcing the printout to light mode is handled by the shared
-    // print handler in main.js.
-    setTimeout(() => { window.print(); }, 200);
-  } catch (error) {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    showToast('Something went wrong. Please try again.', true);
-  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

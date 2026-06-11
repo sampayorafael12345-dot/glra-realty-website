@@ -691,7 +691,12 @@ app.post('/api/subscribe',
         });
         isNew = true;
 
-        if (source !== 'calculator_print') {
+        // Skip the "Welcome" newsletter email for people who only asked for a
+        // PDF/printout from a calculator or the guide — they get their document,
+        // not a welcome message. ('calculator_pdf' is what the live PDF gate in
+        // js/main.js sends; the other two are legacy print sources.)
+        const quietSources = ['calculator_pdf', 'calculator_print', 'guide_print'];
+        if (!quietSources.includes(source)) {
           const welcomeHtml = getEmailHeader() + `
             <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Welcome to GLRA Realty</h2>
             <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Dear ${esc(name) || 'Valued Subscriber'},</p>

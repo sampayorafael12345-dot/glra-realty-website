@@ -82,23 +82,13 @@ body.dark-mode .disclosure-form{background:#0e0e0c;border-color:#3a3a36}
 .print-btn:hover{background:var(--gold);color:#fff}
 
 /* ── PRINT EMAIL MODAL ── */
-.email-print-modal{display:none;position:fixed;inset:0;background:rgba(10,10,10,0.88);z-index:3000;align-items:center;justify-content:center}
-.email-print-content{background:var(--white);max-width:400px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
-.email-print-content>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
-.email-print-content h3{font-family:'Inter',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
-.email-print-content p{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.7}
-.email-print-content input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text-color)}
-.email-print-content input:focus{outline:none;border-color:var(--gold)}
-.email-print-content button{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
-.email-print-content button:hover{background:var(--gold)}
-.close-print-modal{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 
 /* ── PRINT-ONLY HEADER WITH LOGO (hidden on screen, shown when printing) ── */
 .print-only-header{display:none}
 
 /* ── PRINT STYLES ── */
 @media print{
-  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,.email-print-modal,footer,.cta-strip,.toast{display:none !important}
+  .navbar,.floating-buttons,.back-to-top,.print-button-wrapper,footer,.cta-strip,.toast{display:none !important}
   body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page-hero{display:none}
   @page{margin:1.5cm;size:A4 portrait}
@@ -342,18 +332,6 @@ body.dark-mode .disclosure-form{background:#0e0e0c;border-color:#3a3a36}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<!-- Email Modal for Print -->
-<div id="emailPrintModal" class="email-print-modal">
-  <div class="email-print-content">
-    <button class="close-print-modal" onclick="closeEmailPrintModal()">&times;</button>
-    <i class="fas fa-envelope"></i>
-    <h3>Enter Your Email</h3>
-    <p>Enter your email to continue. The print dialog will open — choose <strong>"Save as PDF"</strong> as the destination to download a copy, or pick a printer to print on paper.</p>
-    <input type="email" id="printEmail" placeholder="Your email address">
-    <button onclick="verifyEmailAndPrint()">Continue</button>
-    <p style="font-size:11px;margin-top:15px;color:var(--gray)">We'll keep you updated on new listings and market insights.</p>
-  </div>
-</div>
 
 <script src="/js/main.js"></script>
 <script>
@@ -397,55 +375,6 @@ function glraGuideData(){
   return { title: 'Real Estate Documentation Guide', bottomTitle: document.title, sections };
 }
 
-/* ── PRINT / SAVE AS PDF (legacy browser-print; no longer wired to the button) ── */
-function showPrintEmailModal(){
-  const saved = sessionStorage.getItem('guideEmail');
-  if(saved){
-    document.getElementById('printEmail').value = saved;
-  }
-  document.getElementById('emailPrintModal').style.display = 'flex';
-}
-
-function closeEmailPrintModal(){
-  document.getElementById('emailPrintModal').style.display = 'none';
-}
-
-async function verifyEmailAndPrint(){
-  const email = document.getElementById('printEmail').value.trim();
-  if(!email || !email.includes('@')){
-    showToast('Please enter a valid email address', true);
-    return;
-  }
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-  btn.disabled = true;
-  try {
-    sessionStorage.setItem('guideEmail', email);
-    // Best-effort send to server; don't block the print if the request fails
-    fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, source: 'guide_print' })
-    }).catch(() => {});
-    closeEmailPrintModal();
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    // Temporarily blank the document title so the browser doesn't auto-inject
-    // it into the printed page header.
-    const originalTitle = document.title;
-    document.title = ' ';
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => { document.title = originalTitle; }, 500);
-    }, 200);
-    window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
-  } catch(err){
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    showToast('Something went wrong. Please try again.', true);
-  }
-}
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
 <script src="/js/brutalist-shell.js" defer></script>
