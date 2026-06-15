@@ -177,6 +177,8 @@ body.dark-mode .schedule-table tr.year-row td{background:#0e0e0c}
         <div class="input-group">
           <label>Interest Rate (% per year)</label>
           <select id="interestRate" onchange="recalculate()">
+            <option value="4">4.00% — Low Promo</option>
+            <option value="5">5.00%</option>
             <option value="6">6.00% — Bank Promo</option>
             <option value="6.5">6.50%</option>
             <option value="7">7.00%</option>
@@ -398,7 +400,7 @@ function recalculate(){
 
 function buildFactorsTable(){
   const years = [5, 10, 15, 20, 25, 30];
-  const rates = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10, 11, 12];
+  const rates = [4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10, 11, 12];
 
   let html = '<thead><tr><th>Term \\ Rate</th>';
   rates.forEach(r => html += `<th>${r.toFixed(2)}%</th>`);
