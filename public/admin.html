@@ -327,7 +327,8 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 }
 @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.main-header{padding:0 14px}}
 
-.fg{display:flex;flex-direction:column;gap:6px}
+.fg{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fg .finput{min-width:0}
 .flbl{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px}
 .finput{padding:11px 14px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;transition:all .25s ease;outline:none}
 .finput:focus{border-color:var(--gold)}
@@ -1355,7 +1356,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
         <div id="titlingTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
         <!-- LIST VIEW -->
         <div id="titlingListWrap" class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-          <thead><tr><th>Client</th><th>Branch</th><th>Property / Title No.</th><th>Stage</th><th>Balance</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead id="titlingThead"><tr><th>Client</th><th>Branch</th><th>Property / Title No.</th><th>Stage</th><th>Balance</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody id="titlingTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
         </table></div></div></div>
         <!-- BOARD VIEW (drag a card between columns to move its stage) -->
@@ -1499,7 +1500,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
           <div id="notarialSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
           <div id="notarialTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
           <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Payment</th><th>Actions</th></tr></thead>
+            <thead id="notarialThead"><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Payment</th><th>Actions</th></tr></thead>
             <tbody id="notarialTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
         </div>
@@ -1520,7 +1521,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
           <div id="cashSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
           <div id="cashFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
           <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
+            <thead id="cashThead"><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
             <tbody id="cashTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
         </div>
@@ -1579,7 +1580,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             </div>
 
             <div class="tl-sec">Notarial register</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px">
               <div class="fg"><label class="flbl">Doc No.</label><input type="text" id="ntDocNo" class="finput" placeholder="e.g. 123"></div>
               <div class="fg"><label class="flbl">Page No.</label><input type="text" id="ntPageNo" class="finput" placeholder="e.g. 25"></div>
               <div class="fg"><label class="flbl">Book No.</label><input type="text" id="ntBookNo" class="finput" placeholder="e.g. V"></div>
@@ -5699,6 +5700,31 @@ let titlingView = 'list';            // 'list' | 'board'
 let tlPaymentsData = [];             // working copy of payments while the modal is open
 let tlExpensesData = [];             // working copy of disbursements while the modal is open
 let tlDragId = null;                 // id of the card currently being dragged on the board
+let titlingSort = { key:'updated', dir:'desc' };
+
+// ── Shared table sorting (click a header to sort; click again to flip) ──
+function tblSortRows(rows, sort, getVal){
+  const dir = sort.dir==='asc' ? 1 : -1;
+  rows.sort((a,b)=>{
+    let va=getVal(a,sort.key), vb=getVal(b,sort.key);
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    if(va<vb) return -1*dir; if(va>vb) return 1*dir; return 0;
+  });
+  return rows;
+}
+function buildSortHead(theadId, cols, sort, setFn){
+  const thead=document.getElementById(theadId); if(!thead) return;
+  const arrow=k=> sort.key===k ? (sort.dir==='asc'?' ▲':' ▼') : '';
+  thead.innerHTML='<tr>'+cols.map(c=> c[0]===null
+    ? `<th>${c[1]}</th>`
+    : `<th onclick="${setFn}('${c[0]}')" style="cursor:pointer;user-select:none;white-space:nowrap" title="Sort by ${c[1]}">${c[1]}<span style="color:var(--gold)">${arrow(c[0])}</span></th>`).join('')+'</tr>';
+}
+function toggleSort(sort, key, defaultDir){
+  if(sort.key===key) sort.dir = sort.dir==='asc' ? 'desc' : 'asc';
+  else { sort.key=key; sort.dir = defaultDir || 'asc'; }
+}
+function setTitlingSort(key){ toggleSort(titlingSort, key, (key==='client'||key==='branch'||key==='property')?'asc':'desc'); renderTitling(); }
 
 function setTitlingFilter(key){ titlingFilter = (titlingFilter === key) ? 'all' : key; renderTitling(); }
 function setTitlingView(v){ titlingView = (v==='board') ? 'board' : 'list'; renderTitling(); }
@@ -5804,7 +5830,9 @@ function renderTitling(){
 
   if(titlingView==='board'){ renderTitlingBoard(searched, canManage); return; }
 
-  // ── LIST VIEW ──
+  // ── LIST VIEW — sortable headers + sorted rows ──
+  buildSortHead('titlingThead', [['client','Client'],['branch','Branch'],['property','Property / Title No.'],['stage','Stage'],['balance','Balance'],['updated','Updated'],[null,'Actions']], titlingSort, 'setTitlingSort');
+  tblSortRows(listRows, titlingSort, (t,k)=> k==='client'?(t.clientName||''):k==='branch'?(t.branch||''):k==='property'?((t.titleNumber||'')+' '+(t.propertyLocation||'')):k==='stage'?TITLING_STAGES.findIndex(s=>s.key===t.status):k==='balance'?titlingBalanceOf(t):k==='updated'?new Date(t.updatedAt||t.createdAt||0).getTime():'');
   if(!listRows.length){
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-stamp"></i><p>${titlingData.length?'No jobs match this filter':'No titling jobs yet'}</p></div></td></tr>`;
     return;
@@ -5825,9 +5853,18 @@ function renderTitling(){
     const canAdvance = canManage && idx >= 0 && idx < TITLING_ADVANCE.length-1;
     const nextLabel = canAdvance ? titlingStage(TITLING_ADVANCE[idx+1]).label : '';
     return `<tr>
-      <td><strong style="font-size:13px">${esc(t.clientName)}</strong>${t.serviceType?`<div style="font-size:10px;color:var(--gray);margin-top:2px">${esc(t.serviceType)}</div>`:''}${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td>
+        <strong style="font-size:13px">${esc(t.clientName)}</strong>
+        ${(t.serviceType||t.modeOfAcquisition)?`<div style="font-size:10px;color:var(--gray);margin-top:2px">${esc([t.serviceType,t.modeOfAcquisition].filter(Boolean).join(' · '))}</div>`:''}
+        ${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}
+      </td>
       <td style="font-size:12px;color:var(--gray)">${esc(t.branch||'—')}</td>
-      <td style="font-size:12px;max-width:240px">${esc(prop)}${docCount?`<div style="font-size:10px;color:var(--gray);margin-top:2px"><i class="fas fa-check-circle"></i> ${docCount}/${TITLING_DOCS.length} docs</div>`:''}</td>
+      <td style="font-size:12px;max-width:280px">
+        ${esc(prop)}
+        ${docCount?`<div style="font-size:10px;color:var(--gray);margin-top:2px"><i class="fas fa-check-circle"></i> ${docCount}/${TITLING_DOCS.length} docs</div>`:''}
+        ${t.lacking?`<div style="font-size:10px;color:#d98324;margin-top:3px"><i class="fas fa-exclamation-triangle"></i> Lacking: ${esc(t.lacking)}</div>`:''}
+        ${t.notes?`<div style="font-size:10px;color:var(--gray);margin-top:3px;font-style:italic">${esc(t.notes)}</div>`:''}
+      </td>
       <td><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${st.color}">${esc(st.label)}</span></td>
       <td style="font-size:12px;font-weight:700;color:${balColor};white-space:nowrap">${balText}</td>
       <td style="font-size:11px;white-space:nowrap;color:${overdue?'#ef4444':'var(--gray)'};font-weight:${overdue?'700':'400'}">${fmtDateShort(t.updatedAt||t.createdAt)}${overdue?' <span title="Past target date">&#9888;</span>':''}</td>
@@ -6250,7 +6287,9 @@ async function tlImpDoImport(){
 // ════════════════════════════════════════════════════════════
 let notarialData = [];
 let notarialFilter = 'all';
+let notarialSort = { key:'date', dir:'desc' };
 let ntPaymentsData = [];
+function setNotarialSort(key){ toggleSort(notarialSort, key, (key==='client'||key==='document')?'asc':'desc'); renderNotarial(); }
 const NOTARIAL_PAYSTATUS = [
   { key:'unpaid',  label:'Unpaid',  color:'#ef4444' },
   { key:'partial', label:'Partial', color:'#d98324' },
@@ -6303,6 +6342,8 @@ function renderNotarial(){
     totals.innerHTML = box('Total fees'+suffix,fees,'inherit')+box('Collected'+suffix,collected,'#10b981')+box('Outstanding'+suffix,outstanding,'#ef4444');
   }
 
+  buildSortHead('notarialThead', [['client','Client'],['document','Document'],[null,'Register'],['date','Date'],['fee','Fee'],['payment','Payment'],[null,'Actions']], notarialSort, 'setNotarialSort');
+  tblSortRows(rows, notarialSort, (j,k)=> k==='client'?(j.clientName||''):k==='document'?(j.documentType||''):k==='date'?new Date(j.dateNotarized||0).getTime():k==='fee'?(Number(j.fee)||0):k==='payment'?notarialPaidOf(j):'');
   if(!rows.length){
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-file-signature"></i><p>${notarialData.length?'No records match this filter':'No notarized documents yet'}</p></div></td></tr>`;
     return;
@@ -6445,8 +6486,10 @@ function exportNotarialCSV(){
 // ════════════════════════════════════════════════════════════
 let cashData = [];
 let cashFilter = 'all';
+let cashSort = { key:'date', dir:'desc' };
 let notarialView = 'docs';
 let cashCurrent = null;   // entry object open in the modal (for proof rendering)
+function setCashSort(key){ toggleSort(cashSort, key, (key==='person'||key==='type')?'asc':'desc'); renderCash(); }
 const CASH_KINDS = [
   { key:'request',  label:'Cash request', icon:'fa-hand-holding-usd', color:'#d98324' },
   { key:'fund_in',  label:'Funds in',     icon:'fa-piggy-bank',       color:'#10b981' },
@@ -6499,6 +6542,8 @@ function renderCash(){
   if(cashFilter!=='all') rows=rows.filter(e=>e.kind===cashFilter);
   if(q) rows=rows.filter(e=>[e.person,e.purpose,e.note,e.mode].some(v=>(v||'').toLowerCase().includes(q)));
 
+  buildSortHead('cashThead', [['date','Date'],['type','Type'],['person','Who / Purpose'],['amount','Amount'],['mode','Mode'],['status','Status'],[null,'Proof'],[null,'Actions']], cashSort, 'setCashSort');
+  tblSortRows(rows, cashSort, (e,k)=> k==='date'?new Date(e.date||0).getTime():k==='type'?(e.kind||''):k==='person'?((e.person||'')+' '+(e.purpose||'')):k==='amount'?cashAmountOf(e):k==='mode'?(e.mode||''):k==='status'?(e.status||''):'');
   if(!rows.length){ tbody.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-coins"></i><p>${cashData.length?'No entries match this filter':'No cash entries yet'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(e=>{
     const m=cashKindMeta(e.kind);
