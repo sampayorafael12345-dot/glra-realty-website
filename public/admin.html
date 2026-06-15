@@ -5756,15 +5756,17 @@ function setTitlingSort(key){ toggleSort(titlingSort, key, (key==='client'||key=
 function setTitlingFilter(key){ titlingFilter = (titlingFilter === key) ? 'all' : key; renderTitling(); }
 function applyTitlingView(){
   const isList=titlingView==='list', isBoard=titlingView==='board', isCash=titlingView==='cash';
-  const show=(id,on)=>{ const el=document.getElementById(id); if(el) el.style.display=on?'':'none'; };
+  // `disp` = the display value to restore when showing (these elements rely on an
+  // inline display like grid/inline-flex, so we must NOT blank it to '').
+  const show=(id,on,disp)=>{ const el=document.getElementById(id); if(el) el.style.display = on ? (disp||'') : 'none'; };
   show('titlingListWrap', isList);
   show('titlingBoardWrap', isBoard);
   show('titlingCashWrap', isCash);
   // hide the job-only chrome while in the cash ledger
-  show('titlingSummary', !isCash);
-  show('titlingTotals', !isCash);
+  show('titlingSummary', !isCash, 'grid');
+  show('titlingTotals', !isCash, 'grid');
   show('titlingSearchWrap', !isCash);
-  show('titlingJobBtns', !isCash);
+  show('titlingJobBtns', !isCash, 'inline-flex');
   const hl=(id,on,right)=>{ const b=document.getElementById(id); if(b) b.style.cssText='border:none;'+(right?'border-right:1px solid var(--border-color);':'')+(on?'background:var(--gold);color:#0a0a0a':''); };
   hl('tlViewListBtn', isList, true);
   hl('tlViewBoardBtn', isBoard, true);
