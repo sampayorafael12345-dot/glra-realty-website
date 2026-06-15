@@ -1475,6 +1475,9 @@ function sanitizeCashBody(b) {
   ['amount', 'spent'].forEach(k => {
     if (b[k] !== undefined && b[k] !== null && b[k] !== '') { const n = Number(b[k]); if (!isNaN(n) && n >= 0) out[k] = n; }
   });
+  if (b.titlingId !== undefined) {
+    out.titlingId = (typeof b.titlingId === 'string' && /^[a-f\d]{24}$/i.test(b.titlingId)) ? b.titlingId : null;
+  }
   return out;
 }
 
@@ -1556,21 +1559,23 @@ app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission(
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// ── TITLING MONEY REQUESTS (cash advances + proof, scoped to one titling job) ──
-// Reuses the CashEntry model with business:'titling' + titlingId. Gated by the
-// titling permissions (not notarial) so access can be granted separately.
-app.get('/api/admin/titling/:id/cash', verifyToken, requirePermission('titling_view'), async (req, res) => {
+// ── TITLING CASH LEDGER (liquidation + money requests; mirrors the notarial ledger) ──
+// Business-wide CashEntry with business:'titling'. Entries optionally link to a
+// specific job via titlingId (set when added from inside a titling job). Gated
+// by the titling permissions so access can be granted independently of notarial.
+app.get('/api/admin/titling-cash', verifyToken, requirePermission('titling_view'), async (req, res) => {
   try {
-    const list = await CashEntry.find({ business: 'titling', titlingId: req.params.id }).sort({ date: -1, createdAt: -1 }).lean();
+    const q = { business: 'titling' };
+    if (req.query.titlingId) q.titlingId = req.query.titlingId;
+    const list = await CashEntry.find(q).sort({ date: -1, createdAt: -1 }).lean();
     res.json(list);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/titling/:id/cash', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.post('/api/admin/titling-cash', verifyToken, requirePermission('titling_manage'), async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
     if (!data.kind) return res.status(400).json({ error: 'Entry type is required' });
     data.business = 'titling';
-    data.titlingId = req.params.id;
     data.createdBy = req.user?.email || '';
     data.createdByName = req.user?.name || '';
     const doc = await CashEntry.create(data);
@@ -1578,17 +1583,17 @@ app.post('/api/admin/titling/:id/cash', verifyToken, requirePermission('titling_
     res.json(doc);
   } catch (err) { console.error('titling cash create error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.put('/api/admin/titling/:id/cash/:cid', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.put('/api/admin/titling-cash/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
-    const doc = await CashEntry.findOneAndUpdate({ _id: req.params.cid, titlingId: req.params.id }, data, { new: true });
+    const doc = await CashEntry.findOneAndUpdate({ _id: req.params.id, business: 'titling' }, data, { new: true });
     if (!doc) return res.status(404).json({ error: 'Not found' });
     res.json(doc);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.delete('/api/admin/titling/:id/cash/:cid', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.delete('/api/admin/titling-cash/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
   try {
-    const doc = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    const doc = await CashEntry.findOne({ _id: req.params.id, business: 'titling' });
     if (doc) {
       for (const p of (doc.proof || [])) {
         try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
@@ -1599,10 +1604,10 @@ app.delete('/api/admin/titling/:id/cash/:cid', verifyToken, requirePermission('t
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/titling/:id/cash/:cid/proof', verifyToken, requirePermission('titling_manage'), uploadAttachment.single('file'), async (req, res) => {
+app.post('/api/admin/titling-cash/:id/proof', verifyToken, requirePermission('titling_manage'), uploadAttachment.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
-    const entry = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    const entry = await CashEntry.findOne({ _id: req.params.id, business: 'titling' });
     if (!entry) {
       if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
       return res.status(404).json({ error: 'Not found' });
@@ -1622,9 +1627,9 @@ app.post('/api/admin/titling/:id/cash/:cid/proof', verifyToken, requirePermissio
     res.status(500).json({ error: 'Upload failed' });
   }
 });
-app.delete('/api/admin/titling/:id/cash/:cid/proof/:proofId', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.delete('/api/admin/titling-cash/:id/proof/:proofId', verifyToken, requirePermission('titling_manage'), async (req, res) => {
   try {
-    const entry = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    const entry = await CashEntry.findOne({ _id: req.params.id, business: 'titling' });
     if (!entry) return res.status(404).json({ error: 'Not found' });
     const p = entry.proof.id(req.params.proofId);
     if (!p) return res.status(404).json({ error: 'Proof not found' });

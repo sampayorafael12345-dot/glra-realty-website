@@ -1341,15 +1341,18 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <!-- TITLING (land-title transfer tracker) -->
       <div id="tab-titling" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="titlingSearch" placeholder="Search client, title no., location, branch…" oninput="renderTitling()"></div>
+          <div class="fsearch" id="titlingSearchWrap" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="titlingSearch" placeholder="Search client, title no., location, branch…" oninput="renderTitling()"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="display:inline-flex;border:1px solid var(--border-color)">
               <button class="hdr-btn" id="tlViewListBtn" onclick="setTitlingView('list')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
-              <button class="hdr-btn" id="tlViewBoardBtn" onclick="setTitlingView('board')" style="border:none"><i class="fas fa-columns"></i> Board</button>
+              <button class="hdr-btn" id="tlViewBoardBtn" onclick="setTitlingView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
+              <button class="hdr-btn" id="tlViewCashBtn" onclick="setTitlingView('cash')" style="border:none"><i class="fas fa-coins"></i> Cash &amp; Liquidation</button>
             </div>
-            <button class="hdr-btn" id="tlImportBtn" onclick="tlImpOpen()" style="display:none"><i class="fas fa-file-import"></i> Import</button>
-            <button class="hdr-btn" onclick="exportTitlingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
-            <button class="hdr-btn primary" id="addTitlingBtn" onclick="openTitlingModal()" style="display:none"><i class="fas fa-plus"></i> Add Titling Job</button>
+            <span id="titlingJobBtns" style="display:inline-flex;gap:8px;flex-wrap:wrap">
+              <button class="hdr-btn" id="tlImportBtn" onclick="tlImpOpen()" style="display:none"><i class="fas fa-file-import"></i> Import</button>
+              <button class="hdr-btn" onclick="exportTitlingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+              <button class="hdr-btn primary" id="addTitlingBtn" onclick="openTitlingModal()" style="display:none"><i class="fas fa-plus"></i> Add Titling Job</button>
+            </span>
           </div>
         </div>
         <div id="titlingSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
@@ -1362,6 +1365,26 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
         <!-- BOARD VIEW (drag a card between columns to move its stage) -->
         <div id="titlingBoardWrap" style="display:none;overflow-x:auto;padding-bottom:10px">
           <div id="titlingBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
+        </div>
+        <!-- CASH & LIQUIDATION VIEW (same ledger engine as the notarial tab) -->
+        <div id="titlingCashWrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="fsearch" style="flex:1;min-width:200px;max-width:340px"><i class="fas fa-search"></i><input type="text" id="tlCashSearch" placeholder="Search person, purpose…" oninput="renderTitlingLedger()"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="hdr-btn" onclick="exportTlcCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+              <span id="tlCashAddWrap" style="display:none;gap:8px;flex-wrap:wrap">
+                <button class="hdr-btn primary" onclick="openTitlingCashLedger('request')"><i class="fas fa-hand-holding-usd"></i> Cash request</button>
+                <button class="hdr-btn primary" onclick="openTitlingCashLedger('fund_in')"><i class="fas fa-piggy-bank"></i> Client funds</button>
+                <button class="hdr-btn primary" onclick="openTitlingCashLedger('receipt')"><i class="fas fa-plus"></i> Money received</button>
+              </span>
+            </div>
+          </div>
+          <div id="tlCashSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
+          <div id="tlCashFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
+            <thead id="tlCashThead"><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
+            <tbody id="tlCashTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
         </div>
       </div>
 
@@ -5731,7 +5754,27 @@ function toggleSort(sort, key, defaultDir){
 function setTitlingSort(key){ toggleSort(titlingSort, key, (key==='client'||key==='branch'||key==='property')?'asc':'desc'); renderTitling(); }
 
 function setTitlingFilter(key){ titlingFilter = (titlingFilter === key) ? 'all' : key; renderTitling(); }
-function setTitlingView(v){ titlingView = (v==='board') ? 'board' : 'list'; renderTitling(); }
+function applyTitlingView(){
+  const isList=titlingView==='list', isBoard=titlingView==='board', isCash=titlingView==='cash';
+  const show=(id,on)=>{ const el=document.getElementById(id); if(el) el.style.display=on?'':'none'; };
+  show('titlingListWrap', isList);
+  show('titlingBoardWrap', isBoard);
+  show('titlingCashWrap', isCash);
+  // hide the job-only chrome while in the cash ledger
+  show('titlingSummary', !isCash);
+  show('titlingTotals', !isCash);
+  show('titlingSearchWrap', !isCash);
+  show('titlingJobBtns', !isCash);
+  const hl=(id,on,right)=>{ const b=document.getElementById(id); if(b) b.style.cssText='border:none;'+(right?'border-right:1px solid var(--border-color);':'')+(on?'background:var(--gold);color:#0a0a0a':''); };
+  hl('tlViewListBtn', isList, true);
+  hl('tlViewBoardBtn', isBoard, true);
+  hl('tlViewCashBtn', isCash, false);
+}
+function setTitlingView(v){
+  titlingView = (v==='board'||v==='cash') ? v : 'list';
+  applyTitlingView();
+  if(titlingView==='cash') loadTitlingCashAll(); else renderTitling();
+}
 
 const TITLING_STAGES = [
   { key:'documents',    label:'Documents',            code:'DOCS', color:'#6a6a6a' },
@@ -5796,14 +5839,8 @@ function renderTitling(){
   if(!tbody) return;
   const canManage = hasPerm('titling_manage');
 
-  // ── View toggle: show list or board, sync button styles ──
-  const listWrap = document.getElementById('titlingListWrap');
-  const boardWrap = document.getElementById('titlingBoardWrap');
-  if(listWrap)  listWrap.style.display  = titlingView==='board' ? 'none' : '';
-  if(boardWrap) boardWrap.style.display = titlingView==='board' ? '' : 'none';
-  const lb=document.getElementById('tlViewListBtn'), bb=document.getElementById('tlViewBoardBtn');
-  if(lb) lb.style.cssText = 'border:none;border-right:1px solid var(--border-color);' + (titlingView==='list' ? 'background:var(--gold);color:#0a0a0a' : '');
-  if(bb) bb.style.cssText = 'border:none;' + (titlingView==='board' ? 'background:var(--gold);color:#0a0a0a' : '');
+  // ── View toggle (list / board / cash) + chrome visibility ──
+  applyTitlingView();
 
   // ── Stage summary cards (click to filter) ──
   const sum = document.getElementById('titlingSummary');
@@ -6490,17 +6527,24 @@ function exportNotarialCSV(){
 // NOTARIAL CASH LEDGER / LIQUIDATION
 // ════════════════════════════════════════════════════════════
 let cashData = [];
-let titlingCashData = [];   // cash entries (money requests) for the titling job open in the modal
+let titlingCashData = [];   // cash entries linked to the titling job open in the modal
+let titlingCashAll = [];    // ALL titling cash entries (the tab-wide ledger)
 let cashFilter = 'all';
 let cashSort = { key:'date', dir:'desc' };
+let tlcFilter = 'all';      // titling cash ledger filter
+let tlcSort = { key:'date', dir:'desc' };
 let notarialView = 'docs';
 let cashCurrent = null;   // entry object open in the modal (for proof rendering)
-// The cash modal is shared between the notarial ledger and per-job titling
-// money requests. cashCtx routes its API calls + list refresh to the right one.
-let cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash };
-function cashUseNotarial(){ cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash }; }
-function cashUseTitling(jobId){ cashCtx = { base:'/api/admin/titling/'+jobId+'/cash', getData:()=>titlingCashData, reload:()=>loadTitlingCash(jobId) }; }
+// The cash modal is shared between the notarial ledger, the titling tab-wide
+// ledger, and per-job titling money requests. cashCtx routes its API calls,
+// list refresh, and any auto-injected fields (e.g. titlingId) to the right one.
+let cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash, extra:{} };
+function cashUseNotarial(){ cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash, extra:{} }; }
+function cashUseTitling(jobId){ cashCtx = { base:'/api/admin/titling-cash', getData:()=>titlingCashData, reload:()=>loadTitlingCash(jobId), extra:{ titlingId: jobId } }; }
+function cashUseTitlingAll(){ cashCtx = { base:'/api/admin/titling-cash', getData:()=>titlingCashAll, reload:loadTitlingCashAll, extra:{} }; }
 function setCashSort(key){ toggleSort(cashSort, key, (key==='person'||key==='type')?'asc':'desc'); renderCash(); }
+function setTlcFilter(k){ tlcFilter = (tlcFilter===k)?'all':k; renderTitlingLedger(); }
+function setTlcSort(key){ toggleSort(tlcSort, key, (key==='person'||key==='type')?'asc':'desc'); renderTitlingLedger(); }
 const CASH_KINDS = [
   { key:'request',  label:'Cash request', icon:'fa-hand-holding-usd', color:'#d98324' },
   { key:'fund_in',  label:'Funds in',     icon:'fa-piggy-bank',       color:'#10b981' },
@@ -6533,49 +6577,56 @@ async function loadCash(){
 function openNotarialCash(kind,id){ cashUseNotarial(); openCashModal(kind,id); }
 function deleteNotarialCash(id){ cashUseNotarial(); deleteCash(id); }
 
-function renderCash(){
-  const tbody=document.getElementById('cashTbody'); if(!tbody) return;
-  const canManage=hasPerm('notarial_manage');
-  const addWrap=document.getElementById('cashAddWrap'); if(addWrap) addWrap.style.display = canManage?'inline-flex':'none';
+// Generic cash-ledger renderer — used by BOTH the notarial ledger and the
+// titling cash ledger so they look + behave identically. cfg supplies the data
+// array, the DOM element ids, the filter/sort state, and the action handlers.
+function renderCashLedger(cfg){
+  const tbody=document.getElementById(cfg.tbody); if(!tbody) return;
+  const canManage=hasPerm(cfg.managePerm);
+  const addWrap=cfg.addWrap?document.getElementById(cfg.addWrap):null; if(addWrap) addWrap.style.display = canManage?'inline-flex':'none';
+  const data=cfg.data||[];
 
-  const sumEl=document.getElementById('cashSummary');
+  const sumEl=document.getElementById(cfg.summary);
   if(sumEl){
-    const released = cashData.filter(e=>e.kind==='request'&&e.status==='released').reduce((s,e)=>s+cashAmountOf(e),0);
-    const held = cashData.filter(e=>e.kind==='fund_in').reduce((s,e)=>s+cashAmountOf(e),0) - cashData.filter(e=>e.kind==='fund_out').reduce((s,e)=>s+cashAmountOf(e),0);
-    const received = cashData.filter(e=>e.kind==='receipt').reduce((s,e)=>s+cashAmountOf(e),0);
+    const released = data.filter(e=>e.kind==='request'&&e.status==='released').reduce((s,e)=>s+cashAmountOf(e),0);
+    const held = data.filter(e=>e.kind==='fund_in').reduce((s,e)=>s+cashAmountOf(e),0) - data.filter(e=>e.kind==='fund_out').reduce((s,e)=>s+cashAmountOf(e),0);
+    const received = data.filter(e=>e.kind==='receipt').reduce((s,e)=>s+cashAmountOf(e),0);
     const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:18px;font-weight:700;color:${c}">${fmt(v)}</div></div>`;
     sumEl.innerHTML = box('Cash out (unliquidated)',released,'#d98324')+box('Client funds held',held,'#10b981')+box('Money received',received,'#8b5cf6');
   }
-  const fEl=document.getElementById('cashFilters');
+  const fEl=document.getElementById(cfg.filters);
   if(fEl){
-    const chip=(k,label)=>`<button class="hdr-btn" onclick="setCashFilter('${k}')" style="${cashFilter===k?'background:var(--gold);color:#0a0a0a':''}">${label}</button>`;
+    const chip=(k,label)=>`<button class="hdr-btn" onclick="${cfg.setFilterName}('${k}')" style="${cfg.filterVal===k?'background:var(--gold);color:#0a0a0a':''}">${label}</button>`;
     fEl.innerHTML = chip('all','All')+CASH_KINDS.map(c=>chip(c.key,c.label)).join('');
   }
 
-  const q=(document.getElementById('cashSearch')?.value||'').toLowerCase().trim();
-  let rows=cashData;
-  if(cashFilter!=='all') rows=rows.filter(e=>e.kind===cashFilter);
+  const q=(document.getElementById(cfg.search)?.value||'').toLowerCase().trim();
+  let rows=data;
+  if(cfg.filterVal!=='all') rows=rows.filter(e=>e.kind===cfg.filterVal);
   if(q) rows=rows.filter(e=>[e.person,e.purpose,e.note,e.mode].some(v=>(v||'').toLowerCase().includes(q)));
 
-  buildSortHead('cashThead', [['date','Date'],['type','Type'],['person','Who / Purpose'],['amount','Amount'],['mode','Mode'],['status','Status'],[null,'Proof'],[null,'Actions']], cashSort, 'setCashSort');
-  tblSortRows(rows, cashSort, (e,k)=> k==='date'?new Date(e.date||0).getTime():k==='type'?(e.kind||''):k==='person'?((e.person||'')+' '+(e.purpose||'')):k==='amount'?cashAmountOf(e):k==='mode'?(e.mode||''):k==='status'?(e.status||''):'');
-  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-coins"></i><p>${cashData.length?'No entries match this filter':'No cash entries yet'}</p></div></td></tr>`; return; }
+  buildSortHead(cfg.thead, [['date','Date'],['type','Type'],['person','Who / Purpose'],['amount','Amount'],['mode','Mode'],['status','Status'],[null,'Proof'],[null,'Actions']], cfg.sort, cfg.setSortName);
+  tblSortRows(rows, cfg.sort, (e,k)=> k==='date'?new Date(e.date||0).getTime():k==='type'?(e.kind||''):k==='person'?((e.person||'')+' '+(e.purpose||'')):k==='amount'?cashAmountOf(e):k==='mode'?(e.mode||''):k==='status'?(e.status||''):'');
+  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-coins"></i><p>${data.length?'No entries match this filter':'No cash entries yet'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(e=>{
     const m=cashKindMeta(e.kind);
     const statusTxt = e.kind==='request' ? (e.status||'requested') : '';
     const proofN=(e.proof||[]).length;
+    const jobTag = cfg.jobLabel ? cfg.jobLabel(e) : '';
     return `<tr>
       <td style="font-size:11px;white-space:nowrap;color:var(--gray)">${e.date?fmtDateShort(e.date):'—'}</td>
       <td><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${m.color}"><i class="fas ${m.icon}"></i> ${esc(m.label)}</span></td>
-      <td style="font-size:12px">${esc(e.person||'—')}${e.purpose?`<div style="font-size:10px;color:var(--gray)">${esc(e.purpose)}</div>`:''}</td>
+      <td style="font-size:12px">${esc(e.person||'—')}${e.purpose?`<div style="font-size:10px;color:var(--gray)">${esc(e.purpose)}</div>`:''}${jobTag}</td>
       <td style="font-size:12px;font-weight:700;white-space:nowrap">${fmt(cashAmountOf(e))}${(e.kind==='request'&&e.status==='liquidated'&&e.spent)?`<div style="font-size:10px;color:var(--gray)">spent ${fmt(e.spent)}</div>`:''}</td>
       <td style="font-size:11px;color:var(--gray)">${esc(e.mode||'—')}</td>
       <td style="font-size:11px">${statusTxt?`<span style="text-transform:capitalize">${esc(statusTxt)}</span>`:'<span style="color:var(--gray)">—</span>'}</td>
       <td style="font-size:11px;color:var(--gray)">${proofN?`<i class="fas fa-paperclip"></i> ${proofN}`:'—'}</td>
-      <td><div class="act-btns" style="display:flex;gap:5px">${canManage?`<button class="act act-view" onclick="openNotarialCash(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteNotarialCash('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
+      <td><div class="act-btns" style="display:flex;gap:5px">${canManage?`<button class="act act-view" onclick="${cfg.openName}(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="${cfg.deleteName}('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
     </tr>`;
   }).join('');
 }
+function renderCash(){ renderCashLedger({ data:cashData, filterVal:cashFilter, setFilterName:'setCashFilter', sort:cashSort, setSortName:'setCashSort', summary:'cashSummary', filters:'cashFilters', tbody:'cashTbody', thead:'cashThead', addWrap:'cashAddWrap', search:'cashSearch', openName:'openNotarialCash', deleteName:'deleteNotarialCash', managePerm:'notarial_manage' }); }
+function renderTitlingLedger(){ renderCashLedger({ data:titlingCashAll, filterVal:tlcFilter, setFilterName:'setTlcFilter', sort:tlcSort, setSortName:'setTlcSort', summary:'tlCashSummary', filters:'tlCashFilters', tbody:'tlCashTbody', thead:'tlCashThead', addWrap:'tlCashAddWrap', search:'tlCashSearch', openName:'openTitlingCashLedger', deleteName:'deleteTitlingCashLedger', managePerm:'titling_manage', jobLabel:(e)=>{ if(!e.titlingId) return ''; const j=titlingData.find(t=>t._id===e.titlingId); return j?`<div style="font-size:10px;color:var(--gold)">Job: ${esc(j.clientName)}</div>`:''; } }); }
 
 function cashToggleSpent(){
   const st=document.getElementById('cashStatus').value;
@@ -6672,6 +6723,7 @@ async function saveCash(){
     spent: (kind==='request') ? (parseFloat(document.getElementById('cashSpent').value)||0) : 0
   };
   if(!payload.person && !payload.purpose && !amount){ showToast('Enter at least an amount or a name', true); return; }
+  Object.assign(payload, cashCtx.extra||{});   // e.g. titlingId when adding from a titling job
   const id=document.getElementById('cashId').value;
   const btn=document.getElementById('cashSaveBtn'); const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
   try{
@@ -6713,10 +6765,30 @@ async function loadTitlingCash(jobId){
   if(!jobId){ titlingCashData=[]; renderTitlingCash(); return; }
   cashUseTitling(jobId);
   try{
-    const data = await apiFetch('/api/admin/titling/'+jobId+'/cash').then(r=>r.json());
+    const data = await apiFetch('/api/admin/titling-cash?titlingId='+jobId).then(r=>r.json());
     titlingCashData = Array.isArray(data) ? data : [];
   }catch(e){ titlingCashData=[]; }
   renderTitlingCash();
+}
+// Tab-wide titling cash ledger (the "Cash & Liquidation" view in the Titling tab)
+async function loadTitlingCashAll(){
+  if(!hasPerm('titling_view')) return;
+  cashUseTitlingAll();
+  try{
+    const data = await apiFetch('/api/admin/titling-cash').then(r=>r.json());
+    titlingCashAll = Array.isArray(data) ? data : [];
+  }catch(e){ titlingCashAll=[]; }
+  renderTitlingLedger();
+}
+function openTitlingCashLedger(kind,id){ cashUseTitlingAll(); openCashModal(kind,id); }
+function deleteTitlingCashLedger(id){ cashUseTitlingAll(); deleteCash(id); }
+function exportTlcCSV(){
+  if(!titlingCashAll.length){ showToast('No titling cash entries to export', true); return; }
+  const csvDate=d=>d?new Date(d).toLocaleDateString('en-PH'):'';
+  const rows=[['Date','Type','Job','Person','Purpose','Amount','Mode','Status','Spent','Proof count','Note']];
+  titlingCashAll.forEach(e=>{ const j=e.titlingId?titlingData.find(t=>t._id===e.titlingId):null; rows.push([csvDate(e.date),cashKindMeta(e.kind).label,j?j.clientName:'',e.person||'',e.purpose||'',cashAmountOf(e),e.mode||'',e.kind==='request'?(e.status||''):'',e.spent||'',(e.proof||[]).length,(e.note||'').replace(/\r?\n/g,' ')]); });
+  downloadCSV('glra-titling-cash-'+new Date().toISOString().slice(0,10)+'.csv', rows);
+  showToast(`Exported ${titlingCashAll.length} entr${titlingCashAll.length===1?'y':'ies'}`);
 }
 function renderTitlingCash(){
   const wrap=document.getElementById('tlCashWrap'); if(!wrap) return;
@@ -6799,6 +6871,7 @@ function switchTab(name){
   // Refresh titling jobs on tab visit
   if(name==='titling' && hasPerm('titling_view')){
     loadTitling();
+    if(titlingView==='cash') loadTitlingCashAll();
   }
   // Refresh notarial records on tab visit
   if(name==='notarial' && hasPerm('notarial_view')){
