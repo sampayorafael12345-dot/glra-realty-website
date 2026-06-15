@@ -1267,22 +1267,55 @@ app.delete('/api/admin/inquiries/:id', verifyToken, requirePermission('inquiries
 });
 
 // ── TITLING CASES (land-title transfer / processing tracker) ──
-const TITLING_STATUSES = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold'];
+const TITLING_STATUSES = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold', 'lra'];
 
 // Validate + clamp an incoming titling payload. Only known fields pass through.
 function sanitizeTitlingBody(b) {
   const out = {};
   const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  // optional date: '' / null clears it, a valid date sets it, anything else is ignored
+  const setDate = (k) => {
+    if (b[k] === undefined) return;
+    if (b[k] === '' || b[k] === null) { out[k] = null; return; }
+    const d = new Date(b[k]); if (!isNaN(d.getTime())) out[k] = d;
+  };
+  if (b.branch !== undefined) out.branch = str(b.branch, 80);
   if (b.clientName !== undefined) out.clientName = str(b.clientName, 200);
   if (b.clientPhone !== undefined) out.clientPhone = str(b.clientPhone, 50);
   if (b.clientEmail !== undefined) out.clientEmail = str(b.clientEmail, 120).toLowerCase();
   if (b.titleNumber !== undefined) out.titleNumber = str(b.titleNumber, 100);
+  if (b.taxDecNo !== undefined) out.taxDecNo = str(b.taxDecNo, 100);
   if (b.propertyLocation !== undefined) out.propertyLocation = str(b.propertyLocation, 300);
   if (b.propertyType !== undefined) out.propertyType = str(b.propertyType, 60);
   if (b.serviceType !== undefined) out.serviceType = str(b.serviceType, 80);
+  if (b.modeOfAcquisition !== undefined) out.modeOfAcquisition = str(b.modeOfAcquisition, 100);
   if (typeof b.status === 'string' && TITLING_STATUSES.includes(b.status)) out.status = b.status;
+  // milestone reference numbers
+  if (b.carNo !== undefined) out.carNo = str(b.carNo, 100);
+  if (b.epebNo !== undefined) out.epebNo = str(b.epebNo, 100);
+  if (b.transferredTitleNo !== undefined) out.transferredTitleNo = str(b.transferredTitleNo, 100);
+  if (b.transferredTaxDecNo !== undefined) out.transferredTaxDecNo = str(b.transferredTaxDecNo, 100);
+  // milestone dates
+  ['dateEndorsed', 'dateFiledBIR', 'dateCarReceived', 'dateTransferTax', 'dateFiledRD',
+   'dateTitleTransferred', 'dateFiledAO', 'targetDate'].forEach(setDate);
+  if (b.lacking !== undefined) out.lacking = String(b.lacking || '').slice(0, 2000);
   if (Array.isArray(b.documents)) {
     out.documents = b.documents.filter(d => typeof d === 'string').map(d => d.slice(0, 120)).slice(0, 40);
+  }
+  // liquidation line items
+  if (Array.isArray(b.payments)) {
+    out.payments = b.payments.slice(0, 100).map(p => {
+      const row = { label: str(p && p.label, 200), amount: Math.max(0, Number(p && p.amount) || 0), date: null };
+      if (p && p.date) { const d = new Date(p.date); if (!isNaN(d.getTime())) row.date = d; }
+      return row;
+    }).filter(p => p.label || p.amount || p.date);
+  }
+  if (Array.isArray(b.expenses)) {
+    out.expenses = b.expenses.slice(0, 200).map(e => {
+      const row = { category: str(e && e.category, 120), payee: str(e && e.payee, 200), amount: Math.max(0, Number(e && e.amount) || 0), date: null };
+      if (e && e.date) { const d = new Date(e.date); if (!isNaN(d.getTime())) row.date = d; }
+      return row;
+    }).filter(e => e.category || e.payee || e.amount || e.date);
   }
   ['serviceFee', 'govFees', 'amountPaid'].forEach(k => {
     if (b[k] !== undefined && b[k] !== null && b[k] !== '') {
@@ -1290,8 +1323,6 @@ function sanitizeTitlingBody(b) {
       if (!isNaN(n) && n >= 0) out[k] = n;
     }
   });
-  if (b.targetDate) { const d = new Date(b.targetDate); if (!isNaN(d.getTime())) out.targetDate = d; }
-  else if (b.targetDate === '' || b.targetDate === null) out.targetDate = null;
   if (b.notes !== undefined) out.notes = String(b.notes || '').slice(0, 5000);
   return out;
 }
@@ -1332,6 +1363,32 @@ app.delete('/api/admin/titling/:id', verifyToken, requirePermission('titling_man
     if (doc) await logAudit(req, 'DELETE', 'TitlingCase', String(doc._id), doc.clientName, null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Bulk import (from the broker's ACTIVE ACCOUNTS spreadsheet). Skips exact
+// duplicates (same client + title no. + location) so re-importing is safe.
+app.post('/api/admin/titling/bulk', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const items = req.body;
+    if (!Array.isArray(items)) return res.status(400).json({ error: 'Expected an array' });
+    let added = 0, skipped = 0;
+    for (const raw of items) {
+      const data = sanitizeTitlingBody(raw || {});
+      if (!data.clientName) { skipped++; continue; }
+      const existing = await TitlingCase.findOne({
+        clientName: data.clientName,
+        titleNumber: data.titleNumber || '',
+        propertyLocation: data.propertyLocation || ''
+      });
+      if (existing) { skipped++; continue; }
+      data.createdBy = req.user?.email || '';
+      data.createdByName = req.user?.name || '';
+      await TitlingCase.create(data);
+      added++;
+    }
+    await logAudit(req, 'BULK_CREATE', 'TitlingCase', '', `${added} added`, null);
+    res.json({ success: true, added, skipped });
+  } catch (err) { console.error('titling bulk error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
 app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscribers_delete'), async (req, res) => {

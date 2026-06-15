@@ -331,6 +331,19 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 .flbl{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px}
 .finput{padding:11px 14px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;transition:all .25s ease;outline:none}
 .finput:focus{border-color:var(--gold)}
+.tl-sec{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--gold);font-weight:600;margin:24px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--border-color)}
+.tl-liq-row{display:grid;gap:6px;margin-bottom:6px;align-items:center}
+.tl-liq-row .finput{padding:8px 10px;font-size:13px}
+.tl-mile{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tl-mile-lbl{flex:0 0 165px;font-size:12px;color:var(--text-color)}
+.tl-mile .tl-date{flex:0 0 150px;padding:8px 10px;font-size:13px}
+.tl-mile .tl-ref{flex:1 1 170px;min-width:150px;padding:8px 10px;font-size:13px}
+.tl-today{padding:8px 11px;border:1px solid var(--border-color);background:rgba(200,169,110,.1);color:var(--gold);cursor:pointer;font-size:12px;white-space:nowrap}
+.tl-card{border:1px solid var(--border-color);background:var(--card-bg);padding:10px 11px;cursor:grab;transition:box-shadow .15s}
+.tl-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.tl-card.dragging{opacity:.4}
+.tl-col.dragover{outline:2px dashed var(--gold);outline-offset:-4px}
+@media(max-width:640px){.tl-mile-lbl{flex:1 1 100%}.tl-mile .tl-date{flex:1 1 auto}}
 .b-admin{background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)}
 .b-emp{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
 .modal-ov.open{display:flex}
@@ -1325,57 +1338,141 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <!-- TITLING (land-title transfer tracker) -->
       <div id="tab-titling" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="titlingSearch" placeholder="Search client, title no., location…" oninput="renderTitling()"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="titlingSearch" placeholder="Search client, title no., location, branch…" oninput="renderTitling()"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:inline-flex;border:1px solid var(--border-color)">
+              <button class="hdr-btn" id="tlViewListBtn" onclick="setTitlingView('list')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
+              <button class="hdr-btn" id="tlViewBoardBtn" onclick="setTitlingView('board')" style="border:none"><i class="fas fa-columns"></i> Board</button>
+            </div>
+            <button class="hdr-btn" id="tlImportBtn" onclick="tlImpOpen()" style="display:none"><i class="fas fa-file-import"></i> Import</button>
             <button class="hdr-btn" onclick="exportTitlingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
             <button class="hdr-btn primary" id="addTitlingBtn" onclick="openTitlingModal()" style="display:none"><i class="fas fa-plus"></i> Add Titling Job</button>
           </div>
         </div>
         <div id="titlingSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
         <div id="titlingTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-          <thead><tr><th>Client</th><th>Property / Title No.</th><th>Service</th><th>Status</th><th>Balance</th><th>Target</th><th>Actions</th></tr></thead>
+        <!-- LIST VIEW -->
+        <div id="titlingListWrap" class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
+          <thead><tr><th>Client</th><th>Branch</th><th>Property / Title No.</th><th>Stage</th><th>Balance</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody id="titlingTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
         </table></div></div></div>
+        <!-- BOARD VIEW (drag a card between columns to move its stage) -->
+        <div id="titlingBoardWrap" style="display:none;overflow-x:auto;padding-bottom:10px">
+          <div id="titlingBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
+        </div>
       </div>
 
       <!-- TITLING ADD/EDIT MODAL -->
       <div class="modal-ov" id="titlingModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:660px;width:97%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
+        <div style="background:var(--card-bg);max-width:920px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="titlingModalTitle">Add Titling Job</div>
             <button onclick="closeTitlingModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
           </div>
           <div style="padding:24px">
             <input type="hidden" id="tlId">
+
+            <!-- ── Client & property ── -->
+            <div class="tl-sec" style="margin-top:0">Client &amp; property</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="fg"><label class="flbl">Branch</label><input type="text" list="tlBranchList" id="tlBranch" class="finput" placeholder="Pick or type a branch"><datalist id="tlBranchList"></datalist></div>
               <div class="fg"><label class="flbl">Client name *</label><input type="text" id="tlClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
               <div class="fg"><label class="flbl">Phone</label><input type="text" id="tlClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
               <div class="fg"><label class="flbl">Email</label><input type="email" id="tlClientEmail" class="finput" placeholder="client@email.com"></div>
-              <div class="fg"><label class="flbl">Service type</label><select id="tlServiceType" class="finput">
-                <option>Transfer of Title</option><option>Subdivision of Title</option><option>Consolidation of Titles</option><option>Reconstitution</option><option>Correction / Annotation</option><option>Tax Declaration Transfer</option><option>Other</option>
+              <div class="fg"><label class="flbl">Transaction</label><select id="tlServiceType" class="finput">
+                <option>Transfer of Title</option><option>Original Title</option><option>Transfer of Tax Declaration</option><option>Cancellation of Mortgage</option><option>Subdivision of Title</option><option>Consolidation of Titles</option><option>Reconstitution</option><option>Correction / Annotation</option><option>Other</option>
               </select></div>
-              <div class="fg"><label class="flbl">Title number (TCT/CCT)</label><input type="text" id="tlTitleNumber" class="finput" placeholder="e.g. TCT 123456"></div>
-              <div class="fg"><label class="flbl">Property type</label><input type="text" id="tlPropertyType" class="finput" placeholder="e.g. Condominium / Lot / House"></div>
-              <div class="fg" style="grid-column:1/-1"><label class="flbl">Property location</label><input type="text" id="tlPropertyLocation" class="finput" placeholder="e.g. Legaspi Village, Makati City"></div>
-              <div class="fg"><label class="flbl">Status / stage</label><select id="tlStatus" class="finput">
-                <option value="documents">Documents collected</option><option value="bir">BIR / eCAR</option><option value="transfer_tax">Transfer Tax</option><option value="registry">Registry of Deeds</option><option value="tax_dec">New Tax Declaration</option><option value="completed">Completed</option><option value="on_hold">On hold</option>
+              <div class="fg"><label class="flbl">Mode of acquisition</label><input type="text" list="tlModeList" id="tlMode" class="finput" placeholder="Pick or type"><datalist id="tlModeList"></datalist></div>
+              <div class="fg"><label class="flbl">Title number (TCT/CCT/OCT)</label><input type="text" id="tlTitleNumber" class="finput" placeholder="e.g. T-175713"></div>
+              <div class="fg"><label class="flbl">Tax Dec number</label><input type="text" id="tlTaxDecNo" class="finput" placeholder="e.g. 4059"></div>
+              <div class="fg"><label class="flbl">Property type</label><input type="text" id="tlPropertyType" class="finput" placeholder="e.g. Lot / House &amp; Lot / Condo"></div>
+              <div class="fg" style="grid-column:1/-1"><label class="flbl">Property location</label><input type="text" id="tlPropertyLocation" class="finput" placeholder="e.g. Buensuceso, Gumaca, Quezon"></div>
+            </div>
+
+            <!-- ── Status & timeline ── -->
+            <div class="tl-sec">Status &amp; timeline</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="fg"><label class="flbl">Current stage</label><select id="tlStatus" class="finput">
+                <option value="documents">Documents (endorsed to GLRA)</option><option value="bir">BIR / eCAR</option><option value="transfer_tax">Transfer Tax (Treasurer's)</option><option value="registry">Registry of Deeds</option><option value="tax_dec">Assessor's / New Tax Dec</option><option value="completed">Released / Completed</option><option value="lra">LRA / Court</option><option value="on_hold">On hold</option>
               </select></div>
               <div class="fg"><label class="flbl">Target completion</label><input type="date" id="tlTargetDate" class="finput"></div>
             </div>
+            <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin:10px 0 8px">Milestones — tap <i class="fas fa-clock"></i> to stamp today</div>
+            <div id="tlTimeline" style="display:flex;flex-direction:column;gap:8px"></div>
+            <div class="fg" style="margin-top:14px"><label class="flbl">Lacking / pending</label><textarea id="tlLacking" class="finput" rows="2" placeholder="What's still missing — e.g. CTC of owner's ID, tax clearance from Treasurer's…"></textarea></div>
             <div class="fg" style="margin-top:6px"><label class="flbl">Documents collected</label>
               <div id="tlDocs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px;margin-top:6px"></div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:6px">
-              <div class="fg"><label class="flbl">Service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
-              <div class="fg"><label class="flbl">Government fees (₱)</label><input type="number" min="0" step="any" id="tlGovFees" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
-              <div class="fg"><label class="flbl">Amount paid (₱)</label><input type="number" min="0" step="any" id="tlAmountPaid" class="finput" oninput="titlingCalcBalance()" placeholder="0"></div>
+            <div class="fg" style="margin-top:6px"><label class="flbl">Remarks</label><textarea id="tlNotes" class="finput" rows="3" placeholder="Updates, follow-ups, reference numbers…"></textarea></div>
+
+            <!-- ── Liquidation ── -->
+            <div class="tl-sec">Liquidation</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <label class="flbl" style="margin:0">Payments received from client</label>
+              <button type="button" class="hdr-btn" onclick="tlAddPayment()"><i class="fas fa-plus"></i> Add payment</button>
             </div>
-            <div style="margin:6px 0 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gray)">Outstanding balance: <strong id="tlBalance" style="color:var(--gold)">₱0</strong></div>
-            <div class="fg"><label class="flbl">Notes</label><textarea id="tlNotes" class="finput" rows="3" placeholder="Updates, follow-ups, reference numbers…"></textarea></div>
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+            <div id="tlPayments"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 6px">
+              <label class="flbl" style="margin:0">Disbursements (fees paid out)</label>
+              <button type="button" class="hdr-btn" onclick="tlAddExpense()"><i class="fas fa-plus"></i> Add expense</button>
+            </div>
+            <div id="tlExpenses"></div>
+            <datalist id="tlExpCatList"></datalist>
+            <div class="fg" style="margin-top:16px;max-width:280px"><label class="flbl">Professional / service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingLiqRecalc()" placeholder="0"></div>
+            <div id="tlLiqSummary" style="margin-top:14px"></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
               <button class="hdr-btn" onclick="closeTitlingModal()">Cancel</button>
               <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TITLING IMPORT MODAL (reads the broker's ACTIVE ACCOUNTS spreadsheet) -->
+      <div class="modal-ov" id="tlImpModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:820px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600"><i class="fas fa-file-import" style="font-size:16px"></i> Import Titling Jobs</div>
+            <button onclick="tlImpClose()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:24px">
+            <!-- Step 1: choose file -->
+            <div id="tlImpStep1">
+              <label style="display:block;cursor:pointer;border:2px dashed var(--border-color);padding:34px 20px;text-align:center;background:var(--card-bg)">
+                <i class="fas fa-file-excel" style="font-size:30px;color:var(--gold)"></i>
+                <div style="font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:14px;margin-top:10px">Drop or choose your XLSX / CSV file</div>
+                <div style="font-size:12px;color:var(--gray);margin-top:6px">Your ACTIVE ACCOUNTS Excel works directly — first sheet, headers in row 1.</div>
+                <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="tlImpReadFile(this.files[0])">
+              </label>
+              <details style="margin-top:14px">
+                <summary style="cursor:pointer;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-weight:700">Columns it understands</summary>
+                <div style="margin-top:8px;padding:12px;border:1px solid var(--border-color);font-size:12px;line-height:1.7;color:var(--gray)">
+                  Branch · Client's Name · Location · Transaction · Mode of Acquisition · Title No. · Tax Dec No. · Date Endorsed to GLRA · Status GLRA · Date Filed to BIR · Date CAR Received · CAR · Date Filed to RD · EPEB No. · Date Transferred Title · Transferred Title No. · Date Filed to AO · Transferred Tax Dec No. · Lacking · Remarks GLRA<br>
+                  <span style="font-size:11px">Only <b>Client's Name</b> is required. Column names are matched loosely (case/spacing/punctuation don't matter). Liquidation (money) starts empty — add it per job afterward.</span>
+                </div>
+              </details>
+            </div>
+            <!-- Step 2: preview -->
+            <div id="tlImpStep2" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                <div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">To import</div><div style="font-size:24px;font-weight:700;color:var(--gold)" id="tlImpCountKeep">0</div></div>
+                <div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">Skipped (no client name)</div><div style="font-size:24px;font-weight:700;color:#ef4444" id="tlImpCountSkipped">0</div></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="font-size:12px;color:var(--gray)">Preview shows the first 50 rows. Exact duplicates already saved are skipped automatically.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="hdr-btn" onclick="tlImpReset()"><i class="fas fa-redo"></i> Choose another file</button>
+                  <button class="hdr-btn primary" id="tlImpDoBtn" onclick="tlImpDoImport()"><i class="fas fa-cloud-upload-alt"></i> Import <b id="tlImpCount">0</b></button>
+                </div>
+              </div>
+              <div style="max-height:420px;overflow:auto;border:1px solid var(--border-color)">
+                <table style="width:100%;border-collapse:collapse;font-size:12px">
+                  <thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Client</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Branch</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Location</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Title No.</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Stage</th></tr></thead>
+                  <tbody id="tlImpTbody"></tbody>
+                </table>
+              </div>
+              <div id="tlImpResult" style="display:none;margin-top:14px;padding:12px 16px;border:1px solid var(--border-color);font-size:13px;font-weight:700"></div>
             </div>
           </div>
         </div>
@@ -5467,19 +5564,60 @@ async function impDoImport(){
 // ════════════════════════════════════════════════════════════
 let titlingData = [];
 let titlingFilter = 'all';
+let titlingView = 'list';            // 'list' | 'board'
+let tlPaymentsData = [];             // working copy of payments while the modal is open
+let tlExpensesData = [];             // working copy of disbursements while the modal is open
+let tlDragId = null;                 // id of the card currently being dragged on the board
+
 function setTitlingFilter(key){ titlingFilter = (titlingFilter === key) ? 'all' : key; renderTitling(); }
+function setTitlingView(v){ titlingView = (v==='board') ? 'board' : 'list'; renderTitling(); }
+
 const TITLING_STAGES = [
-  { key:'documents',    label:'Documents collected', color:'#6a6a6a' },
-  { key:'bir',          label:'BIR / eCAR',          color:'#c8a96e' },
-  { key:'transfer_tax', label:'Transfer Tax',        color:'#d98324' },
-  { key:'registry',     label:'Registry of Deeds',   color:'#3b82f6' },
-  { key:'tax_dec',      label:'New Tax Declaration',  color:'#8b5cf6' },
-  { key:'completed',    label:'Completed',           color:'#10b981' },
-  { key:'on_hold',      label:'On hold',             color:'#ef4444' }
+  { key:'documents',    label:'Documents',            code:'DOCS', color:'#6a6a6a' },
+  { key:'bir',          label:'BIR / eCAR',           code:'BIR',  color:'#c8a96e' },
+  { key:'transfer_tax', label:'Transfer Tax',         code:'TO',   color:'#d98324' },
+  { key:'registry',     label:'Registry of Deeds',    code:'RD',   color:'#3b82f6' },
+  { key:'tax_dec',      label:"Assessor's / Tax Dec",  code:'AO',   color:'#8b5cf6' },
+  { key:'completed',    label:'Released / Done',       code:'DONE', color:'#10b981' },
+  { key:'lra',          label:'LRA / Court',           code:'LRA',  color:'#0ea5e9' },
+  { key:'on_hold',      label:'On hold',               code:'HOLD', color:'#ef4444' }
+];
+const TITLING_ADVANCE = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed'];
+// When a case ENTERS a stage, auto-stamp this milestone date (only if still empty).
+const TITLING_STAMP_ON = { bir:'dateFiledBIR', transfer_tax:'dateCarReceived', registry:'dateFiledRD', tax_dec:'dateTitleTransferred', completed:'dateFiledAO' };
+// Dated milestones shown in the modal timeline (date + optional reference number).
+const TITLING_MILESTONES = [
+  { date:'dateEndorsed',          label:'Endorsed to GLRA' },
+  { date:'dateFiledBIR',          label:'Filed to BIR' },
+  { date:'dateCarReceived',       label:'CAR / eCAR received',        ref:'carNo',               refLabel:'CAR No.' },
+  { date:'dateTransferTax',       label:'Transfer tax paid' },
+  { date:'dateFiledRD',           label:'Filed to Registry of Deeds', ref:'epebNo',              refLabel:'EPEB No.' },
+  { date:'dateTitleTransferred',  label:'New title released',         ref:'transferredTitleNo',  refLabel:'New Title No.' },
+  { date:'dateFiledAO',           label:"Filed to Assessor's Office", ref:'transferredTaxDecNo', refLabel:'New Tax Dec No.' }
 ];
 const TITLING_DOCS = ['Deed of Absolute Sale',"Owner's Duplicate Title",'Latest Tax Declaration','Tax Clearance','BIR eCAR','Transfer Tax Receipt','Valid IDs (buyer & seller)','Vicinity / Lot Plan'];
+const TITLING_BRANCHES = ['Lucena','Manila','Lucena / Manila'];
+const TITLING_MODES = ['Deed of Absolute Sale (DOAS)','Extra-Judicial Settlement (EJS)','EJS with Waiver','EJS with Sale','Extra-Judicial Partition','Donation','Other'];
+const TITLING_EXP_CATS = ['Capital Gains Tax (CGT)','Documentary Stamp Tax (DST)','Transfer Tax','Registration Fee (RD)','IT / Entry Fee','Notarial Fee','Certification / CTC','Real Property Tax','Miscellaneous'];
+
 function titlingStage(key){ return TITLING_STAGES.find(s=>s.key===key) || TITLING_STAGES[0]; }
-function titlingBalanceOf(t){ return (Number(t.serviceFee)||0)+(Number(t.govFees)||0)-(Number(t.amountPaid)||0); }
+const escA = s => esc(s).replace(/"/g,'&quot;');
+const dateToInput = d => { if(!d) return ''; const x = new Date(d); return isNaN(x.getTime()) ? '' : x.toISOString().slice(0,10); };
+const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+// Liquidation rollup for one case. Falls back to the old single-number fields
+// (amountPaid / govFees) for records created before the line-item upgrade.
+function titlingLiq(t){
+  const pays = Array.isArray(t.payments) ? t.payments : [];
+  const exps = Array.isArray(t.expenses) ? t.expenses : [];
+  const received  = pays.length ? pays.reduce((s,p)=>s+(Number(p.amount)||0),0) : (Number(t.amountPaid)||0);
+  const disbursed = exps.length ? exps.reduce((s,e)=>s+(Number(e.amount)||0),0) : (Number(t.govFees)||0);
+  const fee = Number(t.serviceFee)||0;
+  const balance = received - disbursed - fee;   // >0 = refund due to client, <0 = still collectible
+  return { received, disbursed, fee, balance };
+}
+// Amount the client still owes (positive) — used by the list column + totals.
+function titlingBalanceOf(t){ return -titlingLiq(t).balance; }
 
 async function loadTitling(){
   if(!hasPerm('titling_view')) return;
@@ -5492,11 +5630,19 @@ async function loadTitling(){
   }catch(e){ console.error('loadTitling', e); }
 }
 
-const TITLING_ADVANCE = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed'];
-
 function renderTitling(){
   const tbody = document.getElementById('titlingTbody');
   if(!tbody) return;
+  const canManage = hasPerm('titling_manage');
+
+  // ── View toggle: show list or board, sync button styles ──
+  const listWrap = document.getElementById('titlingListWrap');
+  const boardWrap = document.getElementById('titlingBoardWrap');
+  if(listWrap)  listWrap.style.display  = titlingView==='board' ? 'none' : '';
+  if(boardWrap) boardWrap.style.display = titlingView==='board' ? '' : 'none';
+  const lb=document.getElementById('tlViewListBtn'), bb=document.getElementById('tlViewBoardBtn');
+  if(lb) lb.style.cssText = 'border:none;border-right:1px solid var(--border-color);' + (titlingView==='list' ? 'background:var(--gold);color:#0a0a0a' : '');
+  if(bb) bb.style.cssText = 'border:none;' + (titlingView==='board' ? 'background:var(--gold);color:#0a0a0a' : '');
 
   // ── Stage summary cards (click to filter) ──
   const sum = document.getElementById('titlingSummary');
@@ -5509,33 +5655,35 @@ function renderTitling(){
       + TITLING_STAGES.map(s => card(s.key, s.label, titlingData.filter(t=>t.status===s.key).length, s.color)).join('');
   }
 
-  // ── Filter rows by stage + search ──
+  // ── Search (applies to both views); stage filter applies to the list only ──
   const q = (document.getElementById('titlingSearch')?.value||'').toLowerCase().trim();
-  let rows = titlingData;
-  if(titlingFilter !== 'all') rows = rows.filter(t => t.status === titlingFilter);
-  if(q) rows = rows.filter(t => [t.clientName,t.titleNumber,t.propertyLocation,t.serviceType,t.clientPhone,t.clientEmail].some(v => (v||'').toLowerCase().includes(q)));
+  const matchQ = t => !q || [t.clientName,t.titleNumber,t.taxDecNo,t.propertyLocation,t.serviceType,t.modeOfAcquisition,t.branch,t.clientPhone,t.clientEmail,t.notes].some(v => (v||'').toLowerCase().includes(q));
+  const searched = titlingData.filter(matchQ);
+  const listRows = (titlingFilter==='all') ? searched : searched.filter(t => t.status === titlingFilter);
 
-  // ── Money totals for the current view ──
+  // ── Money totals (based on what's currently shown in the list) ──
   const totals = document.getElementById('titlingTotals');
   if(totals){
-    let fees=0, collected=0, outstanding=0;
-    rows.forEach(t => { fees += (Number(t.serviceFee)||0)+(Number(t.govFees)||0); collected += (Number(t.amountPaid)||0); outstanding += Math.max(0, titlingBalanceOf(t)); });
+    let charges=0, collected=0, outstanding=0;
+    listRows.forEach(t => { const l = titlingLiq(t); charges += l.disbursed + l.fee; collected += l.received; outstanding += Math.max(0, -l.balance); });
     const box = (label, val, color) => `<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${label}</div><div style="font-size:18px;font-weight:700;color:${color}">${fmt(val)}</div></div>`;
     const suffix = (titlingFilter!=='all'||q) ? ' (shown)' : '';
-    totals.innerHTML = box('Total fees'+suffix, fees, 'inherit') + box('Collected'+suffix, collected, '#10b981') + box('Outstanding'+suffix, outstanding, '#ef4444');
+    totals.innerHTML = box('Charges'+suffix, charges, 'inherit') + box('Collected'+suffix, collected, '#10b981') + box('Outstanding'+suffix, outstanding, '#ef4444');
   }
 
-  if(!rows.length){
+  if(titlingView==='board'){ renderTitlingBoard(searched, canManage); return; }
+
+  // ── LIST VIEW ──
+  if(!listRows.length){
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-stamp"></i><p>${titlingData.length?'No jobs match this filter':'No titling jobs yet'}</p></div></td></tr>`;
     return;
   }
-
-  const canManage = hasPerm('titling_manage');
   const now = Date.now();
-  tbody.innerHTML = rows.map(t=>{
+  tbody.innerHTML = listRows.map(t=>{
     const st = titlingStage(t.status);
     const bal = titlingBalanceOf(t);
     const balColor = bal>0 ? '#ef4444' : '#10b981';
+    const balText = Math.abs(bal)<0.005 ? 'Settled' : (bal>0 ? fmt(bal) : fmt(-bal)+' refund');
     const docCount = (t.documents||[]).length;
     const prop = [t.titleNumber, t.propertyLocation].filter(Boolean).join(' · ') || '—';
     const overdue = t.targetDate && t.status!=='completed' && new Date(t.targetDate).getTime() < now;
@@ -5544,42 +5692,134 @@ function renderTitling(){
     if(t.clientEmail) contact.push(`<a href="mailto:${esc(t.clientEmail)}" title="Email" style="color:var(--gray)"><i class="fas fa-envelope"></i></a>`);
     const idx = TITLING_ADVANCE.indexOf(t.status);
     const canAdvance = canManage && idx >= 0 && idx < TITLING_ADVANCE.length-1;
+    const nextLabel = canAdvance ? titlingStage(TITLING_ADVANCE[idx+1]).label : '';
     return `<tr>
-      <td><strong style="font-size:13px">${esc(t.clientName)}</strong>${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td><strong style="font-size:13px">${esc(t.clientName)}</strong>${t.serviceType?`<div style="font-size:10px;color:var(--gray);margin-top:2px">${esc(t.serviceType)}</div>`:''}${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td style="font-size:12px;color:var(--gray)">${esc(t.branch||'—')}</td>
       <td style="font-size:12px;max-width:240px">${esc(prop)}${docCount?`<div style="font-size:10px;color:var(--gray);margin-top:2px"><i class="fas fa-check-circle"></i> ${docCount}/${TITLING_DOCS.length} docs</div>`:''}</td>
-      <td style="font-size:12px">${esc(t.serviceType||'—')}</td>
       <td><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${st.color}">${esc(st.label)}</span></td>
-      <td style="font-size:12px;font-weight:700;color:${balColor};white-space:nowrap">${fmt(bal)}</td>
-      <td style="font-size:11px;white-space:nowrap;color:${overdue?'#ef4444':'var(--gray)'};font-weight:${overdue?'700':'400'}">${t.targetDate?fmtDateShort(t.targetDate):'—'}${overdue?' &#9888;':''}</td>
+      <td style="font-size:12px;font-weight:700;color:${balColor};white-space:nowrap">${balText}</td>
+      <td style="font-size:11px;white-space:nowrap;color:${overdue?'#ef4444':'var(--gray)'};font-weight:${overdue?'700':'400'}">${fmtDateShort(t.updatedAt||t.createdAt)}${overdue?' <span title="Past target date">&#9888;</span>':''}</td>
       <td><div class="act-btns" style="display:flex;gap:5px">
-        ${canAdvance?`<button class="act" style="background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3)" onclick="advanceTitling('${t._id}')" title="Move to next stage"><i class="fas fa-arrow-right"></i></button>`:''}
+        ${canAdvance?`<button class="act" style="background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3);width:auto;padding:0 8px;gap:5px;font-size:11px" onclick="advanceTitling('${t._id}')" title="Move to ${escA(nextLabel)}">Next <i class="fas fa-arrow-right"></i></button>`:''}
         ${canManage?`<button class="act act-view" onclick="openTitlingModal('${t._id}')" title="Edit"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteTitling('${t._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}
       </div></td>
     </tr>`;
   }).join('');
 }
 
-async function advanceTitling(id){
-  if(!hasPerm('titling_manage')) return;
-  const t = titlingData.find(x=>x._id===id); if(!t) return;
-  const idx = TITLING_ADVANCE.indexOf(t.status);
-  if(idx < 0 || idx >= TITLING_ADVANCE.length-1) return;
-  const next = TITLING_ADVANCE[idx+1];
+// ── BOARD VIEW (Kanban) — drag a card to a column to set its stage ──
+function renderTitlingBoard(rows, canManage){
+  const board = document.getElementById('titlingBoard');
+  if(!board) return;
+  board.innerHTML = TITLING_STAGES.map(s=>{
+    const cards = rows.filter(t=>t.status===s.key);
+    const cardHtml = cards.map(t=>{
+      const bal = titlingBalanceOf(t);
+      const balText = Math.abs(bal)<0.005 ? '' : (bal>0 ? `<span style="color:#ef4444">${fmt(bal)} due</span>` : `<span style="color:#10b981">${fmt(-bal)} refund</span>`);
+      const sub = [t.branch, t.titleNumber].filter(Boolean).join(' · ');
+      return `<div class="tl-card" ${canManage?`draggable="true" ondragstart="tlDragStart(event,'${t._id}')" ondragend="tlDragEnd(event)" onclick="openTitlingModal('${t._id}')"`:''} style="margin-bottom:8px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:3px">${esc(t.clientName)}</div>
+        ${sub?`<div style="font-size:11px;color:var(--gray)">${esc(sub)}</div>`:''}
+        ${t.propertyLocation?`<div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(t.propertyLocation)}</div>`:''}
+        ${balText?`<div style="font-size:11px;font-weight:700;margin-top:5px">${balText}</div>`:''}
+      </div>`;
+    }).join('') || `<div style="font-size:11px;color:var(--gray);padding:8px 2px">—</div>`;
+    return `<div class="tl-col" data-stage="${s.key}" ondragover="tlDragOver(event)" ondragenter="tlColEnter(event)" ondragleave="tlColLeave(event)" ondrop="tlDrop(event,'${s.key}')" style="flex:0 0 230px;border:1px solid var(--border-color);background:var(--card-bg);display:flex;flex-direction:column;max-height:70vh">
+      <div style="border-top:3px solid ${s.color};padding:10px 11px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:700">${esc(s.label)}</span><span style="font-size:11px;color:var(--gray)">${cards.length}</span></div>
+      <div style="padding:0 11px 11px;overflow-y:auto;flex:1">${cardHtml}</div>
+    </div>`;
+  }).join('');
+}
+function tlDragStart(ev, id){ tlDragId=id; ev.dataTransfer.effectAllowed='move'; try{ ev.dataTransfer.setData('text/plain', id); }catch(e){} ev.currentTarget.classList.add('dragging'); }
+function tlDragEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('.tl-col').forEach(c=>c.classList.remove('dragover')); }
+function tlDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; }
+function tlColEnter(ev){ ev.currentTarget.classList.add('dragover'); }
+function tlColLeave(ev){ if(ev.currentTarget===ev.target) ev.currentTarget.classList.remove('dragover'); }
+function tlDrop(ev, stageKey){ ev.preventDefault(); ev.currentTarget.classList.remove('dragover'); const id = tlDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain')); tlDragId=null; if(id) titlingMove(id, stageKey); }
+
+// Move a case to a stage (used by the Next button AND board drag). Auto-stamps
+// the matching milestone date if it's still empty.
+async function titlingMove(id, stageKey){
+  if(!hasPerm('titling_manage')){ showToast('No permission to manage titling jobs', true); return; }
+  const t = titlingData.find(x=>x._id===id); if(!t || t.status===stageKey) return;
+  const patch = { status: stageKey };
+  const stampField = TITLING_STAMP_ON[stageKey];
+  if(stampField && !t[stampField]) patch[stampField] = todayInput();
   try{
-    const res = await apiFetch(`/api/admin/titling/${id}`, { method:'PUT', body: JSON.stringify({ status: next }) });
+    const res = await apiFetch(`/api/admin/titling/${id}`, { method:'PUT', body: JSON.stringify(patch) });
     const d = await res.json();
-    if(res.ok && d._id){ showToast('Moved to: ' + titlingStage(next).label); loadTitling(); }
+    if(res.ok && d._id){ showToast('Moved to: ' + titlingStage(stageKey).label); loadTitling(); }
     else showToast(d.error||'Update failed', true);
   }catch(e){ showToast('Error updating stage', true); }
 }
+function advanceTitling(id){
+  const t = titlingData.find(x=>x._id===id); if(!t) return;
+  const idx = TITLING_ADVANCE.indexOf(t.status);
+  if(idx < 0 || idx >= TITLING_ADVANCE.length-1) return;
+  titlingMove(id, TITLING_ADVANCE[idx+1]);
+}
 
-function titlingCalcBalance(){
-  const sf = parseFloat(document.getElementById('tlServiceFee').value)||0;
-  const gf = parseFloat(document.getElementById('tlGovFees').value)||0;
-  const ap = parseFloat(document.getElementById('tlAmountPaid').value)||0;
-  const bal = sf+gf-ap;
-  const el = document.getElementById('tlBalance');
-  if(el){ el.textContent = fmt(bal); el.style.color = bal>0 ? '#ef4444' : '#10b981'; }
+// ── Modal: datalists, timeline, liquidation line items ──
+function tlFillDatalist(elId, defaults, field){
+  const used = [...new Set(titlingData.map(t=>(t[field]||'').trim()).filter(Boolean))];
+  const all = [...new Set([...defaults, ...used])];
+  const dl = document.getElementById(elId);
+  if(dl) dl.innerHTML = all.map(v=>`<option value="${escA(v)}"></option>`).join('');
+}
+function tlBuildTimeline(t){
+  const c = document.getElementById('tlTimeline'); if(!c) return;
+  c.innerHTML = TITLING_MILESTONES.map(m=>{
+    const dv = t ? dateToInput(t[m.date]) : (m.date==='dateEndorsed' ? todayInput() : '');
+    const rv = (t && m.ref) ? (t[m.ref]||'') : '';
+    const refCell = m.ref
+      ? `<input type="text" id="tl_${m.ref}" class="finput tl-ref" placeholder="${escA(m.refLabel)}" value="${escA(rv)}">`
+      : `<span class="tl-ref"></span>`;
+    return `<div class="tl-mile">
+      <span class="tl-mile-lbl">${esc(m.label)}</span>
+      <input type="date" id="tl_${m.date}" class="finput tl-date" value="${dv}">
+      <button type="button" class="tl-today" title="Stamp today" onclick="document.getElementById('tl_${m.date}').value='${todayInput()}'"><i class="fas fa-clock"></i></button>
+      ${refCell}
+    </div>`;
+  }).join('');
+}
+function tlRenderPayments(){
+  const c = document.getElementById('tlPayments'); if(!c) return;
+  c.innerHTML = tlPaymentsData.length ? tlPaymentsData.map((p,i)=>`
+    <div class="tl-liq-row" style="grid-template-columns:140px 1fr 120px 34px">
+      <input type="date" class="finput" value="${dateToInput(p.date)}" onchange="tlPaymentsData[${i}].date=this.value">
+      <input type="text" class="finput" placeholder="e.g. 1st deposit" value="${escA(p.label||'')}" oninput="tlPaymentsData[${i}].label=this.value">
+      <input type="number" min="0" step="any" class="finput" placeholder="0" value="${p.amount||''}" oninput="tlPaymentsData[${i}].amount=parseFloat(this.value)||0;titlingLiqRecalc()">
+      <button type="button" class="act act-del" title="Remove" onclick="tlPaymentsData.splice(${i},1);tlRenderPayments();titlingLiqRecalc()"><i class="fas fa-times"></i></button>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--gray);margin-bottom:6px">No payments recorded yet.</div>';
+}
+function tlRenderExpenses(){
+  const c = document.getElementById('tlExpenses'); if(!c) return;
+  c.innerHTML = tlExpensesData.length ? tlExpensesData.map((e,i)=>`
+    <div class="tl-liq-row" style="grid-template-columns:130px 1fr 1fr 110px 34px">
+      <input type="date" class="finput" value="${dateToInput(e.date)}" onchange="tlExpensesData[${i}].date=this.value">
+      <input type="text" class="finput" list="tlExpCatList" placeholder="Category" value="${escA(e.category||'')}" oninput="tlExpensesData[${i}].category=this.value">
+      <input type="text" class="finput" placeholder="Paid to" value="${escA(e.payee||'')}" oninput="tlExpensesData[${i}].payee=this.value">
+      <input type="number" min="0" step="any" class="finput" placeholder="0" value="${e.amount||''}" oninput="tlExpensesData[${i}].amount=parseFloat(this.value)||0;titlingLiqRecalc()">
+      <button type="button" class="act act-del" title="Remove" onclick="tlExpensesData.splice(${i},1);tlRenderExpenses();titlingLiqRecalc()"><i class="fas fa-times"></i></button>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--gray);margin-bottom:6px">No disbursements recorded yet.</div>';
+}
+function tlAddPayment(){ tlPaymentsData.push({date:todayInput(), label:'', amount:0}); tlRenderPayments(); }
+function tlAddExpense(){ tlExpensesData.push({date:todayInput(), category:'', payee:'', amount:0}); tlRenderExpenses(); }
+function titlingLiqRecalc(){
+  const received  = tlPaymentsData.reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const disbursed = tlExpensesData.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const fee = parseFloat(document.getElementById('tlServiceFee').value)||0;
+  const bal = received - disbursed - fee;
+  const el = document.getElementById('tlLiqSummary'); if(!el) return;
+  let balLabel, balColor;
+  if(Math.abs(bal)<0.005){ balLabel='Fully settled'; balColor='#10b981'; }
+  else if(bal>0){ balLabel='Refund due to client'; balColor='#10b981'; }
+  else { balLabel='Still collectible'; balColor='#ef4444'; }
+  const box = (l,v,c)=>`<div style="border:1px solid var(--border-color);padding:9px 12px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:16px;font-weight:700;color:${c||'inherit'}">${fmt(v)}</div></div>`;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+    ${box('Received', received, '#10b981')}${box('Disbursed', disbursed, '#d98324')}${box('Professional fee', fee, 'inherit')}${box(balLabel, Math.abs(bal), balColor)}
+  </div>`;
 }
 
 function openTitlingModal(id){
@@ -5587,22 +5827,37 @@ function openTitlingModal(id){
   const t = id ? titlingData.find(x=>x._id===id) : null;
   document.getElementById('titlingModalTitle').textContent = t ? 'Edit Titling Job' : 'Add Titling Job';
   document.getElementById('tlId').value = t ? t._id : '';
+  document.getElementById('tlBranch').value = (t&&t.branch) || '';
   document.getElementById('tlClientName').value = (t&&t.clientName) || '';
   document.getElementById('tlClientPhone').value = (t&&t.clientPhone) || '';
   document.getElementById('tlClientEmail').value = (t&&t.clientEmail) || '';
   document.getElementById('tlTitleNumber').value = (t&&t.titleNumber) || '';
+  document.getElementById('tlTaxDecNo').value = (t&&t.taxDecNo) || '';
   document.getElementById('tlPropertyType').value = (t&&t.propertyType) || '';
   document.getElementById('tlPropertyLocation').value = (t&&t.propertyLocation) || '';
   document.getElementById('tlServiceType').value = (t&&t.serviceType) || 'Transfer of Title';
+  document.getElementById('tlMode').value = (t&&t.modeOfAcquisition) || '';
   document.getElementById('tlStatus').value = (t&&t.status) || 'documents';
-  document.getElementById('tlServiceFee').value = (t&&t.serviceFee) || '';
-  document.getElementById('tlGovFees').value = (t&&t.govFees) || '';
-  document.getElementById('tlAmountPaid').value = (t&&t.amountPaid) || '';
-  document.getElementById('tlTargetDate').value = (t&&t.targetDate) ? new Date(t.targetDate).toISOString().slice(0,10) : '';
+  document.getElementById('tlTargetDate').value = (t&&t.targetDate) ? dateToInput(t.targetDate) : '';
+  document.getElementById('tlLacking').value = (t&&t.lacking) || '';
   document.getElementById('tlNotes').value = (t&&t.notes) || '';
+  document.getElementById('tlServiceFee').value = (t&&t.serviceFee) || '';
+  // suggestions for branch + mode (defaults plus anything already used)
+  tlFillDatalist('tlBranchList', TITLING_BRANCHES, 'branch');
+  tlFillDatalist('tlModeList', TITLING_MODES, 'modeOfAcquisition');
+  const catList = document.getElementById('tlExpCatList'); if(catList) catList.innerHTML = TITLING_EXP_CATS.map(v=>`<option value="${escA(v)}"></option>`).join('');
+  // timeline + documents
+  tlBuildTimeline(t);
   const have = new Set((t&&t.documents) || []);
-  document.getElementById('tlDocs').innerHTML = TITLING_DOCS.map(d=>`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" class="tl-doc" value="${esc(d)}" ${have.has(d)?'checked':''}> ${esc(d)}</label>`).join('');
-  titlingCalcBalance();
+  document.getElementById('tlDocs').innerHTML = TITLING_DOCS.map(d=>`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" class="tl-doc" value="${escA(d)}" ${have.has(d)?'checked':''}> ${esc(d)}</label>`).join('');
+  // liquidation working copies (seed from legacy totals for old records)
+  tlPaymentsData = (t&&Array.isArray(t.payments)&&t.payments.length) ? t.payments.map(p=>({date:p.date||'', label:p.label||'', amount:Number(p.amount)||0}))
+                  : (t&&Number(t.amountPaid)>0 ? [{date:'', label:'Amount paid', amount:Number(t.amountPaid)}] : []);
+  tlExpensesData = (t&&Array.isArray(t.expenses)&&t.expenses.length) ? t.expenses.map(e=>({date:e.date||'', category:e.category||'', payee:e.payee||'', amount:Number(e.amount)||0}))
+                  : (t&&Number(t.govFees)>0 ? [{date:'', category:'Government fees', payee:'', amount:Number(t.govFees)}] : []);
+  tlRenderPayments();
+  tlRenderExpenses();
+  titlingLiqRecalc();
   document.getElementById('titlingModal').style.display='flex';
 }
 function closeTitlingModal(){ document.getElementById('titlingModal').style.display='none'; }
@@ -5611,23 +5866,36 @@ async function saveTitling(){
   const name = document.getElementById('tlClientName').value.trim();
   if(!name){ showToast('Client name is required', true); document.getElementById('tlClientName').focus(); return; }
   const docs = Array.from(document.querySelectorAll('#tlDocs .tl-doc:checked')).map(c=>c.value);
+  const payments = tlPaymentsData.map(p=>({ date:p.date||null, label:(p.label||'').trim(), amount:Number(p.amount)||0 })).filter(p=>p.label||p.amount||p.date);
+  const expenses = tlExpensesData.map(e=>({ date:e.date||null, category:(e.category||'').trim(), payee:(e.payee||'').trim(), amount:Number(e.amount)||0 })).filter(e=>e.category||e.payee||e.amount||e.date);
   const td = document.getElementById('tlTargetDate').value;
   const payload = {
+    branch: document.getElementById('tlBranch').value.trim(),
     clientName: name,
     clientPhone: document.getElementById('tlClientPhone').value.trim(),
     clientEmail: document.getElementById('tlClientEmail').value.trim(),
     titleNumber: document.getElementById('tlTitleNumber').value.trim(),
+    taxDecNo: document.getElementById('tlTaxDecNo').value.trim(),
     propertyType: document.getElementById('tlPropertyType').value.trim(),
     propertyLocation: document.getElementById('tlPropertyLocation').value.trim(),
     serviceType: document.getElementById('tlServiceType').value,
+    modeOfAcquisition: document.getElementById('tlMode').value.trim(),
     status: document.getElementById('tlStatus').value,
-    serviceFee: parseFloat(document.getElementById('tlServiceFee').value)||0,
-    govFees: parseFloat(document.getElementById('tlGovFees').value)||0,
-    amountPaid: parseFloat(document.getElementById('tlAmountPaid').value)||0,
     targetDate: td || null,
+    lacking: document.getElementById('tlLacking').value,
     notes: document.getElementById('tlNotes').value,
-    documents: docs
+    documents: docs,
+    payments, expenses,
+    serviceFee: parseFloat(document.getElementById('tlServiceFee').value)||0,
+    // keep the legacy single-number fields mirrored to the new totals
+    amountPaid: payments.reduce((s,p)=>s+p.amount,0),
+    govFees: expenses.reduce((s,e)=>s+e.amount,0)
   };
+  // milestone dates + reference numbers
+  TITLING_MILESTONES.forEach(m=>{
+    const dEl = document.getElementById('tl_'+m.date); if(dEl) payload[m.date] = dEl.value || null;
+    if(m.ref){ const rEl = document.getElementById('tl_'+m.ref); if(rEl) payload[m.ref] = rEl.value.trim(); }
+  });
   const id = document.getElementById('tlId').value;
   const btn = document.getElementById('tlSaveBtn');
   const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
@@ -5653,14 +5921,197 @@ async function deleteTitling(id){
 
 function exportTitlingCSV(){
   if(!titlingData.length){ showToast('No titling jobs to export', true); return; }
-  const rows = [['Client','Phone','Email','Title No.','Location','Property Type','Service','Status','Service Fee','Gov Fees','Paid','Balance','Target','Documents','Notes']];
-  titlingData.forEach(t=>rows.push([
-    t.clientName||'', t.clientPhone||'', t.clientEmail||'', t.titleNumber||'', t.propertyLocation||'', t.propertyType||'',
-    t.serviceType||'', titlingStage(t.status).label, t.serviceFee||0, t.govFees||0, t.amountPaid||0, titlingBalanceOf(t),
-    t.targetDate?new Date(t.targetDate).toLocaleDateString('en-PH'):'', (t.documents||[]).join('; '), (t.notes||'').replace(/\r?\n/g,' ')
-  ]));
+  const csvDate = d => d ? new Date(d).toLocaleDateString('en-PH') : '';
+  const rows = [['Branch','No.',"Client's Name",'Location','Transaction','Mode of Acquisition','Title No.','Tax Dec No.',
+    'Date Endorsed','Status GLRA','Date Filed BIR','Date CAR Received','CAR No.','Date Transfer Tax',
+    'Date Filed RD','EPEB No.','Date Transferred Title','Transferred Title No.','Date Filed AO','Transferred Tax Dec No.',
+    'Lacking','Remarks','Received','Disbursed','Prof. Fee','Balance','Documents']];
+  titlingData.forEach((t,i)=>{
+    const l = titlingLiq(t);
+    rows.push([
+      t.branch||'', i+1, t.clientName||'', t.propertyLocation||'', t.serviceType||'', t.modeOfAcquisition||'', t.titleNumber||'', t.taxDecNo||'',
+      csvDate(t.dateEndorsed), titlingStage(t.status).code, csvDate(t.dateFiledBIR), csvDate(t.dateCarReceived), t.carNo||'', csvDate(t.dateTransferTax),
+      csvDate(t.dateFiledRD), t.epebNo||'', csvDate(t.dateTitleTransferred), t.transferredTitleNo||'', csvDate(t.dateFiledAO), t.transferredTaxDecNo||'',
+      (t.lacking||'').replace(/\r?\n/g,' '), (t.notes||'').replace(/\r?\n/g,' '), l.received, l.disbursed, l.fee, l.balance, (t.documents||[]).join('; ')
+    ]);
+  });
   downloadCSV('glra-titling-'+new Date().toISOString().slice(0,10)+'.csv', rows);
   showToast(`Exported ${titlingData.length} titling job${titlingData.length===1?'':'s'}`);
+}
+
+// ── TITLING IMPORT (reads the broker's ACTIVE ACCOUNTS spreadsheet) ──
+// Reuses the SheetJS (XLSX) parser + impNorm/impFindCol helpers from the
+// property importer. Money/liquidation is left empty (her sheet has none).
+const tlImpState = { rows: [] };
+function tlImpOpen(){
+  if(!hasPerm('titling_manage')){ showToast('You don\'t have permission to import titling jobs', true); return; }
+  if(typeof XLSX === 'undefined'){ showToast('Spreadsheet reader still loading — try again in a second.', true); return; }
+  document.getElementById('tlImpModal').style.display='flex';
+  tlImpReset();
+}
+function tlImpClose(){ document.getElementById('tlImpModal').style.display='none'; }
+function tlImpReset(){
+  tlImpState.rows = [];
+  document.getElementById('tlImpStep1').style.display = '';
+  document.getElementById('tlImpStep2').style.display = 'none';
+  document.getElementById('tlImpResult').style.display = 'none';
+}
+const tlImpStr = v => String(v==null?'':v).trim();
+// format a Date as YYYY-MM-DD using LOCAL parts (avoids the UTC off-by-one shift)
+const tlYmd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function tlImpDate(v){
+  if(v==null||v==='') return null;
+  if(v instanceof Date && !isNaN(v.getTime())) return tlYmd(v);
+  if(typeof v==='number'){ const d=new Date(Math.round((v-25569)*86400*1000)); return isNaN(d.getTime())?null:tlYmd(d); }
+  const d=new Date(tlImpStr(v)); return isNaN(d.getTime())?null:tlYmd(d);
+}
+function tlImpStatus(raw){
+  const s=tlImpStr(raw).toUpperCase(); if(!s) return 'documents';
+  if(/\bBIR\b|ECAR|\bCAR\b/.test(s)) return 'bir';
+  if(/\bTO\b|TREASUR|TRANSFER\s*TAX/.test(s)) return 'transfer_tax';
+  if(/\bRD\b|REGISTR/.test(s)) return 'registry';
+  if(/\bAO\b|ASSESS/.test(s)) return 'tax_dec';
+  if(/\bLRA\b|COURT/.test(s)) return 'lra';
+  if(/DONE|COMPLET|RELEAS/.test(s)) return 'completed';
+  if(/HOLD/.test(s)) return 'on_hold';
+  return 'documents';
+}
+function tlImpTransaction(raw){
+  const s=tlImpStr(raw); if(!s) return 'Transfer of Title';
+  const u=s.toUpperCase();
+  if(/TRANSFER OF TITLE/.test(u)) return 'Transfer of Title';
+  if(/ORIGINAL TITLE/.test(u)) return 'Original Title';
+  if(/CANCELLATION OF MORTGAGE/.test(u)) return 'Cancellation of Mortgage';
+  if(/TRANSFER OF (TD|TAX DEC)/.test(u)) return 'Transfer of Tax Declaration';
+  if(/SUBDIV/.test(u)) return 'Subdivision of Title';
+  if(/CONSOLIDAT/.test(u)) return 'Consolidation of Titles';
+  if(/RECONSTITUT/.test(u)) return 'Reconstitution';
+  if(/CORRECT|ANNOTAT/.test(u)) return 'Correction / Annotation';
+  return s;
+}
+function tlImpMode(raw){
+  const s=tlImpStr(raw); if(!s) return '';
+  const u=s.toUpperCase();
+  if(/DOAS|DEED OF ABSOLUTE SALE/.test(u)) return 'Deed of Absolute Sale (DOAS)';
+  if(/EJS.*WAIVER|EXTRA.?JUDICIAL.*WAIVER/.test(u)) return 'EJS with Waiver';
+  if(/EJS.*SALE|EXTRA.?JUDICIAL.*SALE/.test(u)) return 'EJS with Sale';
+  if(/EXTRA.?JUDICIAL PARTITION/.test(u)) return 'Extra-Judicial Partition';
+  if(/\bEJS\b|EXTRA.?JUDICIAL/.test(u)) return 'Extra-Judicial Settlement (EJS)';
+  if(/DONAT/.test(u)) return 'Donation';
+  return s;
+}
+function tlImpReadFile(file){
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){ showToast('Spreadsheet reader not loaded — refresh and try again.', true); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      if(!ws){ showToast('No sheet found in file', true); return; }
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', blankrows:false });
+      if(!rows.length){ showToast('Empty file', true); return; }
+      // detect header row (scan first 5 rows for a "client" column)
+      let headerIdx = 0;
+      for(let i=0;i<Math.min(rows.length,5);i++){ if(rows[i].some(c=>/client|name/.test(impNorm(c)))){ headerIdx=i; break; } }
+      const headers = rows[headerIdx] || [];
+      const c = {
+        branch:    impFindCol(headers, 'Branch'),
+        client:    impFindCol(headers, "Client's Name", 'Client Name', 'Client', 'Name'),
+        location:  impFindCol(headers, 'Location', 'Area'),
+        trans:     impFindCol(headers, 'Transaction', 'Service', 'Service Type'),
+        mode:      impFindCol(headers, 'Mode of Acquisition', 'Mode'),
+        title:     impFindCol(headers, 'Title No.', 'Title Number', 'Title No', 'Title'),
+        taxdec:    impFindCol(headers, 'Tax Dec No.', 'Tax Dec No', 'Tax Declaration No', 'Tax Dec'),
+        dEndorsed: impFindCol(headers, 'Date Endorsed to GLRA', 'Date Endorsed', 'Endorsed'),
+        status:    impFindCol(headers, 'Status GLRA', 'Status'),
+        dBIR:      impFindCol(headers, 'Date Filed to BIR', 'Date Filed BIR'),
+        dCar:      impFindCol(headers, 'Date CAR Received', 'CAR Received'),
+        car:       impFindCol(headers, 'CAR No.', 'CAR No', 'CAR'),
+        dTax:      impFindCol(headers, 'Date Transfer Tax', 'Transfer Tax Date'),
+        dRD:       impFindCol(headers, 'Date Filed to RD', 'Date Filed RD'),
+        epeb:      impFindCol(headers, 'EPEB No.', 'EPEB No', 'EPEB'),
+        dTitle:    impFindCol(headers, 'Date Transferred Title', 'Date Transfer Title'),
+        tTitle:    impFindCol(headers, 'Transferred Title No.', 'Transferred Title No', 'New Title No.'),
+        dAO:       impFindCol(headers, 'Date Filed to AO', 'Date Filed AO'),
+        tTaxDec:   impFindCol(headers, 'Transferred Tax Dec No.', 'Transferred Tax Dec No', 'New Tax Dec No.'),
+        lacking:   impFindCol(headers, 'Lacking'),
+        remarks:   impFindCol(headers, 'Remarks GLRA', 'Remarks', 'Notes', 'Note')
+      };
+      if(c.client === -1){ showToast('Could not find a "Client\'s Name" column', true); return; }
+      const parsed = []; let skipped = 0;
+      for(let i=headerIdx+1;i<rows.length;i++){
+        const r = rows[i]; if(!r||!r.length) continue;
+        const g = col => col!==-1 ? r[col] : '';
+        const clientName = tlImpStr(g(c.client));
+        if(!clientName){ skipped++; continue; }
+        parsed.push({
+          branch: tlImpStr(g(c.branch)),
+          clientName,
+          propertyLocation: tlImpStr(g(c.location)),
+          serviceType: tlImpTransaction(g(c.trans)),
+          modeOfAcquisition: tlImpMode(g(c.mode)),
+          titleNumber: tlImpStr(g(c.title)),
+          taxDecNo: tlImpStr(g(c.taxdec)),
+          status: tlImpStatus(g(c.status)),
+          dateEndorsed: tlImpDate(g(c.dEndorsed)),
+          dateFiledBIR: tlImpDate(g(c.dBIR)),
+          dateCarReceived: tlImpDate(g(c.dCar)),
+          carNo: tlImpStr(g(c.car)),
+          dateTransferTax: tlImpDate(g(c.dTax)),
+          dateFiledRD: tlImpDate(g(c.dRD)),
+          epebNo: tlImpStr(g(c.epeb)),
+          dateTitleTransferred: tlImpDate(g(c.dTitle)),
+          transferredTitleNo: tlImpStr(g(c.tTitle)),
+          dateFiledAO: tlImpDate(g(c.dAO)),
+          transferredTaxDecNo: tlImpStr(g(c.tTaxDec)),
+          lacking: tlImpStr(g(c.lacking)),
+          notes: tlImpStr(g(c.remarks))
+        });
+      }
+      tlImpState.rows = parsed;
+      tlImpRenderPreview(skipped);
+    }catch(err){ console.error('titling import parse error:', err); showToast('Failed to read file: '+err.message, true); }
+  };
+  reader.onerror = () => showToast('Failed to read file', true);
+  reader.readAsArrayBuffer(file);
+}
+function tlImpRenderPreview(skipped){
+  document.getElementById('tlImpStep1').style.display='none';
+  document.getElementById('tlImpStep2').style.display='';
+  document.getElementById('tlImpResult').style.display='none';
+  document.getElementById('tlImpCountKeep').textContent = tlImpState.rows.length;
+  document.getElementById('tlImpCountSkipped').textContent = skipped||0;
+  document.getElementById('tlImpCount').textContent = tlImpState.rows.length;
+  const tb = document.getElementById('tlImpTbody');
+  const slice = tlImpState.rows.slice(0,50);
+  tb.innerHTML = slice.map(p=>`<tr>
+    <td style="padding:7px 8px;border-bottom:1px solid var(--border-color)"><b>${esc(p.clientName)}</b></td>
+    <td style="padding:7px 8px;border-bottom:1px solid var(--border-color);color:var(--gray)">${esc(p.branch)||'—'}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid var(--border-color)">${esc(p.propertyLocation)||'—'}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid var(--border-color)">${esc(p.titleNumber)||'—'}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid var(--border-color)"><span style="font-size:11px;font-weight:700;color:${titlingStage(p.status).color}">${esc(titlingStage(p.status).label)}</span></td>
+  </tr>`).join('');
+  if(tlImpState.rows.length>50) tb.insertAdjacentHTML('beforeend', `<tr><td colspan="5" style="text-align:center;font-style:italic;color:var(--gray);padding:10px">… and ${tlImpState.rows.length-50} more (all will be imported)</td></tr>`);
+  else if(!tlImpState.rows.length) tb.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray)">Nothing to import.</td></tr>`;
+}
+async function tlImpDoImport(){
+  if(!tlImpState.rows.length){ showToast('No rows to import', true); return; }
+  if(!confirm(`Import ${tlImpState.rows.length} titling job${tlImpState.rows.length===1?'':'s'}?\n\nExact duplicates already saved will be skipped.`)) return;
+  const btn = document.getElementById('tlImpDoBtn'); const orig = btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Importing…';
+  try{
+    const res = await apiFetch('/api/admin/titling/bulk', { method:'POST', body: JSON.stringify(tlImpState.rows) });
+    const d = await res.json();
+    if(res.ok && d.success){
+      const result = document.getElementById('tlImpResult');
+      result.style.display=''; result.style.color='#10b981';
+      result.innerHTML = `<i class="fas fa-check-circle"></i> ${d.added} added · ${d.skipped||0} skipped · ${tlImpState.rows.length} total`;
+      showToast(`Imported ${d.added} of ${tlImpState.rows.length}`);
+      loadTitling();
+    } else showToast(d.error||'Import failed', true);
+  }catch(e){ showToast('Network error: '+e.message, true); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
 }
 
 function switchTab(name){
@@ -5687,6 +6138,8 @@ function switchTab(name){
   // Add titling button — gated by titling_manage, only on titling tab
   const addTitlingBtn=document.getElementById('addTitlingBtn');
   if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
+  const tlImportBtn=document.getElementById('tlImportBtn');
+  if(tlImportBtn)tlImportBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();
