@@ -1094,6 +1094,8 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Email Campaigns</a>
       <div class="sb-section" data-perm="titling_view" style="margin-top:6px;display:none">Titling</div>
       <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
+      <div class="sb-section" data-perm="notarial_view" style="margin-top:6px;display:none">Notarial</div>
+      <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
@@ -1473,6 +1475,132 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
                 </table>
               </div>
               <div id="tlImpResult" style="display:none;margin-top:14px;padding:12px 16px;border:1px solid var(--border-color);font-size:13px;font-weight:700"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTARIAL (Lucena notarial business — documents, clients & liquidation) -->
+      <div id="tab-notarial" style="display:none">
+        <div style="margin-bottom:14px;display:inline-flex;border:1px solid var(--border-color)">
+          <button class="hdr-btn" id="ntViewDocsBtn" onclick="setNotarialView('docs')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-file-signature"></i> Documents</button>
+          <button class="hdr-btn" id="ntViewCashBtn" onclick="setNotarialView('cash')" style="border:none"><i class="fas fa-coins"></i> Cash &amp; Liquidation</button>
+        </div>
+
+        <!-- DOCUMENTS VIEW -->
+        <div id="notarialDocsView">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialSearch" placeholder="Search client, document, doc/book no.…" oninput="renderNotarial()"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="hdr-btn" onclick="exportNotarialCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+              <button class="hdr-btn primary" id="addNotarialBtn" onclick="openNotarialModal()" style="display:none"><i class="fas fa-plus"></i> Add Notarized Doc</button>
+            </div>
+          </div>
+          <div id="notarialSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
+          <div id="notarialTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
+            <thead><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Payment</th><th>Actions</th></tr></thead>
+            <tbody id="notarialTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
+        </div>
+
+        <!-- CASH & LIQUIDATION VIEW -->
+        <div id="notarialCashView" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="fsearch" style="flex:1;min-width:200px;max-width:340px"><i class="fas fa-search"></i><input type="text" id="cashSearch" placeholder="Search person, purpose…" oninput="renderCash()"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="hdr-btn" onclick="exportCashCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+              <span id="cashAddWrap" style="display:none;gap:8px;flex-wrap:wrap">
+                <button class="hdr-btn primary" onclick="openCashModal('request')"><i class="fas fa-hand-holding-usd"></i> Cash request</button>
+                <button class="hdr-btn primary" onclick="openCashModal('fund_in')"><i class="fas fa-piggy-bank"></i> Client funds</button>
+                <button class="hdr-btn primary" onclick="openCashModal('receipt')"><i class="fas fa-plus"></i> Money received</button>
+              </span>
+            </div>
+          </div>
+          <div id="cashSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
+          <div id="cashFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
+            <thead><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
+            <tbody id="cashTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
+        </div>
+      </div>
+
+      <!-- NOTARIAL CASH ENTRY MODAL -->
+      <div class="modal-ov" id="cashModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:680px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="cashModalTitle">Cash entry</div>
+            <button onclick="closeCashModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:24px">
+            <input type="hidden" id="cashId"><input type="hidden" id="cashKind">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="fg" id="cashDirGroup" style="display:none"><label class="flbl">Direction</label><select id="cashDir" class="finput"><option value="fund_in">Money IN (received to hold)</option><option value="fund_out">Money OUT (returned / paid for client)</option></select></div>
+              <div class="fg"><label class="flbl">Date</label><input type="date" id="cashDate" class="finput"></div>
+              <div class="fg"><label class="flbl" id="cashPersonLbl">Person</label><input type="text" id="cashPerson" class="finput" placeholder="Name"></div>
+              <div class="fg" style="grid-column:1/-1"><label class="flbl" id="cashPurposeLbl">Purpose</label><input type="text" id="cashPurpose" class="finput" placeholder="What is this for?"></div>
+              <div class="fg"><label class="flbl">Amount (₱)</label><input type="number" min="0" step="any" id="cashAmount" class="finput" placeholder="0"></div>
+              <div class="fg" id="cashModeGroup"><label class="flbl">Mode of payment</label><select id="cashMode" class="finput"><option>Cash</option><option>GCash</option><option>Bank transfer</option><option>Check</option><option>Other</option></select></div>
+              <div class="fg" id="cashStatusGroup" style="display:none"><label class="flbl">Status</label><select id="cashStatus" class="finput" onchange="cashToggleSpent()"><option value="requested">Requested</option><option value="released">Released (given)</option><option value="liquidated">Liquidated (spent)</option></select></div>
+              <div class="fg" id="cashSpentGroup" style="display:none"><label class="flbl">Actually spent (₱)</label><input type="number" min="0" step="any" id="cashSpent" class="finput" placeholder="0"></div>
+            </div>
+            <div class="fg" style="margin-top:6px"><label class="flbl">Note</label><textarea id="cashNote" class="finput" rows="2" placeholder="Optional"></textarea></div>
+
+            <div class="tl-sec">Proof (photos / PDF)</div>
+            <div id="cashProofArea"></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+              <button class="hdr-btn" onclick="closeCashModal()">Cancel</button>
+              <button class="hdr-btn primary" id="cashSaveBtn" onclick="saveCash()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTARIAL ADD/EDIT MODAL -->
+      <div class="modal-ov" id="notarialModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:840px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="notarialModalTitle">Add Notarized Document</div>
+            <button onclick="closeNotarialModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:24px">
+            <input type="hidden" id="ntId">
+
+            <div class="tl-sec" style="margin-top:0">Client &amp; document</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div class="fg"><label class="flbl">Client name *</label><input type="text" id="ntClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
+              <div class="fg"><label class="flbl">Phone</label><input type="text" id="ntClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
+              <div class="fg"><label class="flbl">Email</label><input type="email" id="ntClientEmail" class="finput" placeholder="client@email.com"></div>
+              <div class="fg"><label class="flbl">Document type</label><input type="text" list="ntDocTypeList" id="ntDocType" class="finput" placeholder="Pick or type"><datalist id="ntDocTypeList"></datalist></div>
+              <div class="fg"><label class="flbl">No. of copies</label><input type="number" min="0" step="1" id="ntCopies" class="finput" placeholder="1"></div>
+              <div class="fg"><label class="flbl">Notary public</label><input type="text" list="ntNotaryList" id="ntNotaryName" class="finput" placeholder="Commissioned notary"><datalist id="ntNotaryList"></datalist></div>
+            </div>
+
+            <div class="tl-sec">Notarial register</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+              <div class="fg"><label class="flbl">Doc No.</label><input type="text" id="ntDocNo" class="finput" placeholder="e.g. 123"></div>
+              <div class="fg"><label class="flbl">Page No.</label><input type="text" id="ntPageNo" class="finput" placeholder="e.g. 25"></div>
+              <div class="fg"><label class="flbl">Book No.</label><input type="text" id="ntBookNo" class="finput" placeholder="e.g. V"></div>
+              <div class="fg"><label class="flbl">Series of</label><input type="text" id="ntSeries" class="finput" placeholder="e.g. 2026"></div>
+              <div class="fg"><label class="flbl">Date notarized</label><input type="date" id="ntDate" class="finput"></div>
+              <div class="fg"><label class="flbl">Fee (₱)</label><input type="number" min="0" step="any" id="ntFee" class="finput" oninput="notarialPayRecalc()" placeholder="0"></div>
+            </div>
+
+            <div class="tl-sec">Payments</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <label class="flbl" style="margin:0">Payments received (with mode of payment)</label>
+              <button type="button" class="hdr-btn" onclick="ntAddPayment()"><i class="fas fa-plus"></i> Add payment</button>
+            </div>
+            <div id="ntPayments"></div>
+            <div id="ntPaySummary" style="margin-top:14px"></div>
+
+            <div class="fg" style="margin-top:16px"><label class="flbl">Remarks</label><textarea id="ntNotes" class="finput" rows="2" placeholder="Notes, follow-ups…"></textarea></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+              <button class="hdr-btn" onclick="closeNotarialModal()">Cancel</button>
+              <button class="hdr-btn primary" id="ntSaveBtn" onclick="saveNotarial()"><i class="fas fa-save"></i> Save</button>
             </div>
           </div>
         </div>
@@ -2068,7 +2196,9 @@ const PERM_DEFS = [
   { key: 'submissions_delete',      name: 'Delete Submissions',      desc: 'Can permanently delete a submission' },
   { key: 'bulkmail_send',           name: 'Send Email Campaigns',   desc: 'Can compose + send email campaigns to subscribers / pasted lists' },
   { key: 'titling_view',            name: 'View Titling',            desc: 'Can see the Titling tab and titling jobs' },
-  { key: 'titling_manage',          name: 'Manage Titling',          desc: 'Can add, edit, and delete titling jobs' }
+  { key: 'titling_manage',          name: 'Manage Titling',          desc: 'Can add, edit, and delete titling jobs' },
+  { key: 'notarial_view',           name: 'View Notarial',           desc: 'Can see the Notarial tab and records' },
+  { key: 'notarial_manage',         name: 'Manage Notarial',         desc: 'Can add, edit, and delete notarial records' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -2281,6 +2411,7 @@ function loadAll(){
   if(hasPerm('tasks_view')) loadTasksData();
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
+  if(hasPerm('notarial_view')) loadNotarial();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
 
@@ -6114,13 +6245,416 @@ async function tlImpDoImport(){
   finally{ btn.disabled=false; btn.innerHTML=orig; }
 }
 
+// ════════════════════════════════════════════════════════════
+// NOTARIAL BUSINESS (Lucena) — documents & clients
+// ════════════════════════════════════════════════════════════
+let notarialData = [];
+let notarialFilter = 'all';
+let ntPaymentsData = [];
+const NOTARIAL_PAYSTATUS = [
+  { key:'unpaid',  label:'Unpaid',  color:'#ef4444' },
+  { key:'partial', label:'Partial', color:'#d98324' },
+  { key:'paid',    label:'Paid',    color:'#10b981' }
+];
+const NOTARIAL_DOCTYPES = ['Deed of Absolute Sale','Deed of Donation','Extra-Judicial Settlement','Special Power of Attorney (SPA)','General Power of Attorney','Affidavit of Loss','Affidavit','Acknowledgment','Jurat',"Secretary's Certificate",'Board Resolution','Contract of Lease','Promissory Note','Loan Agreement','Joint Affidavit','Sworn Statement','Other'];
+const NOTARIAL_MODES = ['Cash','GCash','Bank transfer','Check','Other'];
+function setNotarialFilter(k){ notarialFilter = (notarialFilter===k)?'all':k; renderNotarial(); }
+function notarialPaidOf(j){ return (j.payments||[]).reduce((s,p)=>s+(Number(p.amount)||0),0); }
+function notarialStatusOf(j){ const fee=Number(j.fee)||0, paid=notarialPaidOf(j); if(paid<=0&&fee>0) return 'unpaid'; if(paid+0.005<fee) return 'partial'; return 'paid'; }
+function notarialStatusMeta(key){ return NOTARIAL_PAYSTATUS.find(s=>s.key===key)||NOTARIAL_PAYSTATUS[0]; }
+
+async function loadNotarial(){
+  if(!hasPerm('notarial_view')) return;
+  try{
+    const data = await apiFetch('/api/admin/notarial').then(r=>r.json());
+    notarialData = Array.isArray(data) ? data : [];
+    const badge = document.getElementById('notarialBadge');
+    if(badge){ const due = notarialData.filter(j=>notarialStatusOf(j)!=='paid').length; badge.textContent = due; badge.style.display = due>0?'':'none'; }
+    renderNotarial();
+  }catch(e){ console.error('loadNotarial', e); }
+}
+
+function renderNotarial(){
+  const tbody = document.getElementById('notarialTbody');
+  if(!tbody) return;
+  const canManage = hasPerm('notarial_manage');
+
+  const sum = document.getElementById('notarialSummary');
+  if(sum){
+    const card = (key,label,count,color)=>{
+      const active = notarialFilter===key ? `box-shadow:inset 0 0 0 2px ${color}` : '';
+      return `<div onclick="setNotarialFilter('${key}')" title="Filter by ${esc(label)}" style="cursor:pointer;border:1px solid var(--border-color);padding:10px 12px;background:var(--card-bg);${active}"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${esc(label)}</div><div style="font-size:22px;font-weight:700;color:${color}">${count}</div></div>`;
+    };
+    sum.innerHTML = card('all','All documents',notarialData.length,'var(--gold)')
+      + NOTARIAL_PAYSTATUS.map(s=>card(s.key,s.label,notarialData.filter(j=>notarialStatusOf(j)===s.key).length,s.color)).join('');
+  }
+
+  const q = (document.getElementById('notarialSearch')?.value||'').toLowerCase().trim();
+  let rows = notarialData;
+  if(notarialFilter!=='all') rows = rows.filter(j=>notarialStatusOf(j)===notarialFilter);
+  if(q) rows = rows.filter(j=>[j.clientName,j.documentType,j.docNo,j.pageNo,j.bookNo,j.series,j.notaryName,j.clientPhone,j.clientEmail].some(v=>(v||'').toString().toLowerCase().includes(q)));
+
+  const totals = document.getElementById('notarialTotals');
+  if(totals){
+    let fees=0,collected=0,outstanding=0;
+    rows.forEach(j=>{ const fee=Number(j.fee)||0,paid=notarialPaidOf(j); fees+=fee; collected+=paid; outstanding+=Math.max(0,fee-paid); });
+    const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:18px;font-weight:700;color:${c}">${fmt(v)}</div></div>`;
+    const suffix=(notarialFilter!=='all'||q)?' (shown)':'';
+    totals.innerHTML = box('Total fees'+suffix,fees,'inherit')+box('Collected'+suffix,collected,'#10b981')+box('Outstanding'+suffix,outstanding,'#ef4444');
+  }
+
+  if(!rows.length){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-file-signature"></i><p>${notarialData.length?'No records match this filter':'No notarized documents yet'}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(j=>{
+    const fee=Number(j.fee)||0, paid=notarialPaidOf(j), bal=fee-paid;
+    const st=notarialStatusMeta(notarialStatusOf(j));
+    const reg=[j.docNo&&('Doc '+j.docNo), j.pageNo&&('Pg '+j.pageNo), j.bookNo&&('Bk '+j.bookNo), j.series&&('S.'+j.series)].filter(Boolean).join(' · ')||'—';
+    const contact=[];
+    if(j.clientPhone) contact.push(`<a href="tel:${esc(j.clientPhone)}" title="Call" style="color:var(--gray)"><i class="fas fa-phone-alt"></i></a>`);
+    if(j.clientEmail) contact.push(`<a href="mailto:${esc(j.clientEmail)}" title="Email" style="color:var(--gray)"><i class="fas fa-envelope"></i></a>`);
+    return `<tr>
+      <td><strong style="font-size:13px">${esc(j.clientName)}</strong>${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td style="font-size:12px">${esc(j.documentType||'—')}${j.copies>1?`<div style="font-size:10px;color:var(--gray)">${j.copies} copies</div>`:''}</td>
+      <td style="font-size:11px;color:var(--gray)">${esc(reg)}</td>
+      <td style="font-size:11px;white-space:nowrap;color:var(--gray)">${j.dateNotarized?fmtDateShort(j.dateNotarized):'—'}</td>
+      <td style="font-size:12px;white-space:nowrap">${fmt(fee)}</td>
+      <td style="white-space:nowrap"><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${st.color}">${esc(st.label)}</span>${bal>0.005?`<div style="font-size:10px;color:#ef4444;margin-top:2px">${fmt(bal)} due</div>`:''}</td>
+      <td><div class="act-btns" style="display:flex;gap:5px">
+        ${canManage?`<button class="act act-view" onclick="openNotarialModal('${j._id}')" title="Edit"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteNotarial('${j._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function ntRenderPayments(){
+  const c=document.getElementById('ntPayments'); if(!c) return;
+  c.innerHTML = ntPaymentsData.length ? ntPaymentsData.map((p,i)=>`
+    <div class="tl-liq-row" style="grid-template-columns:140px 130px 1fr 110px 34px">
+      <input type="date" class="finput" value="${dateToInput(p.date)}" onchange="ntPaymentsData[${i}].date=this.value">
+      <select class="finput" onchange="ntPaymentsData[${i}].mode=this.value">${NOTARIAL_MODES.map(m=>`<option ${p.mode===m?'selected':''}>${m}</option>`).join('')}</select>
+      <input type="text" class="finput" placeholder="e.g. downpayment" value="${escA(p.label||'')}" oninput="ntPaymentsData[${i}].label=this.value">
+      <input type="number" min="0" step="any" class="finput" placeholder="0" value="${p.amount||''}" oninput="ntPaymentsData[${i}].amount=parseFloat(this.value)||0;notarialPayRecalc()">
+      <button type="button" class="act act-del" title="Remove" onclick="ntPaymentsData.splice(${i},1);ntRenderPayments();notarialPayRecalc()"><i class="fas fa-times"></i></button>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--gray);margin-bottom:6px">No payments recorded yet.</div>';
+}
+function ntAddPayment(){ ntPaymentsData.push({date:todayInput(),mode:'Cash',label:'',amount:0}); ntRenderPayments(); }
+function notarialPayRecalc(){
+  const fee=parseFloat(document.getElementById('ntFee').value)||0;
+  const paid=ntPaymentsData.reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const bal=fee-paid;
+  let label,color;
+  if(paid<=0&&fee>0){ label='Unpaid'; color='#ef4444'; }
+  else if(bal>0.005){ label='Partial'; color='#d98324'; }
+  else { label='Fully paid'; color='#10b981'; }
+  const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:9px 12px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:16px;font-weight:700;color:${c||'inherit'}">${typeof v==='number'?fmt(v):v}</div></div>`;
+  const el=document.getElementById('ntPaySummary'); if(!el) return;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+    ${box('Fee',fee,'inherit')}${box('Paid',paid,'#10b981')}${box('Balance',Math.max(0,bal),bal>0.005?'#ef4444':'#10b981')}${box('Status',label,color)}
+  </div>`;
+}
+function ntFillList(id, defaults, field){
+  const used=[...new Set(notarialData.map(j=>(j[field]||'').trim()).filter(Boolean))];
+  const dl=document.getElementById(id);
+  if(dl) dl.innerHTML=[...new Set([...defaults,...used])].map(v=>`<option value="${escA(v)}"></option>`).join('');
+}
+function openNotarialModal(id){
+  if(!hasPerm('notarial_manage')){ showToast('You don\'t have permission to manage notarial records', true); return; }
+  const j = id ? notarialData.find(x=>x._id===id) : null;
+  document.getElementById('notarialModalTitle').textContent = j ? 'Edit Notarized Document' : 'Add Notarized Document';
+  document.getElementById('ntId').value = j ? j._id : '';
+  document.getElementById('ntClientName').value=(j&&j.clientName)||'';
+  document.getElementById('ntClientPhone').value=(j&&j.clientPhone)||'';
+  document.getElementById('ntClientEmail').value=(j&&j.clientEmail)||'';
+  document.getElementById('ntDocType').value=(j&&j.documentType)||'';
+  document.getElementById('ntCopies').value=(j&&j.copies!=null)?j.copies:'';
+  document.getElementById('ntNotaryName').value=(j&&j.notaryName)||'';
+  document.getElementById('ntDocNo').value=(j&&j.docNo)||'';
+  document.getElementById('ntPageNo').value=(j&&j.pageNo)||'';
+  document.getElementById('ntBookNo').value=(j&&j.bookNo)||'';
+  document.getElementById('ntSeries').value=(j&&j.series) ? j.series : (j ? '' : String(new Date().getFullYear()));
+  document.getElementById('ntDate').value=(j&&j.dateNotarized)?dateToInput(j.dateNotarized):'';
+  document.getElementById('ntFee').value=(j&&j.fee)||'';
+  document.getElementById('ntNotes').value=(j&&j.notes)||'';
+  ntFillList('ntDocTypeList', NOTARIAL_DOCTYPES, 'documentType');
+  ntFillList('ntNotaryList', [], 'notaryName');
+  ntPaymentsData = (j&&Array.isArray(j.payments)) ? j.payments.map(p=>({date:p.date||'',mode:p.mode||'Cash',label:p.label||'',amount:Number(p.amount)||0})) : [];
+  ntRenderPayments();
+  notarialPayRecalc();
+  document.getElementById('notarialModal').style.display='flex';
+}
+function closeNotarialModal(){ document.getElementById('notarialModal').style.display='none'; }
+
+async function saveNotarial(){
+  const name=document.getElementById('ntClientName').value.trim();
+  if(!name){ showToast('Client name is required', true); document.getElementById('ntClientName').focus(); return; }
+  const payments = ntPaymentsData.map(p=>({date:p.date||null,mode:(p.mode||'Cash').trim(),label:(p.label||'').trim(),amount:Number(p.amount)||0})).filter(p=>p.amount||p.label||p.date);
+  const nd=document.getElementById('ntDate').value;
+  const payload={
+    clientName:name,
+    clientPhone:document.getElementById('ntClientPhone').value.trim(),
+    clientEmail:document.getElementById('ntClientEmail').value.trim(),
+    documentType:document.getElementById('ntDocType').value.trim(),
+    docNo:document.getElementById('ntDocNo').value.trim(),
+    pageNo:document.getElementById('ntPageNo').value.trim(),
+    bookNo:document.getElementById('ntBookNo').value.trim(),
+    series:document.getElementById('ntSeries').value.trim(),
+    dateNotarized:nd||null,
+    copies:parseInt(document.getElementById('ntCopies').value,10)||0,
+    notaryName:document.getElementById('ntNotaryName').value.trim(),
+    fee:parseFloat(document.getElementById('ntFee').value)||0,
+    notes:document.getElementById('ntNotes').value,
+    payments
+  };
+  const id=document.getElementById('ntId').value;
+  const btn=document.getElementById('ntSaveBtn'); const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try{
+    const res=await apiFetch(id?`/api/admin/notarial/${id}`:'/api/admin/notarial',{method:id?'PUT':'POST',body:JSON.stringify(payload)});
+    const d=await res.json();
+    if(res.ok&&(d._id||d.success)){ showToast(id?'Notarial record updated':'Notarial record added'); closeNotarialModal(); loadNotarial(); }
+    else showToast(d.error||'Save failed', true);
+  }catch(e){ showToast('Network error: '+e.message, true); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+async function deleteNotarial(id){
+  if(!hasPerm('notarial_manage')){ showToast('No permission', true); return; }
+  if(!confirm('Delete this notarial record? This cannot be undone.')) return;
+  try{
+    const res=await apiFetch(`/api/admin/notarial/${id}`,{method:'DELETE'});
+    const d=await res.json();
+    if(res.ok&&d.success){ showToast('Deleted'); loadNotarial(); }
+    else showToast(d.error||'Delete failed', true);
+  }catch(e){ showToast('Error deleting', true); }
+}
+function exportNotarialCSV(){
+  if(!notarialData.length){ showToast('No notarial records to export', true); return; }
+  const csvDate=d=>d?new Date(d).toLocaleDateString('en-PH'):'';
+  const rows=[['Client','Phone','Email','Document','Doc No.','Page No.','Book No.','Series','Date Notarized','Copies','Notary','Fee','Paid','Balance','Status','Modes','Remarks']];
+  notarialData.forEach(j=>{
+    const fee=Number(j.fee)||0,paid=notarialPaidOf(j);
+    const modes=[...new Set((j.payments||[]).map(p=>p.mode).filter(Boolean))].join(', ');
+    rows.push([j.clientName||'',j.clientPhone||'',j.clientEmail||'',j.documentType||'',j.docNo||'',j.pageNo||'',j.bookNo||'',j.series||'',csvDate(j.dateNotarized),j.copies||'',j.notaryName||'',fee,paid,Math.max(0,fee-paid),notarialStatusMeta(notarialStatusOf(j)).label,modes,(j.notes||'').replace(/\r?\n/g,' ')]);
+  });
+  downloadCSV('glra-notarial-'+new Date().toISOString().slice(0,10)+'.csv', rows);
+  showToast(`Exported ${notarialData.length} notarial record${notarialData.length===1?'':'s'}`);
+}
+
+// ════════════════════════════════════════════════════════════
+// NOTARIAL CASH LEDGER / LIQUIDATION
+// ════════════════════════════════════════════════════════════
+let cashData = [];
+let cashFilter = 'all';
+let notarialView = 'docs';
+let cashCurrent = null;   // entry object open in the modal (for proof rendering)
+const CASH_KINDS = [
+  { key:'request',  label:'Cash request', icon:'fa-hand-holding-usd', color:'#d98324' },
+  { key:'fund_in',  label:'Funds in',     icon:'fa-piggy-bank',       color:'#10b981' },
+  { key:'fund_out', label:'Funds out',    icon:'fa-money-bill-wave',  color:'#3b82f6' },
+  { key:'receipt',  label:'Received',     icon:'fa-receipt',          color:'#8b5cf6' }
+];
+function cashKindMeta(k){ return CASH_KINDS.find(x=>x.key===k)||CASH_KINDS[0]; }
+function cashAmountOf(e){ return Number(e.amount)||0; }
+function setCashFilter(k){ cashFilter = (cashFilter===k)?'all':k; renderCash(); }
+function setNotarialView(v){
+  notarialView = (v==='cash')?'cash':'docs';
+  document.getElementById('notarialDocsView').style.display = notarialView==='cash'?'none':'';
+  document.getElementById('notarialCashView').style.display = notarialView==='cash'?'':'none';
+  const db=document.getElementById('ntViewDocsBtn'), cb=document.getElementById('ntViewCashBtn');
+  if(db) db.style.cssText='border:none;border-right:1px solid var(--border-color);'+(notarialView==='docs'?'background:var(--gold);color:#0a0a0a':'');
+  if(cb) cb.style.cssText='border:none;'+(notarialView==='cash'?'background:var(--gold);color:#0a0a0a':'');
+  if(notarialView==='cash') loadCash();
+}
+
+async function loadCash(){
+  if(!hasPerm('notarial_view')) return;
+  try{
+    const data = await apiFetch('/api/admin/cash').then(r=>r.json());
+    cashData = Array.isArray(data) ? data : [];
+    renderCash();
+  }catch(e){ console.error('loadCash', e); }
+}
+
+function renderCash(){
+  const tbody=document.getElementById('cashTbody'); if(!tbody) return;
+  const canManage=hasPerm('notarial_manage');
+  const addWrap=document.getElementById('cashAddWrap'); if(addWrap) addWrap.style.display = canManage?'inline-flex':'none';
+
+  const sumEl=document.getElementById('cashSummary');
+  if(sumEl){
+    const released = cashData.filter(e=>e.kind==='request'&&e.status==='released').reduce((s,e)=>s+cashAmountOf(e),0);
+    const held = cashData.filter(e=>e.kind==='fund_in').reduce((s,e)=>s+cashAmountOf(e),0) - cashData.filter(e=>e.kind==='fund_out').reduce((s,e)=>s+cashAmountOf(e),0);
+    const received = cashData.filter(e=>e.kind==='receipt').reduce((s,e)=>s+cashAmountOf(e),0);
+    const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:18px;font-weight:700;color:${c}">${fmt(v)}</div></div>`;
+    sumEl.innerHTML = box('Cash out (unliquidated)',released,'#d98324')+box('Client funds held',held,'#10b981')+box('Money received',received,'#8b5cf6');
+  }
+  const fEl=document.getElementById('cashFilters');
+  if(fEl){
+    const chip=(k,label)=>`<button class="hdr-btn" onclick="setCashFilter('${k}')" style="${cashFilter===k?'background:var(--gold);color:#0a0a0a':''}">${label}</button>`;
+    fEl.innerHTML = chip('all','All')+CASH_KINDS.map(c=>chip(c.key,c.label)).join('');
+  }
+
+  const q=(document.getElementById('cashSearch')?.value||'').toLowerCase().trim();
+  let rows=cashData;
+  if(cashFilter!=='all') rows=rows.filter(e=>e.kind===cashFilter);
+  if(q) rows=rows.filter(e=>[e.person,e.purpose,e.note,e.mode].some(v=>(v||'').toLowerCase().includes(q)));
+
+  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-coins"></i><p>${cashData.length?'No entries match this filter':'No cash entries yet'}</p></div></td></tr>`; return; }
+  tbody.innerHTML=rows.map(e=>{
+    const m=cashKindMeta(e.kind);
+    const statusTxt = e.kind==='request' ? (e.status||'requested') : '';
+    const proofN=(e.proof||[]).length;
+    return `<tr>
+      <td style="font-size:11px;white-space:nowrap;color:var(--gray)">${e.date?fmtDateShort(e.date):'—'}</td>
+      <td><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${m.color}"><i class="fas ${m.icon}"></i> ${esc(m.label)}</span></td>
+      <td style="font-size:12px">${esc(e.person||'—')}${e.purpose?`<div style="font-size:10px;color:var(--gray)">${esc(e.purpose)}</div>`:''}</td>
+      <td style="font-size:12px;font-weight:700;white-space:nowrap">${fmt(cashAmountOf(e))}${(e.kind==='request'&&e.status==='liquidated'&&e.spent)?`<div style="font-size:10px;color:var(--gray)">spent ${fmt(e.spent)}</div>`:''}</td>
+      <td style="font-size:11px;color:var(--gray)">${esc(e.mode||'—')}</td>
+      <td style="font-size:11px">${statusTxt?`<span style="text-transform:capitalize">${esc(statusTxt)}</span>`:'<span style="color:var(--gray)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--gray)">${proofN?`<i class="fas fa-paperclip"></i> ${proofN}`:'—'}</td>
+      <td><div class="act-btns" style="display:flex;gap:5px">${canManage?`<button class="act act-view" onclick="openCashModal(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteCash('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function cashToggleSpent(){
+  const st=document.getElementById('cashStatus').value;
+  document.getElementById('cashSpentGroup').style.display = (st==='liquidated')?'':'none';
+}
+function openCashModal(kind, id){
+  if(!hasPerm('notarial_manage')){ showToast('No permission to manage cash entries', true); return; }
+  const e = id ? cashData.find(x=>x._id===id) : null;
+  cashCurrent = e || null;
+  const k = e ? e.kind : kind;
+  document.getElementById('cashKind').value = k;
+  document.getElementById('cashId').value = e ? e._id : '';
+  const titleMap={request:'Cash request',fund_in:'Client funds',fund_out:'Client funds',receipt:'Money received'};
+  document.getElementById('cashModalTitle').textContent = (e?'Edit — ':'') + (titleMap[k]||'Cash entry');
+  document.getElementById('cashDirGroup').style.display = (k==='fund_in'||k==='fund_out')?'':'none';
+  document.getElementById('cashStatusGroup').style.display = (k==='request')?'':'none';
+  document.getElementById('cashDir').value = (k==='fund_out')?'fund_out':'fund_in';
+  const personLbl={request:'Requested by',fund_in:'Client / person',fund_out:'Client / person',receipt:'Received from'}[k]||'Person';
+  document.getElementById('cashPersonLbl').textContent = personLbl;
+  document.getElementById('cashPurposeLbl').textContent = (k==='request')?'What for (e.g. bond paper)':'Purpose';
+  document.getElementById('cashDate').value = (e&&e.date) ? dateToInput(e.date) : todayInput();
+  document.getElementById('cashPerson').value = (e&&e.person)||'';
+  document.getElementById('cashPurpose').value = (e&&e.purpose)||'';
+  document.getElementById('cashAmount').value = (e&&e.amount)||'';
+  document.getElementById('cashMode').value = (e&&e.mode)||'Cash';
+  document.getElementById('cashStatus').value = (e&&e.status&&e.status!=='done')?e.status:'requested';
+  document.getElementById('cashSpent').value = (e&&e.spent)||'';
+  document.getElementById('cashNote').value = (e&&e.note)||'';
+  cashToggleSpent();
+  renderCashProof();
+  document.getElementById('cashModal').style.display='flex';
+}
+function closeCashModal(){ document.getElementById('cashModal').style.display='none'; cashCurrent=null; }
+
+function renderCashProof(){
+  const area=document.getElementById('cashProofArea'); if(!area) return;
+  const id=document.getElementById('cashId').value;
+  if(!id){ area.innerHTML='<div style="font-size:12px;color:var(--gray)">Save this entry first, then you can attach a photo or PDF as proof.</div>'; return; }
+  const proofs=(cashCurrent&&cashCurrent.proof)||[];
+  const items = proofs.map(p=>{
+    const isImg=(p.resourceType==='image')|| /\.(jpe?g|png|webp|gif)$/i.test(p.url||'');
+    const thumb = isImg ? `<img src="${esc(p.url)}" style="width:60px;height:60px;object-fit:cover;border:1px solid var(--border-color)">` : `<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color)"><i class="fas fa-file-pdf" style="font-size:22px;color:var(--gray)"></i></div>`;
+    return `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border-color);padding:6px;background:var(--card-bg)"><a href="${esc(p.url)}" target="_blank" rel="noopener">${thumb}</a><div style="flex:1;font-size:11px;color:var(--gray);word-break:break-all">${esc(p.filename||'proof')}</div><button type="button" class="act act-del" title="Remove" onclick="deleteCashProof('${esc(p._id)}')"><i class="fas fa-times"></i></button></div>`;
+  }).join('');
+  area.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-bottom:10px">${items||'<div style="font-size:12px;color:var(--gray)">No proof attached yet.</div>'}</div>
+    <label class="hdr-btn" style="cursor:pointer;display:inline-block"><i class="fas fa-upload"></i> Add proof <input type="file" accept="image/*,application/pdf" style="display:none" onchange="uploadCashProof(this)"></label>`;
+}
+async function uploadCashProof(input){
+  const id=document.getElementById('cashId').value;
+  if(!id || !input.files || !input.files[0]) return;
+  const file=input.files[0];
+  if(file.size>20*1024*1024){ showToast('File too large (max 20MB)', true); input.value=''; return; }
+  const fd=new FormData(); fd.append('file', file);
+  showToast('Uploading proof…');
+  try{
+    const token=getToken();
+    const res=await fetch('/api/admin/cash/'+id+'/proof',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    if(!res.ok){ const er=await res.json().catch(()=>({})); throw new Error(er.error||'Upload failed'); }
+    const fresh=await res.json();
+    cashCurrent=fresh;
+    const idx=cashData.findIndex(x=>x._id===id); if(idx>=0) cashData[idx]=fresh;
+    renderCashProof(); renderCash();
+    showToast('Proof uploaded');
+  }catch(e){ showToast(e.message||'Upload failed', true); }
+  finally{ input.value=''; }
+}
+async function deleteCashProof(proofId){
+  const id=document.getElementById('cashId').value; if(!id) return;
+  if(!confirm('Remove this proof?')) return;
+  try{
+    const res=await apiFetch('/api/admin/cash/'+id+'/proof/'+proofId,{method:'DELETE'});
+    const fresh=await res.json();
+    if(!res.ok) throw new Error(fresh.error||'');
+    cashCurrent=fresh;
+    const idx=cashData.findIndex(x=>x._id===id); if(idx>=0) cashData[idx]=fresh;
+    renderCashProof(); renderCash();
+  }catch(e){ showToast('Could not remove', true); }
+}
+
+async function saveCash(){
+  let kind=document.getElementById('cashKind').value;
+  if(kind==='fund_in'||kind==='fund_out') kind=document.getElementById('cashDir').value;
+  const amount=parseFloat(document.getElementById('cashAmount').value)||0;
+  const cd=document.getElementById('cashDate').value;
+  const payload={
+    kind,
+    date: cd||null,
+    person: document.getElementById('cashPerson').value.trim(),
+    purpose: document.getElementById('cashPurpose').value.trim(),
+    amount,
+    mode: document.getElementById('cashMode').value,
+    note: document.getElementById('cashNote').value,
+    status: (kind==='request') ? document.getElementById('cashStatus').value : 'done',
+    spent: (kind==='request') ? (parseFloat(document.getElementById('cashSpent').value)||0) : 0
+  };
+  if(!payload.person && !payload.purpose && !amount){ showToast('Enter at least an amount or a name', true); return; }
+  const id=document.getElementById('cashId').value;
+  const btn=document.getElementById('cashSaveBtn'); const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try{
+    const res=await apiFetch(id?`/api/admin/cash/${id}`:'/api/admin/cash',{method:id?'PUT':'POST',body:JSON.stringify(payload)});
+    const d=await res.json();
+    if(res.ok&&(d._id||d.success)){
+      showToast(id?'Entry updated':'Entry saved — you can now attach proof');
+      if(!id && d._id){
+        cashData.unshift(d); cashCurrent=d;
+        document.getElementById('cashId').value=d._id;
+        document.getElementById('cashKind').value=d.kind;
+        renderCashProof(); renderCash();
+      } else { closeCashModal(); loadCash(); }
+    } else showToast(d.error||'Save failed', true);
+  }catch(e){ showToast('Network error: '+e.message, true); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+async function deleteCash(id){
+  if(!hasPerm('notarial_manage')){ showToast('No permission', true); return; }
+  if(!confirm('Delete this cash entry and its proof? This cannot be undone.')) return;
+  try{
+    const res=await apiFetch(`/api/admin/cash/${id}`,{method:'DELETE'});
+    const d=await res.json();
+    if(res.ok&&d.success){ showToast('Deleted'); loadCash(); }
+    else showToast(d.error||'Delete failed', true);
+  }catch(e){ showToast('Error deleting', true); }
+}
+function exportCashCSV(){
+  if(!cashData.length){ showToast('No cash entries to export', true); return; }
+  const csvDate=d=>d?new Date(d).toLocaleDateString('en-PH'):'';
+  const rows=[['Date','Type','Person','Purpose','Amount','Mode','Status','Spent','Proof count','Note']];
+  cashData.forEach(e=>rows.push([csvDate(e.date),cashKindMeta(e.kind).label,e.person||'',e.purpose||'',cashAmountOf(e),e.mode||'',e.kind==='request'?(e.status||''):'',e.spent||'',(e.proof||[]).length,(e.note||'').replace(/\r?\n/g,' ')]));
+  downloadCSV('glra-notarial-cash-'+new Date().toISOString().slice(0,10)+'.csv', rows);
+  showToast(`Exported ${cashData.length} cash entr${cashData.length===1?'y':'ies'}`);
+}
+
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -6140,6 +6674,8 @@ function switchTab(name){
   if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   const tlImportBtn=document.getElementById('tlImportBtn');
   if(tlImportBtn)tlImportBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
+  const addNotarialBtn=document.getElementById('addNotarialBtn');
+  if(addNotarialBtn)addNotarialBtn.style.display=(name==='notarial'&&hasPerm('notarial_manage'))?'':'none';
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();
@@ -6164,6 +6700,11 @@ function switchTab(name){
   // Refresh titling jobs on tab visit
   if(name==='titling' && hasPerm('titling_view')){
     loadTitling();
+  }
+  // Refresh notarial records on tab visit
+  if(name==='notarial' && hasPerm('notarial_view')){
+    loadNotarial();
+    setNotarialView(notarialView);
   }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');

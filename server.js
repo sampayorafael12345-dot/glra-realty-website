@@ -251,7 +251,7 @@ const db = require('./server/db');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
-  TitlingCase,
+  TitlingCase, NotarialJob, CashEntry,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
 
@@ -1389,6 +1389,171 @@ app.post('/api/admin/titling/bulk', verifyToken, requirePermission('titling_mana
     await logAudit(req, 'BULK_CREATE', 'TitlingCase', '', `${added} added`, null);
     res.json({ success: true, added, skipped });
   } catch (err) { console.error('titling bulk error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── NOTARIAL JOBS (Lucena notarial business — documents & clients) ──
+function sanitizeNotarialBody(b) {
+  const out = {};
+  const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  if (b.clientName !== undefined) out.clientName = str(b.clientName, 200);
+  if (b.clientPhone !== undefined) out.clientPhone = str(b.clientPhone, 50);
+  if (b.clientEmail !== undefined) out.clientEmail = str(b.clientEmail, 120).toLowerCase();
+  if (b.documentType !== undefined) out.documentType = str(b.documentType, 120);
+  if (b.docNo !== undefined) out.docNo = str(b.docNo, 40);
+  if (b.pageNo !== undefined) out.pageNo = str(b.pageNo, 40);
+  if (b.bookNo !== undefined) out.bookNo = str(b.bookNo, 40);
+  if (b.series !== undefined) out.series = str(b.series, 12);
+  if (b.notaryName !== undefined) out.notaryName = str(b.notaryName, 200);
+  if (b.notes !== undefined) out.notes = String(b.notes || '').slice(0, 5000);
+  if (b.dateNotarized !== undefined) {
+    if (b.dateNotarized === '' || b.dateNotarized === null) out.dateNotarized = null;
+    else { const d = new Date(b.dateNotarized); if (!isNaN(d.getTime())) out.dateNotarized = d; }
+  }
+  if (b.copies !== undefined) { const n = parseInt(b.copies, 10); if (!isNaN(n) && n >= 0) out.copies = n; }
+  if (b.fee !== undefined && b.fee !== null && b.fee !== '') { const n = Number(b.fee); if (!isNaN(n) && n >= 0) out.fee = n; }
+  if (Array.isArray(b.payments)) {
+    out.payments = b.payments.slice(0, 100).map(p => {
+      const row = { amount: Math.max(0, Number(p && p.amount) || 0), mode: str(p && p.mode, 40) || 'Cash', label: str(p && p.label, 200), date: null };
+      if (p && p.date) { const d = new Date(p.date); if (!isNaN(d.getTime())) row.date = d; }
+      return row;
+    }).filter(p => p.amount || p.label || p.date);
+  }
+  return out;
+}
+
+app.get('/api/admin/notarial', verifyToken, requirePermission('notarial_view'), async (req, res) => {
+  try {
+    const jobs = await NotarialJob.find().sort({ createdAt: -1 }).lean();
+    res.json(jobs);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+app.post('/api/admin/notarial', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const data = sanitizeNotarialBody(req.body || {});
+    if (!data.clientName) return res.status(400).json({ error: 'Client name is required' });
+    data.createdBy = req.user?.email || '';
+    data.createdByName = req.user?.name || '';
+    const doc = await NotarialJob.create(data);
+    await logAudit(req, 'CREATE', 'NotarialJob', String(doc._id), doc.clientName, null);
+    res.json(doc);
+  } catch (err) { console.error('notarial create error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.put('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const data = sanitizeNotarialBody(req.body || {});
+    if (data.clientName !== undefined && !data.clientName) return res.status(400).json({ error: 'Client name is required' });
+    const doc = await NotarialJob.findByIdAndUpdate(req.params.id, data, { new: true });
+    if (!doc) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req, 'UPDATE', 'NotarialJob', String(doc._id), doc.clientName, null);
+    res.json(doc);
+  } catch (err) { console.error('notarial update error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.delete('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const doc = await NotarialJob.findByIdAndDelete(req.params.id);
+    if (doc) await logAudit(req, 'DELETE', 'NotarialJob', String(doc._id), doc.clientName, null);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── NOTARIAL CASH LEDGER (liquidation: supply requests, client funds, receipts) ──
+const CASH_KINDS = ['request', 'fund_in', 'fund_out', 'receipt'];
+const CASH_STATUSES = ['requested', 'released', 'liquidated', 'done'];
+function sanitizeCashBody(b) {
+  const out = {};
+  const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  if (typeof b.kind === 'string' && CASH_KINDS.includes(b.kind)) out.kind = b.kind;
+  if (b.person !== undefined) out.person = str(b.person, 200);
+  if (b.purpose !== undefined) out.purpose = str(b.purpose, 300);
+  if (b.mode !== undefined) out.mode = str(b.mode, 40) || 'Cash';
+  if (b.note !== undefined) out.note = String(b.note || '').slice(0, 2000);
+  if (typeof b.status === 'string' && CASH_STATUSES.includes(b.status)) out.status = b.status;
+  if (b.date !== undefined) {
+    if (b.date === '' || b.date === null) out.date = null;
+    else { const d = new Date(b.date); if (!isNaN(d.getTime())) out.date = d; }
+  }
+  ['amount', 'spent'].forEach(k => {
+    if (b[k] !== undefined && b[k] !== null && b[k] !== '') { const n = Number(b[k]); if (!isNaN(n) && n >= 0) out[k] = n; }
+  });
+  return out;
+}
+
+app.get('/api/admin/cash', verifyToken, requirePermission('notarial_view'), async (req, res) => {
+  try {
+    const list = await CashEntry.find({ business: 'notarial' }).sort({ date: -1, createdAt: -1 }).lean();
+    res.json(list);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+app.post('/api/admin/cash', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const data = sanitizeCashBody(req.body || {});
+    if (!data.kind) return res.status(400).json({ error: 'Entry type is required' });
+    data.business = 'notarial';
+    data.createdBy = req.user?.email || '';
+    data.createdByName = req.user?.name || '';
+    const doc = await CashEntry.create(data);
+    await logAudit(req, 'CREATE', 'CashEntry', String(doc._id), data.kind, null);
+    res.json(doc);
+  } catch (err) { console.error('cash create error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.put('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const data = sanitizeCashBody(req.body || {});
+    const doc = await CashEntry.findByIdAndUpdate(req.params.id, data, { new: true });
+    if (!doc) return res.status(404).json({ error: 'Not found' });
+    await logAudit(req, 'UPDATE', 'CashEntry', String(doc._id), doc.kind, null);
+    res.json(doc);
+  } catch (err) { console.error('cash update error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.delete('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const doc = await CashEntry.findById(req.params.id);
+    if (doc) {
+      for (const p of (doc.proof || [])) {
+        try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
+      }
+      await doc.deleteOne();
+      await logAudit(req, 'DELETE', 'CashEntry', String(doc._id), doc.kind, null);
+    }
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+// Attach a proof image/PDF — uploaded to Cloudinary, only the link is stored.
+app.post('/api/admin/cash/:id/proof', verifyToken, requirePermission('notarial_manage'), uploadAttachment.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file provided' });
+    const entry = await CashEntry.findById(req.params.id);
+    if (!entry) {
+      if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+      return res.status(404).json({ error: 'Not found' });
+    }
+    const result = await cloudinary.uploader.upload(req.file.path, { folder: 'glra_realty/notarial', resource_type: 'auto' });
+    if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+    entry.proof.push({
+      url: result.secure_url, publicId: result.public_id, filename: req.file.originalname || '',
+      size: result.bytes || 0, resourceType: result.resource_type || 'image',
+      uploadedByName: req.user.name || req.user.email || '', uploadedAt: new Date()
+    });
+    await entry.save();
+    await logAudit(req, 'UPLOAD', 'CashEntryProof', String(entry._id), req.file.originalname || '', { size: result.bytes });
+    res.json(entry);
+  } catch (err) {
+    console.error('cash proof upload error:', err);
+    if (req.file && fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const entry = await CashEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: 'Not found' });
+    const p = entry.proof.id(req.params.proofId);
+    if (!p) return res.status(404).json({ error: 'Proof not found' });
+    try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
+    p.deleteOne();
+    await entry.save();
+    res.json(entry);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
 app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscribers_delete'), async (req, res) => {

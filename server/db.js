@@ -223,27 +223,125 @@ const scheduledEmailSchema = new mongoose.Schema({
 
 // ── TITLING CASES (land-title transfer / processing jobs) ───
 // Tracks each title-transfer engagement through the PH government workflow.
-// `status` is the current stage; `documents` holds the names of collected docs.
+// Mirrors GLRA's "ACTIVE ACCOUNTS" sheet: client + property details, the
+// mode of acquisition, dated milestones as the title moves agency-to-agency
+// (BIR → Treasurer → Registry of Deeds → Assessor's), and a full liquidation
+// (money received vs. disbursed) per case. `status` is the current stage.
+const titlingPaymentSchema = new mongoose.Schema({
+  date:   { type: Date, default: null },
+  label:  { type: String, default: '', trim: true, maxlength: 200 },  // e.g. "1st deposit", "balance"
+  amount: { type: Number, default: 0 }
+}, { _id: false });
+
+const titlingExpenseSchema = new mongoose.Schema({
+  date:     { type: Date, default: null },
+  category: { type: String, default: '', trim: true, maxlength: 120 }, // CGT, DST, Transfer Tax, RD fee…
+  payee:    { type: String, default: '', trim: true, maxlength: 200 }, // BIR, Treasurer's Office, RD…
+  amount:   { type: Number, default: 0 }
+}, { _id: false });
+
 const titlingCaseSchema = new mongoose.Schema({
+  branch:           { type: String, default: '', trim: true, maxlength: 80 },  // Lucena / Manila / etc.
   clientName:       { type: String, required: true, trim: true, maxlength: 200 },
   clientPhone:      { type: String, default: '', trim: true, maxlength: 50 },
   clientEmail:      { type: String, default: '', trim: true, lowercase: true, maxlength: 120 },
-  titleNumber:      { type: String, default: '', trim: true, maxlength: 100 },
+  titleNumber:      { type: String, default: '', trim: true, maxlength: 100 },   // original TCT/CCT/OCT no.
+  taxDecNo:         { type: String, default: '', trim: true, maxlength: 100 },   // original tax dec no.
   propertyLocation: { type: String, default: '', trim: true, maxlength: 300 },
   propertyType:     { type: String, default: '', trim: true, maxlength: 60 },
-  serviceType:      { type: String, default: 'Transfer of Title', trim: true, maxlength: 80 },
+  serviceType:      { type: String, default: 'Transfer of Title', trim: true, maxlength: 80 }, // TRANSACTION
+  modeOfAcquisition:{ type: String, default: '', trim: true, maxlength: 100 },   // DOAS / EJS / Donation…
   status: {
     type: String,
-    enum: ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold'],
+    enum: ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold', 'lra'],
     default: 'documents',
     index: true
   },
+  // ── Dated milestones as the title moves through the agencies ──
+  dateEndorsed:        { type: Date, default: null },  // endorsed to GLRA
+  dateFiledBIR:        { type: Date, default: null },
+  dateCarReceived:     { type: Date, default: null },
+  carNo:               { type: String, default: '', trim: true, maxlength: 100 },
+  dateTransferTax:     { type: Date, default: null },  // transfer tax paid (Treasurer's Office)
+  dateFiledRD:         { type: Date, default: null },
+  epebNo:              { type: String, default: '', trim: true, maxlength: 100 },
+  dateTitleTransferred:{ type: Date, default: null },
+  transferredTitleNo:  { type: String, default: '', trim: true, maxlength: 100 },
+  dateFiledAO:         { type: Date, default: null },  // filed to Assessor's Office
+  transferredTaxDecNo: { type: String, default: '', trim: true, maxlength: 100 },
+  lacking:     { type: String, default: '', maxlength: 2000 },   // what's still missing/pending
   documents:   { type: [String], default: [] },   // names of documents already collected
+  // ── Liquidation ──
+  payments:    { type: [titlingPaymentSchema], default: [] },  // money received from client
+  expenses:    { type: [titlingExpenseSchema], default: [] },  // disbursements paid out
   serviceFee:  { type: Number, default: 0 },       // your professional fee
-  govFees:     { type: Number, default: 0 },       // total government fees (CGT/DST/transfer tax/RD)
-  amountPaid:  { type: Number, default: 0 },       // total received from client so far
+  govFees:     { type: Number, default: 0 },       // legacy total gov fees (kept for old records)
+  amountPaid:  { type: Number, default: 0 },       // legacy total received (kept for old records)
   targetDate:  { type: Date, default: null },
-  notes:       { type: String, default: '', maxlength: 5000 },
+  notes:       { type: String, default: '', maxlength: 5000 },  // REMARKS GLRA
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' }
+}, { timestamps: true });
+
+// ── NOTARIAL BUSINESS (Lucena) ──────────────────────────────
+// Tracks each notarized document for a client: the official register entry
+// (Doc/Page/Book/Series), the fee, and each payment received (with the mode
+// of payment) so we can see who paid partially vs. in full.
+const notarialPaymentSchema = new mongoose.Schema({
+  date:   { type: Date, default: null },
+  amount: { type: Number, default: 0 },
+  mode:   { type: String, default: 'Cash', trim: true, maxlength: 40 },  // Cash / GCash / Bank / Check
+  label:  { type: String, default: '', trim: true, maxlength: 200 }      // e.g. "downpayment", "balance"
+}, { _id: false });
+
+const notarialJobSchema = new mongoose.Schema({
+  clientName:    { type: String, required: true, trim: true, maxlength: 200 },
+  clientPhone:   { type: String, default: '', trim: true, maxlength: 50 },
+  clientEmail:   { type: String, default: '', trim: true, lowercase: true, maxlength: 120 },
+  documentType:  { type: String, default: '', trim: true, maxlength: 120 }, // Deed of Sale, Affidavit, SPA…
+  // official notarial register entry
+  docNo:         { type: String, default: '', trim: true, maxlength: 40 },
+  pageNo:        { type: String, default: '', trim: true, maxlength: 40 },
+  bookNo:        { type: String, default: '', trim: true, maxlength: 40 },
+  series:        { type: String, default: '', trim: true, maxlength: 12 },  // year, e.g. "2026"
+  dateNotarized: { type: Date, default: null },
+  copies:        { type: Number, default: 1 },
+  notaryName:    { type: String, default: '', trim: true, maxlength: 200 }, // commissioned notary public
+  fee:           { type: Number, default: 0 },
+  payments:      { type: [notarialPaymentSchema], default: [] },
+  notes:         { type: String, default: '', maxlength: 5000 },
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' }
+}, { timestamps: true });
+
+// ── NOTARIAL CASH LEDGER / LIQUIDATION ──────────────────────
+// One row per money movement: a supply/cash request, client funds held
+// (money in / money out), or money received. Proof images & PDFs live in
+// Cloudinary; only the link (url + publicId) is stored here — never the file.
+const cashProofSchema = new mongoose.Schema({
+  url:           { type: String, required: true },
+  publicId:      { type: String, required: true },
+  filename:      { type: String, default: '' },
+  size:          { type: Number, default: 0 },
+  resourceType:  { type: String, default: 'image' },
+  uploadedByName:{ type: String, default: '' },
+  uploadedAt:    { type: Date, default: Date.now }
+});
+
+const cashEntrySchema = new mongoose.Schema({
+  business: { type: String, default: 'notarial', index: true },
+  // request = cash request for supplies; fund_in/fund_out = client money held;
+  // receipt = money received (income)
+  kind:     { type: String, enum: ['request', 'fund_in', 'fund_out', 'receipt'], required: true, index: true },
+  date:     { type: Date, default: null },
+  person:   { type: String, default: '', trim: true, maxlength: 200 },   // client/person involved
+  purpose:  { type: String, default: '', trim: true, maxlength: 300 },
+  amount:   { type: Number, default: 0 },
+  mode:     { type: String, default: 'Cash', trim: true, maxlength: 40 }, // Cash/GCash/Bank/Check
+  status:   { type: String, enum: ['requested', 'released', 'liquidated', 'done'], default: 'done' },
+  spent:    { type: Number, default: 0 },   // actual amount spent (request liquidation)
+  proof:    { type: [cashProofSchema], default: [] },
+  note:     { type: String, default: '', maxlength: 2000 },
   createdBy:     { type: String, default: '' },
   createdByName: { type: String, default: '' }
 }, { timestamps: true });
@@ -273,7 +371,9 @@ const PERMISSION_KEYS = [
   'submissions_delete',  // permanently delete a submission
   'bulkmail_send',       // compose + send bulk emails from the admin (admins always have this)
   'titling_view',        // see the Titling tab
-  'titling_manage'       // add / edit / delete titling jobs
+  'titling_manage',      // add / edit / delete titling jobs
+  'notarial_view',       // see the Notarial tab
+  'notarial_manage'      // add / edit / delete notarial records + cash ledger
 ];
 
 // Sensible defaults per role.
@@ -307,7 +407,9 @@ function defaultPermissionsForRole(role) {
     submissions_delete: false,
     bulkmail_send: false,
     titling_view: false,
-    titling_manage: false
+    titling_manage: false,
+    notarial_view: false,
+    notarial_manage: false
   };
 }
 
@@ -368,6 +470,8 @@ const Task              = mongoose.model('Task',              taskSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
+const NotarialJob       = mongoose.model('NotarialJob',       notarialJobSchema);
+const CashEntry         = mongoose.model('CashEntry',         cashEntrySchema);
 
 module.exports = {
   // models
@@ -384,6 +488,8 @@ module.exports = {
   PropertySubmission,
   ScheduledEmail,
   TitlingCase,
+  NotarialJob,
+  CashEntry,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole
