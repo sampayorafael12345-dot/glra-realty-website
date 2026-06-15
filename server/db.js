@@ -329,7 +329,8 @@ const cashProofSchema = new mongoose.Schema({
 });
 
 const cashEntrySchema = new mongoose.Schema({
-  business: { type: String, default: 'notarial', index: true },
+  business: { type: String, default: 'notarial', index: true },   // 'notarial' | 'titling'
+  titlingId: { type: mongoose.Schema.Types.ObjectId, ref: 'TitlingCase', default: null, index: true },
   // request = cash request for supplies; fund_in/fund_out = client money held;
   // receipt = money received (income)
   kind:     { type: String, enum: ['request', 'fund_in', 'fund_out', 'receipt'], required: true, index: true },

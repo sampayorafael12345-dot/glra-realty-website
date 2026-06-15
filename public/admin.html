@@ -1424,6 +1424,10 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             <div class="fg" style="margin-top:16px;max-width:280px"><label class="flbl">Professional / service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingLiqRecalc()" placeholder="0"></div>
             <div id="tlLiqSummary" style="margin-top:14px"></div>
 
+            <!-- ── Money requests (employee cash advances + proof) ── -->
+            <div class="tl-sec">Money requests &amp; proof <span style="font-size:12px;font-weight:400;color:var(--gray)">— cash advances asked by staff</span></div>
+            <div id="tlCashWrap"></div>
+
             <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
               <button class="hdr-btn" onclick="closeTitlingModal()">Cancel</button>
               <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
@@ -1512,9 +1516,9 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <button class="hdr-btn" onclick="exportCashCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
               <span id="cashAddWrap" style="display:none;gap:8px;flex-wrap:wrap">
-                <button class="hdr-btn primary" onclick="openCashModal('request')"><i class="fas fa-hand-holding-usd"></i> Cash request</button>
-                <button class="hdr-btn primary" onclick="openCashModal('fund_in')"><i class="fas fa-piggy-bank"></i> Client funds</button>
-                <button class="hdr-btn primary" onclick="openCashModal('receipt')"><i class="fas fa-plus"></i> Money received</button>
+                <button class="hdr-btn primary" onclick="openNotarialCash('request')"><i class="fas fa-hand-holding-usd"></i> Cash request</button>
+                <button class="hdr-btn primary" onclick="openNotarialCash('fund_in')"><i class="fas fa-piggy-bank"></i> Client funds</button>
+                <button class="hdr-btn primary" onclick="openNotarialCash('receipt')"><i class="fas fa-plus"></i> Money received</button>
               </span>
             </div>
           </div>
@@ -6026,6 +6030,7 @@ function openTitlingModal(id){
   tlRenderPayments();
   tlRenderExpenses();
   titlingLiqRecalc();
+  loadTitlingCash(t ? t._id : '');
   document.getElementById('titlingModal').style.display='flex';
 }
 function closeTitlingModal(){ document.getElementById('titlingModal').style.display='none'; }
@@ -6485,10 +6490,16 @@ function exportNotarialCSV(){
 // NOTARIAL CASH LEDGER / LIQUIDATION
 // ════════════════════════════════════════════════════════════
 let cashData = [];
+let titlingCashData = [];   // cash entries (money requests) for the titling job open in the modal
 let cashFilter = 'all';
 let cashSort = { key:'date', dir:'desc' };
 let notarialView = 'docs';
 let cashCurrent = null;   // entry object open in the modal (for proof rendering)
+// The cash modal is shared between the notarial ledger and per-job titling
+// money requests. cashCtx routes its API calls + list refresh to the right one.
+let cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash };
+function cashUseNotarial(){ cashCtx = { base:'/api/admin/cash', getData:()=>cashData, reload:loadCash }; }
+function cashUseTitling(jobId){ cashCtx = { base:'/api/admin/titling/'+jobId+'/cash', getData:()=>titlingCashData, reload:()=>loadTitlingCash(jobId) }; }
 function setCashSort(key){ toggleSort(cashSort, key, (key==='person'||key==='type')?'asc':'desc'); renderCash(); }
 const CASH_KINDS = [
   { key:'request',  label:'Cash request', icon:'fa-hand-holding-usd', color:'#d98324' },
@@ -6511,12 +6522,16 @@ function setNotarialView(v){
 
 async function loadCash(){
   if(!hasPerm('notarial_view')) return;
+  cashUseNotarial();
   try{
     const data = await apiFetch('/api/admin/cash').then(r=>r.json());
     cashData = Array.isArray(data) ? data : [];
     renderCash();
   }catch(e){ console.error('loadCash', e); }
 }
+// Notarial entry points (set the ledger context before opening the shared modal)
+function openNotarialCash(kind,id){ cashUseNotarial(); openCashModal(kind,id); }
+function deleteNotarialCash(id){ cashUseNotarial(); deleteCash(id); }
 
 function renderCash(){
   const tbody=document.getElementById('cashTbody'); if(!tbody) return;
@@ -6557,7 +6572,7 @@ function renderCash(){
       <td style="font-size:11px;color:var(--gray)">${esc(e.mode||'—')}</td>
       <td style="font-size:11px">${statusTxt?`<span style="text-transform:capitalize">${esc(statusTxt)}</span>`:'<span style="color:var(--gray)">—</span>'}</td>
       <td style="font-size:11px;color:var(--gray)">${proofN?`<i class="fas fa-paperclip"></i> ${proofN}`:'—'}</td>
-      <td><div class="act-btns" style="display:flex;gap:5px">${canManage?`<button class="act act-view" onclick="openCashModal(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteCash('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
+      <td><div class="act-btns" style="display:flex;gap:5px">${canManage?`<button class="act act-view" onclick="openNotarialCash(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteNotarialCash('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
     </tr>`;
   }).join('');
 }
@@ -6567,8 +6582,8 @@ function cashToggleSpent(){
   document.getElementById('cashSpentGroup').style.display = (st==='liquidated')?'':'none';
 }
 function openCashModal(kind, id){
-  if(!hasPerm('notarial_manage')){ showToast('No permission to manage cash entries', true); return; }
-  const e = id ? cashData.find(x=>x._id===id) : null;
+  if(!hasPerm('notarial_manage') && !hasPerm('titling_manage')){ showToast('No permission to manage cash entries', true); return; }
+  const e = id ? cashCtx.getData().find(x=>x._id===id) : null;
   cashCurrent = e || null;
   const k = e ? e.kind : kind;
   document.getElementById('cashKind').value = k;
@@ -6617,12 +6632,12 @@ async function uploadCashProof(input){
   showToast('Uploading proof…');
   try{
     const token=getToken();
-    const res=await fetch('/api/admin/cash/'+id+'/proof',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const res=await fetch(cashCtx.base+'/'+id+'/proof',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
     if(!res.ok){ const er=await res.json().catch(()=>({})); throw new Error(er.error||'Upload failed'); }
     const fresh=await res.json();
     cashCurrent=fresh;
-    const idx=cashData.findIndex(x=>x._id===id); if(idx>=0) cashData[idx]=fresh;
-    renderCashProof(); renderCash();
+    const arr=cashCtx.getData(); const idx=arr.findIndex(x=>x._id===id); if(idx>=0) arr[idx]=fresh;
+    renderCashProof(); cashCtx.reload();
     showToast('Proof uploaded');
   }catch(e){ showToast(e.message||'Upload failed', true); }
   finally{ input.value=''; }
@@ -6631,12 +6646,12 @@ async function deleteCashProof(proofId){
   const id=document.getElementById('cashId').value; if(!id) return;
   if(!confirm('Remove this proof?')) return;
   try{
-    const res=await apiFetch('/api/admin/cash/'+id+'/proof/'+proofId,{method:'DELETE'});
+    const res=await apiFetch(cashCtx.base+'/'+id+'/proof/'+proofId,{method:'DELETE'});
     const fresh=await res.json();
     if(!res.ok) throw new Error(fresh.error||'');
     cashCurrent=fresh;
-    const idx=cashData.findIndex(x=>x._id===id); if(idx>=0) cashData[idx]=fresh;
-    renderCashProof(); renderCash();
+    const arr=cashCtx.getData(); const idx=arr.findIndex(x=>x._id===id); if(idx>=0) arr[idx]=fresh;
+    renderCashProof(); cashCtx.reload();
   }catch(e){ showToast('Could not remove', true); }
 }
 
@@ -6660,27 +6675,27 @@ async function saveCash(){
   const id=document.getElementById('cashId').value;
   const btn=document.getElementById('cashSaveBtn'); const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving…';
   try{
-    const res=await apiFetch(id?`/api/admin/cash/${id}`:'/api/admin/cash',{method:id?'PUT':'POST',body:JSON.stringify(payload)});
+    const res=await apiFetch(id?`${cashCtx.base}/${id}`:cashCtx.base,{method:id?'PUT':'POST',body:JSON.stringify(payload)});
     const d=await res.json();
     if(res.ok&&(d._id||d.success)){
       showToast(id?'Entry updated':'Entry saved — you can now attach proof');
       if(!id && d._id){
-        cashData.unshift(d); cashCurrent=d;
+        cashCurrent=d;
         document.getElementById('cashId').value=d._id;
         document.getElementById('cashKind').value=d.kind;
-        renderCashProof(); renderCash();
-      } else { closeCashModal(); loadCash(); }
+        renderCashProof(); cashCtx.reload();
+      } else { closeCashModal(); cashCtx.reload(); }
     } else showToast(d.error||'Save failed', true);
   }catch(e){ showToast('Network error: '+e.message, true); }
   finally{ btn.disabled=false; btn.innerHTML=orig; }
 }
 async function deleteCash(id){
-  if(!hasPerm('notarial_manage')){ showToast('No permission', true); return; }
+  if(!hasPerm('notarial_manage') && !hasPerm('titling_manage')){ showToast('No permission', true); return; }
   if(!confirm('Delete this cash entry and its proof? This cannot be undone.')) return;
   try{
-    const res=await apiFetch(`/api/admin/cash/${id}`,{method:'DELETE'});
+    const res=await apiFetch(`${cashCtx.base}/${id}`,{method:'DELETE'});
     const d=await res.json();
-    if(res.ok&&d.success){ showToast('Deleted'); loadCash(); }
+    if(res.ok&&d.success){ showToast('Deleted'); cashCtx.reload(); }
     else showToast(d.error||'Delete failed', true);
   }catch(e){ showToast('Error deleting', true); }
 }
@@ -6692,6 +6707,45 @@ function exportCashCSV(){
   downloadCSV('glra-notarial-cash-'+new Date().toISOString().slice(0,10)+'.csv', rows);
   showToast(`Exported ${cashData.length} cash entr${cashData.length===1?'y':'ies'}`);
 }
+
+// ── Titling money requests (employee cash advances + proof) — reuses cash engine per job ──
+async function loadTitlingCash(jobId){
+  if(!jobId){ titlingCashData=[]; renderTitlingCash(); return; }
+  cashUseTitling(jobId);
+  try{
+    const data = await apiFetch('/api/admin/titling/'+jobId+'/cash').then(r=>r.json());
+    titlingCashData = Array.isArray(data) ? data : [];
+  }catch(e){ titlingCashData=[]; }
+  renderTitlingCash();
+}
+function renderTitlingCash(){
+  const wrap=document.getElementById('tlCashWrap'); if(!wrap) return;
+  const id=document.getElementById('tlId').value;
+  const canManage=hasPerm('titling_manage');
+  if(!id){ wrap.innerHTML='<div style="font-size:12px;color:var(--gray)">Save the job first, then you can add money requests here.</div>'; return; }
+  const rows=titlingCashData||[];
+  const requested=rows.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const released=rows.filter(e=>e.status==='released').reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const spent=rows.filter(e=>e.status==='liquidated').reduce((s,e)=>s+(Number(e.spent)||0),0);
+  const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:8px 11px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:15px;font-weight:700;color:${c||'inherit'}">${fmt(v)}</div></div>`;
+  const stColor=s=> s==='liquidated'?'#10b981':(s==='released'?'#d98324':'#6a6a6a');
+  const list = rows.length ? rows.map(e=>{
+    const proofN=(e.proof||[]).length;
+    return `<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--border-color);padding:8px 10px;background:var(--card-bg)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700">${fmt(Number(e.amount)||0)} <span style="font-weight:400;color:var(--gray)">— ${esc(e.purpose||'(no purpose)')}</span></div>
+        <div style="font-size:10px;color:var(--gray);margin-top:2px">${e.date?fmtDateShort(e.date):''}${e.person?' · '+esc(e.person):''}${(e.status==='liquidated'&&e.spent)?' · spent '+fmt(e.spent):''}${proofN?' · <i class="fas fa-paperclip"></i> '+proofN:''}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;text-transform:capitalize;color:#fff;background:${stColor(e.status)};padding:2px 8px;border-radius:10px">${esc(e.status||'requested')}</span>
+      ${canManage?`<button type="button" class="act act-view" onclick="openTitlingCash(null,'${e._id}')" title="Open"><i class="fas fa-pen"></i></button><button type="button" class="act act-del" onclick="deleteTitlingCash('${e._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:''}
+    </div>`;
+  }).join('') : '<div style="font-size:12px;color:var(--gray)">No money requests yet.</div>';
+  wrap.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px">${box('Requested',requested,'inherit')}${box('Released (out)',released,'#d98324')}${box('Spent (liquidated)',spent,'#10b981')}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">${list}</div>
+    ${canManage?`<button type="button" class="hdr-btn" style="margin-top:10px" onclick="openTitlingCash('request')"><i class="fas fa-plus"></i> Add money request</button>`:''}`;
+}
+function openTitlingCash(kind,id){ const jid=document.getElementById('tlId').value; if(!jid){ showToast('Save the job first', true); return; } cashUseTitling(jid); openCashModal(kind||'request', id); }
+function deleteTitlingCash(id){ const jid=document.getElementById('tlId').value; if(!jid) return; cashUseTitling(jid); deleteCash(id); }
 
 function switchTab(name){
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');

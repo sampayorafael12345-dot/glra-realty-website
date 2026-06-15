@@ -1556,6 +1556,85 @@ app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission(
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// ── TITLING MONEY REQUESTS (cash advances + proof, scoped to one titling job) ──
+// Reuses the CashEntry model with business:'titling' + titlingId. Gated by the
+// titling permissions (not notarial) so access can be granted separately.
+app.get('/api/admin/titling/:id/cash', verifyToken, requirePermission('titling_view'), async (req, res) => {
+  try {
+    const list = await CashEntry.find({ business: 'titling', titlingId: req.params.id }).sort({ date: -1, createdAt: -1 }).lean();
+    res.json(list);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+app.post('/api/admin/titling/:id/cash', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const data = sanitizeCashBody(req.body || {});
+    if (!data.kind) return res.status(400).json({ error: 'Entry type is required' });
+    data.business = 'titling';
+    data.titlingId = req.params.id;
+    data.createdBy = req.user?.email || '';
+    data.createdByName = req.user?.name || '';
+    const doc = await CashEntry.create(data);
+    await logAudit(req, 'CREATE', 'CashEntry', String(doc._id), 'titling ' + data.kind, null);
+    res.json(doc);
+  } catch (err) { console.error('titling cash create error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.put('/api/admin/titling/:id/cash/:cid', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const data = sanitizeCashBody(req.body || {});
+    const doc = await CashEntry.findOneAndUpdate({ _id: req.params.cid, titlingId: req.params.id }, data, { new: true });
+    if (!doc) return res.status(404).json({ error: 'Not found' });
+    res.json(doc);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+app.delete('/api/admin/titling/:id/cash/:cid', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const doc = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    if (doc) {
+      for (const p of (doc.proof || [])) {
+        try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
+      }
+      await doc.deleteOne();
+      await logAudit(req, 'DELETE', 'CashEntry', String(doc._id), 'titling', null);
+    }
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+app.post('/api/admin/titling/:id/cash/:cid/proof', verifyToken, requirePermission('titling_manage'), uploadAttachment.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file provided' });
+    const entry = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    if (!entry) {
+      if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+      return res.status(404).json({ error: 'Not found' });
+    }
+    const result = await cloudinary.uploader.upload(req.file.path, { folder: 'glra_realty/titling', resource_type: 'auto' });
+    if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+    entry.proof.push({
+      url: result.secure_url, publicId: result.public_id, filename: req.file.originalname || '',
+      size: result.bytes || 0, resourceType: result.resource_type || 'image',
+      uploadedByName: req.user.name || req.user.email || '', uploadedAt: new Date()
+    });
+    await entry.save();
+    res.json(entry);
+  } catch (err) {
+    console.error('titling cash proof upload error:', err);
+    if (req.file && fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+app.delete('/api/admin/titling/:id/cash/:cid/proof/:proofId', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const entry = await CashEntry.findOne({ _id: req.params.cid, titlingId: req.params.id });
+    if (!entry) return res.status(404).json({ error: 'Not found' });
+    const p = entry.proof.id(req.params.proofId);
+    if (!p) return res.status(404).json({ error: 'Proof not found' });
+    try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
+    p.deleteOne();
+    await entry.save();
+    res.json(entry);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
 app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscribers_delete'), async (req, res) => {
   try {
     const sub = await Subscriber.findByIdAndDelete(req.params.id);
