@@ -1211,7 +1211,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
           <select class="fsel" id="pListing" onchange="filterProps()"><option value="">All Listings</option><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option></select>
           <div class="res-count" id="pCount"></div>
         </div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Image</th><th>Property</th><th>Type</th><th>Listing</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="propTbody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Image</th><th>Property</th><th>Type</th><th>Listing</th><th>Price</th><th>Views</th><th>Status</th><th>Actions</th></tr></thead><tbody id="propTbody"></tbody></table></div></div></div>
       </div>
 
       <!-- HERO IMAGES -->
@@ -2713,13 +2713,14 @@ function filterProps(){
 function renderProps(props){
   document.getElementById('pCount').textContent=`${props.length} properties`;
   const b=document.getElementById('propTbody');
-  if(!props.length){b.innerHTML=`<tr><td colspan="7"><div class="empty-st"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
+  if(!props.length){b.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
   b.innerHTML=props.map(p=>`<tr>
     <td><img class="tbl-img" src="${p.mainImage||'https://via.placeholder.com/50x38?text=—'}" alt="" loading="lazy"></td>
     <td><div style="font-weight:600;font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.title)}">${esc(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(p.location)}</div>${p.featured?'<span class="badge b-feat" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
     <td style="font-size:12px;color:var(--gray)">${esc(p.propertyType||'—')}</td>
     <td><span class="badge ${p.listingType==='FOR SALE'?'b-sale':'b-lease'}">${esc(p.listingType||'—')}</span></td>
     <td style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);font-weight:600">${fmt(p.price)}</td>
+    <td style="font-size:12px;color:var(--gray)"><i class="far fa-eye" style="color:var(--gold);margin-right:4px"></i>${(p.views||0).toLocaleString()}</td>
     <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
     <td><div class="act-btns">
       ${hasPerm('properties_edit')?`<button class="act act-edit" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}

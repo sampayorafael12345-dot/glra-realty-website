@@ -37,7 +37,9 @@ const propertySchema = new mongoose.Schema({
   notes: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
   previousPrice: { type: Number, default: 0 },
-  priceUpdatedAt: { type: Date, default: null }
+  priceUpdatedAt: { type: Date, default: null },
+  // How many times the public detail view was opened (browsing signal for the admin).
+  views: { type: Number, default: 0 }
 });
 
 // ── INQUIRIES ───────────────────────────────────────────────

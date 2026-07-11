@@ -339,6 +339,17 @@ app.get('/api/properties/:id', async (req, res) => {
   }
 });
 
+// View counter — fired by the public site when someone opens a property's
+// details. Pure browsing signal for the admin dashboard; fire-and-forget.
+app.post('/api/properties/:id/view', publicWriteLimiter, async (req, res) => {
+  try {
+    await Property.updateOne({ _id: req.params.id }, { $inc: { views: 1 } });
+    res.status(204).end();
+  } catch (err) {
+    res.status(204).end(); // never bother the visitor about this
+  }
+});
+
 // ── SEO: per-listing pages + dynamic sitemap ──────────────────
 const SITE_URL = 'https://glrarealty.com';
 function absUrl(u) {
