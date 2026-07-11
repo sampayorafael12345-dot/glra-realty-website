@@ -430,7 +430,14 @@ const accountSchema = new mongoose.Schema({
   // Approval workflow: self-service signups start as 'pending' and cannot log in
   // until an admin approves them (choosing their permissions at that moment).
   // Admin-created accounts and all pre-existing accounts are 'active'.
-  status: { type: String, enum: ['pending', 'active'], default: 'active' }
+  status: { type: String, enum: ['pending', 'active'], default: 'active' },
+  // Forgot-password flow: we store only the SHA-256 HASH of the reset token
+  // (never the token itself) so a database leak can't be used to reset passwords.
+  resetTokenHash: { type: String, default: null },
+  resetTokenExpires: { type: Date, default: null },
+  // Login-alert history (admins only): last few { ip, ua, at } combos we've seen.
+  // A sign-in from an ip+device not in this list triggers an alert email.
+  loginHistory: { type: [{ ip: String, ua: String, at: Date }], default: [], _id: false }
 });
 
 // Hash password before saving (only when modified)

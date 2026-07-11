@@ -2,6 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const crypto = require('crypto');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -150,6 +151,16 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Forgot/reset password — public endpoints. Tight limit so nobody can spam
+// reset emails or brute-force reset tokens.
+const resetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 6,
+  message: { error: 'Too many password reset attempts. Please try again in an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -931,6 +942,35 @@ app.post('/api/admin/login',
       if (account.status === 'pending') {
         return res.status(403).json({ error: 'Your account is waiting for admin approval. You\'ll be able to sign in once it\'s approved.' });
       }
+
+      // ── Login alert (admin accounts only) ─────────────────────────────
+      // If this ip+device combo isn't in the account's recent login history,
+      // email the account owner. First-ever login just seeds the history.
+      if (account.role === 'admin') {
+        try {
+          const ip = req.ip || req.connection?.remoteAddress || '';
+          const ua = String(req.headers['user-agent'] || '').slice(0, 300);
+          const history = Array.isArray(account.loginHistory) ? account.loginHistory : [];
+          const known = history.some(h => h.ip === ip && h.ua === ua);
+          const firstLogin = history.length === 0;
+          account.loginHistory = [{ ip, ua, at: new Date() }, ...history.filter(h => !(h.ip === ip && h.ua === ua))].slice(0, 10);
+          if (!known && !firstLogin) {
+            const when = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'full', timeStyle: 'short' });
+            sendEmail(account.email, '🔐 New sign-in to your GLRA admin account',
+              getEmailHeader() + `
+              <h2 style="color:#0a1628;">New Sign-In Detected</h2>
+              <p>Your GLRA admin account (<strong>${account.email}</strong>) was just used to sign in from a device or location we haven't seen recently:</p>
+              <table style="font-size:14px;line-height:1.8">
+                <tr><td style="padding-right:12px;color:#666">When:</td><td><strong>${when}</strong> (Philippine time)</td></tr>
+                <tr><td style="padding-right:12px;color:#666">IP address:</td><td><strong>${ip || 'unknown'}</strong></td></tr>
+                <tr><td style="padding-right:12px;color:#666">Device:</td><td>${ua || 'unknown'}</td></tr>
+              </table>
+              <p style="margin-top:16px"><strong>Was this you?</strong> If yes, you can ignore this email. If not, reset your password immediately using the "Forgot password" link on the admin sign-in page.</p>
+            ` + getEmailFooter()).catch(err => console.error('Login alert email failed:', err.message));
+          }
+        } catch (e) { console.error('Login alert error:', e.message); }
+      }
+
       account.lastLogin = new Date();
       await account.save();
 
@@ -1005,6 +1045,85 @@ app.post('/api/admin/signup',
     } catch (e) {
       if (e.code === 11000) return res.status(400).json({ error: 'An account with this email already exists.' });
       console.error('Signup error:', e);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+// ============ FORGOT / RESET PASSWORD (public, rate-limited) ============
+// Standard token flow: we email a one-time link containing a random token,
+// store only its SHA-256 hash, and expire it after 30 minutes. The response
+// is identical whether or not the email exists (no account probing).
+app.post('/api/admin/forgot-password',
+  resetLimiter,
+  body('email').isEmail().normalizeEmail(),
+  handleValidation,
+  async (req, res) => {
+    const generic = { success: true, message: 'If that email has an account, a reset link is on its way. Check your inbox (and spam folder).' };
+    try {
+      const account = await Account.findOne({ email: req.body.email, isActive: true });
+      if (!account || account.status === 'pending') return res.json(generic);
+
+      const token = crypto.randomBytes(32).toString('hex');
+      account.resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      account.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      await account.save();
+
+      const link = `${SITE_URL}/admin.html?reset=${token}`;
+      try {
+        await sendEmail(account.email, 'Reset your GLRA admin password',
+          getEmailHeader() + `
+          <h2 style="color:#0a1628;">Password Reset</h2>
+          <p>Hi ${account.name || 'there'},</p>
+          <p>Someone (hopefully you) asked to reset the password for <strong>${account.email}</strong> on the GLRA admin portal.</p>
+          <p style="margin:24px 0"><a href="${link}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Choose a New Password</a></p>
+          <p style="font-size:13px;color:#666">This link works for <strong>30 minutes</strong> and can be used once. If you didn't ask for this, you can safely ignore this email — your password stays the same.</p>
+        ` + getEmailFooter());
+      } catch (e) { console.error('Reset email failed:', e.message); }
+
+      req.user = { email: account.email, name: account.name, role: account.role };
+      await logAudit(req, 'PASSWORD_RESET_REQUEST', 'Account', account._id, account.email, null);
+      res.json(generic);
+    } catch (e) {
+      console.error('Forgot-password error:', e);
+      res.json(generic); // stay generic even on server error
+    }
+  }
+);
+
+app.post('/api/admin/reset-password',
+  resetLimiter,
+  body('token').isString().isLength({ min: 32, max: 128 }),
+  body('password').isString().isLength({ min: 8, max: 200 }),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const tokenHash = crypto.createHash('sha256').update(req.body.token).digest('hex');
+      const account = await Account.findOne({ resetTokenHash: tokenHash, resetTokenExpires: { $gt: new Date() } });
+      if (!account) {
+        return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one from the sign-in page.' });
+      }
+      account.password = req.body.password; // hashed by the pre-save hook
+      account.resetTokenHash = null;
+      account.resetTokenExpires = null;
+      await account.save();
+
+      req.user = { email: account.email, name: account.name, role: account.role };
+      await logAudit(req, 'PASSWORD_RESET', 'Account', account._id, account.email, null);
+
+      // Heads-up email so the owner knows the password changed (best-effort).
+      try {
+        await sendEmail(account.email, 'Your GLRA admin password was changed',
+          getEmailHeader() + `
+          <h2 style="color:#0a1628;">Password Changed</h2>
+          <p>The password for <strong>${account.email}</strong> was just changed using a reset link.</p>
+          <p>If this wasn't you, contact your administrator immediately.</p>
+        ` + getEmailFooter());
+      } catch (e) { console.error('Reset confirmation email failed:', e.message); }
+
+      res.json({ success: true, message: 'Password updated! You can now sign in with your new password.' });
+    } catch (e) {
+      console.error('Reset-password error:', e);
       res.status(500).json({ error: 'Server error' });
     }
   }
@@ -1180,6 +1299,49 @@ app.post('/api/admin/accounts/:id/decline', verifyToken, requireAdmin, async (re
     await logAudit(req, 'DECLINE', 'Account', req.params.id, account.email, null);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── FULL DATA BACKUP (admin only) ──────────────────────────
+// Returns every collection as JSON in one response. The admin UI turns this
+// into a multi-sheet Excel file and/or saves the raw JSON. Passwords and
+// reset tokens are never included.
+app.get('/api/admin/backup', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const [
+      properties, inquiries, heroImages, subscribers, priceAlerts, wishlists,
+      accounts, tasks, submissions, scheduledEmails, titlingCases, notarialJobs,
+      cashEntries, auditLogs, alertLogs
+    ] = await Promise.all([
+      Property.find().lean(),
+      Inquiry.find().lean(),
+      HeroImage.find().lean(),
+      Subscriber.find().lean(),
+      PriceAlert.find().lean(),
+      Wishlist.find().lean(),
+      Account.find().select('-password -resetTokenHash -resetTokenExpires').lean(),
+      Task.find().lean(),
+      PropertySubmission.find().lean(),
+      ScheduledEmail.find().lean(),
+      TitlingCase.find().lean(),
+      NotarialJob.find().lean(),
+      CashEntry.find().lean(),
+      AuditLog.find().sort({ timestamp: -1 }).limit(5000).lean(),
+      AlertLog.find().sort({ createdAt: -1 }).limit(5000).lean()
+    ]);
+    const collections = {
+      properties, inquiries, heroImages, subscribers, priceAlerts, wishlists,
+      accounts, tasks, submissions, scheduledEmails, titlingCases, notarialJobs,
+      cashEntries, auditLogs, alertLogs
+    };
+    const counts = {};
+    let total = 0;
+    Object.entries(collections).forEach(([k, v]) => { counts[k] = v.length; total += v.length; });
+    await logAudit(req, 'BACKUP', 'System', '', `${total} records across ${Object.keys(collections).length} collections`, counts);
+    res.json({ generatedAt: new Date().toISOString(), site: SITE_URL, counts, collections });
+  } catch (e) {
+    console.error('Backup error:', e);
+    res.status(500).json({ error: 'Backup failed' });
+  }
 });
 
 app.get('/api/admin/audit-log', verifyToken, requirePermission('audit_view'), async (req, res) => {

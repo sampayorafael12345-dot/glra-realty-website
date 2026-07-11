@@ -1073,7 +1073,43 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
     <div class="login-field"><label>Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
     <div class="login-error" id="lgErr">Invalid email or password.</div>
-    <div class="login-switch">New employee? <a onclick="showSignup(true)">Request an account</a></div>
+    <div class="login-switch"><a onclick="showForgot(true)">Forgot password?</a></div>
+    <div class="login-switch" style="margin-top:10px">New employee? <a onclick="showSignup(true)">Request an account</a></div>
+  </div>
+  <!-- FORGOT PASSWORD -->
+  <div class="login-card" id="forgotCard" style="display:none">
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-title" style="text-align:center">Forgot Password</div>
+    <div class="login-sub" style="text-align:center">Enter your email and we'll send you a link to choose a new password.</div>
+    <div id="fpForm">
+      <div class="login-field"><label>Email Address</label><input type="email" id="fpEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')forgotPassword()"></div>
+      <button class="login-btn" id="fpBtn" onclick="forgotPassword()"><i class="fas fa-envelope"></i> Send Reset Link</button>
+      <div class="login-error" id="fpErr"></div>
+    </div>
+    <div id="fpDone" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:40px;color:var(--gold);margin-bottom:12px"><i class="fas fa-envelope-open-text"></i></div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Check Your Inbox</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6">If that email has an account, a reset link is on its way. It works for 30 minutes. Don't forget to check spam.</div>
+    </div>
+    <div class="login-switch"><a onclick="showForgot(false)">Back to sign in</a></div>
+  </div>
+  <!-- RESET PASSWORD (opened from the emailed link) -->
+  <div class="login-card" id="resetCard" style="display:none">
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-title" style="text-align:center">Choose a New Password</div>
+    <div class="login-sub" style="text-align:center">Almost done — pick a new password for your account.</div>
+    <div id="rpForm">
+      <div class="login-field"><label>New Password</label><input type="password" id="rpPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')resetPassword()"></div>
+      <div class="login-field"><label>Confirm New Password</label><input type="password" id="rpPass2" placeholder="Repeat your new password" onkeydown="if(event.key==='Enter')resetPassword()"></div>
+      <button class="login-btn" id="rpBtn" onclick="resetPassword()"><i class="fas fa-key"></i> Set New Password</button>
+      <div class="login-error" id="rpErr"></div>
+    </div>
+    <div id="rpDone" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:40px;color:#10b981;margin-bottom:12px"><i class="fas fa-check-circle"></i></div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Password Updated!</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6">You can now sign in with your new password.</div>
+    </div>
+    <div class="login-switch"><a onclick="showReset(false)">Back to sign in</a></div>
   </div>
   <!-- SIGNUP (employee account request) -->
   <div class="login-card" id="signupCard" style="display:none">
@@ -1692,6 +1728,23 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
               <tr><td>Import submissions to live listings</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
               <tr><td>Delete submissions</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
             </tbody></table></div>
+          </div>
+        </div>
+        <!-- Data Backup (admin only — whole tab already is) -->
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-database"></i> Data Backup</div></div>
+          <div class="panel-body">
+            <div style="font-size:13px;color:var(--gray);line-height:1.7;margin-bottom:14px">
+              Downloads a copy of <strong>everything</strong> — properties, inquiries, subscribers, titling jobs, notarial records, cash &amp; liquidation entries, tasks, accounts (without passwords), and recent activity logs.
+              <br>• <strong>Excel</strong> — one sheet per section, easy to open and read.
+              <br>• <strong>JSON</strong> — a complete technical copy, best for restoring data if something ever goes wrong.
+              <br><span style="color:var(--gold)"><i class="fas fa-lightbulb"></i> Tip: download both once a week and keep them somewhere safe (e.g. Google Drive).</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="hdr-btn primary" id="bkXlsBtn" onclick="downloadBackup('excel')"><i class="fas fa-file-excel"></i> Download Excel Backup</button>
+              <button class="hdr-btn" id="bkJsonBtn" onclick="downloadBackup('json')"><i class="fas fa-file-code"></i> Download JSON Backup</button>
+            </div>
+            <div id="bkInfo" style="font-size:12px;color:var(--gray);margin-top:10px"></div>
           </div>
         </div>
       </div>
@@ -2475,10 +2528,17 @@ async function login(){
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'}
 }
 
+// ── LOGIN-SCREEN CARD SWITCHER ────────────────────────────
+// One card visible at a time: loginCard / signupCard / forgotCard / resetCard.
+function loginShowCard(id){
+  ['loginCard','signupCard','forgotCard','resetCard'].forEach(c=>{
+    const el=document.getElementById(c); if(el) el.style.display = c===id ? '' : 'none';
+  });
+}
+
 // ── SIGNUP (employee account request) ─────────────────────
 function showSignup(on){
-  document.getElementById('loginCard').style.display = on ? 'none' : '';
-  document.getElementById('signupCard').style.display = on ? '' : 'none';
+  loginShowCard(on ? 'signupCard' : 'loginCard');
   // Reset the signup card back to the form each time it's opened
   if(on){
     document.getElementById('suForm').style.display='';
@@ -2486,6 +2546,75 @@ function showSignup(on){
     document.getElementById('suErr').style.display='none';
   }
 }
+
+// ── FORGOT / RESET PASSWORD ───────────────────────────────
+function showForgot(on){
+  loginShowCard(on ? 'forgotCard' : 'loginCard');
+  if(on){
+    document.getElementById('fpForm').style.display='';
+    document.getElementById('fpDone').style.display='none';
+    document.getElementById('fpErr').style.display='none';
+  }
+}
+function showReset(on){
+  loginShowCard(on ? 'resetCard' : 'loginCard');
+}
+
+async function forgotPassword(){
+  const email=document.getElementById('fpEmail').value.trim();
+  const err=document.getElementById('fpErr');
+  err.style.display='none';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.style.display='block';err.textContent='Please enter a valid email address.';return}
+  const btn=document.getElementById('fpBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+  try{
+    const res=await fetch('/api/admin/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await res.json();
+    if(res.ok){
+      document.getElementById('fpForm').style.display='none';
+      document.getElementById('fpDone').style.display='block';
+    }else{err.style.display='block';err.textContent=d.error||'Could not send. Please try again.'}
+  }catch{err.style.display='block';err.textContent='Connection error. Please try again.'}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-envelope"></i> Send Reset Link'}
+}
+
+// Token from the emailed link (?reset=...). Read once on page load.
+let resetToken = null;
+
+async function resetPassword(){
+  const pass=document.getElementById('rpPass').value;
+  const pass2=document.getElementById('rpPass2').value;
+  const err=document.getElementById('rpErr');
+  const show=m=>{err.style.display='block';err.textContent=m};
+  err.style.display='none';
+  if(!resetToken){show('This reset link is missing its code. Please open the link from your email again.');return}
+  if(pass.length<8){show('Password must be at least 8 characters.');return}
+  if(pass!==pass2){show('Passwords do not match.');return}
+  const btn=document.getElementById('rpBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+  try{
+    const res=await fetch('/api/admin/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:resetToken,password:pass})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      resetToken=null;
+      document.getElementById('rpForm').style.display='none';
+      document.getElementById('rpDone').style.display='block';
+      document.getElementById('rpPass').value='';document.getElementById('rpPass2').value='';
+    }else show(d.error||'Could not update the password. Please request a new link.');
+  }catch{show('Connection error. Please try again.')}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-key"></i> Set New Password'}
+}
+
+// If the page was opened from a reset-link email, show the reset card.
+(function(){
+  const m = new URLSearchParams(location.search).get('reset');
+  if(m && /^[a-f0-9]{64}$/i.test(m)){
+    resetToken = m;
+    // Clean the token out of the address bar (so it doesn't linger in history)
+    history.replaceState(null,'',location.pathname);
+    loginShowCard('resetCard');
+  }
+})();
 
 async function signup(){
   const name=document.getElementById('suName').value.trim();
@@ -3054,6 +3183,62 @@ async function declineAccount(id, name){
   }catch{showToast('Error',true)}
 }
 
+// ── DATA BACKUP ───────────────────────────────────────────
+// One button = everything. Excel gets one sheet per section (nested data like
+// payment lists is stored as JSON text in the cell); JSON is the full copy.
+const BACKUP_SHEETS = {
+  properties:'Properties', inquiries:'Inquiries', heroImages:'Hero Images', subscribers:'Subscribers',
+  priceAlerts:'Price Alerts', wishlists:'Wishlists', accounts:'Accounts', tasks:'Tasks',
+  submissions:'Submissions', scheduledEmails:'Scheduled Emails', titlingCases:'Titling Jobs',
+  notarialJobs:'Notarial', cashEntries:'Cash Ledger', auditLogs:'Audit Log', alertLogs:'Alert Log'
+};
+
+function bkFlatten(row){
+  const out = {};
+  Object.entries(row).forEach(([k,v])=>{
+    if(k==='__v') return;
+    if(v===null||v===undefined) out[k]='';
+    else if(typeof v==='object') out[k]=JSON.stringify(v);
+    else out[k]=v;
+  });
+  return out;
+}
+
+async function downloadBackup(fmt){
+  const btn = document.getElementById(fmt==='excel'?'bkXlsBtn':'bkJsonBtn');
+  const info = document.getElementById('bkInfo');
+  const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Preparing...';
+  try{
+    const res = await apiFetch('/api/admin/backup');
+    if(!res.ok){ const d=await res.json().catch(()=>({})); showToast(d.error||'Backup failed',true); return; }
+    const data = await res.json();
+    const d0 = new Date();
+    const stamp = `${d0.getFullYear()}-${String(d0.getMonth()+1).padStart(2,'0')}-${String(d0.getDate()).padStart(2,'0')}`;
+    const total = Object.values(data.counts||{}).reduce((a,b)=>a+b,0);
+    if(fmt==='json'){
+      const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `GLRA-backup-${stamp}.json`;
+      a.click(); URL.revokeObjectURL(a.href);
+    } else {
+      const wb = XLSX.utils.book_new();
+      const summary = [{Section:'Backup generated', Records:new Date(data.generatedAt).toLocaleString('en-PH')}]
+        .concat(Object.entries(BACKUP_SHEETS).map(([k,label])=>({Section:label, Records:(data.counts&&data.counts[k])||0})));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Summary');
+      Object.entries(BACKUP_SHEETS).forEach(([k,label])=>{
+        const rows = (data.collections&&data.collections[k])||[];
+        if(!rows.length) return;
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(bkFlatten)), label.slice(0,31));
+      });
+      XLSX.writeFile(wb, `GLRA-backup-${stamp}.xlsx`);
+    }
+    if(info) info.textContent = `Last backup: just now — ${total.toLocaleString()} records across ${Object.keys(data.counts||{}).length} sections.`;
+    showToast('Backup downloaded — keep it somewhere safe!');
+  }catch(e){ console.error(e); showToast('Backup failed',true); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+
 // ── AUDIT LOG ─────────────────────────────────────────────
 let auditAutoRefreshTimer = null;
 
@@ -3164,6 +3349,9 @@ function describeAuditAction(l){
     case 'SIGNUP':      return `Requested an account: ${title}`;
     case 'APPROVE':     return `Approved account request: ${title}`;
     case 'DECLINE':     return `Declined account request: ${title}`;
+    case 'PASSWORD_RESET_REQUEST': return `Requested a password reset link: ${title}`;
+    case 'PASSWORD_RESET':         return `Changed password via reset link: ${title}`;
+    case 'BACKUP':      return `Downloaded a full data backup (${title})`;
     default:            return `${action} ${target}${title ? ': ' + title : ''}`;
   }
 }
@@ -3214,7 +3402,8 @@ function renderAuditLog(logs){
     LOGIN:'#3b82f6', LOGOUT:'#6b7280',
     CREATE:'#10b981', UPDATE:'#f59e0b', DELETE:'#ef4444',
     UPLOAD:'#8b5cf6', REORDER:'#06b6d4', SET_DEFAULT:'#06b6d4', BULK_CREATE:'#10b981',
-    SIGNUP:'#f59e0b', APPROVE:'#10b981', DECLINE:'#ef4444'
+    SIGNUP:'#f59e0b', APPROVE:'#10b981', DECLINE:'#ef4444',
+    PASSWORD_RESET_REQUEST:'#f59e0b', PASSWORD_RESET:'#8b5cf6', BACKUP:'#06b6d4'
   };
   body.innerHTML = logs.map(l=>{
     const color = actionColor[l.action] || 'var(--gray)';
