@@ -154,6 +154,16 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Self-service account signups — public endpoint, keep it tight so nobody
+// floods the approval queue. 5 signup attempts per IP per hour.
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many signup attempts. Please try again in an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const publicWriteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 30,
@@ -917,6 +927,10 @@ app.post('/api/admin/login',
       if (!ok) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
+      // Self-service signups sit in the approval queue until an admin lets them in.
+      if (account.status === 'pending') {
+        return res.status(403).json({ error: 'Your account is waiting for admin approval. You\'ll be able to sign in once it\'s approved.' });
+      }
       account.lastLogin = new Date();
       await account.save();
 
@@ -946,13 +960,63 @@ app.post('/api/admin/login',
   }
 );
 
+// ============ EMPLOYEE SELF-SIGNUP (public, rate-limited) ============
+// Creates an account in 'pending' status with ZERO permissions. The account
+// cannot log in until an admin approves it from the Accounts tab (choosing
+// role + permissions at that moment). Role is always forced to 'employee' —
+// nobody can sign themselves up as an admin.
+app.post('/api/admin/signup',
+  signupLimiter,
+  body('name').isString().trim().isLength({ min: 2, max: 200 }).withMessage('Please enter your full name'),
+  body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email'),
+  body('password').isString().isLength({ min: 8, max: 200 }).withMessage('Password must be at least 8 characters'),
+  handleValidation,
+  async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+      const existing = await Account.findOne({ email }).lean();
+      if (existing) {
+        // Don't leak whether the account is pending/active — same message either way.
+        return res.status(400).json({ error: 'An account with this email already exists. If you just signed up, please wait for admin approval.' });
+      }
+      // Zero permissions until approval — the admin picks them on the approval screen.
+      const noPerms = {};
+      PERMISSION_KEYS.forEach(k => { noPerms[k] = false; });
+      const account = await Account.create({
+        email, password, name,
+        role: 'employee',
+        status: 'pending',
+        permissions: noPerms
+      });
+      req.user = { email: account.email, name: account.name, role: 'employee' };
+      await logAudit(req, 'SIGNUP', 'Account', account._id, email, { status: 'pending' });
+
+      // Best-effort heads-up to the admin inbox — signup still succeeds if email fails.
+      try {
+        await sendEmail('glrarealty@gmail.com', `New account request: ${name}`,
+          getEmailHeader() + `
+          <h2 style="color:#0a1628;">New Account Request</h2>
+          <p><strong>${name}</strong> (${email}) has requested access to the GLRA admin portal.</p>
+          <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline, and to choose exactly what they can access.</p>
+        ` + getEmailFooter());
+      } catch (e) { console.error('Signup notification email failed:', e.message); }
+
+      res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
+    } catch (e) {
+      if (e.code === 11000) return res.status(400).json({ error: 'An account with this email already exists.' });
+      console.error('Signup error:', e);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
 // ============ PROTECTED ADMIN ROUTES ============
 // All routes below require a valid JWT.
 
 app.get('/api/admin/me', verifyToken, async (req, res) => {
   try {
-    const account = await Account.findById(req.user.sub).select('email name role permissions isActive').lean();
-    if (!account || account.isActive === false) {
+    const account = await Account.findById(req.user.sub).select('email name role permissions isActive status').lean();
+    if (!account || account.isActive === false || account.status === 'pending') {
       return res.status(401).json({ error: 'Account inactive' });
     }
     const effectivePerms = account.role === 'admin'
@@ -1061,6 +1125,59 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
     const account = await Account.findByIdAndDelete(req.params.id);
     if (!account) return res.status(404).json({ error: 'Account not found' });
     await logAudit(req, 'DELETE', 'Account', req.params.id, account.email, null);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// ── SIGNUP APPROVAL ────────────────────────────────────────
+// Approve a pending signup: admin chooses role + exact permissions here.
+app.post('/api/admin/accounts/:id/approve',
+  verifyToken, requireAdmin,
+  body('role').optional().isIn(['admin', 'employee']),
+  body('permissions').optional().isObject(),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const account = await Account.findById(req.params.id);
+      if (!account) return res.status(404).json({ error: 'Account not found' });
+      if (account.status !== 'pending') return res.status(400).json({ error: 'This account is not pending approval.' });
+
+      const finalRole = req.body.role || 'employee';
+      // What the admin ticked on the approval screen wins; anything they left out falls back to role defaults.
+      const finalPerms = { ...defaultPermissionsForRole(finalRole), ...sanitizePermissions(req.body.permissions) };
+      account.role = finalRole;
+      account.permissions = finalPerms;
+      account.status = 'active';
+      account.isActive = true;
+      await account.save();
+
+      await logAudit(req, 'APPROVE', 'Account', account._id, account.email, { role: finalRole, permissions: finalPerms });
+
+      // Tell the employee they're in (best-effort).
+      try {
+        await sendEmail(account.email, 'Your GLRA admin account has been approved',
+          getEmailHeader() + `
+          <h2 style="color:#0a1628;">You're In! 🎉</h2>
+          <p>Hi ${account.name || 'there'},</p>
+          <p>Your account request for the GLRA admin portal has been <strong>approved</strong>. You can now sign in with the email and password you registered with.</p>
+        ` + getEmailFooter());
+      } catch (e) { console.error('Approval email failed:', e.message); }
+
+      res.json({ success: true, account: { _id: account._id, email: account.email, name: account.name, role: account.role, status: account.status, permissions: account.permissions } });
+    } catch (e) {
+      console.error('Approve error:', e);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+// Decline a pending signup: removes the request entirely (they can sign up again).
+app.post('/api/admin/accounts/:id/decline', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const account = await Account.findOne({ _id: req.params.id, status: 'pending' });
+    if (!account) return res.status(404).json({ error: 'Pending account not found' });
+    await Account.deleteOne({ _id: account._id });
+    await logAudit(req, 'DECLINE', 'Account', req.params.id, account.email, null);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });

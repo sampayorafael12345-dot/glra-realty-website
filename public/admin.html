@@ -58,6 +58,9 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:
 .login-btn:hover{background:var(--gold-dark)}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
 .login-error{font-size:12px;color:#f87171;margin-top:14px;text-align:center;padding:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);display:none}
+.login-switch{margin-top:18px;text-align:center;font-size:12px;color:var(--gray)}
+.login-switch a{color:var(--gold);cursor:pointer;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.login-switch a:hover{opacity:.8}
 
 /* ── SHELL LAYOUT ───────────────────────────────────── */
 .admin-shell{display:none;min-height:100vh;flex-direction:row}
@@ -1062,7 +1065,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
-  <div class="login-card">
+  <div class="login-card" id="loginCard">
     <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
     <div class="login-title" style="text-align:center">Welcome Back</div>
     <div class="login-sub" style="text-align:center">Sign in to manage your listings and team</div>
@@ -1070,6 +1073,27 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
     <div class="login-field"><label>Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
     <div class="login-error" id="lgErr">Invalid email or password.</div>
+    <div class="login-switch">New employee? <a onclick="showSignup(true)">Request an account</a></div>
+  </div>
+  <!-- SIGNUP (employee account request) -->
+  <div class="login-card" id="signupCard" style="display:none">
+    <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
+    <div class="login-title" style="text-align:center">Request an Account</div>
+    <div class="login-sub" style="text-align:center">Fill this in and the administrator will review your request. You can sign in once approved.</div>
+    <div id="suForm">
+      <div class="login-field"><label>Full Name</label><input type="text" id="suName" placeholder="e.g. Juan dela Cruz" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label>Email Address</label><input type="email" id="suEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label>Password</label><input type="password" id="suPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label>Confirm Password</label><input type="password" id="suPass2" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')signup()"></div>
+      <button class="login-btn" id="suBtn" onclick="signup()"><i class="fas fa-user-plus"></i> Send Request</button>
+      <div class="login-error" id="suErr"></div>
+    </div>
+    <div id="suDone" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:40px;color:var(--gold);margin-bottom:12px"><i class="fas fa-paper-plane"></i></div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Request Sent!</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6">The administrator has been notified. You'll be able to sign in as soon as your account is approved.</div>
+    </div>
+    <div class="login-switch">Already approved? <a onclick="showSignup(false)">Back to sign in</a></div>
   </div>
 </div>
 
@@ -1099,7 +1123,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
-      <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts</a>
+      <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts <span class="nav-badge" id="accBadge" style="display:none">0</span></a>
       <a class="nav-item" data-perm="audit_view" onclick="switchTab('auditlog')" style="display:none"><i class="fas fa-history"></i> Audit Log</a>
       <div class="sb-section" style="margin-top:6px">Links</div>
       <a class="nav-item" href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Website</a>
@@ -1636,6 +1660,8 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- ACCOUNTS (admin only) -->
       <div id="tab-accounts" style="display:none">
+        <!-- Pending signup requests (only shows when there are any) -->
+        <div id="pendingList"></div>
         <!-- Add Account Button -->
         <div style="display:flex;justify-content:flex-end;margin-bottom:18px">
           <button class="hdr-btn primary" onclick="openAddAccount()"><i class="fas fa-user-plus"></i> Add Account</button>
@@ -1695,6 +1721,9 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             <option value="UPDATE">Update / Edit</option>
             <option value="DELETE">Delete</option>
             <option value="UPLOAD">Upload</option>
+            <option value="SIGNUP">Account Signup</option>
+            <option value="APPROVE">Account Approved</option>
+            <option value="DECLINE">Account Declined</option>
             <option value="REORDER">Reorder</option>
             <option value="SET_DEFAULT">Set Default</option>
             <option value="BULK_CREATE">Bulk Create</option>
@@ -1974,6 +2003,41 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
       <div class="form-actions">
         <button class="fbtn primary" id="saveAccBtn" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
         <button class="fbtn secondary" onclick="closeAccModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP APPROVAL MODAL -->
+<div class="modal-ov" id="apModal">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hd"><div class="modal-title">Approve Account Request</div><button class="modal-close" onclick="closeApModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <!-- Who is asking -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border-color);background:rgba(200,169,110,.05);margin-bottom:18px">
+        <div style="width:44px;height:44px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--gold);font-weight:600;flex-shrink:0;border:1px solid rgba(200,169,110,.3)" id="apAv">?</div>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:14px;color:var(--text-color)" id="apName">—</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:2px" id="apEmail">—</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px" id="apDate">—</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="fg full"><label>Role</label><select id="apRole" onchange="apRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
+        <div class="fg full" id="apPermsWrap">
+          <label>What can they access?</label>
+          <div class="field-hint" style="margin-bottom:10px">Tick exactly what this person is allowed to do. You can change this anytime later by editing their account.</div>
+          <div id="apPermsGrid" class="perm-grid"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="hdr-btn" onclick="permsToggleAll(true,'apPermsGrid')"><i class="fas fa-check-double"></i> Select All</button>
+            <button type="button" class="hdr-btn" onclick="permsToggleAll(false,'apPermsGrid')"><i class="fas fa-times-circle"></i> Clear All</button>
+            <button type="button" class="hdr-btn" onclick="permsApplyDefault('apPermsGrid')"><i class="fas fa-undo"></i> Typical Employee</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="fbtn primary" id="apBtn" onclick="approveAccount()"><i class="fas fa-user-check"></i> Approve Account</button>
+        <button class="fbtn secondary" onclick="closeApModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -2326,9 +2390,10 @@ function applyRoleUI(){
   if(addBtn) addBtn.style.display = 'none';
 }
 
-// ── PERMISSION CHECKBOX GRID (in account modal) ───────────
-function renderPermsGrid(currentPerms){
-  const wrap = document.getElementById('accPermsGrid');
+// ── PERMISSION CHECKBOX GRID (account modal + approval modal) ───────────
+// gridId defaults to the account modal's grid; the approval modal passes its own.
+function renderPermsGrid(currentPerms, gridId){
+  const wrap = document.getElementById(gridId || 'accPermsGrid');
   if(!wrap) return;
   wrap.innerHTML = PERM_DEFS.map(p => {
     const checked = currentPerms && currentPerms[p.key] === true ? 'checked' : '';
@@ -2344,20 +2409,20 @@ function renderPermsGrid(currentPerms){
   }).join('');
 }
 
-function readPermsGrid(){
+function readPermsGrid(gridId){
   const out = {};
-  document.querySelectorAll('#accPermsGrid input[data-perm-key]').forEach(cb => {
+  document.querySelectorAll(`#${gridId || 'accPermsGrid'} input[data-perm-key]`).forEach(cb => {
     out[cb.getAttribute('data-perm-key')] = cb.checked;
   });
   return out;
 }
 
-function permsToggleAll(state){
-  document.querySelectorAll('#accPermsGrid input[data-perm-key]').forEach(cb => { cb.checked = !!state; });
+function permsToggleAll(state, gridId){
+  document.querySelectorAll(`#${gridId || 'accPermsGrid'} input[data-perm-key]`).forEach(cb => { cb.checked = !!state; });
 }
 
-function permsApplyDefault(){
-  renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS });
+function permsApplyDefault(gridId){
+  renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS }, gridId);
 }
 
 function onRoleChange(){
@@ -2408,6 +2473,44 @@ async function login(){
     }else{err.style.display='block';err.textContent=d.error||'Invalid credentials.'}
   }catch{err.style.display='block';err.textContent='Connection error. Try again.'}
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'}
+}
+
+// ── SIGNUP (employee account request) ─────────────────────
+function showSignup(on){
+  document.getElementById('loginCard').style.display = on ? 'none' : '';
+  document.getElementById('signupCard').style.display = on ? '' : 'none';
+  // Reset the signup card back to the form each time it's opened
+  if(on){
+    document.getElementById('suForm').style.display='';
+    document.getElementById('suDone').style.display='none';
+    document.getElementById('suErr').style.display='none';
+  }
+}
+
+async function signup(){
+  const name=document.getElementById('suName').value.trim();
+  const email=document.getElementById('suEmail').value.trim();
+  const pass=document.getElementById('suPass').value;
+  const pass2=document.getElementById('suPass2').value;
+  const err=document.getElementById('suErr');
+  const show=m=>{err.style.display='block';err.textContent=m};
+  err.style.display='none';
+  if(name.length<2){show('Please enter your full name.');return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){show('Please enter a valid email address.');return}
+  if(pass.length<8){show('Password must be at least 8 characters.');return}
+  if(pass!==pass2){show('Passwords do not match.');return}
+  const btn=document.getElementById('suBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+  try{
+    const res=await fetch('/api/admin/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pass})});
+    const d=await res.json();
+    if(res.ok&&d.success){
+      document.getElementById('suForm').style.display='none';
+      document.getElementById('suDone').style.display='block';
+      document.getElementById('suPass').value='';document.getElementById('suPass2').value='';
+    }else show((d.details&&d.details[0]&&d.details[0].msg)||d.error||'Could not send request. Please try again.');
+  }catch{show('Connection error. Please try again.')}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-user-plus"></i> Send Request'}
 }
 
 function logout(){
@@ -2752,13 +2855,15 @@ async function loadAccounts(){
   try{
     const data = await apiFetch('/api/admin/accounts').then(r=>r.json());
     allAccounts = Array.isArray(data) ? data : [];
+    renderPendingAccounts(allAccounts.filter(a=>a.status==='pending'));
+    const active = allAccounts.filter(a=>a.status!=='pending');
     const list = document.getElementById('accountsList');
     if(!list) return;
-    if(!allAccounts.length){
+    if(!active.length){
       list.innerHTML='<div class="empty-st"><i class="fas fa-users"></i><p>No accounts yet. Add your first team member.</p></div>';
       return;
     }
-    list.innerHTML = allAccounts.map(a=>`
+    list.innerHTML = active.map(a=>`
       <div class="panel" style="margin-bottom:14px">
         <div style="padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:46px;height:46px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:600;flex-shrink:0;border:1px solid rgba(200,169,110,.3)">${(a.name||a.email)[0].toUpperCase()}</div>
@@ -2854,6 +2959,98 @@ async function deleteAccount(id, name){
     const res = await apiFetch(`/api/admin/accounts/${id}`,{method:'DELETE'});
     if(res.ok){showToast('Account removed');loadAccounts()}
     else showToast('Delete failed',true);
+  }catch{showToast('Error',true)}
+}
+
+// ── SIGNUP APPROVAL QUEUE ─────────────────────────────────
+let approveAccId = null;
+
+function renderPendingAccounts(pending){
+  const wrap = document.getElementById('pendingList');
+  const badge = document.getElementById('accBadge');
+  if(badge){ badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none'; }
+  if(!wrap) return;
+  if(!pending.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = `
+    <div class="panel" style="margin-bottom:18px;border:1px solid rgba(245,158,11,.4)">
+      <div class="panel-head" style="background:rgba(245,158,11,.07)">
+        <div class="panel-title"><i class="fas fa-user-clock" style="color:#f59e0b"></i> Waiting for Your Approval (${pending.length})</div>
+      </div>
+      <div class="panel-body" style="padding:0">
+        ${pending.map(a=>`
+        <div style="padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border-color)">
+          <div style="width:42px;height:42px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:#f59e0b;font-weight:600;flex-shrink:0;border:1px solid rgba(245,158,11,.4)">${esc((a.name||a.email)[0].toUpperCase())}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;color:var(--text-color)">${esc(a.name||'—')}</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(a.email)}</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:4px"><i class="fas fa-clock" style="margin-right:4px"></i>Requested ${fmtDate(a.createdAt)}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="hdr-btn primary" onclick="openApprove('${a._id}')"><i class="fas fa-user-check"></i> Approve</button>
+            <button class="act act-del" onclick="declineAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-user-times"></i> Decline</button>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function openApprove(id){
+  const a = (allAccounts || []).find(x => String(x._id) === String(id));
+  if(!a){ showToast('Request not found', true); return; }
+  approveAccId = id;
+  document.getElementById('apAv').textContent = (a.name||a.email)[0].toUpperCase();
+  document.getElementById('apName').textContent = a.name || '—';
+  document.getElementById('apEmail').textContent = a.email;
+  document.getElementById('apDate').textContent = 'Requested ' + fmtDate(a.createdAt);
+  document.getElementById('apRole').value = 'employee';
+  // Start from the typical-employee defaults so approving is one click for the common case.
+  renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS }, 'apPermsGrid');
+  apRoleChange();
+  document.getElementById('apModal').classList.add('open');
+}
+
+function closeApModal(){document.getElementById('apModal').classList.remove('open')}
+
+function apRoleChange(){
+  // Same behavior as the account modal: admin role ignores the checkboxes.
+  const role = document.getElementById('apRole')?.value;
+  const grid = document.getElementById('apPermsGrid');
+  const wrap = document.getElementById('apPermsWrap');
+  if(!wrap || !grid) return;
+  let notice = wrap.querySelector('.perm-admin-notice');
+  if(!notice){
+    notice = document.createElement('div');
+    notice.className = 'perm-admin-notice';
+    notice.innerHTML = '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.';
+    wrap.insertBefore(notice, grid);
+  }
+  grid.classList.toggle('disabled', role==='admin');
+  notice.classList.toggle('show', role==='admin');
+}
+
+async function approveAccount(){
+  if(!approveAccId) return;
+  const btn = document.getElementById('apBtn');
+  const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Approving...';
+  try{
+    const body = { role: document.getElementById('apRole').value, permissions: readPermsGrid('apPermsGrid') };
+    const res = await apiFetch(`/api/admin/accounts/${approveAccId}/approve`,{method:'POST',body:JSON.stringify(body)});
+    const d = await res.json();
+    if(res.ok){
+      showToast('Account approved! They can now sign in.');
+      closeApModal();
+      loadAccounts();
+    }else showToast(d.error||'Approve failed',true);
+  }catch{showToast('Network error',true)}
+  finally{btn.disabled=false;btn.innerHTML=orig}
+}
+
+async function declineAccount(id, name){
+  if(!confirm(`Decline the account request from "${name}"?\n\nThe request will be removed. They can sign up again later if needed.`)) return;
+  try{
+    const res = await apiFetch(`/api/admin/accounts/${id}/decline`,{method:'POST'});
+    if(res.ok){showToast('Request declined');loadAccounts()}
+    else showToast('Decline failed',true);
   }catch{showToast('Error',true)}
 }
 
@@ -2964,6 +3161,9 @@ function describeAuditAction(l){
     case 'REORDER':     return `Reordered hero images (${title})`;
     case 'SET_DEFAULT': return 'Set a hero image as default';
     case 'BULK_CREATE': return `Bulk-added properties (${title})`;
+    case 'SIGNUP':      return `Requested an account: ${title}`;
+    case 'APPROVE':     return `Approved account request: ${title}`;
+    case 'DECLINE':     return `Declined account request: ${title}`;
     default:            return `${action} ${target}${title ? ': ' + title : ''}`;
   }
 }
@@ -3013,7 +3213,8 @@ function renderAuditLog(logs){
   const actionColor = {
     LOGIN:'#3b82f6', LOGOUT:'#6b7280',
     CREATE:'#10b981', UPDATE:'#f59e0b', DELETE:'#ef4444',
-    UPLOAD:'#8b5cf6', REORDER:'#06b6d4', SET_DEFAULT:'#06b6d4', BULK_CREATE:'#10b981'
+    UPLOAD:'#8b5cf6', REORDER:'#06b6d4', SET_DEFAULT:'#06b6d4', BULK_CREATE:'#10b981',
+    SIGNUP:'#f59e0b', APPROVE:'#10b981', DECLINE:'#ef4444'
   };
   body.innerHTML = logs.map(l=>{
     const color = actionColor[l.action] || 'var(--gray)';

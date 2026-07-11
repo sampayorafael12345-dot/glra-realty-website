@@ -52,9 +52,12 @@ function requirePermission(key) {
     if (!req.user) return res.status(401).json({ error: 'Authentication required' });
     if (req.user.role === 'admin') return next();
     try {
-      const account = await Account.findById(req.user.sub).select('permissions isActive role').lean();
+      const account = await Account.findById(req.user.sub).select('permissions isActive role status').lean();
       if (!account || account.isActive === false) {
         return res.status(403).json({ error: 'Account is inactive' });
+      }
+      if (account.status === 'pending') {
+        return res.status(403).json({ error: 'Account is awaiting admin approval' });
       }
       if (account.role === 'admin') return next();
       const granted = account.permissions && account.permissions[key] === true;

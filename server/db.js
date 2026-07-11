@@ -426,7 +426,11 @@ const accountSchema = new mongoose.Schema({
   permissions: { type: mongoose.Schema.Types.Mixed, default: () => defaultPermissionsForRole('employee') },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  // Approval workflow: self-service signups start as 'pending' and cannot log in
+  // until an admin approves them (choosing their permissions at that moment).
+  // Admin-created accounts and all pre-existing accounts are 'active'.
+  status: { type: String, enum: ['pending', 'active'], default: 'active' }
 });
 
 // Hash password before saving (only when modified)
