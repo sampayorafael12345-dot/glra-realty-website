@@ -80,7 +80,7 @@ a:hover{color:var(--ab-hot)}
   display:flex !important;align-items:center !important;justify-content:space-between !important;gap:20px !important;
   transition:none !important;
 }
-.navbar .logo img{height:78px !important;width:auto !important;filter:none !important}
+.navbar .logo img{height:64px !important;width:auto !important;filter:none !important}
 @media(max-width:560px){.navbar .logo img{height:58px !important}}
 .navbar .logo{position:static !important;transform:none !important}
 .nav-links{display:flex !important;gap:0 !important;align-items:stretch !important}
@@ -182,7 +182,7 @@ body.dark-mode input[type="range"]::-moz-range-thumb{border-color:#f1eee9 !impor
 input[type="range"]::-moz-range-track{height:6px !important;background:#0a0a0a !important;border:0 !important}
 body.dark-mode input[type="range"]::-moz-range-track{background:#3a3a36 !important}
 ::placeholder{color:var(--ab-gray) !important;text-transform:uppercase;letter-spacing:1.2px;font-size:11px;font-weight:600}
-label{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.8px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:700 !important;display:block !important;margin-bottom:6px !important}
+label{font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.8px !important;text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:700 !important;display:block !important;margin-bottom:6px !important}
 
 /* ── BUTTONS (broad coverage) ── */
 button,
@@ -238,11 +238,11 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 }
 .footer-col h4{
   font-family:'JetBrains Mono',monospace !important;color:var(--ab-hot) !important;
-  font-size:10px !important;letter-spacing:2px !important;text-transform:uppercase !important;
+  font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;
   font-weight:700 !important;margin-bottom:14px !important;
 }
 .footer-col p,.footer-col a,.footer-col ul li a{
-  color:rgba(241,238,233,.85) !important;font-size:13px !important;font-weight:600 !important;
+  color:rgba(241,238,233,.85) !important;font-size:14px !important;font-weight:600 !important;
   font-family:'Inter',sans-serif !important;line-height:1.6 !important;
 }
 .footer-col a:hover,.footer-col ul li a:hover{color:var(--ab-hot) !important}
@@ -255,12 +255,12 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 .footer-social a:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important;color:#fff !important}
 .footer-divider{display:none !important}
 .footer-bottom{
-  font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1.5px !important;
-  text-transform:uppercase !important;color:rgba(241,238,233,.5) !important;font-weight:500 !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;
+  text-transform:uppercase !important;color:rgba(241,238,233,.68) !important;font-weight:500 !important;
   max-width:1480px !important;margin:24px auto 0 !important;border-top:0 !important;
 }
-.footer-bottom p{color:rgba(241,238,233,.5) !important;font-size:10px !important;letter-spacing:1.5px !important}
-.footer-bottom-links a{color:rgba(241,238,233,.5) !important;font-size:10px !important;letter-spacing:1.5px !important}
+.footer-bottom p{color:rgba(241,238,233,.68) !important;font-size:11px !important;letter-spacing:1.5px !important}
+.footer-bottom-links a{color:rgba(241,238,233,.68) !important;font-size:11px !important;letter-spacing:1.5px !important}
 .footer-bottom-links a:hover{color:var(--ab-hot) !important}
 
 /* ── FLOATING BUTTONS ──
@@ -295,10 +295,30 @@ html body.dark-mode .floating-buttons .fab-toggle{box-shadow:4px 4px 0 var(--ab-
 .back-to-top{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-radius:0 !important;width:46px !important;height:46px !important}
 .back-to-top:hover{background:var(--ab-hot) !important}
 
-/* ── LOADER ── */
+/* ── LOADER ──
+   brutalist-shell.js swaps the plain "GLRA" text for the real logo image at
+   runtime. The text below is the pre-JS / no-JS fallback. */
 .loader{background:var(--ab-paper) !important}
+/* Never flash white in dark mode: dark-mode-pre is set on <html> before CSS vars flip */
+html.dark-mode-pre .loader,html body.dark-mode .loader{background:#0e0e0c !important}
 .loader-logo{font-family:'Inter',sans-serif !important;color:var(--ab-ink) !important;font-weight:900 !important;letter-spacing:-2px !important;font-size:54px !important;text-transform:uppercase}
-.loader-bar{background:var(--ab-paper-2) !important}
+html.dark-mode-pre .loader-logo{color:#f1eee9 !important}
+/* Logo image loader (injected by brutalist-shell.js): black wordmark in light,
+   white wordmark in dark, chosen by CSS from the first paint (no src swap). */
+.loader-logo-img{margin:0 auto !important;height:120px !important;width:auto !important;display:block;animation:loaderPulse 1.6s ease-in-out infinite}
+@media(max-width:560px){.loader-logo-img{height:96px !important}}
+.loader-logo-light{display:block}
+.loader-logo-dark{display:none}
+html.dark-mode-pre .loader-logo-light,html body.dark-mode .loader-logo-light{display:none}
+html.dark-mode-pre .loader-logo-dark,html body.dark-mode .loader-logo-dark{display:block}
+@keyframes loaderPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(.96)}}
+/* Small mono tagline under the wordmark, on brand (both the text fallback and the image loader) */
+.loader-logo::after{content:'Licensed Real Estate Broker';display:block;font-family:'JetBrains Mono',monospace !important;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-gray);font-weight:600;margin-top:12px}
+html.dark-mode-pre .loader-logo::after{color:#8a8272}
+.loader-tagline{font-family:'JetBrains Mono',monospace !important;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ab-gray);font-weight:600;margin-top:16px}
+html.dark-mode-pre .loader-tagline{color:#8a8272}
+.loader-bar{background:var(--ab-paper-2) !important;margin-top:20px !important}
+html.dark-mode-pre .loader-bar{background:#1a1a17 !important}
 .loader-bar::after{background:var(--ab-hot) !important}
 
 /* ── TOAST ── */
@@ -328,7 +348,7 @@ body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:v
   letter-spacing:-.8px !important;color:var(--ab-ink) !important;text-transform:none !important;line-height:1 !important;white-space:nowrap !important;
 }
 .trust-item .trust-sub{
-  font-family:'JetBrains Mono',monospace !important;font-size:9.5px !important;letter-spacing:1.5px !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;
   text-transform:uppercase !important;color:var(--ab-gray) !important;font-weight:600 !important;
 }
 
@@ -368,7 +388,7 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 
 /* Hint text under inputs */
 .input-hint,.zonal-hint{
-  font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1px !important;
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1px !important;
   color:var(--ab-gray) !important;font-weight:600 !important;text-transform:none !important;
 }
 .input-hint i,.zonal-hint i{color:var(--ab-hot) !important}
@@ -434,7 +454,7 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 .ab-top-strip *{color:#f1eee9 !important}
 .ab-top-strip .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot) !important;margin-right:8px;animation:abpulse 1.5s infinite}
 @keyframes abpulse{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:640px){.ab-top-strip{font-size:9.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
+@media(max-width:640px){.ab-top-strip{font-size:10.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
 
 /* Calculator fee-row padding so values don't touch the box edge */
 .fee-row,.cost-row,.amort-row,.rental-row{padding-left:18px !important;padding-right:18px !important}
@@ -838,7 +858,7 @@ html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
 .ab-top-strip,.ab-top-strip *{color:#f1eee9 !important}
 footer,footer p,footer .footer-col p,footer .footer-col a,footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
 footer .footer-col h4{color:var(--ab-hot) !important}
-footer .footer-bottom,footer .footer-bottom p,footer .footer-bottom-links a{color:rgba(241,238,233,.5) !important}
+footer .footer-bottom,footer .footer-bottom p,footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 footer .footer-social a{color:#f1eee9 !important}
 
 /* Dark-mode footer override (was using var(--ab-paper) which inverts to dark) */
@@ -846,7 +866,7 @@ html body.dark-mode footer{background:#000 !important;color:#f1eee9 !important}
 html body.dark-mode footer *{color:#f1eee9 !important}
 html body.dark-mode footer .footer-col h4{color:var(--ab-hot) !important}
 html body.dark-mode footer .footer-col a,html body.dark-mode footer .footer-col p,html body.dark-mode footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
-html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.5) !important}
+html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 
 /* ════════════════════════════════════════════════════════════
    CALCULATOR / TOOL CARDS — make calc-card-header consistent with
@@ -892,7 +912,7 @@ html body.dark-mode .calc-card-header p{
 html body.dark-mode .input-group label{
   color:var(--ab-gray) !important;
   font-family:'JetBrains Mono',monospace !important;
-  font-size:10.5px !important;letter-spacing:1.8px !important;
+  font-size:11px !important;letter-spacing:1.8px !important;
   text-transform:uppercase !important;font-weight:700 !important;
   margin-bottom:6px !important;display:block !important;
 }
@@ -908,7 +928,7 @@ html body.dark-mode .input-group input,html body.dark-mode .input-group select{
 html body.dark-mode .input-hint{
   color:var(--ab-gray) !important;
   font-family:'JetBrains Mono',monospace !important;
-  font-size:10.5px !important;letter-spacing:.5px !important;
+  font-size:11px !important;letter-spacing:.5px !important;
   text-transform:none !important;font-weight:600 !important;
   margin-top:6px !important;line-height:1.5 !important;
 }
@@ -981,7 +1001,7 @@ html body.dark-mode .breakdown-table tr.total-row td{
   background:var(--ab-paper) !important;color:var(--ab-ink) !important;
   border:1px solid var(--ab-line) !important;
 }
-.result-mini .label{color:var(--ab-gray) !important;font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-weight:700 !important}
+.result-mini .label{color:var(--ab-gray) !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-weight:700 !important}
 .result-mini .value{color:var(--ab-ink) !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.5px !important;font-size:20px !important}
 .result-mini.gold .value{color:var(--ab-hot) !important}
 .result-mini .sub{color:var(--ab-gray) !important;font-size:11px !important;font-weight:500 !important}
@@ -1122,6 +1142,38 @@ html body.dark-mode input[type="range"]::-moz-range-thumb{border-color:#f1eee9 !
        leaked onto the WHITE printout (labels turned invisible). Force them dark
        for print, and enlarge the letterhead logo. Always prints light/black-on-white
        regardless of dark mode (the universal print reset handles backgrounds). */
+/* ════════════════════════════════════════════════════════════
+   UX POLISH (2026-07) — press feedback, brand focus rings,
+   reduced motion, mobile-menu group labels. All inner pages.
+   ════════════════════════════════════════════════════════════ */
+/* Buttons stamp down like a physical press (fires while hover rules are active,
+   so it must come after them and carry !important) */
+button:active,.btn:active,.cta-btn:active,.broker-btn:active,.view-all-btn:active,
+.calculate-btn:active,.submit-btn:active,.search-btn-main:active,.comm-btn:active,
+input[type="submit"]:active,input[type="button"]:active{transform:translate(1px,1px) !important}
+.floating-buttons .floating-btn:active,.floating-buttons .fab-toggle:active{
+  transform:translate(2px,2px) !important;box-shadow:2px 2px 0 var(--ab-ink) !important;
+}
+/* Keyboard focus ring in brand orange (overrides the legacy gold ring in styles.css) */
+:is(a,button,summary,input,textarea,select,[role="button"]):focus-visible,
+body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):focus-visible{
+  outline:3px solid var(--ab-hot) !important;outline-offset:2px !important;border-radius:0 !important;
+}
+/* Mobile menu group labels (used by pages that group their overlay links) */
+.mo-label{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
+  letter-spacing:2px !important;text-transform:uppercase !important;
+  color:var(--ab-hot) !important;font-weight:700 !important;padding:20px 4px 6px !important;
+  text-align:left !important;
+}
+/* Active page in mobile menu: brand orange, not legacy gold */
+.mobile-overlay-links a.gl-active{color:var(--ab-hot) !important}
+/* Users who ask for less motion get a still page */
+@media(prefers-reduced-motion:reduce){
+  .ab-top-strip .live{animation:none !important}
+  #glraEarlyLoader i::after,.loader-bar::after,.loader-logo-img{animation:none !important}
+}
+
 @media print{
   /* Force every "cream text on a dark box" color (screen styling) back to solid
      dark for the WHITE printout — otherwise these labels print invisible. */

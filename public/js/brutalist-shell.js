@@ -12,12 +12,30 @@
     else fn();
   }
 
+  // 0) Upgrade the plain-text "GLRA" loader to the real logo image (light + dark
+  //    aware). Runs as early as possible so the swap happens before the reveal.
+  function upgradeLoader(){
+    var logo = document.querySelector('#loader .loader-logo');
+    if(!logo || logo.dataset.abUpgraded) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'loader-logo-wrap';
+    wrap.dataset.abUpgraded = '1';
+    wrap.innerHTML =
+        '<img src="/img/logo.png" alt="GLRA Realty" class="loader-logo-img loader-logo-light">'
+      + '<img src="/img/hero-logo.png" alt="GLRA Realty" class="loader-logo-img loader-logo-dark">'
+      + '<div class="loader-tagline">Licensed Real Estate Broker</div>';
+    logo.replaceWith(wrap);
+  }
+  upgradeLoader();
+
   ready(function(){
+    upgradeLoader();
+
     // 1) Inject LIVE top strip if not present
     if(!document.querySelector('.ab-top-strip')){
       var top = document.createElement('div');
       top.className = 'ab-top-strip';
-      top.innerHTML = '<span><span class="live"></span>LIVE — By appointment only</span><span>EST. MNL · 2014 — 2026</span>';
+      top.innerHTML = '<span><span class="live"></span>LIVE · By appointment only</span><span>MAKATI · SINCE 2014</span>';
       document.body.insertBefore(top, document.body.firstChild);
     }
 
