@@ -349,11 +349,22 @@ const cashEntrySchema = new mongoose.Schema({
   createdByName: { type: String, default: '' }
 }, { timestamps: true });
 
+// ── SITE TRAFFIC (self-hosted visitor counter) ──────────────
+// One document per calendar day (YYYY-MM-DD). A middleware bumps `views` on
+// each public HTML page load. No IPs, cookies, or personal data are stored —
+// just a daily page-view tally that surfaces inside the admin dashboard.
+const siteStatSchema = new mongoose.Schema({
+  day:   { type: String, required: true, unique: true, index: true }, // 'YYYY-MM-DD' (server local time)
+  views: { type: Number, default: 0 }
+});
+
 // ============================================================================
 // PERMISSIONS
 // ============================================================================
 // Master list of every granular permission key in the system.
 const PERMISSION_KEYS = [
+  'dashboard_view',        // see the main dashboard landing page at all
+  'dashboard_analytics',   // see website visitors + team activity (admin-level insight)
   'properties_create',
   'properties_edit',
   'properties_delete',
@@ -390,6 +401,8 @@ function defaultPermissionsForRole(role) {
   // Employees default: can manage properties (the most common day-to-day task) but not delete or manage hero/accounts.
   // Tasks: by default they can see the board and post comments on their own tasks; only managers create/edit/delete.
   return {
+    dashboard_view: true,        // staff see the basic dashboard...
+    dashboard_analytics: false,  // ...but NOT website visitors / who's-online (admin-only by default)
     properties_create: true,
     properties_edit: true,
     properties_delete: false,
@@ -428,6 +441,9 @@ const accountSchema = new mongoose.Schema({
   permissions: { type: mongoose.Schema.Types.Mixed, default: () => defaultPermissionsForRole('employee') },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },
+  // Updated (throttled) on every authenticated admin API call so the dashboard
+  // can show who's currently online / recently active.
+  lastSeen: { type: Date, default: null },
   isActive: { type: Boolean, default: true },
   // Approval workflow: self-service signups start as 'pending' and cannot log in
   // until an admin approves them (choosing their permissions at that moment).
@@ -486,6 +502,7 @@ const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSche
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
 const NotarialJob       = mongoose.model('NotarialJob',       notarialJobSchema);
 const CashEntry         = mongoose.model('CashEntry',         cashEntrySchema);
+const SiteStat          = mongoose.model('SiteStat',          siteStatSchema);
 
 module.exports = {
   // models
@@ -504,6 +521,7 @@ module.exports = {
   TitlingCase,
   NotarialJob,
   CashEntry,
+  SiteStat,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole

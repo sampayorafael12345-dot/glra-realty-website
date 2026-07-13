@@ -23,6 +23,21 @@ function signToken(account) {
   );
 }
 
+// In-memory throttle for lastSeen writes: { userId: lastWriteMs }. Avoids a DB
+// write on every single authenticated request — one write per user per ~60s is
+// plenty to power the dashboard's "who's online" view. Resets on server restart.
+const _lastSeenWrites = new Map();
+const LAST_SEEN_THROTTLE_MS = 60 * 1000;
+function touchLastSeen(userId) {
+  if (!userId) return;
+  const now = Date.now();
+  const prev = _lastSeenWrites.get(userId) || 0;
+  if (now - prev < LAST_SEEN_THROTTLE_MS) return;
+  _lastSeenWrites.set(userId, now);
+  // Fire-and-forget: never block the request or surface an error to the client.
+  Account.updateOne({ _id: userId }, { $set: { lastSeen: new Date() } }).catch(() => {});
+}
+
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -30,6 +45,7 @@ function verifyToken(req, res, next) {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
+    touchLastSeen(payload.sub); // best-effort presence tracking
     next();
   } catch (e) {
     return res.status(401).json({ error: 'Invalid or expired token' });

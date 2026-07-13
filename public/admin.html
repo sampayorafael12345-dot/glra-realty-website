@@ -1063,6 +1063,100 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 .bm-sched-status.sent{background:#10b981;border-color:#10b981;color:#fff}
 .bm-sched-status.failed{background:#ef4444;border-color:#ef4444;color:#fff}
 .bm-sched-status.cancelled{background:transparent;color:var(--ab-gray);border-color:var(--ab-gray)}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD COCKPIT — needs-attention, charts, pipeline, presence
+   ════════════════════════════════════════════════════════════ */
+.dash-section-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ab-gray);margin:26px 0 12px;display:flex;align-items:center;gap:8px}
+.dash-section-lbl::after{content:'';flex:1;height:2px;background:var(--ab-line);opacity:.35}
+.dash-section-lbl:first-child{margin-top:0}
+
+/* Needs-attention tiles */
+.na-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:8px}
+.na-tile{position:relative;background:var(--card-bg);border:2px solid var(--ab-line);padding:16px 18px;cursor:pointer;transition:all .15s ease;text-align:left;display:block;width:100%;font-family:inherit}
+.na-tile:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ab-line)}
+.na-tile.na-hot{border-color:#ff3d00}
+.na-tile.na-hot::before{content:'';position:absolute;top:0;left:0;width:5px;height:100%;background:#ff3d00}
+.na-tile .na-num{font-family:'Inter',sans-serif;font-weight:900;font-size:32px;line-height:1;letter-spacing:-2px;color:var(--ab-ink)}
+.na-tile.na-hot .na-num{color:#ff3d00}
+.na-tile .na-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ab-gray);margin-top:8px;display:flex;align-items:center;gap:6px}
+.na-tile .na-go{position:absolute;top:14px;right:14px;font-size:12px;color:var(--ab-gray);opacity:0;transition:opacity .15s ease}
+.na-tile:hover .na-go{opacity:1}
+.na-clear{border:2px dashed var(--ab-line);padding:26px 20px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#10b981;display:flex;align-items:center;justify-content:center;gap:10px}
+.na-clear i{font-size:18px}
+
+/* Two-up layout */
+.dash-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.dash-two{grid-template-columns:1fr}}
+
+/* Bar chart */
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:130px;padding-top:6px}
+.bar-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;cursor:default}
+.bar-fill{width:100%;background:#ff3d00;min-height:2px;transition:height .3s ease}
+.bar-col:hover .bar-fill{background:var(--ab-ink)}
+.bar-col .bar-tip{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--ab-ink);color:var(--ab-paper);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s ease;z-index:5}
+.bar-col:hover .bar-tip{opacity:1}
+.bar-axis{display:flex;justify-content:space-between;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.5px;color:var(--ab-gray);text-transform:uppercase}
+.chart-kpis{display:flex;gap:24px;margin-top:14px;padding-top:14px;border-top:2px solid var(--ab-line)}
+.chart-kpi .ck-num{font-family:'Inter',sans-serif;font-weight:900;font-size:22px;letter-spacing:-1px;color:var(--ab-ink);line-height:1}
+.chart-kpi .ck-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ab-gray);margin-top:4px}
+
+/* Portfolio snapshot */
+.pf-hero{font-family:'Inter',sans-serif;font-weight:900;font-size:30px;letter-spacing:-1.5px;color:var(--ab-ink);line-height:1}
+.pf-hero small{font-size:15px;color:var(--ab-gray);font-weight:700;letter-spacing:0}
+.pf-sub{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ab-gray);margin-top:6px}
+.pf-split{display:flex;height:14px;margin-top:16px;border:2px solid var(--ab-line)}
+.pf-split .pf-seg-avail{background:#10b981}
+.pf-split .pf-seg-sold{background:var(--ab-gray)}
+.pf-legend{display:flex;gap:18px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray)}
+.pf-legend b{color:var(--ab-ink)}
+.pf-legend .dot{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:middle}
+
+/* Top-viewed list */
+.tv-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--ab-line)}
+.tv-row:last-child{border-bottom:0}
+.tv-rank{font-family:'Inter',sans-serif;font-weight:900;font-size:16px;color:#ff3d00;width:22px;flex-shrink:0;letter-spacing:-1px}
+.tv-thumb{width:44px;height:34px;object-fit:cover;border:1px solid var(--ab-line);flex-shrink:0;background:var(--ab-paper-2)}
+.tv-main{flex:1;min-width:0}
+.tv-title{font-family:'Inter',sans-serif;font-weight:700;font-size:12.5px;color:var(--ab-ink);text-transform:uppercase;letter-spacing:-.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv-meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray);margin-top:2px}
+.tv-views{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--ab-ink);white-space:nowrap;flex-shrink:0}
+.tv-views i{color:#ff3d00;margin-right:4px}
+
+/* Titling pipeline strip */
+.pipe-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:2px;background:var(--ab-line);border:2px solid var(--ab-line)}
+.pipe-cell{background:var(--card-bg);padding:12px 10px;text-align:center;cursor:pointer;transition:background .12s ease}
+.pipe-cell:hover{background:var(--ab-paper-2)}
+.pipe-cell .pc-num{font-family:'Inter',sans-serif;font-weight:900;font-size:24px;letter-spacing:-1px;line-height:1}
+.pipe-cell .pc-lbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray);margin-top:6px;line-height:1.2}
+
+/* Quick actions */
+.qa-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.qa-btn{display:flex;align-items:center;gap:10px;background:var(--card-bg);border:2px solid var(--ab-line);padding:15px 16px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ab-ink);transition:all .15s ease;text-align:left;width:100%}
+.qa-btn:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.qa-btn i{font-size:15px;color:#ff3d00;flex-shrink:0}
+.qa-btn:hover i{color:#fff}
+
+/* Staff presence */
+.pres-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--ab-line)}
+.pres-row:last-child{border-bottom:0}
+.pres-av{width:36px;height:36px;flex-shrink:0;background:#ff3d00;color:#fff;font-family:'Inter',sans-serif;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center}
+.pres-main{flex:1;min-width:0}
+.pres-name{font-family:'Inter',sans-serif;font-weight:700;font-size:13px;color:var(--ab-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pres-name .pres-tag{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:1px;color:#ff3d00;margin-left:6px}
+.pres-seen{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray);margin-top:2px}
+.pres-state{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
+.pres-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.pres-dot.on{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.pres-dot.idle{background:#f59e0b}
+.pres-dot.off{background:var(--ab-gray)}
+.pres-state.on{color:#10b981}.pres-state.idle{color:#f59e0b}.pres-state.off{color:var(--ab-gray)}
+
+/* Visitors mini-stats */
+.vis-note{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray);margin-top:12px}
+.vis-note a{color:#ff3d00;text-decoration:none;font-weight:700}
+.vis-note a:hover{text-decoration:underline}
+.dash-loading{padding:30px 20px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray)}
 </style>
 </head>
 <body>
@@ -1146,7 +1240,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
     <div class="sb-head"><img src="/img/hero-logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
     <nav class="sb-nav">
       <div class="sb-section">Overview</div>
-      <a class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a class="nav-item active" data-perm="dashboard_view" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
       <div class="sb-section" style="margin-top:6px">Listings</div>
       <a class="nav-item" onclick="switchTab('properties')"><i class="fas fa-home"></i> Properties</a>
       <a class="nav-item" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
@@ -1205,6 +1299,53 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
           <div class="stat-card"><div class="stat-ico ico-orange"><i class="fas fa-users"></i></div><div><div class="stat-num" id="st-subs">—</div><div class="stat-lbl">Subscribers</div></div></div>
           <div class="stat-card"><div class="stat-ico ico-purple"><i class="fas fa-bell"></i></div><div><div class="stat-num" id="st-alerts">—</div><div class="stat-lbl">Price Alerts</div></div></div>
         </div>
+
+        <!-- NEEDS ATTENTION -->
+        <div class="dash-section-lbl"><i class="fas fa-bolt"></i> Needs attention</div>
+        <div class="na-row" id="dashNeedsAttention"><div class="dash-loading">Loading…</div></div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="dash-section-lbl"><i class="fas fa-wand-magic-sparkles"></i> Quick actions</div>
+        <div class="qa-row" id="dashQuickActions"></div>
+
+        <!-- INSIGHTS -->
+        <div class="dash-section-lbl"><i class="fas fa-chart-column"></i> Insights</div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-envelope-open-text"></i> Inquiries · last 30 days</div></div>
+          <div class="panel-body" id="dashInqChart"><div class="dash-loading">Loading…</div></div>
+        </div>
+
+        <div class="dash-two">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-building"></i> Portfolio</div><button class="hdr-btn" onclick="switchTab('properties')">View all</button></div>
+            <div class="panel-body" id="dashPortfolio"><div class="dash-loading">Loading…</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-fire"></i> Most viewed</div></div>
+            <div class="panel-body" id="dashTopViewed"><div class="dash-loading">Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- TITLING PIPELINE (only if the user can see titling) -->
+        <div class="panel" data-perm="titling_view" style="display:none">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-stamp"></i> Titling pipeline</div><button class="hdr-btn" onclick="switchTab('titling')">Open board</button></div>
+          <div class="panel-body"><div class="pipe-strip" id="dashTitlingPipe"></div></div>
+        </div>
+
+        <!-- ADMIN-ONLY ANALYTICS (website visitors + team activity) -->
+        <div class="dash-section-lbl" data-perm="dashboard_analytics" style="display:none"><i class="fas fa-lock"></i> Admin only</div>
+        <div class="dash-two">
+          <div class="panel" data-perm="dashboard_analytics" style="display:none">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-chart-line"></i> Website visitors · 30 days</div></div>
+            <div class="panel-body" id="dashVisitors"><div class="dash-loading">Loading…</div></div>
+          </div>
+          <div class="panel" data-perm="dashboard_analytics" style="display:none">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-user-clock"></i> Team activity</div><button class="hdr-btn admin-only" onclick="switchTab('accounts')" style="display:none">Manage</button></div>
+            <div class="panel-body" id="dashPresence"><div class="dash-loading">Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- RECENT INQUIRIES -->
         <div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-clock"></i> Recent Inquiries</div><button class="hdr-btn" onclick="switchTab('inquiries')">View All</button></div><div class="panel-body"><div id="dashInq"></div></div></div>
       </div>
 
@@ -2327,6 +2468,8 @@ let editPropId = null;
 // ── PERMISSION DEFINITIONS ────────────────────────────────
 // Single source of truth for the modal's checkboxes + the hasPerm() lookups.
 const PERM_DEFS = [
+  { key: 'dashboard_view',          name: 'View Dashboard',         desc: 'Can see the main dashboard landing page' },
+  { key: 'dashboard_analytics',     name: 'Dashboard Analytics',    desc: 'Can see website visitors + team activity (sensitive — admin-level insight)' },
   { key: 'properties_create',       name: 'Add Properties',         desc: 'Can add new property listings' },
   { key: 'properties_edit',         name: 'Edit Properties',        desc: 'Can edit existing property listings' },
   { key: 'properties_delete',       name: 'Delete Properties',      desc: 'Can permanently delete listings' },
@@ -2353,6 +2496,7 @@ const PERM_DEFS = [
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
+  dashboard_view: true, dashboard_analytics: false,
   properties_create: true, properties_edit: true, properties_delete: false,
   properties_upload_image: true, inquiries_delete: false, subscribers_delete: false,
   hero_upload: false, hero_edit: false, hero_delete: false,
@@ -2455,7 +2599,11 @@ function renderPermsGrid(currentPerms, gridId){
   const wrap = document.getElementById(gridId || 'accPermsGrid');
   if(!wrap) return;
   wrap.innerHTML = PERM_DEFS.map(p => {
-    const checked = currentPerms && currentPerms[p.key] === true ? 'checked' : '';
+    // Fall back to the role default when a key is absent (e.g. a legacy account
+    // saved before this permission existed), so editing never silently drops it.
+    let val = currentPerms ? currentPerms[p.key] : undefined;
+    if(val === undefined) val = DEFAULT_EMPLOYEE_PERMS[p.key] === true;
+    const checked = val === true ? 'checked' : '';
     return `<div class="perm-row">
       <label>
         <input type="checkbox" data-perm-key="${p.key}" ${checked}>
@@ -2528,6 +2676,7 @@ async function login(){
       document.getElementById('pageSub').textContent=`Welcome back, ${(d.name||'').split(' ')[0]||email}`;
       applyRoleUI(); // Apply role restrictions BEFORE loading data
       loadAll();
+      landOnAllowedTab();
       showToast(`Welcome, ${(d.name||'').split(' ')[0]||'Admin'}!`);
     }else{err.style.display='block';err.textContent=d.error||'Invalid credentials.'}
   }catch{err.style.display='block';err.textContent='Connection error. Try again.'}
@@ -2678,6 +2827,8 @@ function loadAll(){
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
   if(hasPerm('notarial_view')) loadNotarial();
+  if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
+  renderDashboard();
 }
 function refreshAll(){loadAll();showToast('Data refreshed')}
 
@@ -2698,7 +2849,267 @@ async function loadAllProps(){
   try{
     allProps=await apiFetch('/api/admin/all-properties').then(r=>r.json());
     renderProps(allProps);
+    renderDashboard();
   }catch(e){console.error(e)}
+}
+
+// ════════════════════════════════════════════════════════════
+// DASHBOARD COCKPIT
+// Renders the landing dashboard from data already loaded elsewhere
+// (allProps, lastInquiries, allTasks, allSubmissions, titlingData).
+// Each source loader calls renderDashboard() when its data arrives, so
+// the cockpit fills in progressively. Safe to call anytime — every
+// section guards against missing data.
+// ════════════════════════════════════════════════════════════
+function dashPeso(n){
+  n = Number(n)||0;
+  if(n>=1e9) return '₱'+(n/1e9).toFixed(n>=1e10?0:1).replace(/\.0$/,'')+'B';
+  if(n>=1e6) return '₱'+(n/1e6).toFixed(n>=1e7?0:1).replace(/\.0$/,'')+'M';
+  if(n>=1e3) return '₱'+Math.round(n/1e3)+'K';
+  return '₱'+n.toLocaleString();
+}
+function dayKey(d){ const x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+// Build an array of the last N day-buckets from a list of date strings.
+function bucketByDay(dates, days){
+  const out=[]; const map={};
+  (dates||[]).forEach(d=>{ if(!d) return; const k=dayKey(d); map[k]=(map[k]||0)+1; });
+  const today=new Date(); today.setHours(0,0,0,0);
+  for(let i=days-1;i>=0;i--){
+    const dt=new Date(today); dt.setDate(dt.getDate()-i);
+    const k=dayKey(dt);
+    out.push({ key:k, date:dt, count:map[k]||0 });
+  }
+  return out;
+}
+// Generic mini bar chart → HTML. buckets: [{date,count}]. label picks tick text.
+function barChartHTML(buckets, opts){
+  opts=opts||{};
+  const max=Math.max(1, ...buckets.map(b=>b.count));
+  const bars=buckets.map(b=>{
+    const h=Math.round((b.count/max)*100);
+    const d=b.date;
+    const tip=`${b.count} · ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+    return `<div class="bar-col"><div class="bar-tip">${tip}</div><div class="bar-fill" style="height:${h}%"></div></div>`;
+  }).join('');
+  const first=buckets[0]?.date, last=buckets[buckets.length-1]?.date;
+  const fmt=d=>d?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+  const mid=buckets[Math.floor(buckets.length/2)]?.date;
+  return `<div class="bar-chart">${bars}</div>
+    <div class="bar-axis"><span>${fmt(first)}</span><span>${fmt(mid)}</span><span>${fmt(last)}</span></div>`;
+}
+
+function renderDashboard(){
+  try{ renderNeedsAttention(); }catch(e){}
+  try{ renderQuickActions(); }catch(e){}
+  try{ renderInqChart(); }catch(e){}
+  try{ renderPortfolio(); }catch(e){}
+  try{ renderTopViewed(); }catch(e){}
+  try{ renderTitlingPipe(); }catch(e){}
+}
+
+function renderNeedsAttention(){
+  const wrap=document.getElementById('dashNeedsAttention');
+  if(!wrap) return;
+  const tiles=[];
+  // Unhandled inquiries (everyone can see inquiries)
+  const inq=(window.lastInquiries||[]).filter(i=>!i.handled).length;
+  tiles.push({n:inq, lbl:'Unhandled inquiries', ico:'fa-envelope', tab:'inquiries'});
+  // Overdue tasks
+  if(hasPerm('tasks_view')){
+    const tasks=(typeof allTasks!=='undefined'?allTasks:[]);
+    const overdue=tasks.filter(t=>{try{return isTaskOverdue(t)}catch(e){return false}}).length;
+    tiles.push({n:overdue, lbl:'Overdue tasks', ico:'fa-clipboard-check', tab:'tasks'});
+  }
+  // Pending submissions
+  if(hasPerm('submissions_view')){
+    const pend=(window.submissionStats&&window.submissionStats.pending)||0;
+    tiles.push({n:pend, lbl:'Pending submissions', ico:'fa-inbox', tab:'submissions'});
+  }
+  // Titling on hold
+  if(hasPerm('titling_view')){
+    const tData=(typeof titlingData!=='undefined'?titlingData:[]);
+    const hold=tData.filter(t=>t.status==='on_hold').length;
+    tiles.push({n:hold, lbl:'Titling on hold', ico:'fa-stamp', tab:'titling'});
+  }
+  const anyHot=tiles.some(t=>t.n>0);
+  if(!anyHot){
+    wrap.innerHTML=`<div class="na-clear" style="grid-column:1/-1"><i class="fas fa-circle-check"></i> All caught up — nothing needs your attention</div>`;
+    return;
+  }
+  wrap.innerHTML=tiles.map(t=>{
+    const hot=t.n>0?'na-hot':'';
+    return `<button type="button" class="na-tile ${hot}" onclick="switchTab('${t.tab}')">
+      <span class="na-go"><i class="fas fa-arrow-right"></i></span>
+      <div class="na-num">${t.n}</div>
+      <div class="na-lbl"><i class="fas ${t.ico}"></i> ${t.lbl}</div>
+    </button>`;
+  }).join('');
+}
+
+function renderQuickActions(){
+  const wrap=document.getElementById('dashQuickActions');
+  if(!wrap) return;
+  const acts=[];
+  if(hasPerm('properties_create')) acts.push({ico:'fa-plus',lbl:'Add property',fn:"openAddProperty()"});
+  if(hasPerm('tasks_create')||isAdmin()) acts.push({ico:'fa-clipboard-list',lbl:'New task',fn:"openNewTask()"});
+  if(hasPerm('bulkmail_send')) acts.push({ico:'fa-paper-plane',lbl:'Email campaign',fn:"switchTab('bulkmail')"});
+  if(hasPerm('titling_manage')) acts.push({ico:'fa-stamp',lbl:'New titling job',fn:"switchTab('titling')"});
+  if(hasPerm('hero_upload')) acts.push({ico:'fa-images',lbl:'Hero images',fn:"switchTab('hero')"});
+  acts.push({ico:'fa-file-csv',lbl:'Export inquiries',fn:"exportInquiriesCSV()"});
+  wrap.innerHTML=acts.map(a=>`<button type="button" class="qa-btn" onclick="${a.fn}"><i class="fas ${a.ico}"></i> ${a.lbl}</button>`).join('');
+}
+
+function renderInqChart(){
+  const el=document.getElementById('dashInqChart');
+  if(!el) return;
+  const data=window.lastInquiries;
+  if(!data){ el.innerHTML='<div class="dash-loading">Loading…</div>'; return; }
+  const buckets=bucketByDay(data.map(i=>i.createdAt), 30);
+  const total=buckets.reduce((s,b)=>s+b.count,0);
+  const last7=buckets.slice(-7).reduce((s,b)=>s+b.count,0);
+  const busiest=buckets.reduce((m,b)=>b.count>m.count?b:m,{count:0,date:null});
+  if(total===0){
+    el.innerHTML=`<div class="empty-st"><i class="fas fa-envelope-open-text"></i><p>No inquiries in the last 30 days</p></div>`;
+    return;
+  }
+  el.innerHTML=barChartHTML(buckets)+
+    `<div class="chart-kpis">
+      <div class="chart-kpi"><div class="ck-num">${total}</div><div class="ck-lbl">Last 30 days</div></div>
+      <div class="chart-kpi"><div class="ck-num">${last7}</div><div class="ck-lbl">Last 7 days</div></div>
+      <div class="chart-kpi"><div class="ck-num">${busiest.count}</div><div class="ck-lbl">Busiest day</div></div>
+    </div>`;
+}
+
+function renderPortfolio(){
+  const el=document.getElementById('dashPortfolio');
+  if(!el) return;
+  const props=window.allProps||(typeof allProps!=='undefined'?allProps:null);
+  if(!props){ el.innerHTML='<div class="dash-loading">Loading…</div>'; return; }
+  const total=props.length;
+  const avail=props.filter(p=>p.status==='available').length;
+  const sold=total-avail;
+  const value=props.reduce((s,p)=>s+(Number(p.price)||0),0);
+  const availPct=total?Math.round((avail/total)*100):0;
+  el.innerHTML=`
+    <div class="pf-hero">${dashPeso(value)} <small>total value</small></div>
+    <div class="pf-sub">${total} listing${total===1?'':'s'} · avg ${dashPeso(total?value/total:0)}</div>
+    <div class="pf-split">
+      <div class="pf-seg-avail" style="width:${availPct}%"></div>
+      <div class="pf-seg-sold" style="width:${100-availPct}%"></div>
+    </div>
+    <div class="pf-legend">
+      <span><span class="dot" style="background:#10b981"></span>Available <b>${avail}</b></span>
+      <span><span class="dot" style="background:var(--ab-gray)"></span>Sold / leased <b>${sold}</b></span>
+    </div>`;
+}
+
+function renderTopViewed(){
+  const el=document.getElementById('dashTopViewed');
+  if(!el) return;
+  const props=window.allProps||(typeof allProps!=='undefined'?allProps:null);
+  if(!props){ el.innerHTML='<div class="dash-loading">Loading…</div>'; return; }
+  const top=[...props].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5);
+  if(!top.length || (top[0].views||0)===0){
+    el.innerHTML=`<div class="empty-st"><i class="fas fa-fire"></i><p>No property views recorded yet</p></div>`;
+    return;
+  }
+  el.innerHTML=top.map((p,i)=>`
+    <div class="tv-row">
+      <div class="tv-rank">${i+1}</div>
+      <img class="tv-thumb" src="${p.mainImage||'https://via.placeholder.com/44x34?text=—'}" alt="" loading="lazy">
+      <div class="tv-main">
+        <div class="tv-title" title="${esc(p.title)}">${esc(p.title||'Untitled')}</div>
+        <div class="tv-meta">${esc(p.propertyType||'—')} · ${esc(p.listingType||'—')}</div>
+      </div>
+      <div class="tv-views"><i class="far fa-eye"></i>${(p.views||0).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+function renderTitlingPipe(){
+  const el=document.getElementById('dashTitlingPipe');
+  if(!el || !hasPerm('titling_view')) return;
+  const data=window.titlingData||(typeof titlingData!=='undefined'?titlingData:null);
+  if(!data){ el.innerHTML='<div class="dash-loading" style="grid-column:1/-1">Loading…</div>'; return; }
+  el.innerHTML=TITLING_STAGES.map(s=>{
+    const n=data.filter(t=>t.status===s.key).length;
+    return `<div class="pipe-cell" onclick="switchTab('titling')" title="${esc(s.label)}">
+      <div class="pc-num" style="color:${n>0?s.color:'var(--ab-gray)'}">${n}</div>
+      <div class="pc-lbl">${esc(s.label)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADMIN ANALYTICS: website visitors (self-hosted counter) ──
+async function loadAnalytics(){
+  const el=document.getElementById('dashVisitors');
+  if(!el) return;
+  try{
+    const res=await apiFetch('/api/admin/analytics');
+    if(!res.ok) throw new Error('unavailable');
+    const d=await res.json();
+    const series=(d.series||[]).map(x=>({ date:new Date(x.day+'T00:00:00'), count:x.views||0 }));
+    // Pad to 30 buckets if server returned fewer
+    const buckets=series.length?series:bucketByDay([],30);
+    const total30=buckets.reduce((s,b)=>s+b.count,0);
+    el.innerHTML=barChartHTML(buckets)+
+      `<div class="chart-kpis">
+        <div class="chart-kpi"><div class="ck-num">${(d.today||0).toLocaleString()}</div><div class="ck-lbl">Today</div></div>
+        <div class="chart-kpi"><div class="ck-num">${total30.toLocaleString()}</div><div class="ck-lbl">Last 30 days</div></div>
+        <div class="chart-kpi"><div class="ck-num">${(d.total||0).toLocaleString()}</div><div class="ck-lbl">All time</div></div>
+      </div>
+      <div class="vis-note">Page views on your public site · deep analytics (heatmaps, recordings) at <a href="https://clarity.microsoft.com" target="_blank" rel="noopener">Microsoft Clarity ↗</a></div>`;
+  }catch(e){
+    el.innerHTML=`<div class="empty-st"><i class="fas fa-chart-line"></i><p>Visitor tracking not active yet</p><small style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.5px">Deploy the latest server to switch it on.</small></div>`;
+  }
+}
+
+// ── ADMIN ANALYTICS: team activity / who's online ──
+async function loadPresence(){
+  const el=document.getElementById('dashPresence');
+  if(!el) return;
+  try{
+    const res=await apiFetch('/api/admin/presence');
+    if(!res.ok) throw new Error('unavailable');
+    const list=await res.json();
+    if(!Array.isArray(list)||!list.length){
+      el.innerHTML=`<div class="empty-st"><i class="fas fa-user-clock"></i><p>No team members yet</p></div>`;
+      return;
+    }
+    const now=Date.now();
+    const rank=m=>{ const t=m.lastSeen?now-new Date(m.lastSeen).getTime():Infinity; return t; };
+    list.sort((a,b)=>rank(a)-rank(b));
+    el.innerHTML=list.map(m=>{
+      const seenMs=m.lastSeen?now-new Date(m.lastSeen).getTime():Infinity;
+      let state='off', word='Offline';
+      if(seenMs<3*60*1000){ state='on'; word='Online'; }
+      else if(seenMs<15*60*1000){ state='idle'; word='Idle'; }
+      const seenTxt = m.lastSeen ? relTime(m.lastSeen) : (m.lastLogin?('last login '+relTime(m.lastLogin)):'never signed in');
+      const initial=((m.name||m.email||'?')[0]||'?').toUpperCase();
+      const tag=m.role==='admin'?'<span class="pres-tag">ADMIN</span>':'';
+      return `<div class="pres-row">
+        <div class="pres-av">${initial}</div>
+        <div class="pres-main">
+          <div class="pres-name">${esc(m.name||m.email)}${tag}</div>
+          <div class="pres-seen">${state==='on'?'Active now':seenTxt}</div>
+        </div>
+        <div class="pres-state ${state}"><span class="pres-dot ${state}"></span>${word}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    el.innerHTML=`<div class="empty-st"><i class="fas fa-user-clock"></i><p>Team activity not active yet</p><small style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.5px">Deploy the latest server to switch it on.</small></div>`;
+  }
+}
+
+// Relative time helper for presence ("3m ago", "2h ago", "yesterday")
+function relTime(d){
+  const ms=Date.now()-new Date(d).getTime();
+  const s=Math.floor(ms/1000), m=Math.floor(s/60), h=Math.floor(m/60), day=Math.floor(h/24);
+  if(s<60) return 'just now';
+  if(m<60) return m+'m ago';
+  if(h<24) return h+'h ago';
+  if(day===1) return 'yesterday';
+  if(day<30) return day+'d ago';
+  return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 
 function filterProps(){
@@ -2860,6 +3271,7 @@ async function loadInquiries(){
   try{
     const data=await apiFetch('/api/admin/inquiries').then(r=>r.json());
     window.lastInquiries = data;
+    renderDashboard();
     // Dashboard
     document.getElementById('dashInq').innerHTML=data.length?
       `<table><thead><tr><th>Name</th><th>Email</th><th>Property</th><th>Date</th></tr></thead><tbody>${data.slice(0,6).map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px;color:var(--gray)">${esc(i.propertyTitle||'General')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(i.createdAt)}</td></tr>`).join('')}</tbody></table>`:
@@ -3457,8 +3869,24 @@ async function restoreSession(){
     document.getElementById('pageSub').textContent = `Welcome back, ${(d.name || '').split(' ')[0] || d.email}`;
     applyRoleUI();
     loadAll();
+    landOnAllowedTab();
     return true;
   }catch(e){ return false; }
+}
+
+// If the user can't see the dashboard, drop them on the first tab they CAN see.
+function landOnAllowedTab(){
+  if(hasPerm('dashboard_view')) return; // dashboard is the default landing tab
+  const order = ['properties','tasks','submissions','titling','notarial','inquiries'];
+  const first = order.find(t => {
+    if(t==='properties'||t==='inquiries') return true; // always visible
+    if(t==='tasks') return hasPerm('tasks_view');
+    if(t==='submissions') return hasPerm('submissions_view');
+    if(t==='titling') return hasPerm('titling_view');
+    if(t==='notarial') return hasPerm('notarial_view');
+    return false;
+  }) || 'properties';
+  switchTab(first);
 }
 // Try restore on page load
 window.addEventListener('DOMContentLoaded', () => { restoreSession(); });
@@ -3473,6 +3901,7 @@ async function loadSubmissionStats(){
   if(!hasPerm('submissions_view')) return;
   try{
     const s = await apiFetch('/api/admin/property-submissions-stats').then(r=>r.json());
+    window.submissionStats = s;
     document.getElementById('subTotal').textContent = s.total ?? 0;
     document.getElementById('subPending').textContent = s.pending ?? 0;
     document.getElementById('subImported').textContent = s.imported ?? 0;
@@ -3482,6 +3911,7 @@ async function loadSubmissionStats(){
       if(s.pending > 0){ badge.textContent = s.pending; badge.style.display = ''; }
       else badge.style.display = 'none';
     }
+    renderDashboard();
   }catch(e){ console.error('Sub stats error:', e); }
 }
 
@@ -3759,6 +4189,7 @@ async function loadTasksData(){
     populateTaskFilters();
     renderTasks();
     refreshTasksBadge();
+    renderDashboard();
   }catch(e){
     console.error('Tasks load error:', e);
   }
@@ -6230,6 +6661,7 @@ async function loadTitling(){
     const badge = document.getElementById('titlingBadge');
     if(badge){ const active = titlingData.filter(t=>t.status!=='completed').length; badge.textContent = active; badge.style.display = active>0?'':'none'; }
     renderTitling();
+    renderDashboard();
   }catch(e){ console.error('loadTitling', e); }
 }
 
