@@ -91,7 +91,11 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:
 .sb-btn.danger:hover{border-color:#ef4444;color:#ef4444}
 
 /* MAIN */
-.main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+/* min-width:0 lets this flex item shrink to the viewport instead of being floored
+   at the widest child's size (e.g. the Titling board). Without it, wide content
+   pushes .main-content past the viewport and body{overflow-x:hidden} clips it,
+   making horizontal scroll impossible. */
+.main-content{margin-left:var(--sidebar-w);flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh}
 .main-header{background:var(--card-bg);height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-color);position:sticky;top:0;z-index:200;box-shadow:var(--shadow-sm)}
 .hdr-left{display:flex;align-items:center;gap:14px}
 .sidebar-toggle{display:none;width:34px;height:34px;background:transparent;border:1px solid var(--border-color);cursor:pointer;align-items:center;justify-content:center;font-size:15px;color:var(--text-color);transition:var(--transition)}
@@ -453,11 +457,13 @@ body.dark-mode .t-priority.p-critical{color:#fca5a5}
 .t-due i{font-size:10px}
 
 /* ── QUICK ADD ROW ── */
-.tasks-quickadd{padding:11px 14px;border-top:1px solid var(--border-color);background:var(--gray-light);display:flex;align-items:center;gap:10px}
-.tasks-quickadd i{color:var(--gold);font-size:13px}
-.tasks-quickadd input{flex:1;border:none;background:transparent;outline:none;font-size:13px;color:var(--text-color);font-family:'DM Sans',sans-serif;padding:4px 0}
+.tasks-quickadd{padding:10px 12px;border:2px solid var(--border-color);border-top:none;background:var(--card-bg);display:flex;align-items:center;gap:12px}
+.tqa-add{width:34px;height:34px;flex-shrink:0;border:none;background:var(--gold);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:background .15s ease,transform .1s ease}
+.tqa-add:hover{background:#0a0a0a}
+.tqa-add:active{transform:translate(1px,1px)}
+.tasks-quickadd input{flex:1;border:none;background:transparent;outline:none;font-size:13px;color:var(--text-color);font-family:'DM Sans',sans-serif;padding:6px 2px;letter-spacing:.2px}
 .tasks-quickadd input::placeholder{color:var(--gray)}
-.tasks-quickadd small{color:var(--gray);font-size:10.5px}
+.tasks-quickadd small{color:var(--gray);font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
 
 /* ── KANBAN VIEW ── */
 .kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
@@ -1921,9 +1927,9 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
             </div>
             <!-- Quick-add inline row (Monday-style) -->
             <div class="tasks-quickadd" id="tQuickAdd" style="display:none">
-              <i class="fas fa-plus-circle"></i>
-              <input type="text" id="tQuickAddInput" placeholder="Quick add a new task and press Enter..." onkeydown="if(event.key==='Enter')quickAddTask()">
-              <small>Press Enter to create</small>
+              <button type="button" class="tqa-add" onclick="quickAddTask()" title="Add task" aria-label="Add task"><i class="fas fa-plus"></i></button>
+              <input type="text" id="tQuickAddInput" placeholder="Add a new task…" onkeydown="if(event.key==='Enter')quickAddTask()">
+              <small>Press Enter ↵</small>
             </div>
           </div>
         </div>
