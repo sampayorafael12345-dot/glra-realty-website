@@ -144,6 +144,29 @@ app.use(express.urlencoded({ limit: '1mb', extended: true }));
 // Strip MongoDB operator keys ($ne, $gt, etc.) from req.body, req.query, req.params
 app.use(mongoSanitize());
 
+// ── SITE TRAFFIC COUNTER ────────────────────────────────────
+// Counts real public HTML page views (not assets, not /api, not the /admin
+// dashboard) into a per-day tally the admin dashboard reads back. Runs BEFORE
+// express.static so navigations are observed. Privacy-preserving: no IP, cookie,
+// or personal data is stored — just an anonymous daily page-view count. It never
+// blocks or breaks a page load (fully fire-and-forget).
+app.use((req, res, next) => {
+  try {
+    if (req.method === 'GET') {
+      const p = req.path;
+      const accept = req.headers['accept'] || '';
+      const isPage = (p === '/' || p.endsWith('.html'));
+      const isPublic = !p.startsWith('/api') && !p.startsWith('/admin');
+      if (isPage && isPublic && accept.includes('text/html')) {
+        const now = new Date();
+        const day = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        require('./server/db').SiteStat.updateOne({ day }, { $inc: { views: 1 } }, { upsert: true }).catch(() => {});
+      }
+    }
+  } catch (e) { /* analytics must never break a page load */ }
+  next();
+});
+
 app.use(express.static('public'));
 
 // ============ RATE LIMITERS ============
@@ -272,7 +295,7 @@ const db = require('./server/db');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
-  TitlingCase, NotarialJob, CashEntry,
+  TitlingCase, NotarialJob, CashEntry, SiteStat,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
 
@@ -990,10 +1013,13 @@ app.post('/api/admin/login',
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'LOGIN', 'Session', '', '', null);
 
-      // Compute effective permissions: admins always get all, employees get their stored object
+      // Compute effective permissions: admins always get all, employees get their
+      // stored object layered over role defaults so any permission key added AFTER
+      // the account was created falls back to its sensible default (e.g. a legacy
+      // employee still sees the dashboard) instead of reading as undefined/false.
       const effectivePerms = account.role === 'admin'
         ? defaultPermissionsForRole('admin')
-        : (account.permissions || defaultPermissionsForRole('employee'));
+        : { ...defaultPermissionsForRole('employee'), ...(account.permissions || {}) };
 
       res.json({
         success: true,
@@ -1151,7 +1177,7 @@ app.get('/api/admin/me', verifyToken, async (req, res) => {
     }
     const effectivePerms = account.role === 'admin'
       ? defaultPermissionsForRole('admin')
-      : (account.permissions || defaultPermissionsForRole('employee'));
+      : { ...defaultPermissionsForRole('employee'), ...(account.permissions || {}) };
     res.json({
       email: account.email,
       name: account.name,
@@ -1405,6 +1431,43 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
     const wishlistCount = await Wishlist.countDocuments();
 
     res.json({ totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts, wishlistCount });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── DASHBOARD ANALYTICS: website visitors (self-hosted counter) ──
+// Admin-level insight — gated behind dashboard_analytics (admins always pass).
+// Returns a 30-day daily page-view series plus today + all-time totals.
+app.get('/api/admin/analytics', verifyToken, requirePermission('dashboard_analytics'), async (req, res) => {
+  try {
+    const now = new Date();
+    const dayStr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const days = [];
+    for (let i = 29; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); days.push(dayStr(d)); }
+    const rows = await SiteStat.find({ day: { $in: days } }).lean();
+    const map = {};
+    rows.forEach(r => { map[r.day] = r.views || 0; });
+    const series = days.map(day => ({ day, views: map[day] || 0 }));
+    const today = map[dayStr(now)] || 0;
+    const totalAgg = await SiteStat.aggregate([{ $group: { _id: null, total: { $sum: '$views' } } }]);
+    const total = (totalAgg[0] && totalAgg[0].total) || 0;
+    res.json({ series, today, total });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── DASHBOARD ANALYTICS: team activity / who's online ──
+// Returns non-pending accounts with lastSeen/lastLogin so the dashboard can show
+// online / idle / offline. Gated behind dashboard_analytics (admins always pass).
+app.get('/api/admin/presence', verifyToken, requirePermission('dashboard_analytics'), async (req, res) => {
+  try {
+    const accounts = await Account.find({ status: { $ne: 'pending' } })
+      .select('name email role lastSeen lastLogin isActive')
+      .sort({ name: 1 })
+      .lean();
+    res.json(accounts);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -1688,7 +1751,11 @@ function sanitizeNotarialBody(b) {
   if (b.clientName !== undefined) out.clientName = str(b.clientName, 200);
   if (b.clientPhone !== undefined) out.clientPhone = str(b.clientPhone, 50);
   if (b.clientEmail !== undefined) out.clientEmail = str(b.clientEmail, 120).toLowerCase();
+  if (b.clientType !== undefined) { const allowed = ['', 'walkin', 'retainer', 'monthly_billing']; out.clientType = allowed.includes(b.clientType) ? b.clientType : ''; }
+  if (b.account !== undefined) out.account = str(b.account, 200);
+  if (b.status !== undefined) out.status = str(b.status, 40);
   if (b.documentType !== undefined) out.documentType = str(b.documentType, 120);
+  if (b.documentTypeOther !== undefined) out.documentTypeOther = str(b.documentTypeOther, 120);
   if (b.docNo !== undefined) out.docNo = str(b.docNo, 40);
   if (b.pageNo !== undefined) out.pageNo = str(b.pageNo, 40);
   if (b.bookNo !== undefined) out.bookNo = str(b.bookNo, 40);
@@ -1744,6 +1811,35 @@ app.delete('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_m
     if (doc) await logAudit(req, 'DELETE', 'NotarialJob', String(doc._id), doc.clientName, null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Bulk stage change / mark-as-paid for several notarial jobs at once (the employee's
+// "mark as paid nang hindi iisa-isahin" request — pick many, settle them in one click).
+// markPaid moves each to the "paid" stage AND records a settling payment for any balance.
+app.post('/api/admin/notarial/bulk-status', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+  try {
+    const { ids, status, markPaid } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No records selected' });
+    const stage = status ? String(status).slice(0, 40) : null;
+    let updated = 0;
+    for (const id of ids.slice(0, 500)) {
+      const job = await NotarialJob.findById(id);
+      if (!job) continue;
+      if (markPaid) {
+        job.status = 'paid';
+        const fee = Number(job.fee) || 0;
+        const paid = (job.payments || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        const bal = fee - paid;
+        if (fee > 0 && bal > 0.005) job.payments.push({ date: new Date(), amount: bal, mode: 'Bank transfer', label: 'Settled (bulk)' });
+      } else if (stage) {
+        job.status = stage;
+      }
+      await job.save();
+      updated++;
+    }
+    await logAudit(req, 'BULK_UPDATE', 'NotarialJob', '', `${updated} updated`, markPaid ? { markPaid: true } : { status: stage });
+    res.json({ success: true, updated });
+  } catch (err) { console.error('notarial bulk error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
 // ── NOTARIAL CASH LEDGER (liquidation: supply requests, client funds, receipts) ──

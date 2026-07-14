@@ -1778,12 +1778,12 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- NOTARIAL CASH ENTRY MODAL -->
       <div class="modal-ov" id="cashModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:680px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
+        <div style="background:var(--card-bg);max-width:680px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="cashModalTitle">Cash entry</div>
             <button onclick="closeCashModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
           </div>
-          <div style="padding:24px">
+          <div style="padding:24px;overflow-y:auto;min-height:0">
             <input type="hidden" id="cashId"><input type="hidden" id="cashKind">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <div class="fg" id="cashDirGroup" style="display:none"><label class="flbl">Direction</label><select id="cashDir" class="finput"><option value="fund_in">Money IN (received to hold)</option><option value="fund_out">Money OUT (returned / paid for client)</option></select></div>
@@ -1810,12 +1810,12 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- NOTARIAL ADD/EDIT MODAL -->
       <div class="modal-ov" id="notarialModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:840px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
+        <div style="background:var(--card-bg);max-width:840px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="notarialModalTitle">Add Notarized Document</div>
             <button onclick="closeNotarialModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
           </div>
-          <div style="padding:24px">
+          <div style="padding:24px;overflow-y:auto;min-height:0">
             <input type="hidden" id="ntId">
 
             <div class="tl-sec" style="margin-top:0">Classification &amp; stage</div>
@@ -1830,7 +1830,7 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
               <div class="fg"><label class="flbl">Client name *</label><input type="text" id="ntClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
               <div class="fg"><label class="flbl">Phone</label><input type="text" id="ntClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
               <div class="fg"><label class="flbl">Email</label><input type="email" id="ntClientEmail" class="finput" placeholder="client@email.com"></div>
-              <div class="fg"><label class="flbl">Document type</label><input type="text" list="ntDocTypeList" id="ntDocType" class="finput" placeholder="Pick or type" oninput="ntToggleDocOther()"><datalist id="ntDocTypeList"></datalist></div>
+              <div class="fg"><label class="flbl">Document type</label><select id="ntDocType" class="finput" onchange="ntToggleDocOther()"></select></div>
               <div class="fg" id="ntDocOtherWrap" style="display:none;grid-column:1/-1"><label class="flbl">Specify document (Other)</label><input type="text" id="ntDocTypeOther" class="finput" placeholder="Type the exact document name"></div>
               <div class="fg"><label class="flbl">No. of copies</label><input type="number" min="0" step="1" id="ntCopies" class="finput" placeholder="1"></div>
               <div class="fg"><label class="flbl">Notary public</label><input type="text" list="ntNotaryList" id="ntNotaryName" class="finput" placeholder="Commissioned notary"><datalist id="ntNotaryList"></datalist></div>
@@ -7478,7 +7478,19 @@ function openNotarialModal(id){
   document.getElementById('ntClientEmail').value=(j&&j.clientEmail)||'';
   document.getElementById('ntClientType').value=(j&&j.clientType)||'';
   document.getElementById('ntAccount').value=(j&&j.account)||'';
-  document.getElementById('ntDocType').value=(j&&j.documentType)||'';
+  // Document type is a <select> — rebuild the FULL option list every open so editing
+  // always shows every choice (a datalist filters to the current text, which is the
+  // "only shows Other" bug). Legacy / previously free-typed values are kept, before "Other".
+  (function(){
+    const cur=(j&&j.documentType)||'';
+    let opts=NOTARIAL_DOCTYPES.filter(x=>x!=='Other');
+    [...new Set(notarialData.map(x=>(x.documentType||'').trim()).filter(Boolean))].forEach(v=>{ if(v!=='Other' && !opts.includes(v)) opts.push(v); });
+    if(cur && cur!=='Other' && !opts.includes(cur)) opts.push(cur);
+    opts.push('Other');
+    const sel=document.getElementById('ntDocType');
+    sel.innerHTML='<option value="">— Select —</option>'+opts.map(v=>`<option value="${escA(v)}">${esc(v)}</option>`).join('');
+    sel.value=cur;
+  })();
   document.getElementById('ntDocTypeOther').value=(j&&j.documentTypeOther)||'';
   document.getElementById('ntCopies').value=(j&&j.copies!=null)?j.copies:'';
   document.getElementById('ntNotaryName').value=(j&&j.notaryName)||'';
@@ -7494,7 +7506,6 @@ function openNotarialModal(id){
   document.getElementById('ntStage').value = j ? notarialStageOf(j) : 'received';
   const acctDL=document.getElementById('ntAccountList');
   if(acctDL){ const used=[...new Set(notarialData.map(x=>(x.account||'').trim()).filter(Boolean))]; acctDL.innerHTML=[...new Set([...NOTARIAL_ACCOUNTS,...used])].map(v=>`<option value="${escA(v)}"></option>`).join(''); }
-  ntFillList('ntDocTypeList', NOTARIAL_DOCTYPES, 'documentType');
   ntFillList('ntNotaryList', [], 'notaryName');
   ntToggleAccount();
   ntToggleDocOther();
