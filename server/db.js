@@ -300,7 +300,14 @@ const notarialJobSchema = new mongoose.Schema({
   clientName:    { type: String, required: true, trim: true, maxlength: 200 },
   clientPhone:   { type: String, default: '', trim: true, maxlength: 50 },
   clientEmail:   { type: String, default: '', trim: true, lowercase: true, maxlength: 120 },
+  // Client classification (from the notarial workflow spec): walk-in, retainer, or
+  // monthly-billing. `account` names the retainer/billing company (e.g. RCBC, City Savings).
+  clientType:    { type: String, enum: ['', 'walkin', 'retainer', 'monthly_billing'], default: '' },
+  account:       { type: String, default: '', trim: true, maxlength: 200 },
+  // Workflow stage for the kanban board (received → notarized → released → billed → paid, + on_hold)
+  status:        { type: String, default: 'received', trim: true, maxlength: 40 },
   documentType:  { type: String, default: '', trim: true, maxlength: 120 }, // Deed of Sale, Affidavit, SPA…
+  documentTypeOther: { type: String, default: '', trim: true, maxlength: 120 }, // filled when documentType = "Other"
   // official notarial register entry
   docNo:         { type: String, default: '', trim: true, maxlength: 40 },
   pageNo:        { type: String, default: '', trim: true, maxlength: 40 },

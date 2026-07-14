@@ -1717,26 +1717,41 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- NOTARIAL (Lucena notarial business — documents, clients & liquidation) -->
       <div id="tab-notarial" style="display:none">
-        <div style="margin-bottom:14px;display:inline-flex;border:1px solid var(--border-color)">
-          <button class="hdr-btn" id="ntViewDocsBtn" onclick="setNotarialView('docs')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-file-signature"></i> Documents</button>
+        <div style="margin-bottom:14px;display:inline-flex;border:1px solid var(--border-color);flex-wrap:wrap">
+          <button class="hdr-btn" id="ntViewDocsBtn" onclick="setNotarialView('docs')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
+          <button class="hdr-btn" id="ntViewBoardBtn" onclick="setNotarialView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
           <button class="hdr-btn" id="ntViewCashBtn" onclick="setNotarialView('cash')" style="border:none"><i class="fas fa-coins"></i> Cash &amp; Liquidation</button>
         </div>
 
-        <!-- DOCUMENTS VIEW -->
+        <!-- DOCUMENTS (LIST) VIEW -->
         <div id="notarialDocsView">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialSearch" placeholder="Search client, document, doc/book no.…" oninput="renderNotarial()"></div>
+            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialSearch" placeholder="Search client, account, document…" oninput="renderNotarial()"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="hdr-btn" onclick="exportNotarialCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
               <button class="hdr-btn primary" id="addNotarialBtn" onclick="openNotarialModal()" style="display:none"><i class="fas fa-plus"></i> Add Notarized Doc</button>
             </div>
           </div>
+          <div id="notarialTypeFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
           <div id="notarialSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
           <div id="notarialTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+          <div id="notarialBulkBar" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px;border:2px solid var(--gold);background:var(--card-bg)"></div>
           <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead id="notarialThead"><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Payment</th><th>Actions</th></tr></thead>
+            <thead id="notarialThead"><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="notarialTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
+        </div>
+
+        <!-- BOARD VIEW (drag a card between stages to advance it) -->
+        <div id="notarialBoardView" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialBoardSearch" placeholder="Search client, account, document…" oninput="renderNotarialBoard()"></div>
+            <button class="hdr-btn primary" id="addNotarialBtn2" onclick="openNotarialModal()" style="display:none"><i class="fas fa-plus"></i> Add Notarized Doc</button>
+          </div>
+          <div style="font-size:11px;color:var(--gray);margin-bottom:10px"><i class="fas fa-hand-pointer"></i> Drag a card to the next column as each step is done.</div>
+          <div id="notarialBoardWrap" style="overflow-x:auto;padding-bottom:10px">
+            <div id="notarialBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
+          </div>
         </div>
 
         <!-- CASH & LIQUIDATION VIEW -->
@@ -1803,12 +1818,20 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
           <div style="padding:24px">
             <input type="hidden" id="ntId">
 
-            <div class="tl-sec" style="margin-top:0">Client &amp; document</div>
+            <div class="tl-sec" style="margin-top:0">Classification &amp; stage</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+              <div class="fg"><label class="flbl">Client type</label><select id="ntClientType" class="finput" onchange="ntToggleAccount()"><option value="">— One-off / none —</option><option value="walkin">Walk-in</option><option value="retainer">Retainer</option><option value="monthly_billing">Monthly Billing</option></select></div>
+              <div class="fg" id="ntAccountWrap"><label class="flbl">Account / Company</label><input type="text" list="ntAccountList" id="ntAccount" class="finput" placeholder="e.g. RCBC, City Savings"><datalist id="ntAccountList"></datalist></div>
+              <div class="fg"><label class="flbl">Stage</label><select id="ntStage" class="finput"></select></div>
+            </div>
+
+            <div class="tl-sec">Client &amp; document</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <div class="fg"><label class="flbl">Client name *</label><input type="text" id="ntClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
               <div class="fg"><label class="flbl">Phone</label><input type="text" id="ntClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
               <div class="fg"><label class="flbl">Email</label><input type="email" id="ntClientEmail" class="finput" placeholder="client@email.com"></div>
-              <div class="fg"><label class="flbl">Document type</label><input type="text" list="ntDocTypeList" id="ntDocType" class="finput" placeholder="Pick or type"><datalist id="ntDocTypeList"></datalist></div>
+              <div class="fg"><label class="flbl">Document type</label><input type="text" list="ntDocTypeList" id="ntDocType" class="finput" placeholder="Pick or type" oninput="ntToggleDocOther()"><datalist id="ntDocTypeList"></datalist></div>
+              <div class="fg" id="ntDocOtherWrap" style="display:none;grid-column:1/-1"><label class="flbl">Specify document (Other)</label><input type="text" id="ntDocTypeOther" class="finput" placeholder="Type the exact document name"></div>
               <div class="fg"><label class="flbl">No. of copies</label><input type="number" min="0" step="1" id="ntCopies" class="finput" placeholder="1"></div>
               <div class="fg"><label class="flbl">Notary public</label><input type="text" list="ntNotaryList" id="ntNotaryName" class="finput" placeholder="Commissioned notary"><datalist id="ntNotaryList"></datalist></div>
             </div>
@@ -7160,6 +7183,9 @@ async function tlImpDoImport(){
 // ════════════════════════════════════════════════════════════
 let notarialData = [];
 let notarialFilter = 'all';
+let notarialTypeFilter = 'all';      // client-type filter (walkin/retainer/monthly_billing)
+let notarialSelected = new Set();    // ids ticked for bulk actions
+let notarialShownIds = [];           // ids currently visible in the list (for select-all)
 let notarialSort = { key:'date', dir:'desc' };
 let ntPaymentsData = [];
 function setNotarialSort(key){ toggleSort(notarialSort, key, (key==='client'||key==='document')?'asc':'desc'); renderNotarial(); }
@@ -7168,12 +7194,42 @@ const NOTARIAL_PAYSTATUS = [
   { key:'partial', label:'Partial', color:'#d98324' },
   { key:'paid',    label:'Paid',    color:'#10b981' }
 ];
-const NOTARIAL_DOCTYPES = ['Deed of Absolute Sale','Deed of Donation','Extra-Judicial Settlement','Special Power of Attorney (SPA)','General Power of Attorney','Affidavit of Loss','Affidavit','Acknowledgment','Jurat',"Secretary's Certificate",'Board Resolution','Contract of Lease','Promissory Note','Loan Agreement','Joint Affidavit','Sworn Statement','Other'];
+// Workflow stages for the kanban board. Cards move left→right as each step is done.
+// `on_hold` sits off the linear path (set manually) for stuck / unpaid billings.
+const NOTARIAL_STAGES = [
+  { key:'received',  label:'Received',  color:'#6a6a6a' },
+  { key:'notarized', label:'Notarized', color:'#c8a96e' },
+  { key:'released',  label:'Released',  color:'#3b82f6' },
+  { key:'billed',    label:'Billed',    color:'#d98324' },
+  { key:'paid',      label:'Paid',      color:'#10b981' },
+  { key:'on_hold',   label:'On hold',   color:'#ef4444' }
+];
+const NOTARIAL_ADVANCE = ['received','notarized','released','billed','paid'];
+const NOTARIAL_CLIENT_TYPES = [
+  { key:'walkin',          label:'Walk-in',         color:'#6a6a6a' },
+  { key:'retainer',        label:'Retainer',        color:'#3b82f6' },
+  { key:'monthly_billing', label:'Monthly Billing', color:'#d98324' }
+];
+// Known retainer / billing accounts from the employee's spec (datalist suggestions).
+const NOTARIAL_ACCOUNTS = ['Bayanihan Bank','City Savings','TCHI','DS & Sons','RCBC','Mizukawa','Imperial','Corpuz','Aquino'];
+const NOTARIAL_DOCTYPES = ['Deed of Absolute Sale','Deed of Donation','Extra-Judicial Settlement','Special Power of Attorney (SPA)','General Power of Attorney','Real Estate Mortgage','Release of Mortgage','Cancellation of Real Estate Mortgage','PN w/ SA','PN w/ CM','Undertaking','Affidavit of Loss','Affidavit','Acknowledgment','Jurat',"Secretary's Certificate",'Board Resolution','Contract of Lease','Promissory Note','Loan Agreement','Joint Affidavit','Sworn Statement','Other'];
 const NOTARIAL_MODES = ['Cash','GCash','Bank transfer','Check','Other'];
 function setNotarialFilter(k){ notarialFilter = (notarialFilter===k)?'all':k; renderNotarial(); }
+function setNotarialTypeFilter(k){ notarialTypeFilter = (notarialTypeFilter===k)?'all':k; renderNotarial(); }
 function notarialPaidOf(j){ return (j.payments||[]).reduce((s,p)=>s+(Number(p.amount)||0),0); }
 function notarialStatusOf(j){ const fee=Number(j.fee)||0, paid=notarialPaidOf(j); if(paid<=0&&fee>0) return 'unpaid'; if(paid+0.005<fee) return 'partial'; return 'paid'; }
 function notarialStatusMeta(key){ return NOTARIAL_PAYSTATUS.find(s=>s.key===key)||NOTARIAL_PAYSTATUS[0]; }
+function notarialStage(key){ return NOTARIAL_STAGES.find(s=>s.key===key)||NOTARIAL_STAGES[0]; }
+// The board stage for a record. Falls back for legacy records saved before stages existed.
+function notarialStageOf(j){
+  if(j.status && NOTARIAL_STAGES.some(s=>s.key===j.status)) return j.status;
+  const pay = notarialStatusOf(j);
+  if(pay==='paid') return 'paid';
+  if(j.dateNotarized) return 'notarized';
+  return 'received';
+}
+function notarialClientTypeMeta(key){ return NOTARIAL_CLIENT_TYPES.find(c=>c.key===key); }
+function notarialDocLabel(j){ return (j.documentType==='Other' && j.documentTypeOther) ? j.documentTypeOther : (j.documentType||''); }
 
 async function loadNotarial(){
   if(!hasPerm('notarial_view')) return;
@@ -7183,6 +7239,7 @@ async function loadNotarial(){
     const badge = document.getElementById('notarialBadge');
     if(badge){ const due = notarialData.filter(j=>notarialStatusOf(j)!=='paid').length; badge.textContent = due; badge.style.display = due>0?'':'none'; }
     renderNotarial();
+    renderNotarialBoard();
   }catch(e){ console.error('loadNotarial', e); }
 }
 
@@ -7191,6 +7248,18 @@ function renderNotarial(){
   if(!tbody) return;
   const canManage = hasPerm('notarial_manage');
 
+  // Client-type filter chips
+  const tf = document.getElementById('notarialTypeFilter');
+  if(tf){
+    const chip = (key,label,count)=>{
+      const on = notarialTypeFilter===key;
+      return `<button type="button" class="hdr-btn${on?' primary':''}" onclick="setNotarialTypeFilter('${key}')" style="padding:6px 12px">${esc(label)} <span style="opacity:.65">${count}</span></button>`;
+    };
+    tf.innerHTML = chip('all','All clients',notarialData.length)
+      + NOTARIAL_CLIENT_TYPES.map(c=>chip(c.key,c.label,notarialData.filter(j=>(j.clientType||'')===c.key).length)).join('');
+  }
+
+  // Payment-status summary cards
   const sum = document.getElementById('notarialSummary');
   if(sum){
     const card = (key,label,count,color)=>{
@@ -7203,35 +7272,54 @@ function renderNotarial(){
 
   const q = (document.getElementById('notarialSearch')?.value||'').toLowerCase().trim();
   let rows = notarialData;
+  if(notarialTypeFilter!=='all') rows = rows.filter(j=>(j.clientType||'')===notarialTypeFilter);
   if(notarialFilter!=='all') rows = rows.filter(j=>notarialStatusOf(j)===notarialFilter);
-  if(q) rows = rows.filter(j=>[j.clientName,j.documentType,j.docNo,j.pageNo,j.bookNo,j.series,j.notaryName,j.clientPhone,j.clientEmail].some(v=>(v||'').toString().toLowerCase().includes(q)));
+  if(q) rows = rows.filter(j=>[j.clientName,notarialDocLabel(j),j.account,j.docNo,j.pageNo,j.bookNo,j.series,j.notaryName,j.clientPhone,j.clientEmail].some(v=>(v||'').toString().toLowerCase().includes(q)));
 
   const totals = document.getElementById('notarialTotals');
   if(totals){
     let fees=0,collected=0,outstanding=0;
     rows.forEach(j=>{ const fee=Number(j.fee)||0,paid=notarialPaidOf(j); fees+=fee; collected+=paid; outstanding+=Math.max(0,fee-paid); });
     const box=(l,v,c)=>`<div style="border:1px solid var(--border-color);padding:10px 14px;background:var(--card-bg)"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)">${l}</div><div style="font-size:18px;font-weight:700;color:${c}">${fmt(v)}</div></div>`;
-    const suffix=(notarialFilter!=='all'||q)?' (shown)':'';
+    const suffix=(notarialFilter!=='all'||notarialTypeFilter!=='all'||q)?' (shown)':'';
     totals.innerHTML = box('Total fees'+suffix,fees,'inherit')+box('Collected'+suffix,collected,'#10b981')+box('Outstanding'+suffix,outstanding,'#ef4444');
   }
 
-  buildSortHead('notarialThead', [['client','Client'],['document','Document'],[null,'Register'],['date','Date'],['fee','Fee'],['payment','Payment'],[null,'Actions']], notarialSort, 'setNotarialSort');
-  tblSortRows(rows, notarialSort, (j,k)=> k==='client'?(j.clientName||''):k==='document'?(j.documentType||''):k==='date'?new Date(j.dateNotarized||0).getTime():k==='fee'?(Number(j.fee)||0):k==='payment'?notarialPaidOf(j):'');
+  // Remember which ids are visible (for select-all) and refresh the bulk bar
+  notarialShownIds = rows.map(j=>j._id);
+  renderNotarialBulkBar();
+
+  const cols = [];
+  if(canManage){ const allChk = rows.length && rows.every(j=>notarialSelected.has(j._id)); cols.push([null, `<input type="checkbox" ${allChk?'checked':''} onclick="notarialToggleAll(this.checked)" title="Select all shown" style="cursor:pointer">`]); }
+  cols.push(['client','Client'],['document','Document'],[null,'Register'],[null,'Stage'],['date','Date'],['fee','Fee'],['payment','Status'],[null,'Actions']);
+  buildSortHead('notarialThead', cols, notarialSort, 'setNotarialSort');
+  const colspan = cols.length;
+
+  tblSortRows(rows, notarialSort, (j,k)=> k==='client'?(j.clientName||''):k==='document'?(notarialDocLabel(j)):k==='date'?new Date(j.dateNotarized||0).getTime():k==='fee'?(Number(j.fee)||0):k==='payment'?notarialPaidOf(j):'');
   if(!rows.length){
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-file-signature"></i><p>${notarialData.length?'No records match this filter':'No notarized documents yet'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-st"><i class="fas fa-file-signature"></i><p>${notarialData.length?'No records match this filter':'No notarized documents yet'}</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = rows.map(j=>{
     const fee=Number(j.fee)||0, paid=notarialPaidOf(j), bal=fee-paid;
     const st=notarialStatusMeta(notarialStatusOf(j));
+    const stage=notarialStage(notarialStageOf(j));
     const reg=[j.docNo&&('Doc '+j.docNo), j.pageNo&&('Pg '+j.pageNo), j.bookNo&&('Bk '+j.bookNo), j.series&&('S.'+j.series)].filter(Boolean).join(' · ')||'—';
     const contact=[];
     if(j.clientPhone) contact.push(`<a href="tel:${esc(j.clientPhone)}" title="Call" style="color:var(--gray)"><i class="fas fa-phone-alt"></i></a>`);
     if(j.clientEmail) contact.push(`<a href="mailto:${esc(j.clientEmail)}" title="Email" style="color:var(--gray)"><i class="fas fa-envelope"></i></a>`);
+    const ct=notarialClientTypeMeta(j.clientType);
+    const typeBadge = ct ? `<span style="display:inline-block;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:700;color:#fff;background:${ct.color};margin-left:6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.5px">${esc(ct.label)}</span>` : '';
+    const acct = j.account ? `<div style="font-size:11px;color:var(--gray);margin-top:2px"><i class="fas fa-building" style="font-size:9px"></i> ${esc(j.account)}</div>` : '';
+    const chk = canManage ? `<td style="width:34px;text-align:center"><input type="checkbox" ${notarialSelected.has(j._id)?'checked':''} onchange="notarialRowToggle('${j._id}',this.checked)" style="cursor:pointer"></td>` : '';
+    const adv = (canManage && NOTARIAL_ADVANCE.indexOf(stage.key)>=0 && NOTARIAL_ADVANCE.indexOf(stage.key)<NOTARIAL_ADVANCE.length-1)
+      ? `<button class="act act-view" title="Advance to ${esc(notarialStage(NOTARIAL_ADVANCE[NOTARIAL_ADVANCE.indexOf(stage.key)+1]).label)}" onclick="advanceNotarial('${j._id}')" style="margin-left:6px;vertical-align:middle"><i class="fas fa-angle-right"></i></button>` : '';
     return `<tr>
-      <td><strong style="font-size:13px">${esc(j.clientName)}</strong>${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
-      <td style="font-size:12px">${esc(j.documentType||'—')}${j.copies>1?`<div style="font-size:10px;color:var(--gray)">${j.copies} copies</div>`:''}</td>
+      ${chk}
+      <td><strong style="font-size:13px">${esc(j.clientName)}</strong>${typeBadge}${acct}${contact.length?`<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>`:''}</td>
+      <td style="font-size:12px">${esc(notarialDocLabel(j)||'—')}${j.copies>1?`<div style="font-size:10px;color:var(--gray)">${j.copies} copies</div>`:''}</td>
       <td style="font-size:11px;color:var(--gray)">${esc(reg)}</td>
+      <td style="white-space:nowrap"><span style="display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;color:#fff;background:${stage.color}">${esc(stage.label)}</span>${adv}</td>
       <td style="font-size:11px;white-space:nowrap;color:var(--gray)">${j.dateNotarized?fmtDateShort(j.dateNotarized):'—'}</td>
       <td style="font-size:12px;white-space:nowrap">${fmt(fee)}</td>
       <td style="white-space:nowrap"><span style="display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:${st.color}">${esc(st.label)}</span>${bal>0.005?`<div style="font-size:10px;color:#ef4444;margin-top:2px">${fmt(bal)} due</div>`:''}</td>
@@ -7240,6 +7328,113 @@ function renderNotarial(){
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// ── Bulk selection + actions (mark-as-paid, move stage) ──
+function notarialRowToggle(id, on){ if(on) notarialSelected.add(id); else notarialSelected.delete(id); renderNotarialBulkBar(); syncNotarialSelectAll(); }
+function notarialToggleAll(on){ notarialShownIds.forEach(id=> on?notarialSelected.add(id):notarialSelected.delete(id)); renderNotarial(); }
+function notarialClearSelection(){ notarialSelected.clear(); renderNotarial(); }
+function syncNotarialSelectAll(){
+  const head = document.querySelector('#notarialThead input[type="checkbox"]');
+  if(head) head.checked = notarialShownIds.length>0 && notarialShownIds.every(id=>notarialSelected.has(id));
+}
+function renderNotarialBulkBar(){
+  const bar = document.getElementById('notarialBulkBar');
+  if(!bar) return;
+  // Only count selections that are currently visible
+  const ids = notarialShownIds.filter(id=>notarialSelected.has(id));
+  if(!ids.length || !hasPerm('notarial_manage')){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  const stageOpts = NOTARIAL_STAGES.map(s=>`<option value="${s.key}">${esc(s.label)}</option>`).join('');
+  bar.innerHTML = `
+    <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.5px"><i class="fas fa-check-square" style="color:var(--gold)"></i> ${ids.length} selected</span>
+    <button class="hdr-btn primary" onclick="notarialBulkMarkPaid()"><i class="fas fa-coins"></i> Mark as paid</button>
+    <span style="display:inline-flex;align-items:center;gap:6px">
+      <label class="flbl" style="margin:0">Move to</label>
+      <select id="notarialBulkStage" class="finput" style="width:auto;min-width:130px">${stageOpts}</select>
+      <button class="hdr-btn" onclick="notarialBulkMoveStage()">Apply</button>
+    </span>
+    <button class="hdr-btn" onclick="notarialClearSelection()" style="margin-left:auto"><i class="fas fa-times"></i> Clear</button>`;
+}
+async function notarialBulkMarkPaid(){
+  if(!hasPerm('notarial_manage')) return;
+  const ids = notarialShownIds.filter(id=>notarialSelected.has(id));
+  if(!ids.length) return;
+  if(!confirm(`Mark ${ids.length} record${ids.length>1?'s':''} as PAID? Any outstanding balance will be recorded as settled and they'll move to the Paid stage.`)) return;
+  try{
+    const res = await apiFetch('/api/admin/notarial/bulk-status', { method:'POST', body: JSON.stringify({ ids, markPaid:true }) });
+    const d = await res.json();
+    if(res.ok && d.success){ showToast(`${d.updated} marked as paid`); notarialSelected.clear(); loadNotarial(); }
+    else showToast(d.error||'Bulk update failed', true);
+  }catch(e){ showToast('Error updating records', true); }
+}
+async function notarialBulkMoveStage(){
+  if(!hasPerm('notarial_manage')) return;
+  const ids = notarialShownIds.filter(id=>notarialSelected.has(id));
+  if(!ids.length) return;
+  const stage = document.getElementById('notarialBulkStage')?.value;
+  if(!stage) return;
+  try{
+    const res = await apiFetch('/api/admin/notarial/bulk-status', { method:'POST', body: JSON.stringify({ ids, status:stage }) });
+    const d = await res.json();
+    if(res.ok && d.success){ showToast(`${d.updated} moved to ${notarialStage(stage).label}`); notarialSelected.clear(); loadNotarial(); }
+    else showToast(d.error||'Bulk update failed', true);
+  }catch(e){ showToast('Error updating records', true); }
+}
+
+// ── Board view (drag a card to advance its stage) ──
+let ntDragId = null;
+function renderNotarialBoard(){
+  const board = document.getElementById('notarialBoard');
+  if(!board) return;
+  const canManage = hasPerm('notarial_manage');
+  const q = (document.getElementById('notarialBoardSearch')?.value||'').toLowerCase().trim();
+  let rows = notarialData;
+  if(q) rows = rows.filter(j=>[j.clientName,notarialDocLabel(j),j.account,j.notaryName].some(v=>(v||'').toString().toLowerCase().includes(q)));
+  board.innerHTML = NOTARIAL_STAGES.map(s=>{
+    const cards = rows.filter(j=>notarialStageOf(j)===s.key);
+    const cardHtml = cards.map(j=>{
+      const fee=Number(j.fee)||0, paid=notarialPaidOf(j), bal=fee-paid;
+      const balText = bal>0.005 ? `<span style="color:#ef4444">${fmt(bal)} due</span>` : (fee>0?`<span style="color:#10b981">Paid</span>`:'');
+      const ct=notarialClientTypeMeta(j.clientType);
+      const sub=[ct?ct.label:'', j.account].filter(Boolean).join(' · ');
+      return `<div class="tl-card" ${canManage?`draggable="true" ondragstart="ntDragStart(event,'${j._id}')" ondragend="ntDragEnd(event)" onclick="openNotarialModal('${j._id}')"`:''} style="margin-bottom:8px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:3px">${esc(j.clientName)}</div>
+        ${notarialDocLabel(j)?`<div style="font-size:11px;color:var(--gray)">${esc(notarialDocLabel(j))}</div>`:''}
+        ${sub?`<div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(sub)}</div>`:''}
+        ${balText?`<div style="font-size:11px;font-weight:700;margin-top:5px">${balText}</div>`:''}
+      </div>`;
+    }).join('') || `<div style="font-size:11px;color:var(--gray);padding:8px 2px">—</div>`;
+    return `<div class="tl-col" data-stage="${s.key}" ondragover="ntDragOver(event)" ondragenter="ntColEnter(event)" ondragleave="ntColLeave(event)" ondrop="ntDrop(event,'${s.key}')" style="flex:0 0 220px;border:1px solid var(--border-color);background:var(--card-bg);display:flex;flex-direction:column;max-height:70vh">
+      <div style="border-top:3px solid ${s.color};padding:10px 11px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:700">${esc(s.label)}</span><span style="font-size:11px;color:var(--gray)">${cards.length}</span></div>
+      <div style="padding:0 11px 11px;overflow-y:auto;flex:1">${cardHtml}</div>
+    </div>`;
+  }).join('');
+}
+function ntDragStart(ev, id){ ntDragId=id; ev.dataTransfer.effectAllowed='move'; try{ ev.dataTransfer.setData('text/plain', id); }catch(e){} ev.currentTarget.classList.add('dragging'); }
+function ntDragEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('#notarialBoard .tl-col').forEach(c=>c.classList.remove('dragover')); }
+function ntDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; }
+function ntColEnter(ev){ ev.currentTarget.classList.add('dragover'); }
+function ntColLeave(ev){ if(ev.currentTarget===ev.target) ev.currentTarget.classList.remove('dragover'); }
+function ntDrop(ev, stageKey){ ev.preventDefault(); ev.currentTarget.classList.remove('dragover'); const id = ntDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain')); ntDragId=null; if(id) notarialMove(id, stageKey); }
+function advanceNotarial(id){
+  const j = notarialData.find(x=>x._id===id); if(!j) return;
+  const idx = NOTARIAL_ADVANCE.indexOf(notarialStageOf(j));
+  if(idx<0 || idx>=NOTARIAL_ADVANCE.length-1) return;
+  notarialMove(id, NOTARIAL_ADVANCE[idx+1]);
+}
+async function notarialMove(id, stageKey){
+  if(!hasPerm('notarial_manage')){ showToast('No permission to manage notarial records', true); return; }
+  const j = notarialData.find(x=>x._id===id); if(!j || notarialStageOf(j)===stageKey) return;
+  const patch = { status: stageKey };
+  // Stamp the notarized date automatically when a card reaches "Notarized" and it's still empty.
+  if(stageKey==='notarized' && !j.dateNotarized) patch.dateNotarized = todayInput();
+  try{
+    const res = await apiFetch(`/api/admin/notarial/${id}`, { method:'PUT', body: JSON.stringify(patch) });
+    const d = await res.json();
+    if(res.ok && d._id){ showToast('Moved to: ' + notarialStage(stageKey).label); loadNotarial(); }
+    else showToast(d.error||'Update failed', true);
+  }catch(e){ showToast('Error updating stage', true); }
 }
 
 function ntRenderPayments(){
@@ -7281,7 +7476,10 @@ function openNotarialModal(id){
   document.getElementById('ntClientName').value=(j&&j.clientName)||'';
   document.getElementById('ntClientPhone').value=(j&&j.clientPhone)||'';
   document.getElementById('ntClientEmail').value=(j&&j.clientEmail)||'';
+  document.getElementById('ntClientType').value=(j&&j.clientType)||'';
+  document.getElementById('ntAccount').value=(j&&j.account)||'';
   document.getElementById('ntDocType').value=(j&&j.documentType)||'';
+  document.getElementById('ntDocTypeOther').value=(j&&j.documentTypeOther)||'';
   document.getElementById('ntCopies').value=(j&&j.copies!=null)?j.copies:'';
   document.getElementById('ntNotaryName').value=(j&&j.notaryName)||'';
   document.getElementById('ntDocNo').value=(j&&j.docNo)||'';
@@ -7291,25 +7489,49 @@ function openNotarialModal(id){
   document.getElementById('ntDate').value=(j&&j.dateNotarized)?dateToInput(j.dateNotarized):'';
   document.getElementById('ntFee').value=(j&&j.fee)||'';
   document.getElementById('ntNotes').value=(j&&j.notes)||'';
+  // Stage dropdown + account suggestions
+  document.getElementById('ntStage').innerHTML = NOTARIAL_STAGES.map(s=>`<option value="${s.key}">${esc(s.label)}</option>`).join('');
+  document.getElementById('ntStage').value = j ? notarialStageOf(j) : 'received';
+  const acctDL=document.getElementById('ntAccountList');
+  if(acctDL){ const used=[...new Set(notarialData.map(x=>(x.account||'').trim()).filter(Boolean))]; acctDL.innerHTML=[...new Set([...NOTARIAL_ACCOUNTS,...used])].map(v=>`<option value="${escA(v)}"></option>`).join(''); }
   ntFillList('ntDocTypeList', NOTARIAL_DOCTYPES, 'documentType');
   ntFillList('ntNotaryList', [], 'notaryName');
+  ntToggleAccount();
+  ntToggleDocOther();
   ntPaymentsData = (j&&Array.isArray(j.payments)) ? j.payments.map(p=>({date:p.date||'',mode:p.mode||'Cash',label:p.label||'',amount:Number(p.amount)||0})) : [];
   ntRenderPayments();
   notarialPayRecalc();
   document.getElementById('notarialModal').style.display='flex';
 }
 function closeNotarialModal(){ document.getElementById('notarialModal').style.display='none'; }
+// Account field only matters for retainer / monthly-billing clients.
+function ntToggleAccount(){
+  const t=document.getElementById('ntClientType')?.value;
+  const wrap=document.getElementById('ntAccountWrap');
+  if(wrap) wrap.style.opacity = (t==='retainer'||t==='monthly_billing') ? '1' : '.5';
+}
+// Show the "specify" box only when document type is "Other".
+function ntToggleDocOther(){
+  const v=(document.getElementById('ntDocType')?.value||'').trim().toLowerCase();
+  const wrap=document.getElementById('ntDocOtherWrap');
+  if(wrap) wrap.style.display = (v==='other') ? '' : 'none';
+}
 
 async function saveNotarial(){
   const name=document.getElementById('ntClientName').value.trim();
   if(!name){ showToast('Client name is required', true); document.getElementById('ntClientName').focus(); return; }
   const payments = ntPaymentsData.map(p=>({date:p.date||null,mode:(p.mode||'Cash').trim(),label:(p.label||'').trim(),amount:Number(p.amount)||0})).filter(p=>p.amount||p.label||p.date);
   const nd=document.getElementById('ntDate').value;
+  const docType=document.getElementById('ntDocType').value.trim();
   const payload={
     clientName:name,
     clientPhone:document.getElementById('ntClientPhone').value.trim(),
     clientEmail:document.getElementById('ntClientEmail').value.trim(),
-    documentType:document.getElementById('ntDocType').value.trim(),
+    clientType:document.getElementById('ntClientType').value,
+    account:document.getElementById('ntAccount').value.trim(),
+    status:document.getElementById('ntStage').value,
+    documentType:docType,
+    documentTypeOther:(docType.toLowerCase()==='other') ? document.getElementById('ntDocTypeOther').value.trim() : '',
     docNo:document.getElementById('ntDocNo').value.trim(),
     pageNo:document.getElementById('ntPageNo').value.trim(),
     bookNo:document.getElementById('ntBookNo').value.trim(),
@@ -7344,11 +7566,12 @@ async function deleteNotarial(id){
 function exportNotarialCSV(){
   if(!notarialData.length){ showToast('No notarial records to export', true); return; }
   const csvDate=d=>d?new Date(d).toLocaleDateString('en-PH'):'';
-  const rows=[['Client','Phone','Email','Document','Doc No.','Page No.','Book No.','Series','Date Notarized','Copies','Notary','Fee','Paid','Balance','Status','Modes','Remarks']];
+  const rows=[['Client','Client Type','Account','Stage','Phone','Email','Document','Doc No.','Page No.','Book No.','Series','Date Notarized','Copies','Notary','Fee','Paid','Balance','Payment','Modes','Remarks']];
   notarialData.forEach(j=>{
     const fee=Number(j.fee)||0,paid=notarialPaidOf(j);
     const modes=[...new Set((j.payments||[]).map(p=>p.mode).filter(Boolean))].join(', ');
-    rows.push([j.clientName||'',j.clientPhone||'',j.clientEmail||'',j.documentType||'',j.docNo||'',j.pageNo||'',j.bookNo||'',j.series||'',csvDate(j.dateNotarized),j.copies||'',j.notaryName||'',fee,paid,Math.max(0,fee-paid),notarialStatusMeta(notarialStatusOf(j)).label,modes,(j.notes||'').replace(/\r?\n/g,' ')]);
+    const ct=notarialClientTypeMeta(j.clientType);
+    rows.push([j.clientName||'',ct?ct.label:'',j.account||'',notarialStage(notarialStageOf(j)).label,j.clientPhone||'',j.clientEmail||'',notarialDocLabel(j)||'',j.docNo||'',j.pageNo||'',j.bookNo||'',j.series||'',csvDate(j.dateNotarized),j.copies||'',j.notaryName||'',fee,paid,Math.max(0,fee-paid),notarialStatusMeta(notarialStatusOf(j)).label,modes,(j.notes||'').replace(/\r?\n/g,' ')]);
   });
   downloadCSV('glra-notarial-'+new Date().toISOString().slice(0,10)+'.csv', rows);
   showToast(`Exported ${notarialData.length} notarial record${notarialData.length===1?'':'s'}`);
@@ -7386,13 +7609,17 @@ function cashKindMeta(k){ return CASH_KINDS.find(x=>x.key===k)||CASH_KINDS[0]; }
 function cashAmountOf(e){ return Number(e.amount)||0; }
 function setCashFilter(k){ cashFilter = (cashFilter===k)?'all':k; renderCash(); }
 function setNotarialView(v){
-  notarialView = (v==='cash')?'cash':'docs';
-  document.getElementById('notarialDocsView').style.display = notarialView==='cash'?'none':'';
-  document.getElementById('notarialCashView').style.display = notarialView==='cash'?'':'none';
-  const db=document.getElementById('ntViewDocsBtn'), cb=document.getElementById('ntViewCashBtn');
-  if(db) db.style.cssText='border:none;border-right:1px solid var(--border-color);'+(notarialView==='docs'?'background:var(--gold);color:#0a0a0a':'');
-  if(cb) cb.style.cssText='border:none;'+(notarialView==='cash'?'background:var(--gold);color:#0a0a0a':'');
+  notarialView = (v==='cash'||v==='board') ? v : 'docs';
+  document.getElementById('notarialDocsView').style.display  = notarialView==='docs'  ? '' : 'none';
+  document.getElementById('notarialBoardView').style.display = notarialView==='board' ? '' : 'none';
+  document.getElementById('notarialCashView').style.display  = notarialView==='cash'  ? '' : 'none';
+  const db=document.getElementById('ntViewDocsBtn'), bb=document.getElementById('ntViewBoardBtn'), cb=document.getElementById('ntViewCashBtn');
+  const on='background:var(--gold);color:#0a0a0a';
+  if(db) db.style.cssText='border:none;border-right:1px solid var(--border-color);'+(notarialView==='docs'?on:'');
+  if(bb) bb.style.cssText='border:none;border-right:1px solid var(--border-color);'+(notarialView==='board'?on:'');
+  if(cb) cb.style.cssText='border:none;'+(notarialView==='cash'?on:'');
   if(notarialView==='cash') loadCash();
+  if(notarialView==='board') renderNotarialBoard();
 }
 
 async function loadCash(){
@@ -7676,8 +7903,11 @@ function switchTab(name){
   if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   const tlImportBtn=document.getElementById('tlImportBtn');
   if(tlImportBtn)tlImportBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
+  const showNotarialAdd=(name==='notarial'&&hasPerm('notarial_manage'))?'':'none';
   const addNotarialBtn=document.getElementById('addNotarialBtn');
-  if(addNotarialBtn)addNotarialBtn.style.display=(name==='notarial'&&hasPerm('notarial_manage'))?'':'none';
+  if(addNotarialBtn)addNotarialBtn.style.display=showNotarialAdd;
+  const addNotarialBtn2=document.getElementById('addNotarialBtn2');
+  if(addNotarialBtn2)addNotarialBtn2.style.display=showNotarialAdd;
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();
