@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>What's My Property Worth? | Free Home Valuation | GLRA Realty Philippines</title>
+<meta name="description" content="Get a free, instant estimate of your property's value in the Philippines — then request an exact market valuation from a licensed broker. For sellers of condos, houses, and lots.">
+<meta name="keywords" content="property valuation philippines,how much is my house worth,sell my property philippines,free home valuation,condo valuation,house appraisal philippines">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/valuation.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/valuation.html">
+<meta property="og:title" content="What's My Property Worth? | Free Home Valuation | GLRA Realty">
+<meta property="og:description" content="Get an instant estimate of your property's value, then request a free exact valuation from a licensed broker.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty — Free Property Valuation">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What's My Property Worth? | GLRA Realty Philippines">
+<meta name="twitter:description" content="Instant property value estimate + free exact valuation from a licensed broker.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Property Valuation Estimator","description":"Estimate your property's market value in the Philippines and request a free exact valuation from a licensed real estate broker.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/valuation.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Property Valuation","item":"https://glrarealty.com/valuation.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select,.input-group textarea{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus,.input-group textarea:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+
+.est-headline{padding:26px 24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.est-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px}
+.est-headline .value{font-family:'Inter',serif;font-size:34px;font-weight:600;color:var(--gold);line-height:1.15}
+.est-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:10px;line-height:1.6}
+
+.est-mid{padding:16px;border:1px solid var(--border-color);background:rgba(255,61,0,.06);margin-bottom:16px;text-align:center}
+.est-mid .label{font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:600}
+.est-mid .value{font-family:'Inter',serif;font-size:26px;font-weight:600;color:var(--text-color)}
+
+.breakdown{border:1px solid var(--border-color);margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-color);font-size:13px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row .k{color:var(--gray)}
+.breakdown-row .v{font-weight:600;color:var(--text-color)}
+
+.lead-note{font-size:13px;color:var(--text-color);line-height:1.6;background:var(--gray-light);border-left:3px solid var(--gold);padding:14px 16px;margin-bottom:18px}
+body.dark-mode .lead-note{background:#0e0e0c}
+
+.submit-btn{width:100%;padding:16px;background:var(--gold);color:#fff;border:1px solid var(--gold);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:600;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{background:var(--gold-dark)}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed}
+
+.form-error{display:none;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4);color:#dc2626;padding:12px 16px;font-size:13px;margin-bottom:16px}
+.success-view{display:none;text-align:center;padding:20px 6px}
+.success-view i{font-size:46px;color:var(--gold);margin-bottom:14px}
+.success-view h3{font-family:'Inter',serif;font-size:24px;font-weight:600;color:var(--text-color);margin-bottom:10px}
+.success-view p{font-size:14px;color:var(--gray);line-height:1.7}
+
+.cta-row{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.est-headline .value{font-size:28px}}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" class="active" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Sellers</span>
+  <h1>What's My Property Worth?</h1>
+  <p>Get an instant ballpark estimate of your property's value — then request a free, exact market valuation from Catherine, a licensed broker who knows your area.</p>
+</div>
+
+<div class="calc-container">
+
+  <!-- INPUTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-home"></i> Your Property</h2>
+      <p>The estimate updates as you fill this in.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="input-group">
+        <label>Property Type</label>
+        <select id="ptype" onchange="recalc()">
+          <option value="condo">Condominium</option>
+          <option value="house">House &amp; Lot</option>
+          <option value="townhouse">Townhouse</option>
+          <option value="reslot">Residential Lot</option>
+          <option value="commlot">Commercial Lot</option>
+          <option value="commspace">Commercial Space</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Location</label>
+        <select id="loc" onchange="recalc()">
+          <option value="3.0">Makati CBD / BGC / Rockwell (prime)</option>
+          <option value="2.3">Ortigas / Alabang / Pasig / Mandaluyong</option>
+          <option value="1.9">Quezon City / San Juan / Parañaque</option>
+          <option value="1.5" selected>Other Metro Manila</option>
+          <option value="1.25">Tagaytay / Cavite / Laguna / Rizal (near MM)</option>
+          <option value="1.1">Other Luzon city (Batangas, Pampanga, etc.)</option>
+          <option value="0.9">Provincial town / municipality</option>
+        </select>
+        <div class="input-hint">Pick the closest match. Not sure of exact values? <a href="/zonal.html" style="color:var(--gold)">Check BIR zonal values →</a></div>
+      </div>
+
+      <div id="floorWrap" class="input-group">
+        <label>Floor Area (sqm)</label>
+        <input type="text" id="floor" value="50" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">The unit / building interior size.</div>
+      </div>
+
+      <div id="landWrap" class="input-group" style="display:none">
+        <label>Lot / Land Area (sqm)</label>
+        <input type="text" id="land" value="120" oninput="formatPrice(this);recalc()">
+      </div>
+
+      <div class="section-divider">Condition &amp; Details</div>
+
+      <div class="input-group" id="condWrap">
+        <label>Condition</label>
+        <select id="cond" onchange="recalc()">
+          <option value="1.12">Brand new / never occupied</option>
+          <option value="1.0" selected>Well-maintained / move-in ready</option>
+          <option value="0.9">Average — needs minor work</option>
+          <option value="0.78">Needs major renovation</option>
+        </select>
+      </div>
+
+      <div class="two-col">
+        <div class="input-group" id="bedWrap">
+          <label>Bedrooms</label>
+          <input type="number" id="bed" value="1" min="0" max="20" oninput="recalc()">
+        </div>
+        <div class="input-group" id="parkWrap">
+          <label>Parking Slots</label>
+          <input type="number" id="park" value="0" min="0" max="20" oninput="recalc()">
+        </div>
+      </div>
+
+      <div class="input-hint" style="margin-top:6px"><i class="fas fa-lock" style="color:var(--gold);margin-right:5px"></i>Nothing is submitted until you fill in the request form on the right and press send.</div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS + LEAD -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-chart-line"></i> Estimated Value</h2>
+      <p>An indicative range based on your inputs.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="est-headline">
+        <span class="label">Indicative Market Range</span>
+        <div class="value" id="estRange">₱0 – ₱0</div>
+        <div class="sub">This is a rough guide only — a real valuation depends on the exact address, view, floor, amenities, and current demand.</div>
+      </div>
+
+      <div class="est-mid">
+        <span class="label">Midpoint Estimate</span>
+        <div class="value" id="estMid">₱0</div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="k">Basis</span><span class="v" id="bBasis">—</span></div>
+        <div class="breakdown-row"><span class="k">Approx. price / sqm</span><span class="v" id="bPerSqm">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Adjustments applied</span><span class="v" id="bAdj">—</span></div>
+      </div>
+
+      <div class="section-divider">Get the exact figure — free</div>
+
+      <div id="formWrap">
+        <div class="lead-note">Automated estimates can be off by a lot. Send your details and <strong>Catherine will reply with a proper valuation</strong> based on real comparable sales in your area — no cost, no obligation.</div>
+
+        <div class="form-error" id="formError"></div>
+
+        <div class="input-group">
+          <label>Your Name *</label>
+          <input type="text" id="vName" placeholder="e.g. Juan Dela Cruz">
+        </div>
+        <div class="two-col">
+          <div class="input-group">
+            <label>Email *</label>
+            <input type="email" id="vEmail" placeholder="you@email.com">
+          </div>
+          <div class="input-group">
+            <label>Mobile</label>
+            <input type="text" id="vPhone" placeholder="0917 XXX XXXX">
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Property Address / Landmark</label>
+          <input type="text" id="vAddr" placeholder="e.g. Tower name, subdivision, or barangay & city">
+        </div>
+        <div class="input-group">
+          <label>When are you planning to sell?</label>
+          <select id="vTimeline">
+            <option value="Just curious">Just curious for now</option>
+            <option value="Within 3 months">Within 3 months</option>
+            <option value="3–6 months">3–6 months</option>
+            <option value="6–12 months">6–12 months</option>
+            <option value="Already listed elsewhere">Already listed elsewhere</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Anything else? (optional)</label>
+          <textarea id="vMsg" rows="2" placeholder="e.g. corner unit, recently renovated, clean title, with existing tenant..."></textarea>
+        </div>
+
+        <button class="submit-btn" id="vSubmit" onclick="submitValuation()"><i class="fas fa-paper-plane"></i> Request My Free Valuation</button>
+
+        <div class="cta-row" style="margin-top:12px">
+          <a href="/list-property.html" class="cta-outline"><i class="fas fa-plus-circle"></i> List It For Sale</a>
+          <a href="/calculator.html" class="cta-outline"><i class="fas fa-calculator"></i> Net Proceeds</a>
+        </div>
+      </div>
+
+      <div class="success-view" id="successView">
+        <i class="fas fa-check-circle"></i>
+        <h3>Request sent!</h3>
+        <p>Thank you — Catherine has received your details and will get back to you shortly with a proper valuation. A confirmation is on its way to your email.</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>How this estimate works:</strong> It multiplies your area by a typical price-per-sqm band for that property type and location, then adjusts for condition, parking, and rooms. It is <strong>not an appraisal</strong> and should never be used for a bank loan, tax, or legal purpose. Real market value depends on the exact location, title status, and current buyer demand — which is exactly what Catherine will assess for free when you send the form.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/calculator.html">Closing Fees</a></li>
+      <li><a href="/affordability.html">Affordability</a></li>
+      <li><a href="/rent-vs-buy.html">Rent vs Buy</a></li>
+      <li><a href="/loan-comparison.html">Loan Comparison</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-US'); }
+function fmtShort(n){
+  if(n >= 1e6) return '₱' + (n/1e6).toFixed(n>=1e7?1:2) + 'M';
+  if(n >= 1e3) return '₱' + Math.round(n/1e3) + 'K';
+  return fmtPeso(n);
+}
+
+// Indicative base price per sqm (PHP) at location multiplier = 1.0 (a mid provincial baseline).
+// These are deliberately conservative reference bands, NOT appraisals.
+const BASE_PER_SQM = {
+  condo:      { floor: 45000, land: 0 },
+  house:      { floor: 16000, land: 9000 },
+  townhouse:  { floor: 18000, land: 11000 },
+  reslot:     { floor: 0,     land: 10000 },
+  commlot:    { floor: 0,     land: 16000 },
+  commspace:  { floor: 55000, land: 0 }
+};
+const TYPE_LABEL = {
+  condo:'Floor area × price/sqm', house:'Land + building value', townhouse:'Land + building value',
+  reslot:'Lot area × price/sqm', commlot:'Lot area × price/sqm', commspace:'Floor area × price/sqm'
+};
+
+function recalc(){
+  const type = document.getElementById('ptype').value;
+  const locMult = parseFloat(document.getElementById('loc').value) || 1;
+  const cond = parseFloat(document.getElementById('cond').value) || 1;
+  const floor = getRaw('floor');
+  const land = getRaw('land');
+  const bed = parseInt(document.getElementById('bed').value) || 0;
+  const park = parseInt(document.getElementById('park').value) || 0;
+
+  // Show/hide relevant inputs
+  const usesFloor = ['condo','house','townhouse','commspace'].includes(type);
+  const usesLand  = ['house','townhouse','reslot','commlot'].includes(type);
+  const isResidential = ['condo','house','townhouse'].includes(type);
+  document.getElementById('floorWrap').style.display = usesFloor ? '' : 'none';
+  document.getElementById('landWrap').style.display  = usesLand ? '' : 'none';
+  document.getElementById('condWrap').style.display  = (type==='reslot'||type==='commlot') ? 'none' : '';
+  document.getElementById('bedWrap').style.display   = isResidential ? '' : 'none';
+  document.getElementById('parkWrap').style.display  = (type==='reslot'||type==='commlot') ? 'none' : '';
+
+  const band = BASE_PER_SQM[type];
+  const condMult = (type==='reslot'||type==='commlot') ? 1 : cond;
+
+  // Core value
+  let floorVal = usesFloor ? floor * band.floor * locMult * condMult : 0;
+  let landVal  = usesLand  ? land  * band.land  * locMult : 0;
+  let base = floorVal + landVal;
+
+  // Small add-ons
+  const parkVal = park * 600000 * Math.min(locMult,2.2);   // parking slot value scales a bit with location
+  const bedBonus = isResidential && bed >= 3 ? base * 0.03 * (bed-2) : 0; // more bedrooms nudges value up
+  let mid = base + parkVal + bedBonus;
+
+  // Effective per-sqm (for display)
+  const totalSqm = (usesFloor?floor:0) + (usesLand&&!usesFloor?land:0) || floor || land || 0;
+  const perSqm = totalSqm > 0 ? mid / totalSqm : 0;
+
+  const low = mid * 0.88;
+  const high = mid * 1.15;
+
+  document.getElementById('estRange').textContent = mid > 0 ? (fmtShort(low) + ' – ' + fmtShort(high)) : '₱0 – ₱0';
+  document.getElementById('estMid').textContent = fmtPeso(mid);
+  document.getElementById('bBasis').textContent = TYPE_LABEL[type];
+  document.getElementById('bPerSqm').textContent = perSqm > 0 ? fmtPeso(perSqm) : '—';
+
+  const adj = [];
+  if(condMult !== 1) adj.push((condMult>1?'+':'') + Math.round((condMult-1)*100) + '% condition');
+  if(park > 0) adj.push('+' + park + ' parking');
+  if(bedBonus > 0) adj.push('+bedrooms');
+  document.getElementById('bAdj').textContent = adj.length ? adj.join(', ') : 'none';
+}
+
+async function submitValuation(){
+  const name = document.getElementById('vName').value.trim();
+  const email = document.getElementById('vEmail').value.trim();
+  const phone = document.getElementById('vPhone').value.trim();
+  const addr = document.getElementById('vAddr').value.trim();
+  const timeline = document.getElementById('vTimeline').value;
+  const extra = document.getElementById('vMsg').value.trim();
+  const err = document.getElementById('formError');
+
+  function showErr(m){ err.textContent = m; err.style.display = 'block'; err.scrollIntoView({block:'center',behavior:'smooth'}); }
+  err.style.display = 'none';
+
+  if(!name) return showErr('Please enter your name.');
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Please enter a valid email address.');
+
+  // Build a rich message so it lands in the admin with full context
+  const type = document.getElementById('ptype').options[document.getElementById('ptype').selectedIndex].text;
+  const locTxt = document.getElementById('loc').options[document.getElementById('loc').selectedIndex].text;
+  const floor = getRaw('floor'), land = getRaw('land');
+  const estMid = document.getElementById('estMid').textContent;
+  const estRange = document.getElementById('estRange').textContent;
+
+  const details =
+    `VALUATION REQUEST\n` +
+    `Property type: ${type}\n` +
+    `Location: ${locTxt}\n` +
+    (floor?`Floor area: ${floor} sqm\n`:'') +
+    (land?`Lot area: ${land} sqm\n`:'') +
+    `Auto-estimate: ${estMid} (range ${estRange})\n` +
+    `Address/landmark: ${addr || '—'}\n` +
+    `Selling timeline: ${timeline}\n` +
+    (extra?`Notes: ${extra}\n`:'');
+
+  const btn = document.getElementById('vSubmit');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  try{
+    const res = await fetch('/api/inquiries', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name, email, phone,
+        message: details,
+        propertyTitle: 'Valuation request — ' + type + ' · ' + locTxt
+      })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Request My Free Valuation';
+      return showErr(data.error || 'Something went wrong. Please try again or call 0917 177 4572.');
+    }
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+    document.querySelector('.calc-card:last-child').scrollIntoView({block:'start',behavior:'smooth'});
+  }catch(e){
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Request My Free Valuation';
+    showErr('Connection error. Please check your internet and try again.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/chat.js" defer></script>
+</body>
+</html>

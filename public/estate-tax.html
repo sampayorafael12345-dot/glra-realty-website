@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>Estate Tax & Inheritance Transfer Cost Calculator | GLRA Realty Philippines</title>
+<meta name="description" content="Estimate Philippine estate tax (6%) and the cost to transfer an inherited property's title to the heirs. Free estate settlement calculator with standard and family-home deductions.">
+<meta name="keywords" content="estate tax calculator philippines,inheritance tax philippines,transfer inherited property title,extrajudicial settlement cost,estate settlement philippines,6% estate tax">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/estate-tax.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/estate-tax.html">
+<meta property="og:title" content="Estate Tax & Inheritance Transfer Cost Calculator | GLRA Realty">
+<meta property="og:description" content="Estimate estate tax and the cost to transfer an inherited property title to the heirs in the Philippines.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty — Estate Tax Calculator">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Estate Tax & Inheritance Transfer Calculator | GLRA Realty">
+<meta name="twitter:description" content="Estimate estate tax and title-transfer costs for inherited property in the Philippines.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Estate Tax & Inheritance Transfer Calculator","description":"Estimate Philippine estate tax and the cost to transfer inherited property titles to heirs.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/estate-tax.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Estate Tax","item":"https://glrarealty.com/estate-tax.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+
+.est-headline{padding:24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.est-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.est-headline .value{font-family:'Inter',serif;font-size:40px;font-weight:600;color:var(--gold);line-height:1.1}
+.est-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+
+.breakdown{border:1px solid var(--border-color);margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-color);font-size:13px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row.total{background:rgba(255,61,0,.06);font-weight:700}
+.breakdown-row .k{color:var(--gray)}
+.breakdown-row.total .k{color:var(--text-color)}
+.breakdown-row .v{font-weight:600;color:var(--text-color)}
+.breakdown-row .v.minus{color:#10b981}
+
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.metric-mini{padding:16px;border:1px solid var(--border-color);background:var(--gray-light);text-align:center}
+body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
+.metric-mini .label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.metric-mini .value{font-family:'Inter',serif;font-size:20px;font-weight:600;color:var(--text-color)}
+.metric-mini.gold .value{color:var(--gold)}
+
+.cta-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.est-headline .value{font-size:30px}}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/estate-tax.html" onclick="closeMobileMenu()">Estate Tax</a>
+    <a href="/guide.html" onclick="closeMobileMenu()">Documentation Guide</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty">
+  <h1>Estate Tax &amp; Inheritance Transfer Estimate</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Heirs &amp; Families</span>
+  <h1>Estate Tax &amp; Inheritance Transfer Calculator</h1>
+  <p>Inherited a property? Estimate the estate tax and what it costs to transfer the title into the heirs' names — so there are no surprises before you settle or sell.</p>
+</div>
+
+<div class="calc-container">
+
+  <!-- INPUTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-scroll"></i> The Estate</h2>
+      <p>Enter values as of the date of passing. Results update as you type.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="section-divider">Property &amp; Assets</div>
+      <div class="input-group">
+        <label>Total Property Value (₱)</label>
+        <input type="text" id="propVal" value="6,000,000" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Use the higher of BIR zonal value or fair market value. <a href="/zonal.html" style="color:var(--gold)">Check zonal →</a></div>
+      </div>
+      <div class="input-group">
+        <label>Other Assets — cash, vehicles, shares (₱)</label>
+        <input type="text" id="otherAssets" value="0" oninput="formatPrice(this);recalc()">
+      </div>
+
+      <div class="section-divider">Deductions</div>
+      <div class="input-group">
+        <label>Is this the family home?</label>
+        <select id="famHome" onchange="recalc()">
+          <option value="yes">Yes — the decedent's family home</option>
+          <option value="no" selected>No / not applicable</option>
+        </select>
+        <div class="input-hint">The family home is deductible up to ₱10,000,000.</div>
+      </div>
+      <div class="input-group">
+        <label>Outstanding Debts &amp; Claims (₱)</label>
+        <input type="text" id="debts" value="0" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Unpaid mortgage, loans, and documented claims against the estate.</div>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <label>Number of Heirs</label>
+        <input type="number" id="heirs" value="1" min="1" max="30" oninput="recalc()">
+        <div class="input-hint">Used only to show the share per heir.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-balance-scale"></i> What It Costs</h2>
+      <p>Estate tax plus estimated transfer &amp; processing.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="est-headline">
+        <span class="label">Estimated Estate Tax (6%)</span>
+        <div class="value" id="estTax">₱0</div>
+        <div class="sub">6% of the net taxable estate (TRAIN law)</div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="k">Gross estate</span><span class="v" id="rGross">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Less: Standard deduction</span><span class="v minus" id="rStd">−₱5,000,000</span></div>
+        <div class="breakdown-row"><span class="k">Less: Family home</span><span class="v minus" id="rFam">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Less: Debts &amp; claims</span><span class="v minus" id="rDebts">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Net taxable estate</span><span class="v" id="rNet">₱0</span></div>
+        <div class="breakdown-row total"><span class="k">Estate tax @ 6%</span><span class="v" id="rTax">₱0</span></div>
+      </div>
+
+      <div class="section-divider">Title Transfer &amp; Processing (est.)</div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="k">Estate tax</span><span class="v" id="tTax">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Registration fee (RD)</span><span class="v" id="tReg">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Transfer tax (LGU)</span><span class="v" id="tXfer">₱0</span></div>
+        <div class="breakdown-row"><span class="k">Notarial + publication (extrajudicial)</span><span class="v" id="tNota">₱0</span></div>
+        <div class="breakdown-row total"><span class="k">Total to settle &amp; transfer</span><span class="v" id="tTotal">₱0</span></div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-mini gold">
+          <span class="label">Total Cost</span>
+          <div class="value" id="mTotal">₱0</div>
+        </div>
+        <div class="metric-mini">
+          <span class="label">Est. Share / Heir</span>
+          <div class="value" id="mShare">₱0</div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a href="/#contact" class="cta-primary"><i class="fas fa-hands-helping"></i> Get Help Transferring</a>
+        <a href="/guide.html" class="cta-outline"><i class="fas fa-book"></i> Documents Needed</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="glraOpenPrintGate('Estate Tax Estimate')">
+    <i class="fas fa-file-pdf"></i> Download PDF
+  </button>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>Important:</strong> This is a simplified estimate. The standard deduction (₱5M) and family-home deduction (up to ₱10M) apply to estates of residents; other rules apply to non-residents and to estates with multiple properties or businesses. Penalties and interest apply to late filing, and the BIR requires filing within one year of death (amnesty windows sometimes extend this). Transfer, registration, and notarial costs vary by LGU and Registry of Deeds. This is not legal or tax advice — GLRA Realty handles estate title transfers and can give you an exact, itemized quote. <a href="/#contact" style="color:var(--gold)">Talk to Catherine →</a></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/estate-tax.html">Estate Tax</a></li>
+      <li><a href="/calculator.html">Closing Fees</a></li>
+      <li><a href="/rent-vs-buy.html">Rent vs Buy</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-US'); }
+
+const STD_DEDUCTION = 5000000;
+const FAM_HOME_CAP = 10000000;
+
+function recalc(){
+  const propVal = getRaw('propVal');
+  const other = getRaw('otherAssets');
+  const isFamHome = document.getElementById('famHome').value === 'yes';
+  const debts = getRaw('debts');
+  const heirs = Math.max(1, parseInt(document.getElementById('heirs').value) || 1);
+
+  const gross = propVal + other;
+  const famDeduction = isFamHome ? Math.min(propVal, FAM_HOME_CAP) : 0;
+  const net = Math.max(0, gross - STD_DEDUCTION - famDeduction - debts);
+  const estateTax = net * 0.06;
+
+  // Transfer & processing estimates (rough, based on property value)
+  const regFee = propVal * 0.0025 + 5000;   // Registry of Deeds registration (~0.25% + fixed)
+  const transferTax = propVal * 0.005;       // LGU transfer tax (~0.5%)
+  const notarialPub = Math.max(8000, propVal * 0.005); // notarial for EJS + newspaper publication
+  const transferTotal = estateTax + regFee + transferTax + notarialPub;
+
+  // Estate-tax card
+  document.getElementById('estTax').textContent = fmtPeso(estateTax);
+  document.getElementById('rGross').textContent = fmtPeso(gross);
+  document.getElementById('rStd').textContent = '−' + fmtPeso(STD_DEDUCTION);
+  document.getElementById('rFam').textContent = '−' + fmtPeso(famDeduction);
+  document.getElementById('rDebts').textContent = '−' + fmtPeso(debts);
+  document.getElementById('rNet').textContent = fmtPeso(net);
+  document.getElementById('rTax').textContent = fmtPeso(estateTax);
+
+  // Transfer card
+  document.getElementById('tTax').textContent = fmtPeso(estateTax);
+  document.getElementById('tReg').textContent = fmtPeso(regFee);
+  document.getElementById('tXfer').textContent = fmtPeso(transferTax);
+  document.getElementById('tNota').textContent = fmtPeso(notarialPub);
+  document.getElementById('tTotal').textContent = fmtPeso(transferTotal);
+
+  document.getElementById('mTotal').textContent = fmtPeso(transferTotal);
+  document.getElementById('mShare').textContent = fmtPeso(Math.max(0, (gross - debts)) / heirs);
+}
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker/BIR.</div>
+<script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/chat.js" defer></script>
+</body>
+</html>

@@ -280,13 +280,13 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 /* MODAL */
 .modal-ov{position:fixed;inset:0;background:rgba(5,12,22,.9);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px}
 .modal-ov.open{display:flex}
-.modal-box{background:var(--card-bg);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;border:1px solid var(--border-color);animation:mIn .2s ease}
+.modal-box{background:var(--card-bg);width:100%;max-width:700px;max-height:92vh;overflow:hidden;border:1px solid var(--border-color);animation:mIn .2s ease;display:flex;flex-direction:column}
 @keyframes mIn{from{transform:translateY(-18px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:var(--navy);position:sticky;top:0;z-index:1}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:var(--navy);flex-shrink:0;z-index:1}
 .modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600}
 .modal-close{color:rgba(255,255,255,.45);cursor:pointer;font-size:18px;background:none;border:none;transition:var(--transition)}
 .modal-close:hover{color:var(--gold)}
-.modal-body{padding:24px}
+.modal-body{padding:24px;overflow-y:auto;min-height:0}
 
 /* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 18px;border:1px solid rgba(200,169,110,.3);z-index:9999;animation:toastIn .3s ease;font-size:13px;border-left:3px solid var(--gold);max-width:340px;box-shadow:var(--shadow-lg)}
@@ -1597,12 +1597,12 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- TITLING ADD/EDIT MODAL -->
       <div class="modal-ov" id="titlingModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:920px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);position:sticky;top:0;z-index:5">
+        <div style="background:var(--card-bg);max-width:920px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="titlingModalTitle">Add Titling Job</div>
             <button onclick="closeTitlingModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
           </div>
-          <div style="padding:24px">
+          <div style="padding:24px;overflow-y:auto;min-height:0">
             <input type="hidden" id="tlId">
 
             <!-- ── Client & property ── -->
@@ -1668,12 +1668,12 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
       <!-- TITLING IMPORT MODAL (reads the broker's ACTIVE ACCOUNTS spreadsheet) -->
       <div class="modal-ov" id="tlImpModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:820px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15)">
+        <div style="background:var(--card-bg);max-width:820px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600"><i class="fas fa-file-import" style="font-size:16px"></i> Import Titling Jobs</div>
             <button onclick="tlImpClose()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
           </div>
-          <div style="padding:24px">
+          <div style="padding:24px;overflow-y:auto;min-height:0">
             <!-- Step 1: choose file -->
             <div id="tlImpStep1">
               <label style="display:block;cursor:pointer;border:2px dashed var(--border-color);padding:34px 20px;text-align:center;background:var(--card-bg)">

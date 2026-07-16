@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>Down Payment Savings Planner | GLRA Realty Philippines</title>
+<meta name="description" content="How much should you save each month to hit your home down payment by a target date? Free savings goal planner for first-time property buyers in the Philippines.">
+<meta name="keywords" content="down payment savings calculator,how much to save for a house philippines,home savings plan,first time buyer philippines,down payment planner">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/savings-goal.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/savings-goal.html">
+<meta property="og:title" content="Down Payment Savings Planner | GLRA Realty">
+<meta property="og:description" content="Find out how much to save each month to hit your home down payment by your target date.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty — Savings Planner">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Down Payment Savings Planner | GLRA Realty">
+<meta name="twitter:description" content="How much to save monthly to buy your first home.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Down Payment Savings Planner","description":"Plan how much to save each month to reach a home down payment by a target date in the Philippines.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/savings-goal.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Savings Planner","item":"https://glrarealty.com/savings-goal.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+
+.est-headline{padding:26px 24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.est-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px}
+.est-headline .value{font-family:'Inter',serif;font-size:40px;font-weight:600;color:var(--gold);line-height:1.1}
+.est-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:8px}
+
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.metric-mini{padding:16px;border:1px solid var(--border-color);background:var(--gray-light);text-align:center}
+body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
+.metric-mini .label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.metric-mini .value{font-family:'Inter',serif;font-size:20px;font-weight:600;color:var(--text-color)}
+.metric-mini.gold .value{color:var(--gold)}
+
+.progress-wrap{margin:6px 0 16px}
+.progress-track{height:14px;background:var(--gray-light);border:1px solid var(--border-color);overflow:hidden}
+body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
+.progress-fill{height:100%;background:var(--gold);width:0;transition:width .4s ease}
+.progress-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-top:6px}
+
+.cta-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.est-headline .value{font-size:30px}}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/savings-goal.html" onclick="closeMobileMenu()">Savings Planner</a>
+    <a href="/affordability.html" onclick="closeMobileMenu()">Affordability</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty">
+  <h1>Down Payment Savings Plan</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For First-Time Buyers</span>
+  <h1>Down Payment Savings Planner</h1>
+  <p>Set a target home and a date — this tells you how much to set aside every month to get there, and how far your current savings already take you.</p>
+</div>
+
+<div class="calc-container">
+
+  <!-- INPUTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-piggy-bank"></i> Your Goal</h2>
+      <p>Results update as you type.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="input-group">
+        <label>Target Property Price (₱)</label>
+        <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Not sure yet? <a href="/properties.html" style="color:var(--gold)">Browse listings →</a></div>
+      </div>
+      <div class="input-group">
+        <label>Down Payment (%)</label>
+        <select id="dp" onchange="recalc()">
+          <option value="10">10% — minimum for many developers</option>
+          <option value="20" selected>20% — typical</option>
+          <option value="30">30% — stronger position</option>
+          <option value="100">100% — buying in cash</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--text-color);cursor:pointer">
+          <input type="checkbox" id="incClosing" onchange="recalc()" checked style="width:auto;accent-color:#ff3d00"> Also save for closing costs (~6%)
+        </label>
+        <div class="input-hint">Taxes, transfer, registration, and fees on top of the down payment.</div>
+      </div>
+
+      <div class="section-divider">Your Timeline &amp; Savings</div>
+      <div class="input-group">
+        <label>I want to buy in…</label>
+        <select id="months" onchange="recalc()">
+          <option value="12">1 year</option>
+          <option value="24" selected>2 years</option>
+          <option value="36">3 years</option>
+          <option value="48">4 years</option>
+          <option value="60">5 years</option>
+          <option value="84">7 years</option>
+          <option value="120">10 years</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Money You've Saved So Far (₱)</label>
+        <input type="text" id="current" value="200,000" oninput="formatPrice(this);recalc()">
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <label>Interest / Return on Savings (% / yr)</label>
+        <input type="number" id="rate" value="3" min="0" max="15" step="0.5" oninput="recalc()">
+        <div class="input-hint">A digital bank or time deposit is typically 2–5%.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-bullseye"></i> Your Plan</h2>
+      <p>What it takes to reach the goal.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="est-headline">
+        <span class="label">Save Each Month</span>
+        <div class="value" id="monthly">₱0</div>
+        <div class="sub" id="monthlySub">to reach your goal on time</div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+        <div class="progress-legend"><span id="progPct">0% covered by current savings</span><span id="progGoal">Goal ₱0</span></div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-mini gold">
+          <span class="label">Total You Need</span>
+          <div class="value" id="mGoal">₱0</div>
+        </div>
+        <div class="metric-mini">
+          <span class="label">Still To Save</span>
+          <div class="value" id="mGap">₱0</div>
+        </div>
+        <div class="metric-mini">
+          <span class="label">Down Payment</span>
+          <div class="value" id="mDp">₱0</div>
+        </div>
+        <div class="metric-mini">
+          <span class="label">Closing Costs</span>
+          <div class="value" id="mClose">₱0</div>
+        </div>
+      </div>
+
+      <div class="metric-mini" style="text-align:left">
+        <span class="label">In plain terms</span>
+        <div style="font-size:13px;color:var(--text-color);line-height:1.7;margin-top:4px" id="plainText">—</div>
+      </div>
+
+      <div class="cta-row">
+        <a href="/affordability.html" class="cta-primary"><i class="fas fa-wallet"></i> What Can I Afford?</a>
+        <a href="/properties.html" class="cta-outline"><i class="fas fa-search"></i> Browse Homes</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="glraOpenPrintGate('Down Payment Savings Plan')">
+    <i class="fas fa-file-pdf"></i> Download PDF
+  </button>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>Good to know:</strong> This assumes you keep saving a fixed amount monthly and earn a steady return — real life varies. Property prices also rise over time, so a longer timeline may mean a bigger target later. Many developers offer in-house financing with a spread-out down payment, which can lower the monthly figure. Want options that fit your budget today? <a href="/#contact" style="color:var(--gold)">Talk to Catherine →</a></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/savings-goal.html">Savings Planner</a></li>
+      <li><a href="/affordability.html">Affordability</a></li>
+      <li><a href="/loan-comparison.html">Loan Comparison</a></li>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-US'); }
+
+function recalc(){
+  const price = getRaw('price');
+  const dpPct = num('dp')/100;
+  const incClosing = document.getElementById('incClosing').checked;
+  const months = Math.max(1, num('months'));
+  const current = getRaw('current');
+  const rate = num('rate')/100;
+
+  const downPayment = price*dpPct;
+  const closing = incClosing ? price*0.06 : 0;
+  const goal = downPayment + closing;
+
+  const r = rate/12; // monthly rate
+  // Future value of current savings
+  const fvCurrent = current*Math.pow(1+r, months);
+  const remaining = Math.max(0, goal - fvCurrent);
+
+  // Monthly deposit needed (future value of annuity)
+  let monthly;
+  if(remaining <= 0){ monthly = 0; }
+  else if(r === 0){ monthly = remaining/months; }
+  else { monthly = remaining * r / (Math.pow(1+r, months)-1); }
+
+  const pctCovered = goal>0 ? Math.min(100, fvCurrent/goal*100) : 0;
+
+  document.getElementById('monthly').textContent = fmtPeso(monthly);
+  document.getElementById('monthlySub').textContent = remaining<=0
+    ? 'You are already on track — nice!'
+    : 'to reach your goal in ' + (months/12) + (months/12===1?' year':' years');
+
+  document.getElementById('mGoal').textContent = fmtPeso(goal);
+  document.getElementById('mGap').textContent = fmtPeso(Math.max(0, goal-current));
+  document.getElementById('mDp').textContent = fmtPeso(downPayment);
+  document.getElementById('mClose').textContent = incClosing ? fmtPeso(closing) : '—';
+
+  document.getElementById('progFill').style.width = pctCovered + '%';
+  document.getElementById('progPct').textContent = Math.round(pctCovered) + '% covered by current savings';
+  document.getElementById('progGoal').textContent = 'Goal ' + fmtPeso(goal);
+
+  const yrs = months/12;
+  let plain;
+  if(remaining <= 0){
+    plain = `Your ₱${Math.round(current).toLocaleString()} — growing at ${(rate*100).toFixed(1)}% — already reaches the ${fmtPeso(goal)} you need within ${yrs} ${yrs===1?'year':'years'}. You could aim higher or buy sooner.`;
+  } else {
+    const weekly = monthly*12/52;
+    plain = `Set aside about <strong style="color:var(--gold)">${fmtPeso(monthly)}/month</strong> (roughly ${fmtPeso(weekly)}/week). Combined with your current savings and ${(rate*100).toFixed(1)}% growth, you'll have the ${fmtPeso(goal)} you need in ${yrs} ${yrs===1?'year':'years'}.`;
+  }
+  document.getElementById('plainText').innerHTML = plain;
+}
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only.</div>
+<script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/chat.js" defer></script>
+</body>
+</html>

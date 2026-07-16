@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>Pag-IBIG vs Bank Loan Comparison Calculator | GLRA Realty Philippines</title>
+<meta name="description" content="Compare a Pag-IBIG housing loan against a bank home loan side by side — monthly amortization, total interest, and total cost. Free Philippine mortgage comparison calculator.">
+<meta name="keywords" content="pag-ibig vs bank loan,housing loan comparison philippines,pag-ibig housing loan calculator,bank home loan philippines,mortgage calculator philippines">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/loan-comparison.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/loan-comparison.html">
+<meta property="og:title" content="Pag-IBIG vs Bank Loan Comparison | GLRA Realty">
+<meta property="og:description" content="Compare Pag-IBIG and bank home loans side by side — monthly payment, total interest, total cost.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty — Loan Comparison Calculator">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pag-IBIG vs Bank Loan Comparison | GLRA Realty">
+<meta name="twitter:description" content="Side-by-side home loan comparison for the Philippines.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Pag-IBIG vs Bank Loan Comparison","description":"Compare a Pag-IBIG housing loan against a bank home loan in the Philippines — monthly amortization, total interest, and total cost.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/loan-comparison.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Loan Comparison","item":"https://glrarealty.com/loan-comparison.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 26px;padding:0 5%}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;margin-bottom:26px}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+
+.input-group{margin-bottom:0}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.loan-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+.loan-panel{border:1px solid var(--border-color);padding:20px;background:var(--gray-light)}
+body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
+.loan-panel.pagibig{border-top:3px solid #10b981}
+.loan-panel.bank{border-top:3px solid #3b82f6}
+.loan-panel h3{font-family:'Inter',serif;font-size:18px;font-weight:600;color:var(--text-color);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.loan-panel h3 .badge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;color:#fff;font-family:'DM Sans',sans-serif;font-weight:600}
+.loan-panel.pagibig .badge{background:#10b981}
+.loan-panel.bank .badge{background:#3b82f6}
+.loan-panel .field{margin-bottom:14px}
+.loan-panel .field label{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px}
+.loan-panel .field input{width:100%;padding:11px 14px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500}
+.loan-panel .field input:focus{outline:none;border-color:var(--gold)}
+
+.result-block{margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)}
+.result-block .big{text-align:center;margin-bottom:12px}
+.result-block .big .lbl{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+.result-block .big .amt{font-family:'Inter',serif;font-size:30px;font-weight:600;color:var(--gold);line-height:1.1}
+.rrow{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--border-color)}
+.rrow:last-child{border-bottom:none}
+.rrow .k{color:var(--gray)}
+.rrow .v{font-weight:600;color:var(--text-color)}
+
+.winner-banner{padding:18px 20px;border:1px solid rgba(255,61,0,.2);background:linear-gradient(135deg,var(--navy),var(--navy-mid));margin-top:4px;text-align:center}
+.winner-banner .lbl{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.winner-banner .txt{font-size:15px;color:#fff;line-height:1.6}
+.winner-banner .txt strong{color:var(--gold)}
+
+.cta-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:150px;padding:14px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+
+@media(max-width:820px){.loan-cols{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/loan-comparison.html" onclick="closeMobileMenu()">Loan Comparison</a>
+    <a href="/amortization.html" onclick="closeMobileMenu()">Amortization</a>
+    <a href="/affordability.html" onclick="closeMobileMenu()">Affordability</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty">
+  <h1>Pag-IBIG vs Bank Loan — Comparison</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Buyers</span>
+  <h1>Pag-IBIG vs Bank Loan</h1>
+  <p>The two main ways Filipinos finance a home. Compare the monthly payment, total interest, and total cost side by side — then pick what fits.</p>
+</div>
+
+<div class="calc-container">
+
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-scale-balanced"></i> Compare Two Home Loans</h2>
+      <p>Adjust the loan amount, then the rate and term for each. Results update instantly.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="grid-3" style="margin-bottom:20px">
+        <div class="input-group">
+          <label>Loan Amount (₱)</label>
+          <input type="text" id="amount" value="4,000,000" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">Price minus your down payment.</div>
+        </div>
+        <div class="input-group">
+          <label>Your Monthly Income (₱)</label>
+          <input type="text" id="income" value="80,000" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">Optional — checks affordability.</div>
+        </div>
+        <div class="input-group">
+          <label>Age Now (optional)</label>
+          <input type="number" id="age" value="35" min="18" max="70" oninput="recalc()">
+          <div class="input-hint">Loan must usually end by age 70.</div>
+        </div>
+      </div>
+
+      <div class="loan-cols">
+        <!-- PAG-IBIG -->
+        <div class="loan-panel pagibig">
+          <h3><i class="fas fa-landmark" style="color:#10b981"></i> Pag-IBIG <span class="badge">Govt Fund</span></h3>
+          <div class="field">
+            <label>Interest Rate (% / yr)</label>
+            <input type="number" id="pRate" value="6.25" min="0" max="20" step="0.05" oninput="recalc()">
+          </div>
+          <div class="field">
+            <label>Term (years)</label>
+            <input type="number" id="pTerm" value="30" min="1" max="30" oninput="recalc()">
+          </div>
+          <div class="result-block">
+            <div class="big"><span class="lbl">Monthly Payment</span><span class="amt" id="pMonthly">₱0</span></div>
+            <div class="rrow"><span class="k">Total interest</span><span class="v" id="pInterest">₱0</span></div>
+            <div class="rrow"><span class="k">Total to repay</span><span class="v" id="pTotal">₱0</span></div>
+            <div class="rrow"><span class="k">Income needed</span><span class="v" id="pIncome">₱0</span></div>
+          </div>
+        </div>
+
+        <!-- BANK -->
+        <div class="loan-panel bank">
+          <h3><i class="fas fa-building-columns" style="color:#3b82f6"></i> Bank <span class="badge">Private</span></h3>
+          <div class="field">
+            <label>Interest Rate (% / yr)</label>
+            <input type="number" id="bRate" value="7.5" min="0" max="20" step="0.05" oninput="recalc()">
+          </div>
+          <div class="field">
+            <label>Term (years)</label>
+            <input type="number" id="bTerm" value="20" min="1" max="30" oninput="recalc()">
+          </div>
+          <div class="result-block">
+            <div class="big"><span class="lbl">Monthly Payment</span><span class="amt" id="bMonthly">₱0</span></div>
+            <div class="rrow"><span class="k">Total interest</span><span class="v" id="bInterest">₱0</span></div>
+            <div class="rrow"><span class="k">Total to repay</span><span class="v" id="bTotal">₱0</span></div>
+            <div class="rrow"><span class="k">Income needed</span><span class="v" id="bIncome">₱0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="winner-banner" style="margin-top:20px">
+        <span class="lbl">Bottom Line</span>
+        <div class="txt" id="winnerTxt">Enter a loan amount to compare.</div>
+      </div>
+
+      <div class="cta-row">
+        <a href="/affordability.html" class="cta-primary"><i class="fas fa-wallet"></i> Can I Afford It?</a>
+        <a href="/amortization.html" class="cta-outline"><i class="fas fa-table"></i> Full Amortization</a>
+        <a href="/#contact" class="cta-outline"><i class="fas fa-comment"></i> Ask Catherine</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="glraOpenPrintGate('Pag-IBIG vs Bank Loan')">
+    <i class="fas fa-file-pdf"></i> Download PDF
+  </button>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>About the defaults:</strong> Pag-IBIG rates depend on your chosen fixing period and loan amount (the pre-filled 6.25% reflects a common short-fixing rate; the maximum loanable amount is ₱6,000,000). Bank rates change often and are usually fixed for 1–5 years before repricing. "Income needed" assumes the payment should stay near 30–35% of gross monthly income. Always confirm the exact terms with Pag-IBIG or your bank. Need help choosing? <a href="/#contact" style="color:var(--gold)">Catherine can guide you →</a></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/loan-comparison.html">Loan Comparison</a></li>
+      <li><a href="/amortization.html">Amortization</a></li>
+      <li><a href="/affordability.html">Affordability</a></li>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-US'); }
+
+function monthlyPayment(principal, annualRate, years){
+  const r = annualRate/100/12, n = years*12;
+  if(principal<=0 || n<=0) return 0;
+  if(r===0) return principal/n;
+  return principal * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
+}
+
+function computeSide(prefix, amount){
+  const rate = num(prefix+'Rate');
+  const term = Math.max(1, num(prefix+'Term'));
+  const monthly = monthlyPayment(amount, rate, term);
+  const total = monthly * term * 12;
+  const interest = total - amount;
+  const incomeNeeded = monthly / 0.33; // ~33% of gross
+  document.getElementById(prefix+'Monthly').textContent = fmtPeso(monthly);
+  document.getElementById(prefix+'Interest').textContent = fmtPeso(interest);
+  document.getElementById(prefix+'Total').textContent = fmtPeso(total);
+  document.getElementById(prefix+'Income').textContent = fmtPeso(incomeNeeded);
+  return { rate, term, monthly, total, interest, incomeNeeded };
+}
+
+function recalc(){
+  const amount = getRaw('amount');
+  const income = getRaw('income');
+  const p = computeSide('p', amount);
+  const b = computeSide('b', amount);
+
+  const el = document.getElementById('winnerTxt');
+  if(amount <= 0){ el.textContent = 'Enter a loan amount to compare.'; return; }
+
+  const cheaperMonthly = p.monthly <= b.monthly ? 'Pag-IBIG' : 'Bank';
+  const cheaperTotal   = p.total   <= b.total   ? 'Pag-IBIG' : 'Bank';
+  const monthlyDiff = Math.abs(p.monthly - b.monthly);
+  const totalDiff   = Math.abs(p.total - b.total);
+
+  let msg = `<strong>${cheaperMonthly}</strong> has the lower monthly payment (by ${fmtPeso(monthlyDiff)}/mo). `;
+  if(cheaperTotal === cheaperMonthly){
+    msg += `It's also cheaper overall — you'd pay <strong>${fmtPeso(totalDiff)} less in total</strong>.`;
+  } else {
+    msg += `But <strong>${cheaperTotal}</strong> costs less in total interest (by ${fmtPeso(totalDiff)}) — usually because of the shorter term.`;
+  }
+
+  // affordability flag
+  if(income > 0){
+    const lower = Math.min(p.monthly, b.monthly);
+    const ratio = lower / income;
+    if(ratio > 0.4){
+      msg += `<br><span style="color:#ff7a5c">Heads up: even the lower payment is ${(ratio*100).toFixed(0)}% of your income — banks usually cap this around 30–35%.</span>`;
+    } else {
+      msg += `<br><span style="color:#10b981">The lower payment is about ${(ratio*100).toFixed(0)}% of your income — within the typical comfortable range.</span>`;
+    }
+  }
+  el.innerHTML = msg;
+}
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with lender.</div>
+<script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/chat.js" defer></script>
+</body>
+</html>

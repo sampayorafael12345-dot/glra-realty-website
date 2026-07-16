@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>Rent vs Buy Calculator (+ Sell vs Rent Out) | GLRA Realty Philippines</title>
+<meta name="description" content="Should you rent or buy? Or as an owner, sell now or rent it out? Compare the real cost and wealth outcome over time with this free Philippine property calculator.">
+<meta name="keywords" content="rent vs buy calculator philippines,should i buy or rent,sell or rent out property,rent out vs sell,property investment calculator philippines">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/rent-vs-buy.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/rent-vs-buy.html">
+<meta property="og:title" content="Rent vs Buy Calculator (+ Sell vs Rent Out) | GLRA Realty">
+<meta property="og:description" content="Compare renting vs buying — or selling vs renting out — over time. Free Philippine property calculator.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty — Rent vs Buy Calculator">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rent vs Buy Calculator | GLRA Realty Philippines">
+<meta name="twitter:description" content="Rent or buy? Sell or rent out? Compare the numbers over time.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Rent vs Buy Calculator","description":"Compare renting versus buying, or selling versus renting out a property, over time in the Philippines.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/rent-vs-buy.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Rent vs Buy","item":"https://glrarealty.com/rent-vs-buy.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.mode-toggle{max-width:1100px;margin:34px auto 0;padding:0 5%;display:flex;gap:0}
+.mode-btn{flex:1;padding:16px 14px;background:var(--card-bg);border:1px solid var(--border-color);color:var(--gray);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px}
+.mode-btn:first-child{border-right:none}
+.mode-btn.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+.mode-btn i{font-size:14px}
+
+.calc-container{max-width:1100px;margin:22px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+
+.verdict{padding:24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.verdict .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.verdict .value{font-family:'Inter',serif;font-size:30px;font-weight:600;color:var(--gold);line-height:1.15}
+.verdict .sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:10px;line-height:1.6}
+
+.vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.vs-card{padding:18px 16px;border:1px solid var(--border-color);text-align:center}
+.vs-card.win{border-color:var(--gold);background:rgba(255,61,0,.06)}
+.vs-card .t{font-size:11px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.vs-card .n{font-family:'Inter',serif;font-size:22px;font-weight:600;color:var(--text-color)}
+.vs-card.win .n{color:var(--gold)}
+.vs-card .d{font-size:11px;color:var(--gray);margin-top:6px}
+
+.breakdown{border:1px solid var(--border-color);margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-color);font-size:13px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row .k{color:var(--gray)}
+.breakdown-row .v{font-weight:600;color:var(--text-color)}
+
+.cta-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.verdict .value{font-size:24px}}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/rent-vs-buy.html" onclick="closeMobileMenu()">Rent vs Buy</a>
+    <a href="/loan-comparison.html" onclick="closeMobileMenu()">Loan Comparison</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty">
+  <h1>Rent vs Buy — Comparison</h1>
+  <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Buyers &amp; Owners</span>
+  <h1>Rent vs Buy Calculator</h1>
+  <p>Two big decisions, one tool. If you're a renter, see whether buying wins over time. If you already own, see whether to sell now or rent it out.</p>
+</div>
+
+<div class="mode-toggle">
+  <button class="mode-btn active" id="modeBuyBtn" onclick="setMode('buy')"><i class="fas fa-key"></i> Rent vs Buy</button>
+  <button class="mode-btn" id="modeSellBtn" onclick="setMode('sell')"><i class="fas fa-hand-holding-usd"></i> Sell vs Rent Out</button>
+</div>
+
+<div class="calc-container">
+
+  <!-- INPUTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-sliders-h"></i> <span id="inTitle">Your Numbers</span></h2>
+      <p>Everything updates automatically as you type.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="input-group">
+        <label>Time Horizon (years)</label>
+        <input type="number" id="years" value="7" min="1" max="40" oninput="recalc()">
+        <div class="input-hint">How long you plan to stay / hold.</div>
+      </div>
+
+      <!-- ─────────── RENT vs BUY inputs ─────────── -->
+      <div id="buyInputs">
+        <div class="section-divider">If You Rent</div>
+        <div class="input-group">
+          <label>Monthly Rent (₱)</label>
+          <input type="text" id="rent" value="25,000" oninput="formatPrice(this);recalc()">
+        </div>
+        <div class="input-group">
+          <label>Annual Rent Increase (%)</label>
+          <input type="number" id="rentInc" value="5" min="0" max="20" step="0.5" oninput="recalc()">
+        </div>
+
+        <div class="section-divider">If You Buy</div>
+        <div class="input-group">
+          <label>Property Price (₱)</label>
+          <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
+        </div>
+        <div class="two-col">
+          <div class="input-group">
+            <label>Down Payment (₱)</label>
+            <input type="text" id="down" value="1,000,000" oninput="formatPrice(this);recalc()">
+          </div>
+          <div class="input-group">
+            <label>Closing Costs (₱)</label>
+            <input type="text" id="closing" value="350,000" oninput="formatPrice(this);recalc()">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="input-group">
+            <label>Loan Rate (% / yr)</label>
+            <input type="number" id="rate" value="7" min="0" max="20" step="0.25" oninput="recalc()">
+          </div>
+          <div class="input-group">
+            <label>Loan Term (years)</label>
+            <input type="number" id="term" value="20" min="1" max="30" oninput="recalc()">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="input-group">
+            <label>Appreciation (% / yr)</label>
+            <input type="number" id="appr" value="4" min="-5" max="20" step="0.5" oninput="recalc()">
+          </div>
+          <div class="input-group">
+            <label>Monthly Dues + Amilyar (₱)</label>
+            <input type="text" id="carry" value="6,000" oninput="formatPrice(this);recalc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── SELL vs RENT OUT inputs ─────────── -->
+      <div id="sellInputs" style="display:none">
+        <div class="section-divider">The Property</div>
+        <div class="input-group">
+          <label>Current Market Value (₱)</label>
+          <input type="text" id="sPrice" value="5,000,000" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">Not sure? <a href="/valuation.html" style="color:var(--gold)">Get a valuation →</a></div>
+        </div>
+        <div class="input-group">
+          <label>Appreciation if kept (% / yr)</label>
+          <input type="number" id="sAppr" value="4" min="-5" max="20" step="0.5" oninput="recalc()">
+        </div>
+
+        <div class="section-divider">If You Sell Now</div>
+        <div class="input-group">
+          <label>Selling Costs (% of price)</label>
+          <input type="number" id="sCost" value="11" min="0" max="20" step="0.5" oninput="recalc()">
+          <div class="input-hint">CGT 6% + broker's commission + misc. See <a href="/calculator.html" style="color:var(--gold)">Closing Fees →</a></div>
+        </div>
+        <div class="input-group">
+          <label>Return on Reinvested Cash (% / yr)</label>
+          <input type="number" id="sReinv" value="5" min="0" max="20" step="0.5" oninput="recalc()">
+          <div class="input-hint">If you sold and put the money in a time deposit, fund, or another investment.</div>
+        </div>
+
+        <div class="section-divider">If You Rent It Out</div>
+        <div class="input-group">
+          <label>Monthly Rent (₱)</label>
+          <input type="text" id="sRent" value="25,000" oninput="formatPrice(this);recalc()">
+        </div>
+        <div class="two-col">
+          <div class="input-group">
+            <label>Rent Increase (% / yr)</label>
+            <input type="number" id="sRentInc" value="5" min="0" max="20" step="0.5" oninput="recalc()">
+          </div>
+          <div class="input-group">
+            <label>Costs + Vacancy (% of rent)</label>
+            <input type="number" id="sRentCost" value="25" min="0" max="70" step="1" oninput="recalc()">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-poll"></i> The Verdict</h2>
+      <p id="outSub">After your time horizon.</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="verdict">
+        <span class="label" id="vLabel">Recommendation</span>
+        <div class="value" id="vHeadline">—</div>
+        <div class="sub" id="vSub">Fill in your numbers on the left.</div>
+      </div>
+
+      <div class="vs-grid">
+        <div class="vs-card" id="cardA">
+          <div class="t" id="aTitle">Option A</div>
+          <div class="n" id="aNum">₱0</div>
+          <div class="d" id="aDesc">—</div>
+        </div>
+        <div class="vs-card" id="cardB">
+          <div class="t" id="bTitle">Option B</div>
+          <div class="n" id="bNum">₱0</div>
+          <div class="d" id="bDesc">—</div>
+        </div>
+      </div>
+
+      <div class="breakdown" id="detailBox"></div>
+
+      <div class="cta-row">
+        <a href="/properties.html" class="cta-primary" id="ctaMain"><i class="fas fa-search"></i> Browse Properties</a>
+        <a href="/#contact" class="cta-outline"><i class="fas fa-comment"></i> Ask Catherine</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="print-button-wrapper">
+  <button class="print-btn" onclick="glraOpenPrintGate('Rent vs Buy')">
+    <i class="fas fa-file-pdf"></i> Download PDF
+  </button>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>Assumptions matter:</strong> This is a simplified model. It doesn't account for income tax on rent, mortgage insurance, transaction friction on future sale, or your personal situation and risk appetite. Small changes to appreciation and interest assumptions can flip the result — treat it as a conversation starter, not financial advice. Want a grounded view for your exact property? <a href="/#contact" style="color:var(--gold)">Talk to Catherine →</a></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/rent-vs-buy.html">Rent vs Buy</a></li>
+      <li><a href="/loan-comparison.html">Loan Comparison</a></li>
+      <li><a href="/rental-yield.html">Rental Yield</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function fmtPeso(n){ return (n<0?'−₱':'₱') + Math.abs(Math.round(n)).toLocaleString('en-US'); }
+
+let mode = 'buy';
+function setMode(m){
+  mode = m;
+  document.getElementById('modeBuyBtn').classList.toggle('active', m==='buy');
+  document.getElementById('modeSellBtn').classList.toggle('active', m==='sell');
+  document.getElementById('buyInputs').style.display = m==='buy' ? '' : 'none';
+  document.getElementById('sellInputs').style.display = m==='sell' ? '' : 'none';
+  document.getElementById('inTitle').textContent = m==='buy' ? 'Rent vs Buy' : 'Sell vs Rent Out';
+  document.getElementById('ctaMain').innerHTML = m==='buy'
+    ? '<i class="fas fa-search"></i> Browse Properties'
+    : '<i class="fas fa-tag"></i> Sell With Us';
+  document.getElementById('ctaMain').href = m==='buy' ? '/properties.html' : '/list-property.html';
+  recalc();
+}
+
+// Monthly amortization payment
+function monthlyPayment(principal, annualRate, years){
+  const r = annualRate/100/12, n = years*12;
+  if(principal<=0) return 0;
+  if(r===0) return principal/n;
+  return principal * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
+}
+// Remaining loan balance after k months
+function balanceAfter(principal, annualRate, years, kMonths){
+  const r = annualRate/100/12, n = years*12;
+  if(principal<=0) return 0;
+  if(kMonths>=n) return 0;
+  if(r===0) return principal*(1 - kMonths/n);
+  const pay = monthlyPayment(principal, annualRate, years);
+  let bal = principal;
+  bal = principal*Math.pow(1+r,kMonths) - pay*((Math.pow(1+r,kMonths)-1)/r);
+  return Math.max(0, bal);
+}
+
+function detailHTML(rows){
+  return rows.map(r=>`<div class="breakdown-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('');
+}
+
+function recalc(){
+  const years = Math.max(1, num('years'));
+  if(mode==='buy'){ recalcBuy(years); } else { recalcSell(years); }
+}
+
+function recalcBuy(years){
+  const rent0 = getRaw('rent');
+  const rentInc = num('rentInc')/100;
+  const price = getRaw('price');
+  const down = getRaw('down');
+  const closing = getRaw('closing');
+  const rate = num('rate');
+  const term = Math.max(1, num('term'));
+  const appr = num('appr')/100;
+  const carry = getRaw('carry');
+
+  // Total rent paid over the horizon (annual step-up)
+  let totalRent = 0, m = rent0;
+  for(let y=0;y<years;y++){ totalRent += m*12; m *= (1+rentInc); }
+
+  // Buying: cash out = down + closing + mortgage payments + carrying costs
+  const loan = Math.max(0, price - down);
+  const monthly = monthlyPayment(loan, rate, term);
+  const monthsPaid = Math.min(years, term)*12;
+  const mortgagePaid = monthly * monthsPaid;
+  const carryPaid = carry*12*years;
+  const cashOut = down + closing + mortgagePaid + carryPaid;
+
+  // Value & equity at end
+  const endValue = price*Math.pow(1+appr, years);
+  const endBalance = balanceAfter(loan, rate, term, monthsPaid);
+  const endEquity = endValue - endBalance;
+
+  // Net cost of buying = money spent − equity you'd get back on sale
+  const netBuyCost = cashOut - endEquity;
+
+  const buyWins = netBuyCost < totalRent;
+  const diff = Math.abs(totalRent - netBuyCost);
+
+  document.getElementById('outSub').textContent = 'After ' + years + ' years.';
+  document.getElementById('vLabel').textContent = 'Recommendation';
+  document.getElementById('vHeadline').textContent = buyWins ? 'Buying wins' : 'Renting wins';
+  document.getElementById('vSub').innerHTML = buyWins
+    ? `Over ${years} years, buying works out about <strong style="color:var(--gold)">${fmtPeso(diff)}</strong> cheaper — because you build equity instead of paying a landlord.`
+    : `Over ${years} years, renting is about <strong style="color:var(--gold)">${fmtPeso(diff)}</strong> cheaper here. Buying may still win if you stay longer or appreciation is higher.`;
+
+  document.getElementById('aTitle').textContent = 'Cost of Renting';
+  document.getElementById('aNum').textContent = fmtPeso(totalRent);
+  document.getElementById('aDesc').textContent = 'total rent paid, nothing kept';
+  document.getElementById('bTitle').textContent = 'Net Cost of Buying';
+  document.getElementById('bNum').textContent = fmtPeso(netBuyCost);
+  document.getElementById('bDesc').textContent = 'after equity you keep';
+
+  document.getElementById('cardA').classList.toggle('win', !buyWins);
+  document.getElementById('cardB').classList.toggle('win', buyWins);
+
+  document.getElementById('detailBox').innerHTML = detailHTML([
+    ['Monthly amortization', fmtPeso(monthly)],
+    ['Total paid into mortgage', fmtPeso(mortgagePaid)],
+    ['Cash out (all-in)', fmtPeso(cashOut)],
+    ['Property value in ' + years + ' yrs', fmtPeso(endValue)],
+    ['Equity you keep', fmtPeso(endEquity)]
+  ]);
+}
+
+function recalcSell(years){
+  const price = getRaw('sPrice');
+  const sAppr = num('sAppr')/100;
+  const sCost = num('sCost')/100;
+  const reinv = num('sReinv')/100;
+  const rent0 = getRaw('sRent');
+  const rentInc = num('sRentInc')/100;
+  const rentCost = num('sRentCost')/100;
+
+  // SELL NOW: net proceeds reinvested
+  const netProceeds = price*(1-sCost);
+  const sellWealth = netProceeds*Math.pow(1+reinv, years);
+
+  // RENT OUT: appreciated property + accumulated net rent (reinvested at same reinvest rate for fairness)
+  const endValue = price*Math.pow(1+sAppr, years);
+  let rentWealth = 0, m = rent0;
+  for(let y=0;y<years;y++){
+    const netAnnual = m*12*(1-rentCost);
+    // grow prior accumulated rent + add this year's net
+    rentWealth = rentWealth*(1+reinv) + netAnnual;
+    m *= (1+rentInc);
+  }
+  const rentOutTotal = endValue + rentWealth;
+
+  const rentWins = rentOutTotal > sellWealth;
+  const diff = Math.abs(rentOutTotal - sellWealth);
+
+  document.getElementById('outSub').textContent = 'Projected wealth after ' + years + ' years.';
+  document.getElementById('vLabel').textContent = 'Recommendation';
+  document.getElementById('vHeadline').textContent = rentWins ? 'Renting it out wins' : 'Selling now wins';
+  document.getElementById('vSub').innerHTML = rentWins
+    ? `Keeping and renting it out could leave you about <strong style="color:var(--gold)">${fmtPeso(diff)}</strong> wealthier in ${years} years — if it appreciates and stays rented as assumed.`
+    : `Selling now and reinvesting could leave you about <strong style="color:var(--gold)">${fmtPeso(diff)}</strong> ahead in ${years} years, with far less hassle and risk.`;
+
+  document.getElementById('aTitle').textContent = 'Sell Now';
+  document.getElementById('aNum').textContent = fmtPeso(sellWealth);
+  document.getElementById('aDesc').textContent = 'net proceeds, reinvested';
+  document.getElementById('bTitle').textContent = 'Rent It Out';
+  document.getElementById('bNum').textContent = fmtPeso(rentOutTotal);
+  document.getElementById('bDesc').textContent = 'property + rent income';
+
+  document.getElementById('cardA').classList.toggle('win', !rentWins);
+  document.getElementById('cardB').classList.toggle('win', rentWins);
+
+  document.getElementById('detailBox').innerHTML = detailHTML([
+    ['Net proceeds if sold today', fmtPeso(netProceeds)],
+    ['Property value in ' + years + ' yrs', fmtPeso(endValue)],
+    ['Accumulated net rent', fmtPeso(rentWealth)],
+    ['Selling cost today', fmtPeso(price*sCost)]
+  ]);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>setMode('buy'));
+</script>
+<div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — not financial advice.</div>
+<script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/chat.js" defer></script>
+</body>
+</html>

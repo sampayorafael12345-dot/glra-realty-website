@@ -610,8 +610,11 @@ app.get('/sitemap.xml', async (req, res) => {
     const staticPages = [
       ['/', 'daily', '1.0'], ['/properties.html', 'daily', '0.9'],
       ['/list-property.html', 'monthly', '0.8'], ['/about.html', 'monthly', '0.7'],
+      ['/tools.html', 'monthly', '0.8'], ['/valuation.html', 'monthly', '0.8'],
       ['/calculator.html', 'monthly', '0.6'], ['/affordability.html', 'monthly', '0.6'],
       ['/amortization.html', 'monthly', '0.6'], ['/rental-yield.html', 'monthly', '0.6'],
+      ['/rent-vs-buy.html', 'monthly', '0.6'], ['/loan-comparison.html', 'monthly', '0.6'],
+      ['/estate-tax.html', 'monthly', '0.6'], ['/savings-goal.html', 'monthly', '0.6'],
       ['/zonal.html', 'monthly', '0.6'], ['/ercf.html', 'monthly', '0.6'],
       ['/cost-of-ownership.html', 'monthly', '0.6'], ['/guide.html', 'monthly', '0.6'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
