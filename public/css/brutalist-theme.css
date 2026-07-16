@@ -582,14 +582,20 @@ html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
   letter-spacing:.5px !important;text-transform:uppercase !important;
 }
 
+/* Mobile side-menu section labels (canonical overlay injected by brutalist-shell.js) */
+.mo-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-hot);font-weight:700;padding:20px 4px 6px;text-align:left}
+
 /* ════════════════════════════════════════════════════════════
    MOBILE / TABLET RESPONSIVENESS
    ════════════════════════════════════════════════════════════ */
 @media(max-width:1100px){
   .navbar{padding:10px 16px !important}
   .navbar .logo img{height:60px !important}
-  .nav-links{display:none !important}
-  .mobile-menu-btn{display:block !important}
+  /* Match the homepage's phone top bar: logo LEFT, hamburger + List-property CTA RIGHT */
+  .navbar .logo{order:1;margin-right:auto !important}
+  .mobile-menu-btn{display:block !important;order:2;margin-right:12px !important}
+  .nav-links{display:flex !important;order:3;align-items:center;gap:0 !important}
+  .nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown{display:none !important}
 }
 @media(max-width:560px){
   .navbar .logo img{height:50px !important}

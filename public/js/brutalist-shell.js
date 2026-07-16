@@ -61,7 +61,7 @@
         + '<div class="nav-dropdown">'
         +   '<a>Tools ▾</a>'
         +   '<div class="nav-dropdown-menu">'
-        +     '<a href="/tools.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:700">// All Tools ↴</a>'
+        +     '<a href="/tools.html" style="font-weight:800">// All Tools ↴</a>'
         +     '<a href="/valuation.html">// What\'s My Property Worth?</a>'
         +     '<a href="/affordability.html">// Affordability</a>'
         +     '<a href="/rent-vs-buy.html">// Rent vs Buy</a>'
@@ -98,6 +98,45 @@
           if(!href || href.indexOf('#') === 0) return;
           var clean = href.replace(/\/$/, '');
           if(clean === path) a.classList.add('active');
+        });
+      } catch(e){}
+    }
+
+    // 3) Standardize the mobile side menu — one canonical menu on every page,
+    //    same sections as the homepage overlay (// Browse, // Tools, // The Practice)
+    var overlay = document.querySelector('.mobile-overlay-links');
+    if(overlay){
+      overlay.innerHTML = ''
+        + '<div class="mo-label">// Browse</div>'
+        + '<a href="/" onclick="closeMobileMenu()">Home</a>'
+        + '<a href="/properties.html" onclick="closeMobileMenu()">Properties</a>'
+        + '<a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>'
+        + '<div class="mo-label">// Tools</div>'
+        + '<a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>'
+        + '<a href="/valuation.html" onclick="closeMobileMenu()">What\'s My Property Worth?</a>'
+        + '<a href="/affordability.html" onclick="closeMobileMenu()">Affordability</a>'
+        + '<a href="/rent-vs-buy.html" onclick="closeMobileMenu()">Rent vs Buy</a>'
+        + '<a href="/loan-comparison.html" onclick="closeMobileMenu()">Pag-IBIG vs Bank Loan</a>'
+        + '<a href="/savings-goal.html" onclick="closeMobileMenu()">Savings Planner</a>'
+        + '<a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees</a>'
+        + '<a href="/amortization.html" onclick="closeMobileMenu()">Amortization</a>'
+        + '<a href="/rental-yield.html" onclick="closeMobileMenu()">Rental Yield</a>'
+        + '<a href="/estate-tax.html" onclick="closeMobileMenu()">Estate Tax</a>'
+        + '<a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>'
+        + '<a href="/ercf.html" onclick="closeMobileMenu()">Registration Fee</a>'
+        + '<a href="/cost-of-ownership.html" onclick="closeMobileMenu()">Cost of Ownership</a>'
+        + '<div class="mo-label">// The Practice</div>'
+        + '<a href="/about.html" onclick="closeMobileMenu()">About Us</a>'
+        + '<a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>'
+        + '<a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>'
+        + '<a href="/blog.html" onclick="closeMobileMenu()">Blog</a>'
+        + '<a href="/guide.html" onclick="closeMobileMenu()">Doc Guide</a>'
+        + '<a href="/#contact" onclick="closeMobileMenu()">Contact</a>';
+      try {
+        var mpath = window.location.pathname.replace(/\/$/, '') || '/';
+        overlay.querySelectorAll('a[href]').forEach(function(a){
+          var href = (a.getAttribute('href') || '').replace(/\/$/, '');
+          if(href === mpath) a.classList.add('gl-active');
         });
       } catch(e){}
     }

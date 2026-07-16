@@ -1096,7 +1096,35 @@ async function submitScheduleViewing(){
     btn.disabled = false;
   }
 }
-async function loadProperties(){if(cachedProperties){initFromUrl(cachedProperties);return;}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);buildPopularChips(cachedProperties);initFromUrl(cachedProperties);}catch(e){console.error(e);showToast('Failed to load properties',true);}}
+// Stale-while-revalidate: paint instantly from the last saved copy, then refresh in the background.
+const GLRA_PROPS_CACHE='glraPropsCache_v1';
+async function loadProperties(){
+  if(cachedProperties){initFromUrl(cachedProperties);return;}
+  let painted=false;
+  try{
+    const c=JSON.parse(localStorage.getItem(GLRA_PROPS_CACHE)||'null');
+    if(c&&Array.isArray(c.props)&&c.props.length){
+      cachedProperties=c.props;
+      allPropertyTitles=cachedProperties.map(p=>p.title);
+      buildPopularChips(cachedProperties);
+      initFromUrl(cachedProperties);
+      painted=true;
+    }
+  }catch(e){}
+  try{
+    const r=await fetch('/api/properties');
+    const all=await r.json();
+    const fresh=all.filter(p=>p.status==='available');
+    try{localStorage.setItem(GLRA_PROPS_CACHE,JSON.stringify({t:Date.now(),props:fresh}));}catch(e){}
+    const changed=painted&&JSON.stringify(fresh)!==JSON.stringify(cachedProperties);
+    cachedProperties=fresh;
+    allPropertyTitles=fresh.map(p=>p.title);
+    if(!painted){buildPopularChips(fresh);initFromUrl(fresh);}
+    else if(changed){buildPopularChips(fresh);applyFilters(currentCategory,fresh);}
+  }catch(e){
+    if(!painted){console.error(e);showToast('Failed to load properties',true);}
+  }
+}
 function initFromUrl(properties){const cat=getParam('category');const search=getParam('search');const pt=getParam('propertyType');const br=getParam('bedrooms');const ba=getParam('baths');const mn=getParam('minPrice');const mx=getParam('maxPrice');const propId=getParam('property');let cat2='all';if(cat==='FOR SALE')cat2='FOR SALE';else if(cat==='FOR LEASE')cat2='FOR LEASE';else if(cat==='featured')cat2='featured';currentCategory=cat2;document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.category===cat2);});const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat2]||'All Properties';if(search)document.getElementById('locationInput').value=search;if(pt)document.getElementById('propertyTypeSelect').value=pt;if(br)document.getElementById('bedroomsSelect').value=br;if(ba)document.getElementById('bathsSelect').value=ba;if(mn)document.getElementById('minPriceInput').value=parseInt(mn).toLocaleString();if(mx)document.getElementById('maxPriceInput').value=parseInt(mx).toLocaleString();applyFilters(cat2,properties);if(propId){setTimeout(()=>{const p=cachedProperties.find(x=>x._id===propId);if(p)openDetail(p._id);},600);}}
 function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&p.propertyType!==pt)return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;const price=isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);if(mn>0&&price<mn)return false;if(mx>0&&price>mx)return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);document.getElementById('resultsCount').innerHTML=`${f.length} ${f.length===1?'property':'properties'} found`;allProperties=f;}
 function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.innerHTML='';if(!properties.length){c.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>No properties match your search.<br><br><a href="/properties.html">Clear filters</a></p></div>';return;}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,80);}

@@ -13,6 +13,7 @@ const brevo = require('@getbrevo/brevo');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const { body, validationResult } = require('express-validator');
@@ -136,6 +137,9 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+// Gzip every response (HTML, JSON, CSS, JS) — big win for the property list API
+app.use(compression());
 
 // Body limits — sane defaults; multer handles large file uploads separately
 app.use(express.json({ limit: '1mb' }));

@@ -1403,7 +1403,33 @@ let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
 function isForSale(p){const t=(p.listingType||'').toUpperCase();return t==='FOR SALE'||t==='SALE AND LEASE'}
 function getDisplayPrice(p){const t=(p.listingType||'').toUpperCase();if(t==='SALE AND LEASE'){const parts=[];if(p.price)parts.push('₱'+Number(p.price).toLocaleString());if(p.monthlyRental)parts.push('₱'+Number(p.monthlyRental).toLocaleString()+'/mo');return parts.length?parts.join('  ·  '):'₱'+Number(p.price||p.monthlyRental||0).toLocaleString();}if(isForLease(p))return'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo';return'₱'+Number(p.price||0).toLocaleString()}
-async function loadProperties(){if(cachedProperties){renderAllSections(cachedProperties);return}try{const r=await fetch('/api/properties');const all=await r.json();cachedProperties=all.filter(p=>p.status==='available');allPropertyTitles=cachedProperties.map(p=>p.title);renderAllSections(cachedProperties)}catch(e){console.error(e);showToast('Failed to load properties',true)}}
+// Stale-while-revalidate: paint instantly from the last saved copy, then refresh in the background.
+const GLRA_PROPS_CACHE='glraPropsCache_v1';
+async function loadProperties(){
+  if(cachedProperties){renderAllSections(cachedProperties);return}
+  let painted=false;
+  try{
+    const c=JSON.parse(localStorage.getItem(GLRA_PROPS_CACHE)||'null');
+    if(c&&Array.isArray(c.props)&&c.props.length){
+      cachedProperties=c.props;
+      allPropertyTitles=cachedProperties.map(p=>p.title);
+      renderAllSections(cachedProperties);
+      painted=true;
+    }
+  }catch(e){}
+  try{
+    const r=await fetch('/api/properties');
+    const all=await r.json();
+    const fresh=all.filter(p=>p.status==='available');
+    try{localStorage.setItem(GLRA_PROPS_CACHE,JSON.stringify({t:Date.now(),props:fresh}));}catch(e){}
+    const changed=painted&&JSON.stringify(fresh)!==JSON.stringify(cachedProperties);
+    cachedProperties=fresh;
+    allPropertyTitles=fresh.map(p=>p.title);
+    if(!painted||changed)renderAllSections(fresh);
+  }catch(e){
+    if(!painted){console.error(e);showToast('Failed to load properties',true)}
+  }
+}
 function renderAllSections(properties){
   document.getElementById('statProperties').innerText=properties.length;
   const tc=document.getElementById('topCount');if(tc)tc.innerText=properties.length;
