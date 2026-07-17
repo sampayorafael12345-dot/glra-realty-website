@@ -572,6 +572,9 @@ html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
    preserved (transparency, anti-aliasing, etc.).
    ════════════════════════════════════════════════════════════ */
 .navbar .logo img,.ab-brand img{filter:none !important}
+/* Dark mode shows the white logo INSTANTLY via CSS — no flash of the black logo
+   while waiting for main.js syncLogos() to swap the src on slow loads */
+body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
 
 /* ════════════════════════════════════════════════════════════
    TOOLS / GUIDES DROPDOWN — consistent font with rest of nav
@@ -589,15 +592,18 @@ html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
    MOBILE / TABLET RESPONSIVENESS
    ════════════════════════════════════════════════════════════ */
 @media(max-width:980px){
-  /* Match the homepage's phone top bar exactly: logo LEFT (64→52px like home),
-     hamburger (22px, 8px padding) + List-property CTA (11px, 11x14 pad) RIGHT.
-     Same 980px collapse point as the homepage ab-nav. */
-  .navbar{padding:10px 16px !important}
+  /* Match the homepage's phone top bar EXACTLY (measured from the ab-nav):
+     8px 5% padding → 70px bar; logo LEFT 64→52px; hamburger 42px box;
+     CTA 11px / 11x14 flex-centered → 42px. Same 980px collapse point. */
+  /* gap:0 — on the homepage the burger sits flush against the CTA (its own
+     8px padding is the only breathing room); the navbar's 20px flex gap was
+     pushing the inner-page burger 20px further left */
+  html body nav.navbar{padding:8px 5% !important;gap:0 !important}
   .navbar .logo{order:1;margin-right:auto !important}
-  .mobile-menu-btn{display:block !important;order:2;margin:0 !important;padding:8px !important}
-  .nav-links{display:flex !important;order:3;align-items:center;gap:0 !important}
+  .mobile-menu-btn{display:flex !important;align-items:center !important;justify-content:center !important;order:2;margin:0 !important;padding:8px !important;height:42px !important;line-height:1 !important}
+  .nav-links{display:flex !important;order:3;align-items:center !important;gap:0 !important}
   .nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown{display:none !important}
-  .contact-btn-nav,a.contact-btn-nav{padding:11px 14px !important;font-size:11px !important}
+  html body .navbar .contact-btn-nav,html body a.contact-btn-nav{padding:11px 14px !important;font-size:11px !important;line-height:1.4 !important;display:flex !important;align-items:center !important;height:42px !important;min-height:42px !important;align-self:center !important}
 }
 @media(max-width:560px){
   .navbar .logo img{height:52px !important}
@@ -611,7 +617,7 @@ html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
   .floating-buttons{bottom:14px !important;right:14px !important}
   .floating-buttons .floating-btn,.floating-buttons .fab-toggle{width:42px !important;height:42px !important;font-size:15px !important}
   .back-to-top{width:40px !important;height:40px !important;left:14px !important;bottom:14px !important}
-  .ab-top-strip{padding:7px 12px !important}
+  /* (strip keeps the same 8px 14px padding as the homepage's ab-top at every width) */
 }
 /* (no extra shrink below 400px — the homepage keeps its 52px logo and full-size
    CTA on the smallest phones, so inner pages now do the same) */
