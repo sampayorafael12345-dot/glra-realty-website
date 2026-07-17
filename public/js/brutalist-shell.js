@@ -31,11 +31,19 @@
   ready(function(){
     upgradeLoader();
 
-    // 1) Inject LIVE top strip if not present
+    // 1) Inject LIVE top strip if not present — same wording as the homepage.
+    //    Uses the saved listings count (written by index/properties pages) when available.
     if(!document.querySelector('.ab-top-strip')){
+      var liveMsg = 'LIVE · By appointment only';
+      try {
+        var pc = JSON.parse(localStorage.getItem('glraPropsCache_v1') || 'null');
+        if(pc && Array.isArray(pc.props) && pc.props.length){
+          liveMsg = 'LIVE · ' + pc.props.length + ' listings open right now';
+        }
+      } catch(e){}
       var top = document.createElement('div');
       top.className = 'ab-top-strip';
-      top.innerHTML = '<span><span class="live"></span>LIVE · By appointment only</span><span>MAKATI · SINCE 2014</span>';
+      top.innerHTML = '<span><span class="live"></span>' + liveMsg + '</span><span>MAKATI · SINCE 2014</span>';
       document.body.insertBefore(top, document.body.firstChild);
     }
 
@@ -109,6 +117,7 @@
       overlay.innerHTML = ''
         + '<div class="mo-label">// Browse</div>'
         + '<a href="/" onclick="closeMobileMenu()">Home</a>'
+        + '<a href="/#featured" onclick="closeMobileMenu()">Listings</a>'
         + '<a href="/properties.html" onclick="closeMobileMenu()">Properties</a>'
         + '<a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>'
         + '<div class="mo-label">// Tools</div>'
@@ -126,12 +135,13 @@
         + '<a href="/ercf.html" onclick="closeMobileMenu()">Registration Fee</a>'
         + '<a href="/cost-of-ownership.html" onclick="closeMobileMenu()">Cost of Ownership</a>'
         + '<div class="mo-label">// The Practice</div>'
-        + '<a href="/about.html" onclick="closeMobileMenu()">About Us</a>'
+        + '<a href="/#broker" onclick="closeMobileMenu()">The Broker</a>'
+        + '<a href="/about.html" onclick="closeMobileMenu()">About</a>'
         + '<a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>'
         + '<a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>'
         + '<a href="/blog.html" onclick="closeMobileMenu()">Blog</a>'
         + '<a href="/guide.html" onclick="closeMobileMenu()">Doc Guide</a>'
-        + '<a href="/#contact" onclick="closeMobileMenu()">Contact</a>';
+        + '<a href="/#contact-form" onclick="closeMobileMenu()">Contact</a>';
       try {
         var mpath = window.location.pathname.replace(/\/$/, '') || '/';
         overlay.querySelectorAll('a[href]').forEach(function(a){

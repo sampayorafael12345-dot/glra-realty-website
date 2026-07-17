@@ -239,7 +239,7 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 </div>
 
 <div class="print-button-wrapper">
-  <button class="print-btn" onclick="glraOpenPrintGate('Pag-IBIG vs Bank Loan')">
+  <button class="print-btn" onclick="glraOpenPrintGate('Pag-IBIG vs Bank Loan', glraLoanCompareReport)">
     <i class="fas fa-file-pdf"></i> Download PDF
   </button>
 </div>
@@ -375,6 +375,31 @@ function recalc(){
 }
 
 document.addEventListener('DOMContentLoaded', recalc);
+
+// Page-specific PDF collector — keeps the two loans in clearly-labeled sections
+// (the generic collector would emit two ambiguous "Monthly Payment" rows).
+function glraLoanCompareReport(){
+  function t(id){ return (document.getElementById(id)||{textContent:''}).textContent.trim(); }
+  function side(prefix, name){
+    return { heading: name, rows: [
+      ['Interest rate', document.getElementById(prefix+'Rate').value + '% / yr'],
+      ['Term', document.getElementById(prefix+'Term').value + ' years'],
+      ['Monthly payment', t(prefix+'Monthly')],
+      ['Total interest', t(prefix+'Interest')],
+      ['Total to repay', t(prefix+'Total')],
+      ['Income needed (~33%)', t(prefix+'Income')]
+    ]};
+  }
+  const info = { heading:'Loan Details', rows: [ ['Loan amount', '₱'+document.getElementById('amount').value] ] };
+  const inc = document.getElementById('income').value; if(inc && inc!=='0') info.rows.push(['Monthly income','₱'+inc]);
+  const age = document.getElementById('age').value; if(age) info.rows.push(['Age now', age]);
+  const w = document.getElementById('winnerTxt');
+  return {
+    title: 'Pag-IBIG vs Bank Loan — Comparison',
+    sections: [ info, side('p','Pag-IBIG Housing Loan'), side('b','Bank Home Loan'),
+      { heading:'Bottom Line', rows: [['Verdict', (w?w.textContent:'').replace(/\s+/g,' ').trim()]] } ]
+  };
+}
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with lender.</div>
 <script src="/js/brutalist-shell.js" defer></script>

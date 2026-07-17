@@ -246,8 +246,10 @@ function glraCollectReport() {
   const h1 = document.querySelector('.print-only-header h1');
   out.title = (h1 ? h1.textContent : (document.title || 'Report')).trim();
 
-  // Inputs — the user's entries (all calculators wrap fields in .input-group)
-  document.querySelectorAll('.input-group').forEach(function (g) {
+  // Inputs — the user's entries (all calculators wrap fields in .input-group;
+  // the loan-comparison panels use .field)
+  document.querySelectorAll('.input-group, .loan-panel .field').forEach(function (g) {
+    if (g.offsetParent === null) return; // skip fields hidden by the page (inactive modes, N/A fields)
     const labelEl = g.querySelector('label');
     const ctrl = g.querySelector('input, select');
     if (!labelEl || !ctrl || ctrl.type === 'hidden') return;
@@ -270,22 +272,25 @@ function glraCollectReport() {
     out.results.push([label, value]);
   }
   function pull(box) {
-    const l = box.querySelector('.label, .tax-name, .summary-label');
-    const v = box.querySelector('.value, .amount, .rate, .tax-amount');
+    const l = box.querySelector('.label, .tax-name, .summary-label, .lbl, .t');
+    const v = box.querySelector('.value, .amount, .rate, .tax-amount, .amt, .n, .txt');
     if (l && v) add(l.textContent, v.textContent);
   }
   // Headline / summary boxes — some hold several .result-item children.
   document.querySelectorAll(
     '.result-headline, .result-summary, .headline-total, .yield-headline, .tax-total, ' +
-    '.range-bar, .result-mini, .metric-mini, .metric, .summary-card, .desired-result'
+    '.range-bar, .result-mini, .metric-mini, .metric, .summary-card, .desired-result, ' +
+    '.est-headline, .est-mid, .verdict, .vs-card, .result-block .big, .winner-banner'
   ).forEach(function (box) {
+    if (box.offsetParent === null) return; // skip result boxes hidden by the page
     const items = box.querySelectorAll('.result-item');
     if (items.length) { items.forEach(pull); return; }
     pull(box);
   });
-  // Breakdown rows
-  document.querySelectorAll('.fee-row, .cost-row, .amort-row, .rental-row').forEach(function (el) {
-    const l = el.querySelector('.fee-label, .cost-label, .label'), v = el.querySelector('.fee-value, .cost-value, .value');
+  // Breakdown rows (.breakdown-row/.rrow are the newer tool pages' k/v rows)
+  document.querySelectorAll('.fee-row, .cost-row, .amort-row, .rental-row, .breakdown-row, .rrow').forEach(function (el) {
+    if (el.offsetParent === null) return; // skip rows hidden by the page
+    const l = el.querySelector('.fee-label, .cost-label, .label, .k'), v = el.querySelector('.fee-value, .cost-value, .value, .v');
     if (l && v) add(l.textContent, v.textContent);
   });
   // Breakdown / component tables (registration-fee components, cost-of-ownership rows)
