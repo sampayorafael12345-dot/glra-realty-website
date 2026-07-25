@@ -355,9 +355,34 @@ app.get('/api/properties', async (req, res) => {
   try {
     const properties = await Property.find({ status: 'available' }).sort({ createdAt: -1 }).lean();
     properties.forEach(optimizePropertyImages);
+    // A minute of freshness: repeat views and back-navigation are served from
+    // the browser instead of re-hitting Render. An admin edit shows up on the
+    // next minute, and the pages already re-render when the data changes.
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
     res.json(properties);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Serves a listing photo that lives in the database as a base64 data: URI as a
+// real image response. Immutable + long-lived: the bytes for a given property
+// image never change, so browsers and the service worker cache it after one hit.
+app.get('/api/property-image/:id/:key', async (req, res) => {
+  try {
+    const p = await Property.findById(req.params.id, { mainImage: 1, gallery: 1 }).lean();
+    if (!p) return res.status(404).end();
+    const key = req.params.key;
+    const raw = key === 'main' ? p.mainImage : (p.gallery || [])[Number(key)];
+    const m = isDataUri(raw) && raw.match(/^data:([\w.+/-]+);base64,(.+)$/);
+    if (!m) return res.status(404).end();
+    const buf = Buffer.from(m[2], 'base64');
+    res.set('Content-Type', m[1]);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Content-Length', String(buf.length));
+    return res.end(buf);
+  } catch (err) {
+    return res.status(404).end();
   }
 });
 
@@ -413,6 +438,25 @@ function optimizePropertyImages(p) {
   if (!p) return p;
   if (p.mainImage) p.mainImage = optimizeCloudinary(p.mainImage);
   if (Array.isArray(p.gallery)) p.gallery = p.gallery.map(optimizeCloudinary);
+  return externalizeInlineImages(p);
+}
+
+// Some listings have their photo stored in the database as a base64 "data:"
+// URI instead of a hosted URL. Those blobs were being inlined into every JSON
+// response: one 3 MB photo made up 98% of the entire /api/properties payload,
+// so every visitor downloaded megabytes of text before a single card appeared.
+// They also can't be used as an og:image or a sitemap image (a data: URI is not
+// a fetchable URL). Swap them for a real image endpoint — the JSON stays small
+// and the browser loads the photo as a normal, cacheable, parallel request.
+function isDataUri(v) { return typeof v === 'string' && v.startsWith('data:'); }
+
+function externalizeInlineImages(p) {
+  if (!p || !p._id) return p;
+  const id = String(p._id);
+  if (isDataUri(p.mainImage)) p.mainImage = `/api/property-image/${id}/main`;
+  if (Array.isArray(p.gallery)) {
+    p.gallery = p.gallery.map((g, i) => isDataUri(g) ? `/api/property-image/${id}/${i}` : g);
+  }
   return p;
 }
 
@@ -421,6 +465,10 @@ function optimizePropertyImages(p) {
 // Open Graph image, and JSON-LD; humans get a styled page with an inquiry form.
 function buildPropertyPageHtml(p) {
   const id = String(p._id);
+  // Turn any base64 photo into a real image URL first, so the og:image, the
+  // gallery and the <img> tags below all point at something fetchable rather
+  // than embedding megabytes of base64 in the HTML.
+  externalizeInlineImages(p);
   const title = p.title || 'Property';
   const loc = p.location || '';
   const lt = String(p.listingType || 'FOR SALE').toUpperCase();
@@ -652,6 +700,9 @@ async function buildSitemap(req, res) {
     const props = await Property.find({ status: 'available' },
       { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1 })
       .sort({ createdAt: -1 }).limit(5000).lean();
+    // A base64 photo is not a fetchable image URL — without this it would be
+    // pasted into <image:loc> and balloon the sitemap to megabytes.
+    props.forEach(externalizeInlineImages);
 
     // The listing index genuinely changes whenever inventory does.
     const feedPages = new Set(['/', '/properties.html']);

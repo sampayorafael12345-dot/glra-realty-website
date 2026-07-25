@@ -42,6 +42,11 @@ const propertySchema = new mongoose.Schema({
   views: { type: Number, default: 0 }
 });
 
+// Every public page load runs find({status:'available'}).sort({createdAt:-1}) —
+// this is that exact query, so it stays fast as the listing count grows instead
+// of scanning the whole collection and sorting in memory.
+propertySchema.index({ status: 1, createdAt: -1 });
+
 // ── INQUIRIES ───────────────────────────────────────────────
 const inquirySchema = new mongoose.Schema({
   name: { type: String, default: '' },
