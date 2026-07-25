@@ -243,8 +243,10 @@ function glraPdfText(s) {
 // all the calculators since they share these class names).
 function glraCollectReport() {
   const out = { title: '', bottomTitle: document.title, inputs: [], results: [] };
-  const h1 = document.querySelector('.print-only-header h1');
-  out.title = (h1 ? h1.textContent : (document.title || 'Report')).trim();
+  // .print-title is the current markup; the h1 fallback covers any page whose
+  // letterhead hasn't been migrated yet.
+  const hd = document.querySelector('.print-only-header .print-title, .print-only-header h1');
+  out.title = (hd ? hd.textContent : (document.title || 'Report')).trim();
 
   // Inputs — the user's entries (all calculators wrap fields in .input-group;
   // the loan-comparison panels use .field)

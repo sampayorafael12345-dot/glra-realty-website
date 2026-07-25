@@ -171,6 +171,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// sitemap.xml MUST be matched before express.static. An old static
+// public/sitemap.xml left in the repo would otherwise shadow the dynamic route
+// below forever — which is exactly what happened: the served sitemap was frozen
+// at its April dates and contained no /property/ listing URLs at all.
+app.get('/sitemap.xml', (req, res, next) => buildSitemap(req, res, next));
+
 app.use(express.static('public'));
 
 // ============ RATE LIMITERS ============
@@ -379,6 +385,15 @@ app.post('/api/properties/:id/view', publicWriteLimiter, async (req, res) => {
 
 // ── SEO: per-listing pages + dynamic sitemap ──────────────────
 const SITE_URL = 'https://glrarealty.com';
+
+// XML-safe text for sitemap entries — an & or < in a listing title would
+// otherwise make the whole sitemap unparseable to Google.
+function escapeXml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
 function absUrl(u) {
   if (!u) return '';
   if (/^https?:\/\//i.test(u)) return u;
@@ -487,7 +502,10 @@ function buildPropertyPageHtml(p) {
 <meta name="twitter:description" content="${esc(metaDesc)}">
 <meta name="twitter:image" content="${esc(ogImg)}">
 <link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preload" as="image" href="${esc(heroImg)}" fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
@@ -608,9 +626,15 @@ app.get('/property/:id', async (req, res) => {
 
 // Dynamic sitemap — always fresh. Lists the fixed marketing pages plus a URL
 // for every available listing so Google discovers new properties quickly.
-app.get('/sitemap.xml', async (req, res) => {
+// Registered near the top of the file (before express.static) so no leftover
+// static sitemap.xml can shadow it.
+async function buildSitemap(req, res) {
   try {
     const today = new Date().toISOString().slice(0, 10);
+    // Bump when the marketing pages themselves get a real content change.
+    // Stamping every page with "today" on every crawl makes Google distrust
+    // lastmod entirely, so only genuinely-changing pages get today's date.
+    const STATIC_LASTMOD = '2026-07-25';
     const staticPages = [
       ['/', 'daily', '1.0'], ['/properties.html', 'daily', '0.9'],
       ['/list-property.html', 'monthly', '0.8'], ['/about.html', 'monthly', '0.7'],
@@ -625,21 +649,35 @@ app.get('/sitemap.xml', async (req, res) => {
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
       ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5']
     ];
-    const props = await Property.find({ status: 'available' }, { _id: 1, createdAt: 1, priceUpdatedAt: 1 })
+    const props = await Property.find({ status: 'available' },
+      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1 })
       .sort({ createdAt: -1 }).limit(5000).lean();
+
+    // The listing index genuinely changes whenever inventory does.
+    const feedPages = new Set(['/', '/properties.html']);
     const urls = staticPages.map(([loc, freq, pri]) =>
-      `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority></url>`);
+      `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${feedPages.has(loc) ? today : STATIC_LASTMOD}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority></url>`);
+
     props.forEach(pr => {
       const lm = new Date(pr.priceUpdatedAt || pr.createdAt || Date.now()).toISOString().slice(0, 10);
-      urls.push(`  <url><loc>${SITE_URL}/property/${pr._id}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
+      // Image entry: gets listing photos indexed in Google Images, which is a
+      // real discovery channel for property searches.
+      let img = '';
+      if (pr.mainImage) {
+        const src = absUrl(optimizeCloudinary(pr.mainImage));
+        img = `<image:image><image:loc>${escapeXml(src)}</image:loc><image:title>${escapeXml(pr.title || 'Property')}</image:title></image:image>`;
+      }
+      urls.push(`  <url><loc>${SITE_URL}/property/${pr._id}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority>${img}</url>`);
     });
+
     res.set('Content-Type', 'application/xml; charset=utf-8');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`);
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join('\n')}\n</urlset>`);
   } catch (err) {
     console.error('sitemap error:', err);
     res.status(500).send('');
   }
-});
+}
 
 app.get('/api/hero-images', async (req, res) => {
   try {
@@ -3057,7 +3095,8 @@ app.delete('/api/admin/property-submissions/:id', verifyToken, requirePermission
   }
 });
 
-// sitemap.xml is now served by express.static('public') — no custom route needed.
+// sitemap.xml is generated by buildSitemap() and registered before
+// express.static — see the top of this file.
 
 // ============ ERROR HANDLER ============
 // Catches multer errors and other middleware errors
