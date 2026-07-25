@@ -218,12 +218,15 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
    ============================================ */
 
 /* (A) SCROLL PROGRESS BAR — auto-injected by main.js on every page */
+/* Driven by scaleX, not width: animating width forces a layout pass on
+   every scroll frame. The gradient and the 12px glow were left over from
+   the retired gold palette and do not belong in a hard-edged theme. */
 .scroll-progress{
-  position:fixed;top:0;left:0;height:2px;width:0;
-  background:linear-gradient(90deg,var(--gold) 0%,#f0d9a8 100%);
-  z-index:1500;will-change:width;
-  box-shadow:0 0 12px rgba(200,169,110,0.6);
-  transition:width .08s linear;
+  position:fixed;top:0;left:0;height:2px;width:100%;
+  background:var(--gold);
+  z-index:1500;will-change:transform;
+  transform:scaleX(0);transform-origin:0 50%;
+  transition:transform .08s linear;
 }
 
 /* (B) NAVBAR — refined scroll behavior on inner pages */
@@ -236,11 +239,15 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
   border-bottom-color:rgba(200,169,110,0.45) !important;
 }
 .nav-links > a:not(.contact-btn-nav),.nav-links > .nav-dropdown > a{position:relative}
+/* Grows from the centre on hover. Previously animated width AND left,
+   two layout properties; scaleX from a centred origin looks identical
+   and stays on the compositor. */
 .nav-links > a:not(.contact-btn-nav)::after,.nav-links > .nav-dropdown > a::after{
-  content:'';position:absolute;left:50%;bottom:-6px;width:0;height:1px;background:var(--gold);
-  transition:width .35s cubic-bezier(.2,.7,.2,1),left .35s cubic-bezier(.2,.7,.2,1);
+  content:'';position:absolute;left:0;right:0;bottom:-6px;height:1px;background:var(--gold);
+  transform:scaleX(0);transform-origin:50% 50%;
+  transition:transform .35s cubic-bezier(.2,.7,.2,1);
 }
-.nav-links > a:not(.contact-btn-nav):hover::after,.nav-links > .nav-dropdown:hover > a::after{width:100%;left:0}
+.nav-links > a:not(.contact-btn-nav):hover::after,.nav-links > .nav-dropdown:hover > a::after{transform:scaleX(1)}
 
 /* (C) PAGE HERO — bigger, more dramatic, animated entrance */
 .page-hero{

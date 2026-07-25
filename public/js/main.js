@@ -530,7 +530,10 @@ window.glraOpenPrintGate = function (label, collectFn) {
     var update = function(){
       var h = document.documentElement;
       var max = (h.scrollHeight - h.clientHeight) || 1;
-      sp.style.width = ((h.scrollTop / max) * 100) + '%';
+      /* scaleX instead of width: animating width forces a layout pass on
+         every scroll frame, which is the worst place to pay for one.
+         The bar is full-width in CSS and scaled from its left edge. */
+      sp.style.transform = 'scaleX(' + Math.min(h.scrollTop / max, 1) + ')';
       ticking = false;
     };
     window.addEventListener('scroll', function(){
@@ -558,22 +561,55 @@ window.glraOpenPrintGate = function (label, collectFn) {
   if (!RM) {
     ready(function(){
       if (!('IntersectionObserver' in window)) return;
-      var candidates = document.querySelectorAll(
-        'section, .blog-card, .prop-card, .resource-card, .value-card, .testimonial-card, ' +
-        '.neighborhood-card, .about-intro, .values-bg, .stats-section, .calculator-container'
-      );
-      if (!candidates.length) return;
-      candidates.forEach(function(el){
+
+      var CARD_SEL = '.blog-card, .prop-card, .resource-card, .value-card, ' +
+                     '.testimonial-card, .neighborhood-card';
+      var BLOCK_SEL = 'section, .about-intro, .values-bg, .stats-section, .calculator-container';
+
+      function mark(el){
         /* Skip elements managed by index.html's own observer */
         if (el.classList.contains('reveal') || el.classList.contains('neighborhoods-marquee')) return;
+        /* index.html reveals whole <section>s via its own `.reveal` class.
+           Anything sitting inside an already-revealing ancestor must not
+           fade a second time — the same pixels would cross-fade twice. */
+        if (el.parentElement && el.parentElement.closest('.reveal, .gl-reveal')) return;
         el.classList.add('gl-reveal');
+      }
+
+      /* Cards animate individually so a grid can stagger. A section that
+         holds cards is left alone — revealing both would fade the same
+         pixels twice and read as a double exposure. */
+      var cards = document.querySelectorAll(CARD_SEL);
+      cards.forEach(mark);
+      document.querySelectorAll(BLOCK_SEL).forEach(function(el){
+        if (el.querySelector(CARD_SEL)) return;
+        mark(el);
       });
+
+      if (!document.querySelector('.gl-reveal')) return;
+
       var io = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){
-          if (e.isIntersecting) {
-            e.target.classList.add('in');
-            io.unobserve(e.target);
-          }
+        /* Stagger within the batch that crossed the threshold together,
+           so a grid cascades but a lone section never waits its turn.
+           Capped at 6 steps: a 30-card grid should not crawl in. */
+        var arriving = entries.filter(function(e){ return e.isIntersecting; });
+        arriving.forEach(function(e, i){
+          var el = e.target;
+          var delay = Math.min(i, 6) * 55;
+          if (delay) el.style.setProperty('--ab-d', delay + 'ms');
+          el.classList.add('in');
+          io.unobserve(el);
+          /* Drop the animation classes once the entrance has finished.
+             `.gl-reveal` carries an !important transition for opacity and
+             transform; left in place it outranks the card's own hover
+             transition, so hovering a revealed card would ease over 520ms
+             and its shadow would not animate at all. The end state of
+             `.gl-reveal.in` is identical to the element's natural style,
+             so removing both classes is visually inert. */
+          window.setTimeout(function(){
+            el.classList.remove('gl-reveal', 'in');
+            el.style.removeProperty('--ab-d');
+          }, delay + 700);
         });
       }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
       document.querySelectorAll('.gl-reveal').forEach(function(el){ io.observe(el); });

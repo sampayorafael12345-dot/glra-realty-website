@@ -850,7 +850,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 .mobile-overlay-links a:hover{color:var(--ab-hot);padding-left:14px}
 
 /* ── SCROLL PROGRESS ── */
-.scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--ab-hot);width:0;z-index:300;transition:width .12s linear}
+.scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--ab-hot);width:100%;z-index:300;transform:scaleX(0);transform-origin:0 50%;will-change:transform;transition:transform .12s linear}
 
 /* ── LOADER ── */
 .loader{position:fixed;inset:0;background:var(--ab-paper);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .4s}
@@ -975,6 +975,152 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
   .loader-logo-img{animation:none}
   .loader-bar::after,#glraEarlyLoader i::after{animation:none}
   .reveal{opacity:1;transform:none;transition:none}
+}
+
+/* ════════════════════════════════════════════════════════
+   REFINEMENT LAYER (2026-07-26)
+   The homepage deliberately does NOT load brutalist-theme.css —
+   it carries its own copy of the system so the ab-nav stays
+   independent. So the same refinement pass is mirrored here
+   against this page's own class names. Keep the two in sync.
+   ════════════════════════════════════════════════════════ */
+
+:root{
+  --ab-ease:cubic-bezier(.23,1,.32,1);
+  --ab-ease-mv:cubic-bezier(.77,0,.175,1);
+  --ab-t-press:90ms;
+  --ab-t-hover:170ms;
+  --ab-t-reveal:520ms;
+  --ab-lift-rest:5px 5px 0 var(--ab-ink);
+  --ab-lift-hover:9px 9px 0 var(--ab-ink);
+}
+/* A nested var() inside a custom property resolves against the element
+   that DEFINES it, so these froze as #0a0a0a at :root and rendered
+   black-on-black in dark mode. Dark gets its own values. */
+body.dark-mode{
+  --ab-lift-rest:5px 5px 0 rgba(241,238,233,.20);
+  --ab-lift-hover:9px 9px 0 rgba(241,238,233,.32);
+}
+
+/* Reading rhythm. Display leading was being applied to body copy. */
+h3{line-height:1.05}
+h4,h5,h6{line-height:1.18}
+h1,h2,h3{text-wrap:balance}
+p,li,dd{line-height:1.62;text-wrap:pretty}
+
+/* Prices, stats and counters stop shifting width as digits change. */
+.trust-label,.prop-price,.price,.stat-number,.ab-hero-stats .value,
+.result-mini .value,.fee-value,.cost-value{
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+}
+
+/* Press physics. `transition:.15s` means `transition:all`, which animates
+   layout properties too; these are scoped to compositor-only properties. */
+.cta-btn,.search-btn-main,.broker-btn,.broker-btn-secondary,.resource-btn,
+.share-btn,.modal-inquire-btn,.reset-filters-btn,.filter-toggle-btn,
+.btn-call,.btn-viber,.btn-whatsapp,.btn-messenger,.btn-instagram,.btn-darkmode{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             border-color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-press) var(--ab-ease),
+             box-shadow var(--ab-t-press) var(--ab-ease);
+}
+.cta-btn:active,.search-btn-main:active,.broker-btn:active,
+.broker-btn-secondary:active,.resource-btn:active,.share-btn:active,
+.modal-inquire-btn:active,.reset-filters-btn:active,.filter-toggle-btn:active{
+  transform:translate3d(1px,1px,0) scale(.985);
+}
+.btn-call:active,.btn-viber:active,.btn-whatsapp:active,
+.btn-messenger:active,.btn-instagram:active,.btn-darkmode:active{
+  transform:translate3d(0,0,0);box-shadow:1px 1px 0 var(--ab-ink);
+}
+
+/* Cards sit on the hard shadow the theme already uses everywhere else,
+   lift off it under a real pointer, and slam flat when pressed. */
+/* The rules being overridden here are themselves !important
+   (`.resource-card:hover{transform:none !important;box-shadow:none !important}`),
+   so matching priority is required rather than stylistic. */
+.resource-card,.testimonial-card,.photo-card,.prop-card{
+  box-shadow:var(--ab-lift-rest) !important;
+  transition:transform var(--ab-t-hover) var(--ab-ease),
+             box-shadow var(--ab-t-hover) var(--ab-ease),
+             background var(--ab-t-hover) var(--ab-ease),
+             border-color var(--ab-t-hover) var(--ab-ease) !important;
+}
+@media(hover:hover) and (pointer:fine){
+  .resource-card:hover,.testimonial-card:hover,.photo-card:hover,.prop-card:hover{
+    transform:translate3d(-4px,-4px,0) !important;
+    box-shadow:var(--ab-lift-hover) !important;
+    background:var(--ab-paper-2) !important;
+  }
+  .ab-nav-links a:hover{transform:translate3d(0,-1px,0)}
+  .mobile-overlay-links a:hover{transform:translate3d(10px,0,0)}
+}
+.resource-card:active,.prop-card:active,.photo-card:active{
+  transform:translate3d(0,0,0) !important;
+  box-shadow:1px 1px 0 var(--ab-ink) !important;
+}
+.ab-nav-links a,.mobile-overlay-links a{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-hover) var(--ab-ease);
+}
+
+/* Focused field gets a hard offset shadow rather than only a border tint. */
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],
+input[type="search"],textarea,select{
+  transition:border-color var(--ab-t-hover) var(--ab-ease),
+             background var(--ab-t-hover) var(--ab-ease),
+             box-shadow var(--ab-t-hover) var(--ab-ease);
+}
+input[type="text"]:focus,input[type="email"]:focus,input[type="tel"]:focus,
+input[type="number"]:focus,input[type="search"]:focus,textarea:focus,select:focus{
+  box-shadow:4px 4px 0 var(--ab-hot);
+}
+button:disabled,input:disabled,select:disabled,textarea:disabled{
+  opacity:.42;cursor:not-allowed;box-shadow:none;transform:none;
+}
+
+/* This page's own reveal, retuned to the shared curve, plus the same
+   per-sibling stagger main.js applies to inner pages. */
+.reveal{
+  transform:translate3d(0,16px,0);
+  transition:opacity var(--ab-t-reveal) var(--ab-ease),
+             transform var(--ab-t-reveal) var(--ab-ease);
+  transition-delay:var(--ab-d,0ms);
+}
+.reveal.in{transform:none}
+
+/* Skeleton was shimmering in the retired gold and sat 1px narrower than a
+   real card, so the grid jumped when listings arrived. */
+.prop-card-skeleton{
+  border:2px solid var(--ab-line);
+  background:var(--ab-paper);
+  box-shadow:var(--ab-lift-rest);
+}
+.prop-card-skeleton::before{
+  background:linear-gradient(90deg,transparent 0%,rgba(255,61,0,.14) 50%,transparent 100%);
+}
+.prop-card-skeleton::after{
+  background:linear-gradient(180deg,transparent 0%,var(--ab-paper) 100%);
+}
+
+/* This page sets `scrollbar-color` (Firefox) but never styled the WebKit
+   thumb, so Chrome, Edge and Safari fell through to the styles.css rule
+   that still paints it as a retired-gold gradient. Inner pages get the
+   flat accent from brutalist-theme.css; this page did not load that
+   file, so it gets the same treatment here. */
+*::-webkit-scrollbar{width:6px !important;height:6px !important}
+*::-webkit-scrollbar-track{background:transparent !important}
+*::-webkit-scrollbar-thumb{background:var(--ab-hot) !important;border-radius:0 !important}
+
+/* "No matches" should look designed, not broken. */
+.empty-state{border:2px dashed var(--ab-line);padding:52px 28px}
+.empty-state p{line-height:1.7;max-width:46ch;margin-left:auto;margin-right:auto}
+
+@media(prefers-reduced-motion:reduce){
+  .resource-card:hover,.testimonial-card:hover,.photo-card:hover,.prop-card:hover{transform:none}
+  .prop-card-skeleton::before{animation:none;background:none}
 }
 </style>
 </head>
@@ -1604,7 +1750,9 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   const update = () => {
     const h = document.documentElement;
     const max = (h.scrollHeight - h.clientHeight) || 1;
-    sp.style.width = ((h.scrollTop / max) * 100) + '%';
+    /* scaleX instead of width: width forces layout on every scroll frame,
+       transform is composited. The bar is full-width in CSS and scaled. */
+    sp.style.transform = 'scaleX(' + Math.min(h.scrollTop / max, 1) + ')';
     ticking = false;
   };
   window.addEventListener('scroll', () => {

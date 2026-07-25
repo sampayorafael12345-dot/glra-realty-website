@@ -1206,3 +1206,328 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
   /* Bigger letterhead logo on every printed report */
   .print-only-header img{height:96px !important;margin-bottom:14px !important}
 }
+
+/* ════════════════════════════════════════════════════════════
+   REFINEMENT LAYER (2026-07-26)
+   Appended last on purpose: these rules must win the cascade over
+   the blocks above. Nothing here changes the brutalist identity —
+   paper, ink, hot orange, square corners and hard offset shadows
+   all stay. What changes is how the interface RESPONDS: real press
+   physics, one honest motion curve, readable rhythm, and the hard
+   shadow finally used on cards instead of being switched off.
+   ════════════════════════════════════════════════════════════ */
+
+:root{
+  /* One motion system for the whole site. The built-in CSS easings are
+     too soft to read as "mechanical"; these have the snap the theme wants. */
+  --ab-ease:cubic-bezier(.23,1,.32,1);        /* strong ease-out: enters, hovers */
+  --ab-ease-mv:cubic-bezier(.77,0,.175,1);    /* strong ease-in-out: on-screen movement */
+  --ab-t-press:90ms;                          /* press feedback must feel instant */
+  --ab-t-hover:170ms;
+  --ab-t-enter:240ms;
+  --ab-t-reveal:520ms;
+  /* Hard-shadow depth scale. Rest → hover → pressed. */
+  --ab-lift-rest:5px 5px 0 var(--ab-ink);
+  --ab-lift-hover:9px 9px 0 var(--ab-ink);
+}
+/* A nested var() inside a custom property is substituted against the
+   element that DEFINES it, not the one that uses it. Because these are
+   declared on :root, `var(--ab-ink)` froze as #0a0a0a and the card
+   shadows rendered black-on-black in dark mode. Restated here so the
+   dark theme gets its own values. Cream at low alpha rather than solid:
+   a full-strength cream slab behind every card overpowers the page. */
+body.dark-mode{
+  --ab-lift-rest:5px 5px 0 rgba(241,238,233,.20);
+  --ab-lift-hover:9px 9px 0 rgba(241,238,233,.32);
+}
+
+/* ── 1. TYPOGRAPHIC RHYTHM ──────────────────────────────────
+   Headings kept their weight and tracking; only the leading and
+   wrapping are corrected. The global h1-h6 line-height of .95 is
+   right for a 72px display line and wrong for an 18px h4. */
+h3{line-height:1.05 !important}
+h4,h5,h6{line-height:1.18 !important;letter-spacing:-.2px !important}
+h1,h2,h3{text-wrap:balance}
+
+/* Body copy was running at 1.4, which is display leading applied to
+   paragraphs. 1.62 is the reading value. `pretty` kills orphans. */
+p,li,dd{line-height:1.62 !important;text-wrap:pretty}
+.page-hero p{line-height:1.6 !important;max-width:68ch !important}
+
+/* A real-estate site is mostly numbers. Proportional digits make
+   prices and amortisation rows jitter column-to-column. */
+.fee-value,.cost-value,.summary-result,.summary-amount,.trust-label,
+.result-mini .value,.result-card .value,.result-headline .value,
+.headline-total .value,.headline-total .amount,.yield-headline .value,
+.prop-price,.price,.amort-row,.rental-row,table td,table th{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+
+/* ── 2. PRESS PHYSICS ───────────────────────────────────────
+   The brutalist idiom already owns the right gesture: an element sits
+   on a hard shadow, lifts off it on hover, and slams flat into the
+   page when pressed. It was only ever wired up on the floating
+   buttons. Everything pressable gets it now.
+   Hover is gated behind a real pointer so phones don't latch it. */
+
+button,.btn,.cta-btn,.print-btn,.submit-btn,.search-btn-main,.broker-btn,
+.broker-btn-primary,.broker-btn-secondary,.contact-btn-nav,.view-all-btn,
+.view-listings-btn,.calculate-btn,.reset-filters-btn,.modal-inquire-btn,
+.comm-btn,input[type="submit"],input[type="button"]{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-press) var(--ab-ease),
+             box-shadow var(--ab-t-press) var(--ab-ease) !important;
+  will-change:auto;
+}
+button:active,.btn:active,.cta-btn:active,.print-btn:active,.submit-btn:active,
+.search-btn-main:active,.broker-btn:active,.broker-btn-primary:active,
+.broker-btn-secondary:active,.contact-btn-nav:active,.view-all-btn:active,
+.view-listings-btn:active,.calculate-btn:active,.reset-filters-btn:active,
+.modal-inquire-btn:active,.comm-btn:active,
+input[type="submit"]:active,input[type="button"]:active{
+  transform:translate3d(1px,1px,0) scale(.985) !important;
+}
+
+/* Floating action buttons: same curve as everything else, and a press
+   that drives the button down into its own shadow. */
+.floating-buttons .floating-btn,.floating-buttons .fab-toggle,.back-to-top{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-press) var(--ab-ease),
+             box-shadow var(--ab-t-press) var(--ab-ease) !important;
+}
+.floating-buttons .floating-btn:active,.floating-buttons .fab-toggle:active{
+  transform:translate3d(0,0,0) !important;
+  box-shadow:1px 1px 0 var(--ab-ink) !important;
+}
+html body.dark-mode .floating-buttons .floating-btn:active,
+html body.dark-mode .floating-buttons .fab-toggle:active{
+  box-shadow:1px 1px 0 var(--ab-hot) !important;
+}
+
+/* ── 3. CARDS GET THEIR SHADOW BACK ─────────────────────────
+   --shadow-md was defined at the top of this file and then switched
+   off on every card (`box-shadow:none`). A flat outlined box is the
+   one un-brutalist thing on the page. Restored as a rest-state shadow
+   that deepens on hover and collapses under a press. */
+
+.input-card,.blog-card,.resource-card,.value-card,.testimonial-card,.prop-card,
+.guide-card,.neighborhood-card,.list-card,.about-card,.affordability-card,
+.results-card,.summary-card{
+  box-shadow:var(--ab-lift-rest) !important;
+  transition:transform var(--ab-t-hover) var(--ab-ease),
+             box-shadow var(--ab-t-hover) var(--ab-ease),
+             background var(--ab-t-hover) var(--ab-ease),
+             border-color var(--ab-t-hover) var(--ab-ease) !important;
+}
+@media(hover:hover) and (pointer:fine){
+  .blog-card:hover,.resource-card:hover,.value-card:hover,.testimonial-card:hover,
+  .prop-card:hover,.guide-card:hover,.neighborhood-card:hover,.list-card:hover,
+  .about-card:hover,.affordability-card:hover{
+    transform:translate3d(-4px,-4px,0) !important;
+    box-shadow:var(--ab-lift-hover) !important;
+    background:var(--ab-paper-2) !important;
+  }
+}
+/* Cards that are actually clickable slam flat when pressed. Static
+   content cards (input/results/summary) keep the rest shadow only. */
+.blog-card:active,.resource-card:active,.prop-card:active,.guide-card:active,
+.neighborhood-card:active,.list-card:active{
+  transform:translate3d(0,0,0) !important;
+  box-shadow:1px 1px 0 var(--ab-ink) !important;
+}
+/* Calculator input/results panels are furniture, not targets: no lift. */
+.input-card:hover,.results-card:hover,.summary-card:hover{
+  transform:none !important;box-shadow:var(--ab-lift-rest) !important;
+}
+
+/* Asset / option pickers read as pressable, so they behave that way. */
+.asset-option,.option-card,.radio-option{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             border-color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-press) var(--ab-ease),
+             box-shadow var(--ab-t-press) var(--ab-ease) !important;
+}
+.asset-option:active,.option-card:active,.radio-option:active{
+  transform:translate3d(1px,1px,0) !important;
+}
+.asset-option.selected,.option-card.selected{box-shadow:3px 3px 0 var(--ab-ink) !important}
+
+/* ── 4. NAVIGATION RESPONSE ─────────────────────────────────
+   The nav swapped colours instantly with no easing, and two hover
+   rules animated `padding-left`, which is a layout property and
+   forces reflow on every frame. Both replaced with transforms. */
+
+.nav-links a{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease) !important;
+}
+.nav-links a:active{transform:translate3d(0,1px,0)}
+
+/* Dead rule in the block above: `padding-left:18px` on hover equals the
+   base padding, so it never moved. Real motion, on the GPU instead. */
+.nav-dropdown-menu a,.ab-nav-dropdown-menu a{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-hover) var(--ab-ease) !important;
+}
+@media(hover:hover) and (pointer:fine){
+  .nav-dropdown-menu a:hover,.ab-nav-dropdown-menu a:hover{
+    padding-left:18px !important;transform:translate3d(4px,0,0) !important;
+  }
+  .city-dropdown-item:hover,.zonal-dropdown-item:hover{
+    padding-left:16px !important;transform:translate3d(4px,0,0) !important;
+  }
+  .mobile-overlay-links a:hover{padding-left:4px !important;transform:translate3d(10px,0,0) !important}
+}
+.city-dropdown-item,.zonal-dropdown-item{
+  transition:background var(--ab-t-hover) var(--ab-ease),
+             color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-hover) var(--ab-ease) !important;
+}
+.mobile-overlay-links a{
+  transition:color var(--ab-t-hover) var(--ab-ease),
+             transform var(--ab-t-hover) var(--ab-ease) !important;
+}
+
+/* Inline text links: the underline grows from the left rather than
+   appearing all at once. Scoped to prose so nav and cards are untouched. */
+.page-hero p a,.blog-card p a,.faq-item a,.disclaimer a,.footer-col p a{
+  background-image:linear-gradient(var(--ab-hot),var(--ab-hot));
+  background-repeat:no-repeat;
+  background-position:0 100%;
+  background-size:0% 2px;
+  transition:background-size var(--ab-t-hover) var(--ab-ease),color var(--ab-t-hover) var(--ab-ease);
+}
+@media(hover:hover) and (pointer:fine){
+  .page-hero p a:hover,.blog-card p a:hover,.faq-item a:hover,
+  .disclaimer a:hover,.footer-col p a:hover{background-size:100% 2px}
+}
+
+/* ── 5. FORM FEEDBACK ───────────────────────────────────────
+   Focus was a border-colour swap only. Adding a hard offset shadow on
+   focus makes the active field unmistakable without a glow, which
+   this theme would reject. */
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],
+input[type="password"],input[type="search"],textarea,select,
+.form-input,.zonal-search-input{
+  transition:border-color var(--ab-t-hover) var(--ab-ease),
+             background var(--ab-t-hover) var(--ab-ease),
+             box-shadow var(--ab-t-hover) var(--ab-ease) !important;
+}
+input[type="text"]:focus,input[type="email"]:focus,input[type="tel"]:focus,
+input[type="number"]:focus,input[type="password"]:focus,input[type="search"]:focus,
+textarea:focus,select:focus,.form-input:focus,.zonal-search-input:focus{
+  box-shadow:4px 4px 0 var(--ab-hot) !important;
+}
+/* Inline validation, using the accent already in the system. */
+input[aria-invalid="true"],textarea[aria-invalid="true"],select[aria-invalid="true"],
+input.is-invalid,textarea.is-invalid,.form-input.is-invalid{
+  border-color:var(--ab-hot) !important;
+  box-shadow:4px 4px 0 var(--ab-hot) !important;
+}
+.field-error{
+  font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
+  letter-spacing:1.2px !important;text-transform:uppercase !important;
+  color:var(--ab-hot) !important;font-weight:700 !important;
+  margin-top:6px !important;display:block !important;
+}
+/* Disabled controls read as unavailable rather than merely faint. */
+button:disabled,.btn:disabled,input:disabled,select:disabled,textarea:disabled,
+button[aria-disabled="true"]{
+  opacity:.42 !important;cursor:not-allowed !important;
+  box-shadow:none !important;transform:none !important;
+}
+
+/* ── 6. SCROLL REVEAL, RETUNED ──────────────────────────────
+   styles.css already ships `.gl-reveal`, applied by glraDramaticV2() in
+   main.js. It ran 900ms across 40px on a soft curve, which reads as lag
+   rather than as an entrance, and every card in a grid landed on the
+   same frame. Retuned, not replaced: shorter travel, exponential
+   ease-out, and a per-sibling stagger that main.js sets via --ab-d. */
+.gl-reveal{
+  transform:translate3d(0,16px,0) !important;
+  transition:opacity var(--ab-t-reveal) var(--ab-ease),
+             transform var(--ab-t-reveal) var(--ab-ease) !important;
+  transition-delay:var(--ab-d,0ms) !important;
+}
+.gl-reveal.in{transform:none !important;will-change:auto}
+
+/* ── 7. LOADING STATE, CORRECTED ────────────────────────────
+   `.prop-card-skeleton` in styles.css still shimmered in the legacy gold
+   (rgba(200,169,110,…)) left over from the pre-brutalist palette, and
+   carried a 1px border where real cards now have 2px plus a hard
+   shadow. The footprint mismatch made the grid jump when listings
+   arrived. Both corrected so the placeholder occupies the real box. */
+.prop-card-skeleton{
+  border:2px solid var(--ab-line) !important;
+  background:var(--ab-paper) !important;
+  box-shadow:var(--ab-lift-rest) !important;
+}
+.prop-card-skeleton::before{
+  background:linear-gradient(90deg,transparent 0%,rgba(255,61,0,.14) 50%,transparent 100%) !important;
+}
+.prop-card-skeleton::after{
+  background:linear-gradient(180deg,transparent 0%,var(--ab-paper) 100%) !important;
+}
+
+/* Empty state already exists on properties.html and index.html; it was
+   still using the soft legacy treatment. Squared off and put on the
+   theme's own type ramp so "no matches" looks designed, not broken. */
+.empty-state{
+  border:2px dashed var(--ab-line) !important;
+  background:transparent !important;
+  padding:52px 28px !important;
+  grid-column:1/-1 !important;
+}
+.empty-state i{color:var(--ab-hot) !important}
+.empty-state p{
+  font-family:'JetBrains Mono',monospace !important;font-size:12px !important;
+  letter-spacing:1.2px !important;color:var(--ab-gray) !important;
+  font-weight:600 !important;line-height:1.7 !important;
+  max-width:46ch !important;margin-left:auto !important;margin-right:auto !important;
+}
+.empty-state a{
+  color:var(--ab-hot) !important;font-weight:700 !important;
+  border-bottom:2px solid var(--ab-hot) !important;padding-bottom:1px !important;
+}
+
+/* ── 8. SCROLL PROGRESS BAR ─────────────────────────────────
+   styles.css still styled this from the retired palette: a gold gradient
+   (`var(--gold) → #f0d9a8`) under a 12px soft glow, which is a gradient
+   and a glow in a theme that uses neither. It also animated `width` with
+   `will-change:width`, forcing a layout pass on every scroll frame — the
+   single worst place to pay for one. Now one flat accent bar driven by
+   scaleX, which the compositor handles. main.js sets the transform. */
+.scroll-progress{
+  height:3px !important;
+  width:100% !important;
+  background:var(--ab-hot) !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  transform:scaleX(0);
+  transform-origin:0 50%;
+  will-change:transform !important;
+  transition:transform .12s linear !important;
+}
+
+/* ── 9. MOTION SAFETY ───────────────────────────────────────
+   Extends the reduced-motion block earlier in this file to everything
+   added above. Movement is removed; colour and opacity feedback stay,
+   because those aid comprehension rather than cause discomfort. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    transition-duration:.01ms !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+  }
+  .ab-reveal{opacity:1 !important;transform:none !important}
+  .ab-skel-img,.ab-skel-line{animation:none !important;background-image:none !important}
+  .blog-card:hover,.resource-card:hover,.value-card:hover,.testimonial-card:hover,
+  .prop-card:hover,.guide-card:hover,.neighborhood-card:hover,.list-card:hover,
+  .about-card:hover,.affordability-card:hover{transform:none !important}
+}
