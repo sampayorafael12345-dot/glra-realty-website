@@ -31,9 +31,10 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── Dark mode toggle ──────────────────────────────────────
-// Swap `<img src>` between /img/logo.png (black) and /img/hero-logo.png (white) on
-// every navbar/brand mark. Covers img[data-logo-auto] for opt-in elements
-// plus the common navbar selectors so inner pages don't need markup changes.
+// Repoint each logo image's source between /img/logo.png (black) and
+// /img/hero-logo.png (white) on every navbar/brand mark. Covers
+// img[data-logo-auto] for opt-in elements plus the common navbar selectors
+// so inner pages don't need markup changes.
 function syncLogos() {
   const dark = document.body.classList.contains('dark-mode');
   document.querySelectorAll('img[data-logo-auto], .ab-brand img, .navbar .logo img, .ab-mast img').forEach(img => {
@@ -498,6 +499,140 @@ window.glraOpenPrintGate = function (label, collectFn) {
   modal.classList.add('show');
   setTimeout(() => modal.querySelector('input').focus(), 50);
 };
+
+/* ============================================
+   CALCULATOR / TOOL USAGE TRACKING
+   ============================================
+   Answers "which calculators does this subscriber actually use, and how often"
+   inside the admin Subscribers tab.
+
+   How it works, in short:
+     1. Each browser gets a random id ("vid") in localStorage. On its own it
+        names nobody — it is not built from IP, cookies, or fingerprinting.
+     2. When someone genuinely USES a calculator (changes an input — not merely
+        loads the page) we log one row against that vid.
+     3. The moment they enter their email anywhere on the site, the server ties
+        every past row from that browser to them. That is why the admin can show
+        what a subscriber did BEFORE they ever signed up.
+
+   Visitors can opt out entirely with:  localStorage.glra_no_track = '1'
+   Everything here is best-effort and silent: tracking must never break a page.
+   ============================================ */
+/* CALC-TRACKING-START */
+(function glraCalcTracking() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  // filename -> [stable slug, human label]. Labels match the PDF-gate names so
+  // the admin reads the same words the visitor saw.
+  var TOOLS = {
+    'affordability.html':     ['affordability',     'Affordability Calculator'],
+    'amortization.html':      ['amortization',      'Amortization Schedule'],
+    'calculator.html':        ['closing-fees',      'Sales Closing Fees Calculator'],
+    'cost-of-ownership.html': ['cost-of-ownership', 'Cost of Ownership Calculator'],
+    'ercf.html':              ['ercf',              'Registration Fee Calculator'],
+    'estate-tax.html':        ['estate-tax',        'Estate Tax Estimate'],
+    'loan-comparison.html':   ['loan-comparison',   'Pag-IBIG vs Bank Loan'],
+    'rent-vs-buy.html':       ['rent-vs-buy',       'Rent vs Buy'],
+    'rental-yield.html':      ['rental-yield',      'Rental Yield Calculator'],
+    'savings-goal.html':      ['savings-goal',      'Down Payment Savings Plan'],
+    'valuation.html':         ['valuation',         'Property Valuation Estimate'],
+    'zonal.html':             ['zonal',             'Zonal Value Lookup'],
+    'guide.html':             ['guide',             'Real Estate Documentation Guide']
+  };
+
+  function optedOut() {
+    try { return window.localStorage.getItem('glra_no_track') === '1'; } catch (_) { return true; }
+  }
+
+  // Returns this browser's id, creating one on first use. null = do not track.
+  function vid() {
+    if (optedOut()) return null;
+    try {
+      var v = window.localStorage.getItem('glra_vid');
+      if (!v) {
+        v = (window.crypto && window.crypto.randomUUID)
+          ? window.crypto.randomUUID().replace(/-/g, '')
+          : (Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+        window.localStorage.setItem('glra_vid', v);
+      }
+      return v;
+    } catch (_) { return null; }   // Safari private mode / storage disabled
+  }
+  window.glraVid = vid;
+
+  // ── Attach the browser id to every email-capture POST ────────────────────
+  // Wrapping fetch here means the newsletter form, wishlist, price alert, PDF
+  // gate and valuation enquiry all stitch identity without each page having to
+  // know this feature exists. Strictly limited to our own capture endpoints.
+  var IDENTITY_PATHS = ['/api/subscribe', '/api/wishlist', '/api/price-alert', '/api/inquiries'];
+  if (typeof window.fetch === 'function') {
+    var nativeFetch = window.fetch;
+    window.fetch = function (input, init) {
+      try {
+        var url = (typeof input === 'string') ? input : (input && input.url) || '';
+        var isPost = init && init.method && String(init.method).toUpperCase() === 'POST';
+        var matches = IDENTITY_PATHS.some(function (p) { return url.indexOf(p) !== -1; });
+        if (isPost && matches && typeof init.body === 'string') {
+          var v = vid();
+          if (v) {
+            var payload = JSON.parse(init.body);
+            if (payload && typeof payload === 'object' && !payload.vid) {
+              payload.vid = v;
+              init = Object.assign({}, init, { body: JSON.stringify(payload) });
+            }
+          }
+        }
+      } catch (_) { /* never block the real request */ }
+      return nativeFetch.call(this, input, init);
+    };
+  }
+
+  // ── Log one engagement per calculator visit ──────────────────────────────
+  var file = (window.location.pathname.split('/').pop() || '').toLowerCase().split('?')[0];
+  if (file && file.indexOf('.') === -1) file += '.html';
+  var tool = TOOLS[file || 'index.html'];
+  if (!tool) return;
+
+  var fired = false, timer = null;
+
+  function ping() {
+    if (fired) return;
+    var v = vid();
+    if (!v) return;
+    fired = true;
+    var body = JSON.stringify({ vid: v, calc: tool[0], label: tool[1] });
+    try {
+      // sendBeacon survives the visitor navigating away mid-request.
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/track/calculator', new Blob([body], { type: 'application/json' }));
+        return;
+      }
+      fetch('/api/track/calculator', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: body, keepalive: true
+      }).catch(function () {});
+    } catch (_) {}
+  }
+
+  // Every calculator re-runs on load, so a page view proves nothing. A real
+  // edit to a field does. Debounced so typing "5,000,000" counts once, and
+  // capture-phase so it still sees events that stop propagation.
+  function onEngage(e) {
+    if (fired || !e.isTrusted) return;
+    var t = e.target;
+    if (!t || !t.tagName) return;
+    var tag = t.tagName.toLowerCase();
+    if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') return;
+    // The PDF email gate is a lead form, not calculator use.
+    if (t.closest && t.closest('.glra-print-gate')) return;
+    clearTimeout(timer);
+    timer = setTimeout(ping, 1200);
+  }
+
+  document.addEventListener('input', onEngage, true);
+  document.addEventListener('change', onEngage, true);
+})();
+/* CALC-TRACKING-END */
 
 /* ============================================
    DRAMATIC PASS V2 — interactive helpers

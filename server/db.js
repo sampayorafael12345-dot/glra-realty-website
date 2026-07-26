@@ -78,8 +78,15 @@ const subscriberSchema = new mongoose.Schema({
     priceDrops: { type: Boolean, default: true }
   },
   subscribedAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  // Anonymous browser ids (see calcUsageSchema) that have been tied to this
+  // person by them entering this email on that browser. One human can have
+  // several — phone, laptop, work machine — so it's a set, not a single value.
+  vids: { type: [String], default: [] }
 });
+
+// Look up "which subscriber owns this browser id" on every calculator ping.
+subscriberSchema.index({ vids: 1 });
 
 // ── PRICE ALERTS ────────────────────────────────────────────
 const priceAlertSchema = new mongoose.Schema({
@@ -370,6 +377,32 @@ const siteStatSchema = new mongoose.Schema({
   views: { type: Number, default: 0 }
 });
 
+// ── CALCULATOR / TOOL USAGE ─────────────────────────────────
+// One document per genuine calculator engagement — the visitor actually typed
+// into or changed a field, not merely loaded the page (every calculator runs
+// recalc() once on load, so page views would massively overcount).
+//
+// `vid` is a random id generated in the browser and kept in localStorage. It is
+// NOT derived from IP, fingerprint, or anything personal — on its own it names
+// nobody. `email` starts null and is filled in later: the moment the visitor
+// enters their email anywhere on the site, every past row from that browser is
+// back-filled (see stitchCalcIdentity in server.js). That's what makes
+// "what did this subscriber do BEFORE they signed up" answerable.
+const calcUsageSchema = new mongoose.Schema({
+  vid:   { type: String, required: true },
+  email: { type: String, default: null },
+  calc:  { type: String, required: true },          // stable slug, e.g. 'affordability'
+  label: { type: String, default: '' },             // human label, e.g. 'Affordability Calculator'
+  day:   { type: String, default: '' },             // 'YYYY-MM-DD' (server local time)
+  createdAt: { type: Date, default: Date.now }
+});
+
+// The three real access paths: back-fill by browser, per-subscriber breakdown,
+// and the 30-day aggregate trend.
+calcUsageSchema.index({ vid: 1 });
+calcUsageSchema.index({ email: 1, calc: 1 });
+calcUsageSchema.index({ createdAt: -1 });
+
 // ============================================================================
 // PERMISSIONS
 // ============================================================================
@@ -515,6 +548,7 @@ const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema)
 const NotarialJob       = mongoose.model('NotarialJob',       notarialJobSchema);
 const CashEntry         = mongoose.model('CashEntry',         cashEntrySchema);
 const SiteStat          = mongoose.model('SiteStat',          siteStatSchema);
+const CalcUsage         = mongoose.model('CalcUsage',         calcUsageSchema);
 
 module.exports = {
   // models
@@ -534,6 +568,7 @@ module.exports = {
   NotarialJob,
   CashEntry,
   SiteStat,
+  CalcUsage,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole

@@ -216,6 +216,17 @@ const publicWriteLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Calculator-usage pings are fire-and-forget and fire far more often than form
+// posts (once per tool per visit), so they get their own looser bucket instead
+// of eating into the 30-per-10-min budget that real form submissions need.
+const trackLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 120,
+  message: { error: 'Too many requests.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Stricter limit for public property-submission endpoints.
 // 5 submissions per IP per hour, 25 image uploads per IP per hour.
 const submissionLimiter = rateLimit({
@@ -305,7 +316,7 @@ const db = require('./server/db');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
-  TitlingCase, NotarialJob, CashEntry, SiteStat,
+  TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
 
@@ -748,13 +759,17 @@ app.post('/api/inquiries',
   body('phone').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 50 }),
   body('propertyId').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 100 }),
   body('propertyTitle').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 300 }),
+  body('vid').optional().isString().trim().isLength({ max: 64 }),
   handleValidation,
   async (req, res) => {
     try {
-      const { name, email, phone = '', message, propertyId = null, propertyTitle = null } = req.body;
+      const { name, email, phone = '', message, propertyId = null, propertyTitle = null, vid } = req.body;
       const inquiry = new Inquiry({ name, email, phone, message, propertyId, propertyTitle });
       await inquiry.save();
       console.log('📧 New inquiry from:', name);
+
+      // The valuation tool posts here, so this is a real identity signal.
+      await stitchCalcIdentity(vid, email);
 
       // Confirmation email to user
       const userEmailHtml = getEmailHeader() + `
@@ -820,10 +835,11 @@ app.post('/api/subscribe',
   body('email').isEmail().normalizeEmail(),
   body('name').optional().isString().trim().isLength({ max: 200 }),
   body('source').optional().isString().trim().isLength({ max: 100 }),
+  body('vid').optional().isString().trim().isLength({ max: 64 }),
   handleValidation,
   async (req, res) => {
     try {
-      const { email, name, source } = req.body;
+      const { email, name, source, vid } = req.body;
 
       let existing = await Subscriber.findOne({ email });
       let isNew = false;
@@ -875,6 +891,9 @@ app.post('/api/subscribe',
         await sendEmail('glrarealty@gmail.com', 'New Subscriber - GLRA Realty', adminSubHtml);
       }
 
+      // Tie this browser's calculator history to the email they just gave us.
+      await stitchCalcIdentity(vid, email);
+
       // Generic response — does NOT reveal whether the email already existed (prevents enumeration)
       res.json({ success: true, message: 'Subscription confirmed.' });
     } catch (err) {
@@ -898,6 +917,64 @@ app.post('/api/unsubscribe',
   }
 );
 
+// ============ CALCULATOR / TOOL USAGE TRACKING ============
+
+// Turn an anonymous browser id into a named person.
+//
+// Called whenever a visitor hands over an email ANYWHERE (PDF gate, newsletter,
+// wishlist, price alert, valuation enquiry). Two things happen:
+//   1. every calculator row this browser logged while still anonymous is
+//      back-filled with the email — so you see what they did BEFORE signing up;
+//   2. the browser id is remembered on the Subscriber, so future pings from the
+//      same browser are attributed instantly without another back-fill.
+//
+// Deliberately swallows its own errors: attribution is a nice-to-have and must
+// never turn a successful signup into a 500 for the visitor.
+async function stitchCalcIdentity(vid, email) {
+  if (!vid || !email || typeof vid !== 'string') return;
+  try {
+    await CalcUsage.updateMany({ vid, email: null }, { $set: { email } });
+    await Subscriber.updateOne({ email }, { $addToSet: { vids: vid } });
+  } catch (err) {
+    console.error('Calc identity stitch failed:', err.message);
+  }
+}
+
+// Records one genuine calculator engagement. The browser only sends this after
+// the visitor actually changed an input, so it counts real use rather than
+// drive-by page views.
+app.post('/api/track/calculator',
+  trackLimiter,
+  body('vid').isString().trim().isLength({ min: 8, max: 64 }),
+  body('calc').isString().trim().isLength({ min: 1, max: 60 }),
+  body('label').optional().isString().trim().isLength({ max: 120 }),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const { vid, calc, label = '' } = req.body;
+
+      // Already a known browser? Attribute on the spot.
+      const known = await Subscriber.findOne({ vids: vid }).select('email').lean();
+
+      const now = new Date();
+      const day = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+      await CalcUsage.create({
+        vid,
+        email: known ? known.email : null,
+        calc,
+        label,
+        day
+      });
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Calc track error:', err.message);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
 // ============ WISHLIST ROUTES ============
 
 app.post('/api/wishlist',
@@ -908,13 +985,15 @@ app.post('/api/wishlist',
   body('propertyPrice').optional().isNumeric(),
   body('propertyLocation').optional().isString().trim().isLength({ max: 300 }),
   body('propertyImage').optional().isString().trim().isLength({ max: 1000 }),
+  body('vid').optional().isString().trim().isLength({ max: 64 }),
   handleValidation,
   async (req, res) => {
     try {
-      const { email, propertyId, propertyTitle = '', propertyPrice = 0, propertyLocation = '', propertyImage = '' } = req.body;
+      const { email, propertyId, propertyTitle = '', propertyPrice = 0, propertyLocation = '', propertyImage = '', vid } = req.body;
 
       const existing = await Wishlist.findOne({ email, propertyId });
       if (existing) {
+        await stitchCalcIdentity(vid, email);
         return res.json({ success: true, message: 'Already saved to wishlist' });
       }
 
@@ -925,6 +1004,9 @@ app.post('/api/wishlist',
       if (!existingSubscriber) {
         await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
       }
+      // Must run AFTER the Subscriber exists, otherwise the browser id has no
+      // row to attach to and future pings from this browser stay anonymous.
+      await stitchCalcIdentity(vid, email);
 
       const userWishlistHtml = getEmailHeader() + `
         <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Property Saved to Wishlist</h2>
@@ -991,13 +1073,15 @@ app.post('/api/price-alert',
   body('propertyId').isString().trim().isLength({ min: 1, max: 100 }),
   body('propertyTitle').optional().isString().trim().isLength({ max: 300 }),
   body('propertyPrice').optional().isNumeric(),
+  body('vid').optional().isString().trim().isLength({ max: 64 }),
   handleValidation,
   async (req, res) => {
     try {
-      const { email, propertyId, propertyTitle = '', propertyPrice = 0 } = req.body;
+      const { email, propertyId, propertyTitle = '', propertyPrice = 0, vid } = req.body;
 
       const existing = await PriceAlert.findOne({ email, propertyId });
       if (existing) {
+        await stitchCalcIdentity(vid, email);
         return res.json({ success: true, message: 'Already subscribed to price alerts for this property' });
       }
 
@@ -1008,6 +1092,7 @@ app.post('/api/price-alert',
       if (!existingSubscriber) {
         await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
       }
+      await stitchCalcIdentity(vid, email);
 
       const userAlertHtml = getEmailHeader() + `
         <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Price Alert Confirmation</h2>
@@ -1569,11 +1654,77 @@ app.get('/api/admin/presence', verifyToken, requirePermission('dashboard_analyti
   }
 });
 
+// Each subscriber comes back with their calculator history attached:
+//   calcUsage — [{ calc, label, count, last }] sorted most-used first
+//   calcTotal — total engagements across every tool
+//   calcLast  — when they last touched any calculator
+// Rows stay empty for people who signed up before tracking existed, or who
+// have never opened a calculator on a browser we've tied to their email.
 app.get('/api/admin/subscribers', verifyToken, async (req, res) => {
   try {
-    const subscribers = await Subscriber.find().sort({ subscribedAt: -1 });
+    const subscribers = await Subscriber.find().sort({ subscribedAt: -1 }).lean();
+
+    const usage = await CalcUsage.aggregate([
+      { $match: { email: { $ne: null } } },
+      { $group: {
+          _id:   { email: '$email', calc: '$calc' },
+          label: { $last: '$label' },
+          count: { $sum: 1 },
+          last:  { $max: '$createdAt' }
+      } }
+    ]);
+
+    const byEmail = {};
+    usage.forEach(u => {
+      const list = byEmail[u._id.email] || (byEmail[u._id.email] = []);
+      list.push({ calc: u._id.calc, label: u.label || u._id.calc, count: u.count, last: u.last });
+    });
+
+    subscribers.forEach(s => {
+      const list = (byEmail[s.email] || []).sort((a, b) => b.count - a.count);
+      s.calcUsage = list;
+      s.calcTotal = list.reduce((n, x) => n + x.count, 0);
+      s.calcLast  = list.length ? new Date(Math.max.apply(null, list.map(x => new Date(x.last)))) : null;
+      // The raw browser ids are an internal join key — no reason to ship them to the client.
+      delete s.vids;
+    });
+
     res.json(subscribers);
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error('Subscribers load error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Site-wide calculator usage — includes anonymous visitors, so this is useful
+// from day one even before anyone has been matched to an email.
+app.get('/api/admin/calculator-stats', verifyToken, async (req, res) => {
+  try {
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+
+    const [totals, recent, identified] = await Promise.all([
+      CalcUsage.aggregate([
+        { $group: {
+            _id: '$calc',
+            label: { $last: '$label' },
+            count: { $sum: 1 },
+            people: { $addToSet: '$vid' },
+            last: { $max: '$createdAt' }
+        } },
+        { $project: { calc: '$_id', label: 1, count: 1, last: 1, people: { $size: '$people' }, _id: 0 } },
+        { $sort: { count: -1 } }
+      ]),
+      CalcUsage.countDocuments({ createdAt: { $gte: since } }),
+      CalcUsage.countDocuments({ email: { $ne: null } })
+    ]);
+
+    const total = totals.reduce((n, t) => n + t.count, 0);
+    res.json({ totals, total, last30: recent, identified, anonymous: total - identified });
+  } catch (err) {
+    console.error('Calc stats error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.get('/api/admin/price-alerts', verifyToken, async (req, res) => {
