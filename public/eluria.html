@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- Dark-locked, like the rest of the Arthaland set. Flag the root before
+     any CSS loads so the site chrome comes up dark too. -->
+<script>(function(){var d=document.documentElement;d.classList.add('dark-mode-pre');d.setAttribute('data-eluria','')})();</script>
+<style>html,body{background:#0a0a0b;color:#ece9e3}</style>
+<title>Eluria, Makati | Arthaland &times; ARCH Capital | GLRA Realty</title>
+<meta name="description" content="Eluria: 37 limited-edition residences at 119 Rada Street, Legazpi Village, Makati. Two homes to a floor, private lifts opening into each residence, and butler service from Hospitality Directors trained at The International Butler Academy.">
+<meta name="keywords" content="Eluria Makati,Arthaland Eluria,ARCH Capital,Rada Street Legazpi Village,luxury condo Makati,butler service condominium,LEED Gold Makati,limited edition residences">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/eluria.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/eluria.html">
+<meta property="og:title" content="Eluria, Makati | Arthaland &times; ARCH Capital">
+<meta property="og:description" content="Your neighborhood awaits you. 37 residences, two to a floor, at 119 Rada Street, Legazpi Village.">
+<meta property="og:image" content="https://glrarealty.com/img/arthaland/eluria/01-dusk-tower@1280.webp">
+<meta property="og:image:alt" content="Eluria at dusk, 119 Rada Street, Legazpi Village, Makati. Artist's perspective.">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Eluria, Makati | Arthaland &times; ARCH Capital">
+<meta name="twitter:description" content="37 limited-edition residences, two to a floor, at 119 Rada Street, Legazpi Village.">
+<meta name="twitter:image" content="https://glrarealty.com/img/arthaland/eluria/01-dusk-tower@1280.webp">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Residence","name":"Eluria","description":"A 31-storey residential condominium tower at 119 Rada Street, Legazpi Village, Barangay San Lorenzo, Makati City, holding 37 limited-edition residences. A joint venture between Arthaland Corporation and ARCH Capital.","url":"https://glrarealty.com/eluria.html","address":{"@type":"PostalAddress","streetAddress":"119 Rada Street, Legazpi Village, Barangay San Lorenzo","addressLocality":"Makati City","addressRegion":"Metro Manila","addressCountry":"PH"},"numberOfRooms":37}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Arthaland","item":"https://glrarealty.com/arthaland.html"},{"@type":"ListItem","position":3,"name":"Eluria","item":"https://glrarealty.com/eluria.html"}]}</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="/img/arthaland/eluria/01-dusk-tower@1280.webp">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ELURIA
+
+   Sibling to the Sondris page, not a copy of it. Same near-black ground
+   and the same eight-section discipline, but its own spine and its own
+   colour: Sondris is about how high you go, Eluria about how you come
+   home. Two residences to a floor, thirty-seven in the whole tower, a
+   lift that opens into your own hall and somebody waiting at the door.
+
+   Accent is a sage taken from the planted lanai balconies, which is the
+   building's signature and its own architects' stated idea: "a
+   contemporary tree house". Display face is EB Garamond, warmer and
+   more classical than the Playfair used on Sondris.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root[data-eluria]{
+  --void:#0a0a0b;
+  --pitch:#050506;
+  --slab:#141416;
+  --line:rgba(236,233,227,.11);
+  --line-2:rgba(236,233,227,.22);
+  --bone:#ece9e3;         /* 17:1 on void */
+  --ash:#a8a49c;          /* 8.8:1 */
+  --dim:#847f76;          /* 5.3:1 */
+  --sage:#9cae94;         /* 8.3:1, from the planted lanai */
+  --serif:'EB Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Archivo','Segoe UI',Arial,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --shell:min(1240px,90vw);
+}
+
+/* The theme paints <html> cream for its own dark mode, and because the
+   root carries a background it wins the page canvas. Repaint it here. */
+:root[data-eluria]{background:var(--void) !important}
+
+:root[data-eluria] body{
+  font-family:var(--sans) !important;
+  background:var(--void) !important;
+  color:var(--bone) !important;
+  line-height:1.5 !important;
+  overflow-x:clip !important;   /* clip, not hidden: keeps sticky alive */
+}
+/* EB Garamond runs small for its point size, so the display steps are a
+   touch larger here than on the Playfair page. */
+[data-eluria] .ex h1,[data-eluria] .ex h2,[data-eluria] .ex h3{
+  font-family:var(--serif) !important;
+  text-transform:none !important;
+  color:var(--bone) !important;
+  font-weight:400 !important;
+  letter-spacing:-.005em !important;
+  line-height:1.1 !important;
+  margin:0;
+  text-wrap:balance;
+}
+[data-eluria] .ex h2{font-size:clamp(2.3rem,5.2vw,4.2rem) !important}
+[data-eluria] .ex h3{
+  font-family:var(--sans) !important;font-size:.74rem !important;font-weight:600 !important;
+  letter-spacing:.2em !important;text-transform:uppercase !important;
+  color:var(--dim) !important;line-height:1.4 !important;
+}
+[data-eluria] .ex a{color:inherit}
+[data-eluria] .ex p{margin:0}
+
+.ex{--pad:clamp(96px,12vw,190px)}
+.ex-wrap{width:var(--shell);margin:0 auto}
+.ex-sec{padding:var(--pad) 0}
+.lede{font-size:clamp(1rem,1.3vw,1.13rem);line-height:1.78;color:var(--ash);max-width:60ch;margin:26px 0 0}
+[data-eluria] .ex .eyebrow{
+  font-family:var(--sans) !important;font-size:10px !important;font-weight:600 !important;
+  letter-spacing:.3em !important;text-transform:uppercase !important;
+  color:var(--sage) !important;background:transparent !important;
+  display:block;margin-bottom:24px;
+}
+.tab-num{font-variant-numeric:tabular-nums}
+
+/* Grain and vignette on one fixed layer above everything. Never on a
+   scrolling container: a moving grain filter repaints every frame. */
+.noir-grain{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.noir-vig{
+  position:fixed;inset:0;z-index:59;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 45%,transparent 42%,rgba(0,0,0,.42) 100%);
+}
+
+/* ── The aperture ───────────────────────────────────────────────────
+   Shared with the Sondris page: every image opens from its bottom edge
+   the way a shutter does, which on this building is literal — the
+   lanai screens are operable louvred shutters. The clip rides on the
+   image element so overflow can still crop the settling scale. No
+   coloured glow behind it. */
+.ap{position:relative;overflow:hidden;margin:0;background:var(--slab)}
+.ap img{
+  display:block;width:100%;height:auto;
+  clip-path:inset(100% 0 0 0);transform:scale(1.06);
+  transition:clip-path 1.5s var(--ease),transform 2.2s var(--ease);
+  transition-delay:var(--d,0s);
+}
+.ap.in img{clip-path:inset(0 0 0 0);transform:none}
+
+.rv{opacity:0;transform:translate3d(0,26px,0);transition:opacity 1s var(--ease),transform 1s var(--ease);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+
+/* ── Hero ──────────────────────────────────────────────────────────── */
+.hero{position:relative;overflow:hidden;background:var(--pitch)}
+.hero-media{
+  position:absolute;left:0;right:0;top:0;width:100%;height:118%;
+  object-fit:cover;object-position:50% 46%;
+  animation:heroIn 3.4s var(--ease) both;will-change:transform;
+  filter:saturate(.88) contrast(1.04) brightness(.84);
+}
+@keyframes heroIn{from{transform:scale(1.1)}to{transform:scale(1)}}
+.hero-scrim{position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(183deg,rgba(5,5,6,.72) 0%,rgba(5,5,6,.14) 30%,rgba(5,5,6,.32) 58%,rgba(5,5,6,.94) 100%)}
+.hero-copy{position:absolute;left:0;right:0;bottom:0;padding:0 clamp(22px,5vw,76px) clamp(48px,8vh,92px);color:#fff}
+.hero-copy>*{animation:riseIn 1.4s var(--ease) both}
+.hero-copy .eyebrow{color:#cdd6c6 !important;margin-bottom:26px;animation-delay:.4s}
+[data-eluria] .ex h1.hero-name{
+  font-family:var(--sans) !important;
+  font-size:clamp(2.7rem,9vw,7.8rem) !important;
+  text-transform:uppercase !important;letter-spacing:.28em !important;
+  line-height:1 !important;color:#fff !important;font-weight:400 !important;
+  animation-delay:.56s;
+}
+/* Sits inside the h1, so it has to shed the wordmark's caps and tracking. */
+[data-eluria] .ex h1 .hero-tag{
+  display:block;font-family:var(--serif) !important;font-style:italic;font-weight:400 !important;
+  font-size:clamp(1.45rem,3.1vw,2.6rem) !important;color:var(--sage) !important;
+  text-transform:none !important;letter-spacing:0 !important;
+  line-height:1.2 !important;padding-bottom:.14em;margin-top:.28em;animation-delay:.82s;
+}
+@keyframes riseIn{from{opacity:0;transform:translate3d(0,30px,0)}to{opacity:1;transform:none}}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+[data-eluria] .cta,[data-eluria] a.cta{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 34px;border:1px solid var(--sage) !important;
+  background:var(--sage) !important;color:#121611 !important;
+  font-family:var(--sans) !important;
+  font-size:11px !important;font-weight:600 !important;letter-spacing:.22em !important;
+  text-transform:uppercase !important;text-decoration:none;border-radius:0 !important;
+  white-space:nowrap;
+  transition:background .35s var(--ease),border-color .35s var(--ease),color .35s var(--ease),transform .35s var(--ease);
+}
+[data-eluria] .cta:hover{background:#b3c2ab !important;border-color:#b3c2ab !important;transform:translateY(-2px)}
+[data-eluria] .cta:active{transform:translateY(0) scale(.985)}
+[data-eluria] .cta:focus-visible{outline:2px solid var(--sage);outline-offset:3px}
+[data-eluria] .cta.ghost{background:transparent !important;color:var(--sage) !important}
+[data-eluria] .cta.ghost:hover{background:var(--sage) !important;color:#121611 !important}
+
+/* ── Site chrome, tuned to this page ─────────────────────────────────
+   Scoped recolors only; structure untouched. */
+[data-eluria] .ab-top-strip{background:var(--pitch) !important;color:var(--ash) !important}
+[data-eluria] .ab-top-strip .live{background:var(--sage) !important;color:var(--sage) !important}
+[data-eluria] .navbar{background:rgba(10,10,11,.94) !important;border-bottom:1px solid var(--line)}
+:root[data-eluria] #navbar a.contact-btn-nav{
+  background:var(--sage) !important;border-color:var(--sage) !important;
+  color:#121611 !important;border-radius:0 !important;
+}
+:root[data-eluria] #navbar a.contact-btn-nav:hover{background:#b3c2ab !important;border-color:#b3c2ab !important}
+[data-eluria] .scroll-progress{background:var(--sage) !important}
+[data-eluria] footer{background:var(--pitch) !important}
+/* The theme paints these from `html body.dark-mode footer .footer-col h4`
+   with !important, specificity (0,2,4). A plain [data-eluria] prefix is
+   only (0,1,2) and loses, so match its depth and add the attribute. */
+:root[data-eluria] body.dark-mode footer .footer-col h4,
+:root[data-eluria] body.dark-mode footer .footer-col i{color:var(--sage) !important}
+[data-eluria] #floatingDarkModeToggle{display:none !important}
+
+/* ── Statement ─────────────────────────────────────────────────────── */
+[data-eluria] .ex .say h2{font-size:clamp(2.4rem,6vw,4.7rem) !important;max-width:17ch}
+.say .lede{margin:clamp(52px,6vw,80px) 0 0;max-width:58ch}
+.say .lede i{font-family:var(--serif);font-style:italic;font-size:1.1em;color:var(--bone)}
+
+.nums{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line-2);margin-top:clamp(56px,7vw,96px)}
+.num{padding:40px 18px;text-align:center;border-left:1px solid var(--line)}
+.num:first-child{border-left:0}
+.num b{display:block;font-family:var(--serif);font-size:clamp(2.8rem,5.6vw,4.5rem);font-weight:400;line-height:1;color:var(--sage)}
+.num span{display:block;margin-top:16px;min-height:2.6em;font-size:9.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+
+/* ── The arrival ────────────────────────────────────────────────────
+   This page's single scroll set piece, and deliberately not the Sondris
+   climb: five stops that move inward rather than upward, from the
+   village to the door of your own hall. The progress rule runs
+   horizontally for the same reason. */
+.arr{position:relative;height:520vh;background:var(--pitch);overflow-anchor:none}
+.arr-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.arr-media{position:absolute;inset:0;transform:scale(var(--z,1));transform-origin:50% 54%;will-change:transform}
+.arr-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(.92) brightness(.88)}
+.arr-img:first-child{opacity:1}
+/* Two layers: the vertical ramp seats the plate, the leftward wash
+   guarantees the caption a dark ground however bright the plate is. */
+.arr-veil{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(5,5,6,.76) 0%,rgba(5,5,6,.32) 36%,rgba(5,5,6,0) 64%),
+  linear-gradient(186deg,rgba(5,5,6,.6) 0%,rgba(5,5,6,.1) 30%,rgba(5,5,6,.48) 60%,rgba(5,5,6,.88) 82%,rgba(5,5,6,.97) 100%)}
+.arr-card{
+  position:absolute;left:clamp(22px,5vw,76px);bottom:clamp(76px,12vh,132px);
+  width:min(440px,74vw);z-index:3;color:#fff;
+  transition:opacity .38s var(--ease),transform .38s var(--ease);
+}
+.arr-card.out{opacity:0;transform:translateY(12px)}
+.arr-tag{
+  display:inline-block;font-size:10px;font-weight:600;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--sage);
+  border-left:2px solid var(--sage);padding-left:12px;margin-bottom:20px;
+}
+[data-eluria] .ex .arr-card h2{font-size:clamp(2rem,4.1vw,3.2rem) !important;color:#fff !important}
+.arr-card p{margin-top:16px !important;font-size:.96rem;line-height:1.72;color:#d8d4cc}
+
+.arr-rail{
+  position:absolute;left:clamp(22px,5vw,76px);right:clamp(22px,5vw,76px);
+  bottom:clamp(34px,5vh,58px);height:1px;background:var(--line-2);z-index:3;
+}
+.arr-fill{position:absolute;inset:0;background:var(--sage);transform:scaleX(0);transform-origin:0 50%}
+.arr-tick{position:absolute;top:-4px;width:1px;height:9px;background:var(--line-2)}
+
+/* Flat fallback, filled from the same STEPS array (reduced motion, print).
+   It sits inside .arr rather than an .ex-wrap, so it carries its own
+   shell width or the captions run to the viewport edge. */
+.arr-static{display:none;width:var(--shell);margin:0 auto;padding:var(--pad) 0}
+.arr-static figure{margin:0 0 clamp(52px,7vw,88px)}
+.arr-static figure:last-child{margin-bottom:0}
+.arr-static img{width:100%;height:auto;display:block}
+.arr-static figcaption{padding-top:26px}
+.arr-static figcaption p{margin-top:14px !important;font-size:.95rem;line-height:1.72;color:var(--ash);max-width:56ch}
+
+/* ── The four moves ────────────────────────────────────────────────── */
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:clamp(34px,5vw,72px);margin-top:clamp(56px,7vw,92px)}
+.move figcaption{padding-top:26px}
+.move-name{display:block;font-family:var(--serif);font-size:1.6rem;line-height:1.2;color:var(--bone)}
+.move-line{display:block;margin-top:12px;font-size:.93rem;line-height:1.72;color:var(--ash);max-width:44ch}
+/* The lanai plate is portrait; hold the row together by cropping it. */
+.moves .ap img{aspect-ratio:4/3;height:auto;object-fit:cover}
+
+/* ── The service ───────────────────────────────────────────────────── */
+.svc{display:grid;grid-template-columns:minmax(300px,.85fr) 1.15fr;gap:clamp(40px,5vw,84px);align-items:start;margin-top:clamp(46px,6vw,78px)}
+/* The source portrait is 2:3; crop it so the column does not tower over
+   the text beside it. */
+.svc .ap img{aspect-ratio:3/4;height:auto;object-fit:cover;object-position:50% 26%}
+.svc-lists{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,3.4vw,52px);margin-top:clamp(36px,4.2vw,56px)}
+.svc-col ul{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line-2)}
+.svc-col li{padding:13px 0;border-bottom:1px solid var(--line);font-size:.9rem;line-height:1.6;color:var(--ash)}
+.svc-foot{margin-top:30px !important;font-size:.84rem;line-height:1.75;color:var(--dim);max-width:62ch}
+
+/* ── Residences ────────────────────────────────────────────────────── */
+.res{margin-top:clamp(50px,6vw,84px);border-top:1px solid var(--line-2)}
+.res-row{
+  display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(120px,.6fr) 2fr minmax(120px,.6fr);
+  gap:26px;align-items:baseline;
+  padding:34px 0;border-bottom:1px solid var(--line);
+}
+.res-name{font-family:var(--serif);font-size:clamp(1.4rem,2.3vw,1.9rem);line-height:1.15;color:var(--bone)}
+.res-size{font-size:.86rem;letter-spacing:.03em;color:var(--sage)}
+.res-note{font-size:.91rem;line-height:1.7;color:var(--ash)}
+.res-alt{font-size:.9rem;color:var(--dim);text-align:right;white-space:nowrap}
+.res-foot{font-size:.82rem;line-height:1.7;color:var(--dim);margin-top:26px !important}
+
+/* ── Address ───────────────────────────────────────────────────────── */
+.addr{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,5vw,80px);align-items:start;margin-top:clamp(46px,6vw,78px)}
+.facts{border-top:1px solid var(--line-2);margin-top:34px}
+.fact{display:grid;grid-template-columns:1fr auto;gap:20px;padding:15px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.fact dt{color:var(--dim)}
+.fact dd{margin:0;color:var(--bone);text-align:right}
+.certs{margin-top:44px;border-top:1px solid var(--line-2);padding-top:28px}
+.cert-list{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:18px 0 0;padding:0}
+.cert-list li{
+  font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sage);border:1px solid rgba(156,174,148,.42);padding:9px 15px;
+}
+.certs p{margin-top:22px !important;font-size:.84rem;line-height:1.75;color:var(--dim);max-width:54ch}
+
+/* ── Close ─────────────────────────────────────────────────────────── */
+.close{position:relative;overflow:hidden}
+.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 44%;opacity:.34;filter:saturate(.76)}
+.close-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,6,.93),rgba(5,5,6,.74) 46%,rgba(5,5,6,.96))}
+.close-in{position:relative;padding:clamp(100px,14vw,190px) 0}
+[data-eluria] .ex .close h2{color:#fff !important;font-size:clamp(2.5rem,5.6vw,4.5rem) !important}
+.close .lede{color:#d8d4cc;margin-bottom:42px}
+.close-btns{display:flex;gap:14px;flex-wrap:wrap}
+.disc{font-size:10.5px;line-height:2;color:var(--dim);border-top:1px solid var(--line);padding:30px 0 68px;margin:0}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width:980px){
+  .moves,.addr,.svc{grid-template-columns:1fr}
+  .res-row{grid-template-columns:1fr auto;gap:14px 26px}
+  .res-name{grid-column:1}
+  .res-size{grid-column:2;text-align:right}
+  .res-note{grid-column:1/-1;max-width:52ch}
+  .res-alt{grid-column:1/-1;text-align:left}
+}
+@media (max-width:760px){
+  .arr{height:440vh}
+  .arr-card{left:22px;right:22px;width:auto;bottom:68px}
+  .arr-rail{left:22px;right:22px;bottom:30px}
+  .nums{grid-template-columns:1fr 1fr}
+  .num:nth-child(3){border-left:0}
+  .num{border-top:1px solid var(--line)}
+  .num:first-child,.num:nth-child(2){border-top:0}
+  .svc-lists{grid-template-columns:1fr}
+  .fact{grid-template-columns:1fr;gap:3px}
+  .fact dd{text-align:left}
+}
+
+/* Without motion the arrival is told flat, and nothing wipes in. */
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none}
+  .ap img{clip-path:none;transform:none;transition:none}
+  .hero-media,.hero-copy>*{animation:none}
+  .arr{height:auto !important}
+  .arr-stage{display:none}
+  .arr-static{display:block}
+  [data-eluria] .cta:hover{transform:none}
+  .noir-grain{display:none}
+}
+
+@media print{
+  .hero{height:auto}
+  .hero-media{position:static;aspect-ratio:16/9}
+  .ap img{clip-path:none;transform:none}
+  .arr{height:auto}
+  .arr-stage{display:none}
+  .arr-static{display:block}
+  .close-bg,.close-veil,.noir-grain,.noir-vig{display:none}
+}
+</style>
+</head>
+<body class="dark-mode">
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
+    <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<div class="noir-vig" aria-hidden="true"></div>
+<div class="noir-grain" aria-hidden="true"></div>
+
+<main class="ex">
+
+<!-- ══ 1. HERO ═════════════════════════════════════════════════════ -->
+<header class="hero" id="top">
+  <img class="hero-media" id="heroMedia"
+       src="/img/arthaland/eluria/01-dusk-tower@1280.webp"
+       srcset="/img/arthaland/eluria/01-dusk-tower@800.webp 800w, /img/arthaland/eluria/01-dusk-tower@1280.webp 1280w, /img/arthaland/eluria/01-dusk-tower.webp 2560w"
+       sizes="100vw" fetchpriority="high"
+       alt="Eluria at dusk on Rada Street, its timber-toned facade lit against the Makati skyline. Artist's perspective."
+       width="2560" height="1920">
+  <div class="hero-scrim"></div>
+  <div class="hero-copy">
+    <span class="eyebrow">Arthaland &middot; ARCH Capital</span>
+    <h1 class="hero-name">Eluria<em class="hero-tag">Your neighborhood awaits you.</em></h1>
+  </div>
+</header>
+
+<!-- ══ 2. STATEMENT ════════════════════════════════════════════════ -->
+<section class="ex-sec say" id="about">
+  <div class="ex-wrap">
+    <h2 class="rv">Thirty-seven residences. Two to a floor.</h2>
+    <p class="lede rv" style="--d:.1s">Eluria is Arthaland's joint venture with ARCH Capital, on 916 square metres at 119 Rada Street. Its architects divided each floor into two elongated homes rather than the usual eight or ten, so every residence draws daylight from three sides and the cross breeze runs the length of it. They describe the result as a contemporary tree house. The name is a portmanteau of <i>&eacute;lan</i>, <i>flourish</i> and <i>allure</i>.</p>
+    <div class="nums rv" style="--d:.2s">
+      <div class="num"><b>37</b><span>Residences</span></div>
+      <div class="num"><b>2</b><span>To a floor</span></div>
+      <div class="num"><b>31</b><span>Storeys</span></div>
+      <div class="num"><b>3</b><span>Parking slots each</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. THE ARRIVAL ══════════════════════════════════════════════ -->
+<section class="arr" id="arrival" aria-label="Arriving at Eluria, from the village to your own hall">
+  <div class="arr-stage" id="arrStage">
+    <div class="arr-media" id="arrMedia">
+      <img class="arr-img" src="/img/arthaland/eluria/10-skyline@1280.webp" srcset="/img/arthaland/eluria/10-skyline@1280.webp 1280w, /img/arthaland/eluria/10-skyline.webp 2548w" sizes="100vw" alt="" width="2548" height="1910">
+      <img class="arr-img" src="/img/arthaland/eluria/05-foyer@1280.webp" srcset="/img/arthaland/eluria/05-foyer@1280.webp 1280w, /img/arthaland/eluria/05-foyer.webp 2560w" sizes="100vw" alt="" loading="lazy" width="2560" height="1646">
+      <img class="arr-img" src="/img/arthaland/eluria/07-pool@1280.webp" srcset="/img/arthaland/eluria/07-pool@1280.webp 1280w, /img/arthaland/eluria/07-pool.webp 2560w" sizes="100vw" alt="" loading="lazy" width="2560" height="1440">
+      <img class="arr-img" src="/img/arthaland/eluria/06-living@1280.webp" srcset="/img/arthaland/eluria/06-living@1280.webp 1280w, /img/arthaland/eluria/06-living.webp 2560w" sizes="100vw" alt="" loading="lazy" width="2560" height="1969">
+    </div>
+    <div class="arr-veil"></div>
+    <div class="arr-card" id="arrCard" aria-live="polite">
+      <span class="arr-tag" id="arrTag">Legazpi Village</span>
+      <h2 id="arrTitle">The village</h2>
+      <p id="arrBody">Rada Street closes to cars for the parklets. Greenbelt, Ayala Triangle and the Legazpi Sunday market are all inside a walk, and One Legazpi Park sits across the road.</p>
+    </div>
+    <div class="arr-rail" id="arrRail" aria-hidden="true"><span class="arr-fill" id="arrFill"></span></div>
+  </div>
+  <div class="arr-static" id="arrStatic"></div>
+</section>
+
+<!-- ══ 4. THE FOUR MOVES ═══════════════════════════════════════════ -->
+<section class="ex-sec" id="design">
+  <div class="ex-wrap">
+    <span class="eyebrow rv">Design and architecture</span>
+    <h2 class="rv">Four decisions that shape the building.</h2>
+    <div class="moves">
+      <figure class="move ap">
+        <img src="/img/arthaland/eluria/04-lanai@1280.webp" srcset="/img/arthaland/eluria/04-lanai@800.webp 800w, /img/arthaland/eluria/04-lanai@1280.webp 1280w" sizes="(max-width:980px) 90vw, 44vw" alt="The lanai at Eluria: two chairs on a planted balcony behind folding louvred shutters, the city beyond. Artist's perspective." loading="lazy" width="2560" height="3200">
+        <figcaption>
+          <span class="move-name">The lanai</span>
+          <span class="move-line">Gardens and balconies deep enough to sit out in rather than step onto. Folding louvred screens close down as the sun comes round, and a quarter of the tower is given over to planting and open space.</span>
+        </figcaption>
+      </figure>
+      <figure class="move ap" style="--d:.1s">
+        <img src="/img/arthaland/eluria/11-balconies@800.webp" srcset="/img/arthaland/eluria/11-balconies@800.webp 800w, /img/arthaland/eluria/11-balconies.webp 1148w" sizes="(max-width:980px) 90vw, 44vw" alt="The curved, planted balconies of Eluria stacked up the elevation. Artist's perspective." loading="lazy" width="1148" height="1148">
+        <figcaption>
+          <span class="move-name">Two to a floor</span>
+          <span class="move-line">The plate divides into two elongated residences instead of the eight or ten a Makati tower usually carries. Each one takes light from three sides and cross-ventilates end to end.</span>
+        </figcaption>
+      </figure>
+      <figure class="move ap" style="--d:.06s">
+        <img src="/img/arthaland/eluria/02-tower-day@1280.webp" srcset="/img/arthaland/eluria/02-tower-day@800.webp 800w, /img/arthaland/eluria/02-tower-day@1280.webp 1280w" sizes="(max-width:980px) 90vw, 44vw" alt="Eluria from Rada Street: pale precast concrete with timber shutter screens to the balconies. Artist's perspective." loading="lazy" width="2560" height="1920">
+        <figcaption>
+          <span class="move-name">The envelope</span>
+          <span class="move-line">Light-coloured precast concrete warmed with wood and bronze. Double-glazed low-e glass sits behind the shutter system, and the roughly one-to-three glass-to-concrete ratio is what keeps the interiors cool.</span>
+        </figcaption>
+      </figure>
+      <figure class="move ap" style="--d:.16s">
+        <img src="/img/arthaland/eluria/08-showsuite@1280.webp" srcset="/img/arthaland/eluria/08-showsuite@800.webp 800w, /img/arthaland/eluria/08-showsuite@1280.webp 1280w" sizes="(max-width:980px) 90vw, 44vw" alt="A furnished living area in the Eluria show suite, with stone, warm timber and a curved sofa." loading="lazy" width="2560" height="1706">
+        <figcaption>
+          <span class="move-name">Who drew it</span>
+          <span class="move-line">FMB Architects of Sydney as architect of design, Aidea as architect of record, and Chada, a hospitality studio, on the common areas. The show suite is by Jigs Adefuin.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. THE SERVICE ══════════════════════════════════════════════ -->
+<section class="ex-sec" id="service" style="background:var(--pitch)">
+  <div class="ex-wrap">
+    <h2 class="rv">A butler, trained in the Netherlands.</h2>
+    <div class="svc">
+      <figure class="ap" style="--d:.08s">
+        <img src="/img/arthaland/eluria/09-butler@1280.webp" srcset="/img/arthaland/eluria/09-butler@800.webp 800w, /img/arthaland/eluria/09-butler@1280.webp 1280w" sizes="(max-width:980px) 90vw, 36vw" alt="An Eluria Hospitality Director in white gloves, hand to chest." loading="lazy" width="2560" height="3838">
+      </figure>
+      <div>
+        <p class="lede rv" style="margin-top:0">Eluria's Hospitality Directors take an intensive programme at The International Butler Academy in the Netherlands before they stand at the door. With thirty-seven households in the building, the service is close to one-to-one, and white-glove in the literal sense.</p>
+        <div class="svc-lists">
+          <div class="svc-col rv" style="--d:.1s">
+            <h3>At the door</h3>
+            <ul>
+              <li>Concierge</li>
+              <li>Door staff, around the clock</li>
+              <li>Bell and porter service</li>
+              <li>Visitor management</li>
+              <li>Function room service</li>
+              <li>Chauffeured shuttle nearby</li>
+            </ul>
+          </div>
+          <div class="svc-col rv" style="--d:.18s">
+            <h3>For the residence</h3>
+            <ul>
+              <li>The newspaper, daily</li>
+              <li>Mail and parcel handling</li>
+              <li>Food and drink by cart or tray</li>
+              <li>Escort to your private lift</li>
+              <li>Guests welcomed and announced</li>
+              <li>Amenity reservations</li>
+            </ul>
+          </div>
+        </div>
+        <p class="svc-foot rv" style="--d:.24s">Dining, hotel and venue arrangements, cleaning, laundry, in-residence spa and salon, pet grooming and walking, and a travel desk run through accredited third-party providers rather than the building's own staff.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. RESIDENCES ═══════════════════════════════════════════════ -->
+<section class="ex-sec" id="residences">
+  <div class="ex-wrap">
+    <h2 class="rv">Four plans. Two of them exist once.</h2>
+    <div class="res">
+      <div class="res-row rv">
+        <span class="res-name">Three-Bedroom North</span>
+        <span class="res-size tab-num">288 sqm</span>
+        <span class="res-note">Unit 02 on each residential floor, looking north over Legazpi Village. Plus 10 sqm of limited common area.</span>
+        <span class="res-alt tab-num">3,096 sqft</span>
+      </div>
+      <div class="res-row rv" style="--d:.06s">
+        <span class="res-name">Three-Bedroom South</span>
+        <span class="res-size tab-num">294 sqm</span>
+        <span class="res-note">Unit 01, the south half of the plate, six square metres larger than its neighbour. Plus 10 sqm limited common area.</span>
+        <span class="res-alt tab-num">3,162 sqft</span>
+      </div>
+      <div class="res-row rv" style="--d:.12s">
+        <span class="res-name">Five-Bedroom Garden</span>
+        <span class="res-size tab-num">579 sqm</span>
+        <span class="res-note">A whole floor plate as one home, with its own garden. Plus 21 sqm limited common area.</span>
+        <span class="res-alt tab-num">6,234 sqft</span>
+      </div>
+      <div class="res-row rv" style="--d:.18s">
+        <span class="res-name">Five-Bedroom Penthouse</span>
+        <span class="res-size tab-num">580 sqm</span>
+        <span class="res-note">One only, at the top of the tower under the roof deck garden. Plus 21 sqm limited common area.</span>
+        <span class="res-alt tab-num">6,239 sqft</span>
+      </div>
+    </div>
+    <p class="res-foot rv">Every residence is delivered with a gourmet kitchen in European-grade cabinetry, quartz counters, engineered wood floors to the bedrooms, variable refrigerant flow air conditioning and home automation for lighting, cameras and cooling. Pricing, current availability and a computation against a specific unit are available on request.</p>
+  </div>
+</section>
+
+<!-- ══ 7. THE ADDRESS ══════════════════════════════════════════════ -->
+<section class="ex-sec" id="address">
+  <div class="ex-wrap">
+    <h2 class="rv">119 Rada Street, Legazpi Village.</h2>
+    <div class="addr">
+      <div>
+        <p class="lede rv">Rada is one of the streets Makati gave back to walking, and the parklets along it are the reason the block reads as residential rather than corporate. The private driveway runs off Rada; the car park entrance is kept around the corner on Rodriguez so the frontage stays quiet.</p>
+        <dl class="facts rv" style="--d:.08s">
+          <div class="fact"><dt>Development type</dt><dd>Residential condominium, retail at grade</dd></div>
+          <div class="fact"><dt>Land area</dt><dd class="tab-num">916 sqm</dd></div>
+          <div class="fact"><dt>Storeys</dt><dd class="tab-num">31, of which 20 residential</dd></div>
+          <div class="fact"><dt>Lifts</dt><dd>2 private passenger, 1 service</dd></div>
+          <div class="fact"><dt>Parking</dt><dd class="tab-num">120 slots, 16 EV ready</dd></div>
+          <div class="fact"><dt>Project owner</dt><dd>Bhavya Properties, Inc.</dd></div>
+        </dl>
+        <div class="certs rv" style="--d:.16s">
+          <h3>Certification</h3>
+          <ul class="cert-list">
+            <li>LEED Gold &middot; pre-certified</li>
+            <li>WELL &middot; registered</li>
+            <li>EDGE &middot; registered</li>
+            <li>BERDE &middot; registered</li>
+          </ul>
+          <p>LEED Gold pre-certification is already held; the other three are registered and still in progress. Arthaland's existing residential and commercial portfolio is certified sustainable end to end.</p>
+        </div>
+      </div>
+      <figure class="ap" style="--d:.1s">
+        <img src="/img/arthaland/eluria/12-neighborhood@800.webp" srcset="/img/arthaland/eluria/12-neighborhood@800.webp 800w, /img/arthaland/eluria/12-neighborhood.webp 1148w" sizes="(max-width:980px) 90vw, 44vw" alt="The park at Legazpi Village, palms and walking paths with the Makati towers behind." loading="lazy" width="1148" height="861">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 8. ENQUIRE ══════════════════════════════════════════════════ -->
+<section class="close" id="enquire">
+  <img class="close-bg" src="/img/arthaland/eluria/13-lounge@1280.webp" srcset="/img/arthaland/eluria/13-lounge@1280.webp 1280w, /img/arthaland/eluria/13-lounge.webp 2560w" sizes="100vw" alt="" aria-hidden="true" loading="lazy" width="2560" height="1706">
+  <div class="close-veil"></div>
+  <div class="close-in">
+    <div class="ex-wrap">
+      <h2 class="rv">Ask about Eluria.</h2>
+      <p class="lede rv" style="--d:.08s">There are thirty-seven residences in the building, so what is open changes slowly but matters a great deal. Tell us which plan you are considering and we will send what is currently available, with a computation against it.</p>
+      <div class="close-btns rv" style="--d:.16s">
+        <a class="cta" href="/#contact">Enquire</a>
+        <a class="cta ghost" href="tel:+639171774572">0917 177 4572</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ex-wrap">
+  <p class="disc">
+    Images are supplied by the developer. Renders are artist's perspectives and are indicative only. Furniture, appliances and accessories shown are not deliverables. Unit areas are approximate and are stated exclusive of the limited common areas noted against each plan. Arthaland reserves the right to make additions, deletions and modifications to the plans.<br>
+    Eluria. Project Owner: Bhavya Properties, Inc., a subsidiary of Arthaland Corporation and ARCH Capital. Address: 119 Rada Street, Legazpi Village, Barangay San Lorenzo, Makati City.<br>
+    GLRA Realty Group. Catherine SB Sampayo, Licensed Real Estate Broker.
+  </p>
+</div>
+
+</main>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/properties.html">All Listings</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Neighborhoods</h4><ul>
+      <li><a href="/living-in-bgc.html">BGC</a></li>
+      <li><a href="/living-in-makati.html">Makati</a></li>
+      <li><a href="/living-in-alabang.html">Alabang</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Contact</h4>
+      <p><i class="fas fa-phone-alt" style="margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<!-- No floating contact column, no chat widget and no text-size button on
+     this page (Rafael's call). Enquire above is the contact point. -->
+
+<script>
+/* ── Hero sizing, the aperture observer, and the arrival ─────────────
+   One rAF loop drives the arrival; it only reads a rect and writes
+   opacity and transforms. Everything else is an IntersectionObserver. */
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Hero: fill exactly the viewport below the site chrome ──────────
+     The shell injects a top strip and a 90px sticky navbar after this
+     script parses, so 100svh overflows the fold. Measure instead. */
+  var hero = document.getElementById('top');
+  function sizeHero() {
+    if (!hero) return;
+    hero.style.height = Math.max(520, window.innerHeight - hero.offsetTop) + 'px';
+  }
+  sizeHero();
+  window.addEventListener('load', sizeHero);
+  setTimeout(sizeHero, 900);
+  window.addEventListener('resize', sizeHero);
+
+  /* ── The aperture: open images and raise text as they arrive ──────── */
+  var targets = document.querySelectorAll('.ap,.rv');
+  if (!('IntersectionObserver' in window) || reduce) {
+    for (var i = 0; i < targets.length; i++) targets[i].classList.add('in');
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+    for (var j = 0; j < targets.length; j++) io.observe(targets[j]);
+  }
+
+  /* ── The arrival: five stops, the village to your own hall ────────── */
+  var STEPS = [
+    { tag: 'Legazpi Village', t: 'The village', img: '10-skyline', w: 2548,
+      alt: "The Makati skyline around Legazpi Village at dusk. Artist's perspective.",
+      b: 'Rada Street closes to cars for the parklets. Greenbelt, Ayala Triangle and the Legazpi Sunday market are all inside a walk, and One Legazpi Park sits across the road.' },
+    { tag: 'Ground floor', t: 'The lobby', img: '05-foyer', w: 2560,
+      alt: "The Eluria entrance hall, bronze screens and a planted window beyond. Artist's perspective.",
+      b: 'A private driveway off Rada Street, a porte-cochere with safety bollards, then door staff around the clock. Bell and porter service, visitor management, and a chauffeured shuttle to destinations nearby.' },
+    { tag: 'Amenity floor', t: 'One floor, thirty-seven households', img: '07-pool', w: 2560,
+      alt: "The 18 metre indoor lap pool at Eluria under a curved timber ceiling. Artist's perspective.",
+      b: 'An eighteen metre, two-lane heated saltwater pool, a fitness centre, a function room with its own pantry, a play room by PLAYWORKS, and the Potager Garden up on the roof deck.' },
+    { tag: 'Your floor', t: 'The lift opens into your own hall', img: '06-living', w: 2560,
+      alt: "The living, dining and kitchen of an Eluria residence with a curved fluted island. Artist's perspective.",
+      b: 'Two private lifts run on destination-control RFID and open directly into each residence. No shared corridor, no lobby to cross. Average wait, twenty-three seconds.' }
+  ];
+
+  var arr = document.getElementById('arrival');
+  var stage = document.getElementById('arrStage');
+  var media = document.getElementById('arrMedia');
+  var imgs = media ? media.querySelectorAll('.arr-img') : [];
+  var card = document.getElementById('arrCard');
+  var tagEl = document.getElementById('arrTag');
+  var titleEl = document.getElementById('arrTitle');
+  var bodyEl = document.getElementById('arrBody');
+  var rail = document.getElementById('arrRail');
+  var fill = document.getElementById('arrFill');
+
+  /* Flat version of the same content for reduced motion and print,
+     built from STEPS so the two can never drift apart. */
+  var flat = document.getElementById('arrStatic');
+  if (flat) {
+    var html = '';
+    STEPS.forEach(function (s) {
+      var src = '/img/arthaland/eluria/' + s.img + (s.w > 1280 ? '@1280' : '@800') + '.webp';
+      html += '<figure><img src="' + src + '" alt="' + s.alt.replace(/"/g, '&quot;') + '" loading="lazy">' +
+              '<figcaption><span class="arr-tag">' + s.tag + '</span>' +
+              '<h2>' + s.t + '</h2><p>' + s.b + '</p></figcaption></figure>';
+    });
+    flat.innerHTML = html;
+  }
+
+  /* One tick per stop, so the rule reads as a scale and not a loader. */
+  if (rail) {
+    for (var k = 0; k <= STEPS.length; k++) {
+      var tick = document.createElement('span');
+      tick.className = 'arr-tick';
+      tick.style.left = (k / STEPS.length * 100) + '%';
+      rail.appendChild(tick);
+    }
+  }
+
+  var shown = 0, swapTimer = null;
+  function paint(i) {
+    if (!card) return;
+    var s = STEPS[i];
+    card.classList.add('out');
+    clearTimeout(swapTimer);
+    swapTimer = setTimeout(function () {
+      tagEl.textContent = s.tag;
+      titleEl.textContent = s.t;
+      bodyEl.textContent = s.b;
+      card.classList.remove('out');
+    }, 220);
+  }
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  function frame() {
+    if (arr && stage && !reduce) {
+      var span = arr.offsetHeight - stage.offsetHeight;
+      var p = span > 0 ? clamp(-arr.getBoundingClientRect().top / span, 0, 1) : 0;
+      var n = STEPS.length;
+      var f = p * n;
+      var idx = Math.min(n - 1, Math.floor(f));
+      var frac = f - idx;
+      /* Hold each plate, then crossfade over the last fifth of its span. */
+      var mix = (idx === n - 1 || frac < 0.8) ? 0 : (frac - 0.8) / 0.2;
+
+      for (var i = 0; i < imgs.length; i++) {
+        imgs[i].style.opacity = i === idx ? (1 - mix) : (i === idx + 1 ? mix : 0);
+      }
+      var want = mix > 0.5 ? idx + 1 : idx;
+      if (want !== shown) { shown = want; paint(want); }
+
+      if (fill) fill.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      media.style.setProperty('--z', (1 + p * 0.05).toFixed(4));
+    }
+    requestAnimationFrame(frame);
+  }
+  if (!reduce) requestAnimationFrame(frame);
+})();
+</script>
+
+<script src="/js/main.js"></script>
+<script>
+/* Dark-locked page: main.js applies a saved light preference on load,
+   which would half-light the chrome here. Re-assert dark for the shell
+   without touching localStorage, so the rest of the site keeps the
+   visitor's own choice. */
+document.body.classList.add('dark-mode');
+document.documentElement.classList.add('dark-mode-pre');
+if (typeof syncLogos === 'function') syncLogos();
+</script>
+<script src="/js/brutalist-shell.js" defer></script>
+</body>
+</html>
