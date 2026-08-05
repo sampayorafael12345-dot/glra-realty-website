@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- Same noir lock as the five property pages. Set before any CSS loads so
+     the site chrome comes up dark rather than flashing cream. -->
+<script>(function(){var d=document.documentElement;d.classList.add('dark-mode-pre');d.setAttribute('data-arth','')})();</script>
+<style>html,body{background:#0a0a0b;color:#eceae4}</style>
+<title>Arthaland | Sondris, Eluria, Liv, Una, Lucima | GLRA Realty</title>
+<meta name="description" content="Five Arthaland developments, sold by GLRA Realty: Sondris and Eluria in Makati, Liv on Katipunan, Una at Sevina Park in Bi&ntilde;an, and Lucima in Cebu Business Park. Compare scale, sizes, status and price in one place.">
+<meta name="keywords" content="Arthaland,Arthaland properties Philippines,Sondris Makati,Eluria Makati,Liv Katipunan,Una Apartments Sevina Park,Lucima Cebu,LEED certified condo Philippines,BERDE condominium">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/arthaland.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/arthaland.html">
+<meta property="og:title" content="Arthaland | Five buildings, one standard">
+<meta property="og:description" content="Sondris, Eluria, Liv, Una and Lucima. Five Arthaland developments in four cities, compared in one place.">
+<meta property="og:image" content="https://glrarealty.com/img/arthaland/hub-social.jpg">
+<meta property="og:image:alt" content="The five Arthaland buildings sold by GLRA Realty, side by side.">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Arthaland | Five buildings, one standard">
+<meta name="twitter:description" content="Sondris, Eluria, Liv, Una and Lucima. Five Arthaland developments in four cities, compared in one place.">
+<meta name="twitter:image" content="https://glrarealty.com/img/arthaland/hub-social.jpg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Arthaland developments","description":"Five Arthaland developments offered by GLRA Realty.","url":"https://glrarealty.com/arthaland.html","mainEntity":{"@type":"ItemList","itemListElement":[{"@type":"ListItem","position":1,"name":"Sondris","url":"https://glrarealty.com/sondris.html"},{"@type":"ListItem","position":2,"name":"Eluria","url":"https://glrarealty.com/eluria.html"},{"@type":"ListItem","position":3,"name":"Liv","url":"https://glrarealty.com/liv.html"},{"@type":"ListItem","position":4,"name":"Una Apartments","url":"https://glrarealty.com/una.html"},{"@type":"ListItem","position":5,"name":"Lucima","url":"https://glrarealty.com/lucima.html"}]}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Arthaland","item":"https://glrarealty.com/arthaland.html"}]}</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="/img/arthaland/liv/02-tower-day@800.webp">
+<!-- Archivo is the family's shared text face and this page's display face too. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- The five display faces, one per building, subset with `text=` to the
+     sixteen letters those five names actually use. Five families for a few
+     kilobytes. They must never be applied to anything but the names, or the
+     missing glyphs will silently fall back. -->
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/brutalist-theme.css">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   ARTHALAND — the hub
+
+   The five property pages each own a colour and a serif. This one owns
+   neither, on purpose: the developer is the neutral, and the buildings
+   are where the colour lives. So the hub is bone on the same near-black,
+   set in Archivo — the one face all five already share — and every
+   accent on the page is borrowed from whichever building you are
+   touching. Each property carries its own hue and its own display face
+   as inline `--ac` plus an `.f-*` class, so the page needs no per-
+   property CSS at all.
+
+   Six sections. Everything else is inherited from the five: the void,
+   the aperture reveal, the grain and vignette, the footer fix.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root[data-arth]{
+  --void:#0a0a0b;
+  --pitch:#050506;
+  --slab:#141416;
+  --line:rgba(236,235,231,.11);
+  --line-2:rgba(236,235,231,.22);
+  --bone:#eceae4;         /* 17:1 on void */
+  --ash:#a8a49c;          /* 8.8:1 */
+  --dim:#847f76;          /* 5.3:1 */
+  --sans:'Archivo','Segoe UI',Arial,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --shell:min(1240px,90vw);
+}
+
+/* The theme paints <html> cream for its own dark mode, and a root with a
+   background wins the page canvas — body's dark fill then only covers its
+   own box and the gap reads as a cream flash. Repaint the root here. */
+:root[data-arth]{background:var(--void) !important}
+
+:root[data-arth] body{
+  font-family:var(--sans) !important;
+  background:var(--void) !important;
+  color:var(--bone) !important;
+  line-height:1.5 !important;
+  overflow-x:clip !important;   /* clip, not hidden: keeps sticky alive */
+}
+[data-arth] .ah h1,[data-arth] .ah h2,[data-arth] .ah h3{
+  font-family:var(--sans) !important;
+  text-transform:none !important;
+  color:var(--bone) !important;
+  font-weight:500 !important;
+  letter-spacing:-.028em !important;
+  line-height:1.08 !important;
+  margin:0;
+  text-wrap:balance;
+}
+[data-arth] .ah h2{font-size:clamp(2rem,4.6vw,3.7rem) !important}
+[data-arth] .ah h3{
+  font-size:.74rem !important;font-weight:600 !important;
+  letter-spacing:.2em !important;text-transform:uppercase !important;
+  color:var(--dim) !important;line-height:1.4 !important;letter-spacing:.2em !important;
+}
+[data-arth] .ah a{color:inherit}
+[data-arth] .ah p{margin:0}
+
+.ah{--pad:clamp(88px,11vw,170px)}
+.ah-wrap{width:var(--shell);margin:0 auto}
+.ah-sec{padding:var(--pad) 0}
+.lede{font-size:clamp(1rem,1.3vw,1.13rem);line-height:1.78;color:var(--ash);max-width:60ch;margin:26px 0 0}
+[data-arth] .ah .eyebrow{
+  font-family:var(--sans) !important;font-size:10px !important;font-weight:600 !important;
+  letter-spacing:.3em !important;text-transform:uppercase !important;
+  color:var(--ash) !important;background:transparent !important;
+  display:block;margin-bottom:24px;
+}
+.tab-num{font-variant-numeric:tabular-nums}
+
+/* The five display faces. Only ever on a property name — the webfonts are
+   subset to those names and nothing else. */
+.f-sondris{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-weight:500}
+.f-eluria {font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-weight:500}
+.f-liv    {font-family:'Bricolage Grotesque','Archivo',Arial,sans-serif;font-weight:700;letter-spacing:-.045em}
+.f-una    {font-family:'Newsreader',Georgia,'Times New Roman',serif;font-weight:400}
+.f-lucima {font-family:'Bodoni Moda',Didot,Georgia,serif;font-weight:500}
+/* On a heading the class alone is not enough: this page's own rule sets
+   Archivo with !important at (0,2,1), which beats a bare (0,1,0) class.
+   Match its depth, add the class, and re-declare the weight and tracking
+   the same rule would otherwise impose. */
+[data-arth] .ah h2.f-sondris{font-family:'Playfair Display',Georgia,'Times New Roman',serif !important;font-weight:500 !important;letter-spacing:-.015em !important}
+[data-arth] .ah h2.f-eluria {font-family:'EB Garamond',Georgia,'Times New Roman',serif !important;font-weight:500 !important;letter-spacing:-.004em !important}
+[data-arth] .ah h2.f-liv    {font-family:'Bricolage Grotesque','Archivo',Arial,sans-serif !important;font-weight:700 !important;letter-spacing:-.045em !important}
+[data-arth] .ah h2.f-una    {font-family:'Newsreader',Georgia,'Times New Roman',serif !important;font-weight:400 !important;letter-spacing:-.008em !important}
+[data-arth] .ah h2.f-lucima {font-family:'Bodoni Moda',Didot,Georgia,serif !important;font-weight:500 !important;letter-spacing:-.004em !important}
+
+/* Grain and vignette: one fixed layer above everything, never on a
+   scrolling container. */
+.noir-grain{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.noir-vig{
+  position:fixed;inset:0;z-index:59;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 45%,transparent 42%,rgba(0,0,0,.42) 100%);
+}
+
+/* ── The reveal, unchanged from the five ────────────────────────────
+   Images open like a shutter from their bottom edge; text just rises.
+   The aperture itself lives on `.pane img` and `.pl-fig img` below,
+   because on this page every image is inside one of those two. */
+.rv{opacity:0;transform:translate3d(0,26px,0);transition:opacity 1s var(--ease),transform 1s var(--ease);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+
+/* ── Buttons ───────────────────────────────────────────────────────────
+   Bone rather than a colour: on this page the colours belong to the
+   buildings. */
+[data-arth] .cta,[data-arth] a.cta{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 34px;border:1px solid var(--bone) !important;
+  background:var(--bone) !important;color:#0a0a0b !important;
+  font-family:var(--sans) !important;
+  font-size:11px !important;font-weight:600 !important;letter-spacing:.22em !important;
+  text-transform:uppercase !important;text-decoration:none;border-radius:0 !important;
+  white-space:nowrap;
+  transition:background .35s var(--ease),border-color .35s var(--ease),color .35s var(--ease),transform .35s var(--ease);
+}
+[data-arth] .cta:hover{background:#fff !important;border-color:#fff !important;transform:translateY(-2px)}
+[data-arth] .cta:active{transform:translateY(0) scale(.985)}
+/* The theme rings every focused link in its own vermilion, from
+   `:is(a,button,…):focus-visible` at (0,2,0) with !important. The ring is
+   the only thing telling a keyboard user where they are, so keep it — but
+   paint it bone here, and the building's own colour on the five links. */
+:root[data-arth] body .cta:focus-visible,
+:root[data-arth] body.gl-keyboard .cta:focus-visible{outline:2px solid var(--bone) !important;outline-offset:3px !important}
+[data-arth] .cta.ghost{background:transparent !important;color:var(--bone) !important}
+[data-arth] .cta.ghost:hover{background:var(--bone) !important;color:#0a0a0b !important}
+
+/* ── Site chrome ─────────────────────────────────────────────────────── */
+[data-arth] .ab-top-strip{background:var(--pitch) !important;color:var(--ash) !important}
+[data-arth] .ab-top-strip .live{background:var(--bone) !important;color:var(--bone) !important}
+[data-arth] .navbar{background:rgba(10,10,11,.94) !important;border-bottom:1px solid var(--line)}
+:root[data-arth] #navbar a.contact-btn-nav{
+  background:var(--bone) !important;border-color:var(--bone) !important;
+  color:#0a0a0b !important;border-radius:0 !important;
+}
+:root[data-arth] #navbar a.contact-btn-nav:hover{background:#fff !important;border-color:#fff !important}
+[data-arth] .scroll-progress{background:var(--bone) !important}
+[data-arth] footer{background:var(--pitch) !important}
+/* The theme paints these from `html body.dark-mode footer .footer-col h4`
+   with !important, specificity (0,2,4). A plain [data-arth] prefix is only
+   (0,1,2) and loses, so match its depth and add the attribute. */
+:root[data-arth] body.dark-mode footer .footer-col h4{color:var(--bone) !important}
+:root[data-arth] body.dark-mode footer .footer-col i{color:var(--ash) !important}
+[data-arth] #floatingDarkModeToggle{display:none !important}
+
+/* ══ 1. HERO: the wall ════════════════════════════════════════════════
+   Five buildings standing next to each other, which is the one thing a
+   hub can show that no single property page can. Each panel is a link.
+   The number at the top of each is its storey count, so the row reads as
+   a comparison rather than as decoration, and hovering one floods it
+   with that building's own colour while the other four step back. */
+.hero{display:flex;flex-direction:column;min-height:600px;background:var(--pitch)}
+.hero-head{flex:0 0 auto;padding:clamp(30px,4.4vh,52px) 0 clamp(24px,3.4vh,38px)}
+[data-arth] .ah h1.hero-name{
+  font-family:var(--sans) !important;
+  font-size:clamp(1.7rem,4.4vw,3.1rem) !important;
+  font-weight:500 !important;letter-spacing:-.03em !important;
+  line-height:1.06 !important;color:var(--bone) !important;
+  max-width:24ch;
+}
+.hero-head .eyebrow{margin-bottom:18px}
+.hero-sub{margin-top:16px !important;font-size:.95rem;line-height:1.7;color:var(--ash);max-width:56ch}
+
+.wall{flex:1 1 auto;min-height:0;display:flex;gap:2px;background:var(--line)}
+.pane{
+  position:relative;flex:1 1 0;min-width:0;overflow:hidden;
+  display:block;text-decoration:none;background:var(--slab);
+  transition:flex-grow .7s var(--ease),opacity .5s var(--ease);
+}
+.pane img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  clip-path:inset(100% 0 0 0);transform:scale(1.06);
+  filter:saturate(.5) brightness(.6);
+  transition:clip-path 1.4s var(--ease),transform 2.2s var(--ease),filter .7s var(--ease);
+  transition-delay:var(--d,0s);
+}
+.pane.in img{clip-path:inset(0 0 0 0);transform:none}
+.pane-veil{
+  position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(180deg,rgba(5,5,6,.66) 0%,rgba(5,5,6,.14) 26%,rgba(5,5,6,.22) 54%,rgba(5,5,6,.92) 100%);
+}
+.pane-top{position:absolute;top:clamp(18px,2.4vh,26px);left:18px;right:18px;z-index:2}
+.pane-top b{
+  display:block;font-size:clamp(1.5rem,2.3vw,2.1rem);font-weight:400;line-height:1;
+  color:var(--bone);font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.pane-top span{
+  display:block;margin-top:7px;font-size:8.5px;font-weight:600;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ash);
+}
+/* Runs bottom-to-top, the way the buildings do. */
+.pane-name{
+  position:absolute;left:16px;bottom:104px;z-index:2;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-size:clamp(1.35rem,2vw,1.85rem);line-height:1;color:var(--bone);
+  transition:color .45s var(--ease);
+}
+.pane-meta{
+  position:absolute;left:18px;right:18px;bottom:clamp(20px,2.6vh,30px);z-index:2;
+  opacity:.55;transform:translateY(6px);
+  transition:opacity .45s var(--ease),transform .45s var(--ease);
+}
+.pane-meta b{display:block;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bone)}
+.pane-meta i{display:block;margin-top:6px;font-style:normal;font-size:11px;letter-spacing:.05em;color:var(--ash)}
+.pane-rule{
+  position:absolute;left:0;right:0;bottom:0;height:3px;z-index:3;
+  background:var(--ac);transform:scaleX(0);transform-origin:0 50%;
+  transition:transform .6s var(--ease);
+}
+/* Hover and keyboard focus behave identically. */
+.wall:hover .pane,.wall:focus-within .pane{opacity:.58}
+.pane:hover,.pane:focus-visible{flex-grow:1.85;opacity:1 !important}
+.pane:hover img,.pane:focus-visible img{filter:saturate(1) brightness(.95)}
+.pane:hover .pane-name,.pane:focus-visible .pane-name{color:var(--ac)}
+.pane:hover .pane-meta,.pane:focus-visible .pane-meta{opacity:1;transform:none}
+.pane:hover .pane-rule,.pane:focus-visible .pane-rule{transform:scaleX(1)}
+
+/* ══ 2. STATEMENT ════════════════════════════════════════════════════ */
+[data-arth] .ah .say h2{font-size:clamp(2.1rem,5.2vw,4rem) !important;max-width:19ch}
+.say .lede{margin:clamp(46px,5.5vw,72px) 0 0;max-width:58ch}
+.say .lede + .lede{margin-top:22px}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line-2);margin-top:clamp(52px,6.5vw,88px)}
+.num{padding:40px 18px;text-align:center;border-left:1px solid var(--line)}
+.num:first-child{border-left:0}
+.num b{display:block;font-size:clamp(2.4rem,4.8vw,3.7rem);font-weight:400;line-height:1;color:var(--bone);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+/* min-height so a two-line label cannot knock its column out of line */
+.num span{display:block;margin-top:16px;min-height:2.6em;font-size:9.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+
+/* ══ 3. THE FIVE ═════════════════════════════════════════════════════
+   One block each, alternating sides. The whole block is a link, so the
+   picture, the name and the facts are all the same click. */
+.five{display:grid;gap:clamp(76px,9vw,140px);margin-top:clamp(56px,7vw,96px)}
+.pl{
+  display:grid;grid-template-columns:1.12fr .88fr;gap:clamp(34px,4.6vw,72px);
+  align-items:center;text-decoration:none;
+}
+/* Mirrored rows have to flip the track sizes as well as the order, or the
+   picture lands in the narrow column and every other one comes out small. */
+.pl:nth-child(even){grid-template-columns:.88fr 1.12fr}
+.pl:nth-child(even) .pl-fig{order:2}
+/* The figure owns the shape. Left to the image, the HTML `height`
+   attribute lands as a presentational hint of `height:1469px`, and
+   aspect-ratio only computes a height when height is auto — so the
+   picture stretches to its own pixel height instead of cropping. */
+.pl-fig{position:relative;overflow:hidden;background:var(--slab);aspect-ratio:4/3}
+.pl-fig img{
+  display:block;width:100%;height:100%;object-fit:cover;
+  clip-path:inset(100% 0 0 0);transform:scale(1.06);
+  filter:saturate(.9) brightness(.9);
+  transition:clip-path 1.5s var(--ease),transform 2.2s var(--ease),filter .6s var(--ease);
+}
+.pl.in .pl-fig img{clip-path:inset(0 0 0 0);transform:none}
+.pl:hover .pl-fig img,.pl:focus-visible .pl-fig img{filter:saturate(1) brightness(1.02)}
+/* Accent focus rings. The theme's ring is
+   `body.gl-keyboard :is(a,button,…):focus-visible` at (0,3,1) with
+   !important, and the shell only adds .gl-keyboard once the visitor
+   actually tabs — so each of these needs both the plain and the
+   .gl-keyboard form, at root-plus-body depth, to win in either state. */
+:root[data-arth] body .pane:focus-visible,
+:root[data-arth] body.gl-keyboard .pane:focus-visible{outline:2px solid var(--ac) !important;outline-offset:-3px !important}
+:root[data-arth] body .pl:focus-visible,
+:root[data-arth] body.gl-keyboard .pl:focus-visible{outline:2px solid var(--ac) !important;outline-offset:8px !important}
+:root[data-arth] body .cmp-row:focus-visible,
+:root[data-arth] body.gl-keyboard .cmp-row:focus-visible{outline:2px solid var(--ac) !important;outline-offset:-2px !important}
+.pl-where{
+  display:block;font-size:10px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--ac);border-left:2px solid var(--ac);padding-left:12px;margin-bottom:24px;
+}
+[data-arth] .ah .pl h2{font-size:clamp(2.4rem,5vw,4rem) !important;line-height:1 !important}
+.pl-line{margin-top:26px !important;font-size:.98rem;line-height:1.76;color:var(--ash);max-width:44ch}
+.pl-facts{display:flex;flex-wrap:wrap;gap:0;margin-top:32px;border-top:1px solid var(--line)}
+.pl-facts span{
+  padding:13px 22px 13px 0;font-size:.85rem;color:var(--bone);
+  font-variant-numeric:tabular-nums;
+}
+.pl-facts span + span{padding-left:22px;border-left:1px solid var(--line)}
+.pl-go{
+  display:inline-flex;align-items:center;gap:11px;margin-top:34px;
+  font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ac);
+}
+/* The rule extends on hover by scaling, not by growing its width. On a
+   solid 1px bar the two are pixel-identical, but width would relayout the
+   flex line and shunt the label 20px sideways under the cursor. */
+.pl-go em{
+  display:block;width:54px;height:1px;background:var(--ac);font-style:normal;
+  transform:scaleX(.63);transform-origin:0 50%;
+  transition:transform .45s var(--ease);
+}
+.pl:hover .pl-go em,.pl:focus-visible .pl-go em{transform:none}
+
+/* ══ 4. COMPARE ══════════════════════════════════════════════════════ */
+.cmp{margin-top:clamp(44px,5.5vw,74px);border-top:1px solid var(--line-2)}
+.cmp-head,.cmp-row{
+  display:grid;
+  grid-template-columns:minmax(120px,1fr) minmax(112px,.95fr) minmax(74px,.6fr) minmax(112px,.9fr) minmax(120px,.95fr) minmax(94px,.7fr);
+  gap:20px;align-items:baseline;
+}
+.cmp-head{padding:16px 0;border-bottom:1px solid var(--line)}
+.cmp-head span{font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+.cmp-row{
+  padding:26px 0;border-bottom:1px solid var(--line);text-decoration:none;
+  transition:background .35s var(--ease);
+}
+.cmp-row:hover,.cmp-row:focus-visible{background:rgba(236,235,231,.035)}
+.cmp-row > span{font-size:.9rem;color:var(--ash)}
+.cmp-name{font-size:1.5rem !important;line-height:1.1;color:var(--bone) !important;transition:color .35s var(--ease)}
+.cmp-row:hover .cmp-name,.cmp-row:focus-visible .cmp-name{color:var(--ac) !important}
+.cmp-from{color:var(--bone) !important;white-space:nowrap}
+.cmp-foot{margin-top:26px !important;font-size:.82rem;line-height:1.75;color:var(--dim);max-width:62ch}
+
+/* ══ 5. THE THREAD ═══════════════════════════════════════════════════ */
+.thread{background:var(--pitch)}
+.thread-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,5vw,84px);align-items:start;margin-top:clamp(44px,5.5vw,74px)}
+.cert-list{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:0;padding:0}
+.cert-list li{
+  font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--bone);border:1px solid var(--line-2);padding:11px 17px;
+}
+.thread-note{margin-top:26px !important;font-size:.88rem;line-height:1.78;color:var(--ash);max-width:52ch}
+.thread-note + .thread-note{margin-top:18px !important;color:var(--dim);font-size:.84rem}
+
+/* ══ 6. CLOSE ════════════════════════════════════════════════════════ */
+.close{position:relative;overflow:hidden}
+.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 52%;opacity:.3;filter:saturate(.7)}
+.close-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,6,.93),rgba(5,5,6,.74) 46%,rgba(5,5,6,.96))}
+.close-in{position:relative;padding:clamp(96px,13vw,180px) 0}
+[data-arth] .ah .close h2{font-size:clamp(2.3rem,5.2vw,4.1rem) !important}
+.close .lede{color:#d6d1c7;margin-bottom:42px}
+.close-btns{display:flex;gap:14px;flex-wrap:wrap}
+.disc{font-size:10.5px;line-height:2;color:var(--dim);border-top:1px solid var(--line);padding:30px 0 68px;margin:0}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width:1080px){
+  .cmp-head,.cmp-row{grid-template-columns:minmax(104px,1fr) minmax(96px,.9fr) minmax(64px,.5fr) minmax(100px,.85fr) minmax(104px,.9fr) minmax(84px,.6fr);gap:14px}
+  .cmp-name{font-size:1.25rem !important}
+  .cmp-row > span,.cmp-head span{font-size:.82rem}
+}
+@media (max-width:900px){
+  /* The wall unrolls: five landscape bands, everything already open,
+     because there is no hover to open it with. */
+  .hero{height:auto !important;min-height:0;display:block}
+  .wall{display:block;background:transparent}
+  .pane{height:clamp(190px,42vw,300px);margin-bottom:2px;opacity:1 !important}
+  .pane:hover,.pane:focus-visible{flex-grow:1}
+  .wall:hover .pane,.wall:focus-within .pane{opacity:1}
+  .pane img{filter:saturate(.92) brightness(.82)}
+  .pane-name{
+    writing-mode:horizontal-tb;transform:none;
+    left:20px;bottom:auto;top:clamp(16px,4vw,24px);right:20px;
+    font-size:clamp(1.5rem,6vw,2.1rem);color:var(--ac);
+  }
+  .pane-top{left:auto;right:20px;top:clamp(18px,4.2vw,26px);text-align:right}
+  .pane-meta{opacity:1;transform:none;left:20px;right:20px;bottom:18px}
+  .pane-rule{transform:scaleX(1)}
+  .pl,.thread-in,.pl:nth-child(even){grid-template-columns:1fr}
+  .pl:nth-child(even) .pl-fig{order:0}
+  .pl-line{max-width:52ch}
+}
+@media (max-width:760px){
+  .nums{grid-template-columns:1fr 1fr}
+  .num:nth-child(3){border-left:0}
+  .num{border-top:1px solid var(--line)}
+  .num:first-child,.num:nth-child(2){border-top:0}
+  .pl-fig{aspect-ratio:3/2}
+  .pl-facts span{padding:11px 16px 11px 0;font-size:.8rem}
+  .pl-facts span + span{padding-left:16px}
+  /* The comparison stacks into labelled rows rather than scrolling
+     sideways — six columns on a phone is unreadable either way. */
+  .cmp-head{display:none}
+  .cmp-row{grid-template-columns:1fr;gap:0;padding:22px 0}
+  .cmp-row > span{display:flex;justify-content:space-between;gap:18px;padding:7px 0;text-align:right}
+  .cmp-row > span::before{content:attr(data-l);color:var(--dim);font-size:.78rem;letter-spacing:.04em;text-align:left}
+  .cmp-name{display:block !important;text-align:left !important;margin-bottom:8px;font-size:1.6rem !important}
+  .cmp-name::before{display:none}
+}
+
+/* Without motion nothing wipes, slides or grows. */
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none}
+  .pane img,.pl-fig img{clip-path:none;transform:none;transition:none}
+  .pane,.pane-meta,.pane-name,.pane-rule,.pl-go em,.cmp-row{transition:none}
+  .pane:hover,.pane:focus-visible{flex-grow:1}
+  .wall:hover .pane,.wall:focus-within .pane{opacity:1}
+  .pane img{filter:saturate(.92) brightness(.78)}
+  .pane-meta{opacity:1;transform:none}
+  .pane-rule{transform:scaleX(1)}
+  [data-arth] .cta:hover{transform:none}
+  .noir-grain{display:none}
+}
+
+@media print{
+  .hero{height:auto}
+  .wall{display:block}
+  .pane{height:240px}
+  .pane img,.pl-fig img{clip-path:none;transform:none}
+  .close-bg,.close-veil,.noir-grain,.noir-vig{display:none}
+}
+</style>
+</head>
+<body class="dark-mode">
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
+    <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<div class="noir-vig" aria-hidden="true"></div>
+<div class="noir-grain" aria-hidden="true"></div>
+
+<main class="ah">
+
+<!-- ══ 1. HERO — THE WALL ══════════════════════════════════════════ -->
+<header class="hero" id="top">
+  <div class="hero-head">
+    <div class="ah-wrap">
+      <span class="eyebrow">Arthaland &middot; sold by GLRA Realty</span>
+      <h1 class="hero-name">Five buildings, four cities, one standard.</h1>
+      <p class="hero-sub">Pick one. Each opens into its own page.</p>
+    </div>
+  </div>
+
+  <div class="wall" id="wall">
+
+    <a class="pane" href="/sondris.html" style="--ac:#c99a4e" aria-label="Sondris, Makati. 37 storeys, turnover 2030.">
+      <img src="/img/arthaland/sondris/26-tower-sky@800.webp"
+           srcset="/img/arthaland/sondris/26-tower-sky@800.webp 800w, /img/arthaland/sondris/26-tower-sky@1280.webp 1280w"
+           sizes="(max-width:900px) 100vw, 22vw" style="object-position:50% 45%"
+           alt="Sondris seen from the street, its bronze fins rising above the planted podium screen. Artist's perspective."
+           width="2560" height="1440" fetchpriority="high">
+      <span class="pane-veil" aria-hidden="true"></span>
+      <span class="pane-top" aria-hidden="true"><b class="tab-num">37</b><span>Storeys</span></span>
+      <span class="pane-name f-sondris">Sondris</span>
+      <span class="pane-meta"><b>Makati</b><i>Turnover 2030</i></span>
+      <span class="pane-rule" aria-hidden="true"></span>
+    </a>
+
+    <a class="pane" href="/eluria.html" style="--ac:#9cae94;--d:.09s" aria-label="Eluria, Makati. 31 storeys, now selling.">
+      <img src="/img/arthaland/eluria/01-dusk-tower@800.webp"
+           srcset="/img/arthaland/eluria/01-dusk-tower@800.webp 800w, /img/arthaland/eluria/01-dusk-tower@1280.webp 1280w"
+           sizes="(max-width:900px) 100vw, 22vw" style="object-position:42% 50%"
+           alt="Eluria at dusk on Rada Street, its planted terraces lit against the Makati skyline. Artist's perspective."
+           width="2560" height="1920" loading="lazy">
+      <span class="pane-veil" aria-hidden="true"></span>
+      <span class="pane-top" aria-hidden="true"><b class="tab-num">31</b><span>Storeys</span></span>
+      <span class="pane-name f-eluria">Eluria</span>
+      <span class="pane-meta"><b>Makati</b><i>Now selling</i></span>
+      <span class="pane-rule" aria-hidden="true"></span>
+    </a>
+
+    <a class="pane" href="/liv.html" style="--ac:#6fa9b5;--d:.18s" aria-label="Liv, Katipunan, Quezon City. 46 storeys, turnover 2031.">
+      <img src="/img/arthaland/liv/02-tower-day@800.webp"
+           srcset="/img/arthaland/liv/02-tower-day@800.webp 800w, /img/arthaland/liv/02-tower-day@1280.webp 1280w"
+           sizes="(max-width:900px) 100vw, 22vw" style="object-position:45% 55%"
+           alt="Liv standing above the trees on Katipunan Avenue in daylight. Artist's perspective."
+           width="2560" height="1556" loading="lazy">
+      <span class="pane-veil" aria-hidden="true"></span>
+      <span class="pane-top" aria-hidden="true"><b class="tab-num">46</b><span>Storeys</span></span>
+      <span class="pane-name f-liv">Liv</span>
+      <span class="pane-meta"><b>Quezon City</b><i>Turnover 2031</i></span>
+      <span class="pane-rule" aria-hidden="true"></span>
+    </a>
+
+    <a class="pane" href="/una.html" style="--ac:#cf8567;--d:.27s" aria-label="Una Apartments, Sevina Park, Bi&ntilde;an, Laguna. Three towers of 17 to 22 storeys, first turnover 2026.">
+      <img src="/img/arthaland/una/01-golden-hour@800.webp"
+           srcset="/img/arthaland/una/01-golden-hour@800.webp 800w, /img/arthaland/una/01-golden-hour@1280.webp 1280w"
+           sizes="(max-width:900px) 100vw, 22vw" style="object-position:52% 45%"
+           alt="The Una Apartments towers at Sevina Park at golden hour, seen over the tree line. Artist's perspective."
+           width="2560" height="1440" loading="lazy">
+      <span class="pane-veil" aria-hidden="true"></span>
+      <span class="pane-top" aria-hidden="true"><b class="tab-num">17&ndash;22</b><span>Storeys</span></span>
+      <span class="pane-name f-una">Una</span>
+      <span class="pane-meta"><b>Bi&ntilde;an, Laguna</b><i>From 2026</i></span>
+      <span class="pane-rule" aria-hidden="true"></span>
+    </a>
+
+    <a class="pane" href="/lucima.html" style="--ac:#cbbd9a;--d:.36s" aria-label="Lucima, Cebu Business Park. 37 storeys, completed and turned over in 2024.">
+      <img src="/img/arthaland/lucima/01-aerial@800.webp"
+           srcset="/img/arthaland/lucima/01-aerial@800.webp 800w, /img/arthaland/lucima/01-aerial@1280.webp 1280w"
+           sizes="(max-width:900px) 100vw, 22vw" style="object-position:47% 58%"
+           alt="Lucima standing in Cebu Business Park at dusk, photographed from the air."
+           width="2560" height="1920" loading="lazy">
+      <span class="pane-veil" aria-hidden="true"></span>
+      <span class="pane-top" aria-hidden="true"><b class="tab-num">37</b><span>Storeys</span></span>
+      <span class="pane-name f-lucima">Lucima</span>
+      <span class="pane-meta"><b>Cebu</b><i>Completed 2024</i></span>
+      <span class="pane-rule" aria-hidden="true"></span>
+    </a>
+
+  </div>
+</header>
+
+<!-- ══ 2. STATEMENT ════════════════════════════════════════════════ -->
+<section class="ah-sec say" id="about">
+  <div class="ah-wrap">
+    <h2 class="rv">A developer that builds few things, and certifies all of them.</h2>
+    <p class="lede rv" style="--d:.1s">Arthaland is a Philippine property developer listed on the Philippine Stock Exchange. It puts its buildings through third-party sustainability certification as a matter of course &mdash; LEED, WELL, EDGE and BERDE, three international standards and one Philippine, pursued together rather than collected one at a time. GLRA Realty is an accredited seller of the five developments below.</p>
+    <p class="lede rv" style="--d:.16s">They are not variations on each other. Sondris and Eluria are two very different answers to the same square kilometre of Makati. Liv is a student address on Katipunan and Una is a first home in a Laguna university town. Lucima is finished and standing in Cebu. Each has its own page, built the same way, so you can read them against one another.</p>
+    <div class="nums rv" style="--d:.22s">
+      <div class="num"><b>5</b><span>Developments</span></div>
+      <div class="num"><b class="tab-num">2,538</b><span>Residences in total</span></div>
+      <div class="num"><b>4</b><span>Cities</span></div>
+      <div class="num"><b>1</b><span>Already handed over</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. THE FIVE ═════════════════════════════════════════════════ -->
+<section class="ah-sec" id="properties" style="padding-top:0">
+  <div class="ah-wrap">
+    <span class="eyebrow rv">The portfolio</span>
+    <h2 class="rv">Five, in order of scale.</h2>
+
+    <div class="five">
+
+      <a class="pl rv" href="/sondris.html" style="--ac:#c99a4e">
+        <figure class="pl-fig">
+          <img src="/img/arthaland/sondris/23-pool-tower@1280.webp"
+               srcset="/img/arthaland/sondris/23-pool-tower@800.webp 800w, /img/arthaland/sondris/23-pool-tower@1280.webp 1280w"
+               sizes="(max-width:900px) 90vw, 52vw"
+               alt="The Sondris tower rising over the 25 metre pool on its amenity deck. Artist's perspective."
+               loading="lazy" width="2560" height="1469">
+        </figure>
+        <div>
+          <span class="pl-where">Legazpi Village, Makati</span>
+          <h2 class="f-sondris">Sondris</h2>
+          <p class="pl-line">A joint venture with Mitsui Fudosan (Asia). Thirty-seven storeys on Arnaiz Avenue facing the two-storey roofs of San Lorenzo, which is the reason the views hold. From the two-bedroom up, the balcony becomes an enclosed Sun Room.</p>
+          <div class="pl-facts">
+            <span class="tab-num">252 residences</span>
+            <span class="tab-num">46&ndash;230 sqm</span>
+            <span class="tab-num">From &#8369;21.1M</span>
+          </div>
+          <span class="pl-go"><em aria-hidden="true"></em>View Sondris</span>
+        </div>
+      </a>
+
+      <a class="pl rv" href="/eluria.html" style="--ac:#9cae94">
+        <figure class="pl-fig">
+          <img src="/img/arthaland/eluria/07-pool@1280.webp"
+               srcset="/img/arthaland/eluria/07-pool@800.webp 800w, /img/arthaland/eluria/07-pool@1280.webp 1280w"
+               sizes="(max-width:900px) 90vw, 52vw"
+               alt="The planted lap pool under a timber ceiling at Eluria, open to the Makati skyline. Artist's perspective."
+               loading="lazy" width="2560" height="1440">
+        </figure>
+        <div>
+          <span class="pl-where">Rada Street, Makati</span>
+          <h2 class="f-eluria">Eluria</h2>
+          <p class="pl-line">Thirty-seven residences in a thirty-one storey building, two to a floor, each reached by a private lift that opens inside the home. Service is run by Hospitality Directors trained at The International Butler Academy.</p>
+          <div class="pl-facts">
+            <span class="tab-num">37 residences</span>
+            <span class="tab-num">288&ndash;580 sqm</span>
+            <span>Price on request</span>
+          </div>
+          <span class="pl-go"><em aria-hidden="true"></em>View Eluria</span>
+        </div>
+      </a>
+
+      <a class="pl rv" href="/liv.html" style="--ac:#6fa9b5">
+        <figure class="pl-fig">
+          <img src="/img/arthaland/liv/01-night@1280.webp"
+               srcset="/img/arthaland/liv/01-night@800.webp 800w, /img/arthaland/liv/01-night@1280.webp 1280w"
+               sizes="(max-width:900px) 90vw, 52vw"
+               alt="Liv lit at night above the trees on Katipunan Avenue, Loyola Heights. Artist's perspective."
+               loading="lazy" width="2560" height="1556">
+        </figure>
+        <div>
+          <span class="pl-where">Katipunan Avenue, Quezon City</span>
+          <h2 class="f-liv">Liv</h2>
+          <p class="pl-line">Forty-six storeys on Katipunan with a private bridgeway into Ateneo Gate 1. Studios start at 24 sqm, which makes it the entry point to the whole portfolio &mdash; bought by parents for a student, and kept by the student who stays after graduating.</p>
+          <div class="pl-facts">
+            <span class="tab-num">748 residences</span>
+            <span class="tab-num">24&ndash;70 sqm</span>
+            <span class="tab-num">From &#8369;8.3M</span>
+          </div>
+          <span class="pl-go"><em aria-hidden="true"></em>View Liv</span>
+        </div>
+      </a>
+
+      <a class="pl rv" href="/una.html" style="--ac:#cf8567">
+        <figure class="pl-fig">
+          <img src="/img/arthaland/una/09-studio-living@1280.webp"
+               srcset="/img/arthaland/una/09-studio-living@800.webp 800w, /img/arthaland/una/09-studio-living@1280.webp 1280w"
+               sizes="(max-width:900px) 90vw, 52vw"
+               alt="A studio at Una Apartments, styled as a model unit, with a balcony onto the park."
+               loading="lazy" width="2560" height="1707">
+        </figure>
+        <div>
+          <span class="pl-where">Sevina Park, Bi&ntilde;an, Laguna</span>
+          <h2 class="f-una">Una</h2>
+          <p class="pl-line">Three towers inside Sevina Park, next door to De La Salle Laguna. Studios and one-bedrooms handed over with air conditioning, kitchen, bed and wardrobe already in &mdash; a first home you move into rather than fit out.</p>
+          <div class="pl-facts">
+            <span class="tab-num">1,236 residences</span>
+            <span class="tab-num">28&ndash;37 sqm</span>
+            <span class="tab-num">From &#8369;5.8M</span>
+          </div>
+          <span class="pl-go"><em aria-hidden="true"></em>View Una</span>
+        </div>
+      </a>
+
+      <a class="pl rv" href="/lucima.html" style="--ac:#cbbd9a">
+        <figure class="pl-fig">
+          <img src="/img/arthaland/lucima/02-facade@1280.webp"
+               srcset="/img/arthaland/lucima/02-facade@800.webp 800w, /img/arthaland/lucima/02-facade@1280.webp 1280w"
+               sizes="(max-width:900px) 90vw, 52vw"
+               alt="The Lucima facade in late afternoon light, looking out over Cebu towards the water."
+               loading="lazy" width="2560" height="1440">
+        </figure>
+        <div>
+          <span class="pl-where">Cebu Business Park</span>
+          <h2 class="f-lucima">Lucima</h2>
+          <p class="pl-line">The only one of the five that is finished. Turned over in 2024, thirty-seven storeys on Cardinal Rosales Avenue with 2.9 metre ceilings. What is available is resale and remaining developer inventory, and you can walk into it this week.</p>
+          <div class="pl-facts">
+            <span class="tab-num">265 residences</span>
+            <span class="tab-num">38&ndash;318 sqm</span>
+            <span>Price on request</span>
+          </div>
+          <span class="pl-go"><em aria-hidden="true"></em>View Lucima</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. COMPARE ══════════════════════════════════════════════════ -->
+<section class="ah-sec" id="compare" style="padding-top:0">
+  <div class="ah-wrap">
+    <h2 class="rv">Side by side.</h2>
+    <div class="cmp">
+      <div class="cmp-head" aria-hidden="true">
+        <span>Property</span><span>Where</span><span>Units</span><span>Sizes</span><span>Status</span><span>From</span>
+      </div>
+      <a class="cmp-row rv" href="/sondris.html" style="--ac:#c99a4e">
+        <span class="cmp-name f-sondris">Sondris</span>
+        <span data-l="Where">Makati</span>
+        <span data-l="Units" class="tab-num">252</span>
+        <span data-l="Sizes" class="tab-num">46&ndash;230 sqm</span>
+        <span data-l="Status">Turnover 2030</span>
+        <span data-l="From" class="cmp-from tab-num">&#8369;21.1M</span>
+      </a>
+      <a class="cmp-row rv" href="/eluria.html" style="--ac:#9cae94;--d:.05s">
+        <span class="cmp-name f-eluria">Eluria</span>
+        <span data-l="Where">Makati</span>
+        <span data-l="Units" class="tab-num">37</span>
+        <span data-l="Sizes" class="tab-num">288&ndash;580 sqm</span>
+        <span data-l="Status">Now selling</span>
+        <span data-l="From" class="cmp-from">On request</span>
+      </a>
+      <a class="cmp-row rv" href="/liv.html" style="--ac:#6fa9b5;--d:.1s">
+        <span class="cmp-name f-liv">Liv</span>
+        <span data-l="Where">Quezon City</span>
+        <span data-l="Units" class="tab-num">748</span>
+        <span data-l="Sizes" class="tab-num">24&ndash;70 sqm</span>
+        <span data-l="Status">Turnover 2031</span>
+        <span data-l="From" class="cmp-from tab-num">&#8369;8.3M</span>
+      </a>
+      <a class="cmp-row rv" href="/una.html" style="--ac:#cf8567;--d:.15s">
+        <span class="cmp-name f-una">Una</span>
+        <span data-l="Where">Bi&ntilde;an, Laguna</span>
+        <span data-l="Units" class="tab-num">1,236</span>
+        <span data-l="Sizes" class="tab-num">28&ndash;37 sqm</span>
+        <span data-l="Status">From Dec 2026</span>
+        <span data-l="From" class="cmp-from tab-num">&#8369;5.8M</span>
+      </a>
+      <a class="cmp-row rv" href="/lucima.html" style="--ac:#cbbd9a;--d:.2s">
+        <span class="cmp-name f-lucima">Lucima</span>
+        <span data-l="Where">Cebu</span>
+        <span data-l="Units" class="tab-num">265</span>
+        <span data-l="Sizes" class="tab-num">38&ndash;318 sqm</span>
+        <span data-l="Status">Completed 2024</span>
+        <span data-l="From" class="cmp-from">On request</span>
+      </a>
+    </div>
+    <p class="cmp-foot rv">Entry figures are the developer's own published starting prices and change without notice. Eluria and Lucima are quoted on request rather than listed. Unit availability moves week to week; ask and we will send what is currently open, with a computation against the specific unit.</p>
+  </div>
+</section>
+
+<!-- ══ 5. THE THREAD ═══════════════════════════════════════════════ -->
+<section class="ah-sec thread" id="thread">
+  <div class="ah-wrap">
+    <span class="eyebrow rv">What they share</span>
+    <h2 class="rv">The same four certifications, on every one.</h2>
+    <div class="thread-in">
+      <div class="rv" style="--d:.08s">
+        <ul class="cert-list">
+          <li>LEED</li>
+          <li>WELL</li>
+          <li>EDGE</li>
+          <li>BERDE</li>
+        </ul>
+        <p class="thread-note">Lucima and Eluria are pre-certified LEED Gold. Sondris, Liv and Una are registered and targeting the same four standards. Until a building completes, those are targets rather than awards, and each page says which it is.</p>
+        <p class="thread-note">Sevina Park, where Una stands, is separately certified Platinum under both LEED for Neighborhood Development and LEED for Homes.</p>
+      </div>
+      <div class="rv" style="--d:.16s">
+        <p class="lede" style="margin-top:0">Certification is the part of a developer's claim that somebody else has to sign. It is also the part a buyer can check years later, which is why it is the thread worth following across five buildings that otherwise have very little in common &mdash; a 580 sqm penthouse on Rada Street and a 24 sqm studio on Katipunan are not the same product, and this page does not pretend otherwise.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. ENQUIRE ══════════════════════════════════════════════════ -->
+<section class="close" id="enquire">
+  <img class="close-bg" src="/img/arthaland/lucima/01-aerial@1280.webp" alt="" aria-hidden="true" loading="lazy" width="2560" height="1920">
+  <div class="close-veil"></div>
+  <div class="close-in">
+    <div class="ah-wrap">
+      <h2 class="rv">Not sure which of the five.</h2>
+      <p class="lede rv" style="--d:.08s">Tell us the budget, the city and who is going to live in it, and we will come back with the two that actually fit and the one to rule out. Floor plans, current availability and a computation follow from there.</p>
+      <div class="close-btns rv" style="--d:.16s">
+        <a class="cta" href="/#contact">Enquire</a>
+        <a class="cta ghost" href="tel:+639171774572">0917 177 4572</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ah-wrap">
+  <p class="disc">
+    GLRA Realty is an accredited seller of these developments. Arthaland Corporation and its project companies are the developers and the source of all plans, prices and images shown here.<br>
+    Images of Sondris, Eluria, Liv and Una are artist's perspectives supplied by the developer and are indicative only; furniture, appliances and accessories shown are not deliverables. Una's interiors are styled model units and do not represent the actual delivered unit &mdash; ask for the deliverables schedule for the specific tower before signing. Lucima's images are photographs of the completed building. Areas and measurements are approximate, and the developer reserves the right to make additions, deletions and modifications to the plans.<br>
+    GLRA Realty Group. Catherine SB Sampayo, Licensed Real Estate Broker.
+  </p>
+</div>
+
+</main>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Arthaland</h4><ul>
+      <li><a href="/sondris.html">Sondris</a></li>
+      <li><a href="/eluria.html">Eluria</a></li>
+      <li><a href="/liv.html">Liv</a></li>
+      <li><a href="/una.html">Una Apartments</a></li>
+      <li><a href="/lucima.html">Lucima</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Neighborhoods</h4><ul>
+      <li><a href="/living-in-bgc.html">BGC</a></li>
+      <li><a href="/living-in-makati.html">Makati</a></li>
+      <li><a href="/living-in-alabang.html">Alabang</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Contact</h4>
+      <p><i class="fas fa-phone-alt" style="margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<!-- No floating contact column, no chat widget and no text-size button on
+     the Arthaland pages (Rafael's call). Enquire above is the contact point. -->
+
+<script>
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Hero: fill exactly the viewport below the site chrome ──────────
+     The shell injects a top strip and a 90px sticky navbar after this
+     script parses, so 100svh overflows the fold. Measure instead. Below
+     900px the wall is stacked and sets its own height. */
+  var hero = document.getElementById('top');
+  function sizeHero() {
+    if (!hero) return;
+    if (window.innerWidth <= 900) { hero.style.height = ''; return; }
+    hero.style.height = Math.max(600, window.innerHeight - hero.offsetTop) + 'px';
+  }
+  sizeHero();
+  window.addEventListener('load', sizeHero);
+  setTimeout(sizeHero, 900);
+  window.addEventListener('resize', sizeHero);
+
+  /* ── The aperture: open images and raise text as they arrive ──────── */
+  var targets = document.querySelectorAll('.rv,.pane,.pl');
+  if (!('IntersectionObserver' in window) || reduce) {
+    for (var i = 0; i < targets.length; i++) targets[i].classList.add('in');
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+    for (var j = 0; j < targets.length; j++) io.observe(targets[j]);
+  }
+})();
+</script>
+
+<script src="/js/main.js"></script>
+<script>
+/* Dark-locked page: main.js applies a saved light preference on load, which
+   would half-light the chrome here. Re-assert dark for the shell without
+   touching localStorage, so the rest of the site keeps the visitor's own
+   choice. */
+document.body.classList.add('dark-mode');
+document.documentElement.classList.add('dark-mode-pre');
+if (typeof syncLogos === 'function') syncLogos();
+</script>
+<script src="/js/brutalist-shell.js" defer></script>
+</body>
+</html>
