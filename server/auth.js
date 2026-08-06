@@ -38,18 +38,64 @@ function touchLastSeen(userId) {
   Account.updateOne({ _id: userId }, { $set: { lastSeen: new Date() } }).catch(() => {});
 }
 
-function verifyToken(req, res, next) {
+// Live account-state cache for verifyToken: { userId: {at, state} }.
+// A JWT is valid for JWT_EXPIRES_IN (8h by default) and carries role/identity
+// as *claims* — so before this check, deactivating or demoting someone left
+// their existing token working at full privilege until it expired. Re-reading
+// the account on every request would add a DB round-trip to every API call,
+// so the state is cached briefly: revocation takes effect within ACCOUNT_TTL_MS
+// instead of within 8 hours.
+const _accountState = new Map();
+const ACCOUNT_TTL_MS = 30 * 1000;
+
+async function loadAccountState(userId) {
+  const hit = _accountState.get(userId);
+  if (hit && Date.now() - hit.at < ACCOUNT_TTL_MS) return hit.state;
+  const acc = await Account.findById(userId).select('isActive status role').lean();
+  const state = acc
+    ? { exists: true, isActive: acc.isActive !== false, status: acc.status, role: acc.role }
+    : { exists: false };
+  _accountState.set(userId, { at: Date.now(), state });
+  return state;
+}
+
+// Call after changing an account so the next request sees it immediately
+// rather than waiting out the cache window.
+function invalidateAccountState(userId) {
+  if (userId) _accountState.delete(String(userId));
+}
+
+async function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Authentication required' });
+
+  let payload;
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
-    touchLastSeen(payload.sub); // best-effort presence tracking
-    next();
+    payload = jwt.verify(token, JWT_SECRET);
   } catch (e) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
+
+  try {
+    const state = await loadAccountState(payload.sub);
+    if (!state.exists) return res.status(401).json({ error: 'Account no longer exists' });
+    if (!state.isActive) return res.status(403).json({ error: 'Account is inactive' });
+    if (state.status === 'pending') {
+      return res.status(403).json({ error: 'Account is awaiting admin approval' });
+    }
+    // Trust the stored role over the token claim, so a demotion applies at once.
+    payload.role = state.role || payload.role;
+  } catch (e) {
+    // A transient DB error must not lock the owner out of her own dashboard.
+    // The signature is still cryptographically valid, so fall through to the
+    // pre-existing behaviour and log it rather than failing the request.
+    console.error('Account state check failed (allowing token):', e.message);
+  }
+
+  req.user = payload;
+  touchLastSeen(payload.sub); // best-effort presence tracking
+  next();
 }
 
 function requireAdmin(req, res, next) {
@@ -140,6 +186,7 @@ async function seedDefaultAdmin() {
 module.exports = {
   signToken,
   verifyToken,
+  invalidateAccountState,
   requireAdmin,
   requirePermission,
   logAudit,

@@ -114,10 +114,73 @@ cloudinary.config({
 // Trust the first proxy (needed for correct req.ip behind Render/Heroku/etc.)
 app.set('trust proxy', 1);
 
-// Helmet — sensible default security headers
+// Helmet — sensible default security headers.
+// CSP is configured separately below rather than here, so keep it off in the
+// base call. Everything else (HSTS, X-Frame-Options, nosniff, ...) stays on.
 app.use(helmet({
-  contentSecurityPolicy: false, // disabled because static pages use inline scripts/styles; revisit later
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+}));
+
+// ── CONTENT SECURITY POLICY ─────────────────────────────────
+// Split in two on purpose.
+//
+// 1. ENFORCED: only directives that cannot plausibly break this site. None of
+//    the pages use <object>/<embed>, none set a <base> tag, and no <form> has
+//    an external action, so locking those down costs nothing and shuts off
+//    clickjacking, base-tag hijacking and form exfiltration today.
+//
+// 2. REPORT-ONLY: the full policy, including script/style/img sources. The
+//    pages are full of inline <script> and style="" so this still needs
+//    'unsafe-inline' to be useful, but it does stop a successful injection
+//    from loading or phoning home to an attacker-controlled domain. It runs in
+//    report-only first so a missed origin shows up as a console warning instead
+//    of a blank page. Once the console is clean across every page, move these
+//    directives into CSP_ENFORCED.
+const CSP_BASELINE = {
+  'frame-ancestors': ["'self'"],
+  'object-src': ["'none'"],
+  'base-uri': ["'self'"],
+  'form-action': ["'self'"]
+};
+
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: false,
+  directives: {
+    // This policy deliberately restricts only the four directives above; it is
+    // not trying to control where resources load from (that is the report-only
+    // policy's job). Helmet refuses a policy with no default-src unless you say
+    // so explicitly, hence the alarming-looking constant.
+    'default-src': helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
+    ...CSP_BASELINE
+  }
+}));
+
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: false,
+  reportOnly: true,
+  directives: {
+    'default-src': ["'self'"],
+    // cdn.jsdelivr.net = Swiper (home page hero slider).
+    // clarity.ms = Microsoft Clarity, loaded on admin.html only.
+    'script-src': ["'self'", "'unsafe-inline'",
+      'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
+      'https://www.clarity.ms', 'https://c.clarity.ms'],
+    'style-src': ["'self'", "'unsafe-inline'",
+      'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
+    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+    // Listing photos come from Cloudinary; data:/blob: cover inline SVG
+    // placeholders and the admin's local image previews before upload.
+    'img-src': ["'self'", 'data:', 'blob:',
+      'https://res.cloudinary.com', 'https://images.unsplash.com',
+      'https://www.clarity.ms', 'https://c.clarity.ms'],
+    'connect-src': ["'self'", 'https://www.clarity.ms', 'https://c.clarity.ms',
+      'https://api.cloudinary.com'],
+    'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
+    'media-src': ["'self'"],
+    'worker-src': ["'self'"],                            // service worker
+    ...CSP_BASELINE
+  }
 }));
 
 // CORS — strict allowlist
@@ -126,11 +189,26 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map(s => s.trim())
   .filter(Boolean);
 
+// If ALLOWED_ORIGINS is not configured, fall back to this site's own origin
+// rather than to "*". The previous behaviour treated an empty allowlist as
+// "allow everything" while still sending credentials — so forgetting to set
+// one env var silently opened the API to every website on the internet.
+const DEFAULT_ORIGINS = [
+  'https://glrarealty.com', 'https://www.glrarealty.com'
+];
+const corsAllowlist = allowedOrigins.length ? allowedOrigins : DEFAULT_ORIGINS;
+if (!allowedOrigins.length) {
+  console.warn('⚠️ ALLOWED_ORIGINS not set — defaulting CORS to ' + corsAllowlist.join(', '));
+}
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow same-origin / no-origin requests (curl, mobile apps, server-to-server)
+    // No Origin header = same-origin navigation, curl, or a server-to-server
+    // call. Browsers always send Origin on cross-site requests, so this is safe.
     if (!origin) return callback(null, true);
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (corsAllowlist.includes(origin)) return callback(null, true);
+    // localhost on any port, for local development only.
+    if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
     return callback(new Error('CORS: origin not allowed'));
@@ -154,17 +232,65 @@ app.use(mongoSanitize());
 // express.static so navigations are observed. Privacy-preserving: no IP, cookie,
 // or personal data is stored — just an anonymous daily page-view count. It never
 // blocks or breaks a page load (fully fire-and-forget).
+
+// Whitelist of countable page slugs, read once at boot from the real files in
+// public/. Counting an arbitrary req.path would let anyone inflate the stats
+// document to any size just by requesting /aaa, /aab, /aac...
+const COUNTABLE_PAGES = (() => {
+  const set = new Set(['home', 'property-detail']);
+  try {
+    fs.readdirSync(path.join(__dirname, 'public'))
+      .filter(f => f.endsWith('.html') && f !== 'admin.html' && f !== '404.html')
+      .forEach(f => set.add(f.replace(/\.html$/, '')));
+  } catch (e) { /* fall back to the two defaults */ }
+  return set;
+})();
+
+function pageSlug(p) {
+  if (p === '/' || p === '/index.html') return 'home';
+  if (p.startsWith('/property/')) return 'property-detail';
+  const slug = p.replace(/^\//, '').replace(/\.html$/, '');
+  return COUNTABLE_PAGES.has(slug) ? slug : null;
+}
+
+// Referrer bucketed to a coarse source, never the full URL — "google" tells
+// Catherine what she needs; the exact query string does not, and storing it
+// would turn a plain counter into personal data.
+function refSlug(referer, host) {
+  if (!referer) return 'direct';
+  let h;
+  try { h = new URL(referer).hostname.toLowerCase().replace(/^www\./, ''); }
+  catch (e) { return 'other'; }
+  if (!h || h === String(host || '').toLowerCase().replace(/^www\./, '')) return 'direct';
+  if (h.includes('google')) return 'google';
+  if (h.includes('facebook') || h === 'm.me' || h.includes('messenger')) return 'facebook';
+  if (h.includes('instagram')) return 'instagram';
+  if (h.includes('bing')) return 'bing';
+  if (h.includes('tiktok')) return 'tiktok';
+  if (h.includes('youtube')) return 'youtube';
+  if (h.includes('linkedin')) return 'linkedin';
+  if (h.includes('lamudi') || h.includes('dotproperty') || h.includes('carousell')) return 'listing-portal';
+  return 'other';
+}
+
 app.use((req, res, next) => {
   try {
     if (req.method === 'GET') {
       const p = req.path;
       const accept = req.headers['accept'] || '';
-      const isPage = (p === '/' || p.endsWith('.html'));
+      const isPage = (p === '/' || p.endsWith('.html') || p.startsWith('/property/'));
       const isPublic = !p.startsWith('/api') && !p.startsWith('/admin');
-      if (isPage && isPublic && accept.includes('text/html')) {
+      // A speculative prefetch is the browser guessing, not a person reading.
+      // Counting it would quietly inflate every number on the dashboard.
+      const speculative = /prefetch|prerender/i.test(req.headers['sec-purpose'] || req.headers['purpose'] || '');
+      if (isPage && isPublic && !speculative && accept.includes('text/html')) {
         const now = new Date();
         const day = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-        require('./server/db').SiteStat.updateOne({ day }, { $inc: { views: 1 } }, { upsert: true }).catch(() => {});
+        const inc = { views: 1 };
+        const slug = pageSlug(p);
+        if (slug) inc['pages.' + slug] = 1;
+        inc['refs.' + refSlug(req.headers.referer, req.headers.host)] = 1;
+        require('./server/db').SiteStat.updateOne({ day }, { $inc: inc }, { upsert: true }).catch(() => {});
       }
     }
   } catch (e) { /* analytics must never break a page load */ }
@@ -706,7 +832,15 @@ async function buildSitemap(req, res) {
       ['/cost-of-ownership.html', 'monthly', '0.6'], ['/guide.html', 'monthly', '0.6'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
-      ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5']
+      ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5'],
+      ['/privacy.html', 'yearly', '0.3'],
+      // Arthaland showcase: the hub plus one page per development. High priority
+      // because these are the deepest, most linkable pages on the site and each
+      // targets a distinct high-intent search ("Sondris Makati", "Liv Katipunan").
+      ['/arthaland.html', 'monthly', '0.9'],
+      ['/sondris.html', 'monthly', '0.8'], ['/eluria.html', 'monthly', '0.8'],
+      ['/liv.html', 'monthly', '0.8'], ['/una.html', 'monthly', '0.8'],
+      ['/lucima.html', 'monthly', '0.8']
     ];
     const props = await Property.find({ status: 'available' },
       { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1 })
@@ -1177,8 +1311,10 @@ app.post('/api/admin/login',
               <p>Your GLRA admin account (<strong>${account.email}</strong>) was just used to sign in from a device or location we haven't seen recently:</p>
               <table style="font-size:14px;line-height:1.8">
                 <tr><td style="padding-right:12px;color:#666">When:</td><td><strong>${when}</strong> (Philippine time)</td></tr>
-                <tr><td style="padding-right:12px;color:#666">IP address:</td><td><strong>${ip || 'unknown'}</strong></td></tr>
-                <tr><td style="padding-right:12px;color:#666">Device:</td><td>${ua || 'unknown'}</td></tr>
+                <!-- The User-Agent is attacker-controlled input; escape it so a
+                     crafted header cannot inject markup into this alert email. -->
+                <tr><td style="padding-right:12px;color:#666">IP address:</td><td><strong>${esc(ip) || 'unknown'}</strong></td></tr>
+                <tr><td style="padding-right:12px;color:#666">Device:</td><td>${esc(ua) || 'unknown'}</td></tr>
               </table>
               <p style="margin-top:16px"><strong>Was this you?</strong> If yes, you can ignore this email. If not, reset your password immediately using the "Forgot password" link on the admin sign-in page.</p>
             ` + getEmailFooter()).catch(err => console.error('Login alert email failed:', err.message));
@@ -1254,7 +1390,10 @@ app.post('/api/admin/signup',
         await sendEmail('glrarealty@gmail.com', `New account request: ${name}`,
           getEmailHeader() + `
           <h2 style="color:#0a1628;">New Account Request</h2>
-          <p><strong>${name}</strong> (${email}) has requested access to the GLRA admin portal.</p>
+          <!-- esc(): name is free text from a public, unauthenticated signup form.
+               Unescaped it renders as HTML in the admin's inbox, which is a
+               ready-made phishing surface (a fake "Approve" link). -->
+          <p><strong>${esc(name)}</strong> (${esc(email)}) has requested access to the GLRA admin portal.</p>
           <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline, and to choose exactly what they can access.</p>
         ` + getEmailFooter());
       } catch (e) { console.error('Signup notification email failed:', e.message); }
@@ -1633,7 +1772,23 @@ app.get('/api/admin/analytics', verifyToken, requirePermission('dashboard_analyt
     const today = map[dayStr(now)] || 0;
     const totalAgg = await SiteStat.aggregate([{ $group: { _id: null, total: { $sum: '$views' } } }]);
     const total = (totalAgg[0] && totalAgg[0].total) || 0;
-    res.json({ series, today, total });
+
+    // Roll the per-day page/referrer maps up across the same 30-day window.
+    // .lean() hands these back as plain objects rather than Mongoose Maps.
+    const rollUp = field => {
+      const acc = {};
+      rows.forEach(r => {
+        const m = r[field] || {};
+        Object.keys(m).forEach(k => { acc[k] = (acc[k] || 0) + (m[k] || 0); });
+      });
+      return Object.entries(acc)
+        .sort((a, b) => b[1] - a[1])
+        .map(([key, views]) => ({ key, views }));
+    };
+    const topPages = rollUp('pages').slice(0, 12);
+    const topRefs = rollUp('refs').slice(0, 8);
+
+    res.json({ series, today, total, topPages, topRefs });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -3300,6 +3455,22 @@ app.delete('/api/admin/property-submissions/:id', verifyToken, requirePermission
 // sitemap.xml is generated by buildSitemap() and registered before
 // express.static — see the top of this file.
 
+// ============ 404 ============
+// Anything that reached this point matched no route and no static file.
+// Without this, Express replies with a bare "Cannot GET /whatever" in plain
+// text, which looks broken and advertises the framework. Registered after all
+// routes but before the error handler.
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  const accept = req.headers.accept || '';
+  if (req.method === 'GET' && accept.includes('text/html')) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+  res.status(404).type('txt').send('Not found');
+});
+
 // ============ ERROR HANDLER ============
 // Catches multer errors and other middleware errors
 app.use((err, req, res, next) => {
@@ -3319,7 +3490,7 @@ app.listen(PORT, '0.0.0.0', () => {
   ╠═══════════════════════════════════════════════════════════════╣
   ║   Listening on port ${String(PORT).padEnd(42)}║
   ║   Env: ${String(process.env.NODE_ENV || 'development').padEnd(55)}║
-  ║   Allowed origins: ${(allowedOrigins.join(', ') || '(any)').padEnd(43).slice(0, 43)}║
+  ║   Allowed origins: ${corsAllowlist.join(', ').padEnd(43).slice(0, 43)}║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
 });

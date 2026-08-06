@@ -374,7 +374,16 @@ const cashEntrySchema = new mongoose.Schema({
 // just a daily page-view tally that surfaces inside the admin dashboard.
 const siteStatSchema = new mongoose.Schema({
   day:   { type: String, required: true, unique: true, index: true }, // 'YYYY-MM-DD' (server local time)
-  views: { type: Number, default: 0 }
+  views: { type: Number, default: 0 },
+  // Per-page and per-referrer tallies for the same day, e.g.
+  //   pages: { home: 412, arthaland: 88, 'property-detail': 260 }
+  //   refs:  { google: 300, facebook: 45, direct: 155 }
+  // Keys are sanitised slugs from a fixed whitelist, never raw request input —
+  // an attacker requesting /aaa, /aab, ... could otherwise grow this document
+  // without limit. Still no IP, cookie or per-person data: these are plain
+  // counters, which is what keeps the site free of a consent banner.
+  pages: { type: Map, of: Number, default: () => ({}) },
+  refs:  { type: Map, of: Number, default: () => ({}) }
 });
 
 // ── CALCULATOR / TOOL USAGE ─────────────────────────────────
