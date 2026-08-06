@@ -1154,6 +1154,16 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 
 /* Visitors mini-stats */
 .vis-note{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ab-gray);margin-top:12px}
+/* Top pages / referrers — two ranked bar lists under the visitors chart. */
+.tp-wrap{display:grid;grid-template-columns:1.35fr 1fr;gap:26px;margin-top:20px;padding-top:18px;border-top:1px solid var(--ab-line)}
+.tp-head{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-gray);margin-bottom:10px}
+.tp-row{display:grid;grid-template-columns:minmax(88px,1.1fr) 2fr auto;gap:10px;align-items:center;padding:4px 0}
+.tp-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-track{height:7px;background:var(--ab-paper-2);border:1px solid var(--ab-line)}
+.tp-fill{height:100%;background:var(--ab-hot)}
+.tp-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+.tp-empty{font-size:12px;color:var(--ab-gray);padding:6px 0}
+@media(max-width:820px){.tp-wrap{grid-template-columns:1fr;gap:18px}}
 .vis-note a{color:#ff3d00;text-decoration:none;font-weight:700}
 .vis-note a:hover{text-decoration:underline}
 .dash-loading{padding:30px 20px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray)}
@@ -3277,6 +3287,52 @@ function renderTitlingPipe(){
   }).join('');
 }
 
+// ── ADMIN ANALYTICS: which pages people actually read, and how they arrived ──
+// Fed by the self-hosted counter (no cookies, no third party), so these are
+// plain totals — not sessions or unique visitors.
+const PAGE_LABELS={home:'Home',properties:'All properties','property-detail':'Listing pages',
+  arthaland:'Arthaland hub',sondris:'Sondris',eluria:'Eluria',liv:'Liv',una:'Una',lucima:'Lucima',
+  tools:'Tools index',valuation:"What's my property worth",'list-property':'List your property',
+  about:'About',blog:'Journal',guide:'Documentation guide',testimonials:'Testimonials',
+  neighborhoods:'Neighborhoods',calculator:'Closing fees',affordability:'Affordability',
+  amortization:'Amortization','rent-vs-buy':'Rent vs buy','loan-comparison':'Pag-IBIG vs bank',
+  'rental-yield':'Rental yield','estate-tax':'Estate tax','savings-goal':'Savings planner',
+  zonal:'Zonal value',ercf:'Registration fee','cost-of-ownership':'Cost of ownership',
+  'living-in-makati':'Living in Makati','living-in-bgc':'Living in BGC',
+  'living-in-alabang':'Living in Alabang',privacy:'Privacy policy'};
+const REF_LABELS={direct:'Direct / typed in',google:'Google',facebook:'Facebook / Messenger',
+  instagram:'Instagram',bing:'Bing',tiktok:'TikTok',youtube:'YouTube',linkedin:'LinkedIn',
+  'listing-portal':'Listing portals',other:'Other sites'};
+
+function miniBars(rows,labels,emptyMsg){
+  if(!rows||!rows.length) return `<div class="tp-empty">${esc(emptyMsg)}</div>`;
+  const max=rows[0].views||1;
+  return rows.map(r=>{
+    const name=labels[r.key]||r.key;
+    const pct=Math.max(2,Math.round((r.views/max)*100));
+    return `<div class="tp-row" title="${esc(name)}: ${r.views.toLocaleString()} views">
+      <div class="tp-name">${esc(name)}</div>
+      <div class="tp-track"><div class="tp-fill" style="width:${pct}%"></div></div>
+      <div class="tp-num">${r.views.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+function topListsHTML(d){
+  const pages=d.topPages||[], refs=d.topRefs||[];
+  if(!pages.length && !refs.length) return '';
+  return `<div class="tp-wrap">
+    <div class="tp-col">
+      <div class="tp-head">Most-read pages · 30 days</div>
+      ${miniBars(pages,PAGE_LABELS,'No page data yet.')}
+    </div>
+    <div class="tp-col">
+      <div class="tp-head">Where visitors came from</div>
+      ${miniBars(refs,REF_LABELS,'No referrer data yet.')}
+    </div>
+  </div>`;
+}
+
 // ── ADMIN ANALYTICS: website visitors (self-hosted counter) ──
 async function loadAnalytics(){
   const el=document.getElementById('dashVisitors');
@@ -3295,6 +3351,7 @@ async function loadAnalytics(){
         <div class="chart-kpi"><div class="ck-num">${total30.toLocaleString()}</div><div class="ck-lbl">Last 30 days</div></div>
         <div class="chart-kpi"><div class="ck-num">${(d.total||0).toLocaleString()}</div><div class="ck-lbl">All time</div></div>
       </div>
+      ${topListsHTML(d)}
       <div class="vis-note">Page views on your public site · deep analytics (heatmaps, recordings) at <a href="https://clarity.microsoft.com" target="_blank" rel="noopener">Microsoft Clarity ↗</a></div>`;
   }catch(e){
     el.innerHTML=`<div class="empty-st"><i class="fas fa-chart-line"></i><p>Visitor tracking not active yet</p><small style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.5px">Deploy the latest server to switch it on.</small></div>`;

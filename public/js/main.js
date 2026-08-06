@@ -103,6 +103,40 @@ function showToast(message, isError = false) {
   setTimeout(() => t.remove(), 3500);
 }
 
+// ── Instant navigation ───────────────────────────────────
+// When a visitor hovers or starts pressing a link, the browser fetches that
+// page in the background, so the click lands on an already-downloaded
+// document. Lives here rather than in brutalist-shell.js because the home page
+// does not load the shell — main.js is on all 32 public pages and, correctly,
+// not on admin.html.
+//
+// `prefetch`, not `prerender`, on purpose: it warms the cache without running
+// the target page's scripts, so it cannot fire duplicate analytics or side
+// effects. The server also ignores requests carrying Sec-Purpose: prefetch,
+// so the visitor counter stays honest either way.
+(function () {
+  if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules'))) return;
+  if (document.querySelector('script[type="speculationrules"]')) return;   // never twice
+  var spec = document.createElement('script');
+  spec.type = 'speculationrules';
+  spec.textContent = JSON.stringify({
+    prefetch: [{
+      source: 'document',
+      where: {
+        and: [
+          { href_matches: '/*' },                              // same-origin only
+          { not: { href_matches: '/admin*' } },                // never the portal
+          { not: { href_matches: '/api/*' } },
+          { not: { selector_matches: '[download]' } },
+          { not: { selector_matches: '[target="_blank"]' } }
+        ]
+      },
+      eagerness: 'moderate'    // on hover / pointerdown, not on sight
+    }]
+  });
+  document.head.appendChild(spec);
+})();
+
 // ── HTML escape helper (used by pages that render dynamic text) ──
 function escapeHtml(s) {
   if (!s) return '';
