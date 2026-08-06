@@ -1,0 +1,201 @@
+/* ══════════════════════════════════════════════════════════════════════
+   ARTHALAND — PRESENTATION MODE
+   Shared by sondris / eluria / liv / una / lucima.
+
+   Turns each property page into something you can stand in front of a
+   client and drive: a slide rail down the left showing where you are,
+   arrow-key navigation between sections, and a location map.
+
+   The page supplies its own colour via --present-accent, declared once in
+   its :root block, so this file carries no per-property CSS.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root { --pa: var(--present-accent, #eceae4); }
+
+/* ── The slide rail ──────────────────────────────────────────────────
+   Left side, because the right is already taken by the scroll set
+   piece's own progress hairline on several of these pages. */
+.pres-rail {
+  position: fixed;
+  left: clamp(14px, 2.2vw, 30px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  opacity: 0;
+  transition: opacity .5s ease;
+  pointer-events: none;
+}
+.pres-rail.ready { opacity: 1; pointer-events: auto; }
+
+.pres-dot {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 10px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* The visible mark is a short rule, not a circle — it reads as a scale.
+   The box is drawn once at its largest (26x2) and every state scales it
+   down with a transform. Transitioning width/height instead would force
+   a layout recalculation on each of the eight marks every frame, and
+   this animates on hover — precisely when the page is being driven in
+   front of someone. transform and background-color are the two things
+   the compositor can animate without touching layout. */
+.pres-dot::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 26px;
+  height: 2px;
+  background: rgba(236, 235, 231, .34);
+  transform-origin: left center;
+  transform: translateY(-50%) scale(.538, .5);   /* 14px x 1px */
+  transition: transform .35s cubic-bezier(.22,.61,.36,1),
+              background-color .35s cubic-bezier(.22,.61,.36,1);
+}
+.pres-dot:hover::before,
+.pres-dot:focus-visible::before {
+  transform: translateY(-50%) scale(.846, .5);   /* 22px x 1px */
+  background: rgba(236, 235, 231, .7);
+}
+.pres-dot[aria-current="true"]::before {
+  transform: translateY(-50%) scale(1, 1);       /* 26px x 2px */
+  background: var(--pa);
+}
+
+/* Label appears on hover/focus only, so the rail stays quiet while
+   presenting but is navigable when you need it. */
+.pres-dot span {
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  white-space: nowrap;
+  font-family: 'Archivo', 'Segoe UI', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--pa);
+  background: rgba(5, 5, 6, .86);
+  padding: 5px 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease, transform .3s ease;
+}
+.pres-dot:hover span,
+.pres-dot:focus-visible span { opacity: 1; transform: translateY(-50%) translateX(0); }
+.pres-dot:focus-visible { outline: none; }
+.pres-dot:focus-visible::before { box-shadow: none; }
+
+/* ── Keyboard hint ───────────────────────────────────────────────────
+   Shown once, briefly, so the broker knows the arrow keys work. */
+.pres-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 56;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'Archivo', 'Segoe UI', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(236, 235, 231, .72);
+  background: rgba(5, 5, 6, .82);
+  border: 1px solid rgba(236, 235, 231, .16);
+  padding: 9px 15px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .6s ease, transform .6s ease;
+}
+.pres-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.pres-hint b {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--pa);
+  border: 1px solid rgba(236, 235, 231, .28);
+  padding: 1px 6px;
+  font-weight: 700;
+}
+
+/* ── Location map ────────────────────────────────────────────────────
+   A bright plate on a near-black page, framed deliberately so it reads
+   as a pinned map inset rather than a hole in the design. Google's own
+   tiles and attribution are left untouched — recolouring the embed
+   would breach the Maps terms. */
+.pres-map { margin-top: clamp(30px, 4vw, 46px); }
+.pres-map-frame {
+  position: relative;
+  border: 1px solid rgba(236, 235, 231, .22);
+  background: #14141a;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.pres-map-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  filter: saturate(.9);
+}
+.pres-map-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.pres-map-addr {
+  font-size: .88rem;
+  line-height: 1.6;
+  color: #a8a49c;
+  max-width: 52ch;
+}
+.pres-map-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'Archivo', 'Segoe UI', Arial, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--pa);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s ease;
+}
+.pres-map-go:hover { border-bottom-color: var(--pa); }
+
+@media (max-width: 1100px) {
+  /* The rail would sit on top of the content once the shell narrows. */
+  .pres-rail { display: none; }
+}
+@media (max-width: 760px) {
+  .pres-hint { display: none; }
+  .pres-map-frame { aspect-ratio: 4 / 3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pres-rail, .pres-hint, .pres-dot::before, .pres-dot span { transition: none; }
+}
+@media print {
+  .pres-rail, .pres-hint { display: none; }
+}
