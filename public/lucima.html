@@ -38,6 +38,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="/css/styles.css">
 <link rel="stylesheet" href="/css/brutalist-theme.css">
+<link rel="stylesheet" href="/css/arthaland-present.css">
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    LUCIMA, CEBU BUSINESS PARK
@@ -64,7 +65,8 @@
   --bone:#eeece7;         /* 17:1 on void */
   --ash:#a9a69f;          /* 8.8:1 */
   --dim:#85817a;          /* 5.3:1 */
-  --champ:#cbbd9a;        /* 10.8:1 */
+  --champ:#cbbd9a;
+  --present-accent:#cbbd9a;        /* 10.8:1 */
   --serif:'Bodoni Moda',Didot,Georgia,'Times New Roman',serif;
   --sans:'Archivo','Segoe UI',Arial,sans-serif;
   --ease:cubic-bezier(.22,.61,.36,1);
@@ -142,7 +144,7 @@
   position:absolute;left:0;right:0;top:0;width:100%;height:118%;
   object-fit:cover;object-position:50% 42%;
   animation:heroIn 3.4s var(--ease) both;will-change:transform;
-  filter:saturate(.9) contrast(1.05) brightness(.84);
+  filter:saturate(.99) contrast(1.02) brightness(.96);
 }
 @keyframes heroIn{from{transform:scale(1.1)}to{transform:scale(1)}}
 .hero-scrim{position:absolute;inset:0;pointer-events:none;background:
@@ -216,7 +218,7 @@
 .bt{position:relative;height:520vh;background:var(--pitch);overflow-anchor:none}
 .bt-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
 .bt-media{position:absolute;inset:0;transform:scale(var(--z,1));transform-origin:50% 54%;will-change:transform}
-.bt-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(.93) brightness(.86)}
+.bt-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(1) brightness(.97)}
 .bt-img:first-child{opacity:1}
 .bt-veil{position:absolute;inset:0;background:
   linear-gradient(90deg,rgba(5,5,6,.78) 0%,rgba(5,5,6,.34) 36%,rgba(5,5,6,0) 64%),
@@ -297,7 +299,7 @@
 
 /* ── Close ─────────────────────────────────────────────────────────── */
 .close{position:relative;overflow:hidden}
-.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%;opacity:.3;filter:saturate(.76)}
+.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%;opacity:.48;filter:saturate(.9)}
 .close-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,6,.94),rgba(5,5,6,.76) 46%,rgba(5,5,6,.96))}
 .close-in{position:relative;padding:clamp(100px,14vw,190px) 0}
 [data-lucima] .lc .close h2{color:#fff !important;font-size:clamp(2.3rem,5.2vw,4.1rem) !important}
@@ -554,6 +556,25 @@
       <figure class="addr-map ap" style="--d:.1s">
         <img src="/img/arthaland/lucima/map-cebu.webp" alt="Map of Cebu Business Park showing Lucima at Cardinal Rosales Avenue corner Samar Loop." loading="lazy" width="1600" height="1725">
       </figure>
+
+
+      <!-- Live location map. Bright by design: recolouring the embed
+           would breach the Google Maps terms, and in a client meeting a
+           legible map beats a tasteful one. -->
+      <div class="pres-map rv">
+        <div class="pres-map-frame">
+          <iframe src="https://www.google.com/maps?q=Cardinal%20Rosales%20Avenue%20corner%20Samar%20Loop%2C%20Cebu%20Business%20Park%2C%20Cebu%20City%2C%20Philippines&amp;output=embed"
+                  title="Map showing the location of this development"
+                  loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                  allowfullscreen></iframe>
+        </div>
+        <div class="pres-map-bar">
+          <p class="pres-map-addr">Cardinal Rosales Avenue at Samar Loop, in the compact centre of Cebu. Ayala Center Cebu is across the road; Mactan-Cebu International Airport is reachable without crossing the old town.</p>
+          <a class="pres-map-go" target="_blank" rel="noopener"
+             href="https://www.google.com/maps/dir/?api=1&amp;destination=Cardinal%20Rosales%20Avenue%20corner%20Samar%20Loop%2C%20Cebu%20Business%20Park%2C%20Cebu%20City%2C%20Philippines">
+            Get directions &rarr;</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -728,5 +749,6 @@ document.documentElement.classList.add('dark-mode-pre');
 if (typeof syncLogos === 'function') syncLogos();
 </script>
 <script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/arthaland-present.js" defer></script>
 </body>
 </html>

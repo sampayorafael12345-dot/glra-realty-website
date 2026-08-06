@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="/css/styles.css">
 <link rel="stylesheet" href="/css/brutalist-theme.css">
+<link rel="stylesheet" href="/css/arthaland-present.css">
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    SONDRIS, NOIR
@@ -64,7 +65,8 @@
   --bone:#eceae4;         /* 17:1 on void */
   --ash:#a8a49c;          /* 8.8:1 */
   --dim:#847f76;          /* 5.3:1 */
-  --brass:#c99a4e;        /* 7.4:1, taken from the facade fins */
+  --brass:#c99a4e;
+  --present-accent:#c99a4e;        /* 7.4:1, taken from the facade fins */
   --serif:'Playfair Display',Georgia,'Times New Roman',serif;
   --sans:'Archivo','Segoe UI',Arial,sans-serif;
   --ease:cubic-bezier(.22,.61,.36,1);
@@ -158,7 +160,7 @@
   position:absolute;left:0;right:0;top:0;width:100%;height:118%;
   object-fit:cover;object-position:50% 42%;
   animation:heroIn 3.4s var(--ease) both;will-change:transform;
-  filter:saturate(.86) contrast(1.06) brightness(.8);
+  filter:saturate(.98) contrast(1.03) brightness(.95);
 }
 @keyframes heroIn{from{transform:scale(1.1)}to{transform:scale(1)}}
 .hero-scrim{position:absolute;inset:0;pointer-events:none;background:
@@ -241,7 +243,7 @@
 .asc{position:relative;height:520vh;background:var(--pitch);overflow-anchor:none}
 .asc-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
 .asc-media{position:absolute;inset:0;transform:scale(var(--z,1));transform-origin:50% 56%;will-change:transform}
-.asc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(.9) brightness(.88)}
+.asc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(1) brightness(.98)}
 .asc-img:first-child{opacity:1}
 /* Two layers. The vertical ramp seats the plate; the leftward wash
    guarantees the caption a dark ground no matter how bright the render
@@ -349,7 +351,7 @@
 
 /* ── Close ─────────────────────────────────────────────────────────── */
 .close{position:relative;overflow:hidden}
-.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%;opacity:.4;filter:saturate(.78)}
+.close-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%;opacity:.55;filter:saturate(.9)}
 .close-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,6,.92),rgba(5,5,6,.72) 46%,rgba(5,5,6,.96))}
 .close-in{position:relative;padding:clamp(100px,14vw,190px) 0}
 [data-sondris] .sx .close h2{color:#fff !important;font-size:clamp(2.4rem,5.4vw,4.3rem) !important}
@@ -634,6 +636,25 @@
       <figure class="addr-map ap" style="--d:.1s">
         <img src="/img/arthaland/sondris/map-legazpi.webp" alt="Map of Legazpi Village, Makati, showing the position of Sondris on Arnaiz Avenue." loading="lazy" width="1760" height="1204">
       </figure>
+
+
+      <!-- Live location map. Bright by design: recolouring the embed
+           would breach the Google Maps terms, and in a client meeting a
+           legible map beats a tasteful one. -->
+      <div class="pres-map rv">
+        <div class="pres-map-frame">
+          <iframe src="https://www.google.com/maps?q=Arnaiz%20Avenue%2C%20Legazpi%20Village%2C%20Barangay%20San%20Lorenzo%2C%20Makati%20City%2C%20Philippines&amp;output=embed"
+                  title="Map showing the location of this development"
+                  loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                  allowfullscreen></iframe>
+        </div>
+        <div class="pres-map-bar">
+          <p class="pres-map-addr">Arnaiz Avenue at the quiet end of the central business district, between San Lorenzo and Urdaneta villages. Greenbelt and Ayala Triangle are a walk; the Skyway and SLEX are 700 metres off.</p>
+          <a class="pres-map-go" target="_blank" rel="noopener"
+             href="https://www.google.com/maps/dir/?api=1&amp;destination=Arnaiz%20Avenue%2C%20Legazpi%20Village%2C%20Barangay%20San%20Lorenzo%2C%20Makati%20City%2C%20Philippines">
+            Get directions &rarr;</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -839,5 +860,6 @@ document.documentElement.classList.add('dark-mode-pre');
 if (typeof syncLogos === 'function') syncLogos();
 </script>
 <script src="/js/brutalist-shell.js" defer></script>
+<script src="/js/arthaland-present.js" defer></script>
 </body>
 </html>
