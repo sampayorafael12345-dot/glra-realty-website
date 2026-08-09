@@ -109,6 +109,161 @@
 .lf-submit:disabled{opacity:.6;cursor:not-allowed}
 .lf-disclaimer{font-size:11px;color:var(--gray);max-width:380px;line-height:1.6}
 .lf-disclaimer a{color:var(--gold);text-decoration:none}
+
+/* ── Documents & consent ──────────────────────────────────────────
+   Both blocks use <label> rows so the whole row toggles its checkbox.
+   That is correct semantics but it drags in this form's field-label
+   styling — JetBrains Mono, uppercase, 1.8px tracking — which is right
+   for a four-word caption and unreadable across a two-line sentence.
+   Everything inside is reset to the body face first, then the small
+   status tags opt back into mono, where a short caps label is what mono
+   is actually for. */
+.doc-item, .doc-item *, .consent-item, .consent-item *{
+  font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:normal;
+  font-weight:400;color:var(--text-color)}
+
+.doc-head{display:flex;align-items:baseline;gap:10px;margin:22px 0 9px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold)}
+.doc-head:first-of-type{margin-top:0}
+.doc-head .rule{flex:1;height:1px;background:var(--border-color);opacity:.18}
+.doc-head .ct{color:var(--gray);letter-spacing:1px}
+
+/* An opaque container. The previous version painted the wrapper black
+   and let 2px gaps show through as dividers, so a translucent hover
+   turned the row black and swallowed the text. Real borders instead. */
+.doc-group{border:1px solid var(--border-color);background:var(--card-bg)}
+.doc-item{display:grid;grid-template-columns:20px 1fr auto;gap:0 14px;align-items:start;
+  padding:15px 17px;border-bottom:1px solid var(--border-color);transition:background .15s ease}
+.doc-item:last-child{border-bottom:0}
+/* The row title has to stay a <label for=…> — that is what makes the
+   text toggle its checkbox for a screen reader as well as a mouse. But
+   brutalist-theme.css styles the bare `label` element with !important on
+   every one of these properties, so specificity alone loses no matter
+   how deep it goes. The only thing that outranks !important is
+   !important at higher specificity, so that is what this is. Scoped to
+   this one component rather than loosening the theme rule, which every
+   other form on the site depends on. */
+.doc-group .doc-item label.doc-t{
+  display:block;cursor:pointer;
+  font-family:'DM Sans',sans-serif !important;
+  text-transform:none !important;
+  letter-spacing:normal !important;
+  font-size:14px !important;
+  font-weight:600 !important;
+  color:var(--text-color) !important;   /* the theme greys bare labels too */
+  margin-bottom:0 !important;           /* …and gives them a 6px tail */
+  line-height:1.4}
+.doc-item:hover{background:rgba(255,61,0,.05)}
+.doc-item:has(input:checked){background:rgba(255,61,0,.04)}
+
+/* The tick is an SVG painted into the box's own background, not a
+   rotated ::after. Two reasons, both from this actually going wrong: a
+   white pseudo-element sitting on top of a box whose fill lost a
+   cascade fight is invisible while the box is genuinely checked, and a
+   rotated border-corner has to be hand-centred at every size. Painting
+   the mark and the fill in one declaration means they cannot disagree.
+   appearance is forced too — a surviving native control would draw its
+   own box over all of this. */
+/* Longhands, not the `background` shorthand. A var() inside a shorthand
+   is a pending substitution resolved after the cascade, and if it ever
+   resolves badly the whole declaration is dropped to unset rather than
+   falling back to the previous rule — which lands a white tick on an
+   unfilled box, checked but looking empty. Longhands fail independently
+   and each carries its own !important, so the fill cannot go missing
+   while the mark stays. appearance is forced for the same reason: a
+   surviving native control would paint over all of it. */
+/* No transition. The theme fades background-color over 0.35s for its
+   dark-mode switch, and that fade reaches these boxes: the tick is a
+   background-image and lands instantly, so for a third of a second a
+   white mark sits on a still-pale box and reads as blank. Ticking is a
+   binary, and in this design language it should snap anyway. */
+.doc-item input[type=checkbox]{appearance:none !important;-webkit-appearance:none !important;
+  transition:none !important;
+  width:20px;height:20px;margin:1px 0 0;flex:none;cursor:pointer;
+  border:2px solid var(--border-color);background-color:var(--card-bg);background-image:none}
+.doc-item input[type=checkbox]:checked{
+  background-color:var(--gold) !important;
+  border-color:var(--gold) !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.4l3.4 3.4L13 4.8' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='square'/%3E%3C/svg%3E") !important;
+  background-position:center !important;background-size:12px 12px !important;background-repeat:no-repeat !important}
+.doc-item input[type=checkbox]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.doc-item .doc-t{font-size:14px;font-weight:600;line-height:1.4}
+/* --gray reaches only 4.67:1 on the card and drops to 4.39:1 once the
+   hover tint is over it — under the floor for prose this dense. Derived
+   from the foreground instead of hard-coded, so it stays right when the
+   theme flips to dark; --gray remains the fallback. */
+.doc-item .doc-d{display:block;font-size:12.5px;line-height:1.55;margin-top:4px;max-width:56ch;
+  color:var(--gray);color:color-mix(in srgb, var(--text-color) 70%, transparent)}
+.doc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.1px;
+  text-transform:uppercase;padding:3px 7px;margin-left:8px;white-space:nowrap;vertical-align:2px}
+.doc-tag.need{background:var(--gold);color:#fff}
+.doc-tag.later{background:transparent;color:var(--gray);border:1px solid var(--border-color);opacity:.65}
+
+/* Attach control lives in the third column, so the row keeps one line
+   of type per idea however long the description runs. */
+.doc-attach{grid-column:3;align-self:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;padding:8px 13px;border:1px solid var(--border-color);
+  background:transparent;color:var(--text-color);cursor:pointer;white-space:nowrap;transition:var(--transition)}
+.doc-attach:hover{background:var(--gold);border-color:var(--gold);color:#fff}
+.doc-attach:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.doc-attach[disabled]{opacity:.45;cursor:wait}
+.doc-item input[type=file]{display:none}
+
+.doc-file{grid-column:2/-1;display:flex;align-items:center;gap:10px;margin-top:10px;padding:9px 12px;
+  border:1px solid var(--gold);background:rgba(255,61,0,.06);font-size:12.5px}
+.doc-file i{color:var(--gold);font-size:13px}
+.doc-file .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.doc-file .sz{color:var(--gray);font-size:11.5px;white-space:nowrap}
+.doc-file .rm{background:none;border:0;color:var(--gray);cursor:pointer;padding:2px 4px;font-size:13px;line-height:1}
+.doc-file .rm:hover{color:#b91c1c}
+.doc-file.err{border-color:#ef4444;background:rgba(239,68,68,.07)}
+.doc-file.err i, .doc-file.err .nm{color:#b91c1c}
+
+.doc-note{font-size:12.5px;color:var(--gray);line-height:1.65;margin-top:14px;max-width:62ch}
+.doc-note strong{color:var(--text-color);font-weight:600}
+
+/* ── Authority and consent ──────────────────────────────────────── */
+.consent-box{border:1px solid var(--border-color);background:var(--card-bg)}
+/* Each row is a <label>, and the theme forces `display:block !important`
+   plus a 6px bottom margin on every bare label. Block layout is what
+   dropped the second line of each sentence back under the checkbox
+   instead of holding a text column. Both have to be overridden at
+   !important to land. */
+.consent-item{display:grid !important;margin-bottom:0 !important;
+  grid-template-columns:20px 1fr;gap:14px;align-items:start;padding:16px 18px;
+  border-bottom:1px solid var(--border-color);cursor:pointer;transition:background .15s ease}
+.consent-item:last-child{border-bottom:0}
+.consent-item:hover{background:rgba(255,61,0,.05)}
+.consent-item input{appearance:none !important;-webkit-appearance:none !important;
+  transition:none !important;
+  width:20px;height:20px;margin:0;cursor:pointer;
+  border:2px solid var(--border-color);background-color:var(--card-bg);background-image:none}
+.consent-item input:checked{
+  background-color:var(--gold) !important;
+  border-color:var(--gold) !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.4l3.4 3.4L13 4.8' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='square'/%3E%3C/svg%3E") !important;
+  background-position:center !important;background-size:12px 12px !important;background-repeat:no-repeat !important}
+.consent-item input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.consent-item span{font-size:13.5px;line-height:1.6;max-width:64ch}
+.consent-item b{font-weight:700}
+.consent-item a{color:var(--gold);text-decoration:underline;text-underline-offset:2px}
+.consent-item.missing{background:rgba(239,68,68,.06)}
+.consent-item.missing input{border-color:#ef4444}
+
+@media(max-width:620px){
+  .doc-item{grid-template-columns:20px 1fr}
+  .doc-attach{grid-column:2;justify-self:start;margin-top:10px}
+  .doc-file{grid-column:1/-1}
+}
+/* Bordered on all four sides, with a mono caps label — the device this
+   site already uses for its chips and section eyebrows. A single thick
+   rule down one edge was the odd panel out on a page where everything
+   else is a hard-bordered box. */
+.legal-note{border:1px solid var(--gold);background:var(--gold-light);padding:16px 18px;margin-top:16px;font-size:12px;line-height:1.65;color:var(--text-color)}
+.legal-note .hd{display:block;font-family:'Courier New',monospace;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:9px}
+.legal-note b{font-weight:700}
+.legal-note .cite{color:var(--gray);font-size:11px;display:block;margin-top:8px}
 @media(max-width:600px){.lf-actions{padding:22px}.lf-submit{width:100%;justify-content:center}}
 
 /* Success state */
@@ -270,9 +425,62 @@ body.dark-mode .lf-error{color:#fca5a5}
       </div>
     </div>
 
-    <!-- Section 4: Specs -->
+    <!-- Section 4: Lease terms — only shown when a lease is on the table.
+         A monthly figure on its own is not a lettable listing: the first
+         three questions any tenant asks are how long, how much up front,
+         and is it furnished. Two months' deposit plus one month advance
+         is the usual Philippine convention, so those are the defaults. -->
+    <div class="form-section" id="leaseSection" style="display:none">
+      <div class="form-section-head"><span class="num">4</span><h3>Lease terms</h3><p>What a tenant needs to know before enquiring. Leave anything negotiable as it is.</p></div>
+      <div class="lf-grid">
+        <div class="lf-field"><label>Minimum lease term</label>
+          <select id="leaseTerm">
+            <option value="">Negotiable</option>
+            <option value="6 months">6 months</option>
+            <option value="1 year" selected>1 year</option>
+            <option value="2 years">2 years</option>
+            <option value="3 years">3 years</option>
+          </select>
+        </div>
+        <div class="lf-field"><label>Available from <span class="opt">(optional)</span></label>
+          <input type="date" id="availableFrom">
+        </div>
+        <div class="lf-field"><label>Security deposit (months)</label>
+          <input type="number" id="depositMonths" min="0" max="12" step="1" value="2">
+        </div>
+        <div class="lf-field"><label>Advance rent (months)</label>
+          <input type="number" id="advanceMonths" min="0" max="12" step="1" value="1">
+        </div>
+        <div class="lf-field"><label>Furnishing</label>
+          <select id="furnishing">
+            <option>Unfurnished</option>
+            <option selected>Semi-furnished</option>
+            <option>Fully furnished</option>
+          </select>
+        </div>
+        <div class="lf-field"><label>Association dues</label>
+          <select id="duesArrangement">
+            <option>Paid by tenant</option>
+            <option>Included in the rent</option>
+            <option>Paid by owner</option>
+          </select>
+        </div>
+        <div class="lf-field"><label>Pets</label>
+          <select id="petsPolicy">
+            <option>Not allowed</option>
+            <option>Allowed</option>
+            <option>Case by case</option>
+          </select>
+        </div>
+        <div class="lf-field"><label>Utilities / metering <span class="opt">(optional)</span></label>
+          <input type="text" id="utilities" maxlength="120" placeholder="e.g. separate Meralco and Maynilad meters">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Specs -->
     <div class="form-section">
-      <div class="form-section-head"><span class="num">4</span><h3>Property specs</h3><p>Helps buyers filter and compare. Fill in what's relevant.</p></div>
+      <div class="form-section-head"><span class="num">5</span><h3>Property specs</h3><p>Helps buyers filter and compare. Fill in what's relevant.</p></div>
       <div class="lf-grid">
         <div class="lf-field"><label>Bedrooms</label><input type="number" id="bedrooms" min="0" max="20" value="0"></div>
         <div class="lf-field"><label>Bathrooms</label><input type="number" id="bathrooms" min="0" max="20" value="0"></div>
@@ -283,18 +491,18 @@ body.dark-mode .lf-error{color:#fca5a5}
       </div>
     </div>
 
-    <!-- Section 5: Description -->
+    <!-- Section 6: Description -->
     <div class="form-section">
-      <div class="form-section-head"><span class="num">5</span><h3>Description</h3><p>Highlights, amenities, nearby landmarks, and anything else worth mentioning.</p></div>
+      <div class="form-section-head"><span class="num">6</span><h3>Description</h3><p>Highlights, amenities, nearby landmarks, and anything else worth mentioning.</p></div>
       <div class="lf-field lf-full">
         <textarea id="description" maxlength="5000" placeholder="Walk-in closet, fully furnished, 5 minutes to BGC, building has gym and pool, etc." oninput="updateDescCount()"></textarea>
         <div class="lf-counter"><span id="descCount">0</span> / 5000</div>
       </div>
     </div>
 
-    <!-- Section 6: Photos -->
+    <!-- Section 7: Photos -->
     <div class="form-section">
-      <div class="form-section-head"><span class="num">6</span><h3>Photos <span class="req">*</span></h3><p>Upload at least 1 photo — listings with 5 or more high-quality photos perform best.</p></div>
+      <div class="form-section-head"><span class="num">7</span><h3>Photos <span class="req">*</span></h3><p>Upload at least 1 photo — listings with 5 or more high-quality photos perform best.</p></div>
       <div class="image-upload-zone" id="dropZone" onclick="document.getElementById('imgInput').click()">
         <i class="fas fa-cloud-upload-alt"></i>
         <p>Click to upload or drag photos here</p>
@@ -305,9 +513,9 @@ body.dark-mode .lf-error{color:#fca5a5}
       <small class="lf-hint" style="display:block;margin-top:10px">First photo becomes the main listing image. Hover any photo to remove it.</small>
     </div>
 
-    <!-- Section 7: Owner info -->
+    <!-- Section 8: Owner info -->
     <div class="form-section">
-      <div class="form-section-head"><span class="num">7</span><h3>Your contact details</h3><p>So we can reach you to discuss the listing. Your contact info is never shown publicly.</p></div>
+      <div class="form-section-head"><span class="num">8</span><h3>Your contact details</h3><p>So we can reach you to discuss the listing. Your contact info is never shown publicly.</p></div>
       <div class="lf-grid">
         <div class="lf-field"><label>Your full name <span class="req">*</span></label><input type="text" id="submitterName" maxlength="100" required placeholder="Juan dela Cruz"></div>
         <div class="lf-field"><label>Email <span class="req">*</span></label><input type="email" id="submitterEmail" maxlength="120" required placeholder="you@example.com"></div>
@@ -324,6 +532,144 @@ body.dark-mode .lf-error{color:#fca5a5}
         <div class="lf-field lf-full"><label>Anything we should know? <span class="opt">(optional)</span></label>
           <textarea id="submitterMessage" maxlength="1000" rows="3" placeholder="Best time to contact, special terms, occupancy date, etc."></textarea>
         </div>
+      </div>
+    </div>
+
+    <!-- Section 9: Documents -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="num">9</span><h3>Documents</h3><p>Tick what you already have. Nothing is uploaded here &mdash; we collect the actual copies securely once we have spoken.</p></div>
+
+      <div id="docListSale">
+        <div class="doc-head">Required to list <span class="rule"></span> <span class="ct">4 documents</span></div>
+        <div class="doc-group">
+          <div class="doc-item"><input type="checkbox" id="ds1" data-doc="Copy of Title (TCT / CCT)">
+            <label class="doc-t" for="ds1">Copy of Title &mdash; TCT or CCT<span class="doc-tag need">Required</span>
+              <span class="doc-d">The certificate of title in the registered owner's name. A condominium is a CCT; a house and lot or a lot is a TCT.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds2" data-doc="Latest Tax Declaration">
+            <label class="doc-t" for="ds2">Latest Tax Declaration<span class="doc-tag need">Required</span>
+              <span class="doc-d">From the city or municipal assessor, for both land and improvement where they are separate.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds3" data-doc="Signed Authority to Sell">
+            <label class="doc-t" for="ds3">Signed Authority to Sell<span class="doc-tag need">Required</span>
+              <span class="doc-d">If you do not have one yet, leave this and we will send you ours to sign. We cannot close a sale without it &mdash; see the note below.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds4" data-doc="Valid government ID of registered owner(s)">
+            <label class="doc-t" for="ds4">Valid government ID of the registered owner(s)<span class="doc-tag need">Required</span>
+              <span class="doc-d">Every name that appears on the title. For married owners, the spouse's consent is normally needed too.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+        </div>
+
+        <div class="doc-head">Depending on the property <span class="rule"></span> <span class="ct">as they apply</span></div>
+        <div class="doc-group">
+          <div class="doc-item"><input type="checkbox" id="ds5" data-doc="Latest real property tax receipt">
+            <label class="doc-t" for="ds5">Latest real property tax receipt<span class="doc-tag later">Before closing</span>
+              <span class="doc-d">Proof the amilyar is current. Arrears are settled before transfer.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds6" data-doc="Notarised Special Power of Attorney">
+            <label class="doc-t" for="ds6">Notarised Special Power of Attorney<span class="doc-tag later">If representing</span>
+              <span class="doc-d">Only if you are signing for the owner. It has to be notarised, and for an owner abroad, consularised or apostilled.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds7" data-doc="Condominium certificate of management / dues clearance">
+            <label class="doc-t" for="ds7">Condo certificate of management or dues clearance<span class="doc-tag later">Condos</span>
+              <span class="doc-d">Shows association dues are paid up. Most buildings will not process a transfer without it.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="ds8" data-doc="Lot plan / vicinity map">
+            <label class="doc-t" for="ds8">Lot plan and vicinity map<span class="doc-tag later">Land</span>
+              <span class="doc-d">Useful for lots and house-and-lot listings. Not needed for condominiums.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+        </div>
+      </div>
+
+      <div id="docListLease" style="display:none">
+        <div class="doc-head">Required to list <span class="rule"></span> <span class="ct">4 documents</span></div>
+        <div class="doc-group">
+          <div class="doc-item"><input type="checkbox" id="dl1" data-doc="Copy of Title or proof of ownership">
+            <label class="doc-t" for="dl1">Copy of Title, or proof of ownership<span class="doc-tag need">Required</span>
+              <span class="doc-d">The title in your name. If you are subleasing, the head lease and the owner's written consent to sublease instead.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl2" data-doc="Latest Tax Declaration">
+            <label class="doc-t" for="dl2">Latest Tax Declaration<span class="doc-tag need">Required</span>
+              <span class="doc-d">Confirms the property and its assessed value with the assessor's office.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl3" data-doc="Signed Authority to Lease">
+            <label class="doc-t" for="dl3">Signed Authority to Lease<span class="doc-tag need">Required</span>
+              <span class="doc-d">Your written instruction for us to market and let the unit. We will send you ours if you do not have one.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl4" data-doc="Valid government ID of registered owner(s)">
+            <label class="doc-t" for="dl4">Valid government ID of the registered owner(s)<span class="doc-tag need">Required</span>
+              <span class="doc-d">Every name on the title.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+        </div>
+
+        <div class="doc-head">Depending on the property <span class="rule"></span> <span class="ct">as they apply</span></div>
+        <div class="doc-group">
+          <div class="doc-item"><input type="checkbox" id="dl5" data-doc="BIR registration / TIN as lessor">
+            <label class="doc-t" for="dl5">BIR registration and TIN as a lessor<span class="doc-tag later">Before handover</span>
+              <span class="doc-d">Rental income is taxable. Lessors register with the BIR and issue an official receipt for every rental payment &mdash; a plain acknowledgement receipt does not satisfy this.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl6" data-doc="Association / subdivision clearance and move-in rules">
+            <label class="doc-t" for="dl6">Association clearance and move-in rules<span class="doc-tag later">Condos &amp; villages</span>
+              <span class="doc-d">Dues status, tenant registration, and the building's move-in policy. Tenants ask about this early.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl7" data-doc="Occupancy permit / business permit">
+            <label class="doc-t" for="dl7">Occupancy permit<span class="doc-tag later">Commercial</span>
+              <span class="doc-d">For commercial space. Your tenant will need it to get their own business permit.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+          <div class="doc-item"><input type="checkbox" id="dl8" data-doc="Inventory of furnishings and appliances">
+            <label class="doc-t" for="dl8">Inventory of furnishings and appliances<span class="doc-tag later">If furnished</span>
+              <span class="doc-d">A photographed list attached to the contract. It is what settles deposit disputes at move-out.</span></label>
+            <button type="button" class="doc-attach">Attach</button></div>
+        </div>
+      </div>
+
+      <p class="doc-note"><strong>Attaching is optional at this stage.</strong> Tick what you hold and we will collect the rest when we speak. Anything you do attach is stored privately &mdash; unlike the property photos, these are never published, and only GLRA staff can open them.</p>
+      <p class="doc-note" id="docNoteLease" style="display:none"><strong>One more thing for leases.</strong> A lease running longer than one year has to be in writing to be enforceable under the Statute of Frauds. We put every letting on a written contract regardless of length.</p>
+    </div>
+
+    <!-- Section 10: Authority -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="num">10</span><h3>Authority &amp; consent</h3><p>Required before we can advertise your property.</p></div>
+
+      <div class="lf-grid" style="margin-bottom:16px">
+        <div class="lf-field"><label>Authority type <span class="opt">(optional)</span></label>
+          <select id="authorityType">
+            <option value="">Not decided yet</option>
+            <option value="Exclusive">Exclusive &mdash; GLRA only</option>
+            <option value="Non-exclusive">Non-exclusive &mdash; other brokers too</option>
+          </select>
+          <small class="lf-hint">Exclusive listings get more of our marketing budget. You can decide later.</small>
+        </div>
+        <div class="lf-field"><label>Commission discussed <span class="opt">(optional)</span></label>
+          <input type="text" id="commissionNote" maxlength="60" placeholder="e.g. 3%, or to be discussed">
+        </div>
+      </div>
+
+      <div class="consent-box">
+        <label class="consent-item" id="ci-owner"><input type="checkbox" id="ackOwner">
+          <span>I am the registered owner of this property, a co-owner, or a representative duly authorised by the owner to offer it.</span></label>
+        <label class="consent-item" id="ci-market"><input type="checkbox" id="ackMarketing">
+          <span>I authorise GLRA Realty to advertise and market this property, and to publish the photographs and details I have submitted.</span></label>
+        <label class="consent-item" id="ci-ats"><input type="checkbox" id="ackAuthority">
+          <span>I understand this form is <b>not</b> an Authority to Sell or Lease, and that GLRA Realty cannot conclude a transaction until I have signed a separate written authority.</span></label>
+        <label class="consent-item" id="ci-privacy"><input type="checkbox" id="ackPrivacy">
+          <span>I consent to GLRA Realty collecting and processing my personal data for this listing, as described in the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+      </div>
+
+      <!-- This note is the honest answer to "can a tick box be the
+           authority?". Under Article 1874 of the Civil Code a sale of
+           land through an agent whose authority is not in writing is
+           VOID, not merely unenforceable, and Article 1358(3) puts the
+           power to sell into a notarised public instrument. The
+           E-Commerce Act gives electronic signatures legal effect but
+           carves out anything requiring notarisation. So the boxes
+           above record intent and permission to advertise, which is
+           genuinely useful and legally sound — and the signed paper
+           still has to follow. -->
+      <div class="legal-note">
+        <span class="hd">Why we still need a signed document</span>
+        Under Article 1874 of the Civil Code, where land is sold through an agent, the agent's authority must be in writing &mdash; otherwise the sale itself is void. A tick box records that you want us to market the property, and that is enough for us to start. It cannot stand in for the signed Authority to Sell, and a Special Power of Attorney has to be notarised on top of that.
+        <span class="cite">Civil Code arts. 1874 &amp; 1358(3) · RA 8792 recognises e-signatures but excludes documents requiring notarisation · This is general information, not legal advice.</span>
       </div>
     </div>
 
@@ -461,9 +807,125 @@ function applyListingTypeUI(){
     priceReq.className = 'req'; priceReq.textContent = '*';
     rentalReq.className = 'req'; rentalReq.textContent = '*';
   }
+
+  // Lease terms and the lease document list appear the moment a letting
+  // is on the table. "Sale and lease" gets both checklists, because such
+  // an owner genuinely needs both sets of paperwork.
+  const leasing = (lt === 'FOR LEASE' || lt === 'SALE AND LEASE');
+  const selling = (lt === 'FOR SALE'  || lt === 'SALE AND LEASE');
+  document.getElementById('leaseSection').style.display  = leasing ? '' : 'none';
+  document.getElementById('docListLease').style.display  = leasing ? '' : 'none';
+  document.getElementById('docNoteLease').style.display  = leasing ? '' : 'none';
+  document.getElementById('docListSale').style.display   = selling ? '' : 'none';
+
+  // The wording of the third consent has to name the right document,
+  // otherwise the owner is agreeing to something that does not match
+  // what we will actually send them.
+  const word = leasing && !selling ? 'Authority to Lease'
+             : selling && !leasing ? 'Authority to Sell'
+             : 'Authority to Sell or Lease';
+  document.querySelector('#ci-ats span').innerHTML =
+    'I understand this form is <b>not</b> an ' + word + ', and that GLRA Realty cannot ' +
+    'conclude a transaction until I have signed a separate written authority.';
 }
 document.querySelectorAll('input[name="listingType"]').forEach(r => r.addEventListener('change', applyListingTypeUI));
 applyListingTypeUI();
+
+/* ── Owner documents ─────────────────────────────────────────────
+   Attaching is optional — the checkbox alone still means "I hold this".
+   Attaching just also ticks it, because having sent the file is a
+   strictly stronger claim than saying you have it.
+
+   These go to a private Cloudinary bucket, not the public one the
+   property photos use, and the browser never receives a URL back —
+   only an opaque id it hands to the server on submit. */
+var ownerDocs = [];
+var MAX_DOC = 12 * 1024 * 1024;
+
+function fmtBytes(n){
+  return n >= 1048576 ? (n/1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n/1024)) + ' KB';
+}
+
+function docChip(row, state, text, sub){
+  var chip = row.querySelector('.doc-file');
+  if (!chip){
+    chip = document.createElement('div');
+    chip.className = 'doc-file';
+    row.appendChild(chip);
+  }
+  chip.className = 'doc-file' + (state === 'error' ? ' err' : '');
+  var icon = state === 'busy' ? 'fa-spinner fa-spin' : state === 'error' ? 'fa-triangle-exclamation' : 'fa-paperclip';
+  chip.innerHTML = '<i class="fas ' + icon + '"></i>' +
+    '<span class="nm"></span>' + (sub ? '<span class="sz"></span>' : '') +
+    (state === 'busy' ? '' : '<button type="button" class="rm" aria-label="Remove">&times;</button>');
+  chip.querySelector('.nm').textContent = text;
+  if (sub) chip.querySelector('.sz').textContent = sub;
+  var rm = chip.querySelector('.rm');
+  if (rm) rm.addEventListener('click', function(){ removeDoc(row); });
+  return chip;
+}
+
+function removeDoc(row){
+  var label = row.querySelector('input[type=checkbox]').dataset.doc;
+  ownerDocs = ownerDocs.filter(function(d){ return d.label !== label; });
+  var chip = row.querySelector('.doc-file');
+  if (chip) chip.remove();
+  var btn = row.querySelector('.doc-attach');
+  btn.disabled = false; btn.textContent = 'Attach';
+}
+
+async function uploadOwnerDoc(row, file){
+  if (!file) return;
+  var box = row.querySelector('input[type=checkbox]');
+  var label = box.dataset.doc;
+  var btn = row.querySelector('.doc-attach');
+
+  if (file.size > MAX_DOC){
+    return docChip(row, 'error', fmtBytes(file.size) + ' — too large. 12 MB maximum.');
+  }
+  if (!/^(application\/pdf|image\/(jpeg|png|webp))$/.test(file.type)){
+    return docChip(row, 'error', 'Use a PDF or a photo (JPG, PNG, WEBP).');
+  }
+
+  docChip(row, 'busy', 'Uploading ' + file.name + '…');
+  btn.disabled = true; btn.textContent = 'Sending';
+
+  try {
+    var fd = new FormData();
+    fd.append('document', file);
+    var res = await fetch('/api/property-submissions/upload-document', { method:'POST', body: fd });
+    var data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+    ownerDocs = ownerDocs.filter(function(d){ return d.label !== label; });
+    ownerDocs.push({ label: label, publicId: data.publicId, resourceType: data.resourceType,
+                     format: data.format, name: data.name, bytes: data.bytes });
+    box.checked = true;                     // attached is a stronger claim than ticked
+    docChip(row, 'ok', data.name, fmtBytes(data.bytes));
+    btn.disabled = false; btn.textContent = 'Replace';
+  } catch (e){
+    docChip(row, 'error', e.message || 'Upload failed. Try again.');
+    btn.disabled = false; btn.textContent = 'Attach';
+  }
+}
+
+document.querySelectorAll('.doc-attach').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var row = btn.closest('.doc-item');
+    var input = row.querySelector('input[type=file]');
+    if (!input){
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pdf,image/jpeg,image/png,image/webp';
+      input.addEventListener('change', function(){
+        uploadOwnerDoc(row, input.files[0]);
+        input.value = '';                   // so re-picking the same file still fires
+      });
+      row.appendChild(input);
+    }
+    input.click();
+  });
+});
 
 // ── Drag-drop upload ──
 const dz = document.getElementById('dropZone');
@@ -560,6 +1022,43 @@ async function submitListing(){
   if(lt === 'FOR LEASE' && rental <= 0) return showError('Please enter your monthly rental amount.');
   if(lt === 'SALE AND LEASE' && price <= 0 && rental <= 0) return showError('Please enter at least the selling price or monthly rental.');
 
+  // ── Authority and consent ──────────────────────────────────────
+  // All four are required. The first three are the representations we
+  // rely on to advertise at all; the fourth is Data Privacy Act consent
+  // for holding the owner's contact details.
+  const consents = [
+    ['ackOwner',     'ci-owner',   'Please confirm you are the owner or an authorised representative.'],
+    ['ackMarketing', 'ci-market',  'Please authorise us to advertise the property.'],
+    ['ackAuthority', 'ci-ats',     'Please confirm you understand a signed written authority is still required.'],
+    ['ackPrivacy',   'ci-privacy', 'Please consent to us processing your details so we can contact you.']
+  ];
+  document.querySelectorAll('.consent-item').forEach(el => el.classList.remove('missing'));
+  for (const [box, row, msg] of consents){
+    if (!document.getElementById(box).checked){
+      const el = document.getElementById(row);
+      el.classList.add('missing');
+      el.scrollIntoView({ behavior:'smooth', block:'center' });
+      return showError(msg);
+    }
+  }
+
+  const documentsReady = Array.from(
+    document.querySelectorAll('#docListSale input:checked, #docListLease input:checked'))
+    .map(i => i.dataset.doc)
+    .filter((v,i,a) => a.indexOf(v) === i);   // sale and lease share some entries
+
+  const leasing = (lt === 'FOR LEASE' || lt === 'SALE AND LEASE');
+  const leaseTerms = !leasing ? null : {
+    term:          document.getElementById('leaseTerm').value || 'Negotiable',
+    availableFrom: document.getElementById('availableFrom').value || '',
+    depositMonths: parseInt(document.getElementById('depositMonths').value) || 0,
+    advanceMonths: parseInt(document.getElementById('advanceMonths').value) || 0,
+    furnishing:    document.getElementById('furnishing').value,
+    dues:          document.getElementById('duesArrangement').value,
+    pets:          document.getElementById('petsPolicy').value,
+    utilities:     document.getElementById('utilities').value.trim()
+  };
+
   const ownerRole = document.getElementById('ownerRole').value;
   const baseMsg = document.getElementById('submitterMessage').value.trim();
   const finalMsg = ownerRole ? `[Submitter role: ${ownerRole}]${baseMsg ? '\n\n' + baseMsg : ''}` : baseMsg;
@@ -582,7 +1081,22 @@ async function submitListing(){
     parking: parseInt(document.getElementById('parking').value) || 0,
     developer: document.getElementById('developer').value.trim(),
     mainImage: successfulImages[0],
-    gallery: successfulImages
+    gallery: successfulImages,
+    ownerRole,
+    documentsReady,
+    documents: ownerDocs,
+    leaseTerms,
+    authorityType:  document.getElementById('authorityType').value,
+    commissionNote: document.getElementById('commissionNote').value.trim(),
+    // The evidentiary value of the tick boxes is the record that they
+    // were ticked, so send the acknowledgements themselves. The server
+    // stamps the time and IP — the browser's clock is not evidence.
+    acknowledgements: {
+      isOwnerOrAuthorised: true,
+      marketingAuthorised: true,
+      understandsWrittenAuthorityRequired: true,
+      privacyConsent: true
+    }
   };
 
   const btn = document.getElementById('submitBtn');

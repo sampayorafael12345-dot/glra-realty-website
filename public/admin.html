@@ -2555,6 +2555,16 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <div class="sub-spec-grid" id="spSpecs"></div>
     </div>
 
+    <!-- Paperwork: what the owner says they hold, and whether the signed
+         authority has actually arrived. The banner is deliberately loud —
+         marketing a property on the strength of a tick box is the mistake
+         this panel exists to prevent. -->
+    <div class="task-panel-section" id="spDocsSection" style="display:none">
+      <h4><i class="fas fa-folder-open"></i> Paperwork &amp; authority</h4>
+      <div id="spAuthorityBanner"></div>
+      <div id="spDocs" style="font-size:13px;line-height:1.9;color:var(--text-color)"></div>
+    </div>
+
     <!-- Description -->
     <div class="task-panel-section">
       <h4><i class="fas fa-align-left"></i> Description</h4>
@@ -4522,6 +4532,76 @@ function renderSubPanel(s){
   document.getElementById('spSpecs').innerHTML = specs.length
     ? specs.map(sp => `<div class="sub-spec"><div class="lbl">${esc(sp.lbl)}</div><div class="val">${esc(String(sp.val))}</div></div>`).join('')
     : '<small style="color:var(--gray)">No specifications provided.</small>';
+
+  // ── Paperwork & authority ──────────────────────────────────────
+  // Opens an owner-uploaded document. The signed link is fetched on
+  // demand and expires in five minutes, so it is never stored anywhere.
+  window.openSubDoc = async function(id, idx){
+    try {
+      const r = await apiFetch('/api/admin/property-submissions/' + id + '/document/' + idx);
+      const d = await r.json();
+      if (!d.url) throw new Error(d.error || 'Could not open the document');
+      window.open(d.url, '_blank', 'noopener');
+    } catch (e){ alert(e.message || 'Could not open the document'); }
+  };
+
+  // Lease terms sit in the spec grid above; this block is about what
+  // GLRA is actually allowed to do with the property yet.
+  const lt = s.leaseTerms || {};
+  if (lt.term){
+    specs.push({ lbl: 'Lease term', val: lt.term });
+    if (lt.depositMonths) specs.push({ lbl: 'Deposit', val: lt.depositMonths + ' months' });
+    if (lt.advanceMonths) specs.push({ lbl: 'Advance', val: lt.advanceMonths + ' months' });
+    if (lt.furnishing)    specs.push({ lbl: 'Furnishing', val: lt.furnishing });
+    if (lt.dues)          specs.push({ lbl: 'Assoc. dues', val: lt.dues });
+    if (lt.pets)          specs.push({ lbl: 'Pets', val: lt.pets });
+    if (lt.availableFrom) specs.push({ lbl: 'Available', val: lt.availableFrom });
+    if (lt.utilities)     specs.push({ lbl: 'Utilities', val: lt.utilities });
+    document.getElementById('spSpecs').innerHTML = specs.map(sp =>
+      `<div class="sub-spec"><div class="lbl">${esc(sp.lbl)}</div><div class="val">${esc(String(sp.val))}</div></div>`).join('');
+  }
+
+  const ack  = s.acknowledgements || {};
+  const docs = Array.isArray(s.documentsReady) ? s.documentsReady : [];
+  const hasPaperwork = docs.length || ack.acceptedAt || s.authorityType;
+  document.getElementById('spDocsSection').style.display = hasPaperwork ? '' : 'none';
+  if (hasPaperwork){
+    const signed = s.signedAuthorityReceived;
+    document.getElementById('spAuthorityBanner').innerHTML = signed
+      ? `<div style="background:rgba(34,197,94,.1);border-left:3px solid #22c55e;padding:11px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.6">
+           <b>Signed authority on file.</b>${s.signedAuthorityNote ? ' ' + esc(s.signedAuthorityNote) : ''}</div>`
+      : `<div style="background:rgba(239,68,68,.1);border-left:3px solid #ef4444;padding:11px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.6">
+           <b>No signed authority yet.</b> The owner ticked the consent boxes, which lets us talk to them and
+           prepare the listing — it is not an Authority to Sell. Under Civil Code art. 1874 a sale through an
+           agent without written authority is void. Get it signed before marketing.</div>`;
+
+    // Files the owner actually attached. Links are minted on click and
+    // die in five minutes, so nothing durable sits in the DOM.
+    const files = Array.isArray(s.documents) ? s.documents : [];
+    const filesHtml = files.length
+      ? `<div style="margin-bottom:14px"><b>Attached files</b><br>${files.map(f =>
+          `<a href="#" onclick="openSubDoc('${esc(s._id)}',${f.idx});return false"
+              style="color:var(--gold);display:inline-block;margin-top:5px">
+             <i class="fas fa-paperclip"></i> ${esc(f.name || 'document')}</a>
+           <span style="color:var(--gray);font-size:11.5px"> &middot; ${
+             f.bytes ? (f.bytes/1048576).toFixed(1) + ' MB' : ''} &middot; ${esc(f.label || '')}</span><br>`
+        ).join('')}</div>`
+      : '';
+
+    document.getElementById('spDocs').innerHTML = filesHtml +
+      `<div style="margin-bottom:12px"><b>Owner says they hold</b><br>${
+        docs.length ? docs.map(d => '&#10003; ' + esc(d)).join('<br>')
+                    : '<span style="color:#ef4444">Nothing ticked.</span>'
+      }</div>
+       <div style="color:var(--gray);font-size:12px;line-height:1.7">
+         Role: ${esc(s.ownerRole || '—')} · Authority sought: ${esc(s.authorityType || 'not decided')}${
+           s.commissionNote ? ' · Commission: ' + esc(s.commissionNote) : ''}<br>
+         ${ack.acceptedAt
+             ? 'All four boxes ticked ' + new Date(ack.acceptedAt).toLocaleString('en-PH',{dateStyle:'medium',timeStyle:'short'}) +
+               (ack.acceptedIp ? ' from ' + esc(ack.acceptedIp) : '')
+             : 'No acknowledgement recorded (submitted before this was added).'}
+       </div>`;
+  }
 
   // Description
   document.getElementById('spDescription').textContent = s.description || '— No description provided —';
