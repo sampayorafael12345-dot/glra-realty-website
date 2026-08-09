@@ -3222,6 +3222,51 @@ app.post('/api/property-submissions/upload-image',
 );
 
 // Public: submit the property listing form
+/* Owner documents — titles, tax declarations, IDs.
+   Narrower than the task-attachment filter on purpose: a title copy is a
+   PDF or a photograph, and there is no reason to accept Word or Excel
+   here. Nothing lands in public/uploads for longer than the round trip. */
+const ALLOWED_DOC_MIMES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
+const uploadOwnerDoc = multer({
+  storage: storage,
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_DOC_MIMES.has(file.mimetype)) cb(null, true);
+    else cb(new Error('Upload a PDF or a photo (JPG, PNG, WEBP) of the document.'));
+  }
+});
+
+app.post('/api/property-submissions/upload-document',
+  submissionUploadLimiter,
+  uploadOwnerDoc.single('document'),
+  async (req, res) => {
+    const tmp = req.file && req.file.path;
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No document provided' });
+      // `authenticated` is the whole point: unlike the property photos,
+      // the resulting URL cannot be opened by anyone who happens to have
+      // it. Every view is a signed, expiring link minted for an admin.
+      const result = await cloudinary.uploader.upload(tmp, {
+        folder: 'glra_realty/submission_docs',
+        resource_type: 'auto',
+        type: 'authenticated'
+      });
+      if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {}
+      res.json({
+        publicId: result.public_id,
+        resourceType: result.resource_type,
+        format: result.format || '',
+        bytes: result.bytes,
+        name: String(req.file.originalname || '').slice(0, 200)
+      });
+    } catch (err) {
+      console.error('Owner document upload error:', err.message);
+      if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {}
+      res.status(500).json({ error: 'Upload failed. Please try again.' });
+    }
+  }
+);
+
 app.post('/api/property-submissions',
   submissionLimiter,
   [
@@ -3248,6 +3293,20 @@ app.post('/api/property-submissions',
       if (!b.mainImage && (!Array.isArray(b.gallery) || b.gallery.length === 0)) {
         return res.status(400).json({ error: 'Please upload at least one photo of the property.' });
       }
+      // The four acknowledgements are what let us advertise at all, so a
+      // submission without them is refused here as well as in the browser
+      // — client-side validation is a courtesy, not a control.
+      const ack = b.acknowledgements || {};
+      if (!ack.isOwnerOrAuthorised || !ack.marketingAuthorised ||
+          !ack.understandsWrittenAuthorityRequired || !ack.privacyConsent) {
+        return res.status(400).json({
+          error: 'Please tick all four boxes under Authority & consent before submitting.'
+        });
+      }
+
+      const ALLOWED_DOCS = 24;      // keeps a crafted payload from growing the doc
+      const leaseIn = b.leaseTerms && typeof b.leaseTerms === 'object' ? b.leaseTerms : {};
+
       const sub = await PropertySubmission.create({
         submitterName: b.submitterName,
         submitterEmail: b.submitterEmail,
@@ -3269,6 +3328,48 @@ app.post('/api/property-submissions',
         developer: b.developer || '',
         mainImage: b.mainImage || (Array.isArray(b.gallery) && b.gallery[0]) || '',
         gallery: Array.isArray(b.gallery) ? b.gallery.slice(0, 20) : [],
+
+        ownerRole: String(b.ownerRole || '').slice(0, 60),
+        documentsReady: Array.isArray(b.documentsReady)
+          ? b.documentsReady.slice(0, ALLOWED_DOCS).map(d => String(d).slice(0, 120))
+          : [],
+        // Rebuilt field by field rather than trusting the posted shape —
+        // this array ends up naming Cloudinary assets, so nothing the
+        // browser sends is copied through verbatim.
+        documents: Array.isArray(b.documents)
+          ? b.documents.slice(0, ALLOWED_DOCS).map(d => ({
+              label:        String(d.label || '').slice(0, 120),
+              publicId:     String(d.publicId || '').slice(0, 300),
+              resourceType: ['image','raw','video'].includes(d.resourceType) ? d.resourceType : 'image',
+              format:       String(d.format || '').replace(/[^a-z0-9]/gi, '').slice(0, 12),
+              name:         String(d.name || '').slice(0, 200),
+              bytes:        parseInt(d.bytes) || 0,
+              uploadedAt:   new Date()
+            })).filter(d => d.publicId)
+          : [],
+        leaseTerms: {
+          term:          String(leaseIn.term || '').slice(0, 40),
+          availableFrom: String(leaseIn.availableFrom || '').slice(0, 20),
+          depositMonths: parseInt(leaseIn.depositMonths) || 0,
+          advanceMonths: parseInt(leaseIn.advanceMonths) || 0,
+          furnishing:    String(leaseIn.furnishing || '').slice(0, 40),
+          dues:          String(leaseIn.dues || '').slice(0, 40),
+          pets:          String(leaseIn.pets || '').slice(0, 40),
+          utilities:     String(leaseIn.utilities || '').slice(0, 120)
+        },
+        authorityType:  String(b.authorityType || '').slice(0, 30),
+        commissionNote: String(b.commissionNote || '').slice(0, 60),
+        acknowledgements: {
+          isOwnerOrAuthorised: true,
+          marketingAuthorised: true,
+          understandsWrittenAuthorityRequired: true,
+          privacyConsent: true,
+          // Stamped server-side on purpose. A timestamp the submitter's
+          // browser supplied would be worth nothing as a record.
+          acceptedAt: new Date(),
+          acceptedIp: req.ip || req.connection?.remoteAddress || ''
+        },
+
         ip: req.ip || req.connection?.remoteAddress || '',
         userAgent: req.headers?.['user-agent'] || ''
       });
@@ -3301,7 +3402,32 @@ app.post('/api/property-submissions',
             <p style="margin:0 0 6px">Submitted by: <strong>${safeName}</strong></p>
             <p style="margin:0 0 6px">Email: <a href="mailto:${safeEmail}" style="color:#ff3d00">${safeEmail}</a></p>
             <p style="margin:0 0 6px">Phone: ${safePhone || '—'}</p>
+            <p style="margin:0 0 6px">Role: ${esc(sub.ownerRole || '—')}</p>
           </div>
+          <div style="border-top:1px solid #0a0a0a;padding-top:14px;margin-top:14px">
+            <p style="margin:0 0 6px"><strong>Documents the owner says they hold</strong></p>
+            <p style="margin:0 0 10px;font-size:13px;line-height:1.7">${
+              sub.documentsReady.length
+                ? sub.documentsReady.map(d => esc(d)).join('<br>')
+                : '<em style="color:#b91c1c">None ticked — chase these before doing any work.</em>'
+            }</p>
+            <p style="margin:0 0 6px">Authority sought: <strong>${esc(sub.authorityType || 'not decided')}</strong>${
+              sub.commissionNote ? ' · commission: ' + esc(sub.commissionNote) : ''}</p>
+            <p style="margin:0;font-size:13px;color:#6a6a6a">Owner ticked all four acknowledgements at ${
+              sub.acknowledgements.acceptedAt.toISOString()} from ${esc(sub.acknowledgements.acceptedIp || 'unknown')}.
+              <strong style="color:#b91c1c">This is not an Authority to Sell</strong> — get the signed document before marketing.</p>
+          </div>${ sub.leaseTerms && sub.leaseTerms.term ? `
+          <div style="border-top:1px solid #0a0a0a;padding-top:14px;margin-top:14px">
+            <p style="margin:0 0 6px"><strong>Lease terms</strong></p>
+            <p style="margin:0;font-size:13px;line-height:1.7">
+              Term: ${esc(sub.leaseTerms.term)} · Deposit: ${sub.leaseTerms.depositMonths} mo ·
+              Advance: ${sub.leaseTerms.advanceMonths} mo<br>
+              ${esc(sub.leaseTerms.furnishing)} · Dues ${esc(sub.leaseTerms.dues.toLowerCase())} ·
+              Pets: ${esc(sub.leaseTerms.pets.toLowerCase())}
+              ${sub.leaseTerms.availableFrom ? '<br>Available from ' + esc(sub.leaseTerms.availableFrom) : ''}
+              ${sub.leaseTerms.utilities ? '<br>' + esc(sub.leaseTerms.utilities) : ''}
+            </p>
+          </div>` : '' }
           <p style="margin:18px 0 0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#6a6a6a">Open the admin dashboard → Submissions tab to review and import.</p>
         ` + getEmailFooter();
         await sendEmail('glrarealty@gmail.com', `New Listing Submission: ${safeTitle}`, adminHtml);
@@ -3354,8 +3480,45 @@ app.get('/api/admin/property-submissions/:id', verifyToken, requirePermission('s
   try {
     const sub = await PropertySubmission.findById(req.params.id).lean();
     if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    // Strip the Cloudinary ids before this leaves the server. The panel
+    // only ever needs the name and size to draw the row; the id is what
+    // a signed link is minted from, and it has no business in the DOM.
+    if (Array.isArray(sub.documents)) {
+      sub.documents = sub.documents.map((d, i) => ({
+        idx: i, label: d.label, name: d.name, bytes: d.bytes, uploadedAt: d.uploadedAt
+      }));
+    }
     res.json(sub);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+/* Admin: open one uploaded document.
+   Mints a Cloudinary signed URL good for five minutes and redirects to
+   it. Nothing durable is handed out, so a link pasted into a chat or
+   left in a browser history is dead within the hour. */
+app.get('/api/admin/property-submissions/:id/document/:idx',
+  verifyToken, requirePermission('submissions_view'), async (req, res) => {
+  try {
+    const sub = await PropertySubmission.findById(req.params.id).lean();
+    if (!sub) return res.status(404).json({ error: 'Submission not found' });
+    const idx = parseInt(req.params.idx, 10);
+    const doc = Array.isArray(sub.documents) ? sub.documents[idx] : null;
+    if (!doc || !doc.publicId) return res.status(404).json({ error: 'Document not found' });
+
+    const url = cloudinary.utils.private_download_url(doc.publicId, doc.format, {
+      resource_type: doc.resourceType || 'image',
+      type: 'authenticated',
+      expires_at: Math.floor(Date.now() / 1000) + 300
+    });
+    // Returned as JSON rather than a 302. The dashboard authenticates with
+    // a bearer token, which a plain <a href> cannot carry, and putting the
+    // token in a query string to work around that would write it into
+    // server logs and browser history.
+    res.json({ url, name: doc.name, expiresInSeconds: 300 });
+  } catch (err) {
+    console.error('Document fetch error:', err.message);
+    res.status(500).json({ error: 'Could not open the document' });
+  }
 });
 
 // Admin: update notes / status (without importing — e.g. mark rejected, save notes)

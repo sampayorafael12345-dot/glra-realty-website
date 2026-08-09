@@ -208,6 +208,60 @@ const propertySubmissionSchema = new mongoose.Schema({
   mainImage: { type: String, default: '' },
   gallery: { type: [String], default: [] },
 
+  ownerRole: { type: String, default: '', maxlength: 60 },
+
+  // Ticked but not attached — "I have this, I will send it later".
+  documentsReady: { type: [String], default: [] },
+
+  // Actually uploaded. These are titles and government IDs, so they go to
+  // Cloudinary as `authenticated` rather than public like the property
+  // photos do: no URL is stored and none is ever sent to the browser.
+  // Retrieval goes through an admin-only route that mints a signed link
+  // valid for five minutes. Guessing the public_id gets you nothing.
+  documents: [{
+    label:        { type: String, default: '', maxlength: 120 },
+    publicId:     { type: String, default: '', maxlength: 300 },
+    resourceType: { type: String, default: 'image', maxlength: 20 },
+    format:       { type: String, default: '', maxlength: 12 },
+    name:         { type: String, default: '', maxlength: 200 },
+    bytes:        { type: Number, default: 0 },
+    uploadedAt:   { type: Date, default: Date.now }
+  }],
+
+  // Lease listings only.
+  leaseTerms: {
+    term:          { type: String, default: '', maxlength: 40 },
+    availableFrom: { type: String, default: '', maxlength: 20 },
+    depositMonths: { type: Number, default: 0 },
+    advanceMonths: { type: Number, default: 0 },
+    furnishing:    { type: String, default: '', maxlength: 40 },
+    dues:          { type: String, default: '', maxlength: 40 },
+    pets:          { type: String, default: '', maxlength: 40 },
+    utilities:     { type: String, default: '', maxlength: 120 }
+  },
+
+  // ── Authority record ──────────────────────────────────────────
+  // These tick boxes are NOT an Authority to Sell. Under Civil Code art.
+  // 1874 a sale of land through an agent whose authority is not in
+  // writing is void, and art. 1358(3) requires a notarised instrument
+  // for the power to sell; RA 8792 recognises e-signatures but excludes
+  // anything needing notarisation. What is stored here is evidence that
+  // the owner represented ownership and permitted advertising, on a
+  // given date, from a given address — which is what it is actually
+  // good for. The signed paper is tracked separately by the admin.
+  authorityType:  { type: String, default: '', maxlength: 30 },
+  commissionNote: { type: String, default: '', maxlength: 60 },
+  acknowledgements: {
+    isOwnerOrAuthorised:                 { type: Boolean, default: false },
+    marketingAuthorised:                 { type: Boolean, default: false },
+    understandsWrittenAuthorityRequired: { type: Boolean, default: false },
+    privacyConsent:                      { type: Boolean, default: false },
+    acceptedAt: { type: Date, default: null },
+    acceptedIp: { type: String, default: '' }
+  },
+  signedAuthorityReceived: { type: Boolean, default: false },
+  signedAuthorityNote:     { type: String, default: '', maxlength: 300 },
+
   // Workflow / admin fields
   status: { type: String, enum: ['pending','imported','rejected'], default: 'pending', index: true },
   importedPropertyId: { type: String, default: null },
