@@ -960,6 +960,14 @@ app.get('/api/health', async (req, res) => {
 const { registerChatbot, invalidateChatListingsCache } = require('./server/chatbot');
 registerChatbot(app, { handleValidation });
 
+// ============ AGENT WORKSPACE ============
+// The whole agent system (GPS, actions, lead journal, pipeline, calendar,
+// notifications, morning-agenda emails) lives in ./server/agents.js — routes
+// under /api/agent/* (agents only) and /api/admin/agents* (broker view).
+const { registerAgentRoutes, startAgentTick } = require('./server/agents');
+registerAgentRoutes(app, { sendEmail, esc, handleValidation });
+startAgentTick({ sendEmail, esc });
+
 
 
 // ============ SUBSCRIPTION ROUTES ============
@@ -1330,13 +1338,14 @@ app.post('/api/admin/login',
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'LOGIN', 'Session', '', '', null);
 
-      // Compute effective permissions: admins always get all, employees get their
-      // stored object layered over role defaults so any permission key added AFTER
-      // the account was created falls back to its sensible default (e.g. a legacy
-      // employee still sees the dashboard) instead of reading as undefined/false.
+      // Compute effective permissions: admins always get all, everyone else gets
+      // their stored object layered over their ROLE's defaults so any permission
+      // key added AFTER the account was created falls back to its sensible
+      // default instead of reading as undefined/false. (Agents' defaults are
+      // all-false — their access is the /api/agent/* routes, not permissions.)
       const effectivePerms = account.role === 'admin'
         ? defaultPermissionsForRole('admin')
-        : { ...defaultPermissionsForRole('employee'), ...(account.permissions || {}) };
+        : { ...defaultPermissionsForRole(account.role), ...(account.permissions || {}) };
 
       res.json({
         success: true,
@@ -1364,9 +1373,14 @@ app.post('/api/admin/signup',
   body('name').isString().trim().isLength({ min: 2, max: 200 }).withMessage('Please enter your full name'),
   body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email'),
   body('password').isString().isLength({ min: 8, max: 200 }).withMessage('Password must be at least 8 characters'),
+  // Where the request came from: 'agent' when it's the Agent Workspace signup.
+  // Informational only — the account is still created as a zero-permission
+  // pending employee; the admin picks the real role on the approval screen.
+  body('requestedRole').optional().isIn(['employee', 'agent']),
   handleValidation,
   async (req, res) => {
     const { name, email, password } = req.body;
+    const requestedRole = req.body.requestedRole === 'agent' ? 'agent' : 'employee';
     try {
       const existing = await Account.findOne({ email }).lean();
       if (existing) {
@@ -1379,22 +1393,23 @@ app.post('/api/admin/signup',
       const account = await Account.create({
         email, password, name,
         role: 'employee',
+        requestedRole,
         status: 'pending',
         permissions: noPerms
       });
       req.user = { email: account.email, name: account.name, role: 'employee' };
-      await logAudit(req, 'SIGNUP', 'Account', account._id, email, { status: 'pending' });
+      await logAudit(req, 'SIGNUP', 'Account', account._id, email, { status: 'pending', requestedRole });
 
       // Best-effort heads-up to the admin inbox — signup still succeeds if email fails.
       try {
-        await sendEmail('glrarealty@gmail.com', `New account request: ${name}`,
+        await sendEmail('glrarealty@gmail.com', `New ${requestedRole === 'agent' ? 'AGENT' : 'account'} request: ${name}`,
           getEmailHeader() + `
-          <h2 style="color:#0a1628;">New Account Request</h2>
+          <h2 style="color:#0a1628;">New ${requestedRole === 'agent' ? 'Agent' : 'Account'} Request</h2>
           <!-- esc(): name is free text from a public, unauthenticated signup form.
                Unescaped it renders as HTML in the admin's inbox, which is a
                ready-made phishing surface (a fake "Approve" link). -->
-          <p><strong>${esc(name)}</strong> (${esc(email)}) has requested access to the GLRA admin portal.</p>
-          <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline, and to choose exactly what they can access.</p>
+          <p><strong>${esc(name)}</strong> (${esc(email)}) has requested access to the ${requestedRole === 'agent' ? 'GLRA <strong>Agent Workspace</strong>' : 'GLRA admin portal'}.</p>
+          <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline${requestedRole === 'agent' ? ' — choose the <strong>Agent</strong> role when approving' : ', and to choose exactly what they can access'}.</p>
         ` + getEmailFooter());
       } catch (e) { console.error('Signup notification email failed:', e.message); }
 
@@ -1609,7 +1624,7 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
 // Approve a pending signup: admin chooses role + exact permissions here.
 app.post('/api/admin/accounts/:id/approve',
   verifyToken, requireAdmin,
-  body('role').optional().isIn(['admin', 'employee']),
+  body('role').optional().isIn(['admin', 'employee', 'agent']),
   body('permissions').optional().isObject(),
   handleValidation,
   async (req, res) => {
@@ -1629,13 +1644,15 @@ app.post('/api/admin/accounts/:id/approve',
 
       await logAudit(req, 'APPROVE', 'Account', account._id, account.email, { role: finalRole, permissions: finalPerms });
 
-      // Tell the employee they're in (best-effort).
+      // Tell them they're in (best-effort) — agents get pointed at their own door.
       try {
-        await sendEmail(account.email, 'Your GLRA admin account has been approved',
+        const isAgent = finalRole === 'agent';
+        await sendEmail(account.email, `Your GLRA ${isAgent ? 'Agent Workspace' : 'admin'} account has been approved`,
           getEmailHeader() + `
           <h2 style="color:#0a1628;">You're In! 🎉</h2>
           <p>Hi ${account.name || 'there'},</p>
-          <p>Your account request for the GLRA admin portal has been <strong>approved</strong>. You can now sign in with the email and password you registered with.</p>
+          <p>Your account request has been <strong>approved</strong>. You can now sign in with the email and password you registered with.</p>
+          ${isAgent ? `<p><a href="https://glrarealty.com/agent.html" style="display:inline-block;background:#0a0a0a;color:#ffffff;padding:12px 24px;text-decoration:none;font-weight:600">Open the Agent Workspace</a></p>` : ''}
         ` + getEmailFooter());
       } catch (e) { console.error('Approval email failed:', e.message); }
 

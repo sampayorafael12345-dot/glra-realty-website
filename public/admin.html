@@ -1429,6 +1429,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="notarial_view" style="margin-top:6px;display:none">Notarial</div>
       <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
+      <a class="nav-item" data-perm="agents_view" onclick="switchTab('agents')" style="display:none"><i class="fas fa-id-badge"></i> Agents</a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts <span class="nav-badge" id="accBadge" style="display:none">0</span></a>
@@ -1548,6 +1549,15 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <div id="tab-inquiries" style="display:none">
         <div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="hdr-btn" onclick="exportInquiriesCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div>
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Property</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inqTbody"></tbody></table></div></div></div>
+      </div>
+
+      <!-- AGENTS -->
+      <div id="tab-agents" style="display:none">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-id-badge"></i> Agent Roster</div><button class="hdr-btn" onclick="loadAgentsTab()"><i class="fas fa-rotate"></i> Refresh</button></div>
+          <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>GCI Goal</th><th>Leads</th><th>Active</th><th>Closed</th><th>Today's Actions</th><th>Last Seen</th><th></th></tr></thead><tbody id="agentsTbody"><tr><td colspan="8"><div class="empty-st"><i class="fas fa-id-badge"></i><p>Loading…</p></div></td></tr></tbody></table></div></div>
+        </div>
+        <div id="agentDetail"></div>
       </div>
 
       <!-- SUBSCRIBERS -->
@@ -2471,7 +2481,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         </div>
       </div>
       <div class="form-grid">
-        <div class="fg full"><label>Role</label><select id="apRole" onchange="apRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
+        <div class="fg full"><label>Role</label><select id="apRole" onchange="apRoleChange()"><option value="employee">Employee (Staff)</option><option value="agent">Agent (Agent Workspace only)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below. Agents get NO admin access — they work in the separate Agent Workspace (agent.html).</div></div>
         <div class="fg full" id="apPermsWrap">
           <label>What can they access?</label>
           <div class="field-hint" style="margin-bottom:10px">Tick exactly what this person is allowed to do. You can change this anytime later by editing their account.</div>
@@ -2924,6 +2934,9 @@ async function login(){
     const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await res.json();
     if(res.ok&&d.success&&d.token){
+      // Agents have their own workspace — this portal has nothing for them
+      // (the server refuses them everywhere anyway).
+      if(d.role==='agent'){ window.location.href='agent.html'; return; }
       setToken(d.token);
       CU={email:d.email,name:d.name,role:d.role,id:d.id,permissions:d.permissions||{}};
       document.getElementById('loginScreen').style.display='none';
@@ -3594,7 +3607,9 @@ async function loadInquiries(){
           ? `<button class="act" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)" onclick="toggleInqHandled('${i._id}',false)" title="Mark as NOT handled"><i class="fas fa-rotate-left"></i></button>`
           : `<button class="act act-view" onclick="toggleInqHandled('${i._id}',true)" title="Mark as handled"><i class="fas fa-check"></i></button>`;
         const delBtn = hasPerm('inquiries_delete') ? `<button class="act act-del" onclick="delInq('${i._id}')" title="Delete"><i class="fas fa-trash"></i></button>` : '';
-        return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${handledBtn}${delBtn}</div></td></tr>`;
+        const assignedBadge = i.assignedToName ? ` <span style="display:inline-block;background:#ff3d00;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle" title="Assigned by ${esc(i.assignedBy||'')}">&rarr; ${esc(i.assignedToName)}</span>` : '';
+        const assignBtn = hasPerm('agents_manage') && !i.assignedToName ? `<button class="act act-view" onclick="openAssign('${i._id}')" title="Assign to an agent"><i class="fas fa-user-tag"></i></button>` : '';
+        return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}${assignedBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${assignBtn}${handledBtn}${delBtn}</div></td></tr>`;
       }).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
   }catch(e){console.error(e)}
@@ -4028,9 +4043,9 @@ function renderPendingAccounts(pending){
         <div style="padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border-color)">
           <div style="width:42px;height:42px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:#f59e0b;font-weight:600;flex-shrink:0;border:1px solid rgba(245,158,11,.4)">${esc((a.name||a.email)[0].toUpperCase())}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:14px;color:var(--text-color)">${esc(a.name||'—')}</div>
+            <div style="font-weight:600;font-size:14px;color:var(--text-color)">${esc(a.name||'—')}${a.requestedRole==='agent'?' <span style="display:inline-block;background:#ff3d00;color:#fff;font-size:9px;padding:2px 7px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle">wants: Agent</span>':''}</div>
             <div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(a.email)}</div>
-            <div style="font-size:11px;color:var(--gray);margin-top:4px"><i class="fas fa-clock" style="margin-right:4px"></i>Requested ${fmtDate(a.createdAt)}</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:4px"><i class="fas fa-clock" style="margin-right:4px"></i>Requested ${fmtDate(a.createdAt)}${a.requestedRole==='agent'?' via the Agent Workspace':''}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="hdr-btn primary" onclick="openApprove('${a._id}')"><i class="fas fa-user-check"></i> Approve</button>
@@ -4049,7 +4064,8 @@ function openApprove(id){
   document.getElementById('apName').textContent = a.name || '—';
   document.getElementById('apEmail').textContent = a.email;
   document.getElementById('apDate').textContent = 'Requested ' + fmtDate(a.createdAt);
-  document.getElementById('apRole').value = 'employee';
+  // Pre-select what they asked to be (agent signups come from agent.html).
+  document.getElementById('apRole').value = a.requestedRole === 'agent' ? 'agent' : 'employee';
   // Start from the typical-employee defaults so approving is one click for the common case.
   renderPermsGrid({ ...DEFAULT_EMPLOYEE_PERMS }, 'apPermsGrid');
   apRoleChange();
@@ -4059,7 +4075,8 @@ function openApprove(id){
 function closeApModal(){document.getElementById('apModal').classList.remove('open')}
 
 function apRoleChange(){
-  // Same behavior as the account modal: admin role ignores the checkboxes.
+  // Admin ignores the checkboxes (has everything); agent ignores them too
+  // (has none of them — agents live in the Agent Workspace, not this portal).
   const role = document.getElementById('apRole')?.value;
   const grid = document.getElementById('apPermsGrid');
   const wrap = document.getElementById('apPermsWrap');
@@ -4068,11 +4085,13 @@ function apRoleChange(){
   if(!notice){
     notice = document.createElement('div');
     notice.className = 'perm-admin-notice';
-    notice.innerHTML = '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.';
     wrap.insertBefore(notice, grid);
   }
-  grid.classList.toggle('disabled', role==='admin');
-  notice.classList.toggle('show', role==='admin');
+  notice.innerHTML = role==='agent'
+    ? '<i class="fas fa-info-circle"></i> Agents get NO admin permissions. They sign in at <strong>glrarealty.com/agent.html</strong> and see only their own GPS, actions, leads, pipeline, and calendar. Checkboxes below are ignored.'
+    : '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.';
+  grid.classList.toggle('disabled', role==='admin' || role==='agent');
+  notice.classList.toggle('show', role==='admin' || role==='agent');
 }
 
 async function approveAccount(){
@@ -4099,6 +4118,127 @@ async function declineAccount(id, name){
     if(res.ok){showToast('Request declined');loadAccounts()}
     else showToast('Decline failed',true);
   }catch{showToast('Error',true)}
+}
+
+// ── AGENTS TAB ────────────────────────────────────────────
+// The broker's window into the Agent Workspace: roster with live rollups,
+// per-agent detail (GPS goal, pipeline, lead journal incl. birthdays), and
+// the picker that hands a website inquiry to an agent.
+let AGENTS_CACHE = [];
+
+async function loadAgentsTab(){
+  const tb = document.getElementById('agentsTbody');
+  try{
+    const res = await apiFetch('/api/admin/agents');
+    const d = await res.json();
+    if(!res.ok){ tb.innerHTML = `<tr><td colspan="8"><div class="empty-st"><p>${esc(d.error||'Could not load agents')}</p></div></td></tr>`; return; }
+    AGENTS_CACHE = d.agents || [];
+    if(!AGENTS_CACHE.length){
+      tb.innerHTML = `<tr><td colspan="8"><div class="empty-st"><i class="fas fa-id-badge"></i><p>No agents yet.<br><span style="font-size:12px">Agents request access at <strong>glrarealty.com/agent.html</strong> — approve them from the Accounts tab with the <strong>Agent</strong> role.</span></p></div></td></tr>`;
+      return;
+    }
+    tb.innerHTML = AGENTS_CACHE.map(a=>{
+      const seen = a.lastSeen ? fmtDateShort(a.lastSeen) : '—';
+      const gci = a.annualGCI != null ? '₱'+Number(a.annualGCI).toLocaleString() : '—';
+      const status = a.isActive===false ? ' <span style="font-size:9px;color:#c0392b;text-transform:uppercase;font-weight:700">(deactivated)</span>' : '';
+      return `<tr>
+        <td><strong style="font-size:13px">${esc(a.name||'—')}</strong>${status}<div style="font-size:11px;color:var(--gray)">${esc(a.email)}</div></td>
+        <td style="font-size:12px">${gci}</td>
+        <td style="font-size:12px">${a.leads.total}</td>
+        <td style="font-size:12px"><strong>${a.leads.active}</strong></td>
+        <td style="font-size:12px;color:#10b981"><strong>${a.leads.closed}</strong></td>
+        <td style="font-size:12px">${a.actionsToday.done}/${a.actionsToday.total}</td>
+        <td style="font-size:11px;color:var(--gray);white-space:nowrap">${seen}</td>
+        <td><button class="act act-view" onclick="openAgentDetail('${a._id}')" title="View details"><i class="fas fa-eye"></i></button></td>
+      </tr>`;
+    }).join('');
+  }catch(e){ tb.innerHTML = `<tr><td colspan="8"><div class="empty-st"><p>Network error</p></div></td></tr>`; }
+}
+
+async function openAgentDetail(id){
+  const box = document.getElementById('agentDetail');
+  box.innerHTML = `<div class="panel"><div class="panel-body"><div class="dash-loading">Loading agent…</div></div></div>`;
+  try{
+    const res = await apiFetch(`/api/admin/agents/${id}`);
+    const d = await res.json();
+    if(!res.ok){ box.innerHTML=''; showToast(d.error||'Could not load that agent', true); return; }
+    const g = d.gps, sc = d.byStage;
+    const leadRows = d.leads.map(l=>{
+      const bday = l.birthday ? new Date(l.birthday).toLocaleDateString('en-PH',{month:'short',day:'numeric',timeZone:'UTC'}) : '—';
+      const fu = l.nextFollowUp ? fmtDateShort(l.nextFollowUp) : '—';
+      return `<tr><td><strong style="font-size:12.5px">${esc(l.name)}</strong></td><td style="font-size:11.5px">${esc(l.category)}</td><td style="font-size:11.5px">${esc(l.stage)}</td><td style="font-size:11.5px">${bday}</td><td style="font-size:11.5px">${fu}</td><td style="font-size:11.5px;color:var(--gray)">${esc(l.source||'—')}</td></tr>`;
+    }).join('');
+    box.innerHTML = `
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-head">
+        <div class="panel-title"><i class="fas fa-user"></i> ${esc(d.account.name||d.account.email)}</div>
+        <button class="hdr-btn" onclick="document.getElementById('agentDetail').innerHTML=''">Close</button>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px">
+          <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px">GCI goal</div><div style="font-size:18px;font-weight:700">₱${Number(d.profile.annualGCI).toLocaleString()}</div></div>
+          <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px">Deals needed</div><div style="font-size:18px;font-weight:700">${Math.round(g.targets.salesYearly)}</div></div>
+          <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px">Leads needed / yr</div><div style="font-size:18px;font-weight:700">${Math.round(g.targets.leadsYearly)}</div></div>
+          <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px">Daily lead target</div><div style="font-size:18px;font-weight:700">${(g.targets.leadsYearly/(d.profile.workDaysYear||250)).toFixed(1)}</div></div>
+        </div>
+        <div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Pipeline</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+          ${d.stages.map(s=>`<span style="border:1px solid var(--border-color);padding:4px 10px;font-size:11px">${esc(s)}: <strong>${sc[s]||0}</strong></span>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Lead journal (latest ${d.leads.length})</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Client</th><th>Category</th><th>Stage</th><th>Birthday</th><th>Next follow-up</th><th>Source</th></tr></thead><tbody>${leadRows||'<tr><td colspan="6"><div class="empty-st"><p>No leads yet</p></div></td></tr>'}</tbody></table></div>
+      </div>
+    </div>`;
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ box.innerHTML=''; showToast('Network error', true); }
+}
+
+// ── ASSIGN INQUIRY → AGENT ────────────────────────────────
+let assignInqId = null;
+
+async function openAssign(inquiryId){
+  assignInqId = inquiryId;
+  if(!AGENTS_CACHE.length){
+    try{
+      const res = await apiFetch('/api/admin/agents');
+      const d = await res.json();
+      if(res.ok) AGENTS_CACHE = d.agents || [];
+    }catch(e){}
+  }
+  const choices = AGENTS_CACHE.filter(a=>a.isActive!==false && a.status==='active');
+  let m = document.getElementById('asgModal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'asgModal'; m.className = 'modal-ov';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = `
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-hd"><div class="modal-title">Assign to an Agent</div><button class="modal-close" onclick="closeAssign()"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        ${choices.length ? `
+          <p style="font-size:13px;color:var(--gray);margin-bottom:12px">The inquiry is copied into the agent's Lead Journal (marked "Website") and they get an email right away.</p>
+          <div class="fg full"><label>Agent</label><select id="asgAgent">${choices.map(a=>`<option value="${a._id}">${esc(a.name||a.email)} — ${a.leads.active} active deal${a.leads.active===1?'':'s'}</option>`).join('')}</select></div>
+          <button class="fbtn primary" style="width:100%;margin-top:8px" id="asgBtn" onclick="doAssign()"><i class="fas fa-user-tag"></i> Assign lead</button>`
+        : `<p style="font-size:13.5px;line-height:1.6">No active agents yet.<br><br>Agents request access at <strong>glrarealty.com/agent.html</strong>; approve them in the <strong>Accounts</strong> tab with the <strong>Agent</strong> role, then they'll appear here.</p>`}
+      </div>
+    </div>`;
+  m.classList.add('open');
+}
+function closeAssign(){ const m=document.getElementById('asgModal'); if(m) m.classList.remove('open'); assignInqId=null; }
+
+async function doAssign(){
+  const sel = document.getElementById('asgAgent');
+  if(!assignInqId || !sel) return;
+  const btn = document.getElementById('asgBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assigning…';
+  try{
+    const res = await apiFetch(`/api/admin/inquiries/${assignInqId}/assign`,{method:'POST',body:JSON.stringify({agentId:sel.value})});
+    const d = await res.json();
+    if(!res.ok){ showToast(d.error||'Assign failed', true); }
+    else{ showToast(`Lead assigned to ${d.assignedToName} — they've been emailed`); closeAssign(); loadInquiries(); }
+  }catch(e){ showToast('Network error', true); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-user-tag"></i> Assign lead'; } }
 }
 
 // ── DATA BACKUP ───────────────────────────────────────────
@@ -4359,6 +4499,7 @@ async function restoreSession(){
     const res = await apiFetch('/api/admin/me');
     if(!res.ok) return false;
     const d = await res.json();
+    if(d.role==='agent'){ window.location.href='agent.html'; return false; }
     CU = { email: d.email, name: d.name, role: d.role, permissions: d.permissions || {} };
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminShell').classList.add('visible');
@@ -4376,7 +4517,7 @@ async function restoreSession(){
 // If the user can't see the dashboard, drop them on the first tab they CAN see.
 function landOnAllowedTab(){
   if(hasPerm('dashboard_view')) return; // dashboard is the default landing tab
-  const order = ['properties','tasks','submissions','titling','notarial','inquiries'];
+  const order = ['properties','tasks','submissions','titling','notarial','agents','inquiries'];
   const first = order.find(t => {
     if(t==='properties'||t==='inquiries') return true; // always visible
     if(t==='tasks') return hasPerm('tasks_view');
@@ -8439,8 +8580,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial',agents:'Agents'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena',agents:'Your field agents — scorecards, pipelines, and lead journals'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -8477,6 +8618,10 @@ function switchTab(name){
   // Refresh tasks on tab visit
   if(name==='tasks' && hasPerm('tasks_view')){
     loadTasksData();
+  }
+  // Refresh agents on tab visit
+  if(name==='agents' && hasPerm('agents_view')){
+    loadAgentsTab();
   }
   // Refresh submissions on tab visit
   if(name==='submissions' && hasPerm('submissions_view')){

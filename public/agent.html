@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Agent Workspace — GLRA Realty</title>
+<!-- ==========================================================================
+  AGENT WORKSPACE — the web version of the "GLRA Agent System" workbook.
+  Self-contained on purpose (own styles + script, no styles.css / brutalist-
+  theme.css) so global label/checkbox rules can't distort it and it can be
+  reasoned about in one file, like admin.html.
+  Tabs: GPS · Actions · Report · Leads · Pipeline · Calendar
+  Server side: server/agents.js. Agents only — staff use admin.html.
+=========================================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --cream:#f1eee9; --ink:#0a0a0a; --orange:#ff3d00; --paper:#faf8f5; --gray:#6b6862; --line:#d8d4cc; --ok:#1a7f37; --bad:#c0392b; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ font-family:'Inter',sans-serif; background:var(--cream); color:var(--ink); min-height:100vh; }
+  ::selection{ background:var(--orange); color:#fff; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select,textarea{ font-family:'JetBrains Mono',monospace; font-size:15px; border:2px solid var(--ink); background:#fff; padding:11px 12px; width:100%; border-radius:0; color:var(--ink); }
+  input:focus,select:focus,textarea:focus{ outline:3px solid var(--orange); outline-offset:0; }
+  label{ display:block; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--gray); margin:0 0 5px; }
+  .field{ margin-bottom:14px; }
+
+  /* ── buttons ── */
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--ink); color:#fff; border:2px solid var(--ink); padding:13px 22px; font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase; transition:background .15s; }
+  .btn:hover{ background:var(--orange); border-color:var(--orange); }
+  .btn.alt{ background:transparent; color:var(--ink); }
+  .btn.alt:hover{ background:var(--ink); color:#fff; }
+  .btn.sm{ padding:8px 14px; font-size:11px; }
+  .btn:disabled{ opacity:.5; pointer-events:none; }
+
+  /* ── auth ── */
+  #authView{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 18px; }
+  .masthead{ text-align:center; margin-bottom:28px; }
+  .masthead .mk{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--gray); }
+  .masthead h1{ font-weight:900; font-size:clamp(30px,7vw,44px); letter-spacing:-1px; line-height:1; margin-top:6px; }
+  .masthead h1 span{ color:var(--orange); }
+  .authcard{ width:100%; max-width:420px; background:var(--paper); border:2px solid var(--ink); box-shadow:8px 8px 0 var(--ink); padding:26px 22px; }
+  .authcard h2{ font-size:15px; font-weight:900; letter-spacing:1px; text-transform:uppercase; margin-bottom:18px; border-bottom:2px solid var(--ink); padding-bottom:10px; }
+  .authmsg{ font-size:13.5px; line-height:1.55; padding:12px 14px; margin-bottom:14px; border:2px solid var(--ink); background:#fff; display:none; }
+  .authmsg.bad{ border-color:var(--bad); color:var(--bad); }
+  .authmsg.ok{ border-color:var(--ok); color:var(--ok); }
+  .authswap{ text-align:center; font-size:13px; margin-top:16px; color:var(--gray); }
+  .authswap a{ color:var(--ink); font-weight:800; cursor:pointer; text-decoration:underline; }
+
+  /* ── app shell ── */
+  #appView{ display:none; }
+  .topbar{ position:sticky; top:0; z-index:50; background:var(--ink); color:#fff; display:flex; align-items:center; gap:12px; padding:0 16px; height:54px; }
+  .topbar .mk{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; letter-spacing:2px; }
+  .topbar .mk span{ color:var(--orange); }
+  .topbar .who{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:#bbb; max-width:34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .iconbtn{ position:relative; background:none; border:none; color:#fff; font-size:17px; padding:8px; line-height:1; }
+  .iconbtn:hover{ color:var(--orange); }
+  .badge{ position:absolute; top:2px; right:0; background:var(--orange); color:#fff; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; min-width:15px; height:15px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+
+  .tabs{ position:sticky; top:54px; z-index:49; display:flex; background:var(--paper); border-bottom:2px solid var(--ink); overflow-x:auto; }
+  .tabs button{ flex:1; min-width:70px; background:none; border:none; border-right:1px solid var(--line); padding:12px 6px; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:1.2px; color:var(--gray); white-space:nowrap; }
+  .tabs button.on{ background:var(--ink); color:#fff; font-weight:700; }
+  .tabs button:hover:not(.on){ color:var(--ink); }
+
+  main{ max-width:960px; margin:0 auto; padding:18px 14px 110px; }
+  @media(min-width:720px){ main{ padding:26px 22px 60px; } }
+
+  .card{ background:var(--paper); border:2px solid var(--ink); margin-bottom:18px; }
+  .card > .chead{ display:flex; align-items:center; gap:10px; justify-content:space-between; padding:12px 16px; border-bottom:2px solid var(--ink); }
+  .card > .chead h3{ font-size:13px; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; }
+  .card > .chead .sub{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--gray); }
+  .card > .cbody{ padding:16px; }
+  .note{ font-size:12.5px; line-height:1.55; color:var(--gray); }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--orange); margin-bottom:6px; }
+
+  /* ── tables ── */
+  table.tgt{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.tgt th{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--gray); text-align:right; padding:7px 8px; border-bottom:2px solid var(--ink); }
+  table.tgt th:first-child{ text-align:left; }
+  table.tgt td{ padding:8px; border-bottom:1px solid var(--line); text-align:right; font-family:'JetBrains Mono',monospace; font-size:12.5px; }
+  table.tgt td:first-child{ text-align:left; font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; }
+  table.tgt tr.hl td{ background:#fff; font-weight:700; }
+  .tablewrap{ overflow-x:auto; }
+
+  /* ── actions ── */
+  .arow{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); }
+  .arow:last-child{ border-bottom:none; }
+  .arow .txt{ flex:1; font-size:13.5px; line-height:1.45; }
+  .arow.done .txt{ color:var(--ink); }
+  .arow.done{ box-shadow:inset 4px 0 0 var(--orange); padding-left:10px; }
+  .stepper{ display:flex; align-items:center; border:2px solid var(--ink); background:#fff; }
+  .stepper button{ width:34px; height:34px; background:none; border:none; font-size:17px; font-weight:800; }
+  .stepper button:hover{ background:var(--orange); color:#fff; }
+  .stepper .q{ width:34px; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; }
+  .prog{ height:10px; background:#fff; border:2px solid var(--ink); margin-top:12px; }
+  .prog i{ display:block; height:100%; background:var(--orange); transition:width .3s; }
+
+  /* ── report ── */
+  .scoregrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .score{ border:2px solid var(--ink); background:#fff; padding:14px; }
+  .score .k{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1.5px; color:var(--gray); text-transform:uppercase; }
+  .score .v{ font-size:26px; font-weight:900; margin:4px 0 2px; }
+  .score .r{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; font-weight:700; }
+  .score .r.ok{ color:var(--ok); } .score .r.mid{ color:#b7791f; } .score .r.bad{ color:var(--bad); }
+
+  /* ── leads ── */
+  .lrow{ padding:13px 2px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .lrow:hover{ background:#fff; }
+  .lrow .nm{ font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .lrow .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .chip{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1px; padding:3px 8px; border:1.5px solid var(--ink); text-transform:uppercase; background:#fff; }
+  .chip.stage{ background:var(--ink); color:#fff; }
+  .chip.stage.closing{ background:var(--ok); border-color:var(--ok); }
+  .chip.stage.lost{ background:#fff; color:var(--gray); border-color:var(--gray); }
+  .chip.orange{ background:var(--orange); border-color:var(--orange); color:#fff; }
+  .chip.warn{ background:var(--bad); border-color:var(--bad); color:#fff; }
+  .chip.plain{ border-color:var(--line); color:var(--gray); text-transform:none; }
+  .filters{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .filters select,.filters input{ width:auto; flex:1; min-width:110px; padding:9px 10px; font-size:13px; }
+
+  /* ── pipeline ── */
+  .stagebar{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .stagebar .sn{ width:150px; font-size:12.5px; font-weight:600; flex-shrink:0; }
+  .stagebar .bar{ flex:1; height:16px; background:#fff; border:1px solid var(--line); position:relative; }
+  .stagebar .bar i{ position:absolute; inset:0 auto 0 0; background:var(--orange); }
+  .stagebar .cnt{ font-family:'JetBrains Mono',monospace; font-weight:700; width:30px; text-align:right; }
+  .stagelist{ display:none; padding:4px 0 10px; }
+  .stagelist.open{ display:block; }
+  .slrow{ display:flex; align-items:center; gap:8px; padding:8px 0 8px 12px; border-left:3px solid var(--line); margin:4px 0; font-size:13px; flex-wrap:wrap; }
+  .slrow b{ margin-right:auto; }
+
+  /* ── calendar ── */
+  .calhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .calhead .m{ font-weight:900; font-size:17px; letter-spacing:.5px; }
+  .calgrid{ display:grid; grid-template-columns:repeat(7,1fr); border:2px solid var(--ink); background:var(--ink); gap:1px; }
+  .calgrid .dow{ background:var(--ink); color:#fff; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; text-align:center; padding:6px 0; }
+  .cday{ background:var(--paper); min-height:52px; padding:4px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gray); cursor:pointer; position:relative; }
+  .cday.out{ background:#e7e3db; color:#b5b0a6; }
+  .cday.today{ background:#fff; outline:2px solid var(--orange); outline-offset:-2px; color:var(--ink); font-weight:700; }
+  .cday.sel{ background:var(--ink); color:#fff; }
+  .cday .dots{ display:flex; gap:3px; flex-wrap:wrap; margin-top:4px; }
+  .dot{ width:7px; height:7px; }
+  .dot.followup{ background:var(--orange); } .dot.birthday{ background:#d63384; }
+  .dot.anniversary{ background:#b7791f; } .dot.event,.dot.viewing{ background:var(--ink); }
+  .dayitems{ margin-top:12px; }
+  .ditem{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .ditem .dot{ flex-shrink:0; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1px; color:var(--gray); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+
+  /* ── bell panel ── */
+  #bellPanel{ display:none; position:fixed; top:56px; right:8px; z-index:60; width:min(360px,94vw); max-height:60vh; overflow-y:auto; background:var(--paper); border:2px solid var(--ink); box-shadow:6px 6px 0 var(--ink); }
+  #bellPanel .nrow{ padding:11px 14px; border-bottom:1px solid var(--line); font-size:13px; line-height:1.45; }
+  #bellPanel .nrow.unread{ box-shadow:inset 4px 0 0 var(--orange); background:#fff; }
+  #bellPanel .nrow .t{ font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--gray); margin-top:3px; }
+
+  /* ── modal ── */
+  .overlay{ display:none; position:fixed; inset:0; z-index:80; background:rgba(10,10,10,.6); padding:16px; overflow-y:auto; }
+  .overlay.open{ display:flex; align-items:flex-start; justify-content:center; }
+  .modal{ width:100%; max-width:520px; background:var(--paper); border:2px solid var(--ink); box-shadow:8px 8px 0 var(--ink); margin:4vh 0 8vh; }
+  .modal .mhead{ display:flex; justify-content:space-between; align-items:center; padding:13px 16px; border-bottom:2px solid var(--ink); }
+  .modal .mhead h3{ font-size:13px; font-weight:900; letter-spacing:1px; text-transform:uppercase; }
+  .modal .mbody{ padding:16px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  @media(max-width:420px){ .grid2{ grid-template-columns:1fr; } }
+  .x{ background:none; border:none; font-size:20px; font-weight:800; }
+  .x:hover{ color:var(--orange); }
+
+  /* ── toast ── */
+  #toast{ position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); z-index:99; background:var(--ink); color:#fff; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.5px; padding:12px 20px; opacity:0; pointer-events:none; transition:all .25s; max-width:92vw; text-align:center; }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err{ background:var(--bad); }
+
+  /* ── definitions ── */
+  details.defs{ border:2px solid var(--ink); background:#fff; }
+  details.defs summary{ padding:12px 16px; font-weight:800; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; list-style:none; }
+  details.defs summary::before{ content:'+ '; color:var(--orange); font-weight:900; }
+  details.defs[open] summary::before{ content:'\2212 '; }
+  .defrow{ padding:10px 16px; border-top:1px solid var(--line); font-size:12.5px; line-height:1.5; }
+  .defrow b{ display:block; font-size:12px; }
+  .defrow .k{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--orange); }
+
+  .empty{ text-align:center; color:var(--gray); font-size:13px; padding:26px 10px; }
+  .empty b{ display:block; font-size:15px; color:var(--ink); margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<!-- ════════ AUTH ════════ -->
+<div id="authView">
+  <div class="masthead">
+    <div class="mk">GLRA REALTY // FIELD SYSTEM</div>
+    <h1>AGENT<span>.</span>WORKSPACE</h1>
+  </div>
+  <div class="authcard">
+    <div id="authMsg" class="authmsg"></div>
+
+    <div id="loginForm">
+      <h2>// Sign in</h2>
+      <div class="field"><label>Email</label><input type="email" id="liEmail" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label>Password</label><input type="password" id="liPass" autocomplete="current-password"></div>
+      <button class="btn" style="width:100%" id="liBtn" onclick="doLogin()">Sign in</button>
+      <div class="authswap">
+        New here? <a onclick="swapAuth(true)">Request agent access</a><br>
+        <a style="font-weight:400;font-size:12px" onclick="forgotPass()">Forgot password?</a>
+      </div>
+    </div>
+
+    <div id="signupForm" style="display:none">
+      <h2>// Request agent access</h2>
+      <p class="note" style="margin-bottom:14px">Your request goes to the broker for approval. You'll get an email once you're in.</p>
+      <div class="field"><label>Full name</label><input type="text" id="suName" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input type="email" id="suEmail" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label>Password (min 8 characters)</label><input type="password" id="suPass" autocomplete="new-password"></div>
+      <div class="field"><label>Repeat password</label><input type="password" id="suPass2" autocomplete="new-password"></div>
+      <button class="btn" style="width:100%" id="suBtn" onclick="doSignup()">Send request</button>
+      <div class="authswap">Already approved? <a onclick="swapAuth(false)">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ APP ════════ -->
+<div id="appView">
+  <div class="topbar">
+    <div class="mk">GLRA<span>//</span>AGENT</div>
+    <div class="who" id="whoName"></div>
+    <button class="iconbtn" onclick="toggleBell()" title="Notifications">&#9788;<span class="badge" id="bellBadge" style="display:none">0</span></button>
+    <button class="iconbtn" onclick="signOut()" title="Sign out" style="font-size:14px">&#10162;</button>
+  </div>
+  <div id="bellPanel"></div>
+
+  <div class="tabs" id="tabbar">
+    <button data-t="gps" class="on" onclick="showTab('gps')">GPS</button>
+    <button data-t="actions" onclick="showTab('actions')">ACTIONS</button>
+    <button data-t="report" onclick="showTab('report')">REPORT</button>
+    <button data-t="leads" onclick="showTab('leads')">LEADS</button>
+    <button data-t="pipeline" onclick="showTab('pipeline')">PIPELINE</button>
+    <button data-t="calendar" onclick="showTab('calendar')">CALENDAR</button>
+  </div>
+
+  <main>
+    <div id="tab-gps"></div>
+    <div id="tab-actions" style="display:none"></div>
+    <div id="tab-report" style="display:none"></div>
+    <div id="tab-leads" style="display:none"></div>
+    <div id="tab-pipeline" style="display:none"></div>
+    <div id="tab-calendar" style="display:none"></div>
+  </main>
+</div>
+
+<!-- lead modal -->
+<div class="overlay" id="leadOverlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="leadModalTitle">// New lead</h3><button class="x" onclick="closeLead()">&times;</button></div>
+    <div class="mbody">
+      <div class="field"><label>Client name *</label><input id="lf_name"></div>
+      <div class="grid2">
+        <div class="field"><label>Contact no.</label><input id="lf_contactNo" inputmode="tel"></div>
+        <div class="field"><label>Email</label><input id="lf_email" inputmode="email"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Birthday &#127874;</label><input type="date" id="lf_birthday"></div>
+        <div class="field"><label>Category</label><select id="lf_category"><option>Owner</option><option selected>Buyer</option><option>Tenant</option></select></div>
+      </div>
+      <div class="field"><label>Property / interest</label><input id="lf_propertyInterest"></div>
+      <div class="grid2">
+        <div class="field"><label>Source</label><input id="lf_source" placeholder="Referral, FB, walk-in&#8230;"></div>
+        <div class="field"><label>Stage</label><select id="lf_stage"></select></div>
+      </div>
+      <div class="field"><label>Action to be taken</label><input id="lf_actionToTake"></div>
+      <div class="grid2">
+        <div class="field"><label>Next follow-up</label><input type="date" id="lf_nextFollowUp"></div>
+        <div class="field" id="lf_closingWrap"><label>Closing date</label><input type="date" id="lf_closingDate"></div>
+      </div>
+      <div class="field" id="lf_lostWrap" style="display:none"><label>Reason (if lost)</label><input id="lf_reasonLost"></div>
+      <div class="field"><label>Remarks</label><textarea id="lf_remarks" rows="2"></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
+        <button class="btn sm alt" id="leadDelBtn" style="display:none;border-color:var(--bad);color:var(--bad)" onclick="deleteLead()">Delete</button>
+        <button class="btn" id="leadSaveBtn" onclick="saveLead()" style="margin-left:auto">Save lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- event modal -->
+<div class="overlay" id="evOverlay">
+  <div class="modal">
+    <div class="mhead"><h3>// New calendar entry</h3><button class="x" onclick="closeEv()">&times;</button></div>
+    <div class="mbody">
+      <div class="field"><label>Title *</label><input id="ef_title" placeholder="Viewing at&#8230;"></div>
+      <div class="grid2">
+        <div class="field"><label>Date *</label><input type="date" id="ef_date"></div>
+        <div class="field"><label>Time (optional)</label><input type="time" id="ef_time"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Type</label><select id="ef_type"><option value="viewing">Viewing / ocular</option><option value="appointment">Appointment</option><option value="other" selected>Other</option></select></div>
+        <div class="field"><label>Client (optional)</label><input id="ef_leadName"></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="ef_notes" rows="2"></textarea></div>
+      <button class="btn" style="width:100%" onclick="saveEv()">Add to calendar</button>
+    </div>
+  </div>
+</div>
+
+<!-- phone-sync modal -->
+<div class="overlay" id="syncOverlay">
+  <div class="modal">
+    <div class="mhead"><h3>// Calendar on your phone</h3><button class="x" onclick="closeSync()">&times;</button></div>
+    <div class="mbody">
+      <p class="note" style="margin-bottom:12px">This private link is your live calendar feed — follow-ups, client birthdays, closing anniversaries, and your entries. Add it once and your phone stays in sync by itself.</p>
+      <div class="field"><label>Your private link</label><input id="syncUrl" readonly onclick="this.select()"></div>
+      <button class="btn sm" onclick="copySync()">Copy link</button>
+      <div style="margin-top:16px;font-size:12.5px;line-height:1.6">
+        <b>Google Calendar:</b> Settings &#8594; Add calendar &#8594; <i>From URL</i> &#8594; paste the link.<br>
+        <b>iPhone:</b> Settings &#8594; Apps &#8594; Calendar &#8594; Calendar Accounts &#8594; Add Account &#8594; Other &#8594; <i>Add Subscribed Calendar</i> &#8594; paste the link.
+      </div>
+      <p class="note" style="margin-top:12px">Anyone with the link can see the calendar, so keep it to yourself. You can make a fresh link any time — the old one stops working.</p>
+      <button class="btn sm alt" style="margin-top:10px" onclick="makeSync(true)">Make a new link</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+// ═════════ state + helpers ═════════
+const TK = 'glraAgentToken';
+let ME = null, STAGES = [], LEADS = [], editLeadId = null, calMonth = null, selDay = null, calItems = [];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const peso = n => '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH');
+const fmtN = n => { n = Number(n) || 0; return n >= 100 ? Math.round(n).toLocaleString() : n >= 10 ? (Math.round(n * 10) / 10).toLocaleString() : n >= 1 ? (Math.round(n * 10) / 10) : n.toFixed(2); };
+const dstr = d => d ? new Date(d).toISOString().slice(0, 10) : '';
+const dnice = d => { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', timeZone: 'UTC' }); };
+const todayStr = () => { const t = new Date(Date.now() + 8 * 3600e3); return t.toISOString().slice(0, 10); };
+
+function toast(msg, bad) {
+  const t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = '', 2600);
+}
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  const tk = localStorage.getItem(TK);
+  if (tk) headers.Authorization = 'Bearer ' + tk;
+  const res = await fetch(path, { ...opts, headers });
+  if (res.status === 401) { signOut(true); throw new Error('Signed out'); }
+  return res;
+}
+
+// ═════════ auth ═════════
+function authMsg(msg, kind) { const m = $('authMsg'); m.textContent = msg; m.className = 'authmsg ' + (kind || ''); m.style.display = msg ? 'block' : 'none'; }
+function swapAuth(toSignup) { $('loginForm').style.display = toSignup ? 'none' : ''; $('signupForm').style.display = toSignup ? '' : 'none'; authMsg(''); }
+
+async function doLogin() {
+  const email = $('liEmail').value.trim(), password = $('liPass').value;
+  if (!email || !password) return authMsg('Enter your email and password.', 'bad');
+  const b = $('liBtn'); b.disabled = true; b.textContent = 'Signing in…';
+  try {
+    const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    const d = await res.json();
+    if (!res.ok) return authMsg(d.error || 'Sign-in failed.', 'bad');
+    if (d.role !== 'agent') {
+      return authMsg('This sign-in is for agent accounts. Staff and admin should use the Admin Portal at glrarealty.com/admin.html instead.', 'bad');
+    }
+    localStorage.setItem(TK, d.token);
+    enterApp();
+  } catch (e) { authMsg('Network problem — please try again.', 'bad'); }
+  finally { b.disabled = false; b.textContent = 'Sign in'; }
+}
+
+async function doSignup() {
+  const name = $('suName').value.trim(), email = $('suEmail').value.trim(), p1 = $('suPass').value, p2 = $('suPass2').value;
+  if (name.length < 2) return authMsg('Please enter your full name.', 'bad');
+  if (!email) return authMsg('Please enter your email.', 'bad');
+  if (p1.length < 8) return authMsg('Password must be at least 8 characters.', 'bad');
+  if (p1 !== p2) return authMsg('The two passwords don’t match.', 'bad');
+  const b = $('suBtn'); b.disabled = true; b.textContent = 'Sending…';
+  try {
+    const res = await fetch('/api/admin/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password: p1, requestedRole: 'agent' }) });
+    const d = await res.json();
+    if (!res.ok) return authMsg(d.error || 'Request failed.', 'bad');
+    swapAuth(false);
+    authMsg('Request sent! The broker has been notified — you’ll get an email once your account is approved.', 'ok');
+  } catch (e) { authMsg('Network problem — please try again.', 'bad'); }
+  finally { b.disabled = false; b.textContent = 'Send request'; }
+}
+
+async function forgotPass() {
+  const email = prompt('Enter your account email — we’ll send a password-reset link:');
+  if (!email) return;
+  try {
+    await fetch('/api/admin/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) });
+    authMsg('If that email has an account, a reset link is on its way.', 'ok');
+  } catch (e) { authMsg('Network problem — please try again.', 'bad'); }
+}
+
+function signOut(expired) {
+  localStorage.removeItem(TK);
+  $('appView').style.display = 'none'; $('authView').style.display = 'flex';
+  if (expired) authMsg('Your session ended — please sign in again.', 'bad');
+}
+
+// ═════════ app boot ═════════
+async function enterApp() {
+  try {
+    const res = await api('/api/agent/me');
+    if (!res.ok) { const d = await res.json().catch(() => ({})); signOut(); return authMsg(d.error || 'Could not load your workspace.', 'bad'); }
+    ME = await res.json();
+    STAGES = ME.stages || [];
+    $('authView').style.display = 'none'; $('appView').style.display = 'block';
+    $('whoName').textContent = (ME.name || ME.email).toUpperCase();
+    setBadge(ME.unread);
+    const sel = $('lf_stage'); sel.innerHTML = STAGES.map(s => `<option>${esc(s)}</option>`).join('');
+    showTab('gps');
+  } catch (e) { /* 401 handled in api() */ }
+}
+function setBadge(n) { const b = $('bellBadge'); b.textContent = n; b.style.display = n > 0 ? 'flex' : 'none'; }
+
+function showTab(name) {
+  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
+  ['gps', 'actions', 'report', 'leads', 'pipeline', 'calendar'].forEach(t => $('tab-' + t).style.display = t === name ? '' : 'none');
+  ({ gps: loadGPS, actions: loadActions, report: loadReport, leads: loadLeads, pipeline: loadPipeline, calendar: loadCalendar })[name]();
+  window.scrollTo(0, 0);
+}
+
+// ═════════ GPS ═════════
+const CONV_LABELS = [
+  ['sellerTakenToSold', 'Seller: taken → SOLD'], ['sellerApptToTaken', 'Seller: appt → TAKEN'],
+  ['sellerContactToAppt', 'Seller: contact → APPT'], ['sellerLeadToContact', 'Seller: lead → CONTACT'],
+  ['buyerViewingToClose', 'Buyer: viewing → CLOSE'], ['buyerContactToViewing', 'Buyer: contact → VIEWING'],
+  ['buyerLeadToContact', 'Buyer: lead → CONTACT']
+];
+const GPS_DEFS = [
+  ['Gross Commission Income (GCI)', 'Total sales commissions you aim to earn in a year, before expenses.', 'INPUT', 'This is your goal. Every other number is worked backward from it.'],
+  ['Avg commission per closed deal', 'The typical commission you earn on one closed transaction.', 'INPUT', 'GCI ÷ this = how many deals you must close.'],
+  ['Working days (wk/mo/yr)', 'Days you actually work: 5/week, 22/month, 250/year.', 'INPUT', 'Turns your yearly target into weekly and daily numbers.'],
+  ['Conversion rates', 'The % that move from one step to the next (e.g. lead → contact).', 'INPUT', 'Decide how many leads/contacts you need to get one sale.'],
+  ['Listings SOLD', 'Your seller listings that actually close and pay commission.', 'FORMULA (GCI ÷ avg commission)', 'The seller-side sales you must produce to hit GCI.'],
+  ['Listings to be TAKEN', 'Listing agreements (authority to sell) you must sign. More than SOLD, because not every listing sells.', 'FORMULA (SOLD ÷ take rate)', 'You must sign this many sellers so enough actually sell.'],
+  ['Listing APPOINTMENTS', 'Listing presentations / meetings with potential sellers.', 'FORMULA', 'How many seller meetings are needed to win the signings.'],
+  ['Seller CONTACTS', 'Real conversations with potential sellers (call, chat, meet).', 'FORMULA', 'Conversations needed to book that many appointments.'],
+  ['Seller LEADS', 'Raw seller prospects you generate (names to work).', 'FORMULA', 'Top-of-funnel volume needed to feed the whole chain.'],
+  ['Buyers CLOSED (ATP)', 'Buyer transactions closed. ATP = Agreement to Purchase.', 'FORMULA', 'The buyer-side sales you must produce.'],
+  ['Buyer VIEWINGS', 'Property viewings / oculars you conduct with buyers.', 'FORMULA', 'How many viewings lead to enough buyer closings.'],
+  ['Buyer CONTACTS / LEADS', 'Conversations with, and raw prospects of, buyers.', 'FORMULA', 'Buyer-side funnel volume needed.'],
+  ['Daily / Weekly / Monthly columns', 'Yearly ÷ working days = Daily; × days/week = Weekly; × days/month = Monthly.', 'FORMULA', 'Your do-today numbers — the whole point of the page.']
+];
+
+function loadGPS() { renderGPS(); }
+function renderGPS() {
+  const p = ME.profile, g = ME.gps;
+  const rows4 = (label, o, hl) => `<tr${hl ? ' class="hl"' : ''}><td>${label}</td><td>${fmtN(o.yearly)}</td><td>${fmtN(o.monthly)}</td><td>${fmtN(o.weekly)}</td><td><b>${fmtN(o.daily)}</b></td></tr>`;
+  $('tab-gps').innerHTML = `
+  <div class="card"><div class="chead"><h3>My GPS — from annual goal to today</h3></div>
+    <div class="cbody">
+      <p class="note" style="margin-bottom:14px">Set your goal. Everything below — down to what to do <b>today</b> — calculates itself, exactly like the workbook.</p>
+      <div class="field"><label>Goal statement</label><input id="g_goal" value="${esc(p.goalStatement)}"></div>
+      <div class="grid2">
+        <div class="field"><label>Desired annual GCI (₱)</label><input type="number" id="g_gci" value="${p.annualGCI}" min="1"></div>
+        <div class="field"><label>Avg commission / deal (₱)</label><input type="number" id="g_avg" value="${p.avgCommission}" min="1"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Working days / week</label><input type="number" id="g_dw" value="${p.workDaysWeek}" min="1" max="7"></div>
+        <div class="field"><label>Working days / month</label><input type="number" id="g_dm" value="${p.workDaysMonth}" min="1" max="31"></div>
+      </div>
+      <div class="field" style="max-width:220px"><label>Working days / year</label><input type="number" id="g_dy" value="${p.workDaysYear}" min="1" max="366"></div>
+      <div class="eyebrow" style="margin-top:16px">// CONVERSION RATES (%)</div>
+      <div class="grid2">
+        ${CONV_LABELS.map(([k, lab]) => `<div class="field"><label>${lab}</label><input type="number" id="cv_${k}" value="${Math.round((p.conv[k] || 0) * 100)}" min="1" max="100"></div>`).join('')}
+      </div>
+      <button class="btn" onclick="saveGPS()">Save &amp; recalculate</button>
+    </div>
+  </div>
+  <div class="card"><div class="chead"><h3>Income target</h3><span class="sub">FORMULA</span></div>
+    <div class="cbody tablewrap"><table class="tgt">
+      <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
+      <tr class="hl"><td>Gross Commission Income</td><td>${peso(g.gci.yearly)}</td><td>${peso(g.gci.monthly)}</td><td>${peso(g.gci.weekly)}</td><td><b>${peso(g.gci.daily)}</b></td></tr>
+    </table></div>
+  </div>
+  <div class="card"><div class="chead"><h3>Listing goal — seller side</h3><span class="sub">FORMULA</span></div>
+    <div class="cbody tablewrap"><table class="tgt">
+      <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
+      ${rows4('Listings SOLD', g.seller.sold, true)}
+      ${rows4('Listings to be TAKEN', g.seller.taken)}
+      ${rows4('Listing APPOINTMENTS', g.seller.appointments)}
+      ${rows4('Seller CONTACTS', g.seller.contacts)}
+      ${rows4('Seller LEADS', g.seller.leads)}
+    </table></div>
+  </div>
+  <div class="card"><div class="chead"><h3>Buyer goal</h3><span class="sub">FORMULA</span></div>
+    <div class="cbody tablewrap"><table class="tgt">
+      <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
+      ${rows4('Buyers CLOSED (ATP)', g.buyer.closed, true)}
+      ${rows4('Buyer VIEWINGS', g.buyer.viewings)}
+      ${rows4('Buyer CONTACTS', g.buyer.contacts)}
+      ${rows4('Buyer LEADS', g.buyer.leads)}
+    </table></div>
+  </div>
+  <details class="defs"><summary>Definitions — what every term means</summary>
+    ${GPS_DEFS.map(d => `<div class="defrow"><b>${esc(d[0])} <span class="k">${esc(d[2])}</span></b>${esc(d[1])}<br><i style="color:var(--gray)">${esc(d[3])}</i></div>`).join('')}
+  </details>`;
+}
+
+async function saveGPS() {
+  const conv = {};
+  CONV_LABELS.forEach(([k]) => { const v = Number($('cv_' + k).value); if (v >= 1 && v <= 100) conv[k] = v / 100; });
+  const bodyOut = {
+    goalStatement: $('g_goal').value, annualGCI: Number($('g_gci').value), avgCommission: Number($('g_avg').value),
+    workDaysWeek: Number($('g_dw').value), workDaysMonth: Number($('g_dm').value), workDaysYear: Number($('g_dy').value), conv
+  };
+  try {
+    const res = await api('/api/agent/gps', { method: 'PUT', body: JSON.stringify(bodyOut) });
+    const d = await res.json();
+    if (!res.ok) return toast(d.error || 'Save failed', true);
+    ME.profile = d.profile; ME.gps = d.gps;
+    renderGPS(); toast('GPS saved — targets recalculated');
+  } catch (e) {}
+}
+
+// ═════════ ACTIONS ═════════
+let ACT = null;
+async function loadActions() {
+  $('tab-actions').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await api('/api/agent/actions'); ACT = await res.json();
+    renderActions();
+  } catch (e) {}
+}
+function renderActions() {
+  const { defs, entries, keys } = ACT;
+  const sect = (type, title, subtitle) => {
+    const list = defs[type], ent = entries[type];
+    const done = list.filter(a => Number(ent[a.id]) > 0).length;
+    return `<div class="card"><div class="chead"><h3>${title}</h3><span class="sub">${subtitle}</span></div><div class="cbody">
+      ${list.map(a => {
+        const q = Number(ent[a.id]) || 0;
+        return `<div class="arow${q > 0 ? ' done' : ''}" id="ar_${a.id}">
+          <div class="txt">${q > 0 ? '<b style="color:var(--orange)">✓</b> ' : ''}${esc(a.text)}</div>
+          <div class="stepper"><button onclick="bump('${type}','${a.id}',-1)">−</button><div class="q" id="q_${a.id}">${q}</div><button onclick="bump('${type}','${a.id}',1)">+</button></div>
+        </div>`;
+      }).join('')}
+      <div class="prog"><i style="width:${Math.round(done / list.length * 100)}%"></i></div>
+      <div class="note" style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10.5px">${done}/${list.length} ACTIONS DONE</div>
+    </div></div>`;
+  };
+  $('tab-actions').innerHTML = `
+    <p class="note" style="margin-bottom:14px">Tap <b>+</b> each time you do an action. Lists reset themselves — daily at midnight, weekly every Monday, monthly on the 1st (Philippine time). No more clearing cells.</p>
+    ${sect('daily', 'Daily actions', keys.daily)}
+    ${sect('weekly', 'Weekly actions', keys.weekly)}
+    ${sect('monthly', 'Monthly actions', keys.monthly)}`;
+}
+let bumpTimers = {};
+function bump(type, id, delta) {
+  const ent = ACT.entries[type];
+  const q = Math.max(0, Math.min(999, (Number(ent[id]) || 0) + delta));
+  ent[id] = q;
+  renderActions();
+  clearTimeout(bumpTimers[id]);
+  bumpTimers[id] = setTimeout(async () => {
+    try {
+      const res = await api('/api/agent/actions', { method: 'POST', body: JSON.stringify({ periodType: type, actionId: id, qty: q }) });
+      if (!res.ok) toast('Could not save — check your connection', true);
+    } catch (e) {}
+  }, 400);
+}
+
+// ═════════ REPORT ═════════
+async function loadReport() {
+  $('tab-report').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await api('/api/agent/report'); const r = await res.json();
+    const rate = s => s.score >= 0.8 ? ['ON TRACK', 'ok'] : s.score >= 0.5 ? ['CATCHING UP', 'mid'] : ['BEHIND', 'bad'];
+    const sc = (label, s) => { const [t, c] = rate(s); return `<div class="score"><div class="k">${label}</div><div class="v">${s.done}<span style="font-size:15px;color:var(--gray)">/${s.total}</span></div><div class="r ${c}">${t}</div></div>`; };
+    const cats = r.leads.byCategory, tots = r.leads.totals;
+    const catRow = c => `<tr><td>${c}</td><td>${cats[c]?.today || 0}</td><td>${cats[c]?.week || 0}</td><td>${cats[c]?.month || 0}</td><td>${cats[c]?.year || 0}</td></tr>`;
+    const leadPct = Math.min(100, Math.round(tots.year / Math.max(1, r.leads.targetYearly) * 100));
+    const salePct = Math.min(100, Math.round(r.sales.closedThisYear / Math.max(1, r.sales.targetYearly) * 100));
+    $('tab-report').innerHTML = `
+    <div class="card"><div class="chead"><h3>Score cards — action execution</h3></div><div class="cbody">
+      <div class="scoregrid">${sc('Daily actions', r.actions.daily)}${sc('Weekly actions', r.actions.weekly)}${sc('Monthly actions', r.actions.monthly)}</div>
+      <p class="note" style="margin-top:12px">Counted automatically from your Actions page — nothing typed twice.</p>
+    </div></div>
+    <div class="card"><div class="chead"><h3>Leads generated</h3><span class="sub">FROM THE LEAD JOURNAL</span></div><div class="cbody tablewrap">
+      <table class="tgt">
+        <tr><th>Category</th><th>Today</th><th>This week</th><th>This month</th><th>This year</th></tr>
+        ${catRow('Owner')}${catRow('Buyer')}${catRow('Tenant')}
+        <tr class="hl"><td>TOTAL</td><td>${tots.today}</td><td>${tots.week}</td><td>${tots.month}</td><td>${tots.year}</td></tr>
+      </table>
+      <div style="margin-top:14px"><label>Year progress vs GPS target (${fmtN(r.leads.targetYearly)} leads)</label>
+        <div class="prog"><i style="width:${leadPct}%"></i></div>
+        <div class="note mono" style="margin-top:4px;font-size:10.5px">${tots.year} / ${fmtN(r.leads.targetYearly)} — ${leadPct}%</div>
+      </div>
+    </div></div>
+    <div class="card"><div class="chead"><h3>Sales closed</h3><span class="sub">THIS YEAR</span></div><div class="cbody">
+      <div class="score" style="max-width:260px"><div class="k">Closed vs target</div><div class="v">${r.sales.closedThisYear}<span style="font-size:15px;color:var(--gray)">/${fmtN(r.sales.targetYearly)}</span></div></div>
+      <div class="prog" style="margin-top:10px"><i style="width:${salePct}%"></i></div>
+    </div></div>`;
+  } catch (e) {}
+}
+
+// ═════════ LEADS ═════════
+async function loadLeads() {
+  $('tab-leads').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await api('/api/agent/leads'); const d = await res.json();
+    LEADS = d.leads; renderLeads();
+  } catch (e) {}
+}
+function renderLeads() {
+  const q = ($('leadQ')?.value || '').toLowerCase();
+  const fc = $('leadFC')?.value || '', fs = $('leadFS')?.value || '';
+  const shown = LEADS.filter(l =>
+    (!q || (l.name + ' ' + (l.propertyInterest || '') + ' ' + (l.contactNo || '')).toLowerCase().includes(q)) &&
+    (!fc || l.category === fc) && (!fs || l.stage === fs));
+  const today = todayStr();
+  $('tab-leads').innerHTML = `
+  <div class="card"><div class="chead"><h3>Lead journal</h3><button class="btn sm" onclick="openLead()">+ Add lead</button></div>
+    <div class="cbody">
+      <div class="filters">
+        <input id="leadQ" placeholder="Search…" value="${esc(q)}" oninput="renderLeads()">
+        <select id="leadFC" onchange="renderLeads()"><option value="">All categories</option>${['Owner', 'Buyer', 'Tenant'].map(c => `<option${fc === c ? ' selected' : ''}>${c}</option>`).join('')}</select>
+        <select id="leadFS" onchange="renderLeads()"><option value="">All stages</option>${STAGES.map(s => `<option${fs === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+      </div>
+      ${shown.length ? shown.map(l => {
+        const fu = dstr(l.nextFollowUp), overdue = fu && fu < today && !['Closing', 'Unsuccessful'].includes(l.stage);
+        const stageCls = l.stage === 'Closing' ? ' closing' : l.stage === 'Unsuccessful' ? ' lost' : '';
+        return `<div class="lrow" onclick="openLead('${l._id}')">
+          <div class="nm">${esc(l.name)}${l.source === 'Website' ? '<span class="chip orange">WEB</span>' : ''}${l.birthday ? ' <span title="Birthday on file">🎂</span>' : ''}</div>
+          <div class="meta">
+            <span class="chip">${esc(l.category)}</span>
+            <span class="chip stage${stageCls}">${esc(l.stage)}</span>
+            ${fu ? `<span class="chip${overdue ? ' warn' : ' plain'}">${overdue ? 'OVERDUE ' : 'FU '} ${dnice(l.nextFollowUp)}</span>` : ''}
+            ${l.propertyInterest ? `<span class="chip plain">${esc(l.propertyInterest.slice(0, 34))}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('') : `<div class="empty"><b>No leads${q || fc || fs ? ' match' : ' yet'}</b>${q || fc || fs ? 'Try clearing the filters.' : 'Tap + ADD LEAD to record your first one.'}</div>`}
+      <div class="note mono" style="margin-top:10px;font-size:10.5px">${shown.length} SHOWN · ${LEADS.length} TOTAL</div>
+    </div>
+  </div>`;
+}
+function openLead(id) {
+  editLeadId = id || null;
+  const l = id ? LEADS.find(x => x._id === id) : null;
+  $('leadModalTitle').textContent = l ? '// Edit lead' : '// New lead';
+  $('leadDelBtn').style.display = l ? '' : 'none';
+  $('lf_name').value = l?.name || ''; $('lf_contactNo').value = l?.contactNo || ''; $('lf_email').value = l?.email || '';
+  $('lf_birthday').value = dstr(l?.birthday); $('lf_category').value = l?.category || 'Buyer';
+  $('lf_propertyInterest').value = l?.propertyInterest || ''; $('lf_source').value = l?.source || '';
+  $('lf_stage').value = l?.stage || 'Inquiry'; $('lf_actionToTake').value = l?.actionToTake || '';
+  $('lf_nextFollowUp').value = dstr(l?.nextFollowUp); $('lf_closingDate').value = dstr(l?.closingDate);
+  $('lf_reasonLost').value = l?.reasonLost || ''; $('lf_remarks').value = l?.remarks || '';
+  leadStageUI();
+  $('lf_stage').onchange = leadStageUI;
+  $('leadOverlay').classList.add('open');
+}
+function leadStageUI() {
+  const s = $('lf_stage').value;
+  $('lf_lostWrap').style.display = s === 'Unsuccessful' ? '' : 'none';
+  $('lf_closingWrap').style.display = s === 'Closing' ? '' : 'none';
+}
+function closeLead() { $('leadOverlay').classList.remove('open'); }
+async function saveLead() {
+  const bodyOut = {
+    name: $('lf_name').value.trim(), contactNo: $('lf_contactNo').value.trim(), email: $('lf_email').value.trim(),
+    birthday: $('lf_birthday').value || '', category: $('lf_category').value,
+    propertyInterest: $('lf_propertyInterest').value.trim(), source: $('lf_source').value.trim(),
+    stage: $('lf_stage').value, actionToTake: $('lf_actionToTake').value.trim(),
+    nextFollowUp: $('lf_nextFollowUp').value || '', closingDate: $('lf_closingDate').value || '',
+    reasonLost: $('lf_reasonLost').value.trim(), remarks: $('lf_remarks').value.trim()
+  };
+  if (!bodyOut.name) return toast('Client name is required', true);
+  const btn = $('leadSaveBtn'); btn.disabled = true;
+  try {
+    const res = await api(editLeadId ? '/api/agent/leads/' + editLeadId : '/api/agent/leads', { method: editLeadId ? 'PUT' : 'POST', body: JSON.stringify(bodyOut) });
+    const d = await res.json();
+    if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Save failed', true);
+    closeLead(); toast(editLeadId ? 'Lead updated' : 'Lead added'); loadLeads();
+  } catch (e) {} finally { btn.disabled = false; }
+}
+async function deleteLead() {
+  if (!editLeadId || !confirm('Delete this lead? This cannot be undone.')) return;
+  try {
+    const res = await api('/api/agent/leads/' + editLeadId, { method: 'DELETE' });
+    if (!res.ok) return toast('Delete failed', true);
+    closeLead(); toast('Lead deleted'); loadLeads();
+  } catch (e) {}
+}
+
+// ═════════ PIPELINE ═════════
+let PIPE = null, openStage = null;
+async function loadPipeline() {
+  $('tab-pipeline').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await api('/api/agent/pipeline'); PIPE = await res.json();
+    renderPipeline();
+  } catch (e) {}
+}
+function renderPipeline() {
+  const { byStage, metrics, anniversaries } = PIPE;
+  const max = Math.max(1, ...STAGES.map(s => byStage[s].length));
+  $('tab-pipeline').innerHTML = `
+  <div class="card"><div class="chead"><h3>General pipeline</h3><span class="sub">READS FROM YOUR LEADS</span></div><div class="cbody">
+    ${STAGES.map(s => `
+      <div class="stagebar" onclick="toggleStage('${esc(s)}')">
+        <div class="sn">${esc(s)}</div>
+        <div class="bar"><i style="width:${Math.round(byStage[s].length / max * 100)}%"></i></div>
+        <div class="cnt">${byStage[s].length}</div>
+      </div>
+      <div class="stagelist${openStage === s ? ' open' : ''}" id="sl_${s.replace(/\W/g, '')}">
+        ${byStage[s].length ? byStage[s].map(l => `
+          <div class="slrow"><b>${esc(l.name)}</b><span class="chip plain">${esc(l.category)}</span>
+          ${STAGES.indexOf(s) < 5 ? `<button class="btn sm alt" onclick="event.stopPropagation();advance('${l._id}','${esc(s)}')">advance →</button>` : ''}</div>`).join('') : '<div class="note" style="padding:6px 0 6px 12px">Nothing here.</div>'}
+      </div>`).join('')}
+    <div class="scoregrid" style="margin-top:16px">
+      <div class="score"><div class="k">Active deals</div><div class="v">${metrics.active}</div></div>
+      <div class="score"><div class="k">Closed (won)</div><div class="v" style="color:var(--ok)">${metrics.closed}</div></div>
+      <div class="score"><div class="k">Unsuccessful</div><div class="v" style="color:var(--gray)">${metrics.lost}</div></div>
+      <div class="score"><div class="k">Success rate</div><div class="v">${Math.round(metrics.successRate * 100)}%</div></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="chead"><h3>Closing anniversaries</h3><span class="sub">RECONNECT YEARLY</span></div><div class="cbody">
+    ${anniversaries.length ? anniversaries.map(a => `<div class="ditem"><span class="dot anniversary"></span><b>${esc(a.name)}</b><span class="note mono" style="margin-left:auto;font-size:10.5px">closed ${dnice(a.closingDate)} · next ${esc(a.next)}</span></div>`).join('')
+      : '<div class="empty"><b>No closings yet</b>When a lead reaches Closing with a date, its anniversary lands here and on your calendar.</div>'}
+  </div></div>`;
+}
+function toggleStage(s) { openStage = openStage === s ? null : s; renderPipeline(); }
+async function advance(id, from) {
+  const next = STAGES[STAGES.indexOf(from) + 1];
+  if (!next) return;
+  try {
+    const res = await api('/api/agent/leads/' + id, { method: 'PUT', body: JSON.stringify({ stage: next }) });
+    if (!res.ok) return toast('Could not move the deal', true);
+    toast('Moved to ' + next); openStage = next; loadPipeline();
+  } catch (e) {}
+}
+
+// ═════════ CALENDAR ═════════
+async function loadCalendar() {
+  if (!calMonth) calMonth = todayStr().slice(0, 7);
+  $('tab-calendar').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await api('/api/agent/calendar?month=' + calMonth); const d = await res.json();
+    calItems = d.items; renderCalendar(d.today);
+  } catch (e) {}
+}
+function renderCalendar(todayKey) {
+  const [y, m] = calMonth.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const startDow = (first.getUTCDay() + 6) % 7; // Monday first
+  const daysIn = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const monthName = first.toLocaleDateString('en-PH', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const byDay = {};
+  calItems.forEach(it => (byDay[it.day] = byDay[it.day] || []).push(it));
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div class="cday out"></div>';
+  for (let d = 1; d <= daysIn; d++) {
+    const key = `${calMonth}-${String(d).padStart(2, '0')}`;
+    const items = byDay[d] || [];
+    cells += `<div class="cday${key === todayKey ? ' today' : ''}${selDay === d ? ' sel' : ''}" onclick="pickDay(${d})">${d}
+      <div class="dots">${items.slice(0, 4).map(it => `<span class="dot ${it.kind}"></span>`).join('')}${items.length > 4 ? '<span style="font-size:8px">+</span>' : ''}</div></div>`;
+  }
+  const dayItems = selDay ? (byDay[selDay] || []) : calItems;
+  $('tab-calendar').innerHTML = `
+  <div class="card"><div class="chead"><h3>Calendar</h3><button class="btn sm" onclick="openEv()">+ Add entry</button></div><div class="cbody">
+    <div class="calhead">
+      <button class="btn sm alt" onclick="calNav(-1)">‹</button>
+      <div class="m">${monthName.toUpperCase()}</div>
+      <button class="btn sm alt" onclick="calNav(1)">›</button>
+    </div>
+    <div class="calgrid">
+      ${['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'].map(d => `<div class="dow">${d}</div>`).join('')}
+      ${cells}
+    </div>
+    <div class="legend">
+      <span><span class="dot followup"></span>FOLLOW-UP</span><span><span class="dot birthday"></span>BIRTHDAY</span>
+      <span><span class="dot anniversary"></span>ANNIVERSARY</span><span><span class="dot event"></span>MY ENTRIES</span>
+    </div>
+    <div class="dayitems">
+      <div class="eyebrow">// ${selDay ? `${monthName.split(' ')[0].toUpperCase()} ${selDay}` : 'THIS MONTH'}${selDay ? ` <a style="cursor:pointer;color:var(--gray)" onclick="pickDay(null)">(show all)</a>` : ''}</div>
+      ${dayItems.length ? dayItems.map(it => `<div class="ditem"><span class="dot ${it.kind}"></span>${selDay ? '' : `<span class="mono" style="font-size:10.5px;color:var(--gray);width:22px;flex-shrink:0">${it.day}</span>`}${esc(it.label)}${it.eventId ? `<button class="x" style="margin-left:auto;font-size:15px" title="Remove" onclick="delEv('${it.eventId}')">&times;</button>` : ''}</div>`).join('') : '<div class="empty">Nothing scheduled.</div>'}
+    </div>
+  </div></div>
+  <div class="card"><div class="chead"><h3>Calendar on your phone</h3></div><div class="cbody">
+    <p class="note">Get all of this inside your own Google or iPhone calendar — it updates by itself.</p>
+    <button class="btn sm" style="margin-top:10px" onclick="openSync()">Set up phone sync</button>
+  </div></div>`;
+}
+function pickDay(d) { selDay = selDay === d ? null : d; loadCalendarLocal(); }
+function loadCalendarLocal() { renderCalendar(todayStr()); }
+function calNav(delta) {
+  let [y, m] = calMonth.split('-').map(Number);
+  m += delta; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+  calMonth = `${y}-${String(m).padStart(2, '0')}`; selDay = null; loadCalendar();
+}
+function openEv() { $('ef_title').value = ''; $('ef_date').value = selDay ? `${calMonth}-${String(selDay).padStart(2, '0')}` : todayStr(); $('ef_time').value = ''; $('ef_type').value = 'other'; $('ef_leadName').value = ''; $('ef_notes').value = ''; $('evOverlay').classList.add('open'); }
+function closeEv() { $('evOverlay').classList.remove('open'); }
+async function saveEv() {
+  const bodyOut = { title: $('ef_title').value.trim(), date: $('ef_date').value, time: $('ef_time').value, type: $('ef_type').value, leadName: $('ef_leadName').value.trim(), notes: $('ef_notes').value.trim() };
+  if (!bodyOut.title) return toast('Give the entry a title', true);
+  if (!bodyOut.date) return toast('Pick a date', true);
+  try {
+    const res = await api('/api/agent/events', { method: 'POST', body: JSON.stringify(bodyOut) });
+    const d = await res.json();
+    if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Save failed', true);
+    closeEv(); toast('Added to your calendar');
+    calMonth = bodyOut.date.slice(0, 7); loadCalendar();
+  } catch (e) {}
+}
+async function delEv(id) {
+  if (!confirm('Remove this calendar entry?')) return;
+  try {
+    const res = await api('/api/agent/events/' + id, { method: 'DELETE' });
+    if (!res.ok) return toast('Could not remove it', true);
+    loadCalendar();
+  } catch (e) {}
+}
+
+// ═════════ PHONE SYNC ═════════
+function openSync() {
+  if (ME.calFeedPath) { $('syncUrl').value = location.origin + ME.calFeedPath; $('syncOverlay').classList.add('open'); }
+  else makeSync(false);
+}
+function closeSync() { $('syncOverlay').classList.remove('open'); }
+async function makeSync(regen) {
+  if (regen && !confirm('Make a new link? The old one stops working on every device that uses it.')) return;
+  try {
+    const res = await api('/api/agent/cal-token', { method: 'POST' });
+    const d = await res.json();
+    if (!res.ok) return toast(d.error || 'Could not create the link', true);
+    ME.calFeedPath = d.calFeedPath;
+    $('syncUrl').value = location.origin + d.calFeedPath;
+    $('syncOverlay').classList.add('open');
+    if (regen) toast('New link created — old one is dead');
+  } catch (e) {}
+}
+function copySync() {
+  const inp = $('syncUrl'); inp.select();
+  (navigator.clipboard ? navigator.clipboard.writeText(inp.value) : Promise.reject())
+    .then(() => toast('Link copied')).catch(() => { document.execCommand('copy'); toast('Link copied'); });
+}
+
+// ═════════ BELL ═════════
+let bellOpen = false;
+async function toggleBell() {
+  bellOpen = !bellOpen;
+  const p = $('bellPanel');
+  if (!bellOpen) { p.style.display = 'none'; return; }
+  p.style.display = 'block';
+  p.innerHTML = '<div class="nrow">Loading…</div>';
+  try {
+    const res = await api('/api/agent/notifications'); const d = await res.json();
+    p.innerHTML = d.notifications.length
+      ? d.notifications.map(n => `<div class="nrow${n.read ? '' : ' unread'}">${esc(n.message)}<div class="t">${new Date(n.createdAt).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}</div></div>`).join('')
+      : '<div class="nrow">Nothing yet — follow-up and birthday reminders will land here every morning.</div>';
+    if (d.unread > 0) { await api('/api/agent/notifications/read', { method: 'POST' }); }
+    setBadge(0);
+  } catch (e) { p.innerHTML = '<div class="nrow">Could not load notifications.</div>'; }
+}
+document.addEventListener('click', e => {
+  if (bellOpen && !e.target.closest('#bellPanel') && !e.target.closest('.iconbtn')) { bellOpen = false; $('bellPanel').style.display = 'none'; }
+});
+
+// ═════════ boot ═════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && $('authView').style.display !== 'none') {
+    if ($('loginForm').style.display !== 'none' && (e.target.id === 'liEmail' || e.target.id === 'liPass')) doLogin();
+  }
+  if (e.key === 'Escape') { closeLead(); closeEv(); closeSync(); }
+});
+if (localStorage.getItem(TK)) enterApp();
+</script>
+</body>
+</html>

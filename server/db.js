@@ -58,6 +58,12 @@ const inquirySchema = new mongoose.Schema({
   handled: { type: Boolean, default: false },
   handledAt: { type: Date, default: null },
   handledBy: { type: String, default: '' },
+  // Agent routing: set when an admin hands this inquiry to an agent. The
+  // inquiry itself stays in the admin list; a copy becomes an AgentLead.
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null },
+  assignedToName: { type: String, default: '' },
+  assignedAt: { type: Date, default: null },
+  assignedBy: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -495,7 +501,9 @@ const PERMISSION_KEYS = [
   'titling_view',        // see the Titling tab
   'titling_manage',      // add / edit / delete titling jobs
   'notarial_view',       // see the Notarial tab
-  'notarial_manage'      // add / edit / delete notarial records + cash ledger
+  'notarial_manage',     // add / edit / delete notarial records + cash ledger
+  'agents_view',         // see the Agents tab (roster, scorecards, pipelines)
+  'agents_manage'        // assign website inquiries to agents
 ];
 
 // Sensible defaults per role.
@@ -505,6 +513,14 @@ function defaultPermissionsForRole(role) {
     const all = {};
     PERMISSION_KEYS.forEach(k => { all[k] = true; });
     return all;
+  }
+  if (role === 'agent') {
+    // Agents live in the Agent Workspace (agent.html), never the admin portal.
+    // Every admin permission is off — their access comes from role checks on
+    // the /api/agent/* routes, which are scoped to their own records only.
+    const none = {};
+    PERMISSION_KEYS.forEach(k => { none[k] = false; });
+    return none;
   }
   // Employees default: can manage properties (the most common day-to-day task) but not delete or manage hero/accounts.
   // Tasks: by default they can see the board and post comments on their own tasks; only managers create/edit/delete.
@@ -533,7 +549,9 @@ function defaultPermissionsForRole(role) {
     titling_view: false,
     titling_manage: false,
     notarial_view: false,
-    notarial_manage: false
+    notarial_manage: false,
+    agents_view: false,
+    agents_manage: false
   };
 }
 
@@ -545,7 +563,11 @@ const accountSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   name: { type: String, default: '' },
-  role: { type: String, enum: ['admin', 'employee'], default: 'employee' },
+  role: { type: String, enum: ['admin', 'employee', 'agent'], default: 'employee' },
+  // What the person asked to be when they signed up ('agent' from agent.html,
+  // 'employee' from the admin portal). Purely informational — the real role is
+  // chosen by the admin on the approval screen; nobody self-selects a role.
+  requestedRole: { type: String, enum: ['employee', 'agent'], default: 'employee' },
   permissions: { type: mongoose.Schema.Types.Mixed, default: () => defaultPermissionsForRole('employee') },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },
@@ -593,6 +615,108 @@ accountSchema.methods.comparePassword = function (candidate) {
 };
 
 // ============================================================================
+// AGENT SYSTEM (from "GLRA Agent System" workbook — GPS, Actions, Leads,
+// Pipeline). One record set per agent account; agents only ever see their own.
+// ============================================================================
+
+// ── AGENT PROFILE — GPS inputs (the workbook's yellow cells) ──
+const agentProfileSchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, unique: true },
+  goalStatement: { type: String, default: 'Become a consistent professional producer' },
+  annualGCI: { type: Number, default: 2400000 },
+  avgCommission: { type: Number, default: 150000 },
+  workDaysWeek: { type: Number, default: 5 },
+  workDaysMonth: { type: Number, default: 22 },
+  workDaysYear: { type: Number, default: 250 },
+  // Conversion rates, stored as fractions (0.5 = 50%), exactly like the workbook.
+  conv: {
+    sellerTakenToSold: { type: Number, default: 0.5 },
+    sellerApptToTaken: { type: Number, default: 0.8 },
+    sellerContactToAppt: { type: Number, default: 0.3 },
+    sellerLeadToContact: { type: Number, default: 0.5 },
+    buyerViewingToClose: { type: Number, default: 0.3 },
+    buyerContactToViewing: { type: Number, default: 0.7 },
+    buyerLeadToContact: { type: Number, default: 0.1 }
+  },
+  // Secret for the phone-calendar feed URL. Knowing the URL = seeing the
+  // calendar, so it's a long random token the agent can regenerate any time.
+  calToken: { type: String, default: null },
+  // 'YYYY-MM-DD' (Manila) of the last morning-agenda email, so the daily
+  // reminder tick sends at most one per day per agent.
+  lastDigestKey: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// ── AGENT ACTIONS — one doc per agent per period ──
+// periodKey examples: daily '2026-08-17', weekly '2026-W34', monthly '2026-08'
+// (all computed in Asia/Manila). A new period simply means a new key, so
+// checklists "reset" automatically and history is kept for free.
+const agentActionSchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
+  periodType: { type: String, enum: ['daily', 'weekly', 'monthly'], required: true },
+  periodKey: { type: String, required: true },
+  // { actionId: qtyDone } — action definitions live in server/agents.js
+  entries: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  updatedAt: { type: Date, default: Date.now }
+});
+agentActionSchema.index({ account: 1, periodType: 1, periodKey: 1 }, { unique: true });
+
+// ── AGENT LEAD — the Lead Journal ──
+const AGENT_LEAD_STAGES = ['Inquiry', 'Follow-up', 'Ocular Visitation', 'Negotiation', 'Signing of Contract', 'Closing', 'Unsuccessful'];
+const agentLeadSchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  date: { type: Date, default: Date.now },
+  name: { type: String, required: true, trim: true },
+  contactNo: { type: String, default: '' },
+  email: { type: String, default: '' },
+  // Client's birthday — per the owner's instruction. Feeds the calendar and
+  // the "greet them today" reminder. Personal data: visible only to the
+  // owning agent and the broker.
+  birthday: { type: Date, default: null },
+  category: { type: String, enum: ['Owner', 'Buyer', 'Tenant'], default: 'Buyer' },
+  propertyInterest: { type: String, default: '' },
+  source: { type: String, default: '' },
+  actionToTake: { type: String, default: '' },
+  stage: { type: String, enum: AGENT_LEAD_STAGES, default: 'Inquiry' },
+  reasonLost: { type: String, default: '' },
+  nextFollowUp: { type: Date, default: null },
+  closingDate: { type: Date, default: null },
+  remarks: { type: String, default: '' },
+  // Set when the lead came from a website inquiry an admin assigned over:
+  // { inquiryId, by, at }
+  assignedFrom: { type: mongoose.Schema.Types.Mixed, default: null },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// ── AGENT EVENT — manual calendar entries (viewings, appointments) ──
+const agentEventSchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  title: { type: String, required: true, trim: true },
+  date: { type: Date, required: true },
+  time: { type: String, default: '' }, // 'HH:MM' 24h, optional
+  type: { type: String, enum: ['viewing', 'appointment', 'other'], default: 'other' },
+  leadName: { type: String, default: '' },
+  notes: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// ── AGENT NOTIFICATION — the workspace bell ──
+// dedupeKey (e.g. 'fu:<leadId>:2026-08-17', 'bd:<leadId>:2026') makes the
+// daily tick idempotent: re-running it can never double-post a reminder.
+const agentNotificationSchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  dedupeKey: { type: String, required: true },
+  type: { type: String, default: 'info' }, // followup | birthday | anniversary | lead | info
+  message: { type: String, required: true },
+  leadId: { type: String, default: null },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+agentNotificationSchema.index({ account: 1, dedupeKey: 1 }, { unique: true });
+
+// ============================================================================
 // COMPILED MODELS
 // ============================================================================
 const Property          = mongoose.model('Property',          propertySchema);
@@ -612,6 +736,11 @@ const NotarialJob       = mongoose.model('NotarialJob',       notarialJobSchema)
 const CashEntry         = mongoose.model('CashEntry',         cashEntrySchema);
 const SiteStat          = mongoose.model('SiteStat',          siteStatSchema);
 const CalcUsage         = mongoose.model('CalcUsage',         calcUsageSchema);
+const AgentProfile      = mongoose.model('AgentProfile',      agentProfileSchema);
+const AgentAction       = mongoose.model('AgentAction',       agentActionSchema);
+const AgentLead         = mongoose.model('AgentLead',         agentLeadSchema);
+const AgentEvent        = mongoose.model('AgentEvent',        agentEventSchema);
+const AgentNotification = mongoose.model('AgentNotification', agentNotificationSchema);
 
 module.exports = {
   // models
@@ -632,6 +761,12 @@ module.exports = {
   CashEntry,
   SiteStat,
   CalcUsage,
+  AgentProfile,
+  AgentAction,
+  AgentLead,
+  AgentEvent,
+  AgentNotification,
+  AGENT_LEAD_STAGES,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole
