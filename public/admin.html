@@ -1429,7 +1429,10 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="notarial_view" style="margin-top:6px;display:none">Notarial</div>
       <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
-      <a class="nav-item" data-perm="agents_view" onclick="switchTab('agents')" style="display:none"><i class="fas fa-id-badge"></i> Agents</a>
+      <!-- Agents section — admin only, its own group (broker's team view + door into the workspace) -->
+      <div class="sb-section admin-only" style="margin-top:6px;display:none">Agents</div>
+      <a class="nav-item admin-only" onclick="switchTab('agents')" style="display:none"><i class="fas fa-id-badge"></i> Agents</a>
+      <a class="nav-item admin-only" href="/agent.html" target="_blank" style="display:none"><i class="fas fa-briefcase"></i> Agent Workspace <i class="fas fa-external-link-alt" style="font-size:9px;margin-left:auto"></i></a>
       <!-- Admin only section — hidden for employees via JS -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Admin</div>
       <a class="nav-item admin-only" onclick="switchTab('accounts')" style="display:none"><i class="fas fa-user-shield"></i> Accounts <span class="nav-badge" id="accBadge" style="display:none">0</span></a>
@@ -1554,7 +1557,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <!-- AGENTS -->
       <div id="tab-agents" style="display:none">
         <div class="panel">
-          <div class="panel-head"><div class="panel-title"><i class="fas fa-id-badge"></i> Agent Roster</div><button class="hdr-btn" onclick="loadAgentsTab()"><i class="fas fa-rotate"></i> Refresh</button></div>
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-id-badge"></i> Agent Roster</div><div style="display:flex;gap:8px"><a class="hdr-btn" href="/agent.html" target="_blank" style="text-decoration:none"><i class="fas fa-briefcase"></i> Open Agent Workspace</a><button class="hdr-btn" onclick="loadAgentsTab()"><i class="fas fa-rotate"></i> Refresh</button></div></div>
           <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>GCI Goal</th><th>Leads</th><th>Active</th><th>Closed</th><th>Today's Actions</th><th>Last Seen</th><th></th></tr></thead><tbody id="agentsTbody"><tr><td colspan="8"><div class="empty-st"><i class="fas fa-id-badge"></i><p>Loading…</p></div></td></tr></tbody></table></div></div>
         </div>
         <div id="agentDetail"></div>
@@ -3608,7 +3611,7 @@ async function loadInquiries(){
           : `<button class="act act-view" onclick="toggleInqHandled('${i._id}',true)" title="Mark as handled"><i class="fas fa-check"></i></button>`;
         const delBtn = hasPerm('inquiries_delete') ? `<button class="act act-del" onclick="delInq('${i._id}')" title="Delete"><i class="fas fa-trash"></i></button>` : '';
         const assignedBadge = i.assignedToName ? ` <span style="display:inline-block;background:#ff3d00;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle" title="Assigned by ${esc(i.assignedBy||'')}">&rarr; ${esc(i.assignedToName)}</span>` : '';
-        const assignBtn = hasPerm('agents_manage') && !i.assignedToName ? `<button class="act act-view" onclick="openAssign('${i._id}')" title="Assign to an agent"><i class="fas fa-user-tag"></i></button>` : '';
+        const assignBtn = isAdmin() && !i.assignedToName ? `<button class="act act-view" onclick="openAssign('${i._id}')" title="Assign to an agent"><i class="fas fa-user-tag"></i></button>` : '';
         return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}${assignedBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${assignBtn}${handledBtn}${delBtn}</div></td></tr>`;
       }).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
@@ -4517,7 +4520,7 @@ async function restoreSession(){
 // If the user can't see the dashboard, drop them on the first tab they CAN see.
 function landOnAllowedTab(){
   if(hasPerm('dashboard_view')) return; // dashboard is the default landing tab
-  const order = ['properties','tasks','submissions','titling','notarial','agents','inquiries'];
+  const order = ['properties','tasks','submissions','titling','notarial','inquiries'];
   const first = order.find(t => {
     if(t==='properties'||t==='inquiries') return true; // always visible
     if(t==='tasks') return hasPerm('tasks_view');
@@ -8619,8 +8622,8 @@ function switchTab(name){
   if(name==='tasks' && hasPerm('tasks_view')){
     loadTasksData();
   }
-  // Refresh agents on tab visit
-  if(name==='agents' && hasPerm('agents_view')){
+  // Refresh agents on tab visit — the Agents tab is admin-only
+  if(name==='agents' && isAdmin()){
     loadAgentsTab();
   }
   // Refresh submissions on tab visit

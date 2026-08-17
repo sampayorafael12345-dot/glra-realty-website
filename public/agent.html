@@ -228,8 +228,9 @@
   <div class="topbar">
     <div class="mk">GLRA<span>//</span>AGENT</div>
     <div class="who" id="whoName"></div>
-    <button class="iconbtn" onclick="toggleBell()" title="Notifications">&#9788;<span class="badge" id="bellBadge" style="display:none">0</span></button>
-    <button class="iconbtn" onclick="signOut()" title="Sign out" style="font-size:14px">&#10162;</button>
+    <a class="iconbtn" id="adminLink" href="admin.html" title="Back to the Admin Portal" style="display:none;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:#ff3d00;font-weight:700">ADMIN</a>
+    <button class="iconbtn" onclick="toggleBell()" title="Notifications" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;font-weight:700">NOTIF<span class="badge" id="bellBadge" style="display:none">0</span></button>
+    <button class="iconbtn" onclick="signOut()" title="Sign out" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;font-weight:700;color:#bbb">EXIT</button>
   </div>
   <div id="bellPanel"></div>
 
@@ -263,7 +264,7 @@
         <div class="field"><label>Email</label><input id="lf_email" inputmode="email"></div>
       </div>
       <div class="grid2">
-        <div class="field"><label>Birthday &#127874;</label><input type="date" id="lf_birthday"></div>
+        <div class="field"><label>Birthday</label><input type="date" id="lf_birthday"></div>
         <div class="field"><label>Category</label><select id="lf_category"><option>Owner</option><option selected>Buyer</option><option>Tenant</option></select></div>
       </div>
       <div class="field"><label>Property / interest</label><input id="lf_propertyInterest"></div>
@@ -366,8 +367,8 @@ async function doLogin() {
     const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
     const d = await res.json();
     if (!res.ok) return authMsg(d.error || 'Sign-in failed.', 'bad');
-    if (d.role !== 'agent') {
-      return authMsg('This sign-in is for agent accounts. Staff and admin should use the Admin Portal at glrarealty.com/admin.html instead.', 'bad');
+    if (d.role !== 'agent' && d.role !== 'admin') {
+      return authMsg('This sign-in is for agent accounts. Staff should use the Admin Portal at glrarealty.com/admin.html instead.', 'bad');
     }
     localStorage.setItem(TK, d.token);
     enterApp();
@@ -416,6 +417,7 @@ async function enterApp() {
     STAGES = ME.stages || [];
     $('authView').style.display = 'none'; $('appView').style.display = 'block';
     $('whoName').textContent = (ME.name || ME.email).toUpperCase();
+    $('adminLink').style.display = ME.role === 'admin' ? '' : 'none';
     setBadge(ME.unread);
     const sel = $('lf_stage'); sel.innerHTML = STAGES.map(s => `<option>${esc(s)}</option>`).join('');
     showTab('gps');
@@ -632,7 +634,7 @@ function renderLeads() {
         const fu = dstr(l.nextFollowUp), overdue = fu && fu < today && !['Closing', 'Unsuccessful'].includes(l.stage);
         const stageCls = l.stage === 'Closing' ? ' closing' : l.stage === 'Unsuccessful' ? ' lost' : '';
         return `<div class="lrow" onclick="openLead('${l._id}')">
-          <div class="nm">${esc(l.name)}${l.source === 'Website' ? '<span class="chip orange">WEB</span>' : ''}${l.birthday ? ' <span title="Birthday on file">🎂</span>' : ''}</div>
+          <div class="nm">${esc(l.name)}${l.source === 'Website' ? '<span class="chip orange">WEB</span>' : ''}${l.birthday ? ` <span class="chip plain" title="Birthday: ${dnice(l.birthday)}">BDAY ${dnice(l.birthday)}</span>` : ''}</div>
           <div class="meta">
             <span class="chip">${esc(l.category)}</span>
             <span class="chip stage${stageCls}">${esc(l.stage)}</span>

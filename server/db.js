@@ -501,9 +501,9 @@ const PERMISSION_KEYS = [
   'titling_view',        // see the Titling tab
   'titling_manage',      // add / edit / delete titling jobs
   'notarial_view',       // see the Notarial tab
-  'notarial_manage',     // add / edit / delete notarial records + cash ledger
-  'agents_view',         // see the Agents tab (roster, scorecards, pipelines)
-  'agents_manage'        // assign website inquiries to agents
+  'notarial_manage'      // add / edit / delete notarial records + cash ledger
+  // NOTE: the Agents tab has no permission key on purpose — it is strictly
+  // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
 
 // Sensible defaults per role.
@@ -549,9 +549,7 @@ function defaultPermissionsForRole(role) {
     titling_view: false,
     titling_manage: false,
     notarial_view: false,
-    notarial_manage: false,
-    agents_view: false,
-    agents_manage: false
+    notarial_manage: false
   };
 }
 

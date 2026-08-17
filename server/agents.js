@@ -6,11 +6,11 @@
 // owner's asks: calendar, notifications, email, and client birthdays on leads.
 //
 // Access model, in one line: every /api/agent/* route requires a signed-in
-// account whose role is 'agent' and only ever reads/writes records where
-// { account: req.user.sub } — an agent cannot see anyone else's data, and an
-// agent has zero admin permissions so the admin portal rejects them entirely.
-// Admin-side routes (/api/admin/agents*) are gated by the agents_view /
-// agents_manage permission keys.
+// account whose role is 'agent' OR 'admin' (the broker has full access and can
+// use the workspace as her own) and only ever reads/writes records where
+// { account: req.user.sub } — nobody sees anyone else's data, and an agent has
+// zero admin permissions so the admin portal rejects them entirely. Admin-side
+// routes (/api/admin/agents*) are strictly requireAdmin — employees never.
 //
 // Registered from server.js:
 //   const { registerAgentRoutes, startAgentTick } = require('./server/agents');
@@ -24,7 +24,7 @@ const {
   AgentProfile, AgentAction, AgentLead, AgentEvent, AgentNotification,
   AGENT_LEAD_STAGES
 } = require('./db');
-const { verifyToken, requirePermission, logAudit } = require('./auth');
+const { verifyToken, requireAdmin, logAudit } = require('./auth');
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 
 const SITE_URL = 'https://glrarealty.com';
@@ -151,10 +151,12 @@ async function getOrCreateProfile(accountId) {
   return profile;
 }
 
-// Only agents pass. verifyToken already re-reads the stored role, so a
+// Agents AND admins pass (the broker has full access to the workspace and can
+// use it as her own — her records are scoped to her account like anyone's).
+// Employees are refused. verifyToken already re-reads the stored role, so a
 // demoted/deactivated account loses access within its cache window.
 function requireAgentRole(req, res, next) {
-  if (!req.user || req.user.role !== 'agent') {
+  if (!req.user || (req.user.role !== 'agent' && req.user.role !== 'admin')) {
     return res.status(403).json({ error: 'This area is for agent accounts.' });
   }
   next();
@@ -211,6 +213,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       ]);
       res.json({
         name: account?.name || '', email: account?.email || '',
+        role: req.user.role,
         profile, gps: computeGPS(profile), unread,
         calFeedPath: profile.calToken ? `/api/agent-cal/${profile.calToken}` : null,
         stages: AGENT_LEAD_STAGES
@@ -581,7 +584,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   // ═══════════════════════════════════════════════════════════
   // ADMIN SIDE — the broker's window into the team
   // ═══════════════════════════════════════════════════════════
-  app.get('/api/admin/agents', verifyToken, requirePermission('agents_view'), async (req, res) => {
+  app.get('/api/admin/agents', verifyToken, requireAdmin, async (req, res) => {
     try {
       const agents = await Account.find({ role: 'agent' })
         .select('name email isActive status lastSeen lastLogin createdAt').lean();
@@ -620,7 +623,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     } catch (e) { console.error('admin/agents error:', e); res.status(500).json({ error: 'Server error' }); }
   });
 
-  app.get('/api/admin/agents/:id', verifyToken, requirePermission('agents_view'), async (req, res) => {
+  app.get('/api/admin/agents/:id', verifyToken, requireAdmin, async (req, res) => {
     try {
       const account = await Account.findOne({ _id: req.params.id, role: 'agent' })
         .select('name email isActive status lastSeen lastLogin createdAt').lean();
@@ -638,7 +641,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   // pings their bell, and emails them. The inquiry stays in the admin list
   // with an "assigned" stamp.
   app.post('/api/admin/inquiries/:id/assign',
-    verifyToken, requirePermission('agents_manage'),
+    verifyToken, requireAdmin,
     body('agentId').isString().isLength({ min: 8, max: 64 }),
     handleValidation,
     async (req, res) => {
@@ -680,7 +683,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
           });
         } catch (e) { if (e.code !== 11000) console.error('assign notification error:', e.message); }
 
-        sendEmail(agent.email, '\uD83C\uDFE0 New lead assigned to you \u2014 GLRA',
+        sendEmail(agent.email, 'New lead assigned to you \u2014 GLRA',
           getEmailHeader() + `
           <h2 style="color:#0a1628;">A website lead was just assigned to you</h2>
           <table style="font-size:14px;line-height:1.9">
@@ -720,7 +723,9 @@ function startAgentTick({ sendEmail, esc }) {
       if (now.getUTCHours() < 7) return;
       const todayKey = dayKeyOf(now);
       const todayMD = todayKey.slice(5);
-      const agents = await Account.find({ role: 'agent', isActive: true, status: 'active' }).select('name email').lean();
+      // Admins are included: the broker can use the workspace herself. The
+      // has-profile check keeps it to accounts that actually opened it.
+      const agents = await Account.find({ role: { $in: ['agent', 'admin'] }, isActive: true, status: 'active' }).select('name email').lean();
       for (const agent of agents) {
         try {
           const profile = await AgentProfile.findOne({ account: agent._id });
@@ -745,20 +750,20 @@ function startAgentTick({ sendEmail, esc }) {
             } catch (e) { if (e.code !== 11000) throw e; } // duplicate = already notified
           };
           for (const f of followups) await notify(`fu:${f.lead._id}:${todayKey}`, 'followup', `${f.overdue ? 'Overdue follow-up' : 'Follow up today'}: ${f.lead.name}`, f.lead._id);
-          for (const b of birthdays) await notify(`bd:${b._id}:${todayKey.slice(0, 4)}`, 'birthday', `\uD83C\uDF82 ${b.name} has a birthday today \u2014 send a greeting!`, b._id);
+          for (const b of birthdays) await notify(`bd:${b._id}:${todayKey.slice(0, 4)}`, 'birthday', `Birthday today: ${b.name} \u2014 send a greeting!`, b._id);
           for (const a of anniversaries) await notify(`an:${a._id}:${todayKey.slice(0, 4)}`, 'anniversary', `Closing anniversary today: ${a.name} \u2014 a great day to reconnect`, a._id);
 
           const total = followups.length + birthdays.length + anniversaries.length + events.length;
           if (total > 0 && agent.email) {
             const li = arr => arr.map(s => `<li style="margin:4px 0">${s}</li>`).join('');
-            sendEmail(agent.email, `\u2600\uFE0F Your GLRA agenda \u2014 ${todayKey}`,
+            sendEmail(agent.email, `Your GLRA agenda \u2014 ${todayKey}`,
               getEmailHeader() + `
               <h2 style="color:#0a1628;">Good morning, ${esc(agent.name || 'Agent')}!</h2>
               <p>Here's what's on your plate today:</p>
-              ${followups.length ? `<h3 style="margin-bottom:4px">\uD83D\uDCDE Follow-ups (${followups.length})</h3><ul>${li(followups.map(f => `${esc(f.lead.name)}${f.overdue ? ' <span style="color:#c0392b">(overdue)</span>' : ''}`))}</ul>` : ''}
-              ${birthdays.length ? `<h3 style="margin-bottom:4px">\uD83C\uDF82 Client birthdays</h3><ul>${li(birthdays.map(b => esc(b.name)))}</ul>` : ''}
-              ${anniversaries.length ? `<h3 style="margin-bottom:4px">\uD83C\uDFE1 Closing anniversaries</h3><ul>${li(anniversaries.map(a => esc(a.name)))}</ul>` : ''}
-              ${events.length ? `<h3 style="margin-bottom:4px">\uD83D\uDCC5 Scheduled</h3><ul>${li(events.map(ev => `${esc(ev.title)}${ev.time ? ` \u00B7 ${esc(ev.time)}` : ''}`))}</ul>` : ''}
+              ${followups.length ? `<h3 style="margin-bottom:4px">Follow-ups (${followups.length})</h3><ul>${li(followups.map(f => `${esc(f.lead.name)}${f.overdue ? ' <span style="color:#c0392b">(overdue)</span>' : ''}`))}</ul>` : ''}
+              ${birthdays.length ? `<h3 style="margin-bottom:4px">Client birthdays</h3><ul>${li(birthdays.map(b => esc(b.name)))}</ul>` : ''}
+              ${anniversaries.length ? `<h3 style="margin-bottom:4px">Closing anniversaries</h3><ul>${li(anniversaries.map(a => esc(a.name)))}</ul>` : ''}
+              ${events.length ? `<h3 style="margin-bottom:4px">Scheduled</h3><ul>${li(events.map(ev => `${esc(ev.title)}${ev.time ? ` \u00B7 ${esc(ev.time)}` : ''}`))}</ul>` : ''}
               <p style="margin-top:16px"><a href="${SITE_URL}/agent.html" style="display:inline-block;background:#0a0a0a;color:#ffffff;padding:12px 24px;text-decoration:none;font-weight:600">Open my workspace</a></p>
             ` + getEmailFooter()).catch(err => console.error('agenda email failed:', err.message));
           }
