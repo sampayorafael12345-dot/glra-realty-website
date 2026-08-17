@@ -71,6 +71,53 @@ const ACTION_DEFS = {
 const ALL_ACTION_IDS = new Set(
   [...ACTION_DEFS.daily, ...ACTION_DEFS.weekly, ...ACTION_DEFS.monthly].map(a => a.id)
 );
+const PERIOD_TYPES = ['daily', 'weekly', 'monthly'];
+
+// The agent's *effective* checklists: the workbook's lines minus the ones they
+// switched off, plus the ones they wrote themselves. Everything downstream —
+// saving a quantity, scoring the report, the unfinished-actions nudge — reads
+// the list through here, so an edited checklist stays consistent everywhere.
+function effectiveActionDefs(profile) {
+  const hidden = new Set(profile?.hiddenActions || []);
+  const custom = profile?.customActions || {};
+  const out = {};
+  PERIOD_TYPES.forEach(t => {
+    const own = (custom[t] || []).map(a => ({ id: a.id, text: a.text, custom: true }));
+    out[t] = ACTION_DEFS[t].filter(a => !hidden.has(a.id)).concat(own);
+  });
+  return out;
+}
+function effectiveActionIds(profile) {
+  const defs = effectiveActionDefs(profile);
+  return new Set(PERIOD_TYPES.flatMap(t => defs[t].map(a => a.id)));
+}
+// Which unfinished-action reminders the evening nudge should cover on a given
+// Manila date. Daily every night. Weekly from Friday to Sunday, because the ISO
+// week ends Sunday and that is the window where an unfinished weekly action can
+// still be saved. Monthly in the last three days of the month.
+// Pure and exported so the date arithmetic can be tested without a clock.
+function nudgeScope(manilaDate) {
+  const dow = manilaDate.getUTCDay(); // 0=Sun .. 6=Sat (on the shifted date)
+  const daysInMonth = new Date(Date.UTC(manilaDate.getUTCFullYear(), manilaDate.getUTCMonth() + 1, 0)).getUTCDate();
+  return {
+    daily: true,
+    weekly: dow === 5 || dow === 6 || dow === 0,
+    monthly: manilaDate.getUTCDate() > daysInMonth - 3
+  };
+}
+
+// Which lines of a period are done, and which are still open. `entries` is the
+// { actionId: qty } map from an AgentAction doc.
+function splitActions(defs, entries) {
+  const e = entries || {};
+  const done = defs.filter(a => Number(e[a.id]) > 0);
+  return {
+    done: done.map(a => ({ id: a.id, text: a.text, qty: Number(e[a.id]) || 0 })),
+    pending: defs.filter(a => !(Number(e[a.id]) > 0)).map(a => ({ id: a.id, text: a.text })),
+    total: defs.length,
+    qty: defs.reduce((s, a) => s + (Number(e[a.id]) || 0), 0)
+  };
+}
 
 // ── MANILA TIME ──────────────────────────────────────────────
 // The Philippines is UTC+8 with no daylight saving, so "Manila now" is just a
@@ -213,7 +260,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       ]);
       res.json({
         name: account?.name || '', email: account?.email || '',
-        role: req.user.role,
+        role: req.user.role, since: account?.createdAt || null,
         profile, gps: computeGPS(profile), unread,
         calFeedPath: profile.calToken ? `/api/agent-cal/${profile.calToken}` : null,
         stages: AGENT_LEAD_STAGES
@@ -255,17 +302,24 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   app.get('/api/agent/actions', verifyToken, requireAgentRole, async (req, res) => {
     try {
       const keys = currentKeys();
-      const docs = await AgentAction.find({
-        account: req.user.sub,
-        $or: [
-          { periodType: 'daily', periodKey: keys.daily },
-          { periodType: 'weekly', periodKey: keys.weekly },
-          { periodType: 'monthly', periodKey: keys.monthly }
-        ]
-      }).lean();
+      const [profile, docs] = await Promise.all([
+        getOrCreateProfile(req.user.sub),
+        AgentAction.find({
+          account: req.user.sub,
+          $or: [
+            { periodType: 'daily', periodKey: keys.daily },
+            { periodType: 'weekly', periodKey: keys.weekly },
+            { periodType: 'monthly', periodKey: keys.monthly }
+          ]
+        }).lean()
+      ]);
       const byType = t => docs.find(d => d.periodType === t)?.entries || {};
       res.json({
-        defs: ACTION_DEFS, keys,
+        defs: effectiveActionDefs(profile), keys,
+        // The untouched workbook lists, so the workspace can offer a switched-off
+        // line back without hard-coding the wording in two places.
+        standard: ACTION_DEFS,
+        hidden: profile.hiddenActions || [],
         entries: { daily: byType('daily'), weekly: byType('weekly'), monthly: byType('monthly') }
       });
     } catch (e) { console.error('agent/actions error:', e); res.status(500).json({ error: 'Server error' }); }
@@ -273,14 +327,17 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
 
   app.post('/api/agent/actions',
     verifyToken, requireAgentRole,
-    body('periodType').isIn(['daily', 'weekly', 'monthly']),
+    body('periodType').isIn(PERIOD_TYPES),
     body('actionId').isString(),
     body('qty').isInt({ min: 0, max: 999 }),
     handleValidation,
     async (req, res) => {
       try {
         const { periodType, actionId, qty } = req.body;
-        if (!ALL_ACTION_IDS.has(actionId)) return res.status(400).json({ error: 'Unknown action' });
+        const profile = await getOrCreateProfile(req.user.sub);
+        // Checked against this agent's own list, not just the workbook's, so
+        // their custom lines save and a switched-off line cannot be logged.
+        if (!effectiveActionIds(profile).has(actionId)) return res.status(400).json({ error: 'Unknown action' });
         const periodKey = currentKeys()[periodType];
         await AgentAction.updateOne(
           { account: req.user.sub, periodType, periodKey },
@@ -290,6 +347,107 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         res.json({ success: true, periodKey });
       } catch (e) { console.error('agent/actions save error:', e); res.status(500).json({ error: 'Server error' }); }
     });
+
+  // ── ACTIONS: edit the checklist itself ──
+  // Whole-list replace rather than add/edit/delete routes: the workspace always
+  // holds the complete list, so one atomic write can't leave it half-applied.
+  // Ids are minted here — a client can only reuse an id it already owns.
+  app.put('/api/agent/action-list',
+    verifyToken, requireAgentRole,
+    body('custom').optional().isObject(),
+    body('hidden').optional().isArray({ max: 40 }),
+    handleValidation,
+    async (req, res) => {
+      try {
+        const profile = await getOrCreateProfile(req.user.sub);
+        if (req.body.custom) {
+          PERIOD_TYPES.forEach(t => {
+            const incoming = req.body.custom[t];
+            if (!Array.isArray(incoming)) return;
+            const known = new Set((profile.customActions[t] || []).map(a => a.id));
+            profile.customActions[t] = incoming.slice(0, 30).map(a => {
+              const text = String((a && a.text) || '').trim().slice(0, 200);
+              if (!text) return null;
+              const id = (a.id && known.has(String(a.id)))
+                ? String(a.id)
+                : 'x' + crypto.randomBytes(4).toString('hex');
+              return { id, text };
+            }).filter(Boolean);
+          });
+        }
+        if (Array.isArray(req.body.hidden)) {
+          profile.hiddenActions = req.body.hidden.map(String).filter(id => ALL_ACTION_IDS.has(id));
+        }
+        profile.updatedAt = new Date();
+        await profile.save();
+        res.json({
+          success: true, defs: effectiveActionDefs(profile),
+          standard: ACTION_DEFS, hidden: profile.hiddenActions
+        });
+      } catch (e) { console.error('agent/action-list error:', e); res.status(500).json({ error: 'Server error' }); }
+    });
+
+  // ── OWN PROFILE ──
+  // An agent maintains their own details. Role, status and email are NOT
+  // editable here: they are the sign-in identity and the broker's decision.
+  app.put('/api/agent/profile',
+    verifyToken, requireAgentRole,
+    body('name').optional().isString().trim().isLength({ min: 2, max: 120 }).withMessage('Enter your full name'),
+    body('contactNo').optional().isString().isLength({ max: 60 }),
+    body('licenseNo').optional().isString().isLength({ max: 60 }),
+    body('goalStatement').optional().isString().isLength({ max: 300 }),
+    handleValidation,
+    async (req, res) => {
+      try {
+        const profile = await getOrCreateProfile(req.user.sub);
+        ['contactNo', 'licenseNo', 'goalStatement'].forEach(k => {
+          if (req.body[k] !== undefined) profile[k] = String(req.body[k]).trim();
+        });
+        profile.updatedAt = new Date();
+        await profile.save();
+        if (req.body.name !== undefined) {
+          await Account.updateOne({ _id: req.user.sub }, { $set: { name: String(req.body.name).trim() } });
+        }
+        const account = await Account.findById(req.user.sub).select('name email createdAt').lean();
+        res.json({
+          success: true, profile,
+          name: account?.name || '', email: account?.email || '', since: account?.createdAt || null
+        });
+      } catch (e) { console.error('agent/profile error:', e); res.status(500).json({ error: 'Server error' }); }
+    });
+
+  // ── EMAIL PREFERENCES ──
+  app.put('/api/agent/email-prefs',
+    verifyToken, requireAgentRole,
+    body('morningDigest').optional().isBoolean(),
+    body('actionNudge').optional().isBoolean(),
+    handleValidation,
+    async (req, res) => {
+      try {
+        const profile = await getOrCreateProfile(req.user.sub);
+        ['morningDigest', 'actionNudge'].forEach(k => {
+          if (req.body[k] !== undefined) profile.emailPrefs[k] = !!req.body[k];
+        });
+        profile.updatedAt = new Date();
+        await profile.save();
+        res.json({ success: true, emailPrefs: profile.emailPrefs });
+      } catch (e) { console.error('agent/email-prefs error:', e); res.status(500).json({ error: 'Server error' }); }
+    });
+
+  // ── TEAM ROSTER — fills the broker / agent picker on a lead ──
+  // Names and roles only. An agent has no business reading colleagues' emails,
+  // so they are not in the response.
+  app.get('/api/agent/team', verifyToken, requireAgentRole, async (req, res) => {
+    try {
+      const people = await Account.find({ role: { $in: ['agent', 'admin'] }, isActive: true, status: 'active' })
+        .select('name email role').lean();
+      const team = people
+        .map(p => ({ name: (p.name || p.email || '').trim(), role: p.role }))
+        .filter(p => p.name)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      res.json({ team });
+    } catch (e) { console.error('agent/team error:', e); res.status(500).json({ error: 'Server error' }); }
+  });
 
   // ── ACCOMPLISHMENT REPORT ──
   app.get('/api/agent/report', verifyToken, requireAgentRole, async (req, res) => {
@@ -322,21 +480,24 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         })
       ]);
       const gps = computeGPS(profile);
-      const score = (type, defs) => {
-        const entries = actionDocs.find(d => d.periodType === type)?.entries || {};
-        const done = defs.filter(a => Number(entries[a.id]) > 0).length;
-        const qty = defs.reduce((s, a) => s + (Number(entries[a.id]) || 0), 0);
-        return { done, total: defs.length, qty, score: defs.length ? done / defs.length : 0 };
+      const defs = effectiveActionDefs(profile);
+      // The report is filled from the Actions page and never typed twice: this
+      // hands back the exact lines the agent ticked, with the counts they
+      // logged, plus what is still open in the same period.
+      const score = type => {
+        const s = splitActions(defs[type], actionDocs.find(d => d.periodType === type)?.entries);
+        return {
+          done: s.done.length, total: s.total, qty: s.qty,
+          score: s.total ? s.done.length / s.total : 0,
+          items: s.done, pending: s.pending
+        };
       };
       const cats = { Owner: {}, Buyer: {}, Tenant: {} };
       leadAgg.forEach(g => { cats[g._id] = { today: g.today, week: g.week, month: g.month, year: g.year }; });
       const sum = f => ['Owner', 'Buyer', 'Tenant'].reduce((s, c) => s + (cats[c][f] || 0), 0);
       res.json({
-        actions: {
-          daily: score('daily', ACTION_DEFS.daily),
-          weekly: score('weekly', ACTION_DEFS.weekly),
-          monthly: score('monthly', ACTION_DEFS.monthly)
-        },
+        periodKeys: keys,
+        actions: { daily: score('daily'), weekly: score('weekly'), monthly: score('monthly') },
         leads: {
           byCategory: cats,
           totals: { today: sum('today'), week: sum('week'), month: sum('month'), year: sum('year') },
@@ -363,20 +524,29 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     body('propertyInterest').optional().isString().isLength({ max: 300 }),
     body('source').optional().isString().isLength({ max: 120 }),
     body('actionToTake').optional().isString().isLength({ max: 300 }),
+    body('brokerAgent').optional().isString().isLength({ max: 160 }),
     body('stage').optional().isIn(AGENT_LEAD_STAGES),
     body('reasonLost').optional().isString().isLength({ max: 300 }),
     body('nextFollowUp').optional({ values: 'falsy' }).isISO8601(),
     body('closingDate').optional({ values: 'falsy' }).isISO8601(),
     body('remarks').optional().isString().isLength({ max: 1000 })
   ];
-  const LEAD_FIELDS = ['name', 'contactNo', 'email', 'category', 'propertyInterest', 'source', 'actionToTake', 'stage', 'reasonLost', 'remarks'];
+  const LEAD_FIELDS = ['name', 'contactNo', 'email', 'category', 'propertyInterest', 'source', 'actionToTake', 'brokerAgent', 'stage', 'reasonLost', 'remarks'];
   const LEAD_DATE_FIELDS = ['birthday', 'nextFollowUp', 'closingDate'];
   function applyLeadBody(doc, bodyIn) {
+    const prevStage = doc.stage;
     LEAD_FIELDS.forEach(k => { if (bodyIn[k] !== undefined) doc[k] = String(bodyIn[k]).trim(); });
     LEAD_DATE_FIELDS.forEach(k => {
       if (bodyIn[k] === undefined) return;
       doc[k] = bodyIn[k] ? new Date(String(bodyIn[k]).slice(0, 10)) : null;
     });
+    // The lead's own pipeline. Stamped the moment the stage changes, and once
+    // when the lead is first written, so the trail is complete without anyone
+    // maintaining it by hand. Capped so a lead bounced between stages for years
+    // can't grow without bound.
+    if (!doc.stageHistory || doc.stageHistory.length === 0 || doc.stage !== prevStage) {
+      doc.stageHistory = [...(doc.stageHistory || []), { stage: doc.stage, at: new Date() }].slice(-40);
+    }
   }
 
   app.get('/api/agent/leads', verifyToken, requireAgentRole, async (req, res) => {
@@ -414,11 +584,66 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     } catch (e) { console.error('agent/leads delete error:', e); res.status(500).json({ error: 'Server error' }); }
   });
 
+  // ── EMAIL A CLIENT from the workspace ──
+  // Goes out on GLRA letterhead from the shared sending address (the only
+  // domain Brevo is authorised for), but Reply-To is the agent, so the client's
+  // answer lands in that agent's own inbox. The agent also gets a copy, and the
+  // lead keeps a subject-and-time trail.
+  app.post('/api/agent/leads/:id/email',
+    verifyToken, requireAgentRole,
+    body('subject').isString().trim().isLength({ min: 2, max: 200 }).withMessage('Give the email a subject'),
+    body('message').isString().trim().isLength({ min: 2, max: 4000 }).withMessage('Write a message first'),
+    handleValidation,
+    async (req, res) => {
+      try {
+        const [lead, me] = await Promise.all([
+          AgentLead.findOne({ _id: req.params.id, account: req.user.sub }),
+          Account.findById(req.user.sub).select('name email').lean()
+        ]);
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+        const to = String(lead.email || '').trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+          return res.status(400).json({ error: 'This lead has no valid email address. Add one first.' });
+        }
+        const subject = String(req.body.subject).trim();
+        const agentName = (me?.name || '').trim() || 'Your GLRA agent';
+        // Blank lines become paragraphs, single newlines become breaks, so what
+        // the agent typed is what the client reads.
+        const bodyHtml = String(req.body.message).trim().split(/\n{2,}/)
+          .map(p => `<p style="font-size:15px;line-height:1.7;color:#333">${esc(p).replace(/\n/g, '<br>')}</p>`)
+          .join('');
+        const html = getEmailHeader() + bodyHtml + `
+          <p style="font-size:15px;line-height:1.7;color:#333;margin-top:22px">
+            ${esc(agentName)}<br>
+            <span style="color:#666;font-size:13px">GLRA Realty</span>
+          </p>` + getEmailFooter();
+
+        const sent = await sendEmail(to, subject, html, `${agentName} — GLRA Realty`,
+          me?.email ? { email: me.email, name: agentName } : null);
+        if (sent && sent.success === false) {
+          return res.status(502).json({ error: 'Email service refused the message. Try again shortly.' });
+        }
+
+        lead.emailLog = [...(lead.emailLog || []), { to, subject, at: new Date() }].slice(-30);
+        lead.updatedAt = new Date();
+        await lead.save();
+
+        if (me?.email) {
+          sendEmail(me.email, `Copy: ${subject}`,
+            getEmailHeader() + `<p style="font-size:14px;color:#666">Your copy of the email sent to <strong>${esc(lead.name)}</strong> (${esc(to)}).</p><hr style="border:none;border-top:1px solid #e5e5e5;margin:18px 0">`
+            + bodyHtml + getEmailFooter()
+          ).catch(err => console.error('client-email copy failed:', err.message));
+        }
+        res.json({ success: true, lead });
+      } catch (e) { console.error('agent/leads email error:', e); res.status(500).json({ error: 'Server error' }); }
+    });
+
   // ── PIPELINE — read live from the journal, like the workbook ──
   app.get('/api/agent/pipeline', verifyToken, requireAgentRole, async (req, res) => {
     try {
       const leads = await AgentLead.find({ account: req.user.sub })
-        .select('name category stage actionToTake nextFollowUp closingDate').sort({ updatedAt: -1 }).limit(1000).lean();
+        .select('name category stage actionToTake brokerAgent stageHistory nextFollowUp closingDate updatedAt')
+        .sort({ updatedAt: -1 }).limit(1000).lean();
       const byStage = {};
       AGENT_LEAD_STAGES.forEach(s => { byStage[s] = []; });
       leads.forEach(l => { (byStage[l.stage] || (byStage[l.stage] = [])).push(l); });
@@ -663,6 +888,9 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
           source: 'Website',
           actionToTake: 'Reply to inquiry within the hour',
           stage: 'Inquiry',
+          // This path writes the lead directly, so stamp the opening step of
+          // its pipeline here too (applyLeadBody does it on every other route).
+          stageHistory: [{ stage: 'Inquiry', at: new Date() }],
           nextFollowUp: new Date(dayKeyOf(manilaNow())),
           remarks: (inquiry.message || '').slice(0, 900),
           assignedFrom: { inquiryId: String(inquiry._id), by: req.user.email, at: new Date() }
@@ -710,64 +938,151 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
 }
 
 // =============================================================================
-// DAILY REMINDER TICK — the "notifications + email" the owner asked for
+// REMINDER TICK — the "notifications + email" the owner asked for
 // =============================================================================
-// Every 10 minutes; from 07:00 Manila onward it processes each active agent
-// once per day: writes bell notifications (deduped) for today's follow-ups,
-// client birthdays, and closing anniversaries, then sends ONE morning-agenda
-// email if there's anything to say. lastDigestKey guarantees once-per-day.
+// Runs every 10 minutes and makes two passes per agent per day:
+//
+//   MORNING (07:00-18:59, guarded by lastDigestKey) - today's follow-ups,
+//     client birthdays, closing anniversaries, diary entries, and the daily
+//     actions still to do. Bell notifications plus one agenda email.
+//   EVENING (19:00 onward, guarded by lastNudgeKey) - what is still unfinished:
+//     daily actions every night, weekly actions Friday to Sunday as the week
+//     closes, monthly actions in the last three days of the month.
+//
+// Both guards are 'YYYY-MM-DD' Manila keys, so each pass fires at most once a
+// day, and the bell's unique dedupeKey means a re-run can never double-post.
+// Agents can switch either email off in the workspace; the bell always works.
 function startAgentTick({ sendEmail, esc }) {
+  const CTA = `<p style="margin-top:20px"><a href="${SITE_URL}/agent.html" style="display:inline-block;background:#0a0a0a;color:#ffffff;padding:12px 24px;text-decoration:none;font-weight:600">Open my workspace</a></p>`;
+  const li = arr => arr.map(s => `<li style="margin:4px 0">${esc(s)}</li>`).join('');
+  // Long checklists are trimmed in the email; the workspace has the full list.
+  const listBlock = (heading, items) => `
+    <h3 style="margin:18px 0 4px;font-size:15px;color:#0a1628">${esc(heading)}</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;color:#333">
+      ${li(items.slice(0, 8))}
+      ${items.length > 8 ? `<li style="margin:4px 0;color:#777">and ${items.length - 8} more</li>` : ''}
+    </ul>`;
+
+  // This agent's three live checklists, each split into done / still open.
+  async function actionState(accountId, profile) {
+    const keys = currentKeys();
+    const docs = await AgentAction.find({
+      account: accountId,
+      $or: [
+        { periodType: 'daily', periodKey: keys.daily },
+        { periodType: 'weekly', periodKey: keys.weekly },
+        { periodType: 'monthly', periodKey: keys.monthly }
+      ]
+    }).lean();
+    const defs = effectiveActionDefs(profile);
+    const state = {};
+    PERIOD_TYPES.forEach(t => {
+      state[t] = splitActions(defs[t], docs.find(d => d.periodType === t)?.entries);
+    });
+    return state;
+  }
+
   async function tick() {
     try {
       const now = manilaNow();
-      if (now.getUTCHours() < 7) return;
+      const hour = now.getUTCHours();
+      const isMorning = hour >= 7 && hour < 19;
+      const isEvening = hour >= 19;
+      if (!isMorning && !isEvening) return; // small hours: nothing to send
       const todayKey = dayKeyOf(now);
       const todayMD = todayKey.slice(5);
       // Admins are included: the broker can use the workspace herself. The
       // has-profile check keeps it to accounts that actually opened it.
       const agents = await Account.find({ role: { $in: ['agent', 'admin'] }, isActive: true, status: 'active' }).select('name email').lean();
+
       for (const agent of agents) {
         try {
           const profile = await AgentProfile.findOne({ account: agent._id });
-          if (!profile || profile.lastDigestKey === todayKey) continue;
-
-          const leads = await AgentLead.find({ account: agent._id })
-            .select('name birthday nextFollowUp closingDate stage').lean();
-          const followups = [], birthdays = [], anniversaries = [];
-          leads.forEach(l => {
-            const fu = utcDateKey(l.nextFollowUp);
-            if (fu && fu <= todayKey && !['Closing', 'Unsuccessful'].includes(l.stage)) {
-              followups.push({ lead: l, overdue: fu < todayKey });
-            }
-            if (l.birthday && utcDateKey(l.birthday).slice(5) === todayMD) birthdays.push(l);
-            if (l.closingDate && utcDateKey(l.closingDate).slice(5) === todayMD && utcDateKey(l.closingDate) < todayKey) anniversaries.push(l);
-          });
-          const events = await AgentEvent.find({ account: agent._id, date: new Date(todayKey) }).lean();
+          if (!profile) continue;
+          const morningDue = isMorning && profile.lastDigestKey !== todayKey;
+          const eveningDue = isEvening && profile.lastNudgeKey !== todayKey;
+          if (!morningDue && !eveningDue) continue;
 
           const notify = async (dedupeKey, type, message, leadId) => {
             try {
               await AgentNotification.create({ account: agent._id, dedupeKey, type, message, leadId: leadId ? String(leadId) : null });
             } catch (e) { if (e.code !== 11000) throw e; } // duplicate = already notified
           };
-          for (const f of followups) await notify(`fu:${f.lead._id}:${todayKey}`, 'followup', `${f.overdue ? 'Overdue follow-up' : 'Follow up today'}: ${f.lead.name}`, f.lead._id);
-          for (const b of birthdays) await notify(`bd:${b._id}:${todayKey.slice(0, 4)}`, 'birthday', `Birthday today: ${b.name} \u2014 send a greeting!`, b._id);
-          for (const a of anniversaries) await notify(`an:${a._id}:${todayKey.slice(0, 4)}`, 'anniversary', `Closing anniversary today: ${a.name} \u2014 a great day to reconnect`, a._id);
+          const prefs = profile.emailPrefs || {};
+          const actions = await actionState(agent._id, profile);
 
-          const total = followups.length + birthdays.length + anniversaries.length + events.length;
-          if (total > 0 && agent.email) {
-            const li = arr => arr.map(s => `<li style="margin:4px 0">${s}</li>`).join('');
-            sendEmail(agent.email, `Your GLRA agenda \u2014 ${todayKey}`,
-              getEmailHeader() + `
-              <h2 style="color:#0a1628;">Good morning, ${esc(agent.name || 'Agent')}!</h2>
-              <p>Here's what's on your plate today:</p>
-              ${followups.length ? `<h3 style="margin-bottom:4px">Follow-ups (${followups.length})</h3><ul>${li(followups.map(f => `${esc(f.lead.name)}${f.overdue ? ' <span style="color:#c0392b">(overdue)</span>' : ''}`))}</ul>` : ''}
-              ${birthdays.length ? `<h3 style="margin-bottom:4px">Client birthdays</h3><ul>${li(birthdays.map(b => esc(b.name)))}</ul>` : ''}
-              ${anniversaries.length ? `<h3 style="margin-bottom:4px">Closing anniversaries</h3><ul>${li(anniversaries.map(a => esc(a.name)))}</ul>` : ''}
-              ${events.length ? `<h3 style="margin-bottom:4px">Scheduled</h3><ul>${li(events.map(ev => `${esc(ev.title)}${ev.time ? ` \u00B7 ${esc(ev.time)}` : ''}`))}</ul>` : ''}
-              <p style="margin-top:16px"><a href="${SITE_URL}/agent.html" style="display:inline-block;background:#0a0a0a;color:#ffffff;padding:12px 24px;text-decoration:none;font-weight:600">Open my workspace</a></p>
-            ` + getEmailFooter()).catch(err => console.error('agenda email failed:', err.message));
+          // ── MORNING: the agenda ──
+          if (morningDue) {
+            const leads = await AgentLead.find({ account: agent._id })
+              .select('name birthday nextFollowUp closingDate stage').lean();
+            const followups = [], birthdays = [], anniversaries = [];
+            leads.forEach(l => {
+              const fu = utcDateKey(l.nextFollowUp);
+              if (fu && fu <= todayKey && !['Closing', 'Unsuccessful'].includes(l.stage)) {
+                followups.push({ lead: l, overdue: fu < todayKey });
+              }
+              if (l.birthday && utcDateKey(l.birthday).slice(5) === todayMD) birthdays.push(l);
+              if (l.closingDate && utcDateKey(l.closingDate).slice(5) === todayMD && utcDateKey(l.closingDate) < todayKey) anniversaries.push(l);
+            });
+            const events = await AgentEvent.find({ account: agent._id, date: new Date(todayKey) }).lean();
+            const openToday = actions.daily.pending;
+
+            for (const f of followups) await notify(`fu:${f.lead._id}:${todayKey}`, 'followup', `${f.overdue ? 'Overdue follow-up' : 'Follow up today'}: ${f.lead.name}`, f.lead._id);
+            for (const b of birthdays) await notify(`bd:${b._id}:${todayKey.slice(0, 4)}`, 'birthday', `Birthday today: ${b.name} — send a greeting!`, b._id);
+            for (const a of anniversaries) await notify(`an:${a._id}:${todayKey.slice(0, 4)}`, 'anniversary', `Closing anniversary today: ${a.name} — a great day to reconnect`, a._id);
+            // The bell carries the day's checklist too, not just the diary.
+            if (openToday.length) {
+              await notify(`amd:${todayKey}`, 'action', `${openToday.length} of ${actions.daily.total} daily actions to do today`);
+            }
+
+            const anything = followups.length + birthdays.length + anniversaries.length + events.length + openToday.length;
+            if (anything > 0 && agent.email && prefs.morningDigest !== false) {
+              sendEmail(agent.email, `Your GLRA agenda — ${todayKey}`,
+                getEmailHeader() + `
+                <h2 style="color:#0a1628;">Good morning, ${esc(agent.name || 'Agent')}!</h2>
+                <p style="font-size:15px;color:#333">Here's what's on your plate today:</p>
+                ${followups.length ? listBlock(`Follow-ups (${followups.length})`, followups.map(f => `${f.lead.name}${f.overdue ? ' (overdue)' : ''}`)) : ''}
+                ${birthdays.length ? listBlock('Client birthdays', birthdays.map(b => b.name)) : ''}
+                ${anniversaries.length ? listBlock('Closing anniversaries', anniversaries.map(a => a.name)) : ''}
+                ${events.length ? listBlock('Scheduled', events.map(ev => `${ev.title}${ev.time ? ` · ${ev.time}` : ''}`)) : ''}
+                ${openToday.length ? listBlock(`Daily actions (${openToday.length} of ${actions.daily.total} to do)`, openToday.map(a => a.text)) : ''}
+                ${CTA}` + getEmailFooter()
+              ).catch(err => console.error('agenda email failed:', err.message));
+            }
+            profile.lastDigestKey = todayKey;
           }
-          profile.lastDigestKey = todayKey;
+
+          // ── EVENING: what is still unfinished ──
+          if (eveningDue) {
+            const due = nudgeScope(now);
+            const scope = [
+              { type: 'daily', label: 'Daily actions', due: due.daily },
+              { type: 'weekly', label: 'Weekly actions', due: due.weekly },
+              { type: 'monthly', label: 'Monthly actions', due: due.monthly }
+            ];
+            const blocks = [];
+            for (const s of scope) {
+              if (!s.due) continue;
+              const st = actions[s.type];
+              if (!st.total || !st.pending.length) continue;
+              await notify(`ev${s.type[0]}:${todayKey}`, 'action',
+                `${st.pending.length} of ${st.total} ${s.label.toLowerCase()} still unfinished`);
+              blocks.push(listBlock(`${s.label} — ${st.pending.length} of ${st.total} left`, st.pending.map(a => a.text)));
+            }
+            if (blocks.length && agent.email && prefs.actionNudge !== false) {
+              sendEmail(agent.email, `Still open today — ${todayKey}`,
+                getEmailHeader() + `
+                <h2 style="color:#0a1628;">Before you close the day, ${esc(agent.name || 'Agent')}</h2>
+                <p style="font-size:15px;color:#333">These are still unticked. Even one or two tonight keeps your numbers honest.</p>
+                ${blocks.join('')}
+                ${CTA}
+                <p style="font-size:12px;color:#888;margin-top:18px">You can switch this reminder off under Settings in your workspace.</p>`
+                + getEmailFooter()
+              ).catch(err => console.error('nudge email failed:', err.message));
+            }
+            profile.lastNudgeKey = todayKey;
+          }
+
           await profile.save();
         } catch (e) { console.error(`agent tick failed for ${agent.email}:`, e.message); }
       }
@@ -781,5 +1096,8 @@ module.exports = {
   registerAgentRoutes, startAgentTick, ACTION_DEFS,
   // Exported so the math and date logic can be verified without booting the
   // server (see the workbook: GPS!C15..C30 are the reference values).
-  _test: { computeGPS, weekKeyOf, dayKeyOf, monthKeyOf, nextOccurrence, icsEscape, icsUtcStamp }
+  _test: {
+    computeGPS, weekKeyOf, dayKeyOf, monthKeyOf, nextOccurrence, icsEscape, icsUtcStamp,
+    effectiveActionDefs, effectiveActionIds, splitActions, nudgeScope
+  }
 };

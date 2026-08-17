@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Private workspace for GLRA Realty agents: goals, daily actions, lead journal, pipeline, and calendar.">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" id="themeColor" content="#f4f2ee">
 <link rel="icon" type="image/png" href="/img/favicon.ico.png">
 <link rel="apple-touch-icon" href="/img/hero-logo.png">
 <title>Agent Workspace | GLRA Realty</title>
@@ -14,432 +14,618 @@
   Self-contained on purpose (own styles + script, no styles.css / brutalist-
   theme.css) so global label/checkbox rules can't distort it and it can be
   reasoned about in one file, like admin.html.
-  Tabs: GPS · Actions · Report · Leads · Pipeline · Calendar
-  Server side: server/agents.js. Agents only. Staff use admin.html.
+  Tabs: GPS / Actions / Report / Leads / Pipeline / Calendar
+  Server side: server/agents.js. Agent and admin accounts only.
+
+  THEME: light by default with a dark toggle, remembered per device. Every
+  colour is a token defined twice (:root = light, [data-theme="dark"]). Never
+  hard-code a colour in a rule; add a token instead, or dark mode breaks.
 =========================================================================== -->
+<script>
+  /* Theme is applied before the first paint so there is no white flash on a
+     dark-mode device, and the browser chrome matches from the start. */
+  (function () {
+    var t = 'light';
+    try { if (localStorage.getItem('glraAgentTheme') === 'dark') t = 'dark'; } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    document.addEventListener('DOMContentLoaded', function () {
+      var m = document.getElementById('themeColor');
+      if (m) m.setAttribute('content', t === 'dark' ? '#0a0a0b' : '#f4f2ee');
+    });
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  /* ══ TOKENS ══════════════════════════════════════════════
-     One theme, locked: dark graphite with a single champagne-gold
-     accent. Gold is inherited from the admin portal so the workspace
-     reads as the same brand, not a second one. Grays are all cool-
-     tinted (one family). No pure #000 or #fff anywhere.
-     Radius rule, applied everywhere: containers 16, inner cores 12,
-     controls 10, interactive pills fully round.                    */
+  /* ══ TOKENS ═══════════════════════════════════════════════════
+     Two modes, one system. Warm paper and near-black ink in light,
+     cool graphite in dark, with a single gold accent carried across
+     both so the workspace always reads as GLRA.
+     Contrast: --gray and --faint are set where they are because the
+     small mono labels on this page are 9-10px and get no large-text
+     exemption. Every text token clears WCAG AA 4.5:1 on the surface
+     it actually sits on. Do not darken them in light mode or lighten
+     the surfaces underneath them.
+     Radius: cards 14, controls 10, pills fully round.               */
   :root{
-    --bg:#0b0d12;          /* page */
-    --shell:#10131a;       /* outer bezel of a card */
-    --core:#151922;        /* inner core of a card */
-    --raised:#1c212b;      /* inputs, wells */
-    --line:rgba(255,255,255,.07);
-    --line-2:rgba(255,255,255,.13);
-    --gold:#cbb079;
-    --gold-hi:#e6d3a3;
-    --gold-wash:rgba(203,176,121,.12);
-    /* Three text levels, each measured against the surface it actually
-       sits on so every one clears WCAG AA 4.5:1. The tertiary level is
-       used for 9-10px mono labels, which get no large-text exemption,
-       so it cannot go darker than this. */
-    --ink:#eef1f6;         /* primary   ~15.5:1 */
-    --gray:#aab2be;        /* secondary  ~8.0:1 */
-    --faint:#868fa0;       /* tertiary   ~5.0:1 */
-    --ok:#8aa87d;
-    --bad:#c9706a;
-    --r-card:16px; --r-core:12px; --r-ctl:10px;
+    --bg:#f4f2ee;            /* page: warm paper, never stark white */
+    --surface:#ffffff;       /* cards, sidebar, bars */
+    --surface-2:#faf9f6;     /* card headers, wells */
+    --raised:#f1eee7;        /* inputs */
+    --line:#e6e2d9;
+    --line-2:#d5cfc2;
+    --ink:#191c21;           /* 17.1:1 on white */
+    --gray:#565d67;          /*  6.6:1 on white */
+    --faint:#666d76;         /*  5.2:1 on white, 4.7:1 on --bg */
+    --accent:#7d5f1c;        /* gold as TEXT: 6.0:1 on white */
+    --accent-fill:#b38f39;   /* gold as a FILL: bars, buttons, dots */
+    --accent-soft:rgba(179,143,57,.13);
+    --accent-line:rgba(179,143,57,.45);
+    --btn-fg:#191c21;        /* ink on a gold button: 5.6:1 */
+    --ok:#2c6b4a;  --ok-soft:rgba(44,107,74,.12);
+    --bad:#a1332b; --bad-soft:rgba(161,51,43,.10);
+    --shadow-1:0 1px 2px rgba(24,28,34,.05), 0 1px 3px rgba(24,28,34,.04);
+    --shadow-2:0 2px 4px rgba(24,28,34,.05), 0 14px 30px rgba(24,28,34,.07);
+    --shadow-3:0 26px 60px rgba(24,28,34,.18);
     --ease:cubic-bezier(.32,.72,0,1);
-    --shadow:0 18px 44px rgba(4,6,10,.55);
   }
+  /* Neutral black, not blue-black: the greys here are deliberately free of
+     hue so the only colour on a dark screen is the gold and the two semantic
+     states. An earlier pass tinted these toward blue and read cold. */
+  [data-theme="dark"]{
+    --bg:#0a0a0b;
+    --surface:#151516;
+    --surface-2:#1c1c1e;
+    --raised:#232325;
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(255,255,255,.15);
+    --ink:#f2f2f3;           /* 16.5:1 on --surface */
+    --gray:#adadb0;          /*  8.2:1 */
+    --faint:#8c8c90;         /*  5.5:1 */
+    --accent:#dcc48c;        /* 10.9:1 */
+    --accent-fill:#cbb079;
+    --accent-soft:rgba(203,176,121,.14);
+    --accent-line:rgba(203,176,121,.42);
+    --btn-fg:#131313;        /* 8.8:1 on the gold button */
+    --ok:#8fb489;  --ok-soft:rgba(143,180,137,.14);
+    --bad:#dd8e86; --bad-soft:rgba(221,142,134,.13);
+    --shadow-1:0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 2px 6px rgba(0,0,0,.42), 0 16px 34px rgba(0,0,0,.4);
+    --shadow-3:0 28px 64px rgba(0,0,0,.62);
+  }
+
   *{ margin:0; padding:0; box-sizing:border-box; }
-  html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+  html{ -webkit-text-size-adjust:100%; }
   body{
-    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
     background:var(--bg); color:var(--ink); min-height:100vh;
     font-size:15px; line-height:1.6; letter-spacing:-.005em;
     -webkit-font-smoothing:antialiased;
+    /* Deliberately NOT transitioned. A property whose value comes from a
+       var() can freeze at its old computed colour when only the variable
+       changes, which left the page painting light-mode ink on dark-mode
+       cards. Flipping theme should be instant anyway. */
   }
-  /* Ambient depth so the dark isn't a flat slab. Fixed, so it never
-     repaints while scrolling. */
-  body::before{
-    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:
-      radial-gradient(1100px 600px at 12% -8%, rgba(203,176,121,.055), transparent 60%),
-      radial-gradient(900px 500px at 108% 4%, rgba(120,140,180,.05), transparent 62%);
+  /* Held for one frame while the theme flips, so no element is mid-transition
+     when its tokens change. Without this, anything with a background or colour
+     transition (buttons, inputs, nav items) keeps the old theme's colour. */
+  html.theming *,html.theming *::before,html.theming *::after{
+    transition:none !important;
   }
-  /* Film grain: breaks the digital flatness. Fixed + pointer-events
-     none, never attached to a scrolling container. */
-  body::after{
-    content:''; position:fixed; inset:0; z-index:60; pointer-events:none; opacity:.038;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  #authView,#appView{ position:relative; z-index:1; }
-  ::selection{ background:var(--gold); color:#14171d; }
+  ::selection{ background:var(--accent-fill); color:var(--btn-fg); }
+  svg{ display:block; }
   .mono{ font-family:'JetBrains Mono',monospace; }
-  /* Numbers are data here: tabular so columns align, never proportional. */
-  .num,table.tgt td,.stepper .q,.score .v,.cnt{ font-variant-numeric:tabular-nums; }
+  /* Numbers are data here: tabular so columns line up, never proportional. */
+  .num,table.tgt td,.stepper .q,.score .v,.cnt,.pill{ font-variant-numeric:tabular-nums; }
   button{ font-family:inherit; cursor:pointer; color:inherit; }
-  a{ color:var(--gold); }
-  :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; border-radius:4px; }
+  a{ color:var(--accent); }
+  :focus-visible{ outline:2px solid var(--accent-fill); outline-offset:2px; border-radius:6px; }
 
+  h1,h2,h3{ letter-spacing:-.022em; line-height:1.22; font-weight:700; }
+
+  /* ══ FORM CONTROLS ══ */
   input,select,textarea{
-    font-family:'JetBrains Mono',monospace; font-size:14.5px;
+    font-family:inherit; font-size:14.5px;
     border:1px solid var(--line-2); background:var(--raised);
-    padding:12px 13px; width:100%; border-radius:var(--r-ctl); color:var(--ink);
-    transition:border-color .25s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease);
+    padding:11px 13px; width:100%; border-radius:10px; color:var(--ink);
+    transition:border-color .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
   }
   input::placeholder,textarea::placeholder{ color:var(--faint); }
-  input:hover,select:hover,textarea:hover{ border-color:rgba(255,255,255,.2); }
+  input:hover,select:hover,textarea:hover{ border-color:var(--faint); }
   input:focus,select:focus,textarea:focus{
-    outline:none; border-color:var(--gold);
-    box-shadow:0 0 0 3px var(--gold-wash);
-    background:#20262f;
+    outline:none; border-color:var(--accent-fill);
+    box-shadow:0 0 0 3px var(--accent-soft); background:var(--surface);
   }
-  select{ appearance:none; background-image:linear-gradient(45deg,transparent 50%,var(--gray) 50%),linear-gradient(135deg,var(--gray) 50%,transparent 50%); background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px; }
+  input.money,input.qty{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
+  select{
+    appearance:none; cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--gray) 50%),linear-gradient(135deg,var(--gray) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;
+    background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px;
+  }
   label{
-    display:block; font-family:'JetBrains Mono',monospace; font-size:10px;
-    letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0 0 7px;
+    display:block; font-family:'JetBrains Mono',monospace; font-size:9.5px;
+    letter-spacing:.15em; text-transform:uppercase; color:var(--faint); margin:0 0 7px;
   }
-  .field{ margin-bottom:16px; }
+  .field{ margin-bottom:15px; }
+  /* Peso sign lives inside the box, so the number stays the number. */
+  .pfx{ position:relative; }
+  .pfx span{
+    position:absolute; left:13px; top:50%; transform:translateY(-50%);
+    font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--faint); pointer-events:none;
+  }
+  .pfx input{ padding-left:31px; }
 
-  /* ══ BUTTONS ══ pill geometry, physical press, gold as the only accent */
+  /* ══ BUTTONS ══ */
   .btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:9px;
-    background:var(--gold); color:#14171d; border:1px solid var(--gold);
-    padding:13px 26px; border-radius:999px;
-    font-weight:700; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 8px 20px rgba(203,176,121,.14);
-    transition:transform .35s var(--ease), background .35s var(--ease), box-shadow .35s var(--ease), color .35s var(--ease);
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--accent-fill); color:var(--btn-fg); border:1px solid transparent;
+    padding:11px 20px; border-radius:10px; min-height:42px;
+    font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+    box-shadow:var(--shadow-1); text-decoration:none;
+    transition:transform .2s var(--ease), filter .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
   }
-  .btn:hover{ background:var(--gold-hi); border-color:var(--gold-hi); transform:translateY(-1px); box-shadow:inset 0 1px 0 rgba(255,255,255,.34), 0 12px 26px rgba(203,176,121,.22); }
-  .btn:active{ transform:scale(.98) translateY(0); }
-  .btn.alt{ background:transparent; color:var(--ink); border-color:var(--line-2); box-shadow:none; }
-  .btn.alt:hover{ background:rgba(255,255,255,.05); border-color:var(--gold); color:var(--gold-hi); transform:translateY(-1px); box-shadow:none; }
-  .btn.sm{ padding:9px 17px; font-size:11px; }
+  .btn:hover{ filter:brightness(1.07); transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0) scale(.99); }
+  .btn.alt{ background:var(--surface); color:var(--ink); border-color:var(--line-2); box-shadow:none; }
+  .btn.alt:hover{ filter:none; border-color:var(--accent-fill); color:var(--accent); }
+  .btn.ghost{ background:transparent; border-color:transparent; color:var(--gray); box-shadow:none; }
+  .btn.ghost:hover{ filter:none; background:var(--raised); color:var(--ink); }
+  .btn.danger{ background:transparent; border-color:var(--bad); color:var(--bad); box-shadow:none; }
+  .btn.danger:hover{ filter:none; background:var(--bad-soft); }
+  .btn.sm{ padding:8px 14px; font-size:10.5px; min-height:36px; }
+  .btn svg{ width:15px; height:15px; }
   .btn:disabled{ opacity:.45; pointer-events:none; }
+  /* Round icon-only control, sized for a thumb. */
+  .iconbtn{
+    display:inline-flex; align-items:center; justify-content:center; position:relative;
+    width:38px; height:38px; flex-shrink:0;
+    background:none; border:1px solid transparent; border-radius:10px; color:var(--gray);
+    transition:color .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+  }
+  .iconbtn svg{ width:19px; height:19px; }
+  .iconbtn:hover{ color:var(--accent); background:var(--raised); border-color:var(--line); }
+  .badge{
+    position:absolute; top:1px; right:1px;
+    background:var(--bad); color:#fff;
+    font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700;
+    min-width:16px; height:16px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center; padding:0 4px;
+  }
+  [data-theme="dark"] .badge{ color:#1a1015; }
 
   /* ══ SIGN IN ══ */
-  #authView{ min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 18px; }
-  .masthead{ text-align:center; margin-bottom:34px; }
-  .masthead img{ width:78px; height:78px; object-fit:contain; margin:0 auto 18px; display:block; filter:drop-shadow(0 10px 26px rgba(0,0,0,.5)); }
-  .masthead .mk{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.32em; text-transform:uppercase; color:var(--faint); }
-  /* Cormorant Garamond is the brokerage's existing display serif (it
-     already sets the admin portal's tone), so the workspace inherits
-     the brand voice rather than inventing one. */
-  /* line-height 1.15 plus the padding reserve: the italic word is
-     "Workspace", whose p descends, and a tighter leading clips it. */
-  .masthead h1{
-    font-family:'Cormorant Garamond',Georgia,serif; font-weight:600;
-    font-size:clamp(38px,9vw,58px); line-height:1.15; letter-spacing:-.015em;
-    margin-top:12px; padding-bottom:.1em;
-  }
-  .masthead h1 em{ font-style:italic; color:var(--gold); }
-  .masthead .rule{ width:54px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:20px auto 0; }
-
-  /* Double bezel: outer shell holds a hairline and padding, the inner
-     core carries its own surface and an inset highlight, so the card
-     reads as machined hardware rather than a flat rectangle. */
+  #authView{ min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:36px 18px; }
+  .authtop{ position:fixed; top:14px; right:14px; }
+  .masthead{ text-align:center; margin-bottom:28px; }
+  .masthead img{ width:82px; height:82px; object-fit:contain; margin:0 auto 14px; display:block; }
+  .masthead .mk{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.3em; text-transform:uppercase; color:var(--faint); }
+  .masthead h1{ font-size:clamp(30px,7.5vw,42px); font-weight:800; margin-top:10px; }
+  .masthead h1 span{ color:var(--accent); }
+  .masthead .rule{ width:46px; height:2px; border-radius:2px; background:var(--accent-fill); margin:16px auto 0; }
   .authcard{
-    width:100%; max-width:430px; background:var(--shell);
-    border:1px solid var(--line-2); border-radius:var(--r-card);
-    padding:7px; box-shadow:var(--shadow);
+    width:100%; max-width:420px; background:var(--surface);
+    border:1px solid var(--line); border-radius:14px;
+    padding:26px 24px; box-shadow:var(--shadow-2);
   }
-  .authcard > .inner{
-    background:var(--core); border-radius:var(--r-core); padding:26px 24px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
-  }
-  .authcard h2{
-    font-family:'Cormorant Garamond',Georgia,serif; font-size:26px; font-weight:600;
-    letter-spacing:-.01em; text-transform:none; margin-bottom:20px;
-    padding-bottom:14px; border-bottom:1px solid var(--line);
-  }
-  .authmsg{ font-size:13.5px; line-height:1.6; padding:13px 15px; margin-bottom:16px; border-radius:var(--r-ctl); border:1px solid var(--line-2); background:var(--raised); display:none; }
-  .authmsg.bad{ border-color:rgba(201,112,106,.45); color:#e8a19c; background:rgba(201,112,106,.09); }
-  .authmsg.ok{ border-color:rgba(138,168,125,.45); color:#b3cba7; background:rgba(138,168,125,.09); }
-  .authswap{ text-align:center; font-size:13px; margin-top:20px; color:var(--gray); }
-  .authswap a{ color:var(--gold); font-weight:600; cursor:pointer; text-decoration:none; border-bottom:1px solid rgba(203,176,121,.4); transition:color .3s var(--ease),border-color .3s var(--ease); }
-  .authswap a:hover{ color:var(--gold-hi); border-color:var(--gold-hi); }
+  .authcard h2{ font-size:20px; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .authmsg{ font-size:13.5px; line-height:1.6; padding:12px 14px; margin-bottom:16px; border-radius:10px; border:1px solid var(--line-2); background:var(--raised); display:none; }
+  .authmsg.bad{ border-color:var(--bad); color:var(--bad); background:var(--bad-soft); }
+  .authmsg.ok{ border-color:var(--ok); color:var(--ok); background:var(--ok-soft); }
+  .authswap{ text-align:center; font-size:13px; margin-top:18px; color:var(--gray); }
+  .authswap a{ color:var(--accent); font-weight:700; cursor:pointer; text-decoration:none; border-bottom:1px solid var(--accent-line); }
 
-  /* ══ APP SHELL ══ */
+  /* ══ APP SHELL ══
+     Desktop gets a real sidebar; phones get a top bar plus a bottom nav
+     that sits under the thumb. Both navs are built from one NAV list in
+     the script, so a label can never drift between them. */
   #appView{ display:none; }
-  /* Blur only ever sits on fixed/sticky chrome, never on scrolling content. */
+  #appView.on{ display:block; }
+
+  .side{ display:none; }
+  /* The logo carries the brand, so there is no wordmark next to it; the title
+     of the app goes there instead. Sized to match the logo on the rest of the
+     site rather than shrunk to an icon. */
+  .sidehead{ display:flex; align-items:center; gap:11px; padding:18px 16px 14px; }
+  .sidehead img{ width:52px; height:52px; object-fit:contain; flex-shrink:0; }
+  .wm{ font-size:15px; font-weight:800; letter-spacing:-.025em; line-height:1.2; }
+  .wm span{ display:block; font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:400; letter-spacing:.19em; text-transform:uppercase; color:var(--faint); margin-top:3px; }
+  .sidenav{ padding:6px 12px; display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto; }
+  .navitem{
+    display:flex; align-items:center; gap:11px; padding:10px 13px; border-radius:10px;
+    color:var(--gray); font-size:13.5px; font-weight:600; text-align:left;
+    background:none; border:1px solid transparent; width:100%;
+    transition:background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .navitem svg{ width:18px; height:18px; flex-shrink:0; }
+  .navitem:hover{ background:var(--raised); color:var(--ink); }
+  .navitem.on{ background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); font-weight:700; }
+  .sidefoot{ border-top:1px solid var(--line); padding:12px; }
+  .sidefoot .who{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    padding:7px 6px; margin-bottom:4px; background:none; border:1px solid transparent; border-radius:10px;
+    transition:background .2s var(--ease), border-color .2s var(--ease);
+  }
+  .sidefoot .who:hover{ background:var(--raised); border-color:var(--line); }
+  .sidefoot .who .av{
+    width:32px; height:32px; border-radius:999px; flex-shrink:0;
+    background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:700;
+  }
+  .sidefoot .who .nm{ min-width:0; }
+  .sidefoot .who .nm b{ display:block; font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sidefoot .who .nm i{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.13em; color:var(--faint); text-transform:uppercase; }
+  .sidefoot .row{ display:flex; gap:4px; }
+
   .topbar{
-    position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:11px;
-    padding:0 16px; height:60px;
-    background:rgba(11,13,18,.82); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%);
-    border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:44; display:flex; align-items:center; gap:9px;
+    padding:0 11px; height:62px; background:var(--surface); border-bottom:1px solid var(--line);
   }
-  .topbar img.brand{ width:30px; height:30px; object-fit:contain; flex-shrink:0; }
-  .topbar .mk{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:11.5px; letter-spacing:.18em; color:var(--ink); }
-  .topbar .mk span{ color:var(--gold); }
-  .topbar .who{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; color:var(--faint); max-width:30vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  /* min-height keeps these comfortable to hit with a thumb; agents use
-     this on a phone all day. */
-  .iconbtn{ position:relative; display:inline-flex; align-items:center; justify-content:center; min-height:38px; background:none; border:1px solid transparent; border-radius:999px; color:var(--gray); padding:0 12px; line-height:1; transition:color .3s var(--ease), background .3s var(--ease), border-color .3s var(--ease); }
-  .iconbtn:hover{ color:var(--gold-hi); background:rgba(255,255,255,.05); border-color:var(--line-2); }
-  .badge{ position:absolute; top:-1px; right:1px; background:var(--gold); color:#14171d; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; min-width:16px; height:16px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .topbar img.brand{ width:46px; height:46px; object-fit:contain; flex-shrink:0; }
+  .topbar .wm{ font-size:14px; min-width:0; overflow:hidden; }
+  .topbar .sp{ margin-left:auto; }
+  /* On the narrowest phones the controls win; the strap line drops first. */
+  @media(max-width:359px){ .topbar .wm span{ display:none; } }
 
-  .tabs{
-    position:sticky; top:60px; z-index:49; display:flex; overflow-x:auto;
-    background:rgba(11,13,18,.9); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
-    border-bottom:1px solid var(--line); scrollbar-width:none;
+  .botnav{
+    position:fixed; left:0; right:0; bottom:0; z-index:45; display:flex;
+    background:var(--surface); border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
   }
-  .tabs::-webkit-scrollbar{ display:none; }
-  .tabs button{
-    flex:1; min-width:78px; background:none; border:none; padding:15px 8px 13px;
-    font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.16em;
-    color:var(--faint); white-space:nowrap; position:relative;
-    transition:color .3s var(--ease);
+  /* Seven items across a 375px phone: the label sets the floor, so it is kept
+     tiny and the tracking dropped to zero so nothing truncates. */
+  .botnav button{
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:9px 1px; border:none; background:none; color:var(--faint);
+    font-family:'JetBrains Mono',monospace; font-size:7.5px; letter-spacing:0; min-height:57px;
+    transition:color .2s var(--ease);
   }
-  .tabs button::after{
-    content:''; position:absolute; left:14%; right:14%; bottom:0; height:2px;
-    background:var(--gold); border-radius:2px 2px 0 0;
-    transform:scaleX(0); transform-origin:center;
-    transition:transform .4s var(--ease);
-  }
-  .tabs button.on{ color:var(--gold-hi); font-weight:700; }
-  .tabs button.on::after{ transform:scaleX(1); }
-  .tabs button:hover:not(.on){ color:var(--gray); }
+  .botnav button svg{ width:19px; height:19px; }
+  .botnav button span{ max-width:100%; overflow:hidden; text-overflow:clip; white-space:nowrap; }
+  .botnav button.on{ color:var(--accent); font-weight:700; }
+  .botnav button.on svg{ stroke-width:2; }
 
-  main{ max-width:1000px; margin:0 auto; padding:26px 16px 120px; }
-  @media(min-width:760px){ main{ padding:40px 26px 80px; } }
+  .content main{ max-width:1040px; margin:0 auto; padding:20px 14px 104px; }
+  @media(min-width:1000px){
+    .side{
+      display:flex; flex-direction:column; position:fixed; inset:0 auto 0 0; width:250px;
+      background:var(--surface); border-right:1px solid var(--line); z-index:40;
+    }
+    .topbar,.botnav{ display:none; }
+    .content{ margin-left:250px; }
+    .content main{ padding:34px 30px 70px; }
+  }
 
-  /* Cards: same double bezel as the auth card, applied without any
-     markup change by treating .chead + .cbody as the inner core. */
+  /* ══ CARDS ══ */
   .card{
-    background:var(--shell); border:1px solid var(--line-2); border-radius:var(--r-card);
-    padding:7px; margin-bottom:22px; box-shadow:var(--shadow);
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    margin-bottom:16px; box-shadow:var(--shadow-1); overflow:hidden;
   }
   .card > .chead{
-    display:flex; align-items:center; gap:12px; justify-content:space-between;
-    padding:15px 18px; background:var(--core);
-    border-radius:var(--r-core) var(--r-core) 0 0;
-    border-bottom:1px solid var(--line);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+    display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;
+    padding:14px 17px; background:var(--surface-2); border-bottom:1px solid var(--line);
   }
-  .card > .chead h3{
-    font-family:'Cormorant Garamond',Georgia,serif; font-size:21px; font-weight:600;
-    letter-spacing:-.01em; text-transform:none; line-height:1.25;
+  .card > .chead h3{ font-size:16.5px; }
+  .card > .chead .csub,.csub{
+    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.13em;
+    color:var(--faint); text-transform:uppercase; margin-top:3px;
   }
-  .card > .chead .sub{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.14em; color:var(--faint); text-transform:uppercase; flex-shrink:0; }
-  .card > .cbody{ padding:20px 18px; background:var(--core); border-radius:0 0 var(--r-core) var(--r-core); }
-  .card > .cbody:first-child{ border-radius:var(--r-core); box-shadow:inset 0 1px 0 rgba(255,255,255,.07); }
-  .note{ font-size:13px; line-height:1.65; color:var(--gray); max-width:65ch; }
-  .note b{ color:var(--ink); font-weight:600; }
-  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+  .chead-r{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .card > .cbody{ padding:17px; }
+  .note{ font-size:13.5px; line-height:1.65; color:var(--gray); max-width:68ch; }
+  .note b{ color:var(--ink); font-weight:700; }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:9px; }
+  .metaline{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; color:var(--faint); text-transform:uppercase; margin-top:10px; }
+  .sechead{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); margin:20px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--line); }
+  .sechead:first-child{ margin-top:0; }
 
-  /* ══ TABLES ══ sparse hairlines, mono tabular figures, gold on the row that matters */
+  /* ══ PILLS + CHIPS ══ */
+  .pill{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.05em;
+    padding:5px 10px; border-radius:999px; background:var(--raised);
+    border:1px solid var(--line-2); color:var(--gray); white-space:nowrap;
+  }
+  .pill.ok{ background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
+  .pill.gold{ background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); }
+  .chip{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em;
+    padding:4px 9px; border-radius:999px; border:1px solid var(--line-2);
+    text-transform:uppercase; background:var(--raised); color:var(--gray); white-space:nowrap;
+  }
+  .chip.stage{ background:var(--surface-2); color:var(--ink); }
+  .chip.stage.closing{ background:var(--ok-soft); color:var(--ok); border-color:var(--ok); }
+  .chip.stage.lost{ background:transparent; color:var(--faint); border-color:var(--line); }
+  .chip.gold{ background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); }
+  .chip.warn{ background:var(--bad-soft); border-color:var(--bad); color:var(--bad); }
+  .chip.plain{ border-color:var(--line); color:var(--faint); text-transform:none; letter-spacing:0; background:transparent; }
+  .tag{ font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.12em; color:var(--accent); border:1px solid var(--accent-line); border-radius:4px; padding:1px 4px; vertical-align:1px; }
+
+  /* ══ TABLES ══ */
   table.tgt{ width:100%; border-collapse:collapse; font-size:13px; }
   table.tgt th{
-    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.16em;
+    font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.14em;
     text-transform:uppercase; color:var(--faint); text-align:right;
-    padding:0 10px 11px; border-bottom:1px solid var(--line-2); font-weight:400;
+    padding:0 9px 10px; border-bottom:1px solid var(--line-2); font-weight:400; white-space:nowrap;
   }
   table.tgt th:first-child{ text-align:left; }
-  table.tgt td{ padding:11px 10px; border-bottom:1px solid var(--line); text-align:right; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--gray); }
+  table.tgt td{ padding:10px 9px; border-bottom:1px solid var(--line); text-align:right; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gray); white-space:nowrap; }
   table.tgt tr:last-child td{ border-bottom:none; }
-  table.tgt td:first-child{ text-align:left; font-family:'Plus Jakarta Sans',sans-serif; font-weight:500; font-size:13px; color:var(--ink); }
-  table.tgt td b{ color:var(--gold-hi); font-weight:700; }
-  table.tgt tr.hl td{ background:rgba(203,176,121,.055); color:var(--ink); }
-  table.tgt tr.hl td:first-child{ box-shadow:inset 2px 0 0 var(--gold); }
+  table.tgt td:first-child{ text-align:left; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:600; color:var(--ink); white-space:normal; }
+  table.tgt td b{ color:var(--accent); font-weight:700; }
+  table.tgt tr.hl td{ background:var(--accent-soft); color:var(--ink); }
   .tablewrap{ overflow-x:auto; margin:0 -4px; padding:0 4px; }
 
   /* ══ ACTIONS ══ */
   .arow{
-    display:flex; align-items:center; gap:14px; padding:13px 12px; border-radius:var(--r-ctl);
-    border-bottom:1px solid var(--line);
-    transition:background .3s var(--ease), box-shadow .3s var(--ease);
+    display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px 14px;
+    padding:11px 11px; margin:0 -11px; border-radius:10px; border-bottom:1px solid var(--line);
+    transition:background .2s var(--ease);
   }
   .arow:last-of-type{ border-bottom:none; }
-  .arow:hover{ background:rgba(255,255,255,.028); }
-  .arow .txt{ flex:1; font-size:13.5px; line-height:1.5; color:var(--gray); transition:color .3s var(--ease); }
-  .arow.done{ background:rgba(203,176,121,.05); box-shadow:inset 2px 0 0 var(--gold); border-bottom-color:transparent; }
-  .arow.done .txt{ color:var(--ink); }
-  .arow .tick{ color:var(--gold); font-weight:700; margin-right:2px; }
-  .stepper{ display:flex; align-items:center; border:1px solid var(--line-2); background:var(--raised); border-radius:999px; overflow:hidden; flex-shrink:0; }
-  .stepper button{ width:36px; height:34px; background:none; border:none; font-size:16px; font-weight:600; color:var(--gray); transition:background .25s var(--ease), color .25s var(--ease); }
-  .stepper button:hover{ background:var(--gold); color:#14171d; }
-  .stepper button:active{ transform:scale(.94); }
-  .stepper .q{ width:32px; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13.5px; color:var(--ink); }
-  .prog{ height:5px; background:var(--raised); border-radius:999px; margin-top:16px; overflow:hidden; }
-  .prog i{ display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); border-radius:999px; transition:transform .6s var(--ease); transform-origin:left; }
+  .arow:hover{ background:var(--surface-2); }
+  .arow.on{ background:var(--accent-soft); box-shadow:inset 2px 0 0 var(--accent-fill); border-bottom-color:transparent; }
+  .arow .txt{ font-size:13.5px; line-height:1.5; color:var(--gray); }
+  .arow.on .txt{ color:var(--ink); font-weight:600; }
+  .arow .ctl{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+  .arow input.editline{ font-size:13.5px; }
+  @media(max-width:560px){
+    .arow{ grid-template-columns:1fr; }
+    .arow .ctl{ grid-column:1; }
+  }
+  /* The one-tap path: most actions are done once, so DONE comes first and
+     the counter is there for the ones you repeat. */
+  .tickbtn{
+    display:inline-flex; align-items:center; gap:6px; flex-shrink:0;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:999px;
+    padding:0 14px; height:38px; color:var(--gray);
+    font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em;
+    transition:background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .tickbtn svg{ width:13px; height:13px; }
+  .tickbtn:hover{ border-color:var(--accent-fill); color:var(--accent); }
+  .tickbtn.on{ background:var(--accent-fill); border-color:var(--accent-fill); color:var(--btn-fg); }
+  /* 38px so the plus, minus and the number are each a comfortable thumb
+     target; agents log these on a phone all day. */
+  .stepper{ display:flex; align-items:center; border:1px solid var(--line-2); background:var(--surface); border-radius:999px; overflow:hidden; flex-shrink:0; height:38px; }
+  .stepper button{ width:34px; height:100%; background:none; border:none; color:var(--gray); display:flex; align-items:center; justify-content:center; transition:background .2s var(--ease), color .2s var(--ease); }
+  .stepper button svg{ width:13px; height:13px; }
+  .stepper button:hover{ background:var(--accent-fill); color:var(--btn-fg); }
+  .stepper input.q{
+    width:38px; height:100%; text-align:center; border:none; background:none; padding:0;
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--ink);
+    border-left:1px solid var(--line); border-right:1px solid var(--line); border-radius:0;
+  }
+  .stepper input.q:focus{ box-shadow:none; background:var(--accent-soft); }
+  .prog{ height:6px; background:var(--raised); border-radius:999px; margin-top:16px; overflow:hidden; }
+  .prog i{ display:block; height:100%; background:var(--accent-fill); border-radius:999px; transition:transform .5s var(--ease); transform-origin:left; }
+  .prog.ok i{ background:var(--ok); }
+  .addbox{ display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px dashed var(--line-2); }
+  .addbox input{ flex:1; }
+  .hiddenlist{ margin-top:14px; }
+  .hrow{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; color:var(--faint); }
+  .hrow:last-child{ border-bottom:none; }
+  .hrow span{ flex:1; }
+  .iconsm{ width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:9px; border:1px solid var(--line-2); background:var(--surface); color:var(--gray); flex-shrink:0; }
+  .iconsm svg{ width:15px; height:15px; }
+  .iconsm.danger:hover{ border-color:var(--bad); color:var(--bad); background:var(--bad-soft); }
 
   /* ══ SCORECARDS ══ */
-  .scoregrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:14px; }
-  .score{
-    border:1px solid var(--line); background:var(--raised); border-radius:var(--r-core); padding:17px 16px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-    transition:border-color .35s var(--ease), transform .35s var(--ease);
+  .scoregrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .score{ border:1px solid var(--line); background:var(--surface-2); border-radius:12px; padding:15px 15px; }
+  .score .k{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.15em; color:var(--faint); text-transform:uppercase; }
+  .score .v{ font-size:30px; font-weight:800; line-height:1.1; margin:7px 0 3px; letter-spacing:-.03em; }
+  .score .v small{ font-size:14px; font-weight:600; color:var(--gray); letter-spacing:0; }
+  .score .r{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.12em; font-weight:700; }
+  .score .r.ok{ color:var(--ok); } .score .r.mid{ color:var(--accent); } .score .r.bad{ color:var(--bad); }
+
+  /* ══ THE LEAD'S OWN PIPELINE ══
+     Six segments for Inquiry..Closing; Unsuccessful is a state, not a step. */
+  .track{ display:flex; gap:3px; align-items:center; width:100%; max-width:210px; }
+  .track i{ flex:1; height:5px; border-radius:999px; background:var(--line-2); }
+  .track i.on{ background:var(--accent-fill); }
+  .track.won i.on{ background:var(--ok); }
+  .track.lost i{ background:var(--bad-soft); }
+  .stagepick{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none; }
+  .stagepick::-webkit-scrollbar{ display:none; }
+  .stagepick button{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:6px;
+    padding:0 14px; min-height:38px; border-radius:999px; border:1px solid var(--line-2);
+    background:var(--surface); font-size:11.5px; font-weight:700; color:var(--gray); white-space:nowrap;
+    transition:background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
   }
-  .score:hover{ border-color:var(--line-2); transform:translateY(-2px); }
-  .score .k{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.17em; color:var(--faint); text-transform:uppercase; }
-  .score .v{ font-family:'Cormorant Garamond',Georgia,serif; font-size:38px; font-weight:600; line-height:1.05; margin:8px 0 4px; color:var(--ink); letter-spacing:-.02em; }
-  .score .r{ font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.13em; font-weight:700; }
-  .score .r.ok{ color:var(--ok); } .score .r.mid{ color:var(--gold); } .score .r.bad{ color:var(--bad); }
+  .stagepick button em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--faint); }
+  .stagepick button:hover{ border-color:var(--accent-fill); color:var(--accent); }
+  .stagepick button.on{ background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); }
+  .stagepick button.on em{ color:var(--accent); }
+  .stagepick button.on.won{ background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
+  .stagepick button.on.lost{ background:var(--bad-soft); border-color:var(--bad); color:var(--bad); }
 
   /* ══ LEADS ══ */
   .lrow{
-    padding:15px 14px; margin:0 -14px; border-bottom:1px solid var(--line); cursor:pointer;
-    border-radius:var(--r-ctl);
-    transition:background .3s var(--ease), box-shadow .3s var(--ease);
+    padding:14px 13px; margin:0 -13px; border-bottom:1px solid var(--line);
+    cursor:pointer; border-radius:10px;
+    transition:background .2s var(--ease), box-shadow .2s var(--ease);
   }
   .lrow:last-of-type{ border-bottom:none; }
-  .lrow:hover{ background:rgba(255,255,255,.035); box-shadow:inset 2px 0 0 var(--gold); }
-  .lrow .nm{ font-weight:600; font-size:15px; color:var(--ink); display:flex; align-items:center; gap:9px; flex-wrap:wrap; letter-spacing:-.01em; }
-  .lrow .meta{ display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
-  .chip{
-    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.12em;
-    padding:4px 9px; border-radius:999px; border:1px solid var(--line-2);
-    text-transform:uppercase; background:rgba(255,255,255,.04); color:var(--gray);
-  }
-  .chip.stage{ background:rgba(255,255,255,.07); color:var(--ink); border-color:var(--line-2); }
-  .chip.stage.closing{ background:rgba(138,168,125,.16); color:#bcd2b0; border-color:rgba(138,168,125,.4); }
-  .chip.stage.lost{ background:transparent; color:var(--faint); border-color:var(--line); }
-  .chip.orange{ background:var(--gold-wash); border-color:rgba(203,176,121,.45); color:var(--gold-hi); }
-  .chip.warn{ background:rgba(201,112,106,.16); border-color:rgba(201,112,106,.45); color:#e8a19c; }
-  .chip.plain{ border-color:var(--line); color:var(--faint); text-transform:none; letter-spacing:0; background:transparent; }
-  .filters{ display:flex; gap:9px; margin-bottom:6px; flex-wrap:wrap; }
-  .filters select,.filters input{ width:auto; flex:1; min-width:118px; padding:10px 12px; font-size:13px; }
+  .lrow:hover{ background:var(--surface-2); box-shadow:inset 2px 0 0 var(--accent-fill); }
+  .lrow .nm{ font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; letter-spacing:-.015em; }
+  .lrow .meta{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  .filters{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+  .filters select,.filters input{ width:auto; flex:1; min-width:120px; padding:9px 12px; font-size:13px; }
+  .plrow{ display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .plrow:last-child{ border-bottom:none; }
+  .plrow .pl-nm{ font-weight:700; font-size:14px; min-width:130px; flex:1; }
+  .plrow .pl-tr{ flex:0 0 210px; }
+  @media(max-width:620px){ .plrow .pl-tr{ flex:1 1 100%; } .track{ max-width:none; } }
 
-  /* ══ PIPELINE ══ */
-  .stagebar{
-    display:flex; align-items:center; gap:13px; padding:12px 12px; margin:0 -12px;
-    border-radius:var(--r-ctl); cursor:pointer;
-    transition:background .3s var(--ease);
-  }
-  .stagebar:hover{ background:rgba(255,255,255,.035); }
-  .stagebar .sn{ width:152px; font-size:13px; font-weight:500; color:var(--ink); flex-shrink:0; }
-  .stagebar .bar{ flex:1; height:6px; background:var(--raised); border-radius:999px; position:relative; overflow:hidden; }
-  .stagebar .bar i{ position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); border-radius:999px; }
-  .stagebar .cnt{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; width:28px; text-align:right; color:var(--gold-hi); }
-  .stagelist{ display:none; padding:2px 0 12px 12px; }
+  /* ══ PIPELINE (by stage) ══ */
+  .stagebar{ display:flex; align-items:center; gap:12px; padding:11px 11px; margin:0 -11px; border-radius:10px; cursor:pointer; transition:background .2s var(--ease); }
+  .stagebar:hover{ background:var(--surface-2); }
+  .stagebar .sn{ width:150px; font-size:13px; font-weight:600; flex-shrink:0; }
+  .stagebar .bar{ flex:1; height:7px; background:var(--raised); border-radius:999px; overflow:hidden; }
+  .stagebar .bar i{ display:block; height:100%; background:var(--accent-fill); border-radius:999px; }
+  .stagebar .cnt{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; width:26px; text-align:right; color:var(--accent); }
+  .stagelist{ display:none; padding:2px 0 12px 11px; }
   .stagelist.open{ display:block; }
-  .slrow{ display:flex; align-items:center; gap:10px; padding:10px 0 10px 14px; border-left:1px solid var(--line-2); margin:2px 0; font-size:13px; flex-wrap:wrap; color:var(--gray); }
-  .slrow b{ margin-right:auto; color:var(--ink); font-weight:500; }
+  .slrow{ display:flex; align-items:center; gap:10px; padding:9px 0 9px 14px; border-left:2px solid var(--line-2); margin:2px 0; font-size:13px; flex-wrap:wrap; color:var(--gray); }
+  .slrow b{ margin-right:auto; color:var(--ink); font-weight:600; }
+  @media(max-width:560px){ .stagebar .sn{ width:110px; font-size:12.5px; } }
 
   /* ══ CALENDAR ══ */
-  .calhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; }
-  .calhead .m{ font-family:'Cormorant Garamond',Georgia,serif; font-weight:600; font-size:25px; letter-spacing:-.01em; text-transform:none; }
+  .calhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px; }
+  .calhead .m{ font-size:16px; font-weight:700; }
   .calgrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .calgrid .dow{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-align:center; padding:0 0 8px; color:var(--faint); }
+  .calgrid .dow{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.12em; text-align:center; padding:0 0 8px; color:var(--faint); }
   .cday{
-    background:var(--raised); min-height:56px; padding:7px 6px; border-radius:9px;
-    border:1px solid transparent;
-    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gray);
-    cursor:pointer; position:relative;
-    transition:background .28s var(--ease), border-color .28s var(--ease), transform .28s var(--ease);
+    background:var(--surface-2); min-height:54px; padding:6px 5px; border-radius:9px;
+    border:1px solid var(--line); font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gray);
+    cursor:pointer; transition:background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
   }
-  .cday:hover{ background:#242a35; border-color:var(--line-2); transform:translateY(-1px); }
+  .cday:hover{ border-color:var(--accent-fill); }
   .cday.out{ background:transparent; border-color:transparent; cursor:default; pointer-events:none; }
-  .cday.today{ border-color:var(--gold); color:var(--gold-hi); font-weight:700; }
-  .cday.sel{ background:var(--gold); color:#14171d; font-weight:700; border-color:var(--gold); }
-  .cday.sel .dot{ box-shadow:0 0 0 1.5px rgba(20,23,29,.35); }
-  .cday .dots{ display:flex; gap:3px; flex-wrap:wrap; margin-top:6px; }
-  /* Dots carry real semantic state (each maps to a source in the legend),
-     not decoration. */
-  .dot{ width:6px; height:6px; border-radius:999px; }
-  .dot.followup{ background:var(--gold); } .dot.birthday{ background:#c98db0; }
-  .dot.anniversary{ background:#a58f6a; } .dot.event,.dot.viewing{ background:#8fa3bf; }
-  .dayitems{ margin-top:20px; }
-  .ditem{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px; color:var(--gray); }
+  .cday.today{ border-color:var(--accent-fill); color:var(--accent); font-weight:700; }
+  .cday.sel{ background:var(--accent-fill); border-color:var(--accent-fill); color:var(--btn-fg); font-weight:700; }
+  .cday .dots{ display:flex; gap:3px; flex-wrap:wrap; margin-top:5px; }
+  /* Dots carry real state: each maps to a source in the legend. */
+  .dot{ width:6px; height:6px; border-radius:999px; flex-shrink:0; }
+  .dot.followup{ background:var(--accent-fill); } .dot.birthday{ background:#b5679a; }
+  .dot.anniversary{ background:var(--ok); } .dot.event,.dot.viewing{ background:#4a7ba7; }
+  [data-theme="dark"] .dot.birthday{ background:#d18fb8; }
+  [data-theme="dark"] .dot.event,[data-theme="dark"] .dot.viewing{ background:#8fb0d6; }
+  .dayitems{ margin-top:18px; }
+  .ditem{ display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px; color:var(--gray); }
   .ditem:last-child{ border-bottom:none; }
-  .ditem b{ color:var(--ink); font-weight:500; }
-  .ditem .dot{ flex-shrink:0; }
-  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:16px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.13em; color:var(--faint); }
+  .ditem b{ color:var(--ink); font-weight:600; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.11em; color:var(--faint); }
   .legend span{ display:inline-flex; align-items:center; gap:6px; }
+
+  /* ══ PROFILE ══ */
+  .idcard{
+    display:flex; align-items:center; gap:14px; padding:14px;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:12px; margin-bottom:18px;
+  }
+  .av.lg{ width:54px; height:54px; font-size:17px; }
+  .idmeta{ min-width:0; }
+  .idmeta b{ display:block; font-size:17px; font-weight:800; letter-spacing:-.02em; }
+  .idmeta .csub{ margin-top:4px; }
+
+  /* ══ SWITCH + SEGMENTED ══ */
+  .swrow{ display:flex; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--line); }
+  .swrow:last-of-type{ border-bottom:none; }
+  .swrow .sl{ flex:1; }
+  .swrow .sl b{ display:block; font-size:14px; font-weight:700; }
+  .swrow .sl span{ font-size:12.5px; color:var(--gray); line-height:1.5; }
+  .sw{ position:relative; width:46px; height:27px; border-radius:999px; background:var(--line-2); border:1px solid var(--line-2); flex-shrink:0; transition:background .25s var(--ease), border-color .25s var(--ease); }
+  /* A switch looks right at 27px but is uncomfortable to hit at that size, so
+     the tappable area is widened invisibly around it. */
+  .sw::before{ content:''; position:absolute; inset:-7px -5px; }
+  .sw::after{ content:''; position:absolute; top:2px; left:2px; width:21px; height:21px; border-radius:999px; background:var(--surface); box-shadow:var(--shadow-1); transition:transform .25s var(--ease); }
+  .sw.on{ background:var(--accent-fill); border-color:var(--accent-fill); }
+  .sw.on::after{ transform:translateX(19px); }
+  .seg{ display:inline-flex; background:var(--raised); border:1px solid var(--line); border-radius:11px; padding:3px; }
+  .seg button{ display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 15px; min-height:36px; border:none; background:none; border-radius:8px; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--gray); transition:background .2s var(--ease), color .2s var(--ease); }
+  .seg button svg{ width:15px; height:15px; }
+  .seg button.on{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-1); }
 
   /* ══ BELL ══ */
   #bellPanel{
-    display:none; position:fixed; top:66px; right:10px; z-index:70;
-    width:min(370px,94vw); max-height:62vh; overflow-y:auto;
-    background:rgba(16,19,26,.94); backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
-    border:1px solid var(--line-2); border-radius:var(--r-card); box-shadow:var(--shadow); padding:6px;
+    display:none; position:fixed; top:62px; right:10px; z-index:70;
+    /* calc, not 94vw: with the 10px right offset, a vw-based width plus the
+       scrollbar pushed the left edge a couple of pixels off screen. */
+    width:min(370px,calc(100vw - 20px)); max-height:64vh; overflow-y:auto;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:14px;
+    box-shadow:var(--shadow-3); padding:6px;
   }
-  #bellPanel .nrow{ padding:13px 15px; border-bottom:1px solid var(--line); font-size:13px; line-height:1.55; color:var(--gray); border-radius:9px; }
+  @media(min-width:1000px){ #bellPanel{ top:auto; bottom:80px; left:262px; right:auto; } }
+  #bellPanel .nrow{ padding:12px 14px; border-bottom:1px solid var(--line); font-size:13px; line-height:1.55; color:var(--gray); border-radius:9px; }
   #bellPanel .nrow:last-child{ border-bottom:none; }
-  #bellPanel .nrow.unread{ box-shadow:inset 2px 0 0 var(--gold); background:rgba(203,176,121,.055); color:var(--ink); }
-  #bellPanel .nrow .t{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--faint); margin-top:5px; }
+  #bellPanel .nrow.unread{ background:var(--accent-soft); box-shadow:inset 2px 0 0 var(--accent-fill); color:var(--ink); }
+  #bellPanel .nrow .t{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.09em; color:var(--faint); margin-top:5px; }
+  /* An unread row lays a translucent gold tint over the surface, which lifts
+     the background enough to push this 9px timestamp under 4.5:1. One step
+     brighter on that row only. */
+  #bellPanel .nrow.unread .t{ color:var(--gray); }
 
   /* ══ MODALS ══ */
-  .overlay{ display:none; position:fixed; inset:0; z-index:80; background:rgba(6,8,12,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); padding:16px; overflow-y:auto; }
+  .overlay{ display:none; position:fixed; inset:0; z-index:80; background:rgba(18,20,24,.5); padding:14px; overflow-y:auto; }
+  [data-theme="dark"] .overlay{ background:rgba(4,6,10,.72); }
   .overlay.open{ display:flex; align-items:flex-start; justify-content:center; }
   .modal{
-    width:100%; max-width:540px; background:var(--shell);
-    border:1px solid var(--line-2); border-radius:var(--r-card); padding:7px;
-    box-shadow:0 30px 70px rgba(2,4,8,.7); margin:4vh 0 8vh;
-    animation:modalIn .45s var(--ease) both;
+    width:100%; max-width:560px; background:var(--surface);
+    border:1px solid var(--line-2); border-radius:14px;
+    box-shadow:var(--shadow-3); margin:3vh 0 8vh; overflow:hidden;
+    animation:modalIn .35s var(--ease) both;
   }
-  @keyframes modalIn{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:none; } }
-  .modal .mhead{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:16px 18px; background:var(--core); border-radius:var(--r-core) var(--r-core) 0 0; border-bottom:1px solid var(--line); box-shadow:inset 0 1px 0 rgba(255,255,255,.07); }
-  .modal .mhead h3{ font-family:'Cormorant Garamond',Georgia,serif; font-size:21px; font-weight:600; letter-spacing:-.01em; text-transform:none; }
-  .modal .mbody{ padding:20px 18px; background:var(--core); border-radius:0 0 var(--r-core) var(--r-core); }
+  .modal.wide{ max-width:660px; }
+  @keyframes modalIn{ from{ opacity:0; transform:translateY(12px) scale(.99); } to{ opacity:1; transform:none; } }
+  .modal .mhead{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:15px 17px; background:var(--surface-2); border-bottom:1px solid var(--line); }
+  .modal .mhead h3{ font-size:16.5px; }
+  .modal .mbody{ padding:17px; }
+  .modal .mfoot{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; padding-top:6px; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
-  @media(max-width:430px){ .grid2{ grid-template-columns:1fr; } }
-  .x{ background:none; border:none; font-size:19px; font-weight:400; color:var(--faint); line-height:1; padding:4px 8px; border-radius:999px; transition:color .3s var(--ease), background .3s var(--ease); }
-  .x:hover{ color:var(--ink); background:rgba(255,255,255,.06); }
+  @media(max-width:440px){ .grid2{ grid-template-columns:1fr; } }
+  .x{ background:none; border:none; color:var(--faint); line-height:1; padding:7px; min-width:36px; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; transition:color .2s var(--ease), background .2s var(--ease); }
+  .x svg{ width:17px; height:17px; }
+  .x:hover{ color:var(--ink); background:var(--raised); }
 
-  /* ══ TOAST ══ */
-  #toast{
-    position:fixed; bottom:34px; left:50%; z-index:99;
-    transform:translateX(-50%) translateY(16px);
-    background:rgba(22,26,34,.96); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-    color:var(--ink); border:1px solid var(--line-2); border-left:2px solid var(--gold); border-radius:var(--r-ctl);
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.03em;
-    padding:13px 20px; opacity:0; pointer-events:none; max-width:92vw; text-align:center;
-    box-shadow:var(--shadow);
-    transition:opacity .35s var(--ease), transform .35s var(--ease);
+  /* ══ DISCLOSURES ══ */
+  details.disc{ border:1px solid var(--line); background:var(--surface); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  details.disc summary{
+    padding:14px 16px; font-size:14.5px; font-weight:700; cursor:pointer; list-style:none;
+    background:var(--surface-2); display:flex; align-items:center; gap:10px;
   }
-  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  #toast.err{ border-left-color:var(--bad); }
-
-  /* ══ DEFINITIONS ══ */
-  details.defs{ border:1px solid var(--line-2); background:var(--shell); border-radius:var(--r-card); padding:7px; }
-  details.defs summary{
-    padding:15px 16px; font-family:'Cormorant Garamond',Georgia,serif; font-size:19px; font-weight:600;
-    letter-spacing:-.01em; text-transform:none; cursor:pointer; list-style:none;
-    background:var(--core); border-radius:var(--r-core); color:var(--ink);
-    display:flex; align-items:center; gap:10px;
-    transition:color .3s var(--ease);
-  }
-  details.defs summary::-webkit-details-marker{ display:none; }
-  details.defs summary:hover{ color:var(--gold-hi); }
-  details.defs summary::before{ content:''; width:7px; height:7px; border-right:1.5px solid var(--gold); border-bottom:1.5px solid var(--gold); transform:rotate(-45deg); transition:transform .4s var(--ease); flex-shrink:0; }
-  details.defs[open] summary{ border-radius:var(--r-core) var(--r-core) 0 0; }
-  details.defs[open] summary::before{ transform:rotate(45deg); }
-  .defrow{ padding:14px 16px; border-top:1px solid var(--line); font-size:12.5px; line-height:1.65; color:var(--gray); background:var(--core); }
-  .defrow:last-child{ border-radius:0 0 var(--r-core) var(--r-core); }
-  .defrow b{ display:block; font-size:13px; color:var(--ink); font-weight:600; margin-bottom:3px; }
-  .defrow .k{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.14em; color:var(--gold); font-weight:400; }
+  details.disc summary::-webkit-details-marker{ display:none; }
+  details.disc summary::before{ content:''; width:7px; height:7px; border-right:1.6px solid var(--accent); border-bottom:1.6px solid var(--accent); transform:rotate(-45deg); transition:transform .3s var(--ease); flex-shrink:0; }
+  details.disc[open] summary::before{ transform:rotate(45deg); }
+  details.disc summary:hover{ color:var(--accent); }
+  .defrow{ padding:13px 16px; border-top:1px solid var(--line); font-size:12.5px; line-height:1.65; color:var(--gray); }
+  .defrow b{ display:block; font-size:13px; color:var(--ink); font-weight:700; margin-bottom:3px; }
+  .defrow .k{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.13em; color:var(--accent); font-weight:400; }
   .defrow i{ color:var(--faint); }
+  details.mini{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  details.mini summary{ list-style:none; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+  details.mini summary::-webkit-details-marker{ display:none; }
+  details.mini summary:hover{ color:var(--accent); }
+  .prow{ font-size:13px; color:var(--gray); padding:7px 0 7px 14px; border-left:2px solid var(--line-2); margin-top:6px; }
 
   /* ══ EMPTY + LOADING ══ an empty tab should still look composed */
-  .empty{ text-align:center; color:var(--gray); font-size:13px; line-height:1.6; padding:44px 20px; }
-  .empty b{ display:block; font-family:'Cormorant Garamond',Georgia,serif; font-size:22px; font-weight:600; color:var(--ink); margin-bottom:8px; letter-spacing:-.01em; }
+  .empty{ text-align:center; color:var(--gray); font-size:13px; line-height:1.6; padding:40px 20px; }
+  .empty b{ display:block; font-size:17px; font-weight:700; color:var(--ink); margin-bottom:7px; }
   /* Skeletons match the shape of what is loading, instead of a spinner. */
-  .sk{ padding:8px 0; }
+  .sk{ padding:6px 0; }
   .sk i{
     display:block; height:13px; border-radius:6px; margin:11px 0;
-    background:linear-gradient(90deg,var(--raised) 8%,#242a35 22%,var(--raised) 36%);
-    background-size:900px 100%; animation:shimmer 1.7s linear infinite;
+    background:linear-gradient(90deg,var(--raised) 8%,var(--line) 22%,var(--raised) 36%);
+    background-size:900px 100%; animation:shimmer 1.6s linear infinite;
   }
   .sk i:nth-child(2){ width:82%; } .sk i:nth-child(3){ width:64%; } .sk i:nth-child(4){ width:73%; }
   @keyframes shimmer{ from{ background-position:-420px 0; } to{ background-position:480px 0; } }
 
-  /* ══ SCROLL REVEAL ══ driven by IntersectionObserver, transform+opacity only */
-  .rv{ opacity:0; transform:translateY(18px); }
-  .rv.in{ opacity:1; transform:none; transition:opacity .7s var(--ease), transform .7s var(--ease); }
+  /* ══ TOAST ══ */
+  #toast{
+    position:fixed; bottom:74px; left:50%; z-index:99;
+    transform:translateX(-50%) translateY(14px);
+    background:var(--ink); color:var(--bg);
+    border-radius:11px; border-left:3px solid var(--accent-fill);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.02em;
+    padding:12px 18px; opacity:0; pointer-events:none; max-width:92vw; text-align:center;
+    box-shadow:var(--shadow-3);
+    transition:opacity .3s var(--ease), transform .3s var(--ease);
+  }
+  @media(min-width:1000px){ #toast{ bottom:34px; } }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err{ border-left-color:var(--bad); }
 
-  /* Anything above a whisper of motion must collapse for people who
-     ask for less of it. */
+  /* ══ SCROLL REVEAL ══ IntersectionObserver, transform + opacity only */
+  .rv{ opacity:0; transform:translateY(14px); }
+  .rv.in{ opacity:1; transform:none; transition:opacity .6s var(--ease), transform .6s var(--ease); }
+
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
-    html{ scroll-behavior:auto; }
     .rv{ opacity:1; transform:none; }
-  }
-  /* Glass needs a solid fallback when transparency is unwelcome. */
-  @media (prefers-reduced-transparency:reduce){
-    .topbar,.tabs,#bellPanel,#toast{ backdrop-filter:none; -webkit-backdrop-filter:none; background:#10131a; }
-    .overlay{ backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(6,8,12,.93); }
   }
 </style>
 </head>
@@ -447,14 +633,14 @@
 
 <!-- ════════ AUTH ════════ -->
 <main id="authView">
+  <div class="authtop"><button class="iconbtn themeBtn" onclick="flipTheme()" title="Switch between light and dark"></button></div>
   <div class="masthead">
-    <img src="/img/hero-logo.png" alt="GLRA Realty">
+    <img class="logo" src="/img/logo.png" alt="GLRA Realty">
     <div class="mk">GLRA Realty</div>
-    <h1>Agent <em>Workspace</em></h1>
+    <h1>Agent <span>Workspace</span></h1>
     <div class="rule"></div>
   </div>
   <div class="authcard">
-   <div class="inner">
     <div id="authMsg" class="authmsg"></div>
 
     <div id="loginForm">
@@ -464,7 +650,7 @@
       <button class="btn" style="width:100%" id="liBtn" onclick="doLogin()">Sign in</button>
       <div class="authswap">
         New here? <a onclick="swapAuth(true)">Request agent access</a><br>
-        <a style="font-weight:400;font-size:12px" onclick="forgotPass()">Forgot password?</a>
+        <a style="font-weight:400;font-size:12px;border:none" onclick="forgotPass()">Forgot password?</a>
       </div>
     </div>
 
@@ -478,70 +664,129 @@
       <button class="btn" style="width:100%" id="suBtn" onclick="doSignup()">Send request</button>
       <div class="authswap">Already approved? <a onclick="swapAuth(false)">Sign in</a></div>
     </div>
-   </div>
   </div>
 </main>
 
 <!-- ════════ APP ════════ -->
 <div id="appView">
+  <!-- desktop -->
+  <aside class="side">
+    <div class="sidehead">
+      <img class="logo" src="/img/logo.png" alt="GLRA Realty">
+      <div class="wm">Agent Workspace<span>GLRA Realty</span></div>
+    </div>
+    <nav class="sidenav" id="sideNav"></nav>
+    <div class="sidefoot">
+      <button class="who" onclick="showTab('profile')" title="Open my profile">
+        <div class="av" id="whoAv"></div>
+        <div class="nm"><b id="whoName"></b><i id="whoRole"></i></div>
+      </button>
+      <div class="row">
+        <button class="iconbtn" onclick="toggleBell()" title="Notifications" id="bellBtnSide"></button>
+        <button class="iconbtn themeBtn" onclick="flipTheme()" title="Switch between light and dark"></button>
+        <a class="iconbtn" id="adminLinkSide" href="admin.html" title="Back to the Admin Portal" style="display:none"></a>
+        <button class="iconbtn" onclick="signOut()" title="Sign out" id="exitSide" style="margin-left:auto"></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- phone -->
   <header class="topbar">
-    <img class="brand" src="/img/hero-logo.png" alt="GLRA Realty">
-    <div class="mk">GLRA<span> / </span>AGENT</div>
-    <div class="who" id="whoName"></div>
-    <a class="iconbtn" id="adminLink" href="admin.html" title="Back to the Admin Portal" style="display:none;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:#ff3d00;font-weight:700">ADMIN</a>
-    <button class="iconbtn" onclick="toggleBell()" title="Notifications" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;font-weight:700">NOTIF<span class="badge" id="bellBadge" style="display:none">0</span></button>
-    <button class="iconbtn" onclick="signOut()" title="Sign out" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;font-weight:700">EXIT</button>
+    <img class="brand logo" src="/img/logo.png" alt="GLRA Realty">
+    <div class="wm">Agent Workspace<span>GLRA Realty</span></div>
+    <div class="sp"></div>
+    <a class="iconbtn" id="adminLinkTop" href="admin.html" title="Back to the Admin Portal" style="display:none"></a>
+    <button class="iconbtn" onclick="toggleBell()" title="Notifications" id="bellBtnTop"></button>
+    <button class="iconbtn themeBtn" onclick="flipTheme()" title="Switch between light and dark"></button>
   </header>
+
   <div id="bellPanel"></div>
 
-  <nav class="tabs" id="tabbar">
-    <button data-t="gps" class="on" onclick="showTab('gps')">GPS</button>
-    <button data-t="actions" onclick="showTab('actions')">ACTIONS</button>
-    <button data-t="report" onclick="showTab('report')">REPORT</button>
-    <button data-t="leads" onclick="showTab('leads')">LEADS</button>
-    <button data-t="pipeline" onclick="showTab('pipeline')">PIPELINE</button>
-    <button data-t="calendar" onclick="showTab('calendar')">CALENDAR</button>
-  </nav>
+  <div class="content">
+    <main>
+      <div id="tab-gps"></div>
+      <div id="tab-actions" style="display:none"></div>
+      <div id="tab-report" style="display:none"></div>
+      <div id="tab-leads" style="display:none"></div>
+      <div id="tab-pipeline" style="display:none"></div>
+      <div id="tab-calendar" style="display:none"></div>
+      <div id="tab-profile" style="display:none"></div>
+    </main>
+  </div>
 
-  <main>
-    <div id="tab-gps"></div>
-    <div id="tab-actions" style="display:none"></div>
-    <div id="tab-report" style="display:none"></div>
-    <div id="tab-leads" style="display:none"></div>
-    <div id="tab-pipeline" style="display:none"></div>
-    <div id="tab-calendar" style="display:none"></div>
-  </main>
+  <nav class="botnav" id="botNav"></nav>
 </div>
 
 <!-- lead modal -->
 <div class="overlay" id="leadOverlay">
-  <div class="modal">
-    <div class="mhead"><h3 id="leadModalTitle">New lead</h3><button class="x" onclick="closeLead()">&times;</button></div>
+  <div class="modal wide">
+    <div class="mhead"><h3 id="leadModalTitle">New lead</h3><button class="x" onclick="closeLead()" aria-label="Close" id="leadX"></button></div>
     <div class="mbody">
+      <div class="sechead">This lead's pipeline</div>
+      <div class="stagepick" id="lf_stagepick"></div>
+      <div class="field" id="lf_lostWrap" style="display:none"><label>Reason it did not work out</label><input id="lf_reasonLost"></div>
+
+      <div class="sechead">Client</div>
       <div class="field"><label>Client name *</label><input id="lf_name"></div>
       <div class="grid2">
         <div class="field"><label>Contact no.</label><input id="lf_contactNo" inputmode="tel"></div>
-        <div class="field"><label>Email</label><input id="lf_email" inputmode="email"></div>
+        <div class="field"><label>Email</label><input id="lf_email" inputmode="email" type="email"></div>
       </div>
       <div class="grid2">
         <div class="field"><label>Birthday</label><input type="date" id="lf_birthday"></div>
         <div class="field"><label>Category</label><select id="lf_category"><option>Owner</option><option selected>Buyer</option><option>Tenant</option></select></div>
       </div>
+
+      <div class="sechead">The deal</div>
       <div class="field"><label>Property / interest</label><input id="lf_propertyInterest"></div>
       <div class="grid2">
-        <div class="field"><label>Source</label><input id="lf_source" placeholder="Referral, FB, walk-in&#8230;"></div>
-        <div class="field"><label>Stage</label><select id="lf_stage"></select></div>
+        <div class="field"><label>Source</label><input id="lf_source" placeholder="Referral, FB, walk-in"></div>
+        <div class="field">
+          <label>Broker / agent</label>
+          <select id="lf_brokerSel" onchange="brokerUI()"></select>
+        </div>
       </div>
+      <div class="field" id="lf_brokerOtherWrap" style="display:none"><label>Name of the broker or agent</label><input id="lf_brokerOther" placeholder="Who is co-broking this?"></div>
+
+      <div class="sechead">Next steps</div>
       <div class="field"><label>Action to be taken</label><input id="lf_actionToTake"></div>
       <div class="grid2">
         <div class="field"><label>Next follow-up</label><input type="date" id="lf_nextFollowUp"></div>
         <div class="field" id="lf_closingWrap"><label>Closing date</label><input type="date" id="lf_closingDate"></div>
       </div>
-      <div class="field" id="lf_lostWrap" style="display:none"><label>Reason (if lost)</label><input id="lf_reasonLost"></div>
       <div class="field"><label>Remarks</label><textarea id="lf_remarks" rows="2"></textarea></div>
-      <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
-        <button class="btn sm alt" id="leadDelBtn" style="display:none;border-color:var(--bad);color:var(--bad)" onclick="deleteLead()">Delete</button>
-        <button class="btn" id="leadSaveBtn" onclick="saveLead()" style="margin-left:auto">Save lead</button>
+
+      <div id="lf_history"></div>
+
+      <div class="mfoot">
+        <button class="btn sm danger" id="leadDelBtn" style="display:none;margin-right:auto" onclick="deleteLead()">Delete</button>
+        <button class="btn sm alt" id="leadMailBtn" style="display:none" onclick="openMail()">Email this client</button>
+        <button class="btn" id="leadSaveBtn" onclick="saveLead()">Save lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- email-a-client modal -->
+<div class="overlay" id="mailOverlay">
+  <div class="modal">
+    <div class="mhead"><h3>Email your client</h3><button class="x" onclick="closeMail()" aria-label="Close" id="mailX"></button></div>
+    <div class="mbody">
+      <p class="note" style="margin-bottom:14px">Sent on GLRA letterhead. Replies come straight back to <b id="mailReply"></b>, and you get your own copy.</p>
+      <div class="field"><label>To</label><input id="mf_to" readonly></div>
+      <div class="field">
+        <label>Start from a template</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm alt" onclick="mailTemplate('followup')">Follow-up</button>
+          <button class="btn sm alt" onclick="mailTemplate('birthday')">Birthday greeting</button>
+          <button class="btn sm alt" onclick="mailTemplate('listing')">Listing match</button>
+        </div>
+      </div>
+      <div class="field"><label>Subject</label><input id="mf_subject"></div>
+      <div class="field"><label>Message</label><textarea id="mf_message" rows="9"></textarea></div>
+      <div class="mfoot">
+        <button class="btn alt" onclick="closeMail()">Cancel</button>
+        <button class="btn" id="mailSendBtn" onclick="sendMail()">Send email</button>
       </div>
     </div>
   </div>
@@ -550,9 +795,9 @@
 <!-- event modal -->
 <div class="overlay" id="evOverlay">
   <div class="modal">
-    <div class="mhead"><h3>New calendar entry</h3><button class="x" onclick="closeEv()">&times;</button></div>
+    <div class="mhead"><h3>New calendar entry</h3><button class="x" onclick="closeEv()" aria-label="Close" id="evX"></button></div>
     <div class="mbody">
-      <div class="field"><label>Title *</label><input id="ef_title" placeholder="Viewing at&#8230;"></div>
+      <div class="field"><label>Title *</label><input id="ef_title" placeholder="Viewing at"></div>
       <div class="grid2">
         <div class="field"><label>Date *</label><input type="date" id="ef_date"></div>
         <div class="field"><label>Time (optional)</label><input type="time" id="ef_time"></div>
@@ -570,14 +815,14 @@
 <!-- phone-sync modal -->
 <div class="overlay" id="syncOverlay">
   <div class="modal">
-    <div class="mhead"><h3>Calendar on your phone</h3><button class="x" onclick="closeSync()">&times;</button></div>
+    <div class="mhead"><h3>Calendar on your phone</h3><button class="x" onclick="closeSync()" aria-label="Close" id="syncX"></button></div>
     <div class="mbody">
       <p class="note" style="margin-bottom:12px">This private link is your live calendar feed: follow-ups, client birthdays, closing anniversaries, and your entries. Add it once and your phone stays in sync by itself.</p>
       <div class="field"><label>Your private link</label><input id="syncUrl" readonly onclick="this.select()"></div>
       <button class="btn sm" onclick="copySync()">Copy link</button>
-      <div style="margin-top:16px;font-size:12.5px;line-height:1.6">
-        <b>Google Calendar:</b> Settings &#8594; Add calendar &#8594; <i>From URL</i> &#8594; paste the link.<br>
-        <b>iPhone:</b> Settings &#8594; Apps &#8594; Calendar &#8594; Calendar Accounts &#8594; Add Account &#8594; Other &#8594; <i>Add Subscribed Calendar</i> &#8594; paste the link.
+      <div style="margin-top:16px;font-size:12.5px;line-height:1.7;color:var(--gray)">
+        <b style="color:var(--ink)">Google Calendar:</b> Settings &#8594; Add calendar &#8594; <i>From URL</i> &#8594; paste the link.<br>
+        <b style="color:var(--ink)">iPhone:</b> Settings &#8594; Apps &#8594; Calendar &#8594; Calendar Accounts &#8594; Add Account &#8594; Other &#8594; <i>Add Subscribed Calendar</i> &#8594; paste the link.
       </div>
       <p class="note" style="margin-top:12px">Anyone with the link can see the calendar, so keep it to yourself. You can make a fresh link any time. The old one stops working.</p>
       <button class="btn sm alt" style="margin-top:10px" onclick="makeSync(true)">Make a new link</button>
@@ -589,23 +834,62 @@
 
 <script>
 'use strict';
+// ═════════ icons ═════════
+// One stroke weight, one corner style, currentColor throughout, so an icon
+// picks up whatever the surrounding text colour is in either theme.
+const SV = (d, extra) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${extra || ''}${d ? `<path d="${d}"/>` : ''}</svg>`;
+const ICON = {
+  gps:      SV('M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3', '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.6"/>'),
+  actions:  SV('M3.5 6.2l1.8 1.8 3-3M3.5 13l1.8 1.8 3-3M3.5 19.8l1.8 1.8 3-3M12.5 6.5h8M12.5 13.3h8M12.5 20.1h8'),
+  report:   SV('M3 20.5h18M7 20.5v-6.5M12 20.5V7.5M17 20.5v-9.5'),
+  leads:    SV('M2.5 20.5c0-3.4 2.9-5.7 6.2-5.7s6.3 2.3 6.3 5.7M16.5 11.6a3.3 3.3 0 0 0 0-6.4M18 20.5c0-2.3-.9-4-2.4-5.1', '<circle cx="8.7" cy="8.4" r="3.4"/>'),
+  pipeline: SV('M2.5 5h19l-7.3 8.4v6.3l-4.4-2.2v-4.1z'),
+  calendar: SV('M3.5 10h17M8 3v4M16 3v4', '<rect x="3.5" y="5.5" width="17" height="15.5" rx="2.6"/>'),
+  profile:  SV('M4.5 20.5c0-3.9 3.4-6.4 7.5-6.4s7.5 2.5 7.5 6.4', '<circle cx="12" cy="8" r="3.9"/>'),
+  bell:     SV('M18 9.2a6 6 0 1 0-12 0c0 5.8-2 6.9-2 6.9h16s-2-1.1-2-6.9M10.2 19.5a2.1 2.1 0 0 0 3.6 0'),
+  sun:      SV('M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7', '<circle cx="12" cy="12" r="4.2"/>'),
+  moon:     SV('M20.5 14.8A8.7 8.7 0 0 1 9.2 3.5a7.3 7.3 0 1 0 11.3 11.3z'),
+  gear:     SV('M3.5 7.5h9M17 7.5h3.5M3.5 16.5h4.5M13 16.5h7.5', '<circle cx="15" cy="7.5" r="2.4"/><circle cx="10.5" cy="16.5" r="2.4"/>'),
+  exit:     SV('M14.5 3.5h3.2a2.3 2.3 0 0 1 2.3 2.3v12.4a2.3 2.3 0 0 1-2.3 2.3h-3.2M9.5 8.2L5.7 12l3.8 3.8M5.7 12h8.3'),
+  portal:   SV('M4 12h10M10 7l5 5-5 5M17 4.5h2.5v15H17'),
+  check:    SV('M4.5 12.5l4.5 4.5 10-10'),
+  plus:     SV('M12 5v14M5 12h14'),
+  minus:    SV('M5 12h14'),
+  trash:    SV('M4 7h16M9.5 7V4.6h5V7M6.5 7l.9 13.4h9.2L17.5 7M10.3 11v6M13.7 11v6'),
+  close:    SV('M6 6l12 12M18 6L6 18'),
+  left:     SV('M14.5 5.5L8 12l6.5 6.5'),
+  right:    SV('M9.5 5.5L16 12l-6.5 6.5')
+};
+const NAV = [
+  { id: 'gps', label: 'GPS', long: 'My GPS', icon: ICON.gps },
+  { id: 'actions', label: 'ACTIONS', long: 'Actions', icon: ICON.actions },
+  { id: 'report', label: 'REPORT', long: 'Report', icon: ICON.report },
+  { id: 'leads', label: 'LEADS', long: 'Lead journal', icon: ICON.leads },
+  { id: 'pipeline', label: 'PIPELINE', long: 'Pipeline', icon: ICON.pipeline },
+  { id: 'calendar', label: 'CALENDAR', long: 'Calendar', icon: ICON.calendar },
+  { id: 'profile', label: 'PROFILE', long: 'My profile', icon: ICON.profile }
+];
+const TAB_IDS = NAV.map(n => n.id);
+
 // ═════════ state + helpers ═════════
 const TK = 'glraAgentToken';
-let ME = null, STAGES = [], LEADS = [], editLeadId = null, calMonth = null, selDay = null, calItems = [];
-// Shape-matched placeholder while a tab loads, instead of a spinner.
+const THEME_KEY = 'glraAgentTheme';
+let ME = null, STAGES = [], TEAM = [], LEADS = [], editLeadId = null;
+let calMonth = null, selDay = null, calItems = [];
 const SKELETON = '<div class="card"><div class="cbody"><div class="sk"><i></i><i></i><i></i><i></i></div></div></div>';
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const peso = n => '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH');
 const fmtN = n => { n = Number(n) || 0; return n >= 100 ? Math.round(n).toLocaleString() : n >= 10 ? (Math.round(n * 10) / 10).toLocaleString() : n >= 1 ? (Math.round(n * 10) / 10) : n.toFixed(2); };
 const dstr = d => d ? new Date(d).toISOString().slice(0, 10) : '';
 const dnice = d => { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', timeZone: 'UTC' }); };
-const todayStr = () => { const t = new Date(Date.now() + 8 * 3600e3); return t.toISOString().slice(0, 10); };
+const dfull = d => { if (!d) return ''; return new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }); };
+const todayStr = () => new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
 
 function toast(msg, bad) {
   const t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' err' : '');
-  clearTimeout(t._h); t._h = setTimeout(() => t.className = '', 2600);
+  clearTimeout(t._h); t._h = setTimeout(() => { t.className = ''; }, 2800);
 }
 
 async function api(path, opts = {}) {
@@ -617,6 +901,57 @@ async function api(path, opts = {}) {
   return res;
 }
 
+// ═════════ theme ═════════
+// Light is the default. The logo has to swap with it: /img/logo.png is dark
+// artwork for light backgrounds and /img/hero-logo.png is the light version
+// for dark ones, so using one file for both makes it nearly invisible in one
+// of the two modes.
+function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+function applyTheme(t) {
+  t = t === 'dark' ? 'dark' : 'light';
+  const root = document.documentElement;
+  // Suppress every transition for one frame. See the .theming rule: a
+  // transitioned property fed by var() can otherwise keep the old theme's
+  // colour after the tokens swap.
+  root.classList.add('theming');
+  root.setAttribute('data-theme', t);
+  void root.offsetWidth; // force the recalculation while transitions are off
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theming')));
+  try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  const meta = $('themeColor');
+  if (meta) meta.setAttribute('content', t === 'dark' ? '#0a0a0b' : '#f4f2ee');
+  document.querySelectorAll('img.logo').forEach(img => {
+    img.src = t === 'dark' ? '/img/hero-logo.png' : '/img/logo.png';
+  });
+  // The button shows what you would switch TO, which is what people expect.
+  document.querySelectorAll('.themeBtn').forEach(b => { b.innerHTML = t === 'dark' ? ICON.sun : ICON.moon; });
+  renderThemeSeg();
+}
+function flipTheme() { applyTheme(currentTheme() === 'dark' ? 'light' : 'dark'); }
+function renderThemeSeg() {
+  const seg = $('themeSeg'); if (!seg) return;
+  const t = currentTheme();
+  seg.innerHTML = [['light', 'Light', ICON.sun], ['dark', 'Dark', ICON.moon]]
+    .map(([v, lab, ic]) => `<button class="${t === v ? 'on' : ''}" onclick="applyTheme('${v}')">${ic}${lab}</button>`).join('');
+}
+
+// ═════════ thousand separators ═════════
+// Money fields read with a comma every three digits while you type. The comma
+// is presentation only; numOf() strips it before anything is sent.
+function attachCommas(el) {
+  if (!el) return;
+  const fmt = () => {
+    const fromEnd = el.value.length - (el.selectionStart ?? el.value.length);
+    const digits = el.value.replace(/\D/g, '').slice(0, 12);
+    el.value = digits ? Number(digits).toLocaleString('en-US') : '';
+    const pos = Math.max(0, el.value.length - fromEnd);
+    try { el.setSelectionRange(pos, pos); } catch (e) {}
+  };
+  el.addEventListener('input', fmt);
+  fmt();
+}
+const numOf = id => Number(String($(id)?.value || '').replace(/[^\d.]/g, '')) || 0;
+
 // ═════════ auth ═════════
 function authMsg(msg, kind) { const m = $('authMsg'); m.textContent = msg; m.className = 'authmsg ' + (kind || ''); m.style.display = msg ? 'block' : 'none'; }
 function swapAuth(toSignup) { $('loginForm').style.display = toSignup ? 'none' : ''; $('signupForm').style.display = toSignup ? '' : 'none'; authMsg(''); }
@@ -624,7 +959,7 @@ function swapAuth(toSignup) { $('loginForm').style.display = toSignup ? 'none' :
 async function doLogin() {
   const email = $('liEmail').value.trim(), password = $('liPass').value;
   if (!email || !password) return authMsg('Enter your email and password.', 'bad');
-  const b = $('liBtn'); b.disabled = true; b.textContent = 'Signing in…';
+  const b = $('liBtn'); b.disabled = true; b.textContent = 'Signing in';
   try {
     const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
     const d = await res.json();
@@ -643,14 +978,14 @@ async function doSignup() {
   if (name.length < 2) return authMsg('Please enter your full name.', 'bad');
   if (!email) return authMsg('Please enter your email.', 'bad');
   if (p1.length < 8) return authMsg('Password must be at least 8 characters.', 'bad');
-  if (p1 !== p2) return authMsg('The two passwords don’t match.', 'bad');
-  const b = $('suBtn'); b.disabled = true; b.textContent = 'Sending…';
+  if (p1 !== p2) return authMsg('The two passwords do not match.', 'bad');
+  const b = $('suBtn'); b.disabled = true; b.textContent = 'Sending';
   try {
     const res = await fetch('/api/admin/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password: p1, requestedRole: 'agent' }) });
     const d = await res.json();
     if (!res.ok) return authMsg(d.error || 'Request failed.', 'bad');
     swapAuth(false);
-    authMsg('Request sent! The broker has been notified. You will get an email once your account is approved.', 'ok');
+    authMsg('Request sent. The broker has been notified. You will get an email once your account is approved.', 'ok');
   } catch (e) { authMsg('Network problem. Please try again.', 'bad'); }
   finally { b.disabled = false; b.textContent = 'Send request'; }
 }
@@ -666,85 +1001,107 @@ async function forgotPass() {
 
 function signOut(expired) {
   localStorage.removeItem(TK);
-  $('appView').style.display = 'none'; $('authView').style.display = 'flex';
+  $('appView').classList.remove('on');
+  $('authView').style.display = 'flex';
   if (expired) authMsg('Your session ended. Please sign in again.', 'bad');
 }
 
 // ═════════ app boot ═════════
+function buildChrome() {
+  $('sideNav').innerHTML = NAV.map(n =>
+    `<button class="navitem" data-t="${n.id}" onclick="showTab('${n.id}')">${n.icon}<span>${n.long}</span></button>`).join('');
+  $('botNav').innerHTML = NAV.map(n =>
+    `<button data-t="${n.id}" onclick="showTab('${n.id}')" aria-label="${n.long}">${n.icon}<span>${n.label}</span></button>`).join('');
+  $('bellBtnSide').innerHTML = ICON.bell + '<span class="badge" id="bellBadgeSide" style="display:none">0</span>';
+  $('bellBtnTop').innerHTML = ICON.bell + '<span class="badge" id="bellBadgeTop" style="display:none">0</span>';
+  $('exitSide').innerHTML = ICON.exit;
+  $('adminLinkSide').innerHTML = ICON.portal; $('adminLinkTop').innerHTML = ICON.portal;
+  ['leadX', 'mailX', 'evX', 'syncX'].forEach(id => { if ($(id)) $(id).innerHTML = ICON.close; });
+}
+
 async function enterApp() {
   try {
     const res = await api('/api/agent/me');
     if (!res.ok) { const d = await res.json().catch(() => ({})); signOut(); return authMsg(d.error || 'Could not load your workspace.', 'bad'); }
     ME = await res.json();
     STAGES = ME.stages || [];
-    $('authView').style.display = 'none'; $('appView').style.display = 'block';
-    $('whoName').textContent = (ME.name || ME.email).toUpperCase();
-    $('adminLink').style.display = ME.role === 'admin' ? '' : 'none';
+    $('authView').style.display = 'none';
+    $('appView').classList.add('on');
+    paintIdentity();
+    const showAdmin = ME.role === 'admin' ? '' : 'none';
+    $('adminLinkSide').style.display = showAdmin; $('adminLinkTop').style.display = showAdmin;
     setBadge(ME.unread);
-    const sel = $('lf_stage'); sel.innerHTML = STAGES.map(s => `<option>${esc(s)}</option>`).join('');
     showTab('gps');
-  } catch (e) { /* 401 handled in api() */ }
+    // The team roster only fills a dropdown, so a failure here must not stop
+    // the workspace from loading.
+    api('/api/agent/team').then(r => r.json()).then(d => { TEAM = d.team || []; }).catch(() => {});
+  } catch (e) { /* 401 already handled in api() */ }
 }
-function setBadge(n) { const b = $('bellBadge'); b.textContent = n; b.style.display = n > 0 ? 'flex' : 'none'; }
+function setBadge(n) {
+  ['bellBadgeSide', 'bellBadgeTop'].forEach(id => {
+    const b = $(id); if (!b) return;
+    b.textContent = n > 9 ? '9+' : n; b.style.display = n > 0 ? 'flex' : 'none';
+  });
+}
 
 function showTab(name) {
-  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
-  ['gps', 'actions', 'report', 'leads', 'pipeline', 'calendar'].forEach(t => $('tab-' + t).style.display = t === name ? '' : 'none');
-  ({ gps: loadGPS, actions: loadActions, report: loadReport, leads: loadLeads, pipeline: loadPipeline, calendar: loadCalendar })[name]();
+  document.querySelectorAll('#sideNav .navitem, #botNav button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
+  TAB_IDS.forEach(t => { $('tab-' + t).style.display = t === name ? '' : 'none'; });
+  ({ gps: loadGPS, actions: loadActions, report: loadReport, leads: loadLeads, pipeline: loadPipeline, calendar: loadCalendar, profile: loadProfile })[name]();
   window.scrollTo(0, 0);
 }
 
 // ═════════ entry motion ═════════
-// Cards fade up as they come into view, so a tab arrives in sequence
-// instead of snapping in all at once. IntersectionObserver rather than a
-// scroll listener, and the CSS collapses it under prefers-reduced-motion.
-const revealObserver = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealObserver.unobserve(e.target); } });
-}, { threshold: .08, rootMargin: '0px 0px -40px 0px' }) : null;
-
-// Call after painting a tab. Staggers by index so the cascade reads as
-// deliberate; anything already on screen still animates once.
+// Cards fade up as they come into view, so a tab arrives in sequence instead of
+// snapping in all at once.
 //
 // The failsafe below is not optional: an entry animation must never be the
-// reason a card is invisible. If the observer does not report back (a
-// browser that throttles it, a tab painted while hidden, anything at all),
-// the timer shows everything anyway. Motion is allowed to fail; content is not.
+// reason a card is invisible. If the observer does not report back (a browser
+// that throttles it, a tab painted while hidden, anything at all), the timer
+// shows everything anyway. Motion is allowed to fail; content is not.
+const revealObserver = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealObserver.unobserve(e.target); } });
+}, { threshold: .06, rootMargin: '0px 0px -30px 0px' }) : null;
 let revealFailsafe = null;
 function reveal(container) {
   if (!revealObserver) return;
-  const cards = container.querySelectorAll(':scope > .card, :scope > details.defs');
-  cards.forEach((c, i) => {
+  container.querySelectorAll(':scope > .card, :scope > details.disc').forEach((c, i) => {
     c.classList.add('rv');
-    c.style.transitionDelay = Math.min(i * 55, 220) + 'ms';
+    c.style.transitionDelay = Math.min(i * 50, 200) + 'ms';
     revealObserver.observe(c);
   });
   clearTimeout(revealFailsafe);
   revealFailsafe = setTimeout(() => {
-    document.querySelectorAll('.rv:not(.in)').forEach(c => c.classList.add('in'));
+    document.querySelectorAll('.rv:not(.in)').forEach(c => {
+      // If we are down here the observer never reported, so drop the stagger:
+      // it is decoration, and it would hold content back another 200ms.
+      c.style.transitionDelay = '0ms';
+      c.classList.add('in');
+    });
   }, 900);
 }
 
 // ═════════ GPS ═════════
 const CONV_LABELS = [
-  ['sellerTakenToSold', 'Seller: taken → SOLD'], ['sellerApptToTaken', 'Seller: appt → TAKEN'],
-  ['sellerContactToAppt', 'Seller: contact → APPT'], ['sellerLeadToContact', 'Seller: lead → CONTACT'],
-  ['buyerViewingToClose', 'Buyer: viewing → CLOSE'], ['buyerContactToViewing', 'Buyer: contact → VIEWING'],
-  ['buyerLeadToContact', 'Buyer: lead → CONTACT']
+  ['sellerTakenToSold', 'Seller: taken to SOLD'], ['sellerApptToTaken', 'Seller: appt to TAKEN'],
+  ['sellerContactToAppt', 'Seller: contact to APPT'], ['sellerLeadToContact', 'Seller: lead to CONTACT'],
+  ['buyerViewingToClose', 'Buyer: viewing to CLOSE'], ['buyerContactToViewing', 'Buyer: contact to VIEWING'],
+  ['buyerLeadToContact', 'Buyer: lead to CONTACT']
 ];
 const GPS_DEFS = [
   ['Gross Commission Income (GCI)', 'Total sales commissions you aim to earn in a year, before expenses.', 'INPUT', 'This is your goal. Every other number is worked backward from it.'],
-  ['Avg commission per closed deal', 'The typical commission you earn on one closed transaction.', 'INPUT', 'GCI ÷ this = how many deals you must close.'],
+  ['Avg commission per closed deal', 'The typical commission you earn on one closed transaction.', 'INPUT', 'GCI divided by this equals how many deals you must close.'],
   ['Working days (wk/mo/yr)', 'Days you actually work: 5/week, 22/month, 250/year.', 'INPUT', 'Turns your yearly target into weekly and daily numbers.'],
-  ['Conversion rates', 'The % that move from one step to the next (e.g. lead → contact).', 'INPUT', 'Decide how many leads/contacts you need to get one sale.'],
-  ['Listings SOLD', 'Your seller listings that actually close and pay commission.', 'FORMULA (GCI ÷ avg commission)', 'The seller-side sales you must produce to hit GCI.'],
-  ['Listings to be TAKEN', 'Listing agreements (authority to sell) you must sign. More than SOLD, because not every listing sells.', 'FORMULA (SOLD ÷ take rate)', 'You must sign this many sellers so enough actually sell.'],
-  ['Listing APPOINTMENTS', 'Listing presentations / meetings with potential sellers.', 'FORMULA', 'How many seller meetings are needed to win the signings.'],
-  ['Seller CONTACTS', 'Real conversations with potential sellers (call, chat, meet).', 'FORMULA', 'Conversations needed to book that many appointments.'],
-  ['Seller LEADS', 'Raw seller prospects you generate (names to work).', 'FORMULA', 'Top-of-funnel volume needed to feed the whole chain.'],
-  ['Buyers CLOSED (ATP)', 'Buyer transactions closed. ATP = Agreement to Purchase.', 'FORMULA', 'The buyer-side sales you must produce.'],
-  ['Buyer VIEWINGS', 'Property viewings / oculars you conduct with buyers.', 'FORMULA', 'How many viewings lead to enough buyer closings.'],
+  ['Conversion rates', 'The share that move from one step to the next, for example lead to contact.', 'INPUT', 'Decide how many leads and contacts you need to get one sale.'],
+  ['Listings SOLD', 'Your seller listings that actually close and pay commission.', 'FORMULA (GCI / avg commission)', 'The seller-side sales you must produce to hit GCI.'],
+  ['Listings to be TAKEN', 'Listing agreements (authority to sell) you must sign. More than SOLD, because not every listing sells.', 'FORMULA (SOLD / take rate)', 'You must sign this many sellers so enough actually sell.'],
+  ['Listing APPOINTMENTS', 'Listing presentations and meetings with potential sellers.', 'FORMULA', 'How many seller meetings are needed to win the signings.'],
+  ['Seller CONTACTS', 'Real conversations with potential sellers by call, chat or meeting.', 'FORMULA', 'Conversations needed to book that many appointments.'],
+  ['Seller LEADS', 'Raw seller prospects you generate, meaning names to work.', 'FORMULA', 'Top-of-funnel volume needed to feed the whole chain.'],
+  ['Buyers CLOSED (ATP)', 'Buyer transactions closed. ATP means Agreement to Purchase.', 'FORMULA', 'The buyer-side sales you must produce.'],
+  ['Buyer VIEWINGS', 'Property viewings and oculars you conduct with buyers.', 'FORMULA', 'How many viewings lead to enough buyer closings.'],
   ['Buyer CONTACTS / LEADS', 'Conversations with, and raw prospects of, buyers.', 'FORMULA', 'Buyer-side funnel volume needed.'],
-  ['Daily / Weekly / Monthly columns', 'Yearly ÷ working days = Daily; × days/week = Weekly; × days/month = Monthly.', 'FORMULA', 'Your do-today numbers. The whole point of the page.']
+  ['Daily / Weekly / Monthly columns', 'Yearly divided by working days gives Daily; times days per week gives Weekly; times days per month gives Monthly.', 'FORMULA', 'Your do-today numbers. The whole point of the page.']
 ];
 
 function loadGPS() { renderGPS(); }
@@ -752,33 +1109,33 @@ function renderGPS() {
   const p = ME.profile, g = ME.gps;
   const rows4 = (label, o, hl) => `<tr${hl ? ' class="hl"' : ''}><td>${label}</td><td>${fmtN(o.yearly)}</td><td>${fmtN(o.monthly)}</td><td>${fmtN(o.weekly)}</td><td><b>${fmtN(o.daily)}</b></td></tr>`;
   $('tab-gps').innerHTML = `
-  <div class="card"><div class="chead"><h3>My GPS: from annual goal to today</h3></div>
+  <div class="card"><div class="chead"><div><h3>My GPS: from annual goal to today</h3><div class="csub">Your numbers</div></div></div>
     <div class="cbody">
-      <p class="note" style="margin-bottom:14px">Set your goal. Everything below, down to what to do <b>today</b>, calculates itself, exactly like the workbook.</p>
+      <p class="note" style="margin-bottom:16px">Set your goal. Everything below, down to what to do <b>today</b>, calculates itself, exactly like the workbook.</p>
       <div class="field"><label>Goal statement</label><input id="g_goal" value="${esc(p.goalStatement)}"></div>
       <div class="grid2">
-        <div class="field"><label>Desired annual GCI (₱)</label><input type="number" id="g_gci" value="${p.annualGCI}" min="1"></div>
-        <div class="field"><label>Avg commission / deal (₱)</label><input type="number" id="g_avg" value="${p.avgCommission}" min="1"></div>
+        <div class="field"><label>Desired annual GCI</label><div class="pfx"><span>₱</span><input class="money" id="g_gci" inputmode="numeric" value="${p.annualGCI}"></div></div>
+        <div class="field"><label>Avg commission / deal</label><div class="pfx"><span>₱</span><input class="money" id="g_avg" inputmode="numeric" value="${p.avgCommission}"></div></div>
       </div>
       <div class="grid2">
         <div class="field"><label>Working days / week</label><input type="number" id="g_dw" value="${p.workDaysWeek}" min="1" max="7"></div>
         <div class="field"><label>Working days / month</label><input type="number" id="g_dm" value="${p.workDaysMonth}" min="1" max="31"></div>
       </div>
       <div class="field" style="max-width:220px"><label>Working days / year</label><input type="number" id="g_dy" value="${p.workDaysYear}" min="1" max="366"></div>
-      <div class="eyebrow" style="margin-top:22px">Conversion rates (%)</div>
+      <div class="sechead">Conversion rates (%)</div>
       <div class="grid2">
         ${CONV_LABELS.map(([k, lab]) => `<div class="field"><label>${lab}</label><input type="number" id="cv_${k}" value="${Math.round((p.conv[k] || 0) * 100)}" min="1" max="100"></div>`).join('')}
       </div>
-      <button class="btn" onclick="saveGPS()">Save &amp; recalculate</button>
+      <button class="btn" onclick="saveGPS()">${ICON.check} Save and recalculate</button>
     </div>
   </div>
-  <div class="card"><div class="chead"><h3>Income target</h3><span class="sub">FORMULA</span></div>
+  <div class="card"><div class="chead"><div><h3>Income target</h3></div><span class="pill gold">FORMULA</span></div>
     <div class="cbody tablewrap"><table class="tgt">
       <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
       <tr class="hl"><td>Gross Commission Income</td><td>${peso(g.gci.yearly)}</td><td>${peso(g.gci.monthly)}</td><td>${peso(g.gci.weekly)}</td><td><b>${peso(g.gci.daily)}</b></td></tr>
     </table></div>
   </div>
-  <div class="card"><div class="chead"><h3>Listing goal: seller side</h3><span class="sub">FORMULA</span></div>
+  <div class="card"><div class="chead"><div><h3>Listing goal: seller side</h3></div><span class="pill gold">FORMULA</span></div>
     <div class="cbody tablewrap"><table class="tgt">
       <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
       ${rows4('Listings SOLD', g.seller.sold, true)}
@@ -788,7 +1145,7 @@ function renderGPS() {
       ${rows4('Seller LEADS', g.seller.leads)}
     </table></div>
   </div>
-  <div class="card"><div class="chead"><h3>Buyer goal</h3><span class="sub">FORMULA</span></div>
+  <div class="card"><div class="chead"><div><h3>Buyer goal</h3></div><span class="pill gold">FORMULA</span></div>
     <div class="cbody tablewrap"><table class="tgt">
       <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
       ${rows4('Buyers CLOSED (ATP)', g.buyer.closed, true)}
@@ -797,18 +1154,23 @@ function renderGPS() {
       ${rows4('Buyer LEADS', g.buyer.leads)}
     </table></div>
   </div>
-  <details class="defs"><summary>Definitions: what every term means</summary>
+  <details class="disc"><summary>Definitions: what every term means</summary>
     ${GPS_DEFS.map(d => `<div class="defrow"><b>${esc(d[0])} <span class="k">${esc(d[2])}</span></b>${esc(d[1])}<br><i>${esc(d[3])}</i></div>`).join('')}
   </details>`;
+  attachCommas($('g_gci')); attachCommas($('g_avg'));
   reveal($('tab-gps'));
 }
 
 async function saveGPS() {
   const conv = {};
   CONV_LABELS.forEach(([k]) => { const v = Number($('cv_' + k).value); if (v >= 1 && v <= 100) conv[k] = v / 100; });
+  const gci = numOf('g_gci'), avg = numOf('g_avg');
+  if (gci < 1) return toast('Enter your annual GCI goal', true);
+  if (avg < 1) return toast('Enter your average commission per deal', true);
   const bodyOut = {
-    goalStatement: $('g_goal').value, annualGCI: Number($('g_gci').value), avgCommission: Number($('g_avg').value),
-    workDaysWeek: Number($('g_dw').value), workDaysMonth: Number($('g_dm').value), workDaysYear: Number($('g_dy').value), conv
+    goalStatement: $('g_goal').value, annualGCI: gci, avgCommission: avg,
+    workDaysWeek: Number($('g_dw').value), workDaysMonth: Number($('g_dm').value),
+    workDaysYear: Number($('g_dy').value), conv
   };
   try {
     const res = await api('/api/agent/gps', { method: 'PUT', body: JSON.stringify(bodyOut) });
@@ -820,51 +1182,150 @@ async function saveGPS() {
 }
 
 // ═════════ ACTIONS ═════════
+// Two ways to log: DONE for the one-tap case, and a counter you can type into
+// for the ones you repeat. Edit list turns the same rows into an editor where
+// you can add your own actions, reword them, or switch off ones that do not
+// apply to you.
 let ACT = null;
+const actEdit = { daily: false, weekly: false, monthly: false };
+
 async function loadActions() {
   $('tab-actions').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/actions'); ACT = await res.json();
+    const res = await api('/api/agent/actions');
+    ACT = await res.json();
     renderActions();
   } catch (e) {}
 }
+
+function actionRow(type, a, q, editing) {
+  const on = q > 0;
+  const txt = (editing && a.custom)
+    ? `<input class="editline" value="${esc(a.text)}" onchange="renameCustom('${type}','${a.id}',this.value)" aria-label="Action wording">`
+    : `<div class="txt">${esc(a.text)}${a.custom ? ' <span class="tag">MINE</span>' : ''}</div>`;
+  const ctl = editing
+    ? (a.custom
+      ? `<button class="iconsm danger" title="Delete this action" aria-label="Delete this action" onclick="deleteCustom('${type}','${a.id}')">${ICON.trash}</button>`
+      : `<button class="btn sm ghost" onclick="hideStd('${a.id}')">Switch off</button>`)
+    : `<button class="tickbtn${on ? ' on' : ''}" aria-pressed="${on}" onclick="toggleDone('${type}','${a.id}')">${on ? ICON.check : ''}<span>${on ? 'DONE' : 'MARK DONE'}</span></button>
+       <div class="stepper">
+         <button onclick="bump('${type}','${a.id}',-1)" aria-label="One less">${ICON.minus}</button>
+         <input class="q" inputmode="numeric" value="${q}" aria-label="How many times" onchange="setQty('${type}','${a.id}',this.value)" onfocus="this.select()">
+         <button onclick="bump('${type}','${a.id}',1)" aria-label="One more">${ICON.plus}</button>
+       </div>`;
+  return `<div class="arow${on && !editing ? ' on' : ''}">${txt}<div class="ctl">${ctl}</div></div>`;
+}
+
 function renderActions() {
-  const { defs, entries, keys } = ACT;
-  const sect = (type, title, subtitle) => {
-    const list = defs[type], ent = entries[type];
+  const { defs, entries, keys, standard, hidden } = ACT;
+  const hiddenSet = new Set(hidden || []);
+  const sect = (type, title) => {
+    const list = defs[type] || [], ent = entries[type] || {};
     const done = list.filter(a => Number(ent[a.id]) > 0).length;
-    return `<div class="card"><div class="chead"><h3>${title}</h3><span class="sub">${subtitle}</span></div><div class="cbody">
-      ${list.map(a => {
-        const q = Number(ent[a.id]) || 0;
-        return `<div class="arow${q > 0 ? ' done' : ''}" id="ar_${a.id}">
-          <div class="txt">${q > 0 ? '<span class="tick">&#10003;</span> ' : ''}${esc(a.text)}</div>
-          <div class="stepper"><button onclick="bump('${type}','${a.id}',-1)">−</button><div class="q" id="q_${a.id}">${q}</div><button onclick="bump('${type}','${a.id}',1)">+</button></div>
-        </div>`;
-      }).join('')}
-      <div class="prog"><i style="transform:scaleX(${(done / list.length).toFixed(3)})"></i></div>
-      <div class="note" style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10.5px">${done}/${list.length} ACTIONS DONE</div>
-    </div></div>`;
+    const editing = actEdit[type];
+    const off = (standard[type] || []).filter(a => hiddenSet.has(a.id));
+    const pct = list.length ? done / list.length : 0;
+    return `<div class="card">
+      <div class="chead">
+        <div><h3>${title}</h3><div class="csub">${esc(keys[type])}</div></div>
+        <div class="chead-r">
+          <span class="pill${done && done === list.length ? ' ok' : ''}">${done}/${list.length}</span>
+          <button class="btn sm ${editing ? '' : 'alt'}" onclick="toggleEdit('${type}')">${editing ? 'Finish editing' : 'Edit list'}</button>
+        </div>
+      </div>
+      <div class="cbody">
+        ${list.length ? list.map(a => actionRow(type, a, Number(ent[a.id]) || 0, editing)).join('')
+          : `<div class="empty"><b>This list is empty</b>Use Edit list to add the actions you want to hold yourself to.</div>`}
+        ${editing ? `
+          <div class="addbox">
+            <input id="newact_${type}" placeholder="Add your own action" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustom('${type}')}">
+            <button class="btn sm" onclick="addCustom('${type}')">${ICON.plus} Add</button>
+          </div>
+          ${off.length ? `<div class="hiddenlist"><div class="eyebrow">Switched off</div>${off.map(a => `<div class="hrow"><span>${esc(a.text)}</span><button class="btn sm alt" onclick="restoreStd('${a.id}')">Turn back on</button></div>`).join('')}</div>` : ''}
+        ` : `
+          <div class="prog${pct === 1 ? ' ok' : ''}"><i style="transform:scaleX(${pct.toFixed(3)})"></i></div>
+          <div class="metaline">${done} of ${list.length} done${pct === 1 ? ' · all clear' : ''}</div>`}
+      </div></div>`;
   };
   $('tab-actions').innerHTML = `
-    <p class="note" style="margin-bottom:14px">Tap <b>+</b> each time you do an action. Lists reset themselves: daily at midnight, weekly every Monday, monthly on the 1st (Philippine time). No more clearing cells.</p>
-    ${sect('daily', 'Daily actions', keys.daily)}
-    ${sect('weekly', 'Weekly actions', keys.weekly)}
-    ${sect('monthly', 'Monthly actions', keys.monthly)}`;
+    <p class="note" style="margin-bottom:14px">Tap <b>MARK DONE</b> as you go, or type a count for anything you repeat. Lists clear themselves: daily at midnight, weekly every Monday, monthly on the 1st, Philippine time. Everything here flows into your Report by itself.</p>
+    ${sect('daily', 'Daily actions')}
+    ${sect('weekly', 'Weekly actions')}
+    ${sect('monthly', 'Monthly actions')}`;
   reveal($('tab-actions'));
 }
-let bumpTimers = {};
-function bump(type, id, delta) {
-  const ent = ACT.entries[type];
-  const q = Math.max(0, Math.min(999, (Number(ent[id]) || 0) + delta));
-  ent[id] = q;
+
+// ── logging a quantity ──
+let qtyTimers = {};
+function pushQty(type, id, q) {
+  ACT.entries[type][id] = q;
   renderActions();
-  clearTimeout(bumpTimers[id]);
-  bumpTimers[id] = setTimeout(async () => {
+  clearTimeout(qtyTimers[id]);
+  qtyTimers[id] = setTimeout(async () => {
     try {
       const res = await api('/api/agent/actions', { method: 'POST', body: JSON.stringify({ periodType: type, actionId: id, qty: q }) });
       if (!res.ok) toast('Could not save. Check your connection', true);
     } catch (e) {}
   }, 400);
+}
+function bump(type, id, delta) {
+  pushQty(type, id, Math.max(0, Math.min(999, (Number(ACT.entries[type][id]) || 0) + delta)));
+}
+function setQty(type, id, val) {
+  const raw = String(val).trim();
+  const digits = raw.replace(/\D/g, '');
+  // Clearing the box means zero. Typing letters means nothing, so put the old
+  // number back instead of silently wiping the count.
+  if (raw && !digits) return renderActions();
+  pushQty(type, id, Math.max(0, Math.min(999, Number(digits) || 0)));
+}
+function toggleDone(type, id) {
+  pushQty(type, id, (Number(ACT.entries[type][id]) || 0) > 0 ? 0 : 1);
+}
+
+// ── editing the checklist ──
+function toggleEdit(type) { actEdit[type] = !actEdit[type]; renderActions(); }
+async function saveActionList() {
+  const custom = {};
+  ['daily', 'weekly', 'monthly'].forEach(t => {
+    custom[t] = (ACT.defs[t] || []).filter(a => a.custom).map(a => ({ id: a.id, text: a.text }));
+  });
+  try {
+    const res = await api('/api/agent/action-list', { method: 'PUT', body: JSON.stringify({ custom, hidden: ACT.hidden || [] }) });
+    const d = await res.json();
+    if (!res.ok) return toast(d.error || 'Could not save the list', true);
+    ACT.defs = d.defs; ACT.hidden = d.hidden; ACT.standard = d.standard;
+    renderActions();
+  } catch (e) {}
+}
+function addCustom(type) {
+  const el = $('newact_' + type), text = (el?.value || '').trim();
+  if (!text) return toast('Type the action first', true);
+  // No id: the server mints one and hands the list back.
+  ACT.defs[type].push({ id: '', text, custom: true });
+  el.value = '';
+  saveActionList().then(() => toast('Action added'));
+}
+function renameCustom(type, id, text) {
+  const a = (ACT.defs[type] || []).find(x => x.id === id);
+  if (!a) return;
+  const t = String(text).trim();
+  if (!t) return renderActions();
+  a.text = t;
+  saveActionList();
+}
+function deleteCustom(type, id) {
+  if (!confirm('Remove this action from your list?')) return;
+  ACT.defs[type] = (ACT.defs[type] || []).filter(a => a.id !== id);
+  saveActionList().then(() => toast('Action removed'));
+}
+function hideStd(id) {
+  ACT.hidden = [...new Set([...(ACT.hidden || []), id])];
+  saveActionList();
+}
+function restoreStd(id) {
+  ACT.hidden = (ACT.hidden || []).filter(x => x !== id);
+  saveActionList();
 }
 
 // ═════════ REPORT ═════════
@@ -872,37 +1333,69 @@ async function loadReport() {
   $('tab-report').innerHTML = SKELETON;
   try {
     const res = await api('/api/agent/report'); const r = await res.json();
-    const rate = s => s.score >= 0.8 ? ['ON TRACK', 'ok'] : s.score >= 0.5 ? ['CATCHING UP', 'mid'] : ['BEHIND', 'bad'];
-    const sc = (label, s) => { const [t, c] = rate(s); return `<div class="score"><div class="k">${label}</div><div class="v">${s.done}<span style="font-size:15px;color:var(--gray)">/${s.total}</span></div><div class="r ${c}">${t}</div></div>`; };
+    const rate = s => s.score >= .8 ? ['ON TRACK', 'ok'] : s.score >= .5 ? ['CATCHING UP', 'mid'] : ['BEHIND', 'bad'];
+    const sc = (label, s) => { const [t, c] = rate(s); return `<div class="score"><div class="k">${label}</div><div class="v">${s.done}<small>/${s.total}</small></div><div class="r ${c}">${t}</div></div>`; };
+    // The report is not typed twice: these rows are the actions ticked on the
+    // Actions page, carried straight over with the counts logged there.
+    const logged = (title, key, s) => `
+      <div class="card"><div class="chead"><div><h3>${title}</h3><div class="csub">${esc(key || '')}</div></div>
+        <span class="pill${s.done && s.done === s.total ? ' ok' : ''}">${s.done}/${s.total}</span></div>
+        <div class="cbody">
+          ${s.items.length ? `<div class="tablewrap"><table class="tgt">
+            <tr><th>Action taken</th><th>Times</th></tr>
+            ${s.items.map(i => `<tr><td>${esc(i.text)}</td><td><b>${i.qty}</b></td></tr>`).join('')}
+            <tr class="hl"><td>TOTAL LOGGED</td><td><b>${s.qty}</b></td></tr>
+          </table></div>` : `<div class="empty"><b>Nothing logged in this period yet</b>Tick actions on the Actions page and they appear here on their own.</div>`}
+          ${s.pending.length ? `<details class="mini"><summary>${s.pending.length} still open</summary>${s.pending.map(p => `<div class="prow">${esc(p.text)}</div>`).join('')}</details>` : ''}
+        </div></div>`;
     const cats = r.leads.byCategory, tots = r.leads.totals;
     const catRow = c => `<tr><td>${c}</td><td>${cats[c]?.today || 0}</td><td>${cats[c]?.week || 0}</td><td>${cats[c]?.month || 0}</td><td>${cats[c]?.year || 0}</td></tr>`;
     const leadPct = Math.min(100, Math.round(tots.year / Math.max(1, r.leads.targetYearly) * 100));
     const salePct = Math.min(100, Math.round(r.sales.closedThisYear / Math.max(1, r.sales.targetYearly) * 100));
+    const k = r.periodKeys || {};
     $('tab-report').innerHTML = `
-    <div class="card"><div class="chead"><h3>Score cards: action execution</h3></div><div class="cbody">
+    <div class="card"><div class="chead"><div><h3>Score cards: action execution</h3><div class="csub">Straight from your Actions page</div></div></div><div class="cbody">
       <div class="scoregrid">${sc('Daily actions', r.actions.daily)}${sc('Weekly actions', r.actions.weekly)}${sc('Monthly actions', r.actions.monthly)}</div>
-      <p class="note" style="margin-top:12px">Counted automatically from your Actions page. Nothing is typed twice.</p>
     </div></div>
-    <div class="card"><div class="chead"><h3>Leads generated</h3><span class="sub">FROM THE LEAD JOURNAL</span></div><div class="cbody tablewrap">
-      <table class="tgt">
+    ${logged('Daily actions logged', k.daily, r.actions.daily)}
+    ${logged('Weekly actions logged', k.weekly, r.actions.weekly)}
+    ${logged('Monthly actions logged', k.monthly, r.actions.monthly)}
+    <div class="card"><div class="chead"><div><h3>Leads generated</h3><div class="csub">From the lead journal</div></div></div><div class="cbody">
+      <div class="tablewrap"><table class="tgt">
         <tr><th>Category</th><th>Today</th><th>This week</th><th>This month</th><th>This year</th></tr>
         ${catRow('Owner')}${catRow('Buyer')}${catRow('Tenant')}
         <tr class="hl"><td>TOTAL</td><td>${tots.today}</td><td>${tots.week}</td><td>${tots.month}</td><td>${tots.year}</td></tr>
-      </table>
-      <div style="margin-top:14px"><label>Year progress vs GPS target (${fmtN(r.leads.targetYearly)} leads)</label>
-        <div class="prog"><i style="transform:scaleX(${(leadPct/100).toFixed(3)})"></i></div>
-        <div class="note mono" style="margin-top:4px;font-size:10.5px">${tots.year} / ${fmtN(r.leads.targetYearly)} at ${leadPct}%</div>
+      </table></div>
+      <div style="margin-top:16px"><label>Year progress vs GPS target (${fmtN(r.leads.targetYearly)} leads)</label>
+        <div class="prog"><i style="transform:scaleX(${(leadPct / 100).toFixed(3)})"></i></div>
+        <div class="metaline">${tots.year} of ${fmtN(r.leads.targetYearly)} at ${leadPct}%</div>
       </div>
     </div></div>
-    <div class="card"><div class="chead"><h3>Sales closed</h3><span class="sub">THIS YEAR</span></div><div class="cbody">
-      <div class="score" style="max-width:260px"><div class="k">Closed vs target</div><div class="v">${r.sales.closedThisYear}<span style="font-size:15px;color:var(--gray)">/${fmtN(r.sales.targetYearly)}</span></div></div>
-      <div class="prog" style="margin-top:10px"><i style="transform:scaleX(${(salePct/100).toFixed(3)})"></i></div>
+    <div class="card"><div class="chead"><div><h3>Sales closed</h3><div class="csub">This year</div></div></div><div class="cbody">
+      <div class="score" style="max-width:250px"><div class="k">Closed vs target</div><div class="v">${r.sales.closedThisYear}<small>/${fmtN(r.sales.targetYearly)}</small></div></div>
+      <div class="prog" style="margin-top:12px"><i style="transform:scaleX(${(salePct / 100).toFixed(3)})"></i></div>
+      <div class="metaline">${salePct}% of target</div>
     </div></div>`;
     reveal($('tab-report'));
   } catch (e) {}
 }
 
 // ═════════ LEADS ═════════
+// Every lead carries its own pipeline: the six-segment track shows how far it
+// has come, Inquiry through Closing, with Unsuccessful shown as a state.
+const stageIdx = s => STAGES.indexOf(s);
+function trackHtml(stage) {
+  const i = stageIdx(stage), lost = stage === 'Unsuccessful', won = stage === 'Closing';
+  const steps = Math.max(1, STAGES.length - 1); // Unsuccessful is not a step
+  let out = '';
+  for (let n = 0; n < steps; n++) out += `<i class="${!lost && n <= i ? 'on' : ''}"></i>`;
+  return `<div class="track${lost ? ' lost' : won ? ' won' : ''}" role="img" aria-label="Stage: ${esc(stage)}">${out}</div>`;
+}
+function stageChip(stage) {
+  const cls = stage === 'Closing' ? ' closing' : stage === 'Unsuccessful' ? ' lost' : '';
+  return `<span class="chip stage${cls}">${esc(stage)}</span>`;
+}
+
 async function loadLeads() {
   $('tab-leads').innerHTML = SKELETON;
   try {
@@ -914,69 +1407,117 @@ function renderLeads() {
   const q = ($('leadQ')?.value || '').toLowerCase();
   const fc = $('leadFC')?.value || '', fs = $('leadFS')?.value || '';
   const shown = LEADS.filter(l =>
-    (!q || (l.name + ' ' + (l.propertyInterest || '') + ' ' + (l.contactNo || '')).toLowerCase().includes(q)) &&
+    (!q || (l.name + ' ' + (l.propertyInterest || '') + ' ' + (l.contactNo || '') + ' ' + (l.brokerAgent || '')).toLowerCase().includes(q)) &&
     (!fc || l.category === fc) && (!fs || l.stage === fs));
   const today = todayStr();
   $('tab-leads').innerHTML = `
-  <div class="card"><div class="chead"><h3>Lead journal</h3><button class="btn sm" onclick="openLead()">+ Add lead</button></div>
+  <div class="card"><div class="chead"><div><h3>Lead journal</h3><div class="csub">${LEADS.length} total</div></div>
+      <button class="btn sm" onclick="openLead()">${ICON.plus} Add lead</button></div>
     <div class="cbody">
       <div class="filters">
-        <input id="leadQ" placeholder="Search…" value="${esc(q)}" oninput="renderLeads()">
+        <input id="leadQ" placeholder="Search name, property, agent" value="${esc(q)}" oninput="renderLeads()">
         <select id="leadFC" onchange="renderLeads()"><option value="">All categories</option>${['Owner', 'Buyer', 'Tenant'].map(c => `<option${fc === c ? ' selected' : ''}>${c}</option>`).join('')}</select>
         <select id="leadFS" onchange="renderLeads()"><option value="">All stages</option>${STAGES.map(s => `<option${fs === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
       </div>
       ${shown.length ? shown.map(l => {
         const fu = dstr(l.nextFollowUp), overdue = fu && fu < today && !['Closing', 'Unsuccessful'].includes(l.stage);
-        const stageCls = l.stage === 'Closing' ? ' closing' : l.stage === 'Unsuccessful' ? ' lost' : '';
         return `<div class="lrow" onclick="openLead('${l._id}')">
-          <div class="nm">${esc(l.name)}${l.source === 'Website' ? '<span class="chip orange">WEB</span>' : ''}${l.birthday ? ` <span class="chip plain" title="Birthday: ${dnice(l.birthday)}">BDAY ${dnice(l.birthday)}</span>` : ''}</div>
+          <div class="nm">${esc(l.name)}
+            ${l.source === 'Website' ? '<span class="chip gold">WEB</span>' : ''}
+            ${l.birthday ? `<span class="chip plain">BDAY ${dnice(l.birthday)}</span>` : ''}</div>
           <div class="meta">
             <span class="chip">${esc(l.category)}</span>
-            <span class="chip stage${stageCls}">${esc(l.stage)}</span>
-            ${fu ? `<span class="chip${overdue ? ' warn' : ' plain'}">${overdue ? 'OVERDUE ' : 'FU '} ${dnice(l.nextFollowUp)}</span>` : ''}
-            ${l.propertyInterest ? `<span class="chip plain">${esc(l.propertyInterest.slice(0, 34))}</span>` : ''}
+            ${stageChip(l.stage)}
+            ${fu ? `<span class="chip${overdue ? ' warn' : ' plain'}">${overdue ? 'OVERDUE' : 'FU'} ${dnice(l.nextFollowUp)}</span>` : ''}
+            ${l.brokerAgent ? `<span class="chip plain">${esc(l.brokerAgent.slice(0, 28))}</span>` : ''}
+            ${l.propertyInterest ? `<span class="chip plain">${esc(l.propertyInterest.slice(0, 30))}</span>` : ''}
           </div>
+          <div class="meta" style="margin-top:10px">${trackHtml(l.stage)}</div>
         </div>`;
-      }).join('') : `<div class="empty"><b>No leads${q || fc || fs ? ' match' : ' yet'}</b>${q || fc || fs ? 'Try clearing the filters.' : 'Tap + ADD LEAD to record your first one.'}</div>`}
-      <div class="note mono" style="margin-top:14px;font-size:10px;letter-spacing:.12em;color:var(--faint)">${shown.length} shown of ${LEADS.length}</div>
+      }).join('') : `<div class="empty"><b>No leads${q || fc || fs ? ' match' : ' yet'}</b>${q || fc || fs ? 'Try clearing the filters.' : 'Tap Add lead to record your first one.'}</div>`}
+      <div class="metaline">${shown.length} shown of ${LEADS.length}</div>
     </div>
   </div>`;
   reveal($('tab-leads'));
 }
+
+let leadStage = 'Inquiry';
+function renderStagePick() {
+  $('lf_stagepick').innerHTML = STAGES.map((s, i) => {
+    const on = s === leadStage;
+    const kind = s === 'Closing' ? ' won' : s === 'Unsuccessful' ? ' lost' : '';
+    const mark = s === 'Unsuccessful' ? 'X' : String(i + 1);
+    return `<button type="button" class="${on ? 'on' + kind : ''}" onclick="pickStage(${i})"><em>${mark}</em>${esc(s)}</button>`;
+  }).join('');
+  $('lf_lostWrap').style.display = leadStage === 'Unsuccessful' ? '' : 'none';
+  $('lf_closingWrap').style.display = leadStage === 'Closing' ? '' : 'none';
+}
+function pickStage(i) { leadStage = STAGES[i]; renderStagePick(); }
+
+function brokerOptions(selected) {
+  const names = TEAM.map(t => t.name);
+  const isKnown = selected && names.includes(selected);
+  const opts = [`<option value=""${!selected ? ' selected' : ''}>Just me</option>`]
+    .concat(names.map(n => `<option${isKnown && n === selected ? ' selected' : ''}>${esc(n)}</option>`))
+    .concat([`<option value="__other"${selected && !isKnown ? ' selected' : ''}>Others</option>`]);
+  return opts.join('');
+}
+function brokerUI() {
+  const other = $('lf_brokerSel').value === '__other';
+  $('lf_brokerOtherWrap').style.display = other ? '' : 'none';
+  if (other) $('lf_brokerOther').focus();
+}
+
 function openLead(id) {
   editLeadId = id || null;
   const l = id ? LEADS.find(x => x._id === id) : null;
   $('leadModalTitle').textContent = l ? 'Edit lead' : 'New lead';
   $('leadDelBtn').style.display = l ? '' : 'none';
+  $('leadMailBtn').style.display = (l && l.email) ? '' : 'none';
   $('lf_name').value = l?.name || ''; $('lf_contactNo').value = l?.contactNo || ''; $('lf_email').value = l?.email || '';
   $('lf_birthday').value = dstr(l?.birthday); $('lf_category').value = l?.category || 'Buyer';
   $('lf_propertyInterest').value = l?.propertyInterest || ''; $('lf_source').value = l?.source || '';
-  $('lf_stage').value = l?.stage || 'Inquiry'; $('lf_actionToTake').value = l?.actionToTake || '';
+  $('lf_actionToTake').value = l?.actionToTake || '';
   $('lf_nextFollowUp').value = dstr(l?.nextFollowUp); $('lf_closingDate').value = dstr(l?.closingDate);
   $('lf_reasonLost').value = l?.reasonLost || ''; $('lf_remarks').value = l?.remarks || '';
-  leadStageUI();
-  $('lf_stage').onchange = leadStageUI;
+
+  const ba = (l?.brokerAgent || '').trim();
+  $('lf_brokerSel').innerHTML = brokerOptions(ba);
+  $('lf_brokerOther').value = (ba && !TEAM.some(t => t.name === ba)) ? ba : '';
+  brokerUI();
+
+  leadStage = l?.stage || 'Inquiry';
+  renderStagePick();
+  $('lf_history').innerHTML = l ? historyHtml(l) : '';
   $('leadOverlay').classList.add('open');
 }
-function leadStageUI() {
-  const s = $('lf_stage').value;
-  $('lf_lostWrap').style.display = s === 'Unsuccessful' ? '' : 'none';
-  $('lf_closingWrap').style.display = s === 'Closing' ? '' : 'none';
+function historyHtml(l) {
+  const hist = (l.stageHistory || []).slice().reverse();
+  const mails = (l.emailLog || []).slice().reverse();
+  if (!hist.length && !mails.length) return '';
+  return `<details class="disc" style="margin-top:18px"><summary>History</summary>
+    ${hist.length ? `<div class="defrow"><b>Pipeline</b>${hist.map(h => `<div>${esc(h.stage)} <i style="color:var(--faint)">${dfull(h.at)}</i></div>`).join('')}</div>` : ''}
+    ${mails.length ? `<div class="defrow"><b>Emails sent</b>${mails.map(m => `<div>${esc(m.subject)} <i style="color:var(--faint)">${dfull(m.at)}</i></div>`).join('')}</div>` : ''}
+  </details>`;
 }
 function closeLead() { $('leadOverlay').classList.remove('open'); }
+
 async function saveLead() {
+  const sel = $('lf_brokerSel').value;
   const bodyOut = {
     name: $('lf_name').value.trim(), contactNo: $('lf_contactNo').value.trim(), email: $('lf_email').value.trim(),
     birthday: $('lf_birthday').value || '', category: $('lf_category').value,
     propertyInterest: $('lf_propertyInterest').value.trim(), source: $('lf_source').value.trim(),
-    stage: $('lf_stage').value, actionToTake: $('lf_actionToTake').value.trim(),
+    brokerAgent: sel === '__other' ? $('lf_brokerOther').value.trim() : sel,
+    stage: leadStage, actionToTake: $('lf_actionToTake').value.trim(),
     nextFollowUp: $('lf_nextFollowUp').value || '', closingDate: $('lf_closingDate').value || '',
     reasonLost: $('lf_reasonLost').value.trim(), remarks: $('lf_remarks').value.trim()
   };
   if (!bodyOut.name) return toast('Client name is required', true);
   const btn = $('leadSaveBtn'); btn.disabled = true;
   try {
-    const res = await api(editLeadId ? '/api/agent/leads/' + editLeadId : '/api/agent/leads', { method: editLeadId ? 'PUT' : 'POST', body: JSON.stringify(bodyOut) });
+    const res = await api(editLeadId ? '/api/agent/leads/' + editLeadId : '/api/agent/leads',
+      { method: editLeadId ? 'PUT' : 'POST', body: JSON.stringify(bodyOut) });
     const d = await res.json();
     if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Save failed', true);
     closeLead(); toast(editLeadId ? 'Lead updated' : 'Lead added'); loadLeads();
@@ -991,8 +1532,51 @@ async function deleteLead() {
   } catch (e) {}
 }
 
+// ═════════ EMAIL A CLIENT ═════════
+function openMail() {
+  const l = LEADS.find(x => x._id === editLeadId);
+  if (!l) return;
+  if (!l.email) return toast('Add an email address to this lead first', true);
+  $('mf_to').value = l.email;
+  $('mailReply').textContent = ME.email || 'your inbox';
+  $('mf_subject').value = ''; $('mf_message').value = '';
+  $('mailOverlay').classList.add('open');
+}
+function closeMail() { $('mailOverlay').classList.remove('open'); }
+function mailTemplate(kind) {
+  const l = LEADS.find(x => x._id === editLeadId); if (!l) return;
+  const first = (l.name || '').trim().split(/\s+/)[0] || 'there';
+  const me = (ME.name || '').trim() || 'your agent';
+  const prop = l.propertyInterest || 'the property you asked about';
+  const T = {
+    followup: ['Following up on ' + prop,
+      `Hi ${first},\n\nJust following up on ${prop}. I wanted to check whether you have any questions I can answer, or whether you would like to arrange a viewing.\n\nHappy to work around your schedule. Just reply with a day and time that suits you.\n\nThank you,\n${me}`],
+    birthday: ['Happy birthday, ' + first,
+      `Hi ${first},\n\nHappy birthday from all of us at GLRA Realty. I hope your day is a good one, spent with the people you like most.\n\nWishing you a wonderful year ahead.\n\nWarm regards,\n${me}`],
+    listing: ['A property I think you will like',
+      `Hi ${first},\n\nA listing came in that matches what you are looking for, and I thought of you right away.\n\nI can send the full details and photos, or arrange a viewing this week if you would like to see it in person.\n\nLet me know and I will set it up.\n\nBest,\n${me}`]
+  };
+  const [s, m] = T[kind] || T.followup;
+  $('mf_subject').value = s; $('mf_message').value = m;
+}
+async function sendMail() {
+  const subject = $('mf_subject').value.trim(), message = $('mf_message').value.trim();
+  if (subject.length < 2) return toast('Give the email a subject', true);
+  if (message.length < 2) return toast('Write a message first', true);
+  const btn = $('mailSendBtn'); btn.disabled = true; btn.textContent = 'Sending';
+  try {
+    const res = await api('/api/agent/leads/' + editLeadId + '/email', { method: 'POST', body: JSON.stringify({ subject, message }) });
+    const d = await res.json();
+    if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Could not send', true);
+    // Keep the open lead modal honest without a full reload.
+    const i = LEADS.findIndex(x => x._id === editLeadId);
+    if (i > -1 && d.lead) { LEADS[i] = d.lead; $('lf_history').innerHTML = historyHtml(d.lead); }
+    closeMail(); toast('Email sent. A copy is in your inbox');
+  } catch (e) {} finally { btn.disabled = false; btn.textContent = 'Send email'; }
+}
+
 // ═════════ PIPELINE ═════════
-let PIPE = null, openStage = null;
+let PIPE = null, openStage = null, pipeView = 'stage';
 async function loadPipeline() {
   $('tab-pipeline').innerHTML = SKELETON;
   try {
@@ -1000,38 +1584,67 @@ async function loadPipeline() {
     renderPipeline();
   } catch (e) {}
 }
+function daysInStage(l) {
+  const hist = l.stageHistory || [];
+  const since = hist.length ? hist[hist.length - 1].at : l.updatedAt;
+  if (!since) return null;
+  return Math.max(0, Math.floor((Date.now() - new Date(since).getTime()) / 86400000));
+}
 function renderPipeline() {
   const { byStage, metrics, anniversaries } = PIPE;
-  const max = Math.max(1, ...STAGES.map(s => byStage[s].length));
-  $('tab-pipeline').innerHTML = `
-  <div class="card"><div class="chead"><h3>General pipeline</h3><span class="sub">READS FROM YOUR LEADS</span></div><div class="cbody">
+  const max = Math.max(1, ...STAGES.map(s => (byStage[s] || []).length));
+  const all = STAGES.flatMap(s => (byStage[s] || []).map(l => ({ ...l, _i: stageIdx(s) })))
+    .sort((a, b) => b._i - a._i || String(a.name).localeCompare(String(b.name)));
+
+  const byStageView = `
     ${STAGES.map(s => `
-      <div class="stagebar" onclick="toggleStage('${esc(s)}')">
+      <div class="stagebar" onclick="toggleStage(${stageIdx(s)})">
         <div class="sn">${esc(s)}</div>
-        <div class="bar"><i style="width:${Math.round(byStage[s].length / max * 100)}%"></i></div>
-        <div class="cnt">${byStage[s].length}</div>
+        <div class="bar"><i style="width:${Math.round((byStage[s] || []).length / max * 100)}%"></i></div>
+        <div class="cnt">${(byStage[s] || []).length}</div>
       </div>
-      <div class="stagelist${openStage === s ? ' open' : ''}" id="sl_${s.replace(/\W/g, '')}">
-        ${byStage[s].length ? byStage[s].map(l => `
+      <div class="stagelist${openStage === s ? ' open' : ''}">
+        ${(byStage[s] || []).length ? (byStage[s] || []).map(l => `
           <div class="slrow"><b>${esc(l.name)}</b><span class="chip plain">${esc(l.category)}</span>
-          ${STAGES.indexOf(s) < 5 ? `<button class="btn sm alt" onclick="event.stopPropagation();advance('${l._id}','${esc(s)}')">advance →</button>` : ''}</div>`).join('') : '<div class="note" style="padding:6px 0 6px 12px">Nothing here.</div>'}
-      </div>`).join('')}
-    <div class="scoregrid" style="margin-top:16px">
+          ${stageIdx(s) < STAGES.length - 2 ? `<button class="btn sm alt" onclick="event.stopPropagation();advance('${l._id}',${stageIdx(s)})">Advance ${ICON.right}</button>` : ''}</div>`).join('')
+          : '<div class="note" style="padding:6px 0 6px 14px">Nothing here.</div>'}
+      </div>`).join('')}`;
+
+  const byLeadView = all.length ? all.map(l => {
+    const d = daysInStage(l);
+    return `<div class="plrow">
+      <div class="pl-nm">${esc(l.name)}<div class="csub" style="margin-top:2px">${esc(l.category)}${l.brokerAgent ? ' · ' + esc(l.brokerAgent) : ''}</div></div>
+      <div class="pl-tr">${trackHtml(l.stage)}<div class="csub" style="margin-top:6px">${esc(l.stage)}${d !== null ? ` · ${d} day${d === 1 ? '' : 's'} in stage` : ''}</div></div>
+      ${l._i < STAGES.length - 2 ? `<button class="btn sm alt" onclick="advance('${l._id}',${l._i})">Advance ${ICON.right}</button>` : `<span class="chip stage${l.stage === 'Closing' ? ' closing' : ' lost'}">${esc(l.stage)}</span>`}
+    </div>`;
+  }).join('') : '<div class="empty"><b>No leads yet</b>Add a lead and its own pipeline appears here.</div>';
+
+  $('tab-pipeline').innerHTML = `
+  <div class="card"><div class="chead">
+      <div><h3>Pipeline</h3><div class="csub">Reads from your lead journal</div></div>
+      <div class="seg">
+        <button class="${pipeView === 'stage' ? 'on' : ''}" onclick="setPipeView('stage')">By stage</button>
+        <button class="${pipeView === 'lead' ? 'on' : ''}" onclick="setPipeView('lead')">By lead</button>
+      </div>
+    </div><div class="cbody">
+    ${pipeView === 'stage' ? byStageView : byLeadView}
+    <div class="scoregrid" style="margin-top:18px">
       <div class="score"><div class="k">Active deals</div><div class="v">${metrics.active}</div></div>
       <div class="score"><div class="k">Closed (won)</div><div class="v" style="color:var(--ok)">${metrics.closed}</div></div>
       <div class="score"><div class="k">Unsuccessful</div><div class="v" style="color:var(--gray)">${metrics.lost}</div></div>
       <div class="score"><div class="k">Success rate</div><div class="v">${Math.round(metrics.successRate * 100)}%</div></div>
     </div>
   </div></div>
-  <div class="card"><div class="chead"><h3>Closing anniversaries</h3><span class="sub">RECONNECT YEARLY</span></div><div class="cbody">
-    ${anniversaries.length ? anniversaries.map(a => `<div class="ditem"><span class="dot anniversary"></span><b>${esc(a.name)}</b><span class="note mono" style="margin-left:auto;font-size:10.5px">closed ${dnice(a.closingDate)} · next ${esc(a.next)}</span></div>`).join('')
+  <div class="card"><div class="chead"><div><h3>Closing anniversaries</h3><div class="csub">Reconnect yearly</div></div></div><div class="cbody">
+    ${anniversaries.length ? anniversaries.map(a => `<div class="ditem"><span class="dot anniversary"></span><b>${esc(a.name)}</b><span class="csub" style="margin:0 0 0 auto">closed ${dnice(a.closingDate)} · next ${esc(a.next)}</span></div>`).join('')
       : '<div class="empty"><b>No closings yet</b>When a lead reaches Closing with a date, its anniversary lands here and on your calendar.</div>'}
   </div></div>`;
   reveal($('tab-pipeline'));
 }
-function toggleStage(s) { openStage = openStage === s ? null : s; renderPipeline(); }
-async function advance(id, from) {
-  const next = STAGES[STAGES.indexOf(from) + 1];
+function setPipeView(v) { pipeView = v; renderPipeline(); }
+function toggleStage(i) { const s = STAGES[i]; openStage = openStage === s ? null : s; renderPipeline(); }
+async function advance(id, fromIdx) {
+  const next = STAGES[fromIdx + 1];
   if (!next) return;
   try {
     const res = await api('/api/agent/leads/' + id, { method: 'PUT', body: JSON.stringify({ stage: next }) });
@@ -1067,11 +1680,12 @@ function renderCalendar(todayKey) {
   }
   const dayItems = selDay ? (byDay[selDay] || []) : calItems;
   $('tab-calendar').innerHTML = `
-  <div class="card"><div class="chead"><h3>Calendar</h3><button class="btn sm" onclick="openEv()">+ Add entry</button></div><div class="cbody">
+  <div class="card"><div class="chead"><div><h3>Calendar</h3><div class="csub">${esc(monthName)}</div></div>
+      <button class="btn sm" onclick="openEv()">${ICON.plus} Add entry</button></div><div class="cbody">
     <div class="calhead">
-      <button class="btn sm alt" onclick="calNav(-1)">‹</button>
-      <div class="m">${monthName.toUpperCase()}</div>
-      <button class="btn sm alt" onclick="calNav(1)">›</button>
+      <button class="iconbtn" onclick="calNav(-1)" aria-label="Previous month">${ICON.left}</button>
+      <div class="m">${esc(monthName)}</div>
+      <button class="iconbtn" onclick="calNav(1)" aria-label="Next month">${ICON.right}</button>
     </div>
     <div class="calgrid">
       ${['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'].map(d => `<div class="dow">${d}</div>`).join('')}
@@ -1082,24 +1696,28 @@ function renderCalendar(todayKey) {
       <span><span class="dot anniversary"></span>ANNIVERSARY</span><span><span class="dot event"></span>MY ENTRIES</span>
     </div>
     <div class="dayitems">
-      <div class="eyebrow">${selDay ? `${monthName.split(' ')[0].toUpperCase()} ${selDay}` : 'THIS MONTH'}${selDay ? ` <a style="cursor:pointer;color:var(--gray)" onclick="pickDay(null)">(show all)</a>` : ''}</div>
-      ${dayItems.length ? dayItems.map(it => `<div class="ditem"><span class="dot ${it.kind}"></span>${selDay ? '' : `<span class="mono" style="font-size:10.5px;color:var(--gray);width:22px;flex-shrink:0">${it.day}</span>`}${esc(it.label)}${it.eventId ? `<button class="x" style="margin-left:auto;font-size:15px" title="Remove" onclick="delEv('${it.eventId}')">&times;</button>` : ''}</div>`).join('') : '<div class="empty">Nothing scheduled.</div>'}
+      <div class="eyebrow">${selDay ? `${esc(monthName.split(' ')[0].toUpperCase())} ${selDay}` : 'THIS MONTH'}${selDay ? ` <a style="cursor:pointer;color:var(--gray)" onclick="pickDay(null)">(show all)</a>` : ''}</div>
+      ${dayItems.length ? dayItems.map(it => `<div class="ditem"><span class="dot ${it.kind}"></span>${selDay ? '' : `<span class="mono" style="font-size:10.5px;color:var(--faint);width:22px;flex-shrink:0">${it.day}</span>`}${esc(it.label)}${it.eventId ? `<button class="x" style="margin-left:auto" title="Remove" aria-label="Remove" onclick="delEv('${it.eventId}')">${ICON.close}</button>` : ''}</div>`).join('') : '<div class="empty">Nothing scheduled.</div>'}
     </div>
   </div></div>
-  <div class="card"><div class="chead"><h3>Calendar on your phone</h3></div><div class="cbody">
+  <div class="card"><div class="chead"><div><h3>Calendar on your phone</h3></div></div><div class="cbody">
     <p class="note">Get all of this inside your own Google or iPhone calendar. It updates by itself.</p>
     <button class="btn sm" style="margin-top:14px" onclick="openSync()">Set up phone sync</button>
   </div></div>`;
   reveal($('tab-calendar'));
 }
-function pickDay(d) { selDay = selDay === d ? null : d; loadCalendarLocal(); }
-function loadCalendarLocal() { renderCalendar(todayStr()); }
+function pickDay(d) { selDay = selDay === d ? null : d; renderCalendar(todayStr()); }
 function calNav(delta) {
   let [y, m] = calMonth.split('-').map(Number);
   m += delta; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
   calMonth = `${y}-${String(m).padStart(2, '0')}`; selDay = null; loadCalendar();
 }
-function openEv() { $('ef_title').value = ''; $('ef_date').value = selDay ? `${calMonth}-${String(selDay).padStart(2, '0')}` : todayStr(); $('ef_time').value = ''; $('ef_type').value = 'other'; $('ef_leadName').value = ''; $('ef_notes').value = ''; $('evOverlay').classList.add('open'); }
+function openEv() {
+  $('ef_title').value = '';
+  $('ef_date').value = selDay ? `${calMonth}-${String(selDay).padStart(2, '0')}` : todayStr();
+  $('ef_time').value = ''; $('ef_type').value = 'other'; $('ef_leadName').value = ''; $('ef_notes').value = '';
+  $('evOverlay').classList.add('open');
+}
 function closeEv() { $('evOverlay').classList.remove('open'); }
 async function saveEv() {
   const bodyOut = { title: $('ef_title').value.trim(), date: $('ef_date').value, time: $('ef_time').value, type: $('ef_type').value, leadName: $('ef_leadName').value.trim(), notes: $('ef_notes').value.trim() };
@@ -1120,6 +1738,124 @@ async function delEv(id) {
     if (!res.ok) return toast('Could not remove it', true);
     loadCalendar();
   } catch (e) {}
+}
+
+// ═════════ PROFILE ═════════
+// The agent's own account: details they maintain, the reminder emails they
+// receive, appearance, and phone sync. Email, role and status are shown but not
+// editable here - they are the sign-in identity and the broker's decision.
+function loadProfile() { renderProfile(); }
+function renderProfile() {
+  const p = ME.profile || {};
+  const nm = ME.name || ME.email || '';
+  const initials = nm.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  $('tab-profile').innerHTML = `
+  <div class="card"><div class="chead"><div><h3>My profile</h3><div class="csub">Your details</div></div></div>
+    <div class="cbody">
+      <div class="idcard">
+        <div class="av lg">${esc(initials)}</div>
+        <div class="idmeta">
+          <b>${esc(nm)}</b>
+          <span class="csub">${ME.role === 'admin' ? 'Broker / admin' : 'Agent'}${ME.since ? ' &middot; with GLRA since ' + esc(dfull(ME.since)) : ''}</span>
+        </div>
+      </div>
+      <div class="field"><label>Full name</label><input id="pf_name" value="${esc(nm)}" autocomplete="name"></div>
+      <div class="grid2">
+        <div class="field"><label>Contact no.</label><input id="pf_contact" value="${esc(p.contactNo || '')}" inputmode="tel" placeholder="09xx xxx xxxx"></div>
+        <div class="field"><label>PRC / DHSUD licence no.</label><input id="pf_license" value="${esc(p.licenseNo || '')}" placeholder="If you have one"></div>
+      </div>
+      <div class="field"><label>Goal statement</label><input id="pf_goal" value="${esc(p.goalStatement || '')}"></div>
+      <div class="field"><label>Email (sign-in, cannot be changed here)</label><input value="${esc(ME.email || '')}" readonly></div>
+      <button class="btn" id="pfSaveBtn" onclick="saveProfile()">${ICON.check} Save my details</button>
+    </div>
+  </div>
+
+  <div class="card"><div class="chead"><div><h3>Email reminders</h3><div class="csub">Sent to ${esc(ME.email || 'you')}</div></div></div>
+    <div class="cbody">
+      <div class="swrow">
+        <div class="sl"><b>Morning agenda</b><span>Follow-ups, client birthdays, closing anniversaries, and the day's actions. Sent from 7am, Philippine time.</span></div>
+        <button class="sw" id="sw_morning" role="switch" onclick="flipPref('morningDigest')"></button>
+      </div>
+      <div class="swrow">
+        <div class="sl"><b>Unfinished actions</b><span>An evening reminder of what is still unticked: daily every night, weekly toward the weekend, monthly at month end.</span></div>
+        <button class="sw" id="sw_nudge" role="switch" onclick="flipPref('actionNudge')"></button>
+      </div>
+      <p class="note" style="margin-top:12px">Notifications in the bell always work, whether or not the emails are on.</p>
+    </div>
+  </div>
+
+  <div class="card"><div class="chead"><div><h3>Appearance</h3><div class="csub">Remembered on this device</div></div></div>
+    <div class="cbody"><div class="seg" id="themeSeg"></div></div>
+  </div>
+
+  <div class="card"><div class="chead"><div><h3>Calendar on your phone</h3></div></div>
+    <div class="cbody">
+      <p class="note">Follow-ups, client birthdays and your own entries, inside your Google or iPhone calendar. It updates by itself.</p>
+      <button class="btn sm alt" style="margin-top:14px" onclick="openSync()">Set up phone sync</button>
+    </div>
+  </div>
+
+  <div class="card"><div class="chead"><div><h3>Account</h3></div></div>
+    <div class="cbody">
+      <div class="swrow">
+        <div class="sl"><b>Sign out of this device</b><span>You will need your email and password to get back in.</span></div>
+        <button class="btn sm alt" onclick="signOut()">Sign out</button>
+      </div>
+      ${ME.role === 'admin' ? `<div class="swrow"><div class="sl"><b>Admin Portal</b><span>Listings, inquiries, staff and the notarial board.</span></div><a class="btn sm alt" href="admin.html">Open portal</a></div>` : ''}
+      <p class="note" style="margin-top:12px">Need your role or permissions changed? Ask the broker.</p>
+    </div>
+  </div>`;
+  renderPrefs();
+  renderThemeSeg();
+  reveal($('tab-profile'));
+}
+
+async function saveProfile() {
+  const name = $('pf_name').value.trim();
+  if (name.length < 2) return toast('Enter your full name', true);
+  const btn = $('pfSaveBtn'); btn.disabled = true;
+  try {
+    const res = await api('/api/agent/profile', {
+      method: 'PUT',
+      body: JSON.stringify({
+        name, contactNo: $('pf_contact').value.trim(),
+        licenseNo: $('pf_license').value.trim(), goalStatement: $('pf_goal').value.trim()
+      })
+    });
+    const d = await res.json();
+    if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Could not save', true);
+    ME.profile = d.profile; ME.name = d.name; ME.since = d.since;
+    paintIdentity();
+    renderProfile();
+    toast('Profile saved');
+  } catch (e) {} finally { btn.disabled = false; }
+}
+
+// The name shows in the sidebar, so a rename has to repaint it too.
+function paintIdentity() {
+  const nm = ME.name || ME.email || '';
+  $('whoName').textContent = nm;
+  $('whoRole').textContent = ME.role === 'admin' ? 'Broker / admin' : 'Agent';
+  $('whoAv').textContent = nm.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function renderPrefs() {
+  const p = (ME && ME.profile && ME.profile.emailPrefs) || {};
+  const set = (id, on) => { const el = $(id); if (el) { el.classList.toggle('on', on !== false); el.setAttribute('aria-checked', on !== false); } };
+  set('sw_morning', p.morningDigest);
+  set('sw_nudge', p.actionNudge);
+}
+async function flipPref(key) {
+  const p = ME.profile.emailPrefs || (ME.profile.emailPrefs = {});
+  const next = !(p[key] !== false);
+  p[key] = next; renderPrefs();
+  try {
+    const res = await api('/api/agent/email-prefs', { method: 'PUT', body: JSON.stringify({ [key]: next }) });
+    const d = await res.json();
+    if (!res.ok) { p[key] = !next; renderPrefs(); return toast(d.error || 'Could not save', true); }
+    ME.profile.emailPrefs = d.emailPrefs; renderPrefs();
+    toast(next ? 'Reminder emails on' : 'Reminder emails off');
+  } catch (e) { p[key] = !next; renderPrefs(); }
 }
 
 // ═════════ PHONE SYNC ═════════
@@ -1158,13 +1894,15 @@ async function toggleBell() {
     const res = await api('/api/agent/notifications'); const d = await res.json();
     p.innerHTML = d.notifications.length
       ? d.notifications.map(n => `<div class="nrow${n.read ? '' : ' unread'}">${esc(n.message)}<div class="t">${new Date(n.createdAt).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}</div></div>`).join('')
-      : '<div class="nrow">Nothing yet. Follow-up and birthday reminders will land here every morning.</div>';
-    if (d.unread > 0) { await api('/api/agent/notifications/read', { method: 'POST' }); }
+      : '<div class="nrow">Nothing yet. Follow-ups, birthdays and unfinished actions land here.</div>';
+    if (d.unread > 0) await api('/api/agent/notifications/read', { method: 'POST' });
     setBadge(0);
   } catch (e) { p.innerHTML = '<div class="nrow">Could not load notifications.</div>'; }
 }
 document.addEventListener('click', e => {
-  if (bellOpen && !e.target.closest('#bellPanel') && !e.target.closest('.iconbtn')) { bellOpen = false; $('bellPanel').style.display = 'none'; }
+  if (bellOpen && !e.target.closest('#bellPanel') && !e.target.closest('.iconbtn')) {
+    bellOpen = false; $('bellPanel').style.display = 'none';
+  }
 });
 
 // ═════════ boot ═════════
@@ -1172,8 +1910,10 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('authView').style.display !== 'none') {
     if ($('loginForm').style.display !== 'none' && (e.target.id === 'liEmail' || e.target.id === 'liPass')) doLogin();
   }
-  if (e.key === 'Escape') { closeLead(); closeEv(); closeSync(); }
+  if (e.key === 'Escape') { closeLead(); closeMail(); closeEv(); closeSync(); }
 });
+buildChrome();
+applyTheme(currentTheme());
 if (localStorage.getItem(TK)) enterApp();
 </script>
 </body>

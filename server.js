@@ -69,7 +69,10 @@ function initBrevo() {
   return true;
 }
 
-async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty') {
+// replyTo is optional and only used by the Agent Workspace, where an agent
+// emails their own client: the client's reply has to reach that agent, not the
+// shared inbox. Everything else leaves it off and keeps the default below.
+async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null) {
   if (!brevoApiInstance) {
     const initialized = initBrevo();
     if (!initialized) {
@@ -84,7 +87,9 @@ async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty') {
     sendSmtpEmail.sender = { email: 'hello@glrarealty.com', name: fromName };
     // Replies route to Catherine's gmail instead of the no-reply hello@ address
     // so she sees every customer reply in her primary inbox.
-    sendSmtpEmail.replyTo = { email: 'glrarealty@gmail.com', name: 'GLRA Realty' };
+    sendSmtpEmail.replyTo = (replyTo && replyTo.email)
+      ? { email: replyTo.email, name: replyTo.name || fromName }
+      : { email: 'glrarealty@gmail.com', name: 'GLRA Realty' };
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
 

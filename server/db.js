@@ -617,10 +617,21 @@ accountSchema.methods.comparePassword = function (candidate) {
 // Pipeline). One record set per agent account; agents only ever see their own.
 // ============================================================================
 
+// A checklist line the agent wrote themselves. _id:false — the 'id' field is
+// the key the AgentAction entries map is stored under.
+const agentCustomActionSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  text: { type: String, required: true }
+}, { _id: false });
+
 // ── AGENT PROFILE — GPS inputs (the workbook's yellow cells) ──
 const agentProfileSchema = new mongoose.Schema({
   account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, unique: true },
   goalStatement: { type: String, default: 'Become a consistent professional producer' },
+  // Own-profile details the agent maintains. The name and email live on the
+  // Account (they are the sign-in identity); these are the extras.
+  contactNo: { type: String, default: '' },
+  licenseNo: { type: String, default: '' },
   annualGCI: { type: Number, default: 2400000 },
   avgCommission: { type: Number, default: 150000 },
   workDaysWeek: { type: Number, default: 5 },
@@ -642,6 +653,25 @@ const agentProfileSchema = new mongoose.Schema({
   // 'YYYY-MM-DD' (Manila) of the last morning-agenda email, so the daily
   // reminder tick sends at most one per day per agent.
   lastDigestKey: { type: String, default: null },
+  // 'YYYY-MM-DD' (Manila) of the last evening "unfinished actions" nudge —
+  // same guard, separate key, so morning and evening never block each other.
+  lastNudgeKey: { type: String, default: null },
+  // The agent's own checklist edits. customActions are lines they added
+  // themselves; hiddenActions are workbook lines they switched off. Custom ids
+  // are minted server-side as 'x<hex>' so they can never collide with the
+  // workbook's d1-d12 / w1-w8 / m1-m8.
+  customActions: {
+    daily: { type: [agentCustomActionSchema], default: () => [] },
+    weekly: { type: [agentCustomActionSchema], default: () => [] },
+    monthly: { type: [agentCustomActionSchema], default: () => [] }
+  },
+  hiddenActions: { type: [String], default: () => [] },
+  // Which automatic emails this agent wants. Both on by default; the workspace
+  // has a switch for each.
+  emailPrefs: {
+    morningDigest: { type: Boolean, default: true },
+    actionNudge: { type: Boolean, default: true }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -662,6 +692,19 @@ agentActionSchema.index({ account: 1, periodType: 1, periodKey: 1 }, { unique: t
 
 // ── AGENT LEAD — the Lead Journal ──
 const AGENT_LEAD_STAGES = ['Inquiry', 'Follow-up', 'Ocular Visitation', 'Negotiation', 'Signing of Contract', 'Closing', 'Unsuccessful'];
+// One step in a lead's own pipeline: stamped every time its stage changes.
+const agentStageStepSchema = new mongoose.Schema({
+  stage: { type: String, required: true },
+  at: { type: Date, default: Date.now }
+}, { _id: false });
+// One email the agent sent this client from the workspace. Subject and time
+// only — the body is not kept, so the record stays small and the client's
+// message isn't duplicated in two places.
+const agentEmailLogSchema = new mongoose.Schema({
+  to: { type: String, default: '' },
+  subject: { type: String, default: '' },
+  at: { type: Date, default: Date.now }
+}, { _id: false });
 const agentLeadSchema = new mongoose.Schema({
   account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
   date: { type: Date, default: Date.now },
@@ -676,11 +719,18 @@ const agentLeadSchema = new mongoose.Schema({
   propertyInterest: { type: String, default: '' },
   source: { type: String, default: '' },
   actionToTake: { type: String, default: '' },
+  // Who is handling / co-broking this lead. Free text once the picker resolves,
+  // so "Others" can name someone outside the GLRA roster.
+  brokerAgent: { type: String, default: '' },
   stage: { type: String, enum: AGENT_LEAD_STAGES, default: 'Inquiry' },
+  // This lead's own pipeline: every stage it has passed through, in order.
+  stageHistory: { type: [agentStageStepSchema], default: () => [] },
   reasonLost: { type: String, default: '' },
   nextFollowUp: { type: Date, default: null },
   closingDate: { type: Date, default: null },
   remarks: { type: String, default: '' },
+  // Emails the agent sent this client from the workspace (newest last, capped).
+  emailLog: { type: [agentEmailLogSchema], default: () => [] },
   // Set when the lead came from a website inquiry an admin assigned over:
   // { inquiryId, by, at }
   assignedFrom: { type: mongoose.Schema.Types.Mixed, default: null },
