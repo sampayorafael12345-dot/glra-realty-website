@@ -666,6 +666,15 @@ const agentProfileSchema = new mongoose.Schema({
     monthly: { type: [agentCustomActionSchema], default: () => [] }
   },
   hiddenActions: { type: [String], default: () => [] },
+  // Reworded workbook lines: { actionId: text }. Only lines the agent actually
+  // changed are stored, so a future wording fix in ACTION_DEFS still reaches
+  // everyone who left that line alone.
+  renamedActions: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  // How many times an action has to be done in its period: { actionId: n }.
+  // Absent means once. This is the TARGET and nothing else — the tally of what
+  // was actually done lives in AgentAction.entries and only moves when the
+  // agent taps DONE, so setting a target can never mark anything complete.
+  actionTargets: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
   // Which automatic emails this agent wants. Both on by default; the workspace
   // has a switch for each.
   emailPrefs: {
@@ -715,12 +724,15 @@ const agentLeadSchema = new mongoose.Schema({
   // the "greet them today" reminder. Personal data: visible only to the
   // owning agent and the broker.
   birthday: { type: Date, default: null },
-  category: { type: String, enum: ['Owner', 'Buyer', 'Tenant'], default: 'Buyer' },
+  // Owner / Buyer / Tenant / Broker / Agent, or whatever the agent typed into
+  // the "Other" box. Free text rather than an enum precisely so a category
+  // nobody thought of does not need a code change to record.
+  category: { type: String, default: 'Buyer', trim: true, maxlength: 60 },
   propertyInterest: { type: String, default: '' },
   source: { type: String, default: '' },
   actionToTake: { type: String, default: '' },
-  // Who is handling / co-broking this lead. Free text once the picker resolves,
-  // so "Others" can name someone outside the GLRA roster.
+  // Kept for leads recorded before co-broking became a category. Nothing writes
+  // it any more; it is still read so an old value never silently disappears.
   brokerAgent: { type: String, default: '' },
   stage: { type: String, enum: AGENT_LEAD_STAGES, default: 'Inquiry' },
   // This lead's own pipeline: every stage it has passed through, in order.
@@ -728,6 +740,10 @@ const agentLeadSchema = new mongoose.Schema({
   reasonLost: { type: String, default: '' },
   nextFollowUp: { type: Date, default: null },
   closingDate: { type: Date, default: null },
+  // What the agent actually earned on this deal, entered once it reaches
+  // Closing. Summed on the GPS page against the desired annual GCI so the goal
+  // always reads as "still to earn". The goal itself is never overwritten.
+  commissionEarned: { type: Number, default: 0, min: 0 },
   remarks: { type: String, default: '' },
   // Emails the agent sent this client from the workspace (newest last, capped).
   emailLog: { type: [agentEmailLogSchema], default: () => [] },

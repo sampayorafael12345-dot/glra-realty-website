@@ -369,18 +369,35 @@
   .arow.on{ background:var(--accent-soft); box-shadow:inset 2px 0 0 var(--accent-fill); border-bottom-color:transparent; }
   .arow .txt{ font-size:13.5px; line-height:1.5; color:var(--gray); }
   .arow.on .txt{ color:var(--ink); font-weight:600; }
-  .arow .ctl{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+  .arow .ctl{ display:flex; align-items:center; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
   .arow input.editline{ font-size:13.5px; }
   @media(max-width:560px){
     .arow{ grid-template-columns:1fr; }
     .arow .ctl{ grid-column:1; }
   }
+  /* The target lives under Edit list, captioned, so it can never be mistaken
+     for progress. Nothing in the normal view changes how many are required. */
+  .goalset{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .goallbl{ font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); white-space:nowrap; }
+  /* How far along a repeated action is. Tapping takes one back, so a mis-tap
+     costs one tap to fix instead of clearing the whole line. */
+  .tally{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.04em;
+    height:38px; padding:0 11px; flex-shrink:0; color:var(--gray);
+    border:1px solid var(--line-2); border-radius:999px; background:var(--surface);
+    font-variant-numeric:tabular-nums;
+    transition:color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .tally:hover{ border-color:var(--bad); color:var(--bad); }
+  .tally.on{ color:var(--accent); border-color:var(--accent-line); }
   /* The one-tap path: most actions are done once, so DONE comes first and
      the counter is there for the ones you repeat. */
+  /* One width for all three labels (MARK DONE / MARK ONE / DONE) so the buttons
+     form a straight column instead of stepping in and out as lines are ticked. */
   .tickbtn{
-    display:inline-flex; align-items:center; gap:6px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0;
     background:var(--surface); border:1px solid var(--line-2); border-radius:999px;
-    padding:0 14px; height:38px; color:var(--gray);
+    padding:0 14px; height:38px; min-width:118px; color:var(--gray);
     font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em;
     transition:background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
   }
@@ -455,11 +472,29 @@
   .lrow .meta{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; align-items:center; }
   .filters{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .filters select,.filters input{ width:auto; flex:1; min-width:120px; padding:9px 12px; font-size:13px; }
-  .plrow{ display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  /* Every deal is the same shape: who it is, how far it has come, what to do
+     next. A grid, not flex: with flex the name column absorbed the leftover
+     space, so a long peso amount pushed that row's track sideways and the page
+     read as ragged. Fixed columns make the tracks and the buttons line up all
+     the way down. */
+  .plrow{
+    display:grid; grid-template-columns:minmax(0,1fr) 210px 138px;
+    grid-template-areas:"nm tr ct"; align-items:center; gap:10px 14px;
+    padding:13px 0; border-bottom:1px solid var(--line);
+  }
   .plrow:last-child{ border-bottom:none; }
-  .plrow .pl-nm{ font-weight:700; font-size:14px; min-width:130px; flex:1; }
-  .plrow .pl-tr{ flex:0 0 210px; }
-  @media(max-width:620px){ .plrow .pl-tr{ flex:1 1 100%; } .track{ max-width:none; } }
+  .plrow .pl-nm{ grid-area:nm; font-weight:700; font-size:14px; min-width:0; }
+  .plrow .pl-tr{ grid-area:tr; min-width:0; }
+  /* One line each, always, so no row is taller than its neighbours. */
+  .plrow .csub{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* One fixed box for the control, whichever it is: a peso amount, an Advance
+     button and an Unsuccessful chip all occupy exactly the same rectangle. */
+  .plrow .pl-ct{ grid-area:ct; display:flex; }
+  .plrow .pl-ct > *{ width:100%; min-height:36px; justify-content:center; text-align:center; }
+  @media(max-width:620px){
+    .plrow{ grid-template-columns:minmax(0,1fr) 132px; grid-template-areas:"nm ct" "tr tr"; }
+    .track{ max-width:none; }
+  }
 
   /* ══ PIPELINE (by stage) ══ */
   .stagebar{ display:flex; align-items:center; gap:12px; padding:11px 11px; margin:0 -11px; border-radius:10px; cursor:pointer; transition:background .2s var(--ease); }
@@ -470,9 +505,23 @@
   .stagebar .cnt{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; width:26px; text-align:right; color:var(--accent); }
   .stagelist{ display:none; padding:2px 0 12px 11px; }
   .stagelist.open{ display:block; }
-  .slrow{ display:flex; align-items:center; gap:10px; padding:9px 0 9px 14px; border-left:2px solid var(--line-2); margin:2px 0; font-size:13px; flex-wrap:wrap; color:var(--gray); }
-  .slrow b{ margin-right:auto; color:var(--ink); font-weight:600; }
-  @media(max-width:560px){ .stagebar .sn{ width:110px; font-size:12.5px; } }
+  /* Same shape as .plrow, deliberately: name over category on the left, one
+     fixed control column on the right. The two pipeline views then read as the
+     same list seen two ways, and min-height keeps a row with no button the same
+     height as its neighbours. */
+  .slrow{
+    display:grid; grid-template-columns:minmax(0,1fr) 138px; align-items:center; gap:10px;
+    padding:9px 0 9px 14px; border-left:2px solid var(--line-2); margin:2px 0;
+    min-height:56px; font-size:13px; color:var(--gray);
+  }
+  .slrow .sl-nm{ min-width:0; }
+  .slrow .sl-nm b{ display:block; color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .slrow .sl-nm .csub{ margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .slrow > .btn{ width:100%; }
+  @media(max-width:560px){
+    .stagebar .sn{ width:110px; font-size:12.5px; }
+    .slrow{ grid-template-columns:minmax(0,1fr) 124px; }
+  }
 
   /* ══ CALENDAR ══ */
   .calhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px; }
@@ -734,25 +783,24 @@
       </div>
       <div class="grid2">
         <div class="field"><label>Birthday</label><input type="date" id="lf_birthday"></div>
-        <div class="field"><label>Category</label><select id="lf_category"><option>Owner</option><option selected>Buyer</option><option>Tenant</option></select></div>
+        <div class="field"><label>Category</label><select id="lf_category" onchange="categoryUI()"></select></div>
       </div>
+      <div class="field" id="lf_catOtherWrap" style="display:none"><label>Type the category</label><input id="lf_categoryOther" maxlength="60" placeholder="Developer, lessor, investor"></div>
 
       <div class="sechead">The deal</div>
       <div class="field"><label>Property / interest</label><input id="lf_propertyInterest"></div>
-      <div class="grid2">
-        <div class="field"><label>Source</label><input id="lf_source" placeholder="Referral, FB, walk-in"></div>
-        <div class="field">
-          <label>Broker / agent</label>
-          <select id="lf_brokerSel" onchange="brokerUI()"></select>
-        </div>
-      </div>
-      <div class="field" id="lf_brokerOtherWrap" style="display:none"><label>Name of the broker or agent</label><input id="lf_brokerOther" placeholder="Who is co-broking this?"></div>
+      <div class="field"><label>Source</label><input id="lf_source" placeholder="Referral, FB, walk-in"></div>
 
       <div class="sechead">Next steps</div>
       <div class="field"><label>Action to be taken</label><input id="lf_actionToTake"></div>
       <div class="grid2">
         <div class="field"><label>Next follow-up</label><input type="date" id="lf_nextFollowUp"></div>
         <div class="field" id="lf_closingWrap"><label>Closing date</label><input type="date" id="lf_closingDate"></div>
+      </div>
+      <div class="field" id="lf_commWrap" style="display:none">
+        <label>Commission earned</label>
+        <div class="pfx"><span>&#8369;</span><input class="money" id="lf_commission" inputmode="numeric"></div>
+        <div class="metaline" style="margin-top:7px">Subtracted from your desired annual GCI on the My GPS page.</div>
       </div>
       <div class="field"><label>Remarks</label><textarea id="lf_remarks" rows="2"></textarea></div>
 
@@ -762,6 +810,21 @@
         <button class="btn sm danger" id="leadDelBtn" style="display:none;margin-right:auto" onclick="deleteLead()">Delete</button>
         <button class="btn sm alt" id="leadMailBtn" style="display:none" onclick="openMail()">Email this client</button>
         <button class="btn" id="leadSaveBtn" onclick="saveLead()">Save lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- commission-earned modal -->
+<div class="overlay" id="commOverlay">
+  <div class="modal">
+    <div class="mhead"><h3>Commission earned</h3><button class="x" onclick="closeComm()" aria-label="Close" id="commX"></button></div>
+    <div class="mbody">
+      <p class="note" style="margin-bottom:16px">What you actually earned on <b id="cm_who">this deal</b>. It is subtracted from your desired annual GCI on the My GPS page, so your goal always shows what is left to earn.</p>
+      <div class="field"><label>Amount</label><div class="pfx"><span>&#8369;</span><input class="money" id="cm_amount" inputmode="numeric"></div></div>
+      <div class="mfoot">
+        <button class="btn alt" onclick="closeComm()">Cancel</button>
+        <button class="btn" id="commSaveBtn" onclick="saveComm()">Save amount</button>
       </div>
     </div>
   </div>
@@ -873,7 +936,7 @@ const TAB_IDS = NAV.map(n => n.id);
 // ═════════ state + helpers ═════════
 const TK = 'glraAgentToken';
 const THEME_KEY = 'glraAgentTheme';
-let ME = null, STAGES = [], TEAM = [], LEADS = [], editLeadId = null;
+let ME = null, STAGES = [], LEADS = [], editLeadId = null;
 let calMonth = null, selDay = null, calItems = [];
 const SKELETON = '<div class="card"><div class="cbody"><div class="sk"><i></i><i></i><i></i><i></i></div></div></div>';
 
@@ -1015,7 +1078,10 @@ function buildChrome() {
   $('bellBtnTop').innerHTML = ICON.bell + '<span class="badge" id="bellBadgeTop" style="display:none">0</span>';
   $('exitSide').innerHTML = ICON.exit;
   $('adminLinkSide').innerHTML = ICON.portal; $('adminLinkTop').innerHTML = ICON.portal;
-  ['leadX', 'mailX', 'evX', 'syncX'].forEach(id => { if ($(id)) $(id).innerHTML = ICON.close; });
+  ['leadX', 'commX', 'mailX', 'evX', 'syncX'].forEach(id => { if ($(id)) $(id).innerHTML = ICON.close; });
+  // Bound once, here, and never again: attachCommas adds an input listener, so
+  // re-binding it each time a modal opens would stack duplicates.
+  attachCommas($('lf_commission')); attachCommas($('cm_amount'));
 }
 
 async function enterApp() {
@@ -1033,9 +1099,6 @@ async function enterApp() {
     $('adminLinkSide').style.display = showAdmin; $('adminLinkTop').style.display = showAdmin;
     setBadge(ME.unread);
     showTab('gps');
-    // The team roster only fills a dropdown, so a failure here must not stop
-    // the workspace from loading.
-    api('/api/agent/team').then(r => r.json()).then(d => { TEAM = d.team || []; }).catch(() => {});
   } catch (e) { /* 401 already handled in api() */ }
 }
 function setBadge(n) {
@@ -1109,6 +1172,13 @@ function loadGPS() { renderGPS(); }
 function renderGPS() {
   const p = ME.profile, g = ME.gps;
   const rows4 = (label, o, hl) => `<tr${hl ? ' class="hl"' : ''}><td>${label}</td><td>${fmtN(o.yearly)}</td><td>${fmtN(o.monthly)}</td><td>${fmtN(o.weekly)}</td><td><b>${fmtN(o.daily)}</b></td></tr>`;
+  // Commission is subtracted from the goal for display only. Writing it back
+  // into annualGCI would move the goalposts every time a deal closed, and every
+  // figure below is worked backward from that number.
+  const cm = ME.commission || {};
+  const goal = Number(p.annualGCI) || 0, earned = Number(cm.year) || 0;
+  const left = Math.max(0, goal - earned);
+  const hit = goal ? Math.min(1, earned / goal) : 0;
   $('tab-gps').innerHTML = `
   <div class="card"><div class="chead"><div><h3>My GPS: from annual goal to today</h3><div class="csub">Your numbers</div></div></div>
     <div class="cbody">
@@ -1135,6 +1205,18 @@ function renderGPS() {
       <tr><th></th><th>Yearly</th><th>Monthly</th><th>Weekly</th><th>Daily</th></tr>
       <tr class="hl"><td>Gross Commission Income</td><td>${peso(g.gci.yearly)}</td><td>${peso(g.gci.monthly)}</td><td>${peso(g.gci.weekly)}</td><td><b>${peso(g.gci.daily)}</b></td></tr>
     </table></div>
+  </div>
+  <div class="card"><div class="chead"><div><h3>Commission earned this year</h3><div class="csub">Counted against your goal</div></div><span class="pill">LIVE</span></div>
+    <div class="cbody">
+      <div class="scoregrid">
+        <div class="score"><div class="k">Desired annual GCI</div><div class="v">${peso(goal)}</div><div class="r">YOUR GOAL</div></div>
+        <div class="score"><div class="k">Earned so far</div><div class="v" style="color:var(--ok)">${peso(earned)}</div><div class="r">${cm.dealsYear || 0} DEAL${cm.dealsYear === 1 ? '' : 'S'}</div></div>
+        <div class="score"><div class="k">Still to earn</div><div class="v" style="color:var(--accent)">${peso(left)}</div><div class="r">GOAL MINUS EARNED</div></div>
+      </div>
+      <div class="prog${hit >= 1 ? ' ok' : ''}" style="margin-top:18px"><i style="transform:scaleX(${hit.toFixed(3)})"></i></div>
+      <div class="metaline">${Math.round(hit * 100)}% of your goal earned${left === 0 && goal ? ' · target reached' : ''}</div>
+      <p class="note" style="margin-top:16px">You record this on the <b>Pipeline</b> page: any deal that reaches <b>Closing</b> shows a <b>Commission earned</b> button. Your goal above stays exactly as you set it, so this always reads as goal minus earned rather than quietly shrinking the target.</p>
+    </div>
   </div>
   <div class="card"><div class="chead"><div><h3>Listing goal: seller side</h3></div><span class="pill gold">FORMULA</span></div>
     <div class="cbody tablewrap"><table class="tgt">
@@ -1178,17 +1260,25 @@ async function saveGPS() {
     const d = await res.json();
     if (!res.ok) return toast(d.error || 'Save failed', true);
     ME.profile = d.profile; ME.gps = d.gps;
+    if (d.commission) ME.commission = d.commission;
     renderGPS(); toast('GPS saved. Targets recalculated');
   } catch (e) {}
 }
 
 // ═════════ ACTIONS ═════════
-// Two ways to log: DONE for the one-tap case, and a counter you can type into
-// for the ones you repeat. Edit list turns the same rows into an editor where
-// you can add your own actions, reword them, or switch off ones that do not
-// apply to you.
+// Two numbers per line, and they are deliberately kept apart:
+//
+//   TARGET  how many times this has to be done in the period. Set with the
+//           - / + stepper under "Edit list", where the rest of the list
+//           configuration lives. Changing it never marks anything done.
+//   TALLY   how many times it actually was done. Only MARK DONE moves it.
+//
+// A line reads as complete once the tally reaches the target, so "3 calls a
+// day" stays open at 2 of 3. Edit list also rewords ANY line, the workbook's
+// twelve included, adds your own, and switches off ones that do not apply.
 let ACT = null;
 const actEdit = { daily: false, weekly: false, monthly: false };
+const PERIOD_WORD = { daily: 'day', weekly: 'week', monthly: 'month' };
 
 async function loadActions() {
   $('tab-actions').innerHTML = SKELETON;
@@ -1199,22 +1289,29 @@ async function loadActions() {
   } catch (e) {}
 }
 
+const targetOf = a => { const n = Math.round(Number(a.target)); return n > 1 ? Math.min(99, n) : 1; };
+
 function actionRow(type, a, q, editing) {
-  const on = q > 0;
-  const txt = (editing && a.custom)
-    ? `<input class="editline" value="${esc(a.text)}" onchange="renameCustom('${type}','${a.id}',this.value)" aria-label="Action wording">`
-    : `<div class="txt">${esc(a.text)}${a.custom ? ' <span class="tag">MINE</span>' : ''}</div>`;
+  const target = targetOf(a);
+  const done = q >= target;
+  const txt = editing
+    ? `<input class="editline" value="${esc(a.text)}" onchange="renameAction('${type}','${a.id}',this.value)" aria-label="Action wording">`
+    : `<div class="txt">${esc(a.text)}${a.custom ? ' <span class="tag">MINE</span>' : ''}${target > 1 ? ` <span class="tag">${target}x A ${PERIOD_WORD[type].toUpperCase()}</span>` : ''}</div>`;
   const ctl = editing
-    ? (a.custom
-      ? `<button class="iconsm danger" title="Delete this action" aria-label="Delete this action" onclick="deleteCustom('${type}','${a.id}')">${ICON.trash}</button>`
-      : `<button class="btn sm ghost" onclick="hideStd('${a.id}')">Switch off</button>`)
-    : `<button class="tickbtn${on ? ' on' : ''}" aria-pressed="${on}" onclick="toggleDone('${type}','${a.id}')">${on ? ICON.check : ''}<span>${on ? 'DONE' : 'MARK DONE'}</span></button>
-       <div class="stepper">
-         <button onclick="bump('${type}','${a.id}',-1)" aria-label="One less">${ICON.minus}</button>
-         <input class="q" inputmode="numeric" value="${q}" aria-label="How many times" onchange="setQty('${type}','${a.id}',this.value)" onfocus="this.select()">
-         <button onclick="bump('${type}','${a.id}',1)" aria-label="One more">${ICON.plus}</button>
-       </div>`;
-  return `<div class="arow${on && !editing ? ' on' : ''}">${txt}<div class="ctl">${ctl}</div></div>`;
+    ? `<div class="goalset">
+         <span class="goallbl">Times a ${PERIOD_WORD[type]}</span>
+         <div class="stepper">
+           <button onclick="bumpTarget('${type}','${a.id}',-1)" aria-label="Needs doing one time less">${ICON.minus}</button>
+           <input class="q" inputmode="numeric" value="${target}" aria-label="How many times this must be done" onchange="setTarget('${type}','${a.id}',this.value)" onfocus="this.select()">
+           <button onclick="bumpTarget('${type}','${a.id}',1)" aria-label="Needs doing one time more">${ICON.plus}</button>
+         </div>
+       </div>
+       ${a.custom
+        ? `<button class="iconsm danger" title="Delete this action" aria-label="Delete this action" onclick="deleteCustom('${type}','${a.id}')">${ICON.trash}</button>`
+        : `<button class="btn sm ghost" onclick="hideStd('${a.id}')">Switch off</button>`}`
+    : `${target > 1 && q > 0 ? `<button class="tally${done ? ' on' : ''}" title="Tap to take one back" aria-label="Take one back" onclick="undoOne('${type}','${a.id}')">${q} / ${target}</button>` : ''}
+       <button class="tickbtn${done ? ' on' : ''}" aria-pressed="${done}" title="${done ? 'Tap to clear this' : target > 1 ? 'Logs one of ' + target : 'Mark this done'}" onclick="logDone('${type}','${a.id}')">${done ? ICON.check : ''}<span>${done ? 'DONE' : target > 1 ? 'MARK ONE' : 'MARK DONE'}</span></button>`;
+  return `<div class="arow${done && !editing ? ' on' : ''}">${txt}<div class="ctl">${ctl}</div></div>`;
 }
 
 function renderActions() {
@@ -1222,7 +1319,8 @@ function renderActions() {
   const hiddenSet = new Set(hidden || []);
   const sect = (type, title) => {
     const list = defs[type] || [], ent = entries[type] || {};
-    const done = list.filter(a => Number(ent[a.id]) > 0).length;
+    // Done means the target was reached, not merely touched once.
+    const done = list.filter(a => (Number(ent[a.id]) || 0) >= targetOf(a)).length;
     const editing = actEdit[type];
     const off = (standard[type] || []).filter(a => hiddenSet.has(a.id));
     const pct = list.length ? done / list.length : 0;
@@ -1235,6 +1333,7 @@ function renderActions() {
         </div>
       </div>
       <div class="cbody">
+        ${editing ? `<p class="note" style="margin:0 0 14px">Reword any line by typing over it. <b>Times a ${PERIOD_WORD[type]}</b> sets how many times it has to be done before it counts as finished. It never marks anything done by itself.</p>` : ''}
         ${list.length ? list.map(a => actionRow(type, a, Number(ent[a.id]) || 0, editing)).join('')
           : `<div class="empty"><b>This list is empty</b>Use Edit list to add the actions you want to hold yourself to.</div>`}
         ${editing ? `
@@ -1249,14 +1348,17 @@ function renderActions() {
       </div></div>`;
   };
   $('tab-actions').innerHTML = `
-    <p class="note" style="margin-bottom:14px">Tap <b>MARK DONE</b> as you go, or type a count for anything you repeat. Lists clear themselves: daily at midnight, weekly every Monday, monthly on the 1st, Philippine time. Everything here flows into your Report by itself.</p>
+    <p class="note" style="margin-bottom:14px">Tap <b>MARK DONE</b> as you go. Nothing ticks itself off. For anything you do more than once, <b>Edit list</b> sets how many times a day, week or month it takes, and the counter beside it shows how far you are (tap it to take one back). Lists clear themselves: daily at midnight, weekly every Monday, monthly on the 1st, Philippine time. Everything here flows into your Report by itself.</p>
     ${sect('daily', 'Daily actions')}
     ${sect('weekly', 'Weekly actions')}
     ${sect('monthly', 'Monthly actions')}`;
   reveal($('tab-actions'));
 }
 
-// ── logging a quantity ──
+// ── logging what was actually done ──
+// The tally only ever moves from MARK DONE or the take-one-back counter. There
+// is no control here that both sets a number and completes a line, which is
+// what made the old plus button feel like it ticked itself.
 let qtyTimers = {};
 function pushQty(type, id, q) {
   ACT.entries[type][id] = q;
@@ -1269,35 +1371,57 @@ function pushQty(type, id, q) {
     } catch (e) {}
   }, 400);
 }
-function bump(type, id, delta) {
-  pushQty(type, id, Math.max(0, Math.min(999, (Number(ACT.entries[type][id]) || 0) + delta)));
+const defOf = (type, id) => (ACT.defs[type] || []).find(x => x.id === id);
+function logDone(type, id) {
+  const a = defOf(type, id); if (!a) return;
+  const target = targetOf(a), q = Number(ACT.entries[type][id]) || 0;
+  // Already finished? A second tap clears it, which is how you undo a mistake.
+  pushQty(type, id, q >= target ? 0 : Math.min(999, q + 1));
 }
-function setQty(type, id, val) {
-  const raw = String(val).trim();
-  const digits = raw.replace(/\D/g, '');
-  // Clearing the box means zero. Typing letters means nothing, so put the old
-  // number back instead of silently wiping the count.
-  if (raw && !digits) return renderActions();
-  pushQty(type, id, Math.max(0, Math.min(999, Number(digits) || 0)));
-}
-function toggleDone(type, id) {
-  pushQty(type, id, (Number(ACT.entries[type][id]) || 0) > 0 ? 0 : 1);
+function undoOne(type, id) {
+  pushQty(type, id, Math.max(0, (Number(ACT.entries[type][id]) || 0) - 1));
 }
 
 // ── editing the checklist ──
 function toggleEdit(type) { actEdit[type] = !actEdit[type]; renderActions(); }
+// Whole-list save. Renames are sent for the workbook's lines and targets for
+// every line; the server drops a rename that matches the workbook again and a
+// target of 1, so nothing accumulates as a no-op.
 async function saveActionList() {
-  const custom = {};
+  const custom = {}, renamed = {}, targets = {};
   ['daily', 'weekly', 'monthly'].forEach(t => {
     custom[t] = (ACT.defs[t] || []).filter(a => a.custom).map(a => ({ id: a.id, text: a.text }));
+    (ACT.defs[t] || []).forEach(a => {
+      if (!a.id) return;
+      if (!a.custom) renamed[a.id] = a.text;
+      targets[a.id] = targetOf(a);
+    });
   });
   try {
-    const res = await api('/api/agent/action-list', { method: 'PUT', body: JSON.stringify({ custom, hidden: ACT.hidden || [] }) });
+    const res = await api('/api/agent/action-list', { method: 'PUT', body: JSON.stringify({ custom, hidden: ACT.hidden || [], renamed, targets }) });
     const d = await res.json();
     if (!res.ok) return toast(d.error || 'Could not save the list', true);
     ACT.defs = d.defs; ACT.hidden = d.hidden; ACT.standard = d.standard;
     renderActions();
   } catch (e) {}
+}
+// Holding down + would otherwise fire one whole-list PUT per press.
+let listTimer = null;
+function saveActionListSoon() { clearTimeout(listTimer); listTimer = setTimeout(saveActionList, 600); }
+function setTargetTo(type, id, n) {
+  const a = defOf(type, id); if (!a) return;
+  a.target = Math.max(1, Math.min(99, n));
+  renderActions(); saveActionListSoon();
+}
+function bumpTarget(type, id, delta) {
+  const a = defOf(type, id); if (!a) return;
+  setTargetTo(type, id, targetOf(a) + delta);
+}
+function setTarget(type, id, val) {
+  const digits = String(val).replace(/\D/g, '');
+  // An empty or nonsense box means once, never zero: a line that needs doing
+  // zero times could never be completed and would sit in the report forever.
+  setTargetTo(type, id, Number(digits) || 1);
 }
 function addCustom(type) {
   const el = $('newact_' + type), text = (el?.value || '').trim();
@@ -1307,11 +1431,14 @@ function addCustom(type) {
   el.value = '';
   saveActionList().then(() => toast('Action added'));
 }
-function renameCustom(type, id, text) {
-  const a = (ACT.defs[type] || []).find(x => x.id === id);
+// Any line can be reworded, the workbook's twelve included. Emptying the box is
+// not a delete: it puts the old wording back, because a nameless action is
+// unusable and the workbook lines are switched off, never removed.
+function renameAction(type, id, text) {
+  const a = defOf(type, id);
   if (!a) return;
   const t = String(text).trim();
-  if (!t) return renderActions();
+  if (!t || t === a.text) return renderActions();
   a.text = t;
   saveActionList();
 }
@@ -1343,16 +1470,20 @@ async function loadReport() {
         <span class="pill${s.done && s.done === s.total ? ' ok' : ''}">${s.done}/${s.total}</span></div>
         <div class="cbody">
           ${s.items.length ? `<div class="tablewrap"><table class="tgt">
-            <tr><th>Action taken</th><th>Times</th></tr>
-            ${s.items.map(i => `<tr><td>${esc(i.text)}</td><td><b>${i.qty}</b></td></tr>`).join('')}
-            <tr class="hl"><td>TOTAL LOGGED</td><td><b>${s.qty}</b></td></tr>
+            <tr><th>Action taken</th><th>Times</th><th>Needed</th></tr>
+            ${s.items.map(i => `<tr><td>${esc(i.text)}</td><td><b>${i.qty}</b></td><td>${i.target || 1}</td></tr>`).join('')}
+            <tr class="hl"><td>TOTAL LOGGED</td><td><b>${s.qty}</b></td><td></td></tr>
           </table></div>` : `<div class="empty"><b>Nothing logged in this period yet</b>Tick actions on the Actions page and they appear here on their own.</div>`}
-          ${s.pending.length ? `<details class="mini"><summary>${s.pending.length} still open</summary>${s.pending.map(p => `<div class="prow">${esc(p.text)}</div>`).join('')}</details>` : ''}
+          ${s.pending.length ? `<details class="mini"><summary>${s.pending.length} still open</summary>${s.pending.map(p => `<div class="prow">${esc(p.text)}${p.target > 1 ? ` <span class="tag">${p.qty || 0} OF ${p.target}</span>` : ''}</div>`).join('')}</details>` : ''}
         </div></div>`;
     const cats = r.leads.byCategory, tots = r.leads.totals;
-    const catRow = c => `<tr><td>${c}</td><td>${cats[c]?.today || 0}</td><td>${cats[c]?.week || 0}</td><td>${cats[c]?.month || 0}</td><td>${cats[c]?.year || 0}</td></tr>`;
+    // Categories are whatever the agent has actually used, so the rows come
+    // from the server rather than a hard-coded three.
+    const catNames = r.leads.categories || ['Owner', 'Buyer', 'Tenant'];
+    const catRow = c => `<tr><td>${esc(c)}</td><td>${cats[c]?.today || 0}</td><td>${cats[c]?.week || 0}</td><td>${cats[c]?.month || 0}</td><td>${cats[c]?.year || 0}</td></tr>`;
     const leadPct = Math.min(100, Math.round(tots.year / Math.max(1, r.leads.targetYearly) * 100));
     const salePct = Math.min(100, Math.round(r.sales.closedThisYear / Math.max(1, r.sales.targetYearly) * 100));
+    const earnedYear = (r.sales.commission || {}).year || 0, gciGoal = r.sales.gciGoal || 0;
     const k = r.periodKeys || {};
     $('tab-report').innerHTML = `
     <div class="card"><div class="chead"><div><h3>Score cards: action execution</h3><div class="csub">Straight from your Actions page</div></div></div><div class="cbody">
@@ -1364,7 +1495,7 @@ async function loadReport() {
     <div class="card"><div class="chead"><div><h3>Leads generated</h3><div class="csub">From the lead journal</div></div></div><div class="cbody">
       <div class="tablewrap"><table class="tgt">
         <tr><th>Category</th><th>Today</th><th>This week</th><th>This month</th><th>This year</th></tr>
-        ${catRow('Owner')}${catRow('Buyer')}${catRow('Tenant')}
+        ${catNames.map(catRow).join('')}
         <tr class="hl"><td>TOTAL</td><td>${tots.today}</td><td>${tots.week}</td><td>${tots.month}</td><td>${tots.year}</td></tr>
       </table></div>
       <div style="margin-top:16px"><label>Year progress vs GPS target (${fmtN(r.leads.targetYearly)} leads)</label>
@@ -1373,9 +1504,13 @@ async function loadReport() {
       </div>
     </div></div>
     <div class="card"><div class="chead"><div><h3>Sales closed</h3><div class="csub">This year</div></div></div><div class="cbody">
-      <div class="score" style="max-width:250px"><div class="k">Closed vs target</div><div class="v">${r.sales.closedThisYear}<small>/${fmtN(r.sales.targetYearly)}</small></div></div>
-      <div class="prog" style="margin-top:12px"><i style="transform:scaleX(${(salePct / 100).toFixed(3)})"></i></div>
-      <div class="metaline">${salePct}% of target</div>
+      <div class="scoregrid">
+        <div class="score"><div class="k">Closed vs target</div><div class="v">${r.sales.closedThisYear}<small>/${fmtN(r.sales.targetYearly)}</small></div></div>
+        <div class="score"><div class="k">Commission earned</div><div class="v" style="color:var(--ok)">${peso(earnedYear)}</div><div class="r">THIS YEAR</div></div>
+        <div class="score"><div class="k">Still to earn</div><div class="v" style="color:var(--accent)">${peso(Math.max(0, gciGoal - earnedYear))}</div><div class="r">OF ${peso(gciGoal).toUpperCase()} GOAL</div></div>
+      </div>
+      <div class="prog" style="margin-top:16px"><i style="transform:scaleX(${(salePct / 100).toFixed(3)})"></i></div>
+      <div class="metaline">${salePct}% of your closed-deal target</div>
     </div></div>`;
     reveal($('tab-report'));
   } catch (e) {}
@@ -1417,7 +1552,7 @@ function renderLeads() {
     <div class="cbody">
       <div class="filters">
         <input id="leadQ" placeholder="Search name, property, agent" value="${esc(q)}" oninput="renderLeads()">
-        <select id="leadFC" onchange="renderLeads()"><option value="">All categories</option>${['Owner', 'Buyer', 'Tenant'].map(c => `<option${fc === c ? ' selected' : ''}>${c}</option>`).join('')}</select>
+        <select id="leadFC" onchange="renderLeads()"><option value="">All categories</option>${knownCategories().map(c => `<option${fc === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>
         <select id="leadFS" onchange="renderLeads()"><option value="">All stages</option>${STAGES.map(s => `<option${fs === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
       </div>
       ${shown.length ? shown.map(l => {
@@ -1430,6 +1565,7 @@ function renderLeads() {
             <span class="chip">${esc(l.category)}</span>
             ${stageChip(l.stage)}
             ${fu ? `<span class="chip${overdue ? ' warn' : ' plain'}">${overdue ? 'OVERDUE' : 'FU'} ${dnice(l.nextFollowUp)}</span>` : ''}
+            ${l.commissionEarned > 0 ? `<span class="chip gold">${peso(l.commissionEarned)}</span>` : ''}
             ${l.brokerAgent ? `<span class="chip plain">${esc(l.brokerAgent.slice(0, 28))}</span>` : ''}
             ${l.propertyInterest ? `<span class="chip plain">${esc(l.propertyInterest.slice(0, 30))}</span>` : ''}
           </div>
@@ -1452,21 +1588,31 @@ function renderStagePick() {
   }).join('');
   $('lf_lostWrap').style.display = leadStage === 'Unsuccessful' ? '' : 'none';
   $('lf_closingWrap').style.display = leadStage === 'Closing' ? '' : 'none';
+  $('lf_commWrap').style.display = leadStage === 'Closing' ? '' : 'none';
 }
 function pickStage(i) { leadStage = STAGES[i]; renderStagePick(); }
 
-function brokerOptions(selected) {
-  const names = TEAM.map(t => t.name);
-  const isKnown = selected && names.includes(selected);
-  const opts = [`<option value=""${!selected ? ' selected' : ''}>Just me</option>`]
-    .concat(names.map(n => `<option${isKnown && n === selected ? ' selected' : ''}>${esc(n)}</option>`))
-    .concat([`<option value="__other"${selected && !isKnown ? ' selected' : ''}>Others</option>`]);
-  return opts.join('');
+// Category now covers who the lead is, co-broking included: a lead who is a
+// broker or an agent is that category, which is why there is no separate
+// broker / agent field any more. "Other" takes anything typed in, so a kind of
+// client nobody listed still gets recorded properly instead of as a Buyer.
+const LEAD_CATEGORIES = ['Owner', 'Buyer', 'Tenant', 'Broker', 'Agent'];
+function categoryOptions(selected) {
+  const known = LEAD_CATEGORIES.includes(selected);
+  return LEAD_CATEGORIES
+    .map(c => `<option${c === selected ? ' selected' : ''}>${esc(c)}</option>`)
+    .concat([`<option value="__other"${selected && !known ? ' selected' : ''}>Other (type it in)</option>`])
+    .join('');
 }
-function brokerUI() {
-  const other = $('lf_brokerSel').value === '__other';
-  $('lf_brokerOtherWrap').style.display = other ? '' : 'none';
-  if (other) $('lf_brokerOther').focus();
+function categoryUI() {
+  const other = $('lf_category').value === '__other';
+  $('lf_catOtherWrap').style.display = other ? '' : 'none';
+  if (other) $('lf_categoryOther').focus();
+}
+// Every category in play: the five standard ones plus anything agents have
+// typed, so the filter offers what actually exists in the journal.
+function knownCategories() {
+  return [...new Set(LEAD_CATEGORIES.concat(LEADS.map(l => String(l.category || '').trim()).filter(Boolean)))];
 }
 
 function openLead(id) {
@@ -1476,16 +1622,20 @@ function openLead(id) {
   $('leadDelBtn').style.display = l ? '' : 'none';
   $('leadMailBtn').style.display = (l && l.email) ? '' : 'none';
   $('lf_name').value = l?.name || ''; $('lf_contactNo').value = l?.contactNo || ''; $('lf_email').value = l?.email || '';
-  $('lf_birthday').value = dstr(l?.birthday); $('lf_category').value = l?.category || 'Buyer';
+  $('lf_birthday').value = dstr(l?.birthday);
   $('lf_propertyInterest').value = l?.propertyInterest || ''; $('lf_source').value = l?.source || '';
   $('lf_actionToTake').value = l?.actionToTake || '';
   $('lf_nextFollowUp').value = dstr(l?.nextFollowUp); $('lf_closingDate').value = dstr(l?.closingDate);
   $('lf_reasonLost').value = l?.reasonLost || ''; $('lf_remarks').value = l?.remarks || '';
+  // Set directly, not through attachCommas: that is bound once at start-up, and
+  // re-binding it here would stack a new listener every time a lead is opened.
+  const cm = Number(l?.commissionEarned) || 0;
+  $('lf_commission').value = cm ? cm.toLocaleString('en-US') : '';
 
-  const ba = (l?.brokerAgent || '').trim();
-  $('lf_brokerSel').innerHTML = brokerOptions(ba);
-  $('lf_brokerOther').value = (ba && !TEAM.some(t => t.name === ba)) ? ba : '';
-  brokerUI();
+  const cat = String(l?.category || 'Buyer').trim() || 'Buyer';
+  $('lf_category').innerHTML = categoryOptions(cat);
+  $('lf_categoryOther').value = LEAD_CATEGORIES.includes(cat) ? '' : cat;
+  categoryUI();
 
   leadStage = l?.stage || 'Inquiry';
   renderStagePick();
@@ -1504,17 +1654,21 @@ function historyHtml(l) {
 function closeLead() { $('leadOverlay').classList.remove('open'); }
 
 async function saveLead() {
-  const sel = $('lf_brokerSel').value;
+  const catSel = $('lf_category').value;
+  const category = catSel === '__other' ? $('lf_categoryOther').value.trim() : catSel;
   const bodyOut = {
     name: $('lf_name').value.trim(), contactNo: $('lf_contactNo').value.trim(), email: $('lf_email').value.trim(),
-    birthday: $('lf_birthday').value || '', category: $('lf_category').value,
+    birthday: $('lf_birthday').value || '', category,
     propertyInterest: $('lf_propertyInterest').value.trim(), source: $('lf_source').value.trim(),
-    brokerAgent: sel === '__other' ? $('lf_brokerOther').value.trim() : sel,
     stage: leadStage, actionToTake: $('lf_actionToTake').value.trim(),
     nextFollowUp: $('lf_nextFollowUp').value || '', closingDate: $('lf_closingDate').value || '',
+    // Only meaningful at Closing, and that is the only stage where the field is
+    // on screen, so anything typed earlier is not carried in by accident.
+    commissionEarned: leadStage === 'Closing' ? numOf('lf_commission') : 0,
     reasonLost: $('lf_reasonLost').value.trim(), remarks: $('lf_remarks').value.trim()
   };
   if (!bodyOut.name) return toast('Client name is required', true);
+  if (!category) return toast('Type the category, or pick one from the list', true);
   const btn = $('leadSaveBtn'); btn.disabled = true;
   try {
     const res = await api(editLeadId ? '/api/agent/leads/' + editLeadId : '/api/agent/leads',
@@ -1591,11 +1745,21 @@ function daysInStage(l) {
   if (!since) return null;
   return Math.max(0, Math.floor((Date.now() - new Date(since).getTime()) / 86400000));
 }
+// The extra button a deal earns once it reaches Closing. Filled while the amount
+// is still missing, so an unrecorded closing stands out; quiet once it is in.
+function commBtn(l) {
+  const amt = Number(l.commissionEarned) || 0;
+  return `<button class="btn sm${amt ? ' alt' : ''}" onclick="event.stopPropagation();openComm('${l._id}')" title="${amt ? 'Change the commission recorded' : 'Record what you earned'}">${amt ? peso(amt) : 'Commission earned'}</button>`;
+}
 function renderPipeline() {
   const { byStage, metrics, anniversaries } = PIPE;
   const max = Math.max(1, ...STAGES.map(s => (byStage[s] || []).length));
+  // Live deals first and the furthest along at the top, because those are the
+  // ones you can still act on. Closed sits below them, and Unsuccessful last:
+  // sorting on the raw stage number alone put lost deals at the very top.
+  const band = s => (s === 'Unsuccessful' ? 2 : s === 'Closing' ? 1 : 0);
   const all = STAGES.flatMap(s => (byStage[s] || []).map(l => ({ ...l, _i: stageIdx(s) })))
-    .sort((a, b) => b._i - a._i || String(a.name).localeCompare(String(b.name)));
+    .sort((a, b) => band(a.stage) - band(b.stage) || b._i - a._i || String(a.name).localeCompare(String(b.name)));
 
   const byStageView = `
     ${STAGES.map(s => `
@@ -1606,8 +1770,11 @@ function renderPipeline() {
       </div>
       <div class="stagelist${openStage === s ? ' open' : ''}">
         ${(byStage[s] || []).length ? (byStage[s] || []).map(l => `
-          <div class="slrow"><b>${esc(l.name)}</b><span class="chip plain">${esc(l.category)}</span>
-          ${stageIdx(s) < STAGES.length - 2 ? `<button class="btn sm alt" onclick="event.stopPropagation();advance('${l._id}',${stageIdx(s)})">Advance ${ICON.right}</button>` : ''}</div>`).join('')
+          <div class="slrow">
+            <div class="sl-nm"><b>${esc(l.name)}</b><div class="csub">${esc(l.category)}${l.commissionEarned > 0 ? ' · ' + peso(l.commissionEarned) : ''}</div></div>
+            ${s === 'Closing' ? commBtn(l)
+              : stageIdx(s) < STAGES.length - 2 ? `<button class="btn sm alt" onclick="event.stopPropagation();advance('${l._id}',${stageIdx(s)})">Advance ${ICON.right}</button>` : ''}
+          </div>`).join('')
           : '<div class="note" style="padding:6px 0 6px 14px">Nothing here.</div>'}
       </div>`).join('')}`;
 
@@ -1615,8 +1782,10 @@ function renderPipeline() {
     const d = daysInStage(l);
     return `<div class="plrow">
       <div class="pl-nm">${esc(l.name)}<div class="csub" style="margin-top:2px">${esc(l.category)}${l.brokerAgent ? ' · ' + esc(l.brokerAgent) : ''}</div></div>
-      <div class="pl-tr">${trackHtml(l.stage)}<div class="csub" style="margin-top:6px">${esc(l.stage)}${d !== null ? ` · ${d} day${d === 1 ? '' : 's'} in stage` : ''}</div></div>
-      ${l._i < STAGES.length - 2 ? `<button class="btn sm alt" onclick="advance('${l._id}',${l._i})">Advance ${ICON.right}</button>` : `<span class="chip stage${l.stage === 'Closing' ? ' closing' : ' lost'}">${esc(l.stage)}</span>`}
+      <div class="pl-tr">${trackHtml(l.stage)}<div class="csub" style="margin-top:6px">${esc(l.stage)}${d !== null ? ` · ${d} day${d === 1 ? '' : 's'}` : ''}</div></div>
+      <div class="pl-ct">${l.stage === 'Closing' ? commBtn(l)
+        : l._i < STAGES.length - 2 ? `<button class="btn sm alt" onclick="advance('${l._id}',${l._i})">Advance ${ICON.right}</button>`
+        : `<span class="chip stage lost">${esc(l.stage)}</span>`}</div>
     </div>`;
   }).join('') : '<div class="empty"><b>No leads yet</b>Add a lead and its own pipeline appears here.</div>';
 
@@ -1634,6 +1803,7 @@ function renderPipeline() {
       <div class="score"><div class="k">Closed (won)</div><div class="v" style="color:var(--ok)">${metrics.closed}</div></div>
       <div class="score"><div class="k">Unsuccessful</div><div class="v" style="color:var(--gray)">${metrics.lost}</div></div>
       <div class="score"><div class="k">Success rate</div><div class="v">${Math.round(metrics.successRate * 100)}%</div></div>
+      <div class="score"><div class="k">Commission earned</div><div class="v" style="color:var(--accent)">${peso((PIPE.commission || {}).year || 0)}</div><div class="r">THIS YEAR</div></div>
     </div>
   </div></div>
   <div class="card"><div class="chead"><div><h3>Closing anniversaries</h3><div class="csub">Reconnect yearly</div></div></div><div class="cbody">
@@ -1651,6 +1821,51 @@ async function advance(id, fromIdx) {
     const res = await api('/api/agent/leads/' + id, { method: 'PUT', body: JSON.stringify({ stage: next }) });
     if (!res.ok) return toast('Could not move the deal', true);
     toast('Moved to ' + next); openStage = next; loadPipeline();
+  } catch (e) {}
+}
+
+// ═════════ COMMISSION EARNED ═════════
+// Recorded per deal, then summed against the GPS goal. Saved through the normal
+// lead update, so there is one place the amount can be written and the lead's
+// own Commission earned field on the Leads page edits the very same number.
+let commLeadId = null;
+function findLead(id) {
+  const inPipe = PIPE ? Object.keys(PIPE.byStage || {}).reduce((all, s) => all.concat(PIPE.byStage[s] || []), []) : [];
+  return inPipe.find(x => String(x._id) === String(id)) || LEADS.find(x => String(x._id) === String(id)) || null;
+}
+function openComm(id) {
+  const l = findLead(id);
+  if (!l) return toast('Could not find that deal', true);
+  commLeadId = id;
+  $('cm_who').textContent = l.name || 'this deal';
+  const amt = Number(l.commissionEarned) || 0;
+  $('cm_amount').value = amt ? amt.toLocaleString('en-US') : '';
+  $('commOverlay').classList.add('open');
+  setTimeout(() => $('cm_amount').focus(), 60);
+}
+function closeComm() { $('commOverlay').classList.remove('open'); commLeadId = null; }
+async function saveComm() {
+  if (!commLeadId) return;
+  const amount = numOf('cm_amount');
+  const btn = $('commSaveBtn'); btn.disabled = true;
+  try {
+    const res = await api('/api/agent/leads/' + commLeadId, { method: 'PUT', body: JSON.stringify({ commissionEarned: amount }) });
+    const d = await res.json();
+    if (!res.ok) return toast((d.errors?.[0]?.msg) || d.error || 'Could not save the amount', true);
+    closeComm();
+    toast(amount ? 'Recorded ' + peso(amount) + ' earned' : 'Commission cleared');
+    // The GPS "still to earn" figure is computed server-side, so re-read it
+    // rather than adjusting a number here and hoping the two agree.
+    await refreshMe();
+    loadPipeline();
+  } catch (e) {} finally { btn.disabled = false; }
+}
+async function refreshMe() {
+  try {
+    const res = await api('/api/agent/me');
+    if (!res.ok) return;
+    const d = await res.json();
+    ME = d; STAGES = d.stages || STAGES;
   } catch (e) {}
 }
 

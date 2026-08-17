@@ -71,19 +71,38 @@ const ACTION_DEFS = {
 const ALL_ACTION_IDS = new Set(
   [...ACTION_DEFS.daily, ...ACTION_DEFS.weekly, ...ACTION_DEFS.monthly].map(a => a.id)
 );
+// The workbook's original wording, so a rename that matches it again is simply
+// dropped rather than stored forever as an "override".
+const STD_ACTION_TEXT = new Map(
+  [...ACTION_DEFS.daily, ...ACTION_DEFS.weekly, ...ACTION_DEFS.monthly].map(a => [a.id, a.text])
+);
 const PERIOD_TYPES = ['daily', 'weekly', 'monthly'];
+const MAX_TARGET = 99;
+
+// How many times one action has to be done in its period. Absent, junk or out
+// of range all mean once, so a bad value can never make a line impossible.
+function targetOf(profile, id) {
+  const n = Math.round(Number((profile?.actionTargets || {})[id]));
+  return Number.isFinite(n) && n > 1 ? Math.min(MAX_TARGET, n) : 1;
+}
 
 // The agent's *effective* checklists: the workbook's lines minus the ones they
-// switched off, plus the ones they wrote themselves. Everything downstream —
-// saving a quantity, scoring the report, the unfinished-actions nudge — reads
-// the list through here, so an edited checklist stays consistent everywhere.
+// switched off and with any rewording they applied, plus the ones they wrote
+// themselves, each carrying its target. Everything downstream — saving a
+// quantity, scoring the report, the unfinished-actions nudge — reads the list
+// through here, so an edited checklist stays consistent everywhere.
 function effectiveActionDefs(profile) {
   const hidden = new Set(profile?.hiddenActions || []);
   const custom = profile?.customActions || {};
+  const renamed = profile?.renamedActions || {};
   const out = {};
   PERIOD_TYPES.forEach(t => {
     const own = (custom[t] || []).map(a => ({ id: a.id, text: a.text, custom: true }));
-    out[t] = ACTION_DEFS[t].filter(a => !hidden.has(a.id)).concat(own);
+    out[t] = ACTION_DEFS[t]
+      .filter(a => !hidden.has(a.id))
+      .map(a => ({ id: a.id, text: String(renamed[a.id] || a.text) }))
+      .concat(own)
+      .map(a => ({ ...a, target: targetOf(profile, a.id) }));
   });
   return out;
 }
@@ -107,16 +126,37 @@ function nudgeScope(manilaDate) {
 }
 
 // Which lines of a period are done, and which are still open. `entries` is the
-// { actionId: qty } map from an AgentAction doc.
+// { actionId: qty } map from an AgentAction doc; `defs` carry the target. A line
+// counts as done only once the tally reaches its target, so "3 calls a day"
+// stays open at 2 of 3 instead of ticking itself off on the first one.
 function splitActions(defs, entries) {
   const e = entries || {};
-  const done = defs.filter(a => Number(e[a.id]) > 0);
+  const qty = a => Number(e[a.id]) || 0;
+  const want = a => (Number(a.target) > 1 ? Math.min(MAX_TARGET, Math.round(Number(a.target))) : 1);
+  const row = a => ({ id: a.id, text: a.text, qty: qty(a), target: want(a) });
   return {
-    done: done.map(a => ({ id: a.id, text: a.text, qty: Number(e[a.id]) || 0 })),
-    pending: defs.filter(a => !(Number(e[a.id]) > 0)).map(a => ({ id: a.id, text: a.text })),
+    done: defs.filter(a => qty(a) >= want(a)).map(row),
+    pending: defs.filter(a => qty(a) < want(a)).map(row),
     total: defs.length,
-    qty: defs.reduce((s, a) => s + (Number(e[a.id]) || 0), 0)
+    qty: defs.reduce((s, a) => s + qty(a), 0)
   };
+}
+
+// Commission the agent has actually banked, from the amounts they entered on
+// deals that reached Closing. The year bucket dates a deal by its closing date
+// where there is one and falls back to when the record last moved, which is how
+// the report already counts closings.
+async function commissionTotals(accountId, yearStart) {
+  const rows = await AgentLead.find({ account: accountId, commissionEarned: { $gt: 0 } })
+    .select('commissionEarned closingDate updatedAt').lean();
+  let year = 0, total = 0, dealsYear = 0;
+  rows.forEach(l => {
+    const amt = Number(l.commissionEarned) || 0;
+    total += amt;
+    const when = l.closingDate || l.updatedAt;
+    if (when && new Date(when) >= yearStart) { year += amt; dealsYear += 1; }
+  });
+  return { year, total, deals: rows.length, dealsYear };
 }
 
 // ── MANILA TIME ──────────────────────────────────────────────
@@ -253,15 +293,16 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   // ── ME: profile + computed GPS + badge counts ──
   app.get('/api/agent/me', verifyToken, requireAgentRole, async (req, res) => {
     try {
-      const [profile, account, unread] = await Promise.all([
+      const [profile, account, unread, commission] = await Promise.all([
         getOrCreateProfile(req.user.sub),
         Account.findById(req.user.sub).select('name email createdAt').lean(),
-        AgentNotification.countDocuments({ account: req.user.sub, read: false })
+        AgentNotification.countDocuments({ account: req.user.sub, read: false }),
+        commissionTotals(req.user.sub, manilaPeriodStarts().yearStart)
       ]);
       res.json({
         name: account?.name || '', email: account?.email || '',
         role: req.user.role, since: account?.createdAt || null,
-        profile, gps: computeGPS(profile), unread,
+        profile, gps: computeGPS(profile), unread, commission,
         calFeedPath: profile.calToken ? `/api/agent-cal/${profile.calToken}` : null,
         stages: AGENT_LEAD_STAGES
       });
@@ -294,7 +335,8 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         }
         profile.updatedAt = new Date();
         await profile.save();
-        res.json({ success: true, profile, gps: computeGPS(profile) });
+        const commission = await commissionTotals(req.user.sub, manilaPeriodStarts().yearStart);
+        res.json({ success: true, profile, gps: computeGPS(profile), commission });
       } catch (e) { console.error('agent/gps error:', e); res.status(500).json({ error: 'Server error' }); }
     });
 
@@ -356,6 +398,8 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     verifyToken, requireAgentRole,
     body('custom').optional().isObject(),
     body('hidden').optional().isArray({ max: 40 }),
+    body('renamed').optional().isObject(),
+    body('targets').optional().isObject(),
     handleValidation,
     async (req, res) => {
       try {
@@ -377,6 +421,33 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         }
         if (Array.isArray(req.body.hidden)) {
           profile.hiddenActions = req.body.hidden.map(String).filter(id => ALL_ACTION_IDS.has(id));
+        }
+        // Rewording a workbook line. Only the ids we shipped can be renamed —
+        // a custom line's text is edited through `custom` above — and text that
+        // matches the workbook again is dropped rather than stored as a no-op.
+        if (req.body.renamed && typeof req.body.renamed === 'object') {
+          const out = {};
+          Object.keys(req.body.renamed).slice(0, 80).forEach(id => {
+            if (!ALL_ACTION_IDS.has(id)) return;
+            const text = String(req.body.renamed[id] || '').trim().slice(0, 200);
+            if (text && text !== STD_ACTION_TEXT.get(id)) out[id] = text;
+          });
+          profile.renamedActions = out;
+          profile.markModified('renamedActions');
+        }
+        // Targets are read after the custom ids above are minted, so a line the
+        // agent just added can carry one. A target of 1 is the default and is
+        // never stored, which keeps the profile from filling up with no-ops.
+        if (req.body.targets && typeof req.body.targets === 'object') {
+          const known = effectiveActionIds(profile);
+          const out = {};
+          Object.keys(req.body.targets).slice(0, 160).forEach(id => {
+            if (!known.has(id)) return;
+            const n = Math.round(Number(req.body.targets[id]));
+            if (Number.isFinite(n) && n > 1 && n <= MAX_TARGET) out[id] = n;
+          });
+          profile.actionTargets = out;
+          profile.markModified('actionTargets');
         }
         profile.updatedAt = new Date();
         await profile.save();
@@ -454,7 +525,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     try {
       const keys = currentKeys();
       const { dayStart, monday, monthStart, yearStart } = manilaPeriodStarts();
-      const [profile, actionDocs, leadAgg, closedThisYear] = await Promise.all([
+      const [profile, actionDocs, leadAgg, closedThisYear, commission] = await Promise.all([
         getOrCreateProfile(req.user.sub),
         AgentAction.find({
           account: req.user.sub,
@@ -477,7 +548,8 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         AgentLead.countDocuments({
           account: req.user.sub, stage: 'Closing',
           $or: [{ closingDate: { $gte: yearStart } }, { closingDate: null, updatedAt: { $gte: yearStart } }]
-        })
+        }),
+        commissionTotals(req.user.sub, yearStart)
       ]);
       const gps = computeGPS(profile);
       const defs = effectiveActionDefs(profile);
@@ -492,19 +564,33 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
           items: s.done, pending: s.pending
         };
       };
-      const cats = { Owner: {}, Buyer: {}, Tenant: {} };
-      leadAgg.forEach(g => { cats[g._id] = { today: g.today, week: g.week, month: g.month, year: g.year }; });
-      const sum = f => ['Owner', 'Buyer', 'Tenant'].reduce((s, c) => s + (cats[c][f] || 0), 0);
+      // Categories are free text now, so the table is built from whatever the
+      // agent has actually used. The three core ones always appear, even at
+      // zero, so the report doesn't change shape from one day to the next.
+      const CORE_CATS = ['Owner', 'Buyer', 'Tenant'];
+      const cats = {};
+      CORE_CATS.forEach(c => { cats[c] = {}; });
+      leadAgg.forEach(g => {
+        const name = String(g._id || '').trim() || 'Uncategorised';
+        cats[name] = { today: g.today, week: g.week, month: g.month, year: g.year };
+      });
+      const categories = CORE_CATS.concat(
+        Object.keys(cats).filter(c => !CORE_CATS.includes(c)).sort((a, b) => a.localeCompare(b))
+      );
+      const sum = f => categories.reduce((s, c) => s + (cats[c][f] || 0), 0);
       res.json({
         periodKeys: keys,
         actions: { daily: score('daily'), weekly: score('weekly'), monthly: score('monthly') },
         leads: {
-          byCategory: cats,
+          byCategory: cats, categories,
           totals: { today: sum('today'), week: sum('week'), month: sum('month'), year: sum('year') },
           targetYearly: gps.targets.leadsYearly,
           targetDaily: gps.targets.leadsYearly / (profile.workDaysYear || 250)
         },
-        sales: { closedThisYear, targetYearly: gps.targets.salesYearly }
+        sales: {
+          closedThisYear, targetYearly: gps.targets.salesYearly,
+          commission, gciGoal: Number(profile.annualGCI) || 0
+        }
       });
     } catch (e) { console.error('agent/report error:', e); res.status(500).json({ error: 'Server error' }); }
   });
@@ -520,7 +606,9 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     body('contactNo').optional().isString().isLength({ max: 60 }),
     body('email').optional({ values: 'falsy' }).isString().isLength({ max: 200 }),
     body('birthday').optional({ values: 'falsy' }).isISO8601(),
-    body('category').optional().isIn(['Owner', 'Buyer', 'Tenant']),
+    // Free text: the picker offers Owner / Buyer / Tenant / Broker / Agent and
+    // an "Other" box, so a category we never listed is still recordable.
+    body('category').optional().isString().trim().isLength({ min: 1, max: 60 }).withMessage('Type the category'),
     body('propertyInterest').optional().isString().isLength({ max: 300 }),
     body('source').optional().isString().isLength({ max: 120 }),
     body('actionToTake').optional().isString().isLength({ max: 300 }),
@@ -529,6 +617,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     body('reasonLost').optional().isString().isLength({ max: 300 }),
     body('nextFollowUp').optional({ values: 'falsy' }).isISO8601(),
     body('closingDate').optional({ values: 'falsy' }).isISO8601(),
+    body('commissionEarned').optional().isFloat({ min: 0, max: 1e9 }).withMessage('Enter the commission as a number'),
     body('remarks').optional().isString().isLength({ max: 1000 })
   ];
   const LEAD_FIELDS = ['name', 'contactNo', 'email', 'category', 'propertyInterest', 'source', 'actionToTake', 'brokerAgent', 'stage', 'reasonLost', 'remarks'];
@@ -540,6 +629,13 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       if (bodyIn[k] === undefined) return;
       doc[k] = bodyIn[k] ? new Date(String(bodyIn[k]).slice(0, 10)) : null;
     });
+    // Whole pesos. Anything unparseable or negative clears the amount rather
+    // than writing NaN into the figure the GPS page subtracts from.
+    if (bodyIn.commissionEarned !== undefined) {
+      const amt = Math.round(Number(bodyIn.commissionEarned));
+      doc.commissionEarned = Number.isFinite(amt) && amt > 0 ? amt : 0;
+    }
+    if (!String(doc.category || '').trim()) doc.category = 'Buyer';
     // The lead's own pipeline. Stamped the moment the stage changes, and once
     // when the lead is first written, so the trail is complete without anyone
     // maintaining it by hand. Capped so a lead bounced between stages for years
@@ -642,7 +738,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   app.get('/api/agent/pipeline', verifyToken, requireAgentRole, async (req, res) => {
     try {
       const leads = await AgentLead.find({ account: req.user.sub })
-        .select('name category stage actionToTake brokerAgent stageHistory nextFollowUp closingDate updatedAt')
+        .select('name category stage actionToTake brokerAgent stageHistory nextFollowUp closingDate commissionEarned updatedAt')
         .sort({ updatedAt: -1 }).limit(1000).lean();
       const byStage = {};
       AGENT_LEAD_STAGES.forEach(s => { byStage[s] = []; });
@@ -655,6 +751,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       res.json({
         stages: AGENT_LEAD_STAGES, byStage,
         metrics: { active, closed, lost, successRate: (closed + lost) ? closed / (closed + lost) : 0 },
+        commission: await commissionTotals(req.user.sub, manilaPeriodStarts().yearStart),
         anniversaries
       });
     } catch (e) { console.error('agent/pipeline error:', e); res.status(500).json({ error: 'Server error' }); }
