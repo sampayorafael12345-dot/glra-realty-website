@@ -1042,9 +1042,17 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
 //   MORNING (07:00-18:59, guarded by lastDigestKey) - today's follow-ups,
 //     client birthdays, closing anniversaries, diary entries, and the daily
 //     actions still to do. Bell notifications plus one agenda email.
-//   EVENING (19:00 onward, guarded by lastNudgeKey) - what is still unfinished:
-//     daily actions every night, weekly actions Friday to Sunday as the week
-//     closes, monthly actions in the last three days of the month.
+//   AFTERNOON (15:00 onward, guarded by lastNudgeKey) - what is still
+//     unfinished: daily actions every day, weekly actions Friday to Sunday as
+//     the week closes, monthly actions in the last three days of the month.
+//     3pm on the owner's instruction: late enough to be a fair read of the day,
+//     early enough that an agent can still act on it during working hours.
+//
+// The morning window deliberately stays open until 18:59 even though the
+// afternoon pass starts at 15:00. They overlap by design: the two passes have
+// separate day-keys, so on a normal day the agenda has long since gone out, and
+// the overlap only matters after a restart, where it means a late boot still
+// delivers the day's birthdays instead of dropping them.
 //
 // Both guards are 'YYYY-MM-DD' Manila keys, so each pass fires at most once a
 // day, and the bell's unique dedupeKey means a re-run can never double-post.
@@ -1084,8 +1092,8 @@ function startAgentTick({ sendEmail, esc }) {
       const now = manilaNow();
       const hour = now.getUTCHours();
       const isMorning = hour >= 7 && hour < 19;
-      const isEvening = hour >= 19;
-      if (!isMorning && !isEvening) return; // small hours: nothing to send
+      const isAfternoon = hour >= 15;
+      if (!isMorning && !isAfternoon) return; // small hours: nothing to send
       const todayKey = dayKeyOf(now);
       const todayMD = todayKey.slice(5);
       // Admins are included: the broker can use the workspace herself. The
@@ -1097,8 +1105,8 @@ function startAgentTick({ sendEmail, esc }) {
           const profile = await AgentProfile.findOne({ account: agent._id });
           if (!profile) continue;
           const morningDue = isMorning && profile.lastDigestKey !== todayKey;
-          const eveningDue = isEvening && profile.lastNudgeKey !== todayKey;
-          if (!morningDue && !eveningDue) continue;
+          const nudgeDue = isAfternoon && profile.lastNudgeKey !== todayKey;
+          if (!morningDue && !nudgeDue) continue;
 
           const notify = async (dedupeKey, type, message, leadId) => {
             try {
@@ -1149,8 +1157,8 @@ function startAgentTick({ sendEmail, esc }) {
             profile.lastDigestKey = todayKey;
           }
 
-          // ── EVENING: what is still unfinished ──
-          if (eveningDue) {
+          // ── AFTERNOON (3pm): what is still unfinished ──
+          if (nudgeDue) {
             const due = nudgeScope(now);
             const scope = [
               { type: 'daily', label: 'Daily actions', due: due.daily },
@@ -1169,11 +1177,11 @@ function startAgentTick({ sendEmail, esc }) {
             if (blocks.length && agent.email && prefs.actionNudge !== false) {
               sendEmail(agent.email, `Still open today — ${todayKey}`,
                 getEmailHeader() + `
-                <h2 style="color:#0a1628;">Before you close the day, ${esc(agent.name || 'Agent')}</h2>
-                <p style="font-size:15px;color:#333">These are still unticked. Even one or two tonight keeps your numbers honest.</p>
+                <h2 style="color:#0a1628;">Still to do today, ${esc(agent.name || 'Agent')}</h2>
+                <p style="font-size:15px;color:#333">These are still unticked with hours left in the day. Even one or two now keeps your numbers honest.</p>
                 ${blocks.join('')}
                 ${CTA}
-                <p style="font-size:12px;color:#888;margin-top:18px">You can switch this reminder off under Settings in your workspace.</p>`
+                <p style="font-size:12px;color:#888;margin-top:18px">You can switch this reminder off under Profile in your workspace.</p>`
                 + getEmailFooter()
               ).catch(err => console.error('nudge email failed:', err.message));
             }
