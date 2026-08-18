@@ -1039,7 +1039,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
 // =============================================================================
 // Runs every 10 minutes and makes two passes per agent per day:
 //
-//   MORNING (07:00-18:59, guarded by lastDigestKey) - today's follow-ups,
+//   MORNING (09:00-18:59, guarded by lastDigestKey) - today's follow-ups,
 //     client birthdays, closing anniversaries, diary entries, and the daily
 //     actions still to do. Bell notifications plus one agenda email.
 //   AFTERNOON (15:00 onward, guarded by lastNudgeKey) - what is still
@@ -1091,7 +1091,7 @@ function startAgentTick({ sendEmail, esc }) {
     try {
       const now = manilaNow();
       const hour = now.getUTCHours();
-      const isMorning = hour >= 7 && hour < 19;
+      const isMorning = hour >= 9 && hour < 19;
       const isAfternoon = hour >= 15;
       if (!isMorning && !isAfternoon) return; // small hours: nothing to send
       const todayKey = dayKeyOf(now);
