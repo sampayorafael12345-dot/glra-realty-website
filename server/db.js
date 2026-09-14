@@ -501,7 +501,9 @@ const PERMISSION_KEYS = [
   'titling_view',        // see the Titling tab
   'titling_manage',      // add / edit / delete titling jobs
   'notarial_view',       // see the Notarial tab
-  'notarial_manage'      // add / edit / delete notarial records + cash ledger
+  'notarial_manage',     // add / edit / delete notarial records + cash ledger
+  'leasing_view',        // see the Leasing tab (leases, rent roll, statements)
+  'leasing_manage'       // add / edit leases, record payments, send tenant emails
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
@@ -549,7 +551,9 @@ function defaultPermissionsForRole(role) {
     titling_view: false,
     titling_manage: false,
     notarial_view: false,
-    notarial_manage: false
+    notarial_manage: false,
+    leasing_view: false,
+    leasing_manage: false
   };
 }
 
@@ -780,6 +784,172 @@ const agentNotificationSchema = new mongoose.Schema({
 });
 agentNotificationSchema.index({ account: 1, dedupeKey: 1 }, { unique: true });
 
+// ── LEASING ─────────────────────────────────────────────────
+// One document per lease (or prospective lease). The whole life of a rental
+// lives here: who owns it, who rents it, the terms, every peso that came in,
+// the documents, the email trail. Money math (schedule, balance, overdue) is
+// NOT stored — it is recomputed from `payments` + the terms on every read by
+// server/leasing.js, so a corrected payment can never leave a stale balance.
+const LEASE_STAGES = ['prospect', 'viewing', 'application', 'contract', 'active', 'renewal', 'ended', 'on_hold'];
+
+// Files (contract, IDs, proof of payment) go to Cloudinary as `authenticated`
+// resources, exactly like the owner-intake documents: only the publicId is
+// stored and every view is a signed link that expires in minutes.
+const leaseFileSchema = new mongoose.Schema({
+  publicId:       { type: String, required: true },
+  resourceType:   { type: String, default: 'image' },
+  format:         { type: String, default: '' },
+  bytes:          { type: Number, default: 0 },
+  name:           { type: String, default: '', maxlength: 200 },   // original filename
+  label:          { type: String, default: '', maxlength: 120 },   // 'Contract of Lease', 'Tenant ID', 'Proof of payment'
+  paymentId:      { type: String, default: '' },                   // set when the file is proof for one payment
+  uploadedByName: { type: String, default: '' },
+  uploadedAt:     { type: Date, default: Date.now }
+});
+
+const leasePaymentSchema = new mongoose.Schema({
+  date:      { type: Date, default: null },
+  amount:    { type: Number, default: 0 },
+  // rent/advance pay the rent schedule; deposit is held (never income);
+  // dues/utilities/penalty/other settle one-off charges.
+  kind:      { type: String, enum: ['rent', 'advance', 'deposit', 'dues', 'utilities', 'penalty', 'other'], default: 'rent' },
+  mode:      { type: String, default: 'Cash', trim: true, maxlength: 40 },   // Cash / Bank transfer / GCash / Cheque
+  reference: { type: String, default: '', trim: true, maxlength: 120 },     // bank ref / cheque no.
+  forPeriod: { type: String, default: '', maxlength: 7 },                   // 'YYYY-MM' the payer says it covers
+  note:      { type: String, default: '', maxlength: 500 },
+  receiptNo: { type: String, default: '' },                                 // AR-2026-0001, minted server-side
+  recordedByName: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const leaseChargeSchema = new mongoose.Schema({
+  date:   { type: Date, default: null },
+  label:  { type: String, default: '', trim: true, maxlength: 200 },
+  kind:   { type: String, enum: ['dues', 'utilities', 'penalty', 'repair', 'other'], default: 'other' },
+  amount: { type: Number, default: 0 },
+  note:   { type: String, default: '', maxlength: 500 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const leaseNoteSchema = new mongoose.Schema({
+  at:     { type: Date, default: Date.now },
+  byName: { type: String, default: '' },
+  kind:   { type: String, default: 'note' },   // note | stage | email | payment | system
+  text:   { type: String, default: '', maxlength: 2000 }
+});
+
+const leaseEmailLogSchema = new mongoose.Schema({
+  at:      { type: Date, default: Date.now },
+  to:      { type: String, default: '' },
+  kind:    { type: String, default: '' },
+  subject: { type: String, default: '' },
+  auto:    { type: Boolean, default: false },   // sent by the reminder engine, not a person
+  byName:  { type: String, default: '' }
+});
+
+const leaseSchema = new mongoose.Schema({
+  stage:        { type: String, enum: LEASE_STAGES, default: 'prospect', index: true },
+  stageHistory: { type: [{ stage: String, at: Date, byName: String }], default: [], _id: false },
+  // ── the unit ──
+  propertyId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: null },
+  propertyTitle: { type: String, default: '', trim: true, maxlength: 200 },
+  unit:          { type: String, default: '', trim: true, maxlength: 80 },
+  address:       { type: String, default: '', trim: true, maxlength: 300 },
+  propertyType:  { type: String, default: '', trim: true, maxlength: 60 },
+  furnished:     { type: String, enum: ['', 'unfurnished', 'semi', 'full'], default: '' },
+  parkingSlots:  { type: Number, default: 0 },
+  // When the lease goes Active the linked listing is hidden from the website
+  // (status 'sold', which the admin labels Sold / Leased). Relisting is a
+  // deliberate button on an ended lease, never automatic.
+  hideListingWhileActive: { type: Boolean, default: true },
+  // ── the owner (lessor) ──
+  ownerName:    { type: String, default: '', trim: true, maxlength: 200 },
+  ownerPhone:   { type: String, default: '', trim: true, maxlength: 50 },
+  ownerEmail:   { type: String, default: '', trim: true, maxlength: 120 },
+  ownerAddress: { type: String, default: '', trim: true, maxlength: 300 },
+  managedByGLRA:    { type: Boolean, default: false },   // GLRA collects rent for the owner
+  managementFeePct: { type: Number, default: 0 },        // % of collected rent kept as management fee
+  // ── the tenant (lessee) ──
+  tenantName:       { type: String, default: '', trim: true, maxlength: 200 },
+  tenantPhone:      { type: String, default: '', trim: true, maxlength: 50 },
+  tenantEmail:      { type: String, default: '', trim: true, maxlength: 120 },
+  tenantAddress:    { type: String, default: '', trim: true, maxlength: 300 },
+  tenantIdType:     { type: String, default: '', trim: true, maxlength: 60 },
+  tenantIdNo:       { type: String, default: '', trim: true, maxlength: 60 },
+  tenantOccupation: { type: String, default: '', trim: true, maxlength: 120 },
+  tenantCompany:    { type: String, default: '', trim: true, maxlength: 120 },
+  occupants:        { type: Number, default: 1 },
+  emergencyName:    { type: String, default: '', trim: true, maxlength: 200 },
+  emergencyPhone:   { type: String, default: '', trim: true, maxlength: 50 },
+  // ── terms ──
+  startDate:      { type: Date, default: null },
+  endDate:        { type: Date, default: null },
+  termMonths:     { type: Number, default: 12 },
+  monthlyRent:    { type: Number, default: 0 },
+  dueDay:         { type: Number, default: 5 },     // rent falls due on this day each month
+  graceDays:      { type: Number, default: 5 },     // days after the due date before it counts as late
+  escalationPct:  { type: Number, default: 0 },     // yearly increase applied from month 13
+  depositMonths:  { type: Number, default: 2 },
+  depositAmount:  { type: Number, default: 0 },
+  advanceMonths:  { type: Number, default: 1 },
+  advanceAmount:  { type: Number, default: 0 },
+  lateFeeType:    { type: String, enum: ['none', 'percent', 'fixed'], default: 'none' },
+  lateFeeValue:   { type: Number, default: 0 },
+  duesPaidBy:     { type: String, enum: ['', 'tenant', 'owner'], default: 'tenant' },
+  utilitiesIncluded: { type: String, default: '', trim: true, maxlength: 200 },
+  inclusions:     { type: String, default: '', trim: true, maxlength: 500 },   // furniture, appliances, parking slot no.
+  petsAllowed:    { type: Boolean, default: false },
+  viewingAt:      { type: Date, default: null },    // prospect stage: scheduled viewing
+  // ── broker economics ──
+  brokerFeeType:      { type: String, enum: ['one_month', 'percent', 'fixed', 'none'], default: 'one_month' },
+  brokerFeeValue:     { type: Number, default: 0 },   // % of annual rent, or the fixed amount
+  brokerFeePaidBy:    { type: String, enum: ['owner', 'tenant', 'both'], default: 'owner' },
+  brokerFeeCollected: { type: Number, default: 0 },
+  // ── ledger ──
+  payments: { type: [leasePaymentSchema], default: [] },
+  charges:  { type: [leaseChargeSchema], default: [] },
+  files:    { type: [leaseFileSchema], default: [] },
+  notes:    { type: [leaseNoteSchema], default: [] },
+  emailLog: { type: [leaseEmailLogSchema], default: [] },
+  // ── move-in / move-out ──
+  moveInDate:        { type: Date, default: null },
+  moveOutDate:       { type: Date, default: null },
+  moveInNotes:       { type: String, default: '', maxlength: 3000 },   // condition on turnover, meter readings
+  depositDeductions: { type: [{ label: String, amount: Number }], default: [], _id: false },
+  depositRefunded:   { type: Number, default: 0 },
+  depositRefundDate: { type: Date, default: null },
+  renewalDecision:   { type: String, enum: ['', 'undecided', 'renew', 'vacate'], default: '' },
+  // ── automation ──
+  autoEmails:   { type: Boolean, default: true },   // per-lease switch for the reminder engine
+  // Dedupe map for the reminder engine, e.g. { 'rd:2026-10': '2026-10-02' }.
+  // A key present means that reminder already went out; the tick never resends.
+  reminderKeys: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  remarks: { type: String, default: '', maxlength: 5000 },
+  source:  { type: String, default: '' },           // e.g. 'inquiry:<id>'
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' }
+}, { timestamps: true });
+leaseSchema.index({ stage: 1, endDate: 1 });
+leaseSchema.index({ tenantName: 1 });
+
+// ── SETTINGS (key/value) ───────────────────────────────────
+// Small singleton configs such as the leasing reminder preferences and the
+// calendar-feed token. One doc per key; `value` is free-form JSON.
+const settingSchema = new mongoose.Schema({
+  key:       { type: String, required: true, unique: true },
+  value:     { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// ── COUNTERS ───────────────────────────────────────────────
+// Atomic sequence numbers (receipt numbers). findOneAndUpdate + $inc is
+// atomic in MongoDB, so two payments saved at the same second still get
+// different numbers.
+const counterSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  seq: { type: Number, default: 0 }
+});
+
 // ============================================================================
 // COMPILED MODELS
 // ============================================================================
@@ -805,6 +975,9 @@ const AgentAction       = mongoose.model('AgentAction',       agentActionSchema)
 const AgentLead         = mongoose.model('AgentLead',         agentLeadSchema);
 const AgentEvent        = mongoose.model('AgentEvent',        agentEventSchema);
 const AgentNotification = mongoose.model('AgentNotification', agentNotificationSchema);
+const Lease             = mongoose.model('Lease',             leaseSchema);
+const Setting           = mongoose.model('Setting',           settingSchema);
+const Counter           = mongoose.model('Counter',           counterSchema);
 
 module.exports = {
   // models
@@ -830,7 +1003,11 @@ module.exports = {
   AgentLead,
   AgentEvent,
   AgentNotification,
+  Lease,
+  Setting,
+  Counter,
   AGENT_LEAD_STAGES,
+  LEASE_STAGES,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole

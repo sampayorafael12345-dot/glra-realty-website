@@ -21,6 +21,54 @@ const { Property } = require('./db');
 // code) and .body (error response text) on failure.
 
 // Google Gemini (generativelanguage.googleapis.com)
+// ── MODEL RESOLUTION ─────────────────────────────────────────
+// Google retires Gemini model names every few months (gemini-2.0-flash came
+// back 404 in September 2026 and silently took the chatbot down). Rather than
+// hard-code one name, verify the configured/default model against Google's
+// live model list and, if it is gone, pick the newest generally-available
+// Flash model that supports generateContent. Cached for six hours.
+const GEMINI_FALLBACK = 'gemini-2.5-flash';
+let geminiModelCache = { name: null, until: 0 };
+function geminiRank(name) {
+  // Prefer plain Flash, newest version first; avoid previews, lite, tts, image, live, thinking variants.
+  const m = /^gemini-(\d+(?:\.\d+)?)-(flash|pro)(-lite)?(-[a-z0-9-]+)?$/i.exec(name);
+  if (!m) return -1;
+  const ver = parseFloat(m[1]);
+  if (m[4] && /preview|exp|tts|image|live|thinking|audio|native/i.test(m[4])) return -1;
+  let score = ver * 100;
+  if (m[2] === 'flash') score += 30; else score += 10;
+  if (m[3]) score -= 5;   // lite is fine but plain flash first
+  if (m[4]) score -= 1;   // dated suffixes after the bare alias
+  return score;
+}
+async function resolveGeminiModel(apiKey) {
+  const configured = process.env.GEMINI_MODEL || GEMINI_FALLBACK;
+  if (geminiModelCache.name && Date.now() < geminiModelCache.until) return geminiModelCache.name;
+  let choice = configured;
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`);
+    if (r.ok) {
+      const data = await r.json();
+      const names = (data.models || [])
+        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => String(m.name || '').replace(/^models\//, ''));
+      if (names.length) {
+        if (!names.includes(configured)) {
+          const best = names.map(n => [geminiRank(n), n]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0])[0];
+          if (best) {
+            choice = best[1];
+            console.warn(`[chat] Gemini model "${configured}" is not available; using "${choice}" instead. Set GEMINI_MODEL to pin one.`);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[chat] could not read the Gemini model list:', e.message);
+  }
+  geminiModelCache = { name: choice, until: Date.now() + 6 * 3600 * 1000 };
+  return choice;
+}
+
 async function callGemini({ apiKey, systemPrompt, history, message }) {
   const contents = [];
   for (const turn of history || []) {
@@ -32,7 +80,7 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
   }
   contents.push({ role: 'user', parts: [{ text: message }] });
 
-  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const model = await resolveGeminiModel(apiKey);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const body = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -63,6 +111,9 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
   }
   if (!r.ok) {
     const errText = await r.text().catch(() => '');
+    // A 404 means Google retired this model name. Forget the cached choice so
+    // the next call re-reads the live model list and picks a current one.
+    if (r.status === 404) geminiModelCache = { name: null, until: 0 };
     const err = new Error(`Gemini ${r.status}: ${errText.slice(0, 300)}`);
     err.status = r.status; err.body = errText;
     throw err;

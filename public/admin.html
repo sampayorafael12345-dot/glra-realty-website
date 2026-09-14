@@ -1429,6 +1429,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="notarial_view" style="margin-top:6px;display:none">Notarial</div>
       <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
+      <a class="nav-item" data-perm="leasing_view" onclick="switchTab('leasing')" style="display:none"><i class="fas fa-key"></i> Leasing <span class="nav-badge" id="leasingBadge" style="display:none">0</span></a>
       <!-- Agents section — admin only, its own group (broker's team view + door into the workspace) -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Agents</div>
       <a class="nav-item admin-only" onclick="switchTab('agents')" style="display:none"><i class="fas fa-id-badge"></i> Agents</a>
@@ -1506,6 +1507,12 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div class="panel" data-perm="titling_view" style="display:none">
           <div class="panel-head"><div class="panel-title"><i class="fas fa-stamp"></i> Titling pipeline</div><button class="hdr-btn" onclick="switchTab('titling')">Open board</button></div>
           <div class="panel-body"><div class="pipe-strip" id="dashTitlingPipe"></div></div>
+        </div>
+
+        <!-- LEASING (only if the user can see leasing) -->
+        <div class="panel" data-perm="leasing_view" style="display:none">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-key"></i> Leasing · this month</div><button class="hdr-btn" onclick="switchTab('leasing')">Open board</button></div>
+          <div class="panel-body" id="dashLeasing"><div class="dash-loading">Loading…</div></div>
         </div>
 
         <!-- ADMIN-ONLY ANALYTICS (website visitors + team activity) -->
@@ -2103,6 +2110,182 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       </div>
 
       <!-- ACCOUNTS (admin only) -->
+      <!-- LEASING (rentals from prospect to move-out: board, rent roll, ledgers, statements) -->
+      <style>
+      .ls-card{border:1px solid var(--border-color);background:var(--card-bg);padding:10px 11px;cursor:grab;margin-bottom:8px;transition:box-shadow .15s}
+      .ls-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.18)}
+      .ls-card.dragging{opacity:.4}
+      .ls-card.view{cursor:pointer}
+      .ls-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;padding:2px 7px;letter-spacing:.3px;margin:5px 4px 0 0;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+      .ls-chip.bad{background:rgba(239,68,68,.12);color:#dc2626}
+      .ls-chip.warn{background:rgba(245,158,11,.16);color:#b45309}
+      .ls-chip.ok{background:rgba(16,185,129,.12);color:#059669}
+      .ls-chip.dim{background:rgba(100,116,139,.12);color:var(--gray)}
+      .ls-chip.info{background:rgba(59,130,246,.12);color:#2563eb}
+      .ls-tabs{display:flex;gap:0;border-bottom:2px solid var(--border-color);margin:0 0 16px;overflow-x:auto}
+      .ls-tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--gray);cursor:pointer;white-space:nowrap}
+      .ls-tab.active{color:#ff3d00;border-bottom-color:#ff3d00}
+      .ls-tab:disabled{opacity:.4;cursor:not-allowed}
+      .ls-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+      .ls-grid .full{grid-column:1/-1}
+      .ls-grid .two{grid-column:span 2}
+      @media(max-width:760px){.ls-grid{grid-template-columns:1fr 1fr}.ls-grid .two{grid-column:1/-1}}
+      @media(max-width:480px){.ls-grid{grid-template-columns:1fr}}
+      .ls-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+      .ls-kpi{border:1px solid var(--border-color);padding:10px 12px;background:var(--card-bg);cursor:default}
+      .ls-kpi.click{cursor:pointer}
+      .ls-kpi.on{box-shadow:inset 0 0 0 2px #ff3d00}
+      .ls-kpi .k{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)}
+      .ls-kpi .v{font-size:20px;font-weight:700;margin-top:2px;line-height:1.1}
+      .ls-kpi .s{font-size:11px;color:var(--gray);margin-top:3px}
+      .ls-inline{border:1px dashed var(--border-color);padding:14px;margin:10px 0 16px;background:var(--card-bg)}
+      .ls-note{font-size:11.5px;color:var(--gray);line-height:1.6}
+      .ls-sw{display:flex !important;align-items:center;gap:8px;font-size:13px !important;cursor:pointer;color:var(--text-color) !important;font-family:'DM Sans',sans-serif !important;text-transform:none !important;letter-spacing:0 !important;font-weight:400 !important;margin:0 !important}
+      .ls-sw input{width:16px;height:16px;accent-color:#ff3d00;flex-shrink:0}
+      .ls-log{border-left:2px solid var(--border-color);padding:2px 0 2px 12px;margin:0 0 12px}
+      .ls-log .m{font-size:10.5px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-bottom:2px}
+      .ls-log .t{font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+      .ls-pill{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+      .ls-tbl td{vertical-align:top}
+      .ls-tbl .money{white-space:nowrap;font-variant-numeric:tabular-nums}
+      .ls-stagebar{display:flex;gap:3px;margin-top:6px}
+      .ls-stagebar span{flex:1;height:4px;background:var(--border-color)}
+      .ls-stagebar span.on{background:#ff3d00}
+      .ls-preview{border:2px solid var(--border-color);background:var(--card-bg);padding:12px 14px;margin-top:6px;font-size:12.5px;line-height:1.7}
+      .ls-preview b{font-weight:700}
+      #lePreviewFrame{width:100%;height:520px;border:1px solid var(--border-color);background:#fff;margin-top:10px}
+      </style>
+      <div id="tab-leasing" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="lsSearch" placeholder="Search tenant, owner, property, unit…" oninput="renderLeasing()"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:inline-flex;border:1px solid var(--border-color);flex-wrap:wrap">
+              <button class="hdr-btn" id="lsViewBoardBtn" onclick="setLeasingView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
+              <button class="hdr-btn" id="lsViewListBtn" onclick="setLeasingView('list')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
+              <button class="hdr-btn" id="lsViewRollBtn" onclick="setLeasingView('roll')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-file-invoice-dollar"></i> Rent roll</button>
+              <button class="hdr-btn" id="lsViewSettingsBtn" onclick="setLeasingView('settings')" style="border:none"><i class="fas fa-sliders-h"></i> Settings</button>
+            </div>
+            <button class="hdr-btn" onclick="exportLeasingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button class="hdr-btn primary" id="addLeaseBtn" onclick="openLeaseModal()" style="display:none"><i class="fas fa-plus"></i> New lease</button>
+          </div>
+        </div>
+        <div class="ls-kpis" id="lsSummary"></div>
+
+        <!-- BOARD -->
+        <div id="lsBoardWrap" style="overflow-x:auto;padding-bottom:10px">
+          <div id="lsBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
+        </div>
+
+        <!-- LIST -->
+        <div id="lsListWrap" style="display:none">
+          <div id="lsChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
+            <thead id="lsThead"></thead>
+            <tbody id="lsTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
+        </div>
+
+        <!-- RENT ROLL -->
+        <div id="lsRollWrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="display:inline-flex;align-items:center;gap:6px">
+              <button class="hdr-btn" onclick="lsRollNav(-1)" title="Previous month"><i class="fas fa-chevron-left"></i></button>
+              <input type="month" id="lsRollMonth" class="finput" style="padding:7px 10px;font-size:13px" onchange="loadRentRoll(this.value)">
+              <button class="hdr-btn" onclick="lsRollNav(1)" title="Next month"><i class="fas fa-chevron-right"></i></button>
+              <button class="hdr-btn" onclick="loadRentRoll(lsMeta.today.slice(0,7))">This month</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="hdr-btn" onclick="exportRentRollCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+              <button class="hdr-btn primary" onclick="lsDownload('/api/admin/leases/rent-roll.pdf?month='+encodeURIComponent(lsRollMonth)+'&download=1','GLRA-rent-roll-'+lsRollMonth+'.pdf')"><i class="fas fa-file-pdf"></i> Download PDF</button>
+            </div>
+          </div>
+          <div class="ls-kpis" id="lsRollTotals"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
+            <thead><tr><th>Tenant</th><th>Property</th><th>Owner</th><th>Due</th><th>Rent</th><th>Charges</th><th>Collected</th><th>Balance</th><th>Status</th><th></th></tr></thead>
+            <tbody id="lsRollTbody"><tr><td colspan="10"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
+          <div class="ls-note" style="margin-top:8px">Payments are applied to the oldest unpaid rent first, so a month shows as paid only once every earlier month is settled. Association dues, utilities and other charges dated in the month ride along in the Charges column.</div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="lsSettingsWrap" style="display:none">
+          <div class="dash-two">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title"><i class="fas fa-bell"></i> Automatic emails</div></div>
+              <div class="panel-body">
+                <div class="ls-note" style="margin-bottom:14px">The reminder engine runs every half hour. Each message goes out once per lease per month, only to leases whose "Automatic emails" switch is on, and only between 8am and 8pm Manila time.</div>
+                <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+                  <div class="fg"><label class="flbl">Rent reminder, days before due</label><input type="number" id="lsSetReminderDays" class="finput" min="0" max="30"><div class="ls-note">0 switches reminders off.</div></div>
+                  <div class="fg"><label class="flbl">Broker digest hour (Manila)</label><input type="number" id="lsSetDigestHour" class="finput" min="5" max="20"></div>
+                  <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="lsSetOverdue"> Send an overdue notice when the grace period lapses, and a follow-up a week later</label></div>
+                  <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="lsSetDigest"> Email me a morning digest whenever rent is overdue, due soon, a lease is ending, or a deposit is pending</label></div>
+                  <div class="fg full"><label class="flbl">Send the digest and expiry alerts to</label><input type="email" id="lsSetNotifyEmail" class="finput" placeholder="glrarealty@gmail.com"></div>
+                  <div class="fg full"><label class="flbl">Lease-ending alerts (days before the end date)</label><input type="text" id="lsSetExpiryDays" class="finput" placeholder="60, 30, 7"><div class="ls-note">Comma-separated. Each threshold alerts once per lease.</div></div>
+                  <div class="fg full"><label class="flbl">How tenants can pay (shown in reminders and statements)</label><textarea id="lsSetPayInstructions" class="finput" rows="4" placeholder="e.g. BPI savings 1234-5678-90 (Catherine SB Sampayo) · GCash 0917 177 4572 · Send the reference number after paying."></textarea><div class="ls-note">Only tenants of leases you manage receive this. It is never shown on the public website.</div></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-sliders-h"></i> Defaults for new leases</div></div>
+                <div class="panel-body">
+                  <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+                    <div class="fg"><label class="flbl">Rent due day</label><input type="number" id="lsSetDueDay" class="finput" min="1" max="31"></div>
+                    <div class="fg"><label class="flbl">Grace days</label><input type="number" id="lsSetGraceDays" class="finput" min="0" max="60"></div>
+                    <div class="fg"><label class="flbl">Deposit (months)</label><input type="number" id="lsSetDepositMonths" class="finput" min="0" max="24" step="0.5"></div>
+                    <div class="fg"><label class="flbl">Advance rent (months)</label><input type="number" id="lsSetAdvanceMonths" class="finput" min="0" max="24" step="0.5"></div>
+                  </div>
+                  <div class="ls-note" style="margin-top:12px">Rent Control Act (RA 9653) covers residential units renting up to ₱10,000 a month in Metro Manila and other highly urbanised cities (₱5,000 elsewhere): at most one month advance and two months deposit, and a capped yearly increase (1% for 2026 under NHSB Resolution 2024-01 for continuing tenants). Units above the threshold are not covered.</div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="hdr-btn primary" id="lsSetSaveBtn" onclick="saveLeasingSettings()"><i class="fas fa-save"></i> Save settings</button></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-calendar-alt"></i> Phone calendar feed</div></div>
+                <div class="panel-body">
+                  <div class="ls-note">Rent due dates, lease end dates, viewings and move-ins as a calendar you can subscribe to on a phone or in Google Calendar ("Other calendars → From URL"). The link is the password: anyone holding it can read those dates, so keep it private and regenerate it if it leaks.</div>
+                  <div id="lsCalFeed" style="margin-top:12px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEASE MODAL -->
+      <div class="modal-ov" id="leaseModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:1040px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:0 auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px);min-height:min(560px,calc(100vh - 48px))">
+          <div style="background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5;flex-wrap:wrap">
+            <div style="min-width:0">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600;line-height:1.1" id="leTitle">New lease</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:4px" id="leSub"></div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="leHeadBtns"></div>
+            <button onclick="closeLeaseModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;margin-left:auto"><i class="fas fa-times"></i></button>
+          </div>
+          <div id="leScroll" style="padding:18px 24px 24px;overflow-y:auto;min-height:0">
+            <div class="ls-tabs" id="leTabs">
+              <button class="ls-tab active" data-t="details" onclick="leShowTab('details')">Details</button>
+              <button class="ls-tab" data-t="ledger" onclick="leShowTab('ledger')" disabled>Ledger</button>
+              <button class="ls-tab" data-t="docs" onclick="leShowTab('docs')" disabled>Documents</button>
+              <button class="ls-tab" data-t="msgs" onclick="leShowTab('msgs')" disabled>Messages</button>
+              <button class="ls-tab" data-t="log" onclick="leShowTab('log')" disabled>Activity</button>
+            </div>
+            <div id="lePane-details">
+              <div id="leForm"></div>
+              <div style="display:flex;justify-content:space-between;gap:10px;margin-top:22px;flex-wrap:wrap">
+                <div><button class="hdr-btn danger" id="leDeleteBtn" onclick="deleteLease()" style="display:none"><i class="fas fa-trash"></i> Delete lease</button></div>
+                <div style="display:flex;gap:10px"><button class="hdr-btn" onclick="closeLeaseModal()">Cancel</button><button class="hdr-btn primary" id="leSaveBtn" onclick="leSave()"><i class="fas fa-save"></i> Save</button></div>
+              </div>
+            </div>
+            <div id="lePane-ledger" style="display:none"></div>
+            <div id="lePane-docs" style="display:none"></div>
+            <div id="lePane-msgs" style="display:none"></div>
+            <div id="lePane-log" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="leFileInput" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv" onchange="leUploadChosen(this)">
+
       <div id="tab-accounts" style="display:none">
         <!-- Pending signup requests (only shows when there are any) -->
         <div id="pendingList"></div>
@@ -2763,7 +2946,9 @@ const PERM_DEFS = [
   { key: 'titling_view',            name: 'View Titling',            desc: 'Can see the Titling tab and titling jobs' },
   { key: 'titling_manage',          name: 'Manage Titling',          desc: 'Can add, edit, and delete titling jobs' },
   { key: 'notarial_view',           name: 'View Notarial',           desc: 'Can see the Notarial tab and records' },
-  { key: 'notarial_manage',         name: 'Manage Notarial',         desc: 'Can add, edit, and delete notarial records' }
+  { key: 'notarial_manage',         name: 'Manage Notarial',         desc: 'Can add, edit, and delete notarial records' },
+  { key: 'leasing_view',            name: 'View Leasing',            desc: 'Can see the Leasing tab: leases, rent roll, statements' },
+  { key: 'leasing_manage',          name: 'Manage Leasing',          desc: 'Can add/edit leases, record payments, upload documents, email tenants' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -2774,7 +2959,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   accounts_manage: false, audit_view: false,
   tasks_view: true, tasks_create: false, tasks_edit: false, tasks_delete: false,
   submissions_view: true, submissions_import: false, submissions_delete: false,
-  bulkmail_send: false
+  bulkmail_send: false,
+  leasing_view: false, leasing_manage: false
 };
 
 // Check if the currently logged-in user has a permission.
@@ -3101,6 +3287,7 @@ function loadAll(){
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
   if(hasPerm('notarial_view')) loadNotarial();
+  if(hasPerm('leasing_view')) loadLeasing();
   if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
   renderDashboard();
 }
@@ -3179,6 +3366,7 @@ function renderDashboard(){
   try{ renderPortfolio(); }catch(e){}
   try{ renderTopViewed(); }catch(e){}
   try{ renderTitlingPipe(); }catch(e){}
+  try{ renderLeasingPanel(); }catch(e){}
 }
 
 function renderNeedsAttention(){
@@ -3205,6 +3393,12 @@ function renderNeedsAttention(){
     const hold=tData.filter(t=>t.status==='on_hold').length;
     tiles.push({n:hold, lbl:'Titling on hold', ico:'fa-stamp', tab:'titling'});
   }
+  // Leasing: overdue rent + leases ending within 30 days
+  if(hasPerm('leasing_view') && window.lsData){
+    const live=window.lsData.filter(l=>l.stage==='active'||l.stage==='renewal');
+    tiles.push({n:live.filter(l=>l.computed&&l.computed.overdueCount>0).length, lbl:'Overdue rent', ico:'fa-key', tab:'leasing'});
+    tiles.push({n:live.filter(l=>l.computed&&l.computed.daysToEnd!==null&&l.computed.daysToEnd>=0&&l.computed.daysToEnd<=30).length, lbl:'Leases ending in 30 days', ico:'fa-calendar-times', tab:'leasing'});
+  }
   const anyHot=tiles.some(t=>t.n>0);
   if(!anyHot){
     wrap.innerHTML=`<div class="na-clear" style="grid-column:1/-1"><i class="fas fa-circle-check"></i> All caught up — nothing needs your attention</div>`;
@@ -3228,6 +3422,7 @@ function renderQuickActions(){
   if(hasPerm('tasks_create')||isAdmin()) acts.push({ico:'fa-clipboard-list',lbl:'New task',fn:"openNewTask()"});
   if(hasPerm('bulkmail_send')) acts.push({ico:'fa-paper-plane',lbl:'Email campaign',fn:"switchTab('bulkmail')"});
   if(hasPerm('titling_manage')) acts.push({ico:'fa-stamp',lbl:'New titling job',fn:"switchTab('titling')"});
+  if(hasPerm('leasing_manage')) acts.push({ico:'fa-key',lbl:'New lease',fn:"switchTab('leasing');openLeaseModal()"});
   if(hasPerm('hero_upload')) acts.push({ico:'fa-images',lbl:'Hero images',fn:"switchTab('hero')"});
   acts.push({ico:'fa-file-csv',lbl:'Export inquiries',fn:"exportInquiriesCSV()"});
   wrap.innerHTML=acts.map(a=>`<button type="button" class="qa-btn" onclick="${a.fn}"><i class="fas ${a.ico}"></i> ${a.lbl}</button>`).join('');
@@ -3612,7 +3807,8 @@ async function loadInquiries(){
         const delBtn = hasPerm('inquiries_delete') ? `<button class="act act-del" onclick="delInq('${i._id}')" title="Delete"><i class="fas fa-trash"></i></button>` : '';
         const assignedBadge = i.assignedToName ? ` <span style="display:inline-block;background:#ff3d00;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle" title="Assigned by ${esc(i.assignedBy||'')}">&rarr; ${esc(i.assignedToName)}</span>` : '';
         const assignBtn = isAdmin() && !i.assignedToName ? `<button class="act act-view" onclick="openAssign('${i._id}')" title="Assign to an agent"><i class="fas fa-user-tag"></i></button>` : '';
-        return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}${assignedBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${assignBtn}${handledBtn}${delBtn}</div></td></tr>`;
+        const leaseBtn = hasPerm('leasing_manage') ? `<button class="act act-view" onclick="leaseFromInquiry('${i._id}')" title="Turn into a leasing prospect"><i class="fas fa-key"></i></button>` : '';
+        return `<tr style="${handled?'opacity:.6':''}"><td><strong style="font-size:13px">${esc(i.name)}</strong>${handledBadge}${assignedBadge}</td><td style="font-size:12px">${esc(i.email)}</td><td style="font-size:12px">${esc(i.phone||'—')}</td><td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.propertyTitle||'General')}</td><td style="font-size:12px;max-width:360px;white-space:pre-wrap;word-wrap:break-word;line-height:1.5;padding-top:10px;padding-bottom:10px">${esc(i.message||'—')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap;vertical-align:top">${fmtDateShort(i.createdAt)}</td><td style="vertical-align:top"><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">${replyBtn}${assignBtn}${leaseBtn}${handledBtn}${delBtn}</div></td></tr>`;
       }).join(''):
       `<tr><td colspan="7"><div class="empty-st"><i class="fas fa-envelope"></i><p>No inquiries</p></div></td></tr>`;
   }catch(e){console.error(e)}
@@ -8583,8 +8779,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial',agents:'Agents'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena',agents:'Your field agents — scorecards, pipelines, and lead journals'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial',agents:'Agents',leasing:'Leasing'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena',agents:'Your field agents — scorecards, pipelines, and lead journals',leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -8609,6 +8805,9 @@ function switchTab(name){
   if(addNotarialBtn)addNotarialBtn.style.display=showNotarialAdd;
   const addNotarialBtn2=document.getElementById('addNotarialBtn2');
   if(addNotarialBtn2)addNotarialBtn2.style.display=showNotarialAdd;
+  // New lease button — gated by leasing_manage, only on the leasing tab
+  const addLeaseBtn=document.getElementById('addLeaseBtn');
+  if(addLeaseBtn)addLeaseBtn.style.display=(name==='leasing'&&hasPerm('leasing_manage'))?'':'none';
   // Load audit log on visit; stop auto-refresh when leaving the tab
   if(name==='auditlog'){
     loadAuditLog();
@@ -8644,8 +8843,762 @@ function switchTab(name){
     loadNotarial();
     setNotarialView(notarialView);
   }
+  // Refresh leases on tab visit
+  if(name==='leasing' && hasPerm('leasing_view')){
+    loadLeasing();
+    setLeasingView(lsView);
+  }
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// LEASING — board, list, rent roll, settings, lease drawer
+// ═══════════════════════════════════════════════════════════════════════════
+// Server: server/leasing.js. Every lease arrives with `computed` (schedule,
+// balance, overdue, deposit) already worked out, so this file only draws.
+let lsData = [], lsMeta = { today: '', stages: {}, flow: [], settings: {} };
+let lsView = localStorage.getItem('glra_ls_view') || 'board';
+let lsFilter = 'all', lsSort = { key: 'updated', dir: 'desc' }, lsDragId = null;
+let lsCurrent = null, lsTab = 'details', lsRollMonth = '', lsRoll = null, leFormBuilt = false, lePayEditId = null, leUploadCtx = null;
+const LS_ORDER = ['prospect', 'viewing', 'application', 'contract', 'active', 'renewal', 'ended', 'on_hold'];
+const LS_FLOW = ['prospect', 'viewing', 'application', 'contract', 'active', 'renewal', 'ended'];
+const LS_STAGES = {
+  prospect:    { label: 'Prospect',    color: '#64748b', hint: 'Asked about a rental' },
+  viewing:     { label: 'Viewing',     color: '#3b82f6', hint: 'Viewing set or done' },
+  application: { label: 'Application', color: '#8b5cf6', hint: 'Screening and documents' },
+  contract:    { label: 'Contract',    color: '#f59e0b', hint: 'Drafting, signing, deposit' },
+  active:      { label: 'Active',      color: '#10b981', hint: 'Moved in, rent cycle running' },
+  renewal:     { label: 'Renewal',     color: '#d97706', hint: 'Ending soon: renew or vacate' },
+  ended:       { label: 'Ended',       color: '#475569', hint: 'Moved out, deposit settled' },
+  on_hold:     { label: 'On hold',     color: '#ef4444', hint: 'Paused' }
+};
+const LS_LIVE = ['active', 'renewal'];
+const LS_KINDS = { rent: 'Rent', advance: 'Advance rent', deposit: 'Security deposit', dues: 'Association dues', utilities: 'Utilities', penalty: 'Penalty / late fee', other: 'Other' };
+const LS_CHARGE_KINDS = { dues: 'Association dues', utilities: 'Utilities', penalty: 'Penalty / late fee', repair: 'Repair / damage', other: 'Other' };
+const LS_MODES = ['Cash', 'Bank transfer', 'GCash', 'Maya', 'Cheque', 'Other'];
+const LS_DOC_LABELS = ['Contract of Lease', 'Tenant ID', 'Owner ID', 'Authority to Lease / SPA', 'Move-in checklist', 'Move-out checklist', 'Proof of payment', 'Other'];
+const LS_EMAIL_KINDS = [['reminder', 'Rent reminder'], ['overdue', 'Overdue notice'], ['statement', 'Statement of account (PDF attached)'], ['receipt', 'Payment receipt (PDF attached)'], ['renewal', 'Lease ending: renew or move out?'], ['welcome', 'Welcome + lease summary'], ['owner_statement', 'Owner statement (PDF attached)'], ['custom', 'Custom message']];
+const lsStage = k => LS_STAGES[k] || LS_STAGES.prospect;
+const lsD = k => { if (!k) return '—'; const p = String(k).slice(0, 10).split('-'); if (p.length < 3) return '—'; return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); };
+const lsM = ym => { if (!ym) return ''; const [y, m] = ym.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' }); };
+const lsPeso = n => { const v = Math.round((Number(n) || 0) * 100) / 100; return (v < 0 ? '-' : '') + '₱' + Math.abs(v).toLocaleString('en-PH', Number.isInteger(v) ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+const lsWho = l => l.tenantName || 'No tenant yet';
+const lsUnit = l => [l.propertyTitle, l.unit].filter(Boolean).join(' · ');
+const lsNum = v => parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
+const lsStatusPill = st => { const m = { paid: ['Paid', '#10b981'], overdue: ['Overdue', '#dc2626'], partial: ['Partial', '#d97706'], due: ['Due now', '#d97706'], upcoming: ['Upcoming', '#94a3b8'] }[st] || [st, '#94a3b8']; return `<span class="ls-pill" style="background:${m[1]}">${m[0]}</span>`; };
+
+// ── load + summary ──
+async function loadLeasing(){
+  if(!hasPerm('leasing_view')) return;
+  try{
+    const r = await apiFetch('/api/admin/leases'); const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'load failed');
+    lsData = Array.isArray(d.leases) ? d.leases : [];
+    lsMeta = { today: d.today || new Date().toISOString().slice(0, 10), stages: d.stages || {}, flow: d.flow || LS_FLOW, settings: d.settings || {} };
+    window.lsData = lsData;
+    lsUpdateBadge();
+    if(lsCurrent){ const fresh = lsData.find(x => x._id === lsCurrent._id); if(fresh) lsCurrent = fresh; }
+    renderLeasing(); renderDashboard();
+  }catch(e){ console.error('loadLeasing', e); }
+}
+function lsUpdateBadge(){
+  const b = document.getElementById('leasingBadge'); if(!b) return;
+  const n = lsData.filter(l => LS_LIVE.includes(l.stage) && l.computed && l.computed.overdueCount > 0).length;
+  b.textContent = n; b.style.display = n > 0 ? '' : 'none';
+}
+function lsUpsert(doc){
+  const i = lsData.findIndex(x => x._id === doc._id);
+  if(i >= 0) lsData[i] = doc; else lsData.unshift(doc);
+  window.lsData = lsData; lsUpdateBadge();
+}
+function lsMonthStats(month){
+  let expected = 0, collected = 0;
+  lsData.forEach(l => { if(!l.computed || ['prospect', 'viewing', 'application', 'on_hold'].includes(l.stage)) return; const row = (l.computed.schedule || []).find(r => r.month === month); if(row){ expected += row.amount; collected += row.paid; } });
+  return { expected, collected };
+}
+function setLeasingView(v){ lsView = v; localStorage.setItem('glra_ls_view', v); renderLeasing(); if(v === 'roll') loadRentRoll(lsRollMonth || lsMeta.today.slice(0, 7)); if(v === 'settings') renderLeasingSettings(); }
+function setLsFilter(k){ lsFilter = (lsFilter === k) ? 'all' : k; if(lsView === 'board' && lsFilter !== 'all') { lsView = 'list'; localStorage.setItem('glra_ls_view', 'list'); } renderLeasing(); }
+function setLsSort(key){ toggleSort(lsSort, key, (key === 'tenant' || key === 'property' || key === 'stage') ? 'asc' : 'desc'); renderLeasing(); }
+
+function renderLeasing(){
+  const wrap = document.getElementById('tab-leasing'); if(!wrap) return;
+  const canManage = hasPerm('leasing_manage');
+  ['board', 'list', 'roll', 'settings'].forEach(v => {
+    const w = document.getElementById('ls' + v.charAt(0).toUpperCase() + v.slice(1) + 'Wrap'); if(w) w.style.display = lsView === v ? '' : 'none';
+    const b = document.getElementById('lsView' + v.charAt(0).toUpperCase() + v.slice(1) + 'Btn'); if(b){ b.style.background = lsView === v ? '#ff3d00' : ''; b.style.color = lsView === v ? '#fff' : ''; }
+  });
+  // headline numbers
+  const month = lsMeta.today.slice(0, 7), ms = lsMonthStats(month);
+  const live = lsData.filter(l => LS_LIVE.includes(l.stage));
+  const overdue = live.filter(l => l.computed && l.computed.overdueCount > 0);
+  const overdueAmt = overdue.reduce((s, l) => s + l.computed.overdueAmount, 0);
+  const ending = live.filter(l => l.computed && l.computed.daysToEnd !== null && l.computed.daysToEnd >= 0 && l.computed.daysToEnd <= 60);
+  const pipeline = lsData.filter(l => ['prospect', 'viewing', 'application', 'contract'].includes(l.stage));
+  const sum = document.getElementById('lsSummary');
+  if(sum){
+    const card = (key, k, v, s, color) => `<div class="ls-kpi click ${lsFilter === key ? 'on' : ''}" onclick="setLsFilter('${key}')"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s}</div></div>`;
+    sum.innerHTML = card('live', 'Active leases', live.length, `${lsPeso(live.reduce((s, l) => s + (Number(l.monthlyRent) || 0), 0))} a month`)
+      + card('month', 'Rent roll · ' + lsM(month).split(' ')[0], lsPeso(ms.expected), `${lsPeso(ms.collected)} collected${ms.expected ? ' · ' + Math.round(ms.collected / ms.expected * 100) + '%' : ''}`)
+      + card('overdue', 'Overdue', lsPeso(overdueAmt), `${overdue.length} lease${overdue.length === 1 ? '' : 's'}`, overdue.length ? '#dc2626' : 'inherit')
+      + card('ending', 'Ending within 60 days', ending.length, ending.length ? 'renew or turn over' : 'nothing ending soon', ending.length ? '#b45309' : 'inherit')
+      + card('pipeline', 'In the pipeline', pipeline.length, 'prospect to contract');
+  }
+  const q = (document.getElementById('lsSearch')?.value || '').toLowerCase().trim();
+  const matchQ = l => !q || [l.tenantName, l.ownerName, l.propertyTitle, l.unit, l.address, l.tenantEmail, l.tenantPhone, l.ownerEmail, l.remarks].some(v => (v || '').toLowerCase().includes(q));
+  const searched = lsData.filter(matchQ);
+  if(lsView === 'board'){ renderLsBoard(searched, canManage); return; }
+  if(lsView !== 'list') return;
+
+  // stage chips
+  const chips = document.getElementById('lsChips');
+  if(chips){
+    const chip = (key, label, n, color) => `<button type="button" class="hdr-btn" onclick="setLsFilter('${key}')" style="${lsFilter === key ? 'background:#ff3d00;color:#fff;border-color:#ff3d00' : ''}">${label} <span style="opacity:.7">${n}</span></button>`;
+    chips.innerHTML = chip('all', 'All', lsData.length) + LS_ORDER.map(s => chip(s, lsStage(s).label, lsData.filter(l => l.stage === s).length, lsStage(s).color)).join('');
+  }
+  let rows = searched;
+  if(lsFilter === 'live') rows = rows.filter(l => LS_LIVE.includes(l.stage));
+  else if(lsFilter === 'overdue') rows = rows.filter(l => LS_LIVE.includes(l.stage) && l.computed && l.computed.overdueCount > 0);
+  else if(lsFilter === 'ending') rows = rows.filter(l => LS_LIVE.includes(l.stage) && l.computed && l.computed.daysToEnd !== null && l.computed.daysToEnd >= 0 && l.computed.daysToEnd <= 60);
+  else if(lsFilter === 'pipeline') rows = rows.filter(l => ['prospect', 'viewing', 'application', 'contract'].includes(l.stage));
+  else if(lsFilter === 'month') rows = rows.filter(l => l.computed && (l.computed.schedule || []).some(r => r.month === month));
+  else if(lsFilter !== 'all') rows = rows.filter(l => l.stage === lsFilter);
+
+  buildSortHead('lsThead', [['tenant', 'Tenant'], ['property', 'Property'], ['rent', 'Rent'], ['term', 'Term'], ['next', 'Next due'], ['balance', 'Balance'], ['stage', 'Stage'], [null, 'Actions']], lsSort, 'setLsSort');
+  tblSortRows(rows, lsSort, (l, k) => k === 'tenant' ? (l.tenantName || '') : k === 'property' ? lsUnit(l) : k === 'rent' ? (Number(l.monthlyRent) || 0) : k === 'term' ? (l.computed?.end || '') : k === 'next' ? (l.computed?.nextDue?.due || '9999') : k === 'balance' ? (l.computed?.balance || 0) : k === 'stage' ? LS_ORDER.indexOf(l.stage) : new Date(l.updatedAt || l.createdAt || 0).getTime());
+  const tbody = document.getElementById('lsTbody');
+  if(!rows.length){ tbody.innerHTML = `<tr><td colspan="8"><div class="empty-st"><i class="fas fa-key"></i><p>${lsData.length ? 'No leases match this filter' : 'No leases yet — add your first rental or turn a website inquiry into a prospect'}</p></div></td></tr>`; return; }
+  tbody.innerHTML = rows.map(l => {
+    const c = l.computed || {}, st = lsStage(l.stage);
+    const idx = LS_FLOW.indexOf(l.stage); const canAdvance = canManage && idx >= 0 && idx < LS_FLOW.length - 1;
+    const next = c.nextDue ? `<div class="money" style="font-weight:700;color:${c.nextDue.status === 'overdue' ? '#dc2626' : 'inherit'}">${lsPeso(c.nextDue.remaining)}</div><div style="font-size:11px;color:var(--gray)">${lsD(c.nextDue.due)}${c.nextDue.status === 'overdue' ? ' · ' + c.nextDue.daysLate + 'd late' : ''}</div>` : '<span style="color:var(--gray)">—</span>';
+    const bal = c.balance > 0 ? `<span class="money" style="color:#dc2626;font-weight:700">${lsPeso(c.balance)} due</span>` : c.balance < 0 ? `<span class="money" style="color:#059669;font-weight:700">${lsPeso(-c.balance)} ahead</span>` : (LS_LIVE.includes(l.stage) ? '<span style="color:#059669;font-weight:700">Paid up</span>' : '<span style="color:var(--gray)">—</span>');
+    const contact = [];
+    if(l.tenantPhone) contact.push(`<a href="tel:${escA(l.tenantPhone)}" title="Call" style="color:var(--gray)"><i class="fas fa-phone-alt"></i></a>`);
+    if(l.tenantEmail) contact.push(`<a href="mailto:${escA(l.tenantEmail)}" title="Email" style="color:var(--gray)"><i class="fas fa-envelope"></i></a>`);
+    return `<tr>
+      <td><strong style="font-size:13px">${esc(lsWho(l))}</strong>${l.ownerName ? `<div style="font-size:10.5px;color:var(--gray);margin-top:2px">Owner: ${esc(l.ownerName)}</div>` : ''}${contact.length ? `<div style="display:flex;gap:12px;margin-top:4px;font-size:11px">${contact.join('')}</div>` : ''}</td>
+      <td style="font-size:12px;max-width:240px">${esc(lsUnit(l) || '—')}${l.address ? `<div style="font-size:10.5px;color:var(--gray)">${esc(l.address)}</div>` : ''}</td>
+      <td class="money" style="font-size:12px;font-weight:700">${l.monthlyRent ? lsPeso(l.monthlyRent) : '—'}</td>
+      <td style="font-size:11px;white-space:nowrap">${c.start ? `${lsD(c.start)}<br>→ ${lsD(c.end)}` : '—'}${c.daysToEnd !== null && c.daysToEnd !== undefined && LS_LIVE.includes(l.stage) ? `<div style="font-size:10px;color:${c.daysToEnd <= 60 ? '#b45309' : 'var(--gray)'};font-weight:${c.daysToEnd <= 60 ? 700 : 400}">${c.daysToEnd < 0 ? 'ended ' + (-c.daysToEnd) + 'd ago' : c.daysToEnd + ' days left'}</div>` : ''}</td>
+      <td style="font-size:12px">${next}</td>
+      <td style="font-size:12px">${bal}</td>
+      <td><span class="ls-pill" style="background:${st.color}">${esc(st.label)}</span></td>
+      <td><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">
+        ${canAdvance ? `<button class="act" style="background:rgba(200,169,110,.12);color:var(--gold);border:1px solid rgba(200,169,110,.3);width:auto;padding:0 8px;gap:5px;font-size:11px" onclick="lsAdvance('${l._id}')" title="Move to ${escA(lsStage(LS_FLOW[idx + 1]).label)}">Next <i class="fas fa-arrow-right"></i></button>` : ''}
+        <button class="act act-view" onclick="openLeaseModal('${l._id}')" title="${canManage ? 'Open' : 'View'}"><i class="fas fa-${canManage ? 'pen' : 'eye'}"></i></button>
+        ${LS_LIVE.includes(l.stage) || l.stage === 'ended' ? `<button class="act act-view" onclick="openLeaseModal('${l._id}','ledger')" title="Ledger"><i class="fas fa-file-invoice-dollar"></i></button>` : ''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── board ──
+function lsCardChips(l){
+  const c = l.computed || {}; const out = [];
+  if(LS_LIVE.includes(l.stage)){
+    if(c.overdueCount) out.push(`<span class="ls-chip bad"><i class="fas fa-exclamation-circle"></i> Overdue ${lsPeso(c.overdueAmount)} · ${c.oldestOverdueDays}d</span>`);
+    else if(c.nextDue && (c.nextDue.status === 'due' || c.nextDue.status === 'partial')) out.push(`<span class="ls-chip warn">Due ${lsD(c.nextDue.due)} · ${lsPeso(c.nextDue.remaining)}</span>`);
+    else if(c.nextDue) out.push(`<span class="ls-chip dim">Next ${lsD(c.nextDue.due)}</span>`);
+    else if(c.schedule && c.schedule.length) out.push(`<span class="ls-chip ok">Paid up</span>`);
+    if(c.daysToEnd !== null && c.daysToEnd !== undefined) out.push(c.daysToEnd < 0 ? `<span class="ls-chip bad">Term ended</span>` : c.daysToEnd <= 60 ? `<span class="ls-chip warn">Ends in ${c.daysToEnd}d</span>` : '');
+    if(l.renewalDecision === 'renew') out.push(`<span class="ls-chip ok">Renewing</span>`);
+    if(l.renewalDecision === 'vacate') out.push(`<span class="ls-chip info">Vacating</span>`);
+  }
+  if(l.stage === 'contract'){
+    if(c.deposit && c.deposit.status === 'unpaid' && c.deposit.required) out.push(`<span class="ls-chip warn">Deposit pending ${lsPeso(c.deposit.required)}</span>`);
+    else if(c.deposit && c.deposit.status === 'held') out.push(`<span class="ls-chip ok">Deposit received</span>`);
+    if(c.start) out.push(`<span class="ls-chip dim">Starts ${lsD(c.start)}</span>`);
+  }
+  if((l.stage === 'prospect' || l.stage === 'viewing') && l.viewingAt) out.push(`<span class="ls-chip info"><i class="fas fa-eye"></i> Viewing ${lsD(l.viewingAt)}</span>`);
+  if(l.stage === 'ended' && c.deposit && c.deposit.held > 0) out.push(`<span class="ls-chip warn">Deposit to settle ${lsPeso(c.deposit.held)}</span>`);
+  if(l.source && l.source.startsWith('inquiry:')) out.push(`<span class="ls-chip dim">From website</span>`);
+  return out.join('');
+}
+function renderLsBoard(rows, canManage){
+  const board = document.getElementById('lsBoard'); if(!board) return;
+  board.innerHTML = LS_ORDER.map(s => {
+    const st = lsStage(s); const cards = rows.filter(l => l.stage === s);
+    const html = cards.map(l => `<div class="ls-card ${canManage ? '' : 'view'}" ${canManage ? `draggable="true" ondragstart="lsDragStart(event,'${l._id}')" ondragend="lsDragEnd(event)"` : ''} onclick="openLeaseModal('${l._id}')">
+        <div style="font-weight:700;font-size:12.5px">${esc(lsWho(l))}</div>
+        ${lsUnit(l) ? `<div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(lsUnit(l))}</div>` : ''}
+        ${l.monthlyRent ? `<div style="font-size:11.5px;font-weight:700;margin-top:4px">${lsPeso(l.monthlyRent)} <span style="font-weight:400;color:var(--gray)">/ month</span></div>` : ''}
+        <div>${lsCardChips(l)}</div>
+      </div>`).join('') || `<div style="font-size:11px;color:var(--gray);padding:8px 2px">${esc(st.hint)}</div>`;
+    return `<div class="tl-col" data-stage="${s}" ondragover="lsDragOver(event)" ondragenter="lsColEnter(event)" ondragleave="lsColLeave(event)" ondrop="lsDrop(event,'${s}')" style="flex:0 0 236px;border:1px solid var(--border-color);background:var(--card-bg);display:flex;flex-direction:column;max-height:72vh">
+      <div style="border-top:3px solid ${st.color};padding:10px 11px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:700">${esc(st.label)}</span><span style="font-size:11px;color:var(--gray)">${cards.length}</span></div>
+      <div style="padding:0 11px 11px;overflow-y:auto;flex:1">${html}</div>
+    </div>`;
+  }).join('');
+}
+function lsDragStart(ev, id){ lsDragId = id; ev.dataTransfer.effectAllowed = 'move'; try{ ev.dataTransfer.setData('text/plain', id); }catch(e){} ev.currentTarget.classList.add('dragging'); }
+function lsDragEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('#lsBoard .tl-col').forEach(c => c.classList.remove('dragover')); }
+function lsDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; }
+function lsColEnter(ev){ ev.currentTarget.classList.add('dragover'); }
+function lsColLeave(ev){ if(ev.currentTarget === ev.target) ev.currentTarget.classList.remove('dragover'); }
+function lsDrop(ev, stage){ ev.preventDefault(); ev.currentTarget.classList.remove('dragover'); const id = lsDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain')); lsDragId = null; if(id) lsMove(id, stage); }
+async function lsMove(id, stage){
+  if(!hasPerm('leasing_manage')){ showToast('No permission to manage leases', true); return; }
+  const l = lsData.find(x => x._id === id); if(!l || l.stage === stage) return;
+  if(stage === 'active' && !(l.startDate && l.monthlyRent)){ showToast('Set the start date and monthly rent before making a lease active', true); openLeaseModal(id); return; }
+  if(stage === 'ended' && !confirm(`Mark ${lsWho(l)} as ended (moved out)?`)) return;
+  try{
+    const r = await apiFetch(`/api/admin/leases/${id}/stage`, { method: 'POST', body: JSON.stringify({ stage }) }); const d = await r.json();
+    if(r.ok && d._id){ lsUpsert(d); if(lsCurrent && lsCurrent._id === id){ lsCurrent = d; leRefreshHeader(); } showToast('Moved to ' + lsStage(stage).label); renderLeasing(); renderDashboard(); }
+    else showToast(d.error || 'Update failed', true);
+  }catch(e){ showToast('Error updating stage', true); }
+}
+function lsAdvance(id){ const l = lsData.find(x => x._id === id); if(!l) return; const i = LS_FLOW.indexOf(l.stage); if(i < 0 || i >= LS_FLOW.length - 1) return; lsMove(id, LS_FLOW[i + 1]); }
+
+// ── rent roll ──
+function lsRollNav(dir){ const [y, m] = (lsRollMonth || lsMeta.today.slice(0, 7)).split('-').map(Number); const d = new Date(y, m - 1 + dir, 1); loadRentRoll(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); }
+async function loadRentRoll(month){
+  if(!/^\d{4}-\d{2}$/.test(month || '')) month = lsMeta.today.slice(0, 7);
+  lsRollMonth = month; const inp = document.getElementById('lsRollMonth'); if(inp) inp.value = month;
+  try{
+    const r = await apiFetch('/api/admin/leases/rent-roll?month=' + month); const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'load failed');
+    lsRoll = d; renderRentRoll();
+  }catch(e){ console.error('rent roll', e); showToast('Could not load the rent roll', true); }
+}
+function renderRentRoll(){
+  if(!lsRoll) return; const t = lsRoll.totals, canManage = hasPerm('leasing_manage');
+  const tot = document.getElementById('lsRollTotals');
+  const box = (k, v, s, color) => `<div class="ls-kpi"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s || ''}</div></div>`;
+  tot.innerHTML = box('Expected · ' + lsM(lsRoll.month), lsPeso(t.expected), `${lsRoll.rows.length} lease${lsRoll.rows.length === 1 ? '' : 's'}`) + box('Collected', lsPeso(t.collected), `${t.rate}% collection rate`, '#059669') + box('Outstanding', lsPeso(t.outstanding), '', t.outstanding > 0 ? '#b45309' : 'inherit') + box('Overdue', lsPeso(t.overdue), `${t.overdueCount} lease${t.overdueCount === 1 ? '' : 's'}`, t.overdue > 0 ? '#dc2626' : 'inherit') + box('Management fees', lsPeso(t.managementFees), t.managedCollected ? `on ${lsPeso(t.managedCollected)} managed rent` : 'no GLRA-managed units');
+  const tb = document.getElementById('lsRollTbody');
+  if(!lsRoll.rows.length){ tb.innerHTML = `<tr><td colspan="10"><div class="empty-st"><i class="fas fa-file-invoice-dollar"></i><p>No rent falls due in ${esc(lsM(lsRoll.month))}</p></div></td></tr>`; return; }
+  tb.innerHTML = lsRoll.rows.map(r => { const bal = r.expected - r.collected; return `<tr>
+    <td><strong style="font-size:13px">${esc(r.tenantName || 'No tenant')}</strong></td>
+    <td style="font-size:12px">${esc([r.propertyTitle, r.unit].filter(Boolean).join(' · ') || '—')}</td>
+    <td style="font-size:12px;color:var(--gray)">${esc(r.ownerName || '—')}${r.managedByGLRA ? `<div style="font-size:10px">GLRA-managed · ${r.managementFeePct}%</div>` : ''}</td>
+    <td style="font-size:12px;white-space:nowrap">${r.due ? lsD(r.due) : '—'}${r.daysLate && r.status === 'overdue' ? `<div style="font-size:10px;color:#dc2626;font-weight:700">${r.daysLate}d late</div>` : ''}</td>
+    <td class="money" style="font-size:12px">${r.rent ? lsPeso(r.rent) : '—'}</td>
+    <td class="money" style="font-size:12px">${r.charges ? lsPeso(r.charges) : '—'}</td>
+    <td class="money" style="font-size:12px;color:#059669;font-weight:700">${r.collected ? lsPeso(r.collected) : '—'}</td>
+    <td class="money" style="font-size:12px;font-weight:700;color:${bal > 0.005 ? (r.status === 'overdue' ? '#dc2626' : '#b45309') : 'var(--gray)'}">${bal > 0.005 ? lsPeso(bal) : '—'}</td>
+    <td>${lsStatusPill(r.status)}</td>
+    <td><div class="act-btns" style="display:flex;gap:5px">${canManage && bal > 0.005 ? `<button class="act act-view" onclick="openLeaseModal('${r.leaseId}','ledger','pay')" title="Record a payment"><i class="fas fa-hand-holding-usd"></i></button>` : ''}<button class="act act-view" onclick="openLeaseModal('${r.leaseId}','ledger')" title="Ledger"><i class="fas fa-file-invoice-dollar"></i></button></div></td>
+  </tr>`; }).join('');
+}
+function exportRentRollCSV(){
+  if(!lsRoll) return;
+  const rows = [['Month', 'Tenant', 'Property', 'Unit', 'Owner', 'Due', 'Rent', 'Charges', 'Collected', 'Balance', 'Status']];
+  lsRoll.rows.forEach(r => rows.push([lsRoll.month, r.tenantName, r.propertyTitle, r.unit, r.ownerName, r.due, r.rent, r.charges, r.collected, Math.round((r.expected - r.collected) * 100) / 100, r.status]));
+  downloadCSV(`glra-rent-roll-${lsRoll.month}.csv`, rows);
+}
+function exportLeasingCSV(){
+  const rows = [['Stage', 'Tenant', 'Tenant phone', 'Tenant email', 'Owner', 'Property', 'Unit', 'Address', 'Start', 'End', 'Monthly rent', 'Due day', 'Deposit', 'Advance', 'Balance', 'Overdue', 'Next due', 'Next amount', 'Updated']];
+  lsData.forEach(l => { const c = l.computed || {}; rows.push([lsStage(l.stage).label, l.tenantName, l.tenantPhone, l.tenantEmail, l.ownerName, l.propertyTitle, l.unit, l.address, c.start || '', c.end || '', l.monthlyRent, l.dueDay, l.depositAmount, l.advanceAmount, c.balance || 0, c.overdueAmount || 0, c.nextDue ? c.nextDue.due : '', c.nextDue ? c.nextDue.remaining : '', (l.updatedAt || '').slice(0, 10)]); });
+  downloadCSV(`glra-leases-${lsMeta.today}.csv`, rows);
+}
+
+// ── settings ──
+function renderLeasingSettings(){
+  const s = lsMeta.settings || {}; const v = (id, val) => { const el = document.getElementById(id); if(el) el.value = val == null ? '' : val; };
+  v('lsSetReminderDays', s.reminderDays); v('lsSetDigestHour', s.digestHour); v('lsSetNotifyEmail', s.notifyEmail); v('lsSetExpiryDays', (s.expiryDays || []).join(', ')); v('lsSetPayInstructions', s.paymentInstructions);
+  v('lsSetDueDay', s.defaultDueDay); v('lsSetGraceDays', s.defaultGraceDays); v('lsSetDepositMonths', s.defaultDepositMonths); v('lsSetAdvanceMonths', s.defaultAdvanceMonths);
+  const c1 = document.getElementById('lsSetOverdue'); if(c1) c1.checked = s.overdueNotice !== false;
+  const c2 = document.getElementById('lsSetDigest'); if(c2) c2.checked = s.digestEnabled !== false;
+  const can = hasPerm('leasing_manage');
+  document.querySelectorAll('#lsSettingsWrap input, #lsSettingsWrap textarea').forEach(el => { el.disabled = !can; });
+  const sb = document.getElementById('lsSetSaveBtn'); if(sb) sb.style.display = can ? '' : 'none';
+  const cal = document.getElementById('lsCalFeed');
+  if(cal){
+    const url = s.calFeedPath ? location.origin + s.calFeedPath : '';
+    cal.innerHTML = (url ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="text" class="finput" readonly value="${escA(url)}" style="flex:1;min-width:220px;font-size:12px;font-family:'JetBrains Mono',monospace" onclick="this.select()"><button class="hdr-btn" onclick="navigator.clipboard.writeText('${escA(url)}').then(()=>showToast('Link copied'))"><i class="fas fa-copy"></i> Copy</button></div>` : `<div class="ls-note">No feed yet.</div>`)
+      + (isAdmin() ? `<div style="margin-top:10px"><button class="hdr-btn" onclick="lsRegenCal()"><i class="fas fa-sync-alt"></i> ${url ? 'Regenerate link' : 'Create link'}</button></div>` : '');
+  }
+}
+async function saveLeasingSettings(){
+  if(!hasPerm('leasing_manage')) return;
+  const g = id => document.getElementById(id)?.value;
+  const body = { reminderDays: g('lsSetReminderDays'), digestHour: g('lsSetDigestHour'), notifyEmail: g('lsSetNotifyEmail'), expiryDays: String(g('lsSetExpiryDays') || '').split(/[,\s]+/).filter(Boolean), paymentInstructions: g('lsSetPayInstructions'), defaultDueDay: g('lsSetDueDay'), defaultGraceDays: g('lsSetGraceDays'), defaultDepositMonths: g('lsSetDepositMonths'), defaultAdvanceMonths: g('lsSetAdvanceMonths'), overdueNotice: !!document.getElementById('lsSetOverdue')?.checked, digestEnabled: !!document.getElementById('lsSetDigest')?.checked };
+  try{ const r = await apiFetch('/api/admin/leasing/settings', { method: 'PUT', body: JSON.stringify(body) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Save failed', true); return; } lsMeta.settings = d; renderLeasingSettings(); showToast('Leasing settings saved'); }
+  catch(e){ showToast('Error saving settings', true); }
+}
+async function lsRegenCal(){
+  if(!confirm('Create a new calendar link? Any phone using the old link will stop updating.')) return;
+  try{ const r = await apiFetch('/api/admin/leasing/calendar-token', { method: 'POST' }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsMeta.settings.calFeedPath = d.calFeedPath; lsMeta.settings.hasCalToken = true; renderLeasingSettings(); showToast('Calendar link ready'); }
+  catch(e){ showToast('Error', true); }
+}
+
+// ── downloads (bearer token cannot ride on a plain link) ──
+async function lsDownload(url, filename){
+  showLoad('Building PDF…');
+  try{
+    const r = await apiFetch(url);
+    if(!r.ok){ let msg = 'Could not build the PDF'; try{ msg = (await r.json()).error || msg; }catch(e){} showToast(msg, true); return; }
+    const blob = await r.blob(); const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = u; a.download = filename || 'document.pdf'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 60000);
+  }catch(e){ showToast('Download failed', true); }
+  finally{ hideLoad(); }
+}
+
+// ── lease modal: form spec ──
+const LE_FIELDS = [
+  { sec: 'Stage & listing' },
+  { k: 'stage', l: 'Stage', t: 'select', opts: LS_ORDER.map(s => [s, LS_STAGES[s].label]) },
+  { k: 'propertyId', l: 'Website listing', t: 'propsel', hint: 'Pick a For Lease listing to fill the unit details.' },
+  { k: 'propertyTitle', l: 'Property / building *', t: 'text', ph: 'e.g. One Serendra Tower 2' },
+  { k: 'unit', l: 'Unit no.', t: 'text', ph: 'e.g. 12B' },
+  { k: 'propertyType', l: 'Type', t: 'text', ph: 'Condominium, House and Lot, Office…' },
+  { k: 'address', l: 'Address', t: 'text', ph: 'Street, barangay, city', cls: 'two' },
+  { k: 'furnished', l: 'Furnished', t: 'select', opts: [['', '—'], ['unfurnished', 'Unfurnished'], ['semi', 'Semi-furnished'], ['full', 'Fully furnished']] },
+  { k: 'parkingSlots', l: 'Parking slots', t: 'number', min: 0, max: 20 },
+  { k: 'viewingAt', l: 'Viewing date', t: 'date', hint: 'For prospects.' },
+  { k: 'inclusions', l: 'Inclusions', t: 'text', ph: 'Appliances, furniture, parking slot no.', cls: 'two' },
+  { k: 'hideListingWhileActive', l: '', t: 'check', cl: 'Hide the listing from the website while this lease is active (relist from the ended lease when it is free again)', cls: 'full' },
+  { sec: 'Tenant (lessee)' },
+  { k: 'tenantName', l: 'Tenant name *', t: 'text', ph: 'Full name' },
+  { k: 'tenantPhone', l: 'Phone', t: 'tel', ph: '+63 9XX XXX XXXX' },
+  { k: 'tenantEmail', l: 'Email', t: 'email', ph: 'tenant@email.com', hint: 'Needed for reminders, receipts and statements.' },
+  { k: 'tenantAddress', l: 'Permanent address', t: 'text', cls: 'two' },
+  { k: 'occupants', l: 'Occupants', t: 'number', min: 0, max: 99 },
+  { k: 'tenantIdType', l: 'ID presented', t: 'text', ph: 'e.g. Passport, UMID, Driver’s licence' },
+  { k: 'tenantIdNo', l: 'ID number', t: 'text' },
+  { k: 'tenantOccupation', l: 'Occupation', t: 'text' },
+  { k: 'tenantCompany', l: 'Employer / business', t: 'text' },
+  { k: 'emergencyName', l: 'Emergency contact', t: 'text' },
+  { k: 'emergencyPhone', l: 'Emergency phone', t: 'tel' },
+  { sec: 'Owner (lessor)' },
+  { k: 'ownerName', l: 'Owner name', t: 'text' },
+  { k: 'ownerPhone', l: 'Phone', t: 'tel' },
+  { k: 'ownerEmail', l: 'Email', t: 'email', hint: 'For owner statements.' },
+  { k: 'ownerAddress', l: 'Address', t: 'text', cls: 'two' },
+  { k: 'managedByGLRA', l: '', t: 'check', cl: 'GLRA collects the rent for this owner (managed unit)' },
+  { k: 'managementFeePct', l: 'Management fee (% of rent)', t: 'number', min: 0, max: 100, step: 0.5 },
+  { sec: 'Lease terms' },
+  { k: 'startDate', l: 'Start date', t: 'date', on: 'leSyncTerms()' },
+  { k: 'termMonths', l: 'Term (months)', t: 'number', min: 1, max: 360, on: 'leSyncTerms()' },
+  { k: 'endDate', l: 'End date', t: 'date', hint: 'Filled in from start + term; edit to override.' },
+  { k: 'monthlyRent', l: 'Monthly rent (₱)', t: 'money', on: 'leSyncTerms()' },
+  { k: 'dueDay', l: 'Rent due on day', t: 'number', min: 1, max: 31, hint: 'e.g. 5 = every 5th. The first month is due on the start date.' },
+  { k: 'graceDays', l: 'Grace period (days)', t: 'number', min: 0, max: 60 },
+  { k: 'escalationPct', l: 'Yearly escalation (%)', t: 'number', min: 0, max: 100, step: 0.5, on: 'leSyncTerms()' },
+  { k: 'depositMonths', l: 'Deposit (months)', t: 'number', min: 0, max: 24, step: 0.5, on: 'leSyncTerms(true)' },
+  { k: 'depositAmount', l: 'Deposit amount (₱)', t: 'money', on: 'lePreviewTerms()' },
+  { k: 'advanceMonths', l: 'Advance rent (months)', t: 'number', min: 0, max: 24, step: 0.5, on: 'leSyncTerms(true)' },
+  { k: 'advanceAmount', l: 'Advance amount (₱)', t: 'money', on: 'lePreviewTerms()' },
+  { k: 'lateFeeType', l: 'Late fee', t: 'select', opts: [['none', 'None'], ['percent', '% of the month’s rent'], ['fixed', 'Fixed amount (₱)']] },
+  { k: 'lateFeeValue', l: 'Late fee value', t: 'number', min: 0, step: 0.5 },
+  { k: 'duesPaidBy', l: 'Association dues paid by', t: 'select', opts: [['tenant', 'Tenant'], ['owner', 'Owner'], ['', 'Not applicable']] },
+  { k: 'utilitiesIncluded', l: 'Utilities included in rent', t: 'text', ph: 'e.g. Water, internet' },
+  { k: 'petsAllowed', l: '', t: 'check', cl: 'Pets allowed' },
+  { k: '_preview', t: 'preview' },
+  { sec: 'Broker’s fee' },
+  { k: 'brokerFeeType', l: 'Fee basis', t: 'select', opts: [['one_month', 'One month’s rent'], ['percent', '% of total contract'], ['fixed', 'Fixed amount (₱)'], ['none', 'None']], on: 'lePreviewTerms()' },
+  { k: 'brokerFeeValue', l: 'Fee value', t: 'number', min: 0, step: 0.5, on: 'lePreviewTerms()' },
+  { k: 'brokerFeePaidBy', l: 'Paid by', t: 'select', opts: [['owner', 'Owner'], ['tenant', 'Tenant'], ['both', 'Split']], on: 'lePreviewTerms()' },
+  { k: 'brokerFeeCollected', l: 'Fee collected so far (₱)', t: 'money' },
+  { sec: 'Move-out & deposit settlement' },
+  { k: 'moveInDate', l: 'Move-in date', t: 'date' },
+  { k: 'moveOutDate', l: 'Move-out date', t: 'date' },
+  { k: 'renewalDecision', l: 'Renewal decision', t: 'select', opts: [['', '—'], ['undecided', 'Undecided'], ['renew', 'Renewing'], ['vacate', 'Moving out']] },
+  { k: 'moveInNotes', l: 'Turnover notes (condition, meter readings, keys)', t: 'textarea', cls: 'full' },
+  { k: 'depositDeductions', l: 'Deductions from the deposit', t: 'deductions', cls: 'two' },
+  { k: 'depositRefunded', l: 'Deposit refunded (₱)', t: 'money' },
+  { k: 'depositRefundDate', l: 'Refund date', t: 'date' },
+  { sec: 'Automation & notes' },
+  { k: 'autoEmails', l: '', t: 'check', cl: 'Automatic emails to the tenant (rent reminders, overdue notices)', cls: 'full' },
+  { k: 'remarks', l: 'Remarks', t: 'textarea', cls: 'full', ph: 'Anything the next person should know' }
+];
+function leBuildForm(){
+  const wrap = document.getElementById('leForm'); if(!wrap || leFormBuilt) return;
+  let html = '', open = false;
+  LE_FIELDS.forEach(f => {
+    if(f.sec){ if(open) html += '</div>'; html += `<div class="tl-sec" style="${html ? '' : 'margin-top:0'}">${esc(f.sec)}</div><div class="ls-grid">`; open = true; return; }
+    const id = 'le_' + f.k, cls = f.cls ? ' ' + f.cls : '', hint = f.hint ? `<div class="ls-note">${esc(f.hint)}</div>` : '';
+    const on = f.on ? `oninput="${f.on}" onchange="${f.on}"` : '';
+    if(f.t === 'check'){ html += `<div class="${f.cls || 'two'}" style="display:flex;align-items:flex-end;padding-bottom:6px"><label class="ls-sw"><input type="checkbox" id="${id}" ${on}> ${esc(f.cl)}</label></div>`; return; }
+    if(f.t === 'preview'){ html += `<div class="full" id="lePreview"></div>`; return; }
+    if(f.t === 'deductions'){ html += `<div class="fg${cls}"><label class="flbl">${esc(f.l)}</label><div id="leDeductions"></div><button type="button" class="hdr-btn" style="align-self:flex-start;margin-top:4px" onclick="leAddDeduction()"><i class="fas fa-plus"></i> Add deduction</button></div>`; return; }
+    let ctl = '';
+    if(f.t === 'select') ctl = `<select id="${id}" class="finput" ${on}>${f.opts.map(o => `<option value="${escA(o[0])}">${esc(o[1])}</option>`).join('')}</select>`;
+    else if(f.t === 'propsel') ctl = `<select id="${id}" class="finput" onchange="lePickProperty(this.value)"></select>`;
+    else if(f.t === 'textarea') ctl = `<textarea id="${id}" class="finput" rows="3" placeholder="${escA(f.ph || '')}"></textarea>`;
+    else if(f.t === 'money') ctl = `<input type="text" id="${id}" class="finput" inputmode="decimal" placeholder="0" oninput="fmtField(this);${f.on || ''}">`;
+    else ctl = `<input type="${f.t}" id="${id}" class="finput" placeholder="${escA(f.ph || '')}" ${f.min !== undefined ? `min="${f.min}"` : ''} ${f.max !== undefined ? `max="${f.max}"` : ''} ${f.step ? `step="${f.step}"` : ''} ${on}>`;
+    html += `<div class="fg${cls}"><label class="flbl" for="${id}">${esc(f.l)}</label>${ctl}${hint}</div>`;
+  });
+  if(open) html += '</div>';
+  wrap.innerHTML = html; leFormBuilt = true;
+}
+function leProps(){ return (window.allProps || (typeof allProps !== 'undefined' ? allProps : [])) || []; }
+function leFillPropertySelect(currentId){
+  const sel = document.getElementById('le_propertyId'); if(!sel) return;
+  const props = leProps().filter(p => /LEASE/i.test(p.listingType || '') || p._id === currentId).sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  sel.innerHTML = `<option value="">Not on the website</option>` + props.map(p => `<option value="${p._id}">${esc(p.title || 'Untitled')}${p.monthlyRental ? ' · ' + lsPeso(p.monthlyRental) + '/mo' : ''}${p.status && p.status !== 'available' ? ' (hidden)' : ''}</option>`).join('');
+  sel.value = currentId || '';
+}
+function lePickProperty(id){
+  const p = leProps().find(x => x._id === id); if(!p) return;
+  const set = (k, v, force) => { const el = document.getElementById('le_' + k); if(el && (force || !el.value)) el.value = v == null ? '' : v; };
+  set('propertyTitle', p.title, true); set('address', p.location); set('propertyType', p.propertyType); set('parkingSlots', p.parking || 0);
+  if(p.monthlyRental){ const el = document.getElementById('le_monthlyRent'); if(el && !lsNum(el.value)){ el.value = Number(p.monthlyRental).toLocaleString('en-US'); } }
+  leSyncTerms();
+}
+function leAddDeduction(label, amount){
+  const box = document.getElementById('leDeductions'); if(!box) return;
+  const row = document.createElement('div'); row.className = 'tl-liq-row'; row.style.gridTemplateColumns = '1fr 140px 34px';
+  row.innerHTML = `<input type="text" class="finput ded-label" placeholder="e.g. Repaint, unpaid Meralco" value="${escA(label || '')}"><input type="text" class="finput ded-amount" inputmode="decimal" placeholder="0" value="${amount ? Number(amount).toLocaleString('en-US') : ''}" oninput="fmtField(this)"><button type="button" class="act act-del" onclick="this.parentNode.remove()" title="Remove"><i class="fas fa-times"></i></button>`;
+  box.appendChild(row);
+}
+function leSyncTerms(monthsChanged){
+  const g = k => document.getElementById('le_' + k);
+  const start = g('startDate').value, term = parseInt(g('termMonths').value, 10) || 0, rent = lsNum(g('monthlyRent').value);
+  if(start && term){ const p = start.split('-').map(Number); const dim = new Date(p[0], p[1] - 1 + term + 1, 0).getDate(); const d = new Date(p[0], p[1] - 1 + term, Math.min(p[2], dim) - 1); g('endDate').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+  if(rent > 0){
+    const dm = parseFloat(g('depositMonths').value) || 0, am = parseFloat(g('advanceMonths').value) || 0;
+    if(monthsChanged || !lsNum(g('depositAmount').value) || g('depositAmount').dataset.auto === '1'){ g('depositAmount').value = dm ? Math.round(rent * dm).toLocaleString('en-US') : ''; g('depositAmount').dataset.auto = '1'; }
+    if(monthsChanged || !lsNum(g('advanceAmount').value) || g('advanceAmount').dataset.auto === '1'){ g('advanceAmount').value = am ? Math.round(rent * am).toLocaleString('en-US') : ''; g('advanceAmount').dataset.auto = '1'; }
+  }
+  lePreviewTerms();
+}
+function lePreviewTerms(){
+  const g = k => document.getElementById('le_' + k); const box = document.getElementById('lePreview'); if(!box) return;
+  const rent = lsNum(g('monthlyRent').value), term = parseInt(g('termMonths').value, 10) || 0, dep = lsNum(g('depositAmount').value), adv = lsNum(g('advanceAmount').value), esc_ = parseFloat(g('escalationPct').value) || 0;
+  const ft = g('brokerFeeType').value, fv = parseFloat(g('brokerFeeValue').value) || 0, fb = g('brokerFeePaidBy').value;
+  let contract = 0; for(let i = 0; i < term; i++) contract += rent * Math.pow(1 + esc_ / 100, Math.floor(i / 12));
+  const fee = ft === 'one_month' ? rent : ft === 'percent' ? contract * fv / 100 : ft === 'fixed' ? fv : 0;
+  const tenantFee = fb === 'tenant' ? fee : fb === 'both' ? fee / 2 : 0;
+  if(!rent){ box.innerHTML = ''; return; }
+  const rc = rent <= 10000 ? `<div class="ls-note" style="margin-top:6px"><i class="fas fa-info-circle"></i> At ${lsPeso(rent)} a month this unit may fall under the Rent Control Act: at most 1 month advance + 2 months deposit, and a capped yearly increase.</div>` : '';
+  box.innerHTML = `<div class="ls-preview"><b>Move-in cash-out:</b> ${lsPeso(dep)} deposit + ${lsPeso(adv)} advance${tenantFee ? ' + ' + lsPeso(tenantFee) + ' broker’s fee' : ''} = <b>${lsPeso(dep + adv + tenantFee)}</b>
+    &nbsp;·&nbsp; <b>Contract value:</b> ${lsPeso(Math.round(contract))} over ${term || 0} months${esc_ ? ` (rent rises ${esc_}% yearly)` : ''}
+    &nbsp;·&nbsp; <b>Broker’s fee:</b> ${fee ? lsPeso(Math.round(fee)) + ' paid by ' + fb : 'none'}${rc}</div>`;
+}
+function leFill(l){
+  const s = lsMeta.settings || {};
+  const defaults = { stage: 'prospect', dueDay: s.defaultDueDay || 5, graceDays: s.defaultGraceDays ?? 5, depositMonths: s.defaultDepositMonths ?? 2, advanceMonths: s.defaultAdvanceMonths ?? 1, termMonths: 12, lateFeeType: 'none', duesPaidBy: 'tenant', brokerFeeType: 'one_month', brokerFeePaidBy: 'owner', hideListingWhileActive: true, autoEmails: true, occupants: 1, parkingSlots: 0, escalationPct: 0, lateFeeValue: 0, managementFeePct: 0, brokerFeeValue: 0, brokerFeeCollected: 0, depositRefunded: 0 };
+  const src = l || defaults;
+  LE_FIELDS.forEach(f => {
+    if(f.sec || f.t === 'preview') return;
+    const el = document.getElementById('le_' + f.k); if(!el && f.t !== 'deductions') return;
+    let v = src[f.k]; if(v === undefined) v = defaults[f.k];
+    if(f.t === 'check'){ el.checked = !!v; return; }
+    if(f.t === 'deductions'){ document.getElementById('leDeductions').innerHTML = ''; (src.depositDeductions || []).forEach(d => leAddDeduction(d.label, d.amount)); return; }
+    if(f.t === 'propsel'){ leFillPropertySelect(v || ''); return; }
+    if(f.t === 'date'){ el.value = v ? String(v).slice(0, 10) : ''; return; }
+    if(f.t === 'money'){ el.value = v ? Number(v).toLocaleString('en-US') : ''; el.dataset.auto = l ? '0' : '1'; return; }
+    el.value = v == null ? '' : v;
+  });
+  const stageSel = document.getElementById('le_stage'); if(stageSel) stageSel.disabled = !hasPerm('leasing_manage');
+  document.querySelectorAll('#leForm input, #leForm select, #leForm textarea, #leForm button').forEach(el => { if(el.id !== 'le_stage') el.disabled = !hasPerm('leasing_manage'); });
+  lePreviewTerms();
+}
+function leRead(){
+  const b = {};
+  LE_FIELDS.forEach(f => {
+    if(f.sec || f.t === 'preview') return;
+    if(f.t === 'deductions'){ b.depositDeductions = [...document.querySelectorAll('#leDeductions .tl-liq-row')].map(r => ({ label: r.querySelector('.ded-label').value.trim(), amount: lsNum(r.querySelector('.ded-amount').value) })).filter(d => d.label || d.amount); return; }
+    const el = document.getElementById('le_' + f.k); if(!el) return;
+    if(f.t === 'check') b[f.k] = el.checked;
+    else if(f.t === 'money') b[f.k] = lsNum(el.value);
+    else b[f.k] = el.value;
+  });
+  return b;
+}
+
+// ── lease modal: open / header / tabs ──
+function openLeaseModal(id, tab, action){
+  leBuildForm();
+  lsCurrent = id ? (lsData.find(x => x._id === id) || null) : null;
+  if(id && !lsCurrent){ showToast('Lease not found', true); return; }
+  leFill(lsCurrent);
+  document.getElementById('leDeleteBtn').style.display = (lsCurrent && isAdmin()) ? '' : 'none';
+  document.getElementById('leSaveBtn').style.display = hasPerm('leasing_manage') ? '' : 'none';
+  leRefreshHeader(); leEnableTabs();
+  document.getElementById('leaseModal').style.display = 'flex';
+  leShowTab(lsCurrent ? (tab || 'details') : 'details');
+  const sc = document.getElementById('leScroll'); if(sc) sc.scrollTop = 0;
+  if(action === 'pay') lePayForm();
+}
+function closeLeaseModal(){ document.getElementById('leaseModal').style.display = 'none'; lsCurrent = null; lePayEditId = null; }
+function leRefreshHeader(){
+  const l = lsCurrent; const c = l && l.computed || {};
+  document.getElementById('leTitle').textContent = l ? lsWho(l) : 'New lease';
+  document.getElementById('leSub').innerHTML = l ? `${esc(lsUnit(l) || 'No property yet')}${l.monthlyRent ? ' · ' + lsPeso(l.monthlyRent) + '/mo' : ''}${c.start ? ' · ' + lsD(c.start) + ' → ' + lsD(c.end) : ''}` : 'Fill in what you know — the rest can wait.';
+  const hb = document.getElementById('leHeadBtns'); const btn = (ico, label, fn, title) => `<button class="hdr-btn" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:#fff;padding:6px 10px" onclick="${fn}" title="${escA(title || label)}"><i class="fas ${ico}"></i> ${label}</button>`;
+  if(!l){ hb.innerHTML = ''; return; }
+  const st = lsStage(l.stage); const idx = LS_FLOW.indexOf(l.stage);
+  hb.innerHTML = `<span class="ls-pill" style="background:${st.color}">${esc(st.label)}</span>`
+    + (hasPerm('leasing_manage') && idx >= 0 && idx < LS_FLOW.length - 1 ? btn('fa-arrow-right', lsStage(LS_FLOW[idx + 1]).label, `lsMove('${l._id}','${LS_FLOW[idx + 1]}')`, 'Move to the next stage') : '')
+    + btn('fa-file-pdf', 'Statement', `lsDownload('/api/admin/leases/${l._id}/pdf?mode=tenant&download=1','GLRA-statement-${escA((l.tenantName || 'tenant').replace(/[^a-z0-9]+/gi, '-'))}.pdf')`, 'Statement of account for the tenant (PDF)')
+    + btn('fa-file-pdf', 'Owner', `lsDownload('/api/admin/leases/${l._id}/pdf?mode=owner&download=1','GLRA-owner-statement-${escA((l.ownerName || 'owner').replace(/[^a-z0-9]+/gi, '-'))}.pdf')`, 'Owner statement (PDF)')
+    + btn('fa-id-card', 'Profile', `lsDownload('/api/admin/leases/${l._id}/pdf?mode=full&download=1','GLRA-lease-profile-${escA((l.tenantName || 'lease').replace(/[^a-z0-9]+/gi, '-'))}.pdf')`, 'Full internal lease profile (PDF)')
+    + (l.stage === 'ended' && l.propertyId && hasPerm('leasing_manage') ? btn('fa-globe', 'Relist', `lsRelist('${l._id}')`, 'Put the listing back on the website') : '');
+}
+function leEnableTabs(){ document.querySelectorAll('#leTabs .ls-tab').forEach(b => { b.disabled = !lsCurrent && b.dataset.t !== 'details'; }); }
+function leShowTab(t){
+  lsTab = t;
+  document.querySelectorAll('#leTabs .ls-tab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  ['details', 'ledger', 'docs', 'msgs', 'log'].forEach(p => { document.getElementById('lePane-' + p).style.display = p === t ? '' : 'none'; });
+  const sc = document.getElementById('leScroll'); if(sc) sc.scrollTop = 0;
+  if(t === 'ledger') leRenderLedger(); if(t === 'docs') leRenderDocs(); if(t === 'msgs') leRenderMsgs(); if(t === 'log') leRenderLog();
+}
+async function leSave(){
+  if(!hasPerm('leasing_manage')) return;
+  const b = leRead();
+  if(!b.tenantName.trim() && !b.propertyTitle.trim()){ showToast('Enter at least a tenant name or a property', true); return; }
+  const id = lsCurrent && lsCurrent._id;
+  showLoad('Saving lease…');
+  try{
+    let res, d;
+    if(id){
+      const stage = b.stage; delete b.stage;
+      res = await apiFetch(`/api/admin/leases/${id}`, { method: 'PUT', body: JSON.stringify(b) }); d = await res.json();
+      if(res.ok && d._id && stage && stage !== lsCurrent.stage){ const r2 = await apiFetch(`/api/admin/leases/${id}/stage`, { method: 'POST', body: JSON.stringify({ stage }) }); const d2 = await r2.json(); if(r2.ok && d2._id) d = d2; else showToast(d2.error || 'Saved, but the stage did not change', true); }
+    } else { res = await apiFetch('/api/admin/leases', { method: 'POST', body: JSON.stringify(b) }); d = await res.json(); }
+    if(!res.ok || !d._id){ showToast(d.error || 'Save failed', true); return; }
+    lsCurrent = d; lsUpsert(d); leFill(d); leRefreshHeader(); leEnableTabs(); renderLeasing(); renderDashboard();
+    document.getElementById('leDeleteBtn').style.display = isAdmin() ? '' : 'none';
+    showToast(id ? 'Lease saved' : 'Lease created — the Ledger, Documents and Messages tabs are now open');
+  }catch(e){ showToast('Error saving the lease', true); }
+  finally{ hideLoad(); }
+}
+async function deleteLease(){
+  if(!lsCurrent || !isAdmin()) return;
+  if(!confirm(`Delete the lease for ${lsWho(lsCurrent)}? The whole ledger, documents list and email trail go with it. This cannot be undone.`)) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}`, { method: 'DELETE' }); if(!r.ok) throw new Error(); lsData = lsData.filter(x => x._id !== lsCurrent._id); window.lsData = lsData; closeLeaseModal(); lsUpdateBadge(); renderLeasing(); renderDashboard(); showToast('Lease deleted'); }
+  catch(e){ showToast('Delete failed', true); }
+}
+async function lsRelist(id){
+  if(!confirm('Put this listing back on the website as Available?')) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${id}/relist`, { method: 'POST' }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsUpsert(d); if(lsCurrent && lsCurrent._id === id) lsCurrent = d; showToast('Listing is back on the website'); loadAllProps(); }
+  catch(e){ showToast('Error', true); }
+}
+async function leaseFromInquiry(inqId){
+  if(!hasPerm('leasing_manage')){ showToast('No permission to manage leases', true); return; }
+  showLoad('Creating prospect…');
+  try{
+    const r = await apiFetch(`/api/admin/leases/from-inquiry/${inqId}`, { method: 'POST' }); const d = await r.json();
+    if(!r.ok || !d.lease){ showToast(d.error || 'Could not create the lease', true); return; }
+    lsUpsert(d.lease); switchTab('leasing'); openLeaseModal(d.lease._id);
+    showToast(d.existing ? 'This inquiry already has a lease card — opened it' : 'Prospect created from the inquiry');
+  }catch(e){ showToast('Error', true); }
+  finally{ hideLoad(); }
+}
+
+// ── ledger ──
+function leRenderLedger(){
+  const l = lsCurrent, pane = document.getElementById('lePane-ledger'); if(!l || !pane) return;
+  const c = l.computed || {}, can = hasPerm('leasing_manage');
+  if(!c.schedule || !c.schedule.length){
+    pane.innerHTML = `<div class="empty-st"><i class="fas fa-calendar-alt"></i><p>No rent schedule yet.<br>Set the <b>start date</b>, <b>term</b> and <b>monthly rent</b> under Details and save.</p></div>` + (can ? `<div id="lePayBox"></div>${leChargeBoxHtml()}${lePaymentsHtml(l, can)}` : lePaymentsHtml(l, can));
+    return;
+  }
+  const kpi = (k, v, s, color) => `<div class="ls-kpi"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s || ''}</div></div>`;
+  const balance = c.balance > 0 ? kpi('Balance due', lsPeso(c.balance), c.overdueCount ? `${c.overdueCount} overdue · oldest ${c.oldestOverdueDays}d` : 'within grace period', '#dc2626') : c.balance < 0 ? kpi('Paid ahead', lsPeso(-c.balance), 'credit on account', '#059669') : kpi('Balance', 'Paid up', `${lsPeso(c.credits.rent)} received`, '#059669');
+  const next = c.nextDue ? kpi(c.nextDue.status === 'overdue' ? 'Overdue' : 'Next payment', lsPeso(c.nextDue.remaining), `${c.nextDue.label} · due ${lsD(c.nextDue.due)}`, c.nextDue.status === 'overdue' ? '#dc2626' : 'inherit') : kpi('Next payment', 'None', 'schedule complete');
+  const dep = kpi('Security deposit', lsPeso(c.deposit.held), { unpaid: 'not yet received', partial: `of ${lsPeso(c.deposit.required)} required`, held: 'held for the tenant', settled: 'settled', none: 'no deposit set' }[c.deposit.status], c.deposit.status === 'unpaid' ? '#b45309' : 'inherit');
+  const ends = kpi('Lease ends', lsD(c.end), c.daysToEnd === null ? '' : c.daysToEnd < 0 ? `${-c.daysToEnd} days ago` : `${c.daysToEnd} days from now`, c.endsSoon ? '#b45309' : 'inherit');
+  pane.innerHTML = `<div class="ls-kpis">${balance}${next}${dep}${ends}</div>
+    ${can ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button class="hdr-btn primary" onclick="lePayForm()"><i class="fas fa-hand-holding-usd"></i> Record payment</button><button class="hdr-btn" onclick="leChargeForm()"><i class="fas fa-plus"></i> Add charge</button>${c.lateFeeSuggested ? `<button class="hdr-btn" onclick="leChargeForm('penalty','Late fee',${c.lateFeeSuggested})" title="Per the lease terms"><i class="fas fa-percent"></i> Add late fee ${lsPeso(c.lateFeeSuggested)}</button>` : ''}</div><div id="lePayBox"></div><div id="leChargeBox"></div>` : ''}
+    <div class="tl-sec">Rent schedule</div>
+    <div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Period</th><th>Covers</th><th>Due</th><th>Rent</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+      ${c.schedule.map(r => `<tr style="${r.status === 'upcoming' ? 'opacity:.75' : ''}"><td><strong>${esc(r.label)}</strong></td><td style="font-size:12px;color:var(--gray);white-space:nowrap">${lsD(r.start)} – ${lsD(r.end)}</td><td style="white-space:nowrap">${lsD(r.due)}${r.status === 'overdue' ? `<div style="font-size:10px;color:#dc2626;font-weight:700">${r.daysLate}d late</div>` : ''}</td><td class="money">${lsPeso(r.amount)}</td><td class="money" style="color:#059669">${r.paid ? lsPeso(r.paid) : '—'}</td><td class="money" style="font-weight:700;color:${r.status === 'overdue' ? '#dc2626' : 'inherit'}">${r.remaining ? lsPeso(r.remaining) : '—'}</td><td>${lsStatusPill(r.status)}</td></tr>`).join('')}
+      <tr style="font-weight:700"><td colspan="3">Total contract</td><td class="money">${lsPeso(c.contractValue)}</td><td class="money">${lsPeso(c.schedule.reduce((s, r) => s + r.paid, 0))}</td><td class="money">${lsPeso(c.schedule.reduce((s, r) => s + r.remaining, 0))}</td><td></td></tr>
+    </tbody></table></div>
+    ${c.charges && c.charges.length ? `<div class="tl-sec">Other charges</div><div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Date</th><th>Charge</th><th>Type</th><th>Amount</th><th>Paid</th><th>Status</th><th></th></tr></thead><tbody>${c.charges.map(ch => `<tr><td style="white-space:nowrap">${lsD(ch.date)}</td><td><strong>${esc(ch.label)}</strong>${ch.note ? `<div style="font-size:11px;color:var(--gray)">${esc(ch.note)}</div>` : ''}</td><td style="font-size:12px">${esc(LS_CHARGE_KINDS[ch.kind] || ch.kind)}</td><td class="money">${lsPeso(ch.amount)}</td><td class="money" style="color:#059669">${ch.paid ? lsPeso(ch.paid) : '—'}</td><td>${lsStatusPill(ch.status)}</td><td>${can ? `<button class="act act-del" onclick="leDeleteCharge('${ch.id}')" title="Remove"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${lePaymentsHtml(l, can)}
+    ${c.deposit.status !== 'none' ? `<div class="tl-sec">Security deposit</div><div class="ls-kpis">${kpi('Required', lsPeso(c.deposit.required))}${kpi('Received', lsPeso(c.deposit.paid))}${kpi('Deductions', c.deposit.deductions ? lsPeso(c.deposit.deductions) : 'None')}${kpi('Refunded', c.deposit.refunded ? lsPeso(c.deposit.refunded) : 'Not yet')}${kpi('Held now', lsPeso(c.deposit.held))}</div><div class="ls-note">Deductions and the refund are recorded under Details → Move-out & deposit settlement. The deposit is held for the tenant and never counts as rent.</div>` : ''}`;
+}
+function lePaymentsHtml(l, can){
+  const pays = [...(l.payments || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  const files = l.files || [];
+  return `<div class="tl-sec">Payments received <span style="font-size:12px;font-weight:400;color:var(--gray)">— ${pays.length ? lsPeso(l.computed?.credits?.total || 0) + ' in total' : 'none yet'}</span></div>
+    ${pays.length ? `<div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Date</th><th>Receipt</th><th>For</th><th>Mode / ref</th><th>Amount</th><th>Proof</th><th>Actions</th></tr></thead><tbody>${pays.map(p => { const proof = files.filter(f => f.paymentId === p._id); return `<tr>
+      <td style="white-space:nowrap">${lsD(p.date)}<div style="font-size:10px;color:var(--gray)">${esc(p.recordedByName || '')}</div></td>
+      <td><strong style="font-family:'JetBrains Mono',monospace;font-size:12px">${esc(p.receiptNo || '—')}</strong></td>
+      <td style="font-size:12px">${esc(LS_KINDS[p.kind] || p.kind)}${p.forPeriod ? `<div style="font-size:11px;color:var(--gray)">${esc(lsM(p.forPeriod))}</div>` : ''}${p.note ? `<div style="font-size:11px;color:var(--gray)">${esc(p.note)}</div>` : ''}</td>
+      <td style="font-size:12px">${esc(p.mode || '')}${p.reference ? `<div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace">${esc(p.reference)}</div>` : ''}</td>
+      <td class="money" style="font-weight:700">${lsPeso(p.amount)}</td>
+      <td style="font-size:11px">${proof.map(f => `<a href="#" onclick="leOpenFile('${f._id}');return false" title="${escA(f.name)}"><i class="fas fa-paperclip"></i> ${esc((f.name || 'file').slice(0, 18))}</a><br>`).join('')}${can ? `<a href="#" onclick="leUploadFor('${p._id}');return false" style="color:var(--gray)"><i class="fas fa-upload"></i> ${proof.length ? 'add' : 'attach proof'}</a>` : ''}</td>
+      <td><div class="act-btns" style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="act act-view" onclick="lsDownload('/api/admin/leases/${l._id}/receipt/${p._id}?download=1','GLRA-receipt-${escA(p.receiptNo || p._id)}.pdf')" title="Receipt PDF"><i class="fas fa-file-pdf"></i></button>
+        ${can && l.tenantEmail ? `<button class="act act-view" onclick="leEmailReceipt('${p._id}')" title="Email the receipt to ${escA(l.tenantEmail)}"><i class="fas fa-paper-plane"></i></button>` : ''}
+        ${can ? `<button class="act act-view" onclick="lePayForm('${p._id}')" title="Correct"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="leDeletePayment('${p._id}')" title="Remove"><i class="fas fa-trash"></i></button>` : ''}
+      </div></td></tr>`; }).join('')}</tbody></table></div>` : `<div class="ls-note">${can ? 'Use <b>Record payment</b> when money comes in — every payment gets a receipt number and a PDF receipt you can email.' : 'No payments recorded.'}</div>`}`;
+}
+function leChargeBoxHtml(){ return `<div id="leChargeBox"></div>`; }
+function lePayForm(editId){
+  const l = lsCurrent, c = l.computed || {}, box = document.getElementById('lePayBox'); if(!box) return;
+  lePayEditId = editId || null;
+  const p = editId ? (l.payments || []).find(x => x._id === editId) : null;
+  const periods = (c.schedule || []).map(r => `<option value="${r.month}" ${(p ? p.forPeriod === r.month : (c.nextDue && c.nextDue.month === r.month)) ? 'selected' : ''}>${esc(r.label)}${r.status === 'paid' ? ' (paid)' : r.status === 'overdue' ? ' (overdue)' : ''}</option>`).join('');
+  const defaultKind = p ? p.kind : (l.stage === 'contract' && c.deposit && c.deposit.status === 'unpaid' ? 'deposit' : 'rent');
+  const defaultAmt = p ? p.amount : (defaultKind === 'deposit' ? c.deposit.required : (c.nextDue ? c.nextDue.remaining : l.monthlyRent));
+  box.innerHTML = `<div class="ls-inline"><div style="font-weight:700;margin-bottom:10px">${p ? 'Correct payment ' + esc(p.receiptNo || '') : 'Record a payment'}</div>
+    <div class="ls-grid">
+      <div class="fg"><label class="flbl">Date received</label><input type="date" id="lp_date" class="finput" value="${p ? String(p.date || '').slice(0, 10) : lsMeta.today}"></div>
+      <div class="fg"><label class="flbl">Amount (₱)</label><input type="text" id="lp_amount" class="finput" inputmode="decimal" value="${defaultAmt ? Number(defaultAmt).toLocaleString('en-US') : ''}" oninput="fmtField(this)"></div>
+      <div class="fg"><label class="flbl">Payment for</label><select id="lp_kind" class="finput" onchange="lePayKindChanged()">${Object.entries(LS_KINDS).map(([k, v]) => `<option value="${k}" ${k === defaultKind ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="fg"><label class="flbl">Mode</label><select id="lp_mode" class="finput">${LS_MODES.map(m => `<option ${p && p.mode === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="fg"><label class="flbl">Reference no.</label><input type="text" id="lp_ref" class="finput" placeholder="Bank ref / cheque no." value="${escA(p ? p.reference : '')}"></div>
+      <div class="fg"><label class="flbl">Rent month it covers</label><select id="lp_period" class="finput"><option value="">—</option>${periods}</select><div class="ls-note">For the receipt. Money is still applied to the oldest unpaid rent.</div></div>
+      <div class="fg full"><label class="flbl">Note</label><input type="text" id="lp_note" class="finput" value="${escA(p ? p.note : '')}"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="hdr-btn" onclick="document.getElementById('lePayBox').innerHTML='';lePayEditId=null">Cancel</button><button class="hdr-btn primary" onclick="leSavePayment()"><i class="fas fa-save"></i> ${p ? 'Save correction' : 'Save payment'}</button></div></div>`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function lePayKindChanged(){ const k = document.getElementById('lp_kind').value, c = lsCurrent.computed || {}; const a = document.getElementById('lp_amount'); if(k === 'deposit' && c.deposit) a.value = Number(c.deposit.required - c.deposit.paid > 0 ? c.deposit.required - c.deposit.paid : c.deposit.required).toLocaleString('en-US'); else if(k === 'advance') a.value = Number(lsCurrent.advanceAmount || lsCurrent.monthlyRent || 0).toLocaleString('en-US'); else if(k === 'rent' && c.nextDue) a.value = Number(c.nextDue.remaining).toLocaleString('en-US'); }
+async function leSavePayment(){
+  const l = lsCurrent; if(!l) return;
+  const body = { date: document.getElementById('lp_date').value, amount: lsNum(document.getElementById('lp_amount').value), kind: document.getElementById('lp_kind').value, mode: document.getElementById('lp_mode').value, reference: document.getElementById('lp_ref').value, forPeriod: document.getElementById('lp_period').value, note: document.getElementById('lp_note').value };
+  if(!(body.amount > 0)){ showToast('Enter the amount received', true); return; }
+  showLoad('Saving payment…');
+  try{
+    const r = await apiFetch(lePayEditId ? `/api/admin/leases/${l._id}/payments/${lePayEditId}` : `/api/admin/leases/${l._id}/payments`, { method: lePayEditId ? 'PUT' : 'POST', body: JSON.stringify(body) }); const d = await r.json();
+    if(!r.ok){ showToast(d.error || 'Save failed', true); return; }
+    const lease = d.lease || d; lsCurrent = lease; lsUpsert(lease); lePayEditId = null; leRefreshHeader(); leRenderLedger(); renderLeasing(); renderDashboard();
+    showToast(d.receiptNo ? `Recorded — receipt ${d.receiptNo}` : 'Payment updated');
+    if(d.receiptNo && d.paymentId && l.tenantEmail && confirm(`Email receipt ${d.receiptNo} (with the PDF) to ${l.tenantEmail} now?`)) leEmailReceipt(d.paymentId);
+  }catch(e){ showToast('Error saving payment', true); }
+  finally{ hideLoad(); }
+}
+async function leDeletePayment(pid){
+  const l = lsCurrent; const p = (l.payments || []).find(x => x._id === pid); if(!p) return;
+  if(!confirm(`Remove payment ${p.receiptNo || ''} of ${lsPeso(p.amount)}? The receipt number will not be reused.`)) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${l._id}/payments/${pid}`, { method: 'DELETE' }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsCurrent = d; lsUpsert(d); leRefreshHeader(); leRenderLedger(); renderLeasing(); renderDashboard(); showToast('Payment removed'); }
+  catch(e){ showToast('Error', true); }
+}
+function leChargeForm(kind, label, amount){
+  const box = document.getElementById('leChargeBox'); if(!box) return;
+  box.innerHTML = `<div class="ls-inline"><div style="font-weight:700;margin-bottom:10px">Add a charge to the tenant’s account</div>
+    <div class="ls-grid">
+      <div class="fg"><label class="flbl">Date</label><input type="date" id="lc_date" class="finput" value="${lsMeta.today}"></div>
+      <div class="fg"><label class="flbl">Type</label><select id="lc_kind" class="finput">${Object.entries(LS_CHARGE_KINDS).map(([k, v]) => `<option value="${k}" ${k === (kind || 'dues') ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="fg"><label class="flbl">Amount (₱)</label><input type="text" id="lc_amount" class="finput" inputmode="decimal" value="${amount ? Number(amount).toLocaleString('en-US') : ''}" oninput="fmtField(this)"></div>
+      <div class="fg two"><label class="flbl">Description</label><input type="text" id="lc_label" class="finput" placeholder="e.g. Association dues · October, Meralco July, Repaint after move-out" value="${escA(label || '')}"></div>
+      <div class="fg"><label class="flbl">Note</label><input type="text" id="lc_note" class="finput"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="hdr-btn" onclick="document.getElementById('leChargeBox').innerHTML=''">Cancel</button><button class="hdr-btn primary" onclick="leSaveCharge()"><i class="fas fa-save"></i> Add charge</button></div></div>`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+async function leSaveCharge(){
+  const l = lsCurrent; if(!l) return;
+  const body = { date: document.getElementById('lc_date').value, kind: document.getElementById('lc_kind').value, amount: lsNum(document.getElementById('lc_amount').value), label: document.getElementById('lc_label').value, note: document.getElementById('lc_note').value };
+  if(!body.label.trim()){ showToast('Describe the charge', true); return; } if(!(body.amount > 0)){ showToast('Enter the amount', true); return; }
+  try{ const r = await apiFetch(`/api/admin/leases/${l._id}/charges`, { method: 'POST', body: JSON.stringify(body) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsCurrent = d; lsUpsert(d); leRefreshHeader(); leRenderLedger(); renderLeasing(); showToast('Charge added'); }
+  catch(e){ showToast('Error', true); }
+}
+async function leDeleteCharge(cid){
+  if(!confirm('Remove this charge?')) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/charges/${cid}`, { method: 'DELETE' }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsCurrent = d; lsUpsert(d); leRenderLedger(); renderLeasing(); showToast('Charge removed'); }
+  catch(e){ showToast('Error', true); }
+}
+
+// ── documents ──
+function leRenderDocs(){
+  const l = lsCurrent, pane = document.getElementById('lePane-docs'); if(!l || !pane) return;
+  const can = hasPerm('leasing_manage'); const files = [...(l.files || [])].sort((a, b) => new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0));
+  const have = new Set(files.map(f => f.label));
+  pane.innerHTML = `${can ? `<div class="ls-inline"><div class="ls-grid" style="align-items:end"><div class="fg"><label class="flbl">What is it?</label><select id="ld_label" class="finput">${LS_DOC_LABELS.map(x => `<option>${x}</option>`).join('')}</select></div><div class="fg two"><button class="hdr-btn primary" style="align-self:flex-start" onclick="leUploadFor('')"><i class="fas fa-upload"></i> Choose a file and upload</button><div class="ls-note">PDF, images, Word, Excel — up to 20 MB. Stored privately; every view is a signed link that expires in 5 minutes.</div></div></div></div>` : ''}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${LS_DOC_LABELS.filter(x => x !== 'Other' && x !== 'Proof of payment').map(x => `<span class="ls-chip ${have.has(x) ? 'ok' : 'dim'}"><i class="fas fa-${have.has(x) ? 'check' : 'minus'}"></i> ${esc(x)}</span>`).join('')}</div>
+    ${files.length ? `<div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Document</th><th>File</th><th>Size</th><th>Added</th><th>By</th><th></th></tr></thead><tbody>${files.map(f => `<tr><td><strong>${esc(f.label || 'Document')}</strong>${f.paymentId ? `<div style="font-size:10.5px;color:var(--gray)">Proof for ${esc(((l.payments || []).find(p => p._id === f.paymentId) || {}).receiptNo || 'a payment')}</div>` : ''}</td><td style="font-size:12px">${esc(f.name || '')}</td><td style="font-size:11px;color:var(--gray);white-space:nowrap">${f.bytes ? (f.bytes / 1024 / 1024 >= 1 ? (f.bytes / 1024 / 1024).toFixed(1) + ' MB' : Math.round(f.bytes / 1024) + ' KB') : ''}</td><td style="font-size:11px;white-space:nowrap">${lsD(f.uploadedAt)}</td><td style="font-size:11px;color:var(--gray)">${esc(f.uploadedByName || '')}</td><td><div class="act-btns" style="display:flex;gap:5px"><button class="act act-view" onclick="leOpenFile('${f._id}')" title="Open"><i class="fas fa-external-link-alt"></i></button>${can ? `<button class="act act-del" onclick="leDeleteFile('${f._id}')" title="Delete"><i class="fas fa-trash"></i></button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty-st"><i class="fas fa-folder-open"></i><p>No documents yet. The signed Contract of Lease and the tenant’s ID are the two to have on file.</p></div>`}`;
+}
+function leUploadFor(paymentId){ leUploadCtx = { paymentId: paymentId || '', label: paymentId ? 'Proof of payment' : (document.getElementById('ld_label')?.value || 'Document') }; document.getElementById('leFileInput').click(); }
+async function leUploadChosen(inp){
+  const file = inp.files && inp.files[0]; inp.value = ''; if(!file || !lsCurrent) return;
+  if(file.size > 20 * 1024 * 1024){ showToast('That file is over 20 MB', true); return; }
+  const fd = new FormData(); fd.append('file', file); fd.append('label', leUploadCtx?.label || 'Document'); if(leUploadCtx?.paymentId) fd.append('paymentId', leUploadCtx.paymentId);
+  showLoad('Uploading…');
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/files`, { method: 'POST', body: fd }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Upload failed', true); return; } lsCurrent = d; lsUpsert(d); if(lsTab === 'docs') leRenderDocs(); else leRenderLedger(); showToast('Uploaded'); }
+  catch(e){ showToast('Upload failed', true); }
+  finally{ hideLoad(); leUploadCtx = null; }
+}
+async function leOpenFile(fid){
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/files/${fid}/link`); const d = await r.json(); if(!r.ok || !d.url){ showToast(d.error || 'Could not open the file', true); return; } window.open(d.url, '_blank', 'noopener'); }
+  catch(e){ showToast('Could not open the file', true); }
+}
+async function leDeleteFile(fid){
+  if(!confirm('Delete this file permanently?')) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/files/${fid}`, { method: 'DELETE' }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsCurrent = d; lsUpsert(d); leRenderDocs(); showToast('File deleted'); }
+  catch(e){ showToast('Error', true); }
+}
+
+// ── messages ──
+function leRenderMsgs(){
+  const l = lsCurrent, pane = document.getElementById('lePane-msgs'); if(!l || !pane) return;
+  const can = hasPerm('leasing_manage'); const log = [...(l.emailLog || [])].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+  const pays = [...(l.payments || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  pane.innerHTML = `${can ? `<div class="ls-inline">
+      <div class="ls-grid">
+        <div class="fg"><label class="flbl">Send to</label><select id="lm_to" class="finput" onchange="leMsgKindChanged()"><option value="tenant" ${!l.tenantEmail ? 'disabled' : ''}>Tenant ${l.tenantEmail ? '· ' + esc(l.tenantEmail) : '(no email on file)'}</option><option value="owner" ${!l.ownerEmail ? 'disabled' : ''}>Owner ${l.ownerEmail ? '· ' + esc(l.ownerEmail) : '(no email on file)'}</option></select></div>
+        <div class="fg two"><label class="flbl">Message</label><select id="lm_kind" class="finput" onchange="leMsgKindChanged()">${LS_EMAIL_KINDS.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></div>
+        <div class="fg full" id="lm_receiptWrap" style="display:none"><label class="flbl">Which payment</label><select id="lm_payment" class="finput">${pays.map(p => `<option value="${p._id}">${esc(p.receiptNo || '')} · ${lsD(p.date)} · ${lsPeso(p.amount)} · ${esc(LS_KINDS[p.kind] || p.kind)}</option>`).join('') || '<option value="">No payments yet</option>'}</select></div>
+        <div class="fg full" id="lm_customWrap" style="display:none"><label class="flbl">Subject</label><input type="text" id="lm_subject" class="finput" placeholder="Subject line"><label class="flbl" style="margin-top:10px">Message</label><textarea id="lm_message" class="finput" rows="6" placeholder="Write the message. The GLRA letterhead and Catherine’s signature block are added automatically."></textarea></div>
+        <div class="full" id="lm_attachWrap" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="lm_attach"> Attach the statement of account (PDF)</label></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap"><button class="hdr-btn" onclick="leMsgPreview()"><i class="fas fa-eye"></i> Preview</button><button class="hdr-btn primary" onclick="leMsgSend()"><i class="fas fa-paper-plane"></i> Send</button></div>
+      <div id="lm_previewWrap" style="display:none"><div class="ls-note" style="margin-top:12px">Subject: <b id="lm_previewSubject"></b></div><iframe id="lePreviewFrame" sandbox="" title="Email preview"></iframe></div>
+    </div>` : ''}
+    <div class="tl-sec">Email trail</div>
+    ${log.length ? log.map(e => `<div class="ls-log"><div class="m">${fmtDate(e.at)} · to ${esc(e.to)} · ${e.auto ? 'automatic' : esc(e.byName || '')}</div><div class="t">${esc(e.subject)}</div></div>`).join('') : `<div class="ls-note">Nothing sent yet. Reminders sent by the engine will also show up here.</div>`}`;
+  if(can){ if(!l.tenantEmail && l.ownerEmail) document.getElementById('lm_to').value = 'owner'; leMsgKindChanged(); }
+}
+function leMsgKindChanged(){
+  const kind = document.getElementById('lm_kind').value, to = document.getElementById('lm_to').value;
+  document.getElementById('lm_receiptWrap').style.display = kind === 'receipt' ? '' : 'none';
+  document.getElementById('lm_customWrap').style.display = kind === 'custom' ? '' : 'none';
+  document.getElementById('lm_attachWrap').style.display = ['statement', 'receipt', 'owner_statement'].includes(kind) ? 'none' : '';
+  document.getElementById('lm_attachWrap').querySelector('label').lastChild.textContent = to === 'owner' ? ' Attach the owner statement (PDF)' : ' Attach the statement of account (PDF)';
+  document.getElementById('lm_previewWrap').style.display = 'none';
+}
+function leMsgBody(){ return { kind: document.getElementById('lm_kind').value, to: document.getElementById('lm_to').value, paymentId: document.getElementById('lm_payment')?.value || '', subject: document.getElementById('lm_subject')?.value || '', message: document.getElementById('lm_message')?.value || '', attach: !!document.getElementById('lm_attach')?.checked }; }
+async function leMsgPreview(){
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/email-preview`, { method: 'POST', body: JSON.stringify(leMsgBody()) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Preview failed', true); return; } document.getElementById('lm_previewSubject').textContent = d.subject; document.getElementById('lePreviewFrame').srcdoc = d.html; document.getElementById('lm_previewWrap').style.display = ''; }
+  catch(e){ showToast('Preview failed', true); }
+}
+async function leMsgSend(){
+  const b = leMsgBody(); const l = lsCurrent; const addr = b.to === 'owner' ? l.ownerEmail : l.tenantEmail;
+  if(!addr){ showToast(`No ${b.to} email on this lease — add it under Details`, true); return; }
+  if(b.kind === 'custom' && !b.message.trim()){ showToast('Write the message first', true); return; }
+  if(b.kind === 'receipt' && !b.paymentId){ showToast('Pick the payment', true); return; }
+  if(!confirm(`Send this email to ${addr}?`)) return;
+  showLoad('Sending…');
+  try{ const r = await apiFetch(`/api/admin/leases/${l._id}/email`, { method: 'POST', body: JSON.stringify(b) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Send failed', true); return; } lsCurrent = d.lease; lsUpsert(d.lease); leRenderMsgs(); showToast('Email sent to ' + addr); }
+  catch(e){ showToast('Send failed', true); }
+  finally{ hideLoad(); }
+}
+async function leEmailReceipt(pid){
+  const l = lsCurrent; if(!l || !l.tenantEmail) return;
+  showLoad('Sending receipt…');
+  try{ const r = await apiFetch(`/api/admin/leases/${l._id}/email`, { method: 'POST', body: JSON.stringify({ kind: 'receipt', to: 'tenant', paymentId: pid }) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Send failed', true); return; } lsCurrent = d.lease; lsUpsert(d.lease); if(lsTab === 'msgs') leRenderMsgs(); showToast('Receipt emailed to ' + l.tenantEmail); }
+  catch(e){ showToast('Send failed', true); }
+  finally{ hideLoad(); }
+}
+
+// ── activity ──
+function leRenderLog(){
+  const l = lsCurrent, pane = document.getElementById('lePane-log'); if(!l || !pane) return;
+  const can = hasPerm('leasing_manage'); const notes = [...(l.notes || [])].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+  const kindChip = k => ({ note: 'info', stage: 'dim', email: 'ok', payment: 'ok', system: 'dim' })[k] || 'dim';
+  pane.innerHTML = `${can ? `<div class="ls-inline" style="display:flex;gap:8px;align-items:flex-start"><textarea id="ln_text" class="finput" rows="2" style="flex:1" placeholder="Add a note — a call, a promise to pay, a repair request…"></textarea><button class="hdr-btn primary" onclick="leAddNote()"><i class="fas fa-plus"></i> Add</button></div>` : ''}
+    ${(l.stageHistory || []).length ? `<div class="ls-note" style="margin-bottom:12px">Stage history: ${[...l.stageHistory].map(h => `${esc(lsStage(h.stage).label)} <span style="opacity:.7">(${lsD(h.at)})</span>`).join(' → ')}</div>` : ''}
+    ${notes.length ? notes.map(n => `<div class="ls-log"><div class="m">${fmtDate(n.at)} · ${esc(n.byName || '')} <span class="ls-chip ${kindChip(n.kind)}" style="margin:0 0 0 6px">${esc(n.kind)}</span></div><div class="t">${esc(n.text)}</div></div>`).join('') : `<div class="ls-note">No activity yet.</div>`}`;
+}
+async function leAddNote(){
+  const t = document.getElementById('ln_text').value.trim(); if(!t) return;
+  try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/notes`, { method: 'POST', body: JSON.stringify({ text: t }) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Failed', true); return; } lsCurrent = d; lsUpsert(d); leRenderLog(); }
+  catch(e){ showToast('Error', true); }
+}
+
+// ── dashboard panel ──
+function renderLeasingPanel(){
+  const el = document.getElementById('dashLeasing'); if(!el || !hasPerm('leasing_view')) return;
+  if(!window.lsData){ el.innerHTML = '<div class="dash-loading">Loading…</div>'; return; }
+  const month = (lsMeta.today || new Date().toISOString().slice(0, 10)).slice(0, 7), ms = lsMonthStats(month);
+  const live = lsData.filter(l => LS_LIVE.includes(l.stage));
+  const overdue = live.filter(l => l.computed && l.computed.overdueCount > 0);
+  const ending = live.filter(l => l.computed && l.computed.daysToEnd !== null && l.computed.daysToEnd >= 0 && l.computed.daysToEnd <= 60);
+  const strip = `<div class="pipe-strip" style="margin-bottom:14px">${LS_ORDER.map(s => { const n = lsData.filter(l => l.stage === s).length; return `<div class="pipe-cell" onclick="switchTab('leasing')" title="${escA(lsStage(s).label)}"><div class="pc-num" style="color:${n > 0 ? lsStage(s).color : 'var(--ab-gray)'}">${n}</div><div class="pc-lbl">${esc(lsStage(s).label)}</div></div>`; }).join('')}</div>`;
+  const kpi = (k, v, s, color) => `<div class="ls-kpi"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s || ''}</div></div>`;
+  el.innerHTML = strip + `<div class="ls-kpis" style="margin-bottom:0">${kpi('Expected · ' + lsM(month).split(' ')[0], lsPeso(ms.expected), `${live.length} active lease${live.length === 1 ? '' : 's'}`)}${kpi('Collected', lsPeso(ms.collected), ms.expected ? Math.round(ms.collected / ms.expected * 100) + '% of expected' : '', '#059669')}${kpi('Overdue', overdue.length, overdue.length ? lsPeso(overdue.reduce((s, l) => s + l.computed.overdueAmount, 0)) + ' outstanding' : 'nothing overdue', overdue.length ? '#dc2626' : 'inherit')}${kpi('Ending ≤ 60 days', ending.length, ending.length ? ending.map(l => lsWho(l)).slice(0, 2).join(', ') : 'none', ending.length ? '#b45309' : 'inherit')}</div>`;
 }
 </script>
 

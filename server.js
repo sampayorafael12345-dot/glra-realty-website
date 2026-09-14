@@ -40,6 +40,16 @@ if (process.env.JWT_SECRET.length < 32) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
+// A promise nobody awaited (a failed email, a Cloudinary hiccup) must not take
+// the whole site down. Log it and keep serving; Render restarts the process
+// only on a genuine crash.
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason && reason.stack ? reason.stack : reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err && err.stack ? err.stack : err);
+});
+
 // ============ HTML ESCAPE HELPER (used in email templates) ============
 function esc(value) {
   if (value === null || value === undefined) return '';
@@ -72,7 +82,9 @@ function initBrevo() {
 // replyTo is optional and only used by the Agent Workspace, where an agent
 // emails their own client: the client's reply has to reach that agent, not the
 // shared inbox. Everything else leaves it off and keeps the default below.
-async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null) {
+// attachments is optional too: [{ name, content }] where content is a Buffer
+// or a base64 string. The leasing module uses it for PDF statements/receipts.
+async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null, attachments = null) {
   if (!brevoApiInstance) {
     const initialized = initBrevo();
     if (!initialized) {
@@ -92,6 +104,11 @@ async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', rep
       : { email: 'glrarealty@gmail.com', name: 'GLRA Realty' };
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
+    if (Array.isArray(attachments) && attachments.length) {
+      sendSmtpEmail.attachment = attachments
+        .filter(a => a && a.name && a.content)
+        .map(a => ({ name: String(a.name).slice(0, 120), content: Buffer.isBuffer(a.content) ? a.content.toString('base64') : String(a.content) }));
+    }
 
     const response = await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
     console.log(`✅ Email sent to ${to}: ${subject}`);
@@ -973,6 +990,14 @@ const { registerAgentRoutes, startAgentTick } = require('./server/agents');
 registerAgentRoutes(app, { sendEmail, esc, handleValidation });
 startAgentTick({ sendEmail, esc });
 
+// ============ LEASING ============
+// Rent roll, tenant ledgers, statements/receipts as PDF, reminder emails and
+// the broker's calendar feed all live in ./server/leasing.js — routes under
+// /api/admin/leases* (leasing_view / leasing_manage) plus the public ICS feed.
+const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
+registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
+startLeasingTick({ sendEmail, esc });
+
 
 
 // ============ SUBSCRIPTION ROUTES ============
@@ -1188,7 +1213,10 @@ app.post('/api/wishlist',
   }
 );
 
-app.get('/api/wishlist/:email', async (req, res) => {
+// The wishlist is keyed by email alone (no login on the public site), so the
+// read and delete routes are rate-limited like every other public write to
+// keep someone from walking through addresses.
+app.get('/api/wishlist/:email', publicWriteLimiter, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1201,7 +1229,7 @@ app.get('/api/wishlist/:email', async (req, res) => {
   }
 });
 
-app.delete('/api/wishlist/:email/:propertyId', async (req, res) => {
+app.delete('/api/wishlist/:email/:propertyId', publicWriteLimiter, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     const propertyId = String(req.params.propertyId);

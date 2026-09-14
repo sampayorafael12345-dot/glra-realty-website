@@ -54,6 +54,12 @@
 .input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}
 .input-group input,.input-group select{padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
 .input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.presets button{font-family:'JetBrains Mono',monospace !important;font-size:10px !important;letter-spacing:1px !important;padding:5px 9px !important;border:2px solid var(--ab-ink,#0a0a0a) !important;background:var(--ab-paper,#f1eee9) !important;color:var(--ab-ink,#0a0a0a) !important;cursor:pointer;transition:var(--transition);text-transform:uppercase;font-weight:700}
+.presets button:hover,.presets button.on{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
+body.dark-mode .presets button{background:#111 !important;color:#f1eee9 !important;border-color:#f1eee9 !important}
+body.dark-mode .presets button:hover,body.dark-mode .presets button.on{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important}
+.input-hint{font-size:11px;color:var(--gray);line-height:1.5}
 
 .result-summary{background:var(--navy);padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;border:1px solid rgba(255,61,0,.2);margin-bottom:20px}
 .result-item{text-align:center;padding:6px}
@@ -171,35 +177,33 @@ body.dark-mode .schedule-table tr.year-row td{background:#0e0e0c}
     <div class="calc-body">
       <div class="input-row">
         <div class="input-group">
-          <label>Loan Amount (₱)</label>
-          <input type="text" id="loanAmount" value="3,000,000" oninput="formatPrice(this);recalculate()">
+          <label for="loanAmount">Loan Amount (₱)</label>
+          <input type="text" id="loanAmount" value="3,000,000" inputmode="numeric" oninput="formatPrice(this);recalculate()">
         </div>
         <div class="input-group">
-          <label>Interest Rate (% per year)</label>
-          <select id="interestRate" onchange="recalculate()">
-            <option value="4">4.00% — Low Promo</option>
-            <option value="5">5.00%</option>
-            <option value="6">6.00% — Bank Promo</option>
-            <option value="6.5">6.50%</option>
-            <option value="7">7.00%</option>
-            <option value="7.5" selected>7.50% — Standard</option>
-            <option value="8">8.00%</option>
-            <option value="9">9.00%</option>
-            <option value="10">10.00%</option>
-            <option value="11">11.00% — Pag-IBIG</option>
-            <option value="12">12.00%</option>
-          </select>
+          <label for="interestRate">Interest Rate (% per year)</label>
+          <input type="number" id="interestRate" value="7.5" min="0" max="30" step="0.01" inputmode="decimal" placeholder="e.g. 6.25" oninput="recalculate()">
+          <div class="presets" aria-label="Common rates">
+            <button type="button" onclick="setRate(5.75)">5.75%</button>
+            <button type="button" onclick="setRate(6.25)">6.25% Pag-IBIG</button>
+            <button type="button" onclick="setRate(7)">7%</button>
+            <button type="button" onclick="setRate(7.5)">7.5%</button>
+            <button type="button" onclick="setRate(8.5)">8.5%</button>
+            <button type="button" onclick="setRate(10)">10%</button>
+          </div>
+          <div class="input-hint">Type the exact rate your bank quoted, e.g. 6.88 — the chips are just shortcuts.</div>
         </div>
         <div class="input-group">
-          <label>Loan Term (Years)</label>
-          <select id="loanTerm" onchange="recalculate()">
-            <option value="5">5 years</option>
-            <option value="10">10 years</option>
-            <option value="15">15 years</option>
-            <option value="20" selected>20 years</option>
-            <option value="25">25 years</option>
-            <option value="30">30 years</option>
-          </select>
+          <label for="loanTerm">Loan Term (Years)</label>
+          <input type="number" id="loanTerm" value="20" min="1" max="40" step="1" inputmode="numeric" oninput="recalculate()">
+          <div class="presets" aria-label="Common terms">
+            <button type="button" onclick="setTerm(5)">5 yrs</button>
+            <button type="button" onclick="setTerm(10)">10 yrs</button>
+            <button type="button" onclick="setTerm(15)">15 yrs</button>
+            <button type="button" onclick="setTerm(20)">20 yrs</button>
+            <button type="button" onclick="setTerm(25)">25 yrs</button>
+            <button type="button" onclick="setTerm(30)">30 yrs</button>
+          </div>
         </div>
       </div>
 
@@ -353,14 +357,28 @@ function fmtPeso(n){
   return '₱' + Math.round(n).toLocaleString('en-US');
 }
 
+// Preset chips just fill the boxes; the boxes are the source of truth.
+function setRate(v){ document.getElementById('interestRate').value = v; recalculate(); }
+function setTerm(v){ document.getElementById('loanTerm').value = v; recalculate(); }
+function syncPresets(){
+  const rate = parseFloat(document.getElementById('interestRate').value);
+  const years = parseInt(document.getElementById('loanTerm').value);
+  document.querySelectorAll('.presets button').forEach(b => {
+    const m = /setRate\(([\d.]+)\)|setTerm\((\d+)\)/.exec(b.getAttribute('onclick') || '');
+    if(!m) return;
+    b.classList.toggle('on', m[1] !== undefined ? parseFloat(m[1]) === rate : parseInt(m[2]) === years);
+  });
+}
+
 function recalculate(){
   const principal = getRaw('loanAmount');
-  const annualRate = parseFloat(document.getElementById('interestRate').value);
-  const years = parseInt(document.getElementById('loanTerm').value);
+  const annualRate = Math.max(0, parseFloat(document.getElementById('interestRate').value) || 0);
+  const years = Math.max(0, parseInt(document.getElementById('loanTerm').value) || 0);
   const months = years * 12;
   const monthlyRate = annualRate / 100 / 12;
+  syncPresets();
 
-  if(principal <= 0 || monthlyRate <= 0 || months <= 0){
+  if(principal <= 0 || months <= 0){
     document.getElementById('monthlyPayment').textContent = '₱0';
     document.getElementById('totalInterest').textContent = '₱0';
     document.getElementById('totalPayment').textContent = '₱0';
@@ -369,7 +387,10 @@ function recalculate(){
     return;
   }
 
-  const monthly = principal * monthlyRate * Math.pow(1+monthlyRate, months) / (Math.pow(1+monthlyRate, months) - 1);
+  // A 0% rate (developer in-house promos) is a plain straight-line split.
+  const monthly = monthlyRate > 0
+    ? principal * monthlyRate * Math.pow(1+monthlyRate, months) / (Math.pow(1+monthlyRate, months) - 1)
+    : principal / months;
   const totalPaid = monthly * months;
   const totalInterest = totalPaid - principal;
 
