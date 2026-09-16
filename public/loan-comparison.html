@@ -104,7 +104,7 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a>
@@ -144,7 +144,7 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Pag-IBIG vs Bank Loan — Comparison</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -167,17 +167,17 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="grid-3" style="margin-bottom:20px">
         <div class="input-group">
-          <label>Loan Amount (₱)</label>
+          <label for="amount">Loan Amount (₱)</label>
           <input type="text" id="amount" value="4,000,000" oninput="formatPrice(this);recalc()">
           <div class="input-hint">Price minus your down payment.</div>
         </div>
         <div class="input-group">
-          <label>Your Monthly Income (₱)</label>
+          <label for="income">Your Monthly Income (₱)</label>
           <input type="text" id="income" value="80,000" oninput="formatPrice(this);recalc()">
           <div class="input-hint">Optional — checks affordability.</div>
         </div>
         <div class="input-group">
-          <label>Age Now (optional)</label>
+          <label for="age">Age Now (optional)</label>
           <input type="number" id="age" value="35" min="18" max="70" oninput="recalc()">
           <div class="input-hint">Loan must usually end by age 70.</div>
         </div>
@@ -188,11 +188,11 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
         <div class="loan-panel pagibig">
           <h3><i class="fas fa-landmark" style="color:#10b981"></i> Pag-IBIG <span class="badge">Govt Fund</span></h3>
           <div class="field">
-            <label>Interest Rate (% / yr)</label>
+            <label for="pRate">Interest Rate (% / yr)</label>
             <input type="number" id="pRate" value="6.25" min="0" max="20" step="0.05" oninput="recalc()">
           </div>
           <div class="field">
-            <label>Term (years)</label>
+            <label for="pTerm">Term (years)</label>
             <input type="number" id="pTerm" value="30" min="1" max="30" oninput="recalc()">
           </div>
           <div class="result-block">
@@ -207,11 +207,11 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
         <div class="loan-panel bank">
           <h3><i class="fas fa-building-columns" style="color:#3b82f6"></i> Bank <span class="badge">Private</span></h3>
           <div class="field">
-            <label>Interest Rate (% / yr)</label>
+            <label for="bRate">Interest Rate (% / yr)</label>
             <input type="number" id="bRate" value="7.5" min="0" max="20" step="0.05" oninput="recalc()">
           </div>
           <div class="field">
-            <label>Term (years)</label>
+            <label for="bTerm">Term (years)</label>
             <input type="number" id="bTerm" value="20" min="1" max="30" oninput="recalc()">
           </div>
           <div class="result-block">

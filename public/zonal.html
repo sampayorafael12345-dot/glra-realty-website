@@ -119,7 +119,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 <div class="loader" id="loader"><div><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -166,7 +166,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">BIR Zonal Value Lookup Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -482,7 +482,7 @@ function render(hits){
       <div class="rc-body">
         <div class="rc-desc">${esc(r.d)}</div>
         <div class="sqm-control">
-          <label>Calculate for:</label>
+          <label for="sqm_${idx}">Calculate for:</label>
           <input type="number" id="sqm_${idx}" value="100" min="1" max="10000" oninput="recalc(${idx},${r.a})">
           <span>sqm at average zonal value</span>
         </div>

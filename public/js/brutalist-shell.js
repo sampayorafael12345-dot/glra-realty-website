@@ -38,7 +38,8 @@
       try {
         var pc = JSON.parse(localStorage.getItem('glraPropsCache_v1') || 'null');
         if(pc && Array.isArray(pc.props) && pc.props.length){
-          liveMsg = 'LIVE · ' + pc.props.length + ' listings open right now';
+          var n = pc.props.length;
+          liveMsg = 'LIVE · ' + n + (n === 1 ? ' listing' : ' listings') + ' open right now';
         }
       } catch(e){}
       var top = document.createElement('div');

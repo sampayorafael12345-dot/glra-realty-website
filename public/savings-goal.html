@@ -97,7 +97,7 @@ body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a>
@@ -136,7 +136,7 @@ body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Down Payment Savings Plan</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -159,12 +159,12 @@ body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
     <div class="calc-body">
 
       <div class="input-group">
-        <label>Target Property Price (₱)</label>
+        <label for="price">Target Property Price (₱)</label>
         <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Not sure yet? <a href="/properties.html" style="color:var(--gold)">Browse listings →</a></div>
       </div>
       <div class="input-group">
-        <label>Down Payment (%)</label>
+        <label for="dp">Down Payment (%)</label>
         <select id="dp" onchange="recalc()">
           <option value="10">10% — minimum for many developers</option>
           <option value="20" selected>20% — typical</option>
@@ -181,7 +181,7 @@ body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="section-divider">Your Timeline &amp; Savings</div>
       <div class="input-group">
-        <label>I want to buy in…</label>
+        <label for="months">I want to buy in…</label>
         <select id="months" onchange="recalc()">
           <option value="12">1 year</option>
           <option value="24" selected>2 years</option>
@@ -193,11 +193,11 @@ body.dark-mode .progress-track{background:#0e0e0c;border-color:#3a3a36}
         </select>
       </div>
       <div class="input-group">
-        <label>Money You've Saved So Far (₱)</label>
+        <label for="current">Money You've Saved So Far (₱)</label>
         <input type="text" id="current" value="200,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group" style="margin-bottom:0">
-        <label>Interest / Return on Savings (% / yr)</label>
+        <label for="rate">Interest / Return on Savings (% / yr)</label>
         <input type="number" id="rate" value="3" min="0" max="15" step="0.5" oninput="recalc()">
         <div class="input-hint">A digital bank or time deposit is typically 2–5%.</div>
       </div>

@@ -104,7 +104,7 @@
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a>
@@ -144,7 +144,7 @@
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Rent vs Buy — Comparison</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -172,7 +172,7 @@
     <div class="calc-body">
 
       <div class="input-group">
-        <label>Time Horizon (years)</label>
+        <label for="years">Time Horizon (years)</label>
         <input type="number" id="years" value="7" min="1" max="40" oninput="recalc()">
         <div class="input-hint">How long you plan to stay / hold.</div>
       </div>
@@ -181,46 +181,46 @@
       <div id="buyInputs">
         <div class="section-divider">If You Rent</div>
         <div class="input-group">
-          <label>Monthly Rent (₱)</label>
+          <label for="rent">Monthly Rent (₱)</label>
           <input type="text" id="rent" value="25,000" oninput="formatPrice(this);recalc()">
         </div>
         <div class="input-group">
-          <label>Annual Rent Increase (%)</label>
+          <label for="rentInc">Annual Rent Increase (%)</label>
           <input type="number" id="rentInc" value="5" min="0" max="20" step="0.5" oninput="recalc()">
         </div>
 
         <div class="section-divider">If You Buy</div>
         <div class="input-group">
-          <label>Property Price (₱)</label>
+          <label for="price">Property Price (₱)</label>
           <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
         </div>
         <div class="two-col">
           <div class="input-group">
-            <label>Down Payment (₱)</label>
+            <label for="down">Down Payment (₱)</label>
             <input type="text" id="down" value="1,000,000" oninput="formatPrice(this);recalc()">
           </div>
           <div class="input-group">
-            <label>Closing Costs (₱)</label>
+            <label for="closing">Closing Costs (₱)</label>
             <input type="text" id="closing" value="350,000" oninput="formatPrice(this);recalc()">
           </div>
         </div>
         <div class="two-col">
           <div class="input-group">
-            <label>Loan Rate (% / yr)</label>
+            <label for="rate">Loan Rate (% / yr)</label>
             <input type="number" id="rate" value="7" min="0" max="20" step="0.25" oninput="recalc()">
           </div>
           <div class="input-group">
-            <label>Loan Term (years)</label>
+            <label for="term">Loan Term (years)</label>
             <input type="number" id="term" value="20" min="1" max="30" oninput="recalc()">
           </div>
         </div>
         <div class="two-col">
           <div class="input-group">
-            <label>Appreciation (% / yr)</label>
+            <label for="appr">Appreciation (% / yr)</label>
             <input type="number" id="appr" value="4" min="-5" max="20" step="0.5" oninput="recalc()">
           </div>
           <div class="input-group">
-            <label>Monthly Dues + Amilyar (₱)</label>
+            <label for="carry">Monthly Dues + Amilyar (₱)</label>
             <input type="text" id="carry" value="6,000" oninput="formatPrice(this);recalc()">
           </div>
         </div>
@@ -230,39 +230,39 @@
       <div id="sellInputs" style="display:none">
         <div class="section-divider">The Property</div>
         <div class="input-group">
-          <label>Current Market Value (₱)</label>
+          <label for="sPrice">Current Market Value (₱)</label>
           <input type="text" id="sPrice" value="5,000,000" oninput="formatPrice(this);recalc()">
           <div class="input-hint">Not sure? <a href="/valuation.html" style="color:var(--gold)">Get a valuation →</a></div>
         </div>
         <div class="input-group">
-          <label>Appreciation if kept (% / yr)</label>
+          <label for="sAppr">Appreciation if kept (% / yr)</label>
           <input type="number" id="sAppr" value="4" min="-5" max="20" step="0.5" oninput="recalc()">
         </div>
 
         <div class="section-divider">If You Sell Now</div>
         <div class="input-group">
-          <label>Selling Costs (% of price)</label>
+          <label for="sCost">Selling Costs (% of price)</label>
           <input type="number" id="sCost" value="11" min="0" max="20" step="0.5" oninput="recalc()">
           <div class="input-hint">CGT 6% + broker's commission + misc. See <a href="/calculator.html" style="color:var(--gold)">Closing Fees →</a></div>
         </div>
         <div class="input-group">
-          <label>Return on Reinvested Cash (% / yr)</label>
+          <label for="sReinv">Return on Reinvested Cash (% / yr)</label>
           <input type="number" id="sReinv" value="5" min="0" max="20" step="0.5" oninput="recalc()">
           <div class="input-hint">If you sold and put the money in a time deposit, fund, or another investment.</div>
         </div>
 
         <div class="section-divider">If You Rent It Out</div>
         <div class="input-group">
-          <label>Monthly Rent (₱)</label>
+          <label for="sRent">Monthly Rent (₱)</label>
           <input type="text" id="sRent" value="25,000" oninput="formatPrice(this);recalc()">
         </div>
         <div class="two-col">
           <div class="input-group">
-            <label>Rent Increase (% / yr)</label>
+            <label for="sRentInc">Rent Increase (% / yr)</label>
             <input type="number" id="sRentInc" value="5" min="0" max="20" step="0.5" oninput="recalc()">
           </div>
           <div class="input-group">
-            <label>Costs + Vacancy (% of rent)</label>
+            <label for="sRentCost">Costs + Vacancy (% of rent)</label>
             <input type="number" id="sRentCost" value="25" min="0" max="70" step="1" oninput="recalc()">
           </div>
         </div>

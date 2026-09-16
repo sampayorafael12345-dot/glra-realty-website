@@ -105,7 +105,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -153,7 +153,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 
 <!-- Print-only branded header (hidden on screen, visible only when printing) -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Affordability Calculator Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -175,27 +175,27 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
     </div>
     <div class="calc-body">
       <div class="input-group">
-        <label>Your Monthly Income (₱)</label>
+        <label for="income">Your Monthly Income (₱)</label>
         <input type="text" id="income" value="80,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Take-home (after-tax) salary plus any side income.</div>
       </div>
       <div class="input-group">
-        <label>Co-Borrower Monthly Income (₱)</label>
+        <label for="coIncome">Co-Borrower Monthly Income (₱)</label>
         <input type="text" id="coIncome" value="0" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Spouse or co-borrower income, if combining loans. Enter 0 if alone.</div>
       </div>
       <div class="input-group">
-        <label>Existing Monthly Debt Payments (₱)</label>
+        <label for="debts">Existing Monthly Debt Payments (₱)</label>
         <input type="text" id="debts" value="5,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Credit cards, car loans, personal loans, other monthly obligations.</div>
       </div>
       <div class="input-group">
-        <label>Available Down Payment (₱)</label>
+        <label for="downPayment">Available Down Payment (₱)</label>
         <input type="text" id="downPayment" value="500,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Cash you have ready. Bank loans typically cover 80%; you put down 20%.</div>
       </div>
       <div class="input-group">
-        <label>Loan Term (Years)</label>
+        <label for="term">Loan Term (Years)</label>
         <select id="term" onchange="recalc()">
           <option value="5">5 years</option>
           <option value="10">10 years</option>
@@ -206,7 +206,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
         </select>
       </div>
       <div class="input-group">
-        <label>Interest Rate (% per year)</label>
+        <label for="rate">Interest Rate (% per year)</label>
         <select id="rate" onchange="recalc()">
           <option value="6">6.00% — Bank Promo</option>
           <option value="6.5">6.50%</option>
@@ -218,7 +218,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
         </select>
       </div>
       <div class="input-group">
-        <label>Maximum Debt-to-Income Ratio (DTI)</label>
+        <label for="dti">Maximum Debt-to-Income Ratio (DTI)</label>
         <div class="dti-slider-wrap">
           <input type="range" class="dti-slider" id="dti" min="20" max="50" step="5" value="35" oninput="recalc()">
           <div class="dti-display"><span>20% Conservative</span><strong id="dtiVal">35%</strong><span>50% Aggressive</span></div>

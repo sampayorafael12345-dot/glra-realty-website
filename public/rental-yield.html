@@ -102,7 +102,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -150,7 +150,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Rental Yield &amp; ROI Calculator Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -174,27 +174,27 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="section-divider">Purchase</div>
       <div class="input-group">
-        <label>Property Purchase Price (₱)</label>
+        <label for="price">Property Purchase Price (₱)</label>
         <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group">
-        <label>Cash Down Payment (₱)</label>
+        <label for="down">Cash Down Payment (₱)</label>
         <input type="text" id="down" value="1,000,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Plus closing costs (typically 5-8% of price). The rest is loan.</div>
       </div>
       <div class="input-group">
-        <label>Closing Costs (₱)</label>
+        <label for="closing">Closing Costs (₱)</label>
         <input type="text" id="closing" value="350,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">CGT, DST, transfer tax, registration, notarial, broker fees.</div>
       </div>
 
       <div class="section-divider">Rental Income</div>
       <div class="input-group">
-        <label>Expected Monthly Rent (₱)</label>
+        <label for="rent">Expected Monthly Rent (₱)</label>
         <input type="text" id="rent" value="30,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group">
-        <label>Vacancy Rate (% of year)</label>
+        <label for="vacancy">Vacancy Rate (% of year)</label>
         <select id="vacancy" onchange="recalc()">
           <option value="0">0% — Always rented</option>
           <option value="5" selected>5% — Standard</option>
@@ -207,24 +207,24 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="section-divider">Annual Expenses</div>
       <div class="input-group">
-        <label>Annual Real Property Tax — Amilyar (₱)</label>
+        <label for="rpt">Annual Real Property Tax — Amilyar (₱)</label>
         <input type="text" id="rpt" value="15,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group">
-        <label>Monthly Condo Dues / HOA (₱)</label>
+        <label for="hoa">Monthly Condo Dues / HOA (₱)</label>
         <input type="text" id="hoa" value="6,000" oninput="formatPrice(this);recalc()">
         <div class="input-hint">Set to 0 for house and lot.</div>
       </div>
       <div class="input-group">
-        <label>Annual Maintenance & Repairs (₱)</label>
+        <label for="maintenance">Annual Maintenance & Repairs (₱)</label>
         <input type="text" id="maintenance" value="20,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group">
-        <label>Annual Insurance (₱)</label>
+        <label for="insurance">Annual Insurance (₱)</label>
         <input type="text" id="insurance" value="8,000" oninput="formatPrice(this);recalc()">
       </div>
       <div class="input-group">
-        <label>Property Management Fee (% of rent)</label>
+        <label for="mgmt">Property Management Fee (% of rent)</label>
         <select id="mgmt" onchange="recalc()">
           <option value="0" selected>0% — Self-managed</option>
           <option value="5">5%</option>

@@ -144,6 +144,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+// Nothing on this site uses the camera, microphone, geolocation or payment
+// APIs, so switch them off for the page and anything it embeds. Costs nothing
+// and stops an injected script from even asking the visitor for permission.
+app.use((req, res, next) => {
+  res.set('Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
+  next();
+});
+
 // ── CONTENT SECURITY POLICY ─────────────────────────────────
 // Split in two on purpose.
 //
@@ -184,10 +193,15 @@ app.use(helmet.contentSecurityPolicy({
   directives: {
     'default-src': ["'self'"],
     // cdn.jsdelivr.net = Swiper (home page hero slider).
-    // clarity.ms = Microsoft Clarity, loaded on admin.html only.
+    // clarity.ms = Microsoft Clarity, loaded by js/main.js on every public page
+    // (NOT on admin.html, which main.js skips). Clarity bootstraps from
+    // www.clarity.ms/tag/<id> but the tag then pulls its real payload from
+    // scripts.clarity.ms and beacons to b.clarity.ms / c.bing.com — all four
+    // hosts have to be listed or the console fills with violations and the
+    // policy can never be promoted out of report-only.
     'script-src': ["'self'", "'unsafe-inline'",
       'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-      'https://www.clarity.ms', 'https://c.clarity.ms'],
+      'https://www.clarity.ms', 'https://c.clarity.ms', 'https://scripts.clarity.ms'],
     'style-src': ["'self'", "'unsafe-inline'",
       'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
     'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
@@ -195,9 +209,9 @@ app.use(helmet.contentSecurityPolicy({
     // placeholders and the admin's local image previews before upload.
     'img-src': ["'self'", 'data:', 'blob:',
       'https://res.cloudinary.com', 'https://images.unsplash.com',
-      'https://www.clarity.ms', 'https://c.clarity.ms'],
+      'https://www.clarity.ms', 'https://c.clarity.ms', 'https://c.bing.com'],
     'connect-src': ["'self'", 'https://www.clarity.ms', 'https://c.clarity.ms',
-      'https://api.cloudinary.com'],
+      'https://b.clarity.ms', 'https://api.cloudinary.com'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
     'worker-src': ["'self'"],                            // service worker
@@ -244,6 +258,19 @@ app.use(compression());
 // Body limits — sane defaults; multer handles large file uploads separately
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
+
+// Body-parser failures are the client's fault, not a server fault. Answer them
+// honestly (413 too large / 400 malformed) so a browser or a script gets a
+// usable message instead of a 500 that looks like the site fell over.
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'That request is too large. Maximum 1 MB.' });
+  }
+  if (err && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+    return res.status(400).json({ error: 'Malformed request body.' });
+  }
+  return next(err);
+});
 
 // Strip MongoDB operator keys ($ne, $gt, etc.) from req.body, req.query, req.params
 app.use(mongoSanitize());
@@ -325,7 +352,19 @@ app.use((req, res, next) => {
 // at its April dates and contained no /property/ listing URLs at all.
 app.get('/sitemap.xml', (req, res, next) => buildSitemap(req, res, next));
 
-app.use(express.static('public'));
+app.use(express.static('public', {
+  // HTML is the one thing that must never be held: admin edits and new
+  // listings have to show up on the next load without a hard refresh.
+  // Everything else (css, js, img, manifest) is safe to keep for a week —
+  // the service worker's CACHE_VERSION is what retires an old asset.
+  setHeaders(res, path) {
+    if (/\.html?$/i.test(path)) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+  }
+}));
 
 // ============ RATE LIMITERS ============
 const loginLimiter = rateLimit({
@@ -510,9 +549,24 @@ function handleValidation(req, res, next) {
 
 // ============ PUBLIC ROUTES ============
 
+// Fields the public site is allowed to see. This is a WHITELIST on purpose:
+// a new internal field added to the schema later stays private by default
+// instead of silently appearing in the public API. Deliberately excluded:
+// commission / fixedAmount / totalCommission (the brokerage's own economics)
+// and notes (free text that holds the owner's name, email and mobile on any
+// listing imported from a "List your property" submission).
+const PUBLIC_PROPERTY_FIELDS = [
+  '_id', 'title', 'location', 'price', 'monthlyRental', 'bedrooms', 'bathrooms',
+  'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
+  'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
+  'mapLocation', 'pricePerSqm', 'developer', 'previousPrice', 'priceUpdatedAt',
+  'views', 'createdAt'
+].join(' ');
+
 app.get('/api/properties', async (req, res) => {
   try {
-    const properties = await Property.find({ status: 'available' }).sort({ createdAt: -1 }).lean();
+    const properties = await Property.find({ status: 'available' })
+      .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
     properties.forEach(optimizePropertyImages);
     // A minute of freshness: repeat views and back-navigation are served from
     // the browser instead of re-hitting Render. An admin edit shows up on the
@@ -548,8 +602,10 @@ app.get('/api/property-image/:id/:key', async (req, res) => {
 // Single property as JSON (handy for clients / future use).
 app.get('/api/properties/:id', async (req, res) => {
   try {
-    const p = await Property.findById(req.params.id).lean();
-    if (!p) return res.status(404).json({ error: 'Not found' });
+    const p = await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean();
+    // Same visibility rule as the /property/:id page: a listing that is sold,
+    // reserved or hidden behind an active lease is not served publicly.
+    if (!p || p.status !== 'available') return res.status(404).json({ error: 'Not found' });
     res.json(optimizePropertyImages(p));
   } catch (err) {
     res.status(400).json({ error: 'Invalid id' });
@@ -1300,7 +1356,7 @@ app.post('/api/price-alert',
   }
 );
 
-app.get('/api/price-alert/check/:propertyId', async (req, res) => {
+app.get('/api/price-alert/check/:propertyId', publicWriteLimiter, async (req, res) => {
   try {
     const propertyId = String(req.params.propertyId);
     const alerts = await PriceAlert.find({ propertyId, isNotified: false });

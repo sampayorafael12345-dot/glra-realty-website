@@ -3375,29 +3375,29 @@ function renderNeedsAttention(){
   const tiles=[];
   // Unhandled inquiries (everyone can see inquiries)
   const inq=(window.lastInquiries||[]).filter(i=>!i.handled).length;
-  tiles.push({n:inq, lbl:'Unhandled inquiries', ico:'fa-envelope', tab:'inquiries'});
+  tiles.push({n:inq, lbl:'Unhandled inquiries', one:'Unhandled inquiry', ico:'fa-envelope', tab:'inquiries'});
   // Overdue tasks
   if(hasPerm('tasks_view')){
     const tasks=(typeof allTasks!=='undefined'?allTasks:[]);
     const overdue=tasks.filter(t=>{try{return isTaskOverdue(t)}catch(e){return false}}).length;
-    tiles.push({n:overdue, lbl:'Overdue tasks', ico:'fa-clipboard-check', tab:'tasks'});
+    tiles.push({n:overdue, lbl:'Overdue tasks', one:'Overdue task', ico:'fa-clipboard-check', tab:'tasks'});
   }
   // Pending submissions
   if(hasPerm('submissions_view')){
     const pend=(window.submissionStats&&window.submissionStats.pending)||0;
-    tiles.push({n:pend, lbl:'Pending submissions', ico:'fa-inbox', tab:'submissions'});
+    tiles.push({n:pend, lbl:'Pending submissions', one:'Pending submission', ico:'fa-inbox', tab:'submissions'});
   }
   // Titling on hold
   if(hasPerm('titling_view')){
     const tData=(typeof titlingData!=='undefined'?titlingData:[]);
     const hold=tData.filter(t=>t.status==='on_hold').length;
-    tiles.push({n:hold, lbl:'Titling on hold', ico:'fa-stamp', tab:'titling'});
+    tiles.push({n:hold, lbl:'Titling on hold', one:'Titling job on hold', ico:'fa-stamp', tab:'titling'});
   }
   // Leasing: overdue rent + leases ending within 30 days
   if(hasPerm('leasing_view') && window.lsData){
     const live=window.lsData.filter(l=>l.stage==='active'||l.stage==='renewal');
-    tiles.push({n:live.filter(l=>l.computed&&l.computed.overdueCount>0).length, lbl:'Overdue rent', ico:'fa-key', tab:'leasing'});
-    tiles.push({n:live.filter(l=>l.computed&&l.computed.daysToEnd!==null&&l.computed.daysToEnd>=0&&l.computed.daysToEnd<=30).length, lbl:'Leases ending in 30 days', ico:'fa-calendar-times', tab:'leasing'});
+    tiles.push({n:live.filter(l=>l.computed&&l.computed.overdueCount>0).length, lbl:'Leases with overdue rent', one:'Lease with overdue rent', ico:'fa-key', tab:'leasing'});
+    tiles.push({n:live.filter(l=>l.computed&&l.computed.daysToEnd!==null&&l.computed.daysToEnd>=0&&l.computed.daysToEnd<=30).length, lbl:'Leases ending in 30 days', one:'Lease ending in 30 days', ico:'fa-calendar-times', tab:'leasing'});
   }
   const anyHot=tiles.some(t=>t.n>0);
   if(!anyHot){
@@ -3409,7 +3409,7 @@ function renderNeedsAttention(){
     return `<button type="button" class="na-tile ${hot}" onclick="switchTab('${t.tab}')">
       <span class="na-go"><i class="fas fa-arrow-right"></i></span>
       <div class="na-num">${t.n}</div>
-      <div class="na-lbl"><i class="fas ${t.ico}"></i> ${t.lbl}</div>
+      <div class="na-lbl"><i class="fas ${t.ico}"></i> ${t.n===1&&t.one?t.one:t.lbl}</div>
     </button>`;
   }).join('');
 }

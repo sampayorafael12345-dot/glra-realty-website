@@ -297,7 +297,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -387,14 +387,14 @@ body.dark-mode .lf-error{color:#fca5a5}
     <div class="form-section">
       <div class="form-section-head"><span class="num">2</span><h3>Property details</h3><p>Basic information that helps buyers find your property.</p></div>
       <div class="lf-grid">
-        <div class="lf-field lf-full"><label>Listing title <span class="req">*</span></label>
+        <div class="lf-field lf-full"><label for="title">Listing title <span class="req">*</span></label>
           <input type="text" id="title" maxlength="200" required placeholder="e.g. 2BR Condo at The Fort, BGC">
           <small class="lf-hint">A short, descriptive title — bedrooms, property type, and location work best.</small>
         </div>
-        <div class="lf-field lf-full"><label>Location / Address <span class="req">*</span></label>
+        <div class="lf-field lf-full"><label for="location">Location / Address <span class="req">*</span></label>
           <input type="text" id="location" maxlength="200" required placeholder="e.g. Bonifacio Global City, Taguig, Metro Manila">
         </div>
-        <div class="lf-field"><label>Property type <span class="req">*</span></label>
+        <div class="lf-field"><label for="propertyType">Property type <span class="req">*</span></label>
           <select id="propertyType" required>
             <option value="Condominium">Condominium</option>
             <option value="House and Lot">House and Lot</option>
@@ -404,7 +404,7 @@ body.dark-mode .lf-error{color:#fca5a5}
             <option value="Commercial Space">Commercial Space</option>
           </select>
         </div>
-        <div class="lf-field"><label>Developer / Building <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="developer">Developer / Building <span class="opt">(optional)</span></label>
           <input type="text" id="developer" maxlength="120" placeholder="e.g. Ayala Land, SMDC, etc.">
         </div>
       </div>
@@ -414,11 +414,11 @@ body.dark-mode .lf-error{color:#fca5a5}
     <div class="form-section">
       <div class="form-section-head"><span class="num">3</span><h3>Pricing</h3><p>Set your asking price. You can adjust this any time after submission.</p></div>
       <div class="lf-grid">
-        <div class="lf-field" id="priceField"><label>Selling / contract price (₱) <span id="priceReq" class="req">*</span></label>
+        <div class="lf-field" id="priceField"><label for="price">Selling / contract price (₱) <span id="priceReq" class="req">*</span></label>
           <input type="text" id="price" inputmode="numeric" placeholder="0" oninput="fmtNum(this)">
           <small class="lf-hint">Enter the full asking price in pesos.</small>
         </div>
-        <div class="lf-field" id="rentalField"><label>Monthly rental (₱) <span id="rentalReq" class="opt">(optional)</span></label>
+        <div class="lf-field" id="rentalField"><label for="monthlyRental">Monthly rental (₱) <span id="rentalReq" class="opt">(optional)</span></label>
           <input type="text" id="monthlyRental" inputmode="numeric" placeholder="0" oninput="fmtNum(this)">
           <small class="lf-hint">Per month, all-in or excluding dues — note in the description.</small>
         </div>
@@ -433,7 +433,7 @@ body.dark-mode .lf-error{color:#fca5a5}
     <div class="form-section" id="leaseSection" style="display:none">
       <div class="form-section-head"><span class="num">4</span><h3>Lease terms</h3><p>What a tenant needs to know before enquiring. Leave anything negotiable as it is.</p></div>
       <div class="lf-grid">
-        <div class="lf-field"><label>Minimum lease term</label>
+        <div class="lf-field"><label for="leaseTerm">Minimum lease term</label>
           <select id="leaseTerm">
             <option value="">Negotiable</option>
             <option value="6 months">6 months</option>
@@ -442,37 +442,37 @@ body.dark-mode .lf-error{color:#fca5a5}
             <option value="3 years">3 years</option>
           </select>
         </div>
-        <div class="lf-field"><label>Available from <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="availableFrom">Available from <span class="opt">(optional)</span></label>
           <input type="date" id="availableFrom">
         </div>
-        <div class="lf-field"><label>Security deposit (months)</label>
+        <div class="lf-field"><label for="depositMonths">Security deposit (months)</label>
           <input type="number" id="depositMonths" min="0" max="12" step="1" value="2">
         </div>
-        <div class="lf-field"><label>Advance rent (months)</label>
+        <div class="lf-field"><label for="advanceMonths">Advance rent (months)</label>
           <input type="number" id="advanceMonths" min="0" max="12" step="1" value="1">
         </div>
-        <div class="lf-field"><label>Furnishing</label>
+        <div class="lf-field"><label for="furnishing">Furnishing</label>
           <select id="furnishing">
             <option>Unfurnished</option>
             <option selected>Semi-furnished</option>
             <option>Fully furnished</option>
           </select>
         </div>
-        <div class="lf-field"><label>Association dues</label>
+        <div class="lf-field"><label for="duesArrangement">Association dues</label>
           <select id="duesArrangement">
             <option>Paid by tenant</option>
             <option>Included in the rent</option>
             <option>Paid by owner</option>
           </select>
         </div>
-        <div class="lf-field"><label>Pets</label>
+        <div class="lf-field"><label for="petsPolicy">Pets</label>
           <select id="petsPolicy">
             <option>Not allowed</option>
             <option>Allowed</option>
             <option>Case by case</option>
           </select>
         </div>
-        <div class="lf-field"><label>Utilities / metering <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="utilities">Utilities / metering <span class="opt">(optional)</span></label>
           <input type="text" id="utilities" maxlength="120" placeholder="e.g. separate Meralco and Maynilad meters">
         </div>
       </div>
@@ -482,12 +482,12 @@ body.dark-mode .lf-error{color:#fca5a5}
     <div class="form-section">
       <div class="form-section-head"><span class="num">5</span><h3>Property specs</h3><p>Helps buyers filter and compare. Fill in what's relevant.</p></div>
       <div class="lf-grid">
-        <div class="lf-field"><label>Bedrooms</label><input type="number" id="bedrooms" min="0" max="20" value="0"></div>
-        <div class="lf-field"><label>Bathrooms</label><input type="number" id="bathrooms" min="0" max="20" value="0"></div>
-        <div class="lf-field"><label>Floor area (sqm)</label><input type="number" id="sqm" min="0" max="100000" step="0.01" value="0"></div>
-        <div class="lf-field"><label>Land area (sqm) <span class="opt">(if applicable)</span></label><input type="number" id="landArea" min="0" max="1000000" step="0.01" value="0"></div>
-        <div class="lf-field"><label>Parking slots</label><input type="number" id="parking" min="0" max="20" value="0"></div>
-        <div class="lf-field"><label>Map area / pin <span class="opt">(optional)</span></label><input type="text" id="mapLocation" maxlength="200" placeholder="e.g. BGC, Taguig"></div>
+        <div class="lf-field"><label for="bedrooms">Bedrooms</label><input type="number" id="bedrooms" min="0" max="20" value="0"></div>
+        <div class="lf-field"><label for="bathrooms">Bathrooms</label><input type="number" id="bathrooms" min="0" max="20" value="0"></div>
+        <div class="lf-field"><label for="sqm">Floor area (sqm)</label><input type="number" id="sqm" min="0" max="100000" step="0.01" value="0"></div>
+        <div class="lf-field"><label for="landArea">Land area (sqm) <span class="opt">(if applicable)</span></label><input type="number" id="landArea" min="0" max="1000000" step="0.01" value="0"></div>
+        <div class="lf-field"><label for="parking">Parking slots</label><input type="number" id="parking" min="0" max="20" value="0"></div>
+        <div class="lf-field"><label for="mapLocation">Map area / pin <span class="opt">(optional)</span></label><input type="text" id="mapLocation" maxlength="200" placeholder="e.g. BGC, Taguig"></div>
       </div>
     </div>
 
@@ -507,7 +507,7 @@ body.dark-mode .lf-error{color:#fca5a5}
         <i class="fas fa-cloud-upload-alt"></i>
         <p>Click to upload or drag photos here</p>
         <small>JPEG, PNG, WEBP, or GIF · up to 20MB each · max 20 photos</small>
-        <input type="file" id="imgInput" accept="image/*" multiple onchange="handleImageUpload(this.files)">
+        <input type="file" id="imgInput" accept="image/*" multiple aria-label="Choose photos of the property" onchange="handleImageUpload(this.files)">
       </div>
       <div class="image-grid" id="imageGrid"></div>
       <small class="lf-hint" style="display:block;margin-top:10px">First photo becomes the main listing image. Hover any photo to remove it.</small>
@@ -517,10 +517,10 @@ body.dark-mode .lf-error{color:#fca5a5}
     <div class="form-section">
       <div class="form-section-head"><span class="num">8</span><h3>Your contact details</h3><p>So we can reach you to discuss the listing. Your contact info is never shown publicly.</p></div>
       <div class="lf-grid">
-        <div class="lf-field"><label>Your full name <span class="req">*</span></label><input type="text" id="submitterName" maxlength="100" required placeholder="Juan dela Cruz"></div>
-        <div class="lf-field"><label>Email <span class="req">*</span></label><input type="email" id="submitterEmail" maxlength="120" required placeholder="you@example.com"></div>
-        <div class="lf-field"><label>Phone <span class="opt">(optional)</span></label><input type="tel" id="submitterPhone" maxlength="30" placeholder="+63 917 123 4567"></div>
-        <div class="lf-field"><label>I am the <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="submitterName">Your full name <span class="req">*</span></label><input type="text" id="submitterName" maxlength="100" required placeholder="Juan dela Cruz" autocomplete="name"></div>
+        <div class="lf-field"><label for="submitterEmail">Email <span class="req">*</span></label><input type="email" id="submitterEmail" maxlength="120" required placeholder="you@example.com" autocomplete="email"></div>
+        <div class="lf-field"><label for="submitterPhone">Phone <span class="opt">(optional)</span></label><input type="tel" id="submitterPhone" maxlength="30" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel"></div>
+        <div class="lf-field"><label for="ownerRole">I am the <span class="opt">(optional)</span></label>
           <select id="ownerRole">
             <option value="">Select…</option>
             <option>Owner</option>
@@ -529,7 +529,7 @@ body.dark-mode .lf-error{color:#fca5a5}
             <option>Broker / Agent</option>
           </select>
         </div>
-        <div class="lf-field lf-full"><label>Anything we should know? <span class="opt">(optional)</span></label>
+        <div class="lf-field lf-full"><label for="submitterMessage">Anything we should know? <span class="opt">(optional)</span></label>
           <textarea id="submitterMessage" maxlength="1000" rows="3" placeholder="Best time to contact, special terms, occupancy date, etc."></textarea>
         </div>
       </div>
@@ -632,7 +632,7 @@ body.dark-mode .lf-error{color:#fca5a5}
       <div class="form-section-head"><span class="num">10</span><h3>Authority &amp; consent</h3><p>Required before we can advertise your property.</p></div>
 
       <div class="lf-grid" style="margin-bottom:16px">
-        <div class="lf-field"><label>Authority type <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="authorityType">Authority type <span class="opt">(optional)</span></label>
           <select id="authorityType">
             <option value="">Not decided yet</option>
             <option value="Exclusive">Exclusive &mdash; GLRA only</option>
@@ -640,7 +640,7 @@ body.dark-mode .lf-error{color:#fca5a5}
           </select>
           <small class="lf-hint">Exclusive listings get more of our marketing budget. You can decide later.</small>
         </div>
-        <div class="lf-field"><label>Commission discussed <span class="opt">(optional)</span></label>
+        <div class="lf-field"><label for="commissionNote">Commission discussed <span class="opt">(optional)</span></label>
           <input type="text" id="commissionNote" maxlength="60" placeholder="e.g. 3%, or to be discussed">
         </div>
       </div>

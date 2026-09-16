@@ -105,7 +105,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a>
@@ -146,7 +146,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Property Valuation Estimate</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -169,7 +169,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
     <div class="calc-body">
 
       <div class="input-group">
-        <label>Property Type</label>
+        <label for="ptype">Property Type</label>
         <select id="ptype" onchange="recalc()">
           <option value="condo">Condominium</option>
           <option value="house">House &amp; Lot</option>
@@ -181,7 +181,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
       </div>
 
       <div class="input-group">
-        <label>Location</label>
+        <label for="loc">Location</label>
         <select id="loc" onchange="recalc()">
           <option value="3.0">Makati CBD / BGC / Rockwell (prime)</option>
           <option value="2.3">Ortigas / Alabang / Pasig / Mandaluyong</option>
@@ -195,20 +195,20 @@ body.dark-mode .lead-note{background:#0e0e0c}
       </div>
 
       <div id="floorWrap" class="input-group">
-        <label>Floor Area (sqm)</label>
+        <label for="floor">Floor Area (sqm)</label>
         <input type="text" id="floor" value="50" oninput="formatPrice(this);recalc()">
         <div class="input-hint">The unit / building interior size.</div>
       </div>
 
       <div id="landWrap" class="input-group" style="display:none">
-        <label>Lot / Land Area (sqm)</label>
+        <label for="land">Lot / Land Area (sqm)</label>
         <input type="text" id="land" value="120" oninput="formatPrice(this);recalc()">
       </div>
 
       <div class="section-divider">Condition &amp; Details</div>
 
       <div class="input-group" id="condWrap">
-        <label>Condition</label>
+        <label for="cond">Condition</label>
         <select id="cond" onchange="recalc()">
           <option value="1.12">Brand new / never occupied</option>
           <option value="1.0" selected>Well-maintained / move-in ready</option>
@@ -219,11 +219,11 @@ body.dark-mode .lead-note{background:#0e0e0c}
 
       <div class="two-col">
         <div class="input-group" id="bedWrap">
-          <label>Bedrooms</label>
+          <label for="bed">Bedrooms</label>
           <input type="number" id="bed" value="1" min="0" max="20" oninput="recalc()">
         </div>
         <div class="input-group" id="parkWrap">
-          <label>Parking Slots</label>
+          <label for="park">Parking Slots</label>
           <input type="number" id="park" value="0" min="0" max="20" oninput="recalc()">
         </div>
       </div>
@@ -266,25 +266,25 @@ body.dark-mode .lead-note{background:#0e0e0c}
         <div class="form-error" id="formError"></div>
 
         <div class="input-group">
-          <label>Your Name *</label>
-          <input type="text" id="vName" placeholder="e.g. Juan Dela Cruz">
+          <label for="vName">Your Name *</label>
+          <input type="text" id="vName" placeholder="e.g. Juan Dela Cruz" autocomplete="name">
         </div>
         <div class="two-col">
           <div class="input-group">
-            <label>Email *</label>
-            <input type="email" id="vEmail" placeholder="you@email.com">
+            <label for="vEmail">Email *</label>
+            <input type="email" id="vEmail" placeholder="you@example.com" autocomplete="email">
           </div>
           <div class="input-group">
-            <label>Mobile</label>
-            <input type="text" id="vPhone" placeholder="0917 XXX XXXX">
+            <label for="vPhone">Mobile</label>
+            <input type="tel" id="vPhone" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel">
           </div>
         </div>
         <div class="input-group">
-          <label>Property Address / Landmark</label>
+          <label for="vAddr">Property Address / Landmark</label>
           <input type="text" id="vAddr" placeholder="e.g. Tower name, subdivision, or barangay & city">
         </div>
         <div class="input-group">
-          <label>When are you planning to sell?</label>
+          <label for="vTimeline">When are you planning to sell?</label>
           <select id="vTimeline">
             <option value="Just curious">Just curious for now</option>
             <option value="Within 3 months">Within 3 months</option>
@@ -294,7 +294,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
           </select>
         </div>
         <div class="input-group">
-          <label>Anything else? (optional)</label>
+          <label for="vMsg">Anything else? (optional)</label>
           <textarea id="vMsg" rows="2" placeholder="e.g. corner unit, recently renovated, clean title, with existing tenant..."></textarea>
         </div>
 

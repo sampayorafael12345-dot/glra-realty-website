@@ -322,7 +322,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
 <div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html" class="active">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -388,26 +388,26 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
     </div>
     <div class="advanced-filters" id="advancedFilters">
       <div class="filter-grid">
-        <div class="filter-group"><label>Property Type</label>
+        <div class="filter-group"><label for="propertyTypeSelect">Property Type</label>
           <select id="propertyTypeSelect" onchange="applyFilters(currentCategory,cachedProperties)">
             <option value="">All Types</option><option value="Condominium">Condominium</option>
             <option value="House and Lot">House and Lot</option><option value="Townhouse">Townhouse</option>
             <option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option>
           </select>
         </div>
-        <div class="filter-group"><label>Bedrooms</label>
+        <div class="filter-group"><label for="bedroomsSelect">Bedrooms</label>
           <select id="bedroomsSelect" onchange="applyFilters(currentCategory,cachedProperties)">
             <option value="">Any</option><option value="1">1+</option><option value="2">2+</option>
             <option value="3">3+</option><option value="4">4+</option><option value="5">5+</option>
           </select>
         </div>
-        <div class="filter-group"><label>Bathrooms</label>
+        <div class="filter-group"><label for="bathsSelect">Bathrooms</label>
           <select id="bathsSelect" onchange="applyFilters(currentCategory,cachedProperties)">
             <option value="">Any</option><option value="1">1+</option><option value="2">2+</option>
             <option value="3">3+</option><option value="4">4+</option>
           </select>
         </div>
-        <div class="filter-group"><label>Price Range (₱)</label>
+        <div class="filter-group"><label for="minPriceInput">Price Range (₱)</label>
           <div class="price-range-group">
             <input type="text" id="minPriceInput" placeholder="Min" oninput="fmtPrice(this);applyFilters(currentCategory,cachedProperties)">
             <input type="text" id="maxPriceInput" placeholder="Max" oninput="fmtPrice(this);applyFilters(currentCategory,cachedProperties)">
@@ -423,7 +423,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
       <span style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase">Show prices in:</span>
       <label class="currency-switcher">
         <i class="fas fa-money-bill-wave"></i>
-        <select id="currencySelect" onchange="changeCurrency(this.value)">
+        <select id="currencySelect" aria-label="Show prices in" onchange="changeCurrency(this.value)">
           <option value="PHP">PHP - Philippine Peso (&#8369;)</option>
           <option value="USD">USD - US Dollar ($)</option>
           <option value="AED">AED - UAE Dirham (د.إ)</option>
@@ -467,11 +467,11 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
 <!-- Price Alert Modal -->
 <div id="emailModal" class="email-modal">
   <div class="email-modal-content">
-    <button class="close-modal-btn" onclick="closeEmailModal()"><i class="fas fa-times"></i></button>
+    <button class="close-modal-btn" onclick="closeEmailModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     <i class="fas fa-bell modal-icon"></i>
     <h3>Price Drop Alert</h3>
     <p id="modalPropertyName">Get notified when this property's price drops</p>
-    <input type="email" id="modalEmail" placeholder="Your email address">
+    <input type="email" id="modalEmail" placeholder="you@example.com" autocomplete="email">
     <input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice">
     <button class="submit-btn" onclick="submitPriceAlert()">Notify Me When Price Drops</button>
     <p style="font-size:11px;margin-top:10px;color:var(--gray)">We'll only email you about this property when price changes.</p>
@@ -480,11 +480,11 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
 <!-- Wishlist Modal -->
 <div id="wishlistModal" class="email-modal">
   <div class="email-modal-content">
-    <button class="close-modal-btn" onclick="closeWishlistModal()"><i class="fas fa-times"></i></button>
+    <button class="close-modal-btn" onclick="closeWishlistModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     <i class="fas fa-heart modal-icon"></i>
     <h3>Save to Wishlist</h3>
     <p>Enter your email to save this property to your wishlist</p>
-    <input type="email" id="wishlistEmail" placeholder="Your email address">
+    <input type="email" id="wishlistEmail" placeholder="you@example.com" autocomplete="email">
     <input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle">
     <input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage">
     <button class="submit-btn" onclick="submitWishlist()">Save to Wishlist</button>
@@ -492,7 +492,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
 </div>
 <!-- Property Detail Modal -->
 <div id="modal">
-  <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+  <button class="modal-close" onclick="closeModal()" aria-label="Close"><i class="fas fa-times"></i></button>
   <div id="modal-content" class="modal-body"></div>
 </div>
 
@@ -511,7 +511,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
   <div class="compare-modal-content">
     <div class="compare-modal-head">
       <h2><i class="fas fa-balance-scale" style="color:var(--gold)"></i> Compare Properties</h2>
-      <button class="compare-modal-close" onclick="closeCompareModal()"><i class="fas fa-times"></i></button>
+      <button class="compare-modal-close" onclick="closeCompareModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div id="compareGrid" class="compare-grid"></div>
   </div>
@@ -520,32 +520,32 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
 <!-- SCHEDULE A VIEWING MODAL -->
 <div id="scheduleModal" class="email-modal">
   <div class="email-modal-content" style="max-width:480px">
-    <button class="close-modal-btn" onclick="closeScheduleModal()"><i class="fas fa-times"></i></button>
+    <button class="close-modal-btn" onclick="closeScheduleModal()" aria-label="Close"><i class="fas fa-times"></i></button>
     <i class="far fa-calendar-check modal-icon"></i>
     <h3>Schedule a Viewing</h3>
     <p id="scheduleSubtitle" style="margin-bottom:18px">For: <strong>...</strong></p>
     <div style="display:grid;gap:12px;text-align:left">
       <div>
-        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Your Name</label>
-        <input type="text" id="schedName" placeholder="Full name" required>
+        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedName">Your Name</label>
+        <input type="text" id="schedName" placeholder="Full name" required autocomplete="name">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Email</label>
-          <input type="email" id="schedEmail" placeholder="you@example.com" required>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedEmail">Email</label>
+          <input type="email" id="schedEmail" placeholder="you@example.com" required autocomplete="email">
         </div>
         <div>
-          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Phone</label>
-          <input type="tel" id="schedPhone" placeholder="0917 ..." required>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedPhone">Phone</label>
+          <input type="tel" id="schedPhone" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel" required>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Preferred Date</label>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedDate">Preferred Date</label>
           <input type="date" id="schedDate" required>
         </div>
         <div>
-          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Preferred Time</label>
+          <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedTime">Preferred Time</label>
           <select id="schedTime">
             <option value="9:00 AM">9:00 AM</option>
             <option value="10:00 AM">10:00 AM</option>
@@ -559,7 +559,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
         </div>
       </div>
       <div>
-        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px">Message (optional)</label>
+        <label style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedMessage">Message (optional)</label>
         <textarea id="schedMessage" rows="3" placeholder="Anything Catherine should know in advance?" style="width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;font-family:'Inter',sans-serif;background:var(--white);color:var(--text-color);resize:vertical"></textarea>
       </div>
     </div>
@@ -1157,7 +1157,7 @@ if(isSale&&pp>0){
 // You might also like — same type/area/price bracket
 const sims=similarProps(prop,3);
 const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${escapeHtml(s.title)} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${s.mainImage||''}" alt="${escapeHtml(s.title)}" loading="lazy"><div class="sim-info"><h5>${escapeHtml(s.title)}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--gold)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
-document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]||''}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&prop.sqm>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/prop.sqm))} / sqm</span>`:''}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label>Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--gold)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label>Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label>Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% - Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
+document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]||''}" alt="${escapeHtml(prop.title)}"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span><span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${prop.sqm} sqm</span><span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&prop.sqm>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/prop.sqm))} / sqm</span>`:''}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--gold)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% - Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
 ${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
 function calcMortgage(price){const dp=parseFloat(document.getElementById('dpSlider')?.value)||20;const term=parseFloat(document.getElementById('loanTerm')?.value)||20;const rate=parseFloat(document.getElementById('intRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageAmt');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:16px">/mo</span>`;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=dp+'%';}
 function updateDP(val,price){const el=document.getElementById('dpSlider');if(el)el.value=val;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=val+'%';calcMortgage(price);}

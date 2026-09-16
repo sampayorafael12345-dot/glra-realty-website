@@ -1028,6 +1028,13 @@ window.glraOpenPrintGate = function (label, collectFn) {
   (function loadClarity(){
     if (!CLARITY_ID || CLARITY_ID === 'PASTE_YOUR_CLARITY_ID_HERE') return;
     if (location.pathname.toLowerCase().indexOf('/admin') === 0) return;
+    /* privacy.html offers a "Turn tracking off" switch that writes
+       glra_no_track. The calculator tracking below already respects it;
+       Clarity did not, so someone who used the switch was still being
+       session-recorded. Honour it here too, and fail closed if localStorage
+       cannot be read at all. */
+    try { if (window.localStorage.getItem('glra_no_track') === '1') return; }
+    catch (e) { return; }
     (function(c,l,a,r,i,t,y){
       c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
       t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;

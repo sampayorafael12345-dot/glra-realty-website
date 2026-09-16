@@ -187,7 +187,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
 <div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html" class="active">TOOLS</a>
@@ -239,7 +239,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
 
 <!-- This header is hidden on screen — only appears when printing or saving as PDF -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
   <div class="print-title">Sales Closing Fees Calculator</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -299,13 +299,13 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
     <div class="input-card">
       <h3><i class="fas fa-tag"></i> Property Value</h3>
       
-      <label>Area (sqm)</label>
+      <label for="areaSqm">Area (sqm)</label>
       <input type="text" id="areaSqm" placeholder="Enter area in square meters" oninput="handleNumberInput(this, 'area')">
       
-      <label style="margin-top: 12px;">Gross Selling Price</label>
+      <label style="margin-top: 12px;" for="propertyValue">Gross Selling Price</label>
       <input type="text" id="propertyValue" placeholder="Enter selling price" oninput="handleNumberInput(this, 'price')">
       
-      <label style="margin-top: 12px;">BIR Zonal Value (per sqm)</label>
+      <label style="margin-top: 12px;" for="zonalSearchInput">BIR Zonal Value (per sqm)</label>
       <div class="zonal-row">
         <div class="zonal-search-container">
           <input type="text" id="zonalSearchInput" class="zonal-search-input" placeholder="Search city (e.g., Makati, Taguig, QC)" autocomplete="off" oninput="filterZonalLocations(this.value)">
@@ -320,7 +320,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
         <span id="areaCalculationHint" style="font-size: 10px;"></span>
       </div>
 
-      <label style="margin-top: 16px;">Improvements (FMV from Tax Declaration)</label>
+      <label style="margin-top: 16px;" for="improvementsValue">Improvements (FMV from Tax Declaration)</label>
       <input type="text" id="improvementsValue" placeholder="Building / house value — ₱0 for raw land" oninput="handleNumberInput(this, 'improvements')">
       <div class="input-hint" style="margin-top: 6px; font-size: 11px;">
         <i class="fas fa-info-circle"></i> The assessed value of the structure built on the land (house, building, fence, pool) per the local Assessor's Tax Declaration. Per <strong>Sec. 6(E) NIRC</strong>, BIR computes CGT &amp; DST on the higher of Selling Price OR <em>Land Zonal Value + Improvements</em>. Use ₱0 for vacant lots.
@@ -399,7 +399,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
   <!-- Desired Net Proceed Card -->
   <div class="input-card desired-proceed-card" style="margin-bottom: 30px;">
     <h3><i class="fas fa-bullseye"></i> Desired Net Proceed (Reverse Calculator)</h3>
-    <label>How much do you want to receive?</label>
+    <label for="desiredNetProceed">How much do you want to receive?</label>
     <input type="text" id="desiredNetProceed" placeholder="Enter desired net amount" oninput="handleDesiredInput(this)">
     <div class="desired-result" id="desiredResult" style="display: none;">
       <div class="label">Required Selling Price</div>
