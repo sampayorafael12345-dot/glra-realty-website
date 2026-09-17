@@ -2,11 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!-- viewport-fit=cover so the page can reach under an iPhone notch; the CSS
+     then pays it back with env(safe-area-inset-*) padding. -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>Admin Dashboard | GLRA Realty</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/png" href="/img/favicon.ico.png">
-<link rel="manifest" href="/manifest.json">
+<!-- Its OWN manifest. This used to point at /manifest.json, whose start_url
+     is "/", so an icon added to an iPhone home screen opened the public
+     marketing site instead of the dashboard. -->
+<link rel="manifest" href="/admin-manifest.json">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<meta name="apple-mobile-web-app-title" content="GLRA Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ff3d00">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1476,6 +1486,87 @@ body.dark-mode .sb-section{color:#8a8378 !important}
    keeps the pale grey the theme already uses elsewhere. */
 :root{--gray:#636363 !important;--ab-gray:#636363 !important}
 body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
+
+/* ══ PHONE ════════════════════════════════════════════════════════════════
+   The dashboard can be added to an iPhone home screen and run as an app, so
+   it has to behave like one rather than like a shrunken desktop. Measured at
+   375x812 across every tab. See scratchpad admin_phone.py for the findings. */
+
+@media(max-width:768px){
+
+  /* iOS Safari zooms the whole page when a control with a font-size under
+     16px receives focus, and never zooms back out. With 152 controls on this
+     dashboard, most of them at 13px, every tap on a field left the page
+     magnified and drifting. Nothing else about the phone experience mattered
+     until this was fixed. */
+  input,select,textarea,
+  .finput,.fsel,.tf-input,.tf-select{font-size:16px !important}
+  /* The checkboxes and radios are sized by width/height, not font-size, and
+     bumping their text does nothing but misalign them. */
+  input[type=checkbox],input[type=radio]{font-size:inherit !important}
+
+  /* The one control the whole phone experience depends on. 34px cleared the
+     accessibility minimum but not Apple's 44 -- and flex-shrink:0 matters as
+     much as the size, because it shares a flex row with the page title and,
+     once that title was set to nowrap for its ellipsis, the button lost the
+     fight and was squeezed to 21px wide. */
+  .sidebar-toggle{width:44px;height:44px;flex-shrink:0}
+
+  /* A flex item will not shrink below its own content, so raising the quick-add
+     field to 16px pushed the Tasks tab 8px off the screen. The "Press Enter"
+     hint costs 90px and means nothing on a phone keyboard; the + button beside
+     the field does the same job. */
+  .tasks-quickadd input{min-width:0}
+  .tasks-quickadd small{display:none}
+
+  /* The sticky header follows you down every page, so its height is a tax on
+     every screenful. The page subtitle wrapped to three lines on a phone
+     ("Your listings - add, edit and publish what the website shows"); one line
+     with an ellipsis says the same thing and gives 17px back each time. */
+  .hdr-left{min-width:0}
+  .hdr-left>div{min-width:0}
+  .page-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .page-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* No tap delay on anything interactive. */
+  button,a,.nav-item,.hdr-btn,[onclick]{touch-action:manipulation}
+
+  /* Horizontal table scrollers get momentum, and stop the page itself from
+     being dragged sideways when a scroller reaches its end. */
+  .tbl-wrap,.bm-list,[style*="overflow-x"]{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+
+  /* EMAIL CAMPAIGNS: the tab that scrolled sideways. The one-column rule below
+     1100px dropped the minmax(0,...) that was keeping the columns shrinkable,
+     so the source strip's 488px minimum pushed the page out by 165px. */
+  .bm-grid{grid-template-columns:minmax(0,1fr)}
+  .bm-col,.bm-col>.panel{min-width:0}
+  .bm-source-tabs{display:grid;grid-template-columns:1fr 1fr}
+  .bm-srt{min-width:0;border-right:2px solid var(--ab-line);border-bottom:2px solid var(--ab-line)}
+  .bm-srt:nth-child(2n){border-right:0}
+  .bm-srt:nth-last-child(-n+2){border-bottom:0}
+}
+
+/* THE NOTCH AND THE HOME INDICATOR. admin.html carries viewport-fit=cover so a
+   standalone window can use the full screen; that is only correct if the page
+   pays the inset back. Wrapped in @supports so nothing changes on a browser
+   that has never heard of env(). */
+@supports(padding-top:env(safe-area-inset-top)){
+  @media(max-width:768px){
+    .main-header{
+      height:auto;
+      min-height:calc(var(--header-h) + env(safe-area-inset-top));
+      padding-top:env(safe-area-inset-top);
+    }
+    .sidebar{padding-top:env(safe-area-inset-top)}
+    .sb-nav{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+    .page-content{
+      padding-bottom:calc(24px + env(safe-area-inset-bottom));
+      padding-left:max(16px,env(safe-area-inset-left));
+      padding-right:max(16px,env(safe-area-inset-right));
+    }
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3734,7 +3825,7 @@ function renderTopViewed(){
   el.innerHTML=top.map((p,i)=>`
     <div class="tv-row">
       <div class="tv-rank">${i+1}</div>
-      <img class="tv-thumb" src="${p.mainImage||'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%23e8e4dd'/%3E%3C/svg%3E'}" alt="" loading="lazy">
+      <img class="tv-thumb" src="${p.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E'}" alt="" loading="lazy">
       <div class="tv-main">
         <div class="tv-title" title="${esc(p.title)}">${esc(p.title||'Untitled')}</div>
         <div class="tv-meta">${esc(p.propertyType||'—')} · ${esc(p.listingType||'—')}</div>
@@ -3897,7 +3988,7 @@ function renderProps(props){
   const b=document.getElementById('propTbody');
   if(!props.length){b.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
   b.innerHTML=props.map(p=>`<tr>
-    <td><img class="tbl-img" src="${p.mainImage||'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%23e8e4dd'/%3E%3C/svg%3E'}" alt="" loading="lazy"></td>
+    <td><img class="tbl-img" src="${p.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E'}" alt="" loading="lazy"></td>
     <td><div style="font-weight:600;font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.title)}">${esc(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(p.location)}</div>${p.featured?'<span class="badge b-feat" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
     <td style="font-size:12px;color:var(--gray)">${esc(p.propertyType||'—')}</td>
     <td><span class="badge ${p.listingType==='FOR SALE'?'b-sale':'b-lease'}">${esc(p.listingType||'—')}</span></td>

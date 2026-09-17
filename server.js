@@ -1468,6 +1468,14 @@ async function buildSitemap(req, res) {
       // each targets a high-volume search of its own.
       ['/pre-selling.html', 'monthly', '0.75'], ['/property-tax.html', 'monthly', '0.75'],
       ['/bir-deadlines.html', 'monthly', '0.75'],
+      // Added Sept 2026: five more, filling the gaps the plan identified.
+      // Each answers a question a broker is asked in person every week and
+      // which no Philippine property site answers properly.
+      ['/pagibig-loanable.html', 'monthly', '0.75'],
+      ['/vat-exemption.html', 'monthly', '0.75'],
+      ['/rental-income-tax.html', 'monthly', '0.75'],
+      ['/lease-escalation.html', 'monthly', '0.75'],
+      ['/principal-residence.html', 'monthly', '0.75'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
       ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5'],

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}</style>
+<title>Rental Income Tax Calculator Philippines | GLRA Realty</title>
+<meta name="description" content="Work out the tax on Philippine rental income. Compares the graduated rates against the flat 8% election, and applies the 15,000-a-month per-unit exemption from VAT and percentage tax.">
+<meta name="keywords" content="rental income tax philippines, 8% flat tax rental, percentage tax rental income, 15000 monthly rent vat exempt, landlord tax philippines, bir rental income, osd 40 percent">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/rental-income-tax.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/rental-income-tax.html">
+<meta property="og:title" content="Rental Income Tax Calculator | GLRA Realty">
+<meta property="og:description" content="Two taxes land on rent and the per-unit rule surprises most landlords. See both routes and which one costs less.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty &mdash; Philippine Rental Income Tax Calculator">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rental Income Tax Calculator | GLRA Realty">
+<meta name="twitter:description" content="Two taxes land on rent and the per-unit rule surprises most landlords. See both routes and which one costs less.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Philippine Rental Income Tax Calculator","description":"Computes Philippine rental income tax under both the graduated rates and the 8% election, including the per-unit VAT and percentage tax exemption for residential lettings.","applicationCategory":"FinanceApplication","operatingSystem":"Web","inLanguage":"en-PH","url":"https://glrarealty.com/rental-income-tax.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://glrarealty.com/tools.html"},{"@type":"ListItem","position":3,"name":"Rental Income Tax","item":"https://glrarealty.com/rental-income-tax.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css?v=98">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=98">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.input-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.est-headline{padding:24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.est-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.est-headline .value{font-family:'Inter',serif;font-size:40px;font-weight:600;color:var(--gold);line-height:1.1}
+.est-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.breakdown{border:1px solid var(--border-color);margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-color);font-size:13px;gap:14px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row.total{background:rgba(255,61,0,.06);font-weight:700}
+.breakdown-row .k{color:var(--gray)}
+.breakdown-row.total .k{color:var(--text-color)}
+.breakdown-row .v{font-weight:600;color:var(--text-color);white-space:nowrap}
+.breakdown-row .v.minus{color:#10b981}
+.breakdown-row .v.bad{color:#dc2626}
+body.dark-mode .breakdown-row .v.bad{color:#f87171}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.metric-mini{padding:16px;border:1px solid var(--border-color);background:var(--gray-light);text-align:center}
+body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
+.metric-mini .label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.metric-mini .value{font-family:'Inter',serif;font-size:20px;font-weight:600;color:var(--text-color)}
+.metric-mini.gold .value{color:var(--gold)}
+.phase{border:1px solid var(--border-color);margin-bottom:14px}
+.phase-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px;background:var(--gray-light);border-bottom:1px solid var(--border-color)}
+body.dark-mode .phase-head{background:#0e0e0c}
+.phase-head .t{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--gold)}
+.phase-head .n{font-size:11px;color:var(--gray)}
+.phase-body{padding:14px 16px}
+.phase-big{font-family:'Inter',serif;font-size:26px;font-weight:600;color:var(--text-color);line-height:1.15}
+.phase-sub{font-size:12px;color:var(--gray);margin-top:4px;line-height:1.6}
+.alarm{padding:14px 16px;border:1px solid var(--border-color);margin-bottom:12px;display:flex;gap:12px;align-items:flex-start}
+.alarm i{font-size:16px;flex-shrink:0;margin-top:2px}
+.alarm .t{font-size:13px;font-weight:700;margin-bottom:3px}
+.alarm .d{font-size:12px;color:var(--gray);line-height:1.6}
+.alarm.ok{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.07)}
+.alarm.ok i{color:#0a7551}
+body.dark-mode .alarm.ok i{color:#34d399}
+.alarm.soon{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.08)}
+.alarm.soon i{color:#8c5a06}
+body.dark-mode .alarm.soon i{color:#fbbf24}
+.alarm.late{border-color:rgba(220,38,38,.45);background:rgba(220,38,38,.07)}
+.alarm.late i{color:#bf2121}
+body.dark-mode .alarm.late i{color:#f87171}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.ref-table th,.ref-table td{padding:8px 10px;border:1px solid var(--border-color);text-align:left}
+.ref-table th{background:var(--gray-light);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);font-weight:600}
+body.dark-mode .ref-table th{background:#0e0e0c}
+.ref-table td.n{text-align:right;font-weight:600;white-space:nowrap}
+.cta-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+.wide-card{max-width:1100px;margin:0 auto 30px;padding:0 5%}
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.est-headline .value{font-size:30px}.input-pair{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees</a>
+    <a href="/guide.html" onclick="closeMobileMenu()">Documentation Guide</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
+  <div class="print-title">Rental Income Tax</div>
+  <div class="print-subtitle">GLRA Realty &mdash; Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Landlords</span>
+  <h1>Rental Income Tax Calculator</h1>
+  <p>Two different taxes land on rent, and the one most landlords have never heard of turns on the rent of each unit rather than on the total. Work out both, and see whether the flat 8% beats the normal rates.</p>
+</div>
+
+<div class="calc-container">
+
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-key"></i> What You Let</h2>
+      <p>Split by rent, because the rules do</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="input-pair">
+        <div class="input-group">
+          <label for="rentA">Rent Per Unit &mdash; Group 1</label>
+          <input type="text" id="rentA" value="12,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">A month</div>
+        </div>
+        <div class="input-group">
+          <label for="unitsA">How Many</label>
+          <input type="number" id="unitsA" value="3" min="0" max="500" step="1" oninput="recalc()">
+          <div class="input-hint">Units at this rent</div>
+        </div>
+      </div>
+      <div class="input-hint" id="hintA" style="margin:-10px 0 18px">&nbsp;</div>
+
+      <div class="input-pair">
+        <div class="input-group">
+          <label for="rentB">Rent Per Unit &mdash; Group 2</label>
+          <input type="text" id="rentB" value="25,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">A month</div>
+        </div>
+        <div class="input-group">
+          <label for="unitsB">How Many</label>
+          <input type="number" id="unitsB" value="1" min="0" max="500" step="1" oninput="recalc()">
+          <div class="input-hint">Set to zero if not needed</div>
+        </div>
+      </div>
+      <div class="input-hint" id="hintB" style="margin:-10px 0 18px">&nbsp;</div>
+
+      <div class="section-divider">Your position</div>
+
+      <div class="input-group">
+        <label for="income">Do You Have Other Income?</label>
+        <select id="income" onchange="recalc()">
+          <option value="pure">No &mdash; rent is all I earn</option>
+          <option value="mixed">Yes &mdash; I also draw a salary</option>
+        </select>
+        <div class="input-hint">It changes the answer. The first &#8369;250,000 inside the 8% election belongs to someone whose only income is the business. If you draw a salary you have already had that allowance in the payroll table and cannot claim it twice.</div>
+      </div>
+
+      <div class="input-group" id="salaryBox">
+        <label for="salary">Annual Taxable Salary</label>
+        <input type="text" id="salary" value="0" inputmode="numeric" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Gross compensation less mandatory contributions, as on your Form 2316.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="method">How You Deduct Expenses</label>
+        <select id="method" onchange="recalc()">
+          <option value="osd">Optional standard deduction &mdash; 40% of gross, no receipts needed</option>
+          <option value="itemised">Itemised &mdash; my actual expenses, with receipts</option>
+        </select>
+        <div class="input-hint">This only affects the graduated route. The 8% election is on gross receipts and allows no deductions at all.</div>
+      </div>
+
+      <div class="input-group" id="expBox">
+        <label for="expenses">Actual Expenses For The Year</label>
+        <input type="text" id="expenses" value="0" inputmode="numeric" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Repairs, association dues you pay, real property tax, depreciation, insurance, agent's commission, interest on the loan against the property.</div>
+      </div>
+
+      <div class="input-group" style="margin-bottom:0">
+        <label for="ewt">Do Your Tenants Withhold Tax?</label>
+        <select id="ewt" onchange="recalc()">
+          <option value="no">No &mdash; they are individuals or small tenants</option>
+          <option value="yes">Yes &mdash; a company tenant withholds 5%</option>
+        </select>
+        <div class="input-hint">A corporate tenant is required to withhold 5% of the rent and remit it for you. It is not an extra tax; it is credited against what you owe.</div>
+      </div>
+
+      <div class="section-divider">The rules &mdash; change them if they move</div>
+
+      <div class="input-pair">
+        <div class="input-group">
+          <label for="leaseLine">Per-Unit Exemption</label>
+          <input type="text" id="leaseLine" value="15,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">A month, per unit</div>
+        </div>
+        <div class="input-group">
+          <label for="vatThr">VAT Threshold</label>
+          <input type="text" id="vatThr" value="3,000,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">Gross receipts a year</div>
+        </div>
+      </div>
+
+      <div class="input-pair" style="margin-bottom:0">
+        <div class="input-group" style="margin-bottom:0">
+          <label for="pctRate">Percentage Tax</label>
+          <input type="number" id="pctRate" value="3" min="0" max="12" step="0.5" oninput="recalc()">
+          <div class="input-hint">Per cent. Was 1% to June 2023.</div>
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label for="osdRate">Standard Deduction</label>
+          <input type="number" id="osdRate" value="40" min="0" max="100" step="1" oninput="recalc()">
+          <div class="input-hint">Per cent of gross</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-receipt"></i> What You Owe</h2>
+      <p>Both routes, side by side</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="est-headline">
+        <span class="label">Total Tax For The Year</span>
+        <span class="value" id="hTax">&#8369;0</span>
+        <div class="sub" id="hSub">&nbsp;</div>
+      </div>
+
+      <div class="alarm" id="alarmBox">
+        <i class="fas fa-circle-check" id="alarmIcon"></i>
+        <div>
+          <div class="t" id="alarmTitle">&nbsp;</div>
+          <div class="d" id="alarmText">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="section-divider">The two routes</div>
+
+      <div class="phase" id="boxGrad">
+        <div class="phase-head">
+          <span class="t">Graduated Rates</span>
+          <span class="n" id="gradNote">plus business tax</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-big" id="gradTotal">&#8369;0</div>
+          <div class="phase-sub" id="gradSub">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="phase" id="boxFlat">
+        <div class="phase-head">
+          <span class="t">Flat 8% Election</span>
+          <span class="n" id="flatNote">&nbsp;</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-big" id="flatTotal">&#8369;0</div>
+          <div class="phase-sub" id="flatSub">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="section-divider">Where the money goes</div>
+
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <span class="k">Gross rent for the year</span>
+          <span class="v" id="vGross">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kExempt">Exempt from business tax</span>
+          <span class="v" id="vExempt">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kLiable">Counted for business tax</span>
+          <span class="v" id="vLiable">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kBiz">Business tax</span>
+          <span class="v" id="vBiz">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kInc">Income tax</span>
+          <span class="v" id="vInc">&#8369;0</span>
+        </div>
+        <div class="breakdown-row" id="rowEwt">
+          <span class="k">Already withheld by tenants</span>
+          <span class="v minus" id="vEwt">&#8369;0</span>
+        </div>
+        <div class="breakdown-row total">
+          <span class="k">Still to pay</span>
+          <span class="v" id="vDue">&#8369;0</span>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-mini gold">
+          <span class="label">Kept After Tax</span>
+          <span class="value" id="mNet">&#8369;0</span>
+        </div>
+        <div class="metric-mini">
+          <span class="label">Effective Rate</span>
+          <span class="value" id="mRate">0%</span>
+        </div>
+      </div>
+
+      <div class="alarm" id="vatBox" style="display:none">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div>
+          <div class="t">You have crossed into VAT</div>
+          <div class="d" id="vatText">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a href="/#contact" class="cta-primary"><i class="fas fa-comments"></i> Ask Catherine</a>
+        <a href="/rental-yield.html" class="cta-outline"><i class="fas fa-chart-line"></i> Rental Yield</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="wide-card">
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-table"></i> The Graduated Table</h2>
+      <p>TRAIN rates, effective 1 January 2023 and unchanged for 2026</p>
+    </div>
+    <div class="calc-body">
+      <table class="ref-table">
+        <thead><tr><th>Annual taxable income</th><th>Tax</th></tr></thead>
+        <tbody>
+          <tr><td>Not over &#8369;250,000</td><td class="n">None</td></tr>
+          <tr><td>&#8369;250,000 to &#8369;400,000</td><td class="n">15% of the excess over &#8369;250,000</td></tr>
+          <tr><td>&#8369;400,000 to &#8369;800,000</td><td class="n">&#8369;22,500 + 20% of the excess over &#8369;400,000</td></tr>
+          <tr><td>&#8369;800,000 to &#8369;2,000,000</td><td class="n">&#8369;102,500 + 25% of the excess over &#8369;800,000</td></tr>
+          <tr><td>&#8369;2,000,000 to &#8369;8,000,000</td><td class="n">&#8369;402,500 + 30% of the excess over &#8369;2,000,000</td></tr>
+          <tr><td>Over &#8369;8,000,000</td><td class="n">&#8369;2,202,500 + 35% of the excess over &#8369;8,000,000</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--gray);line-height:1.8;margin-top:16px">
+        <strong>The per-unit rule, in one sentence.</strong> A residential unit let at &#8369;15,000 a month or less is exempt from VAT and from the percentage tax however many of them you have and whatever they come to in a year; only the units above that line are counted, and only their receipts are tested against the &#8369;3,000,000 threshold. Eight units at &#8369;14,000 bring in &#8369;1,344,000 a year and carry no business tax at all. Three units at &#8369;16,000 bring in &#8369;576,000 and carry percentage tax on every peso.
+      </p>
+      <p style="font-size:12px;color:var(--gray);line-height:1.8;margin-top:10px">
+        <strong>Once you elect the 8%, you are stuck with it for the year.</strong> The election is made on the first quarterly return and is irrevocable for that taxable year. It is also unavailable the moment you are required to register for VAT. Working out the yield before tax? That is the <a href="/rental-yield.html" style="color:var(--gold)">rental yield calculator</a>. Wondering whether the sale of the unit would be vatable? The <a href="/vat-exemption.html" style="color:var(--gold)">VAT exemption checker</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>A guide, not a tax return.</strong> This covers an individual letting residential property. Corporations, mixed residential and commercial buildings, sub-leases, and property held in a partnership are all taxed differently. Whether the 8% election beats the graduated route can also turn on income you have not entered here. The election is irrevocable for the taxable year once made. Have an accountant check the position before you file.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/pre-selling.html">Pre-Selling Schedule</a></li>
+      <li><a href="/property-tax.html">Amilyar</a></li>
+      <li><a href="/bir-deadlines.html">BIR Deadlines</a></li>
+      <li><a href="/calculator.html">Closing Fees</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js?v=98"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function fmtPeso(n){ return '\u20b1' + Math.round(n).toLocaleString('en-US'); }
+function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function setT(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+
+// TRAIN graduated table for individuals, effective 1 January 2023.
+function gradTax(ti){
+  if(ti <= 250000) return 0;
+  if(ti <= 400000) return (ti - 250000) * 0.15;
+  if(ti <= 800000) return 22500 + (ti - 400000) * 0.20;
+  if(ti <= 2000000) return 102500 + (ti - 800000) * 0.25;
+  if(ti <= 8000000) return 402500 + (ti - 2000000) * 0.30;
+  return 2202500 + (ti - 8000000) * 0.35;
+}
+
+function recalc(){
+  const rentA = getRaw('rentA'), unitsA = num('unitsA');
+  const rentB = getRaw('rentB'), unitsB = num('unitsB');
+  const kind  = document.getElementById('income').value;
+  const salary = kind === 'mixed' ? getRaw('salary') : 0;
+  const method = document.getElementById('method').value;
+  const expenses = getRaw('expenses');
+  const ewtOn = document.getElementById('ewt').value === 'yes';
+  const line   = getRaw('leaseLine');
+  const vatThr = getRaw('vatThr');
+  const pctRate = num('pctRate');
+  const osdRate = num('osdRate');
+
+  document.getElementById('salaryBox').style.display = kind === 'mixed' ? '' : 'none';
+  document.getElementById('expBox').style.display = method === 'itemised' ? '' : 'none';
+
+  // Each group is classified on its own per-unit rent, never on the total.
+  const annA = rentA * unitsA * 12;
+  const annB = rentB * unitsB * 12;
+  const exemptA = rentA <= line, exemptB = rentB <= line;
+
+  document.getElementById('hintA').innerHTML = unitsA <= 0 ? '&nbsp;'
+    : (exemptA ? 'At ' + fmtPeso(rentA) + ' a month these are <strong>under the ' + fmtPeso(line) + ' line</strong>, so no VAT and no percentage tax on ' + fmtPeso(annA) + ' a year.'
+               : 'At ' + fmtPeso(rentA) + ' a month these are <strong>over the ' + fmtPeso(line) + ' line</strong> and count towards business tax.');
+  document.getElementById('hintB').innerHTML = unitsB <= 0 ? '&nbsp;'
+    : (exemptB ? 'At ' + fmtPeso(rentB) + ' a month these are <strong>under the ' + fmtPeso(line) + ' line</strong>, so no VAT and no percentage tax on ' + fmtPeso(annB) + ' a year.'
+               : 'At ' + fmtPeso(rentB) + ' a month these are <strong>over the ' + fmtPeso(line) + ' line</strong> and count towards business tax.');
+
+  const gross  = annA + annB;
+  const exempt = (exemptA ? annA : 0) + (exemptB ? annB : 0);
+  const liable = gross - exempt;
+
+  // Only the receipts from the units above the line are tested.
+  const mustVat = liable > vatThr;
+  const bizTax  = mustVat ? 0 : liable * pctRate / 100;
+
+  // Income tax, graduated route.
+  const deduction = method === 'osd' ? gross * osdRate / 100 : Math.min(expenses, gross);
+  const netRent   = Math.max(0, gross - deduction);
+  const gradInc   = gradTax(netRent + salary);
+  const gradAll   = gradInc + bizTax;
+
+  // Income tax, 8% route. Closed once VAT registration is required.
+  const flatOpen  = !mustVat && gross <= vatThr;
+  const flatBase  = kind === 'mixed' ? gross : Math.max(0, gross - 250000);
+  const flatInc   = flatBase * 0.08 + (kind === 'mixed' ? gradTax(salary) : 0);
+  const flatAll   = flatInc;   // 8% stands in for the percentage tax as well
+
+  const useFlat = flatOpen && flatAll < gradAll;
+  const incTax  = useFlat ? flatInc : gradInc;
+  const owed    = useFlat ? flatAll : gradAll;
+  const ewt     = ewtOn ? gross * 0.05 : 0;
+  const due     = Math.max(0, owed - ewt);
+
+  setT('gradTotal', fmtPeso(gradAll));
+  setT('gradNote', bizTax > 0 ? 'includes ' + fmtPeso(bizTax) + ' business tax' : 'no business tax due');
+  setT('gradSub', fmtPeso(gross) + ' gross, less ' + (method === 'osd' ? osdRate + '% standard deduction' : 'expenses') + ' of ' + fmtPeso(deduction) + ', leaves ' + fmtPeso(netRent) + ' taxable' + (salary > 0 ? ', added to a salary of ' + fmtPeso(salary) : '') + '.');
+
+  const boxG = document.getElementById('boxGrad');
+  const boxF = document.getElementById('boxFlat');
+  boxG.style.borderColor = useFlat ? '' : 'var(--gold)';
+  boxF.style.borderColor = useFlat ? 'var(--gold)' : '';
+
+  if(!flatOpen){
+    setT('flatTotal', 'Not available');
+    setT('flatNote', 'closed');
+    setT('flatSub', gross > vatThr
+      ? 'Gross receipts of ' + fmtPeso(gross) + ' are over the ' + fmtPeso(vatThr) + ' threshold, and the 8% election is only open below it.'
+      : 'The units above the ' + fmtPeso(line) + ' line bring in ' + fmtPeso(liable) + ', which requires VAT registration. The 8% election is closed to anyone who must register for VAT.');
+  } else {
+    setT('flatTotal', fmtPeso(flatAll));
+    setT('flatNote', 'replaces the business tax too');
+    setT('flatSub', kind === 'mixed'
+      ? '8% of the whole ' + fmtPeso(gross) + ' of rent, because the &#8369;250,000 allowance is already inside your payroll table, plus ' + fmtPeso(gradTax(salary)) + ' on the salary itself.'
+      : '8% of ' + fmtPeso(gross) + ' less the &#8369;250,000 allowance, so 8% of ' + fmtPeso(flatBase) + '. No deductions, and no percentage tax on top.');
+  }
+
+  setT('hTax', fmtPeso(owed));
+  setT('hSub', useFlat ? 'Taking the 8% election' : (flatOpen ? 'Staying on the graduated rates' : 'Graduated rates \u2014 the 8% is not open to you'));
+
+  const box = document.getElementById('alarmBox');
+  const ico = document.getElementById('alarmIcon');
+  const diff = Math.abs(gradAll - flatAll);
+  if(!flatOpen){
+    box.className = 'alarm soon'; ico.className = 'fas fa-circle-info';
+    setT('alarmTitle', 'The graduated route is your only option');
+    document.getElementById('alarmText').innerHTML = 'The 8% election is closed once you are required to register for VAT, so the comparison below is one-sided. What you can still choose is how you deduct: the ' + osdRate + '% standard deduction needs no receipts, itemising needs all of them.';
+  } else if(useFlat){
+    box.className = 'alarm ok'; ico.className = 'fas fa-circle-check';
+    setT('alarmTitle', 'The 8% election saves you ' + fmtPeso(diff));
+    document.getElementById('alarmText').innerHTML = 'It replaces the graduated income tax <em>and</em> the percentage tax in one go, which is why it wins here. Elect it on your first quarterly return &mdash; it is irrevocable for the year, and if you say nothing you are on the graduated rates by default.';
+  } else {
+    box.className = 'alarm ok'; ico.className = 'fas fa-circle-check';
+    setT('alarmTitle', 'The graduated rates save you ' + fmtPeso(diff));
+    document.getElementById('alarmText').innerHTML = 'Deductions are worth more to you than the flat rate is. Do nothing and this is what you are on &mdash; the 8% has to be positively elected.';
+  }
+
+  setT('vGross', fmtPeso(gross));
+  setT('kExempt', 'Exempt from business tax (units at or under ' + fmtPeso(line) + ')');
+  setT('vExempt', fmtPeso(exempt));
+  setT('kLiable', 'Counted for business tax (units over ' + fmtPeso(line) + ')');
+  setT('vLiable', fmtPeso(liable));
+  setT('kBiz', useFlat ? 'Business tax (covered by the 8%)' : (mustVat ? 'Percentage tax \u2014 superseded by VAT' : 'Percentage tax at ' + pctRate + '%'));
+  setT('vBiz', fmtPeso(useFlat ? 0 : bizTax));
+  setT('kInc', useFlat ? 'Income tax at 8%' : 'Income tax, graduated');
+  setT('vInc', fmtPeso(incTax));
+  document.getElementById('rowEwt').style.display = ewtOn ? '' : 'none';
+  setT('vEwt', '- ' + fmtPeso(ewt));
+  setT('vDue', fmtPeso(due));
+
+  const cash = gross - (method === 'itemised' ? expenses : 0) - owed;
+  setT('mNet', fmtPeso(cash));
+  setT('mRate', gross > 0 ? (owed / gross * 100).toFixed(1) + '%' : '0%');
+
+  const vb = document.getElementById('vatBox');
+  vb.style.display = mustVat ? '' : 'none';
+  if(mustVat){
+    document.getElementById('vatText').innerHTML = 'The units above the ' + fmtPeso(line) + ' line bring in ' + fmtPeso(liable) + ' a year, past the ' + fmtPeso(vatThr) + ' threshold. You must register for VAT, charge 12% on those rents and remit it quarterly, and file monthly. The VAT is collected from the tenant on top of the rent rather than taken out of it, so it is not in the figures above &mdash; but the registration closes the 8% election and brings real bookkeeping with it.';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<script src="/js/brutalist-shell.js?v=98" defer></script>
+<script src="/js/chat.js?v=98" defer></script>
+</body>
+</html>

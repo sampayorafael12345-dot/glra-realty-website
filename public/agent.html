@@ -8,6 +8,10 @@
 <meta name="theme-color" id="themeColor" content="#f4f2ee">
 <link rel="icon" type="image/png" href="/img/favicon.ico.png">
 <link rel="apple-touch-icon" href="/img/hero-logo.png">
+<link rel="manifest" href="/agent-manifest.json">
+<meta name="apple-mobile-web-app-title" content="GLRA Agent">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Agent Workspace | GLRA Realty</title>
 <!-- ==========================================================================
   AGENT WORKSPACE. The web version of the "GLRA Agent System" workbook.
@@ -676,6 +680,28 @@
     *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
     .rv{ opacity:1; transform:none; }
   }
+
+/* ══ PHONE: STOP iOS ZOOMING ON EVERY FIELD ═══════════════════════════════
+   The workspace is built for a phone and its breakpoints already go down to
+   359px, but its fields are 13px. iOS Safari zooms the whole page whenever a
+   control with a font-size under 16px takes focus, and it does not zoom back
+   out when the field is blurred -- so logging a lead left the page magnified
+   and drifting under the thumb. The same fix is in admin.html. */
+@media(max-width:768px){
+  input,select,textarea{font-size:16px !important}
+  input[type=checkbox],input[type=radio]{font-size:inherit !important}
+  button,a,[onclick]{touch-action:manipulation}
+}
+
+/* The notch and the home indicator: agent.html already carries
+   viewport-fit=cover, and now that it can be installed to a home screen it
+   needs to pay the inset back rather than draw underneath them. */
+@supports(padding-top:env(safe-area-inset-top)){
+  body{
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+}
 </style>
 </head>
 <body>

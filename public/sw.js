@@ -1,8 +1,10 @@
 // Service Worker for GLRA Realty
 // Strategy:
+//   - /admin.html, /agent.html and /api/: NOT TOUCHED. Authenticated pages and
+//     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v97';
+const CACHE_VERSION = 'glra-cache-v98';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -28,6 +30,19 @@ self.addEventListener('activate', event => {
   );
 });
 
+// The two dashboards are authenticated app shells and /api/ is the data layer
+// behind them. Neither belongs in a cache on the device, and neither should ever
+// be answered with the fallback below. Returning true here takes the request out
+// of the service worker entirely: the browser fetches it normally.
+function isPassThrough(url){
+  if (/^\/(admin|agent)\.html$/i.test(url.pathname)) return true;
+  // Listing and hero photographs are served from /api/ but are immutable bytes,
+  // so they stay on the cache-first path below.
+  if (url.pathname.startsWith('/api/property-image/')) return false;
+  if (url.pathname.startsWith('/api/hero-image/')) return false;
+  return url.pathname.startsWith('/api/');
+}
+
 function isHTMLRequest(req){
   if (req.mode === 'navigate') return true;
   const url = new URL(req.url);
@@ -48,6 +63,9 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
+  const url = new URL(req.url);
+  if (url.origin === self.location.origin && isPassThrough(url)) return;
+
   // NETWORK-FIRST for HTML — always try fresh, fall back to cache when offline
   if (isHTMLRequest(req)) {
     event.respondWith(
@@ -59,7 +77,17 @@ self.addEventListener('fetch', event => {
           }
           return res;
         })
-        .catch(() => caches.match(req).then(r => r || caches.match('/index.html')))
+        .catch(() => caches.match(req).then(r => {
+          if (r) return r;
+          // Only ever stand the home page in for a page the visitor navigated
+          // to. Handing it to anything else turns a plain network error into a
+          // parse error a long way from its cause, and on a phone it reads as
+          // "the site redirected me to the home page".
+          if (req.mode === 'navigate' && url.origin === self.location.origin) {
+            return caches.match('/index.html');
+          }
+          return Response.error();
+        }))
     );
     return;
   }

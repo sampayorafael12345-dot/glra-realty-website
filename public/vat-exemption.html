@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}</style>
+<title>Philippine Property VAT Exemption Checker | GLRA Realty</title>
+<meta name="description" content="Check whether a Philippine property sale is VAT-exempt. Covers the 3.6 million residential threshold, the bare-lot rule that changed in 2021, parking slots, and sellers who are outside VAT altogether.">
+<meta name="keywords" content="vat exemption philippines property, 3.6 million vat threshold, rr 1-2024, is my property sale vat exempt, residential lot vat 2021, vat on condominium philippines, parking slot vat">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://glrarealty.com/vat-exemption.html">
+<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glrarealty.com/vat-exemption.html">
+<meta property="og:title" content="Is This Property Sale VAT-Exempt? | GLRA Realty">
+<meta property="og:description" content="Twelve per cent is a large number on a property. See whether it applies, and why a bare residential lot no longer qualifies.">
+<meta property="og:image" content="https://glrarealty.com/img/social-card.png">
+<meta property="og:image:alt" content="GLRA Realty &mdash; Philippine Property VAT Exemption Checker">
+<meta property="og:locale" content="en_PH">
+<meta property="og:site_name" content="GLRA Realty">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Is This Property Sale VAT-Exempt? | GLRA Realty">
+<meta name="twitter:description" content="Twelve per cent is a large number on a property. See whether it applies, and why a bare residential lot no longer qualifies.">
+<meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Philippine Property VAT Exemption Checker","description":"Determines whether a Philippine property sale is VAT-exempt from the property type, the seller status and the price, and shows the VAT payable when it is not.","applicationCategory":"FinanceApplication","operatingSystem":"Web","inLanguage":"en-PH","url":"https://glrarealty.com/vat-exemption.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://glrarealty.com/tools.html"},{"@type":"ListItem","position":3,"name":"VAT Exemption Checker","item":"https://glrarealty.com/vat-exemption.html"}]}</script>
+<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css?v=98">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=98">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.calc-container{max-width:1100px;margin:40px auto 60px;padding:0 5%;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
+.calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
+.calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
+.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.calc-body{padding:26px}
+.input-group{margin-bottom:18px}
+.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
+.input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
+.input-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.section-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--border-color);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.est-headline{padding:24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:16px;background:linear-gradient(135deg,var(--navy),var(--navy-mid))}
+.est-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.est-headline .value{font-family:'Inter',serif;font-size:40px;font-weight:600;color:var(--gold);line-height:1.1}
+.est-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
+.breakdown{border:1px solid var(--border-color);margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border-color);font-size:13px;gap:14px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row.total{background:rgba(255,61,0,.06);font-weight:700}
+.breakdown-row .k{color:var(--gray)}
+.breakdown-row.total .k{color:var(--text-color)}
+.breakdown-row .v{font-weight:600;color:var(--text-color);white-space:nowrap}
+.breakdown-row .v.minus{color:#10b981}
+.breakdown-row .v.bad{color:#dc2626}
+body.dark-mode .breakdown-row .v.bad{color:#f87171}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.metric-mini{padding:16px;border:1px solid var(--border-color);background:var(--gray-light);text-align:center}
+body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
+.metric-mini .label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.metric-mini .value{font-family:'Inter',serif;font-size:20px;font-weight:600;color:var(--text-color)}
+.metric-mini.gold .value{color:var(--gold)}
+.phase{border:1px solid var(--border-color);margin-bottom:14px}
+.phase-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px;background:var(--gray-light);border-bottom:1px solid var(--border-color)}
+body.dark-mode .phase-head{background:#0e0e0c}
+.phase-head .t{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--gold)}
+.phase-head .n{font-size:11px;color:var(--gray)}
+.phase-body{padding:14px 16px}
+.phase-big{font-family:'Inter',serif;font-size:26px;font-weight:600;color:var(--text-color);line-height:1.15}
+.phase-sub{font-size:12px;color:var(--gray);margin-top:4px;line-height:1.6}
+.alarm{padding:14px 16px;border:1px solid var(--border-color);margin-bottom:12px;display:flex;gap:12px;align-items:flex-start}
+.alarm i{font-size:16px;flex-shrink:0;margin-top:2px}
+.alarm .t{font-size:13px;font-weight:700;margin-bottom:3px}
+.alarm .d{font-size:12px;color:var(--gray);line-height:1.6}
+.alarm.ok{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.07)}
+.alarm.ok i{color:#0a7551}
+body.dark-mode .alarm.ok i{color:#34d399}
+.alarm.soon{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.08)}
+.alarm.soon i{color:#8c5a06}
+body.dark-mode .alarm.soon i{color:#fbbf24}
+.alarm.late{border-color:rgba(220,38,38,.45);background:rgba(220,38,38,.07)}
+.alarm.late i{color:#bf2121}
+body.dark-mode .alarm.late i{color:#f87171}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.ref-table th,.ref-table td{padding:8px 10px;border:1px solid var(--border-color);text-align:left}
+.ref-table th{background:var(--gray-light);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);font-weight:600}
+body.dark-mode .ref-table th{background:#0e0e0c}
+.ref-table td.n{text-align:right;font-weight:600;white-space:nowrap}
+.cta-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.cta-primary:hover{background:var(--gold-dark)}
+.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline:hover{background:var(--gold);color:#fff}
+.disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
+.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+.wide-card{max-width:1100px;margin:0 auto 30px;padding:0 5%}
+@media(max-width:900px){.calc-container{grid-template-columns:1fr}}
+@media(max-width:768px){.est-headline .value{font-size:30px}.input-pair{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/zonal.html">ZONAL VALUE</a>
+    <div class="nav-dropdown">
+      <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
+      <div class="nav-dropdown-menu">
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
+        <a href="/tools.html">All Tools &amp; Calculators</a>
+        <a href="/about.html">About Us</a>
+        <a href="/neighborhoods.html">Neighborhood Guides</a>
+        <a href="/testimonials.html">Testimonials</a>
+        <a href="/blog.html">Blog &amp; Tips</a>
+        <a href="/guide.html">Documentation Guide</a>
+      </div>
+    </div>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees</a>
+    <a href="/guide.html" onclick="closeMobileMenu()">Documentation Guide</a>
+    <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+
+<!-- Print-only branded header -->
+<div class="print-only-header">
+  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
+  <div class="print-title">VAT Exemption Checker</div>
+  <div class="print-subtitle">GLRA Realty &mdash; Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
+  <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
+</div>
+
+<div class="page-hero">
+  <span class="eyebrow">For Buyers, Sellers And Developers</span>
+  <h1>Is This Sale VAT-Exempt?</h1>
+  <p>Twelve per cent is a large number on a property. Whether it applies turns on what is being sold and who is selling it, not only on the price &mdash; and a bare residential lot lost its own exemption in 2021.</p>
+</div>
+
+<div class="calc-container">
+
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-file-signature"></i> The Sale</h2>
+      <p>Who is selling matters as much as what</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="input-group">
+        <label for="seller">Who Is Selling</label>
+        <select id="seller" onchange="recalc()">
+          <option value="business">A developer, dealer or lessor &mdash; in the business of property</option>
+          <option value="personal">A private owner selling their own property</option>
+        </select>
+        <div class="input-hint">This is the first question, not the price. VAT only reaches property sold in the ordinary course of trade or business. A private owner selling a house they lived in is outside VAT entirely.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="ptype">What Is Being Sold</label>
+        <select id="ptype" onchange="recalc()">
+          <option value="dwelling">House and lot, condominium, or other residential dwelling</option>
+          <option value="lot">Residential lot, no house on it</option>
+          <option value="parking">Parking slot</option>
+          <option value="commercial">Commercial, industrial or office property</option>
+        </select>
+        <div class="input-hint" id="typeHint">&nbsp;</div>
+      </div>
+
+      <div class="input-group">
+        <label for="price">Selling Price</label>
+        <input type="text" id="price" value="3,500,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">The consideration in the deed of sale.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="fmv">Zonal Or Assessed Value</label>
+        <input type="text" id="fmv" value="0" inputmode="numeric" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Leave at zero if you do not know it. Where VAT applies it is charged on the higher of the price and this figure. <a href="/zonal.html" style="color:var(--gold)">Look up the BIR zonal value &rarr;</a></div>
+      </div>
+
+      <div class="input-group" id="adjBox">
+        <label for="adjacent">Other Lots To The Same Buyer</label>
+        <input type="text" id="adjacent" value="0" inputmode="numeric" oninput="formatPrice(this);recalc()">
+        <div class="input-hint">Combined price of any <strong>adjacent</strong> lots or units sold to the same buyer within twelve months. The BIR treats these as one sale, so two units at 2 million each are tested as a 4 million sale, not as two exempt ones.</div>
+      </div>
+
+      <div class="section-divider">The rules &mdash; change them if they move</div>
+
+      <div class="input-pair" style="margin-bottom:0">
+        <div class="input-group" style="margin-bottom:0">
+          <label for="thr">Exemption Threshold</label>
+          <input type="text" id="thr" value="3,600,000" inputmode="numeric" oninput="formatPrice(this);recalc()">
+          <div class="input-hint">RR 1-2024. Indexed every three years.</div>
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label for="vrate">VAT Rate</label>
+          <input type="number" id="vrate" value="12" min="0" max="25" step="0.5" oninput="recalc()">
+          <div class="input-hint">Per cent</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-scale-balanced"></i> The Answer</h2>
+      <p>And the rule it turns on</p>
+    </div>
+    <div class="calc-body">
+
+      <div class="est-headline">
+        <span class="label">Verdict</span>
+        <span class="value" id="hVerdict">&mdash;</span>
+        <div class="sub" id="hSub">&nbsp;</div>
+      </div>
+
+      <div class="alarm" id="alarmBox">
+        <i class="fas fa-circle-check" id="alarmIcon"></i>
+        <div>
+          <div class="t" id="alarmTitle">&nbsp;</div>
+          <div class="d" id="alarmText">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <span class="k">Selling price</span>
+          <span class="v" id="vPrice">&#8369;0</span>
+        </div>
+        <div class="breakdown-row" id="rowTested">
+          <span class="k" id="kTested">Tested against the threshold</span>
+          <span class="v" id="vTested">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kBase">VAT charged on</span>
+          <span class="v" id="vBase">&#8369;0</span>
+        </div>
+        <div class="breakdown-row">
+          <span class="k" id="kVat">VAT at 12%</span>
+          <span class="v" id="vVat">&#8369;0</span>
+        </div>
+        <div class="breakdown-row total">
+          <span class="k">Buyer pays</span>
+          <span class="v" id="vTotal">&#8369;0</span>
+        </div>
+      </div>
+
+      <div class="phase" id="cliffBox">
+        <div class="phase-head">
+          <span class="t">The Threshold Is A Cliff</span>
+          <span class="n" id="cliffNote">&nbsp;</span>
+        </div>
+        <div class="phase-body">
+          <div class="phase-big" id="cliffBig">&nbsp;</div>
+          <div class="phase-sub" id="cliffSub">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a href="/#contact" class="cta-primary"><i class="fas fa-comments"></i> Ask Catherine</a>
+        <a href="/calculator.html" class="cta-outline"><i class="fas fa-calculator"></i> Closing Fees</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="wide-card">
+  <div class="calc-card">
+    <div class="calc-card-header">
+      <h2><i class="fas fa-book"></i> The Rules In One Table</h2>
+      <p>Assuming the seller is in the business of property</p>
+    </div>
+    <div class="calc-body">
+      <table class="ref-table">
+        <thead><tr><th>What is sold</th><th>VAT position</th><th>Where it comes from</th></tr></thead>
+        <tbody>
+          <tr><td>House and lot, condominium, other residential dwelling</td><td class="n">Exempt at &#8369;3,600,000 or below</td><td>Sec 109(P), threshold set by RR 1-2024</td></tr>
+          <tr><td>Residential lot with no house on it</td><td class="n">Vatable at any price</td><td>Its separate exemption ended 1 Jan 2021 under TRAIN</td></tr>
+          <tr><td>Parking slot, sold on its own or alongside a unit</td><td class="n">Vatable at any price</td><td>Not a residential dwelling &mdash; RR 16-2011</td></tr>
+          <tr><td>Commercial, industrial or office property</td><td class="n">Vatable at any price</td><td>No residential exemption applies</td></tr>
+          <tr><td>Lease of a residential unit</td><td class="n">Exempt at &#8369;15,000 a month or below</td><td>Sec 109(Q), per unit, whatever the yearly total</td></tr>
+          <tr><td>Property sold by an owner not in the business</td><td class="n">Outside VAT &mdash; 6% capital gains tax instead</td><td>A capital asset, not stock in trade</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--gray);line-height:1.8;margin-top:16px">
+        <strong>Two things this page does not decide for you.</strong> A seller in business whose gross annual sales stay under &#8369;3,000,000 may register as non-VAT and pay percentage tax instead, which changes the answer for a small lessor or an occasional dealer. And socialised and economic housing under the housing laws carry their own reliefs. Both are worth an accountant's half hour before you price anything.
+      </p>
+      <p style="font-size:12px;color:var(--gray);line-height:1.8;margin-top:10px">
+        Renting rather than selling? The lease side is worked out in full on the <a href="/rental-income-tax.html" style="color:var(--gold)">rental income tax calculator</a>, which handles the &#8369;15,000 per-unit line and the 8% option together.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="disclaimer-box">
+  <div class="disclaimer">
+    <i class="fas fa-info-circle"></i>
+    <div><strong>A guide to the rule, not tax advice.</strong> Whether a seller is "engaged in business" is a question of fact the BIR decides on the whole picture, not on a dropdown. The threshold is re-indexed to the consumer price index every three years and has moved twice since 2018. Socialised and economic housing, installment sales, and sellers below the &#8369;3,000,000 registration threshold all have their own treatment. Confirm with your accountant or the BIR before you price, sign or file anything.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/pre-selling.html">Pre-Selling Schedule</a></li>
+      <li><a href="/property-tax.html">Amilyar</a></li>
+      <li><a href="/bir-deadlines.html">BIR Deadlines</a></li>
+      <li><a href="/calculator.html">Closing Fees</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<script src="/js/main.js?v=98"></script>
+<script>
+function formatPrice(input){
+  const cursor = input.selectionStart;
+  const oldLength = input.value.length;
+  let v = input.value.replace(/,/g,'');
+  if(!v) return;
+  const n = parseFloat(v);
+  if(!isNaN(n)){
+    input.value = n.toLocaleString('en-US');
+    const newLength = input.value.length;
+    input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+  }
+}
+function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
+function fmtPeso(n){ return '\u20b1' + Math.round(n).toLocaleString('en-US'); }
+function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+function setT(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+
+const TYPE_HINTS = {
+  dwelling: 'The only category with a price threshold. A condominium unit counts; the parking slot sold with it does not.',
+  lot:      'A bare residential lot has been vatable at any price since 1 January 2021. Advice quoting a lot threshold is out of date.',
+  parking:  'A parking slot is not a residential dwelling, so the threshold never reaches it &mdash; vatable at any price.',
+  commercial: 'No residential exemption applies. Vatable at any price when sold in the course of business.'
+};
+
+function recalc(){
+  const seller = document.getElementById('seller').value;
+  const ptype  = document.getElementById('ptype').value;
+  const price  = getRaw('price');
+  const fmv    = getRaw('fmv');
+  const adj    = getRaw('adjacent');
+  const thr    = getRaw('thr');
+  const vrate  = num('vrate');
+
+  document.getElementById('typeHint').innerHTML = TYPE_HINTS[ptype] || '&nbsp;';
+  // Aggregation only ever bites on the one category that has a threshold.
+  document.getElementById('adjBox').style.display = (seller === 'business' && ptype === 'dwelling') ? '' : 'none';
+  document.getElementById('rowTested').style.display = (seller === 'business' && ptype === 'dwelling') ? '' : 'none';
+
+  const tested = price + adj;
+  const base   = Math.max(price, fmv);
+
+  let verdict, sub, exempt, outside = false, title, text, cls, icon;
+
+  if(seller === 'personal'){
+    outside = true; exempt = true;
+    verdict = 'Outside VAT';
+    sub = 'A capital asset, not stock in trade';
+    cls = 'alarm ok'; icon = 'fas fa-circle-check';
+    title = 'VAT does not reach this sale at all';
+    text = 'VAT applies to property sold in the ordinary course of trade or business. A private owner selling their own house, lot or unit is not doing that, so no threshold applies and the price is irrelevant to VAT. What does apply is the 6% capital gains tax on the higher of the price and the zonal or assessed value, plus documentary stamp tax, transfer tax and registration. Those are on the closing fees calculator.';
+  } else if(ptype === 'dwelling'){
+    exempt = tested <= thr;
+    if(exempt){
+      verdict = 'VAT-exempt';
+      sub = 'At or below ' + fmtPeso(thr);
+      cls = 'alarm ok'; icon = 'fas fa-circle-check';
+      title = 'No VAT on this sale';
+      text = 'A residential dwelling at or below ' + fmtPeso(thr) + ' is exempt under Section 109(P). The threshold was raised to ' + fmtPeso(3600000) + ' by RR 1-2024 with effect from 1 January 2024 and is re-indexed to the consumer price index every three years, so check it is still current before you rely on it.';
+      if(adj > 0) text += ' The ' + fmtPeso(adj) + ' of adjacent property has been added in, and the combined ' + fmtPeso(tested) + ' is still inside the line.';
+    } else {
+      verdict = fmtNum(vrate) + '% VAT applies';
+      sub = 'Above ' + fmtPeso(thr);
+      cls = 'alarm late'; icon = 'fas fa-circle-exclamation';
+      title = 'This sale is vatable';
+      text = 'At ' + fmtPeso(tested) + ' the sale is ' + fmtPeso(tested - thr) + ' over the ' + fmtPeso(thr) + ' line, so the whole price is vatable &mdash; not just the excess.';
+      if(adj > 0) text += ' That figure includes ' + fmtPeso(adj) + ' of adjacent property sold to the same buyer, which the BIR treats as one sale.';
+    }
+  } else {
+    exempt = false;
+    verdict = fmtNum(vrate) + '% VAT applies';
+    sub = 'No threshold reaches this category';
+    cls = 'alarm late'; icon = 'fas fa-circle-exclamation';
+    title = ptype === 'lot' ? 'A bare lot has no exemption' : (ptype === 'parking' ? 'A parking slot has no exemption' : 'Commercial property has no exemption');
+    text = ptype === 'lot'
+      ? 'The separate exemption for residential lots ended on 1 January 2021 under TRAIN. A lot with no dwelling on it is vatable whatever it costs. This is the single most common mistake in published Philippine property advice, because the old lot threshold is still quoted everywhere.'
+      : (ptype === 'parking'
+        ? 'A parking slot is not a residential dwelling, so the dwelling threshold does not reach it even when it is sold together with an exempt unit. The unit and the slot are looked at separately.'
+        : 'The residential thresholds do not apply to commercial, industrial or office property. Sold in the course of business, it is vatable at any price.');
+  }
+
+  const vat   = exempt ? 0 : base * vrate / 100;
+  const total = price + vat;
+
+  setT('hVerdict', verdict);
+  setT('hSub', sub);
+  document.getElementById('alarmBox').className = cls;
+  document.getElementById('alarmIcon').className = icon;
+  setT('alarmTitle', title);
+  document.getElementById('alarmText').innerHTML = text;
+
+  setT('vPrice', fmtPeso(price));
+  setT('kTested', adj > 0 ? 'Tested against the threshold, with adjacent property' : 'Tested against the threshold');
+  setT('vTested', fmtPeso(tested));
+  setT('kBase', exempt ? 'VAT base' : (base > price ? 'VAT charged on the higher figure' : 'VAT charged on'));
+  setT('vBase', exempt ? '\u2014' : fmtPeso(base));
+  setT('kVat', 'VAT at ' + fmtNum(vrate) + '%');
+  setT('vVat', exempt ? fmtPeso(0) : fmtPeso(vat));
+  setT('vTotal', fmtPeso(total));
+
+  // The cliff. Only meaningful for the one category that has a threshold and a
+  // seller the threshold applies to.
+  const cliff = document.getElementById('cliffBox');
+  if(outside || ptype !== 'dwelling'){
+    cliff.style.display = 'none';
+  } else {
+    cliff.style.display = '';
+    const justOver = thr + 1;
+    const vatOver  = justOver * vrate / 100;
+    setT('cliffNote', 'at ' + fmtPeso(thr));
+    if(exempt){
+      const room = thr - tested;
+      setT('cliffBig', room > 0 ? fmtPeso(room) + ' of headroom' : 'Exactly on the line');
+      setT('cliffSub', 'Go one peso over and the buyer pays ' + fmtPeso(vatOver) + ' of VAT on the whole price, not on the excess. Pricing at ' + fmtPeso(thr) + ' costs the buyer ' + fmtPeso(thr) + '. Pricing at ' + fmtPeso(thr + 100000) + ' costs them ' + fmtPeso((thr + 100000) * (1 + vrate / 100)) + '. A hundred thousand more on the price is ' + fmtPeso((thr + 100000) * (1 + vrate / 100) - thr) + ' more out of their pocket.');
+    } else {
+      const overBy = tested - thr;
+      setT('cliffBig', fmtPeso(vat) + ' of VAT to save ' + fmtPeso(overBy));
+      setT('cliffSub', 'This sale is only ' + fmtPeso(overBy) + ' over the line, and crossing it costs ' + fmtPeso(vat) + '. Whether the price can come back under ' + fmtPeso(thr) + ' is worth an honest conversation before the deed is drawn &mdash; but the property has to genuinely be worth it, because the BIR values it independently.');
+      if(overBy > vat) setT('cliffSub', 'At ' + fmtPeso(tested) + ' this is well clear of the ' + fmtPeso(thr) + ' line, so the exemption is not in reach and the VAT of ' + fmtPeso(vat) + ' is simply part of the deal. Make sure the buyer is quoted a VAT-inclusive figure from the start.');
+    }
+  }
+}
+
+function fmtNum(n){ return (Math.round(n * 100) / 100).toString(); }
+
+document.addEventListener('DOMContentLoaded', recalc);
+</script>
+<script src="/js/brutalist-shell.js?v=98" defer></script>
+<script src="/js/chat.js?v=98" defer></script>
+</body>
+</html>
