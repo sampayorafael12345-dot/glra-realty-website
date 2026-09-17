@@ -372,6 +372,28 @@ app.use(express.static('public', {
   setHeaders(res, path) {
     if (/\.html?$/i.test(path)) {
       res.setHeader('Cache-Control', 'no-cache');
+      // The two private portals say noindex in their <head> already; saying it
+      // in the header too means the instruction survives a fetch that never
+      // parses the HTML.
+      if (/(admin|agent)\.html$/i.test(path)) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+      } else if (!/404\.html$/i.test(path)) {
+        // max-image-preview:large is the important one on a property site: it
+        // is what lets Google put a full-width photograph next to the result
+        // instead of a thumbnail. max-snippet:-1 lifts the cap on the
+        // description length. Set once here so every page - including any
+        // added later - inherits it.
+        res.setHeader('X-Robots-Tag',
+          'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+      }
+    } else if (/\.(css|js)$/i.test(path)) {
+      // These are requested with ?v=<CACHE_VERSION> now, so a changed file
+      // arrives under a new URL and a cached one can never be stale. That
+      // makes it safe - and correct - to cache them hard. It also fixes the
+      // real problem the version stamp was added for: before this, a css
+      // change took up to a week to reach a returning visitor, because the
+      // browser's own copy sat underneath the service worker and won.
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     } else {
       res.setHeader('Cache-Control', 'public, max-age=604800');
     }
@@ -736,10 +758,38 @@ function externalizeInlineImages(p) {
   return p;
 }
 
+// Photographs published on the static marketing pages, read once at boot so
+// the sitemap can point Google Images at them. The five Arthaland development
+// pages carry between twelve and twenty photographs each and not one of them
+// was discoverable: an <img> inside a page Google has to render is far weaker
+// than an <image:loc> in the sitemap. Capped at six per page - the sitemap is
+// a map, not a gallery.
+const PAGE_IMAGES = (() => {
+  const map = {};
+  try {
+    const dir = path.join(__dirname, 'public');
+    fs.readdirSync(dir).filter(f => f.endsWith('.html') && !['admin.html', 'agent.html', '404.html'].includes(f))
+      .forEach(f => {
+        const html = fs.readFileSync(path.join(dir, f), 'utf8');
+        const seen = new Set();
+        const re = /<img\b[^>]*\bsrc="(\/img\/[^"]+\.(?:jpe?g|png|webp))"/gi;
+        let m;
+        while ((m = re.exec(html)) && seen.size < 6) seen.add(m[1]);
+        // The Arthaland pages build their gallery from a JS array of names, so
+        // the <img> scan above only sees the first one or two. Pick up the
+        // literal paths in the source as well.
+        const re2 = /['"](\/img\/arthaland\/[a-z0-9\-]+\/[^'"]+\.(?:jpe?g|png|webp))['"]/gi;
+        while ((m = re2.exec(html)) && seen.size < 6) seen.add(m[1]);
+        if (seen.size) map['/' + f] = [...seen];
+      });
+  } catch (e) { /* a sitemap without images is still a valid sitemap */ }
+  return map;
+})();
+
 // Build a fully server-rendered, SEO-rich detail page for one property.
 // Crawlers and social-share scrapers get real <title>, meta description,
 // Open Graph image, and JSON-LD; humans get a styled page with an inquiry form.
-function buildPropertyPageHtml(p) {
+function buildPropertyPageHtml(p, related) {
   const id = String(p._id);
   // Turn any base64 photo into a real image URL first, so the og:image, the
   // gallery and the <img> tags below all point at something fetchable rather
@@ -778,22 +828,104 @@ function buildPropertyPageHtml(p) {
     .trim();
   const gallery = (p.gallery || []).filter(Boolean);
 
+  // The listing, the home itself, and the offer, as one connected graph.
+  // `Product` alone said nothing about floor area, bedrooms or where it is,
+  // all of which are printed on the page a few lines below.
+  // The cover photograph first, then the gallery, de-duplicated. Building this
+  // from `gallery` alone left the best photo on the listing out of the markup
+  // entirely, because mainImage is held separately from the gallery array.
+  const galleryAbs = [...new Set([rawImg, ...gallery].filter(Boolean))]
+    .slice(0, 8).map(g => absUrl(optimizeCloudinary(g)));
+  const residence = {
+    '@type': p.propertyType === 'House and Lot' ? 'SingleFamilyResidence'
+      : p.propertyType === 'Lot' ? 'Place' : 'Apartment',
+    '@id': canonical + '#home',
+    name: title,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: loc || 'Metro Manila',
+      addressRegion: 'Metro Manila',
+      addressCountry: 'PH'
+    }
+  };
+  if (p.sqm) residence.floorSize = { '@type': 'QuantitativeValue', value: Number(p.sqm), unitCode: 'MTK' };
+  if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
+  if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
+  if (galleryAbs.length || ogImg) residence.photo = galleryAbs.length ? galleryAbs : [ogImg];
+
+  const listedOn = new Date(p.createdAt || Date.now()).toISOString();
+  const updatedOn = new Date(p.priceUpdatedAt || p.createdAt || Date.now()).toISOString();
+
   const jsonld = JSON.stringify({
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: title,
-    description: metaDesc,
-    image: ogImg,
-    category: p.propertyType || 'Real Estate',
-    url: canonical,
-    offers: {
-      '@type': 'Offer',
-      price: Number(priceNum) || 0,
-      priceCurrency: 'PHP',
-      availability: 'https://schema.org/InStock',
-      url: canonical
-    }
+    '@graph': [
+      {
+        '@type': 'RealEstateListing',
+        '@id': canonical,
+        url: canonical,
+        name: title,
+        description: metaDesc,
+        image: galleryAbs.length ? galleryAbs : [ogImg],
+        datePosted: listedOn,
+        dateModified: updatedOn,
+        inLanguage: 'en-PH',
+        mainEntity: { '@id': canonical + '#home' },
+        provider: { '@type': 'RealEstateAgent', name: 'GLRA Realty', url: SITE_URL },
+        offers: {
+          '@type': 'Offer',
+          price: Number(priceNum) || 0,
+          priceCurrency: 'PHP',
+          availability: 'https://schema.org/InStock',
+          businessFunction: isLease
+            ? 'http://purl.org/goodrelations/v1#LeaseOut'
+            : 'http://purl.org/goodrelations/v1#Sell',
+          url: canonical,
+          seller: { '@type': 'RealEstateAgent', name: 'GLRA Realty', url: SITE_URL }
+        }
+      },
+      residence,
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL + '/' },
+          { '@type': 'ListItem', position: 2, name: 'Properties', item: SITE_URL + '/properties.html' },
+          ...(loc ? [{ '@type': 'ListItem', position: 3, name: loc, item: SITE_URL + '/properties.html?search=' + encodeURIComponent(loc) }] : []),
+          { '@type': 'ListItem', position: loc ? 4 : 3, name: title, item: canonical }
+        ]
+      }
+    ]
   }).replace(/</g, '\\u003c');
+
+  // The visible trail. Google will only draw a breadcrumb in the result if it
+  // can see one, and a person two clicks deep from a Facebook share needs a
+  // way back up that is not the browser's back button.
+  const crumbHtml = `<nav class="pg-crumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span>/</span>
+    <a href="/properties.html">Properties</a>${loc ? ` <span>/</span>
+    <a href="/properties.html?search=${encodeURIComponent(loc)}">${esc(loc)}</a>` : ''}
+    <span>/</span> <span aria-current="page">${esc(title)}</span>
+  </nav>`;
+
+  // Real links to other listings. Without these every listing page is an
+  // island: the cards that link to them on properties.html only exist after
+  // that page's JavaScript runs, and not every crawler runs it.
+  const rel = Array.isArray(related) ? related : [];
+  const relatedHtml = rel.length ? `
+  <div class="pg-section-label">More listings you may like</div>
+  <div class="pg-related">
+    ${rel.map(r => {
+      const rLease = String(r.listingType || '').toUpperCase().includes('LEASE');
+      const rPrice = rLease ? (r.monthlyRental || r.price || 0) : (r.price || 0);
+      const rTxt = rPrice ? ('₱' + Number(rPrice).toLocaleString('en-PH') + (rLease ? '/mo' : '')) : 'Price on request';
+      const rImg = r.mainImage ? absUrl(optimizeCloudinary(r.mainImage)) : '/img/social-card.png';
+      return `<a class="pg-rel" href="/property/${String(r._id)}">
+        <img src="${esc(rImg)}" alt="${esc(r.title || 'Property')}" loading="lazy" width="200" height="140">
+        <span class="pg-rel-t">${esc(r.title || 'Property')}</span>
+        <span class="pg-rel-l">${esc(r.location || '')}</span>
+        <span class="pg-rel-p">${esc(rTxt)}</span>
+      </a>`;
+    }).join('')}
+  </div>` : '';
 
   const specRows = [['Type', p.propertyType || '—']]
     .concat(p.bedrooms ? [['Bedrooms', p.bedrooms]] : [])
@@ -813,6 +945,7 @@ function buildPropertyPageHtml(p) {
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <title>${esc(title)}${loc ? ' — ' + esc(loc) : ''} | GLRA Realty</title>
 <meta name="description" content="${esc(metaDesc)}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <link rel="canonical" href="${esc(canonical)}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)} | GLRA Realty">
@@ -860,6 +993,17 @@ a{color:inherit;text-decoration:none}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
 .pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px}
+.pg-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pg-crumbs a{border-bottom:1px solid transparent}
+.pg-crumbs a:hover{color:var(--hot);border-bottom-color:var(--hot)}
+.pg-crumbs span[aria-current]{color:var(--ink);font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-related{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:40px}
+.pg-rel{display:block;border:2px solid var(--line);background:var(--paper2);padding:0 0 12px}
+.pg-rel:hover{border-color:var(--hot)}
+.pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px}
+.pg-rel-t{display:block;padding:0 12px;font-size:14px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:4px}
+.pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
+.pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot);letter-spacing:-.3px}
 .pg-form{border:2px solid var(--line);padding:26px;background:var(--paper2)}
 .pg-form h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:16px}
 .pg-form input,.pg-form textarea{width:100%;padding:14px 16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:12px}
@@ -877,6 +1021,7 @@ a{color:inherit;text-decoration:none}
   <a href="/properties.html" class="pg-back">← All listings</a>
 </nav>
 <div class="pg-wrap">
+  ${crumbHtml}
   <span class="pg-badge">${esc(lt)}</span>
   <h1 class="pg-title">${esc(title)}</h1>
   <div class="pg-loc"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>
@@ -896,6 +1041,7 @@ a{color:inherit;text-decoration:none}
     </form>
     <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
   </div>
+  ${relatedHtml}
 </div>
 <div class="pg-foot">
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a>
@@ -939,14 +1085,56 @@ async function pgSubmit(e){
 
 app.get('/property/:id', async (req, res) => {
   try {
-    const p = await Property.findById(req.params.id);
+    // Same whitelist the public API uses: the commission and the owner's
+    // contact details in `notes` have no business being loaded into a page
+    // renderer, even one that does not print them.
+    const p = await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean();
     if (!p || p.status !== 'available') return res.redirect(302, '/properties.html');
+    // Neighbours to link to. Preference order: same area, then same kind of
+    // property, then simply the newest - so the block is never empty and a
+    // crawler always has somewhere to go from here.
+    const related = await findRelatedListings(p);
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(buildPropertyPageHtml(p));
+    res.send(buildPropertyPageHtml(p, related));
   } catch (err) {
     return res.redirect(302, '/properties.html');
   }
 });
+
+// Up to six other available listings worth linking to from a listing page.
+// Cheap: one indexed query, a small projection, and the result is only used to
+// print six anchors.
+const RELATED_FIELDS = '_id title location price monthlyRental listingType mainImage propertyType';
+async function findRelatedListings(p) {
+  const id = p._id;
+  const out = [];
+  const seen = new Set([String(id)]);
+  const push = rows => rows.forEach(r => {
+    if (out.length >= 6 || seen.has(String(r._id))) return;
+    seen.add(String(r._id)); out.push(r);
+  });
+  // The first word or two of a location is the area name ("Makati City, Metro
+  // Manila" -> "Makati"). A prefix match keeps it to one index range.
+  const area = String(p.location || '').split(/[,\-]/)[0].trim();
+  try {
+    if (area.length >= 3) {
+      push(await Property.find({
+        status: 'available', _id: { $ne: id },
+        location: new RegExp('^' + area.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      }).select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
+    }
+    if (out.length < 6 && p.propertyType) {
+      push(await Property.find({ status: 'available', _id: { $ne: id }, propertyType: p.propertyType })
+        .select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
+    }
+    if (out.length < 6) {
+      push(await Property.find({ status: 'available', _id: { $ne: id } })
+        .select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
+    }
+  } catch (e) { /* a listing page must render even if this query fails */ }
+  out.forEach(optimizePropertyImages);
+  return out;
+}
 
 // Dynamic sitemap — always fresh. Lists the fixed marketing pages plus a URL
 // for every available listing so Google discovers new properties quickly.
@@ -982,7 +1170,7 @@ async function buildSitemap(req, res) {
       ['/lucima.html', 'monthly', '0.8']
     ];
     const props = await Property.find({ status: 'available' },
-      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1 })
+      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1, gallery: 1, location: 1 })
       .sort({ createdAt: -1 }).limit(5000).lean();
     // A base64 photo is not a fetchable image URL — without this it would be
     // pasted into <image:loc> and balloon the sitemap to megabytes.
@@ -990,18 +1178,26 @@ async function buildSitemap(req, res) {
 
     // The listing index genuinely changes whenever inventory does.
     const feedPages = new Set(['/', '/properties.html']);
-    const urls = staticPages.map(([loc, freq, pri]) =>
-      `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${feedPages.has(loc) ? today : STATIC_LASTMOD}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority></url>`);
+    const urls = staticPages.map(([loc, freq, pri]) => {
+      const key = loc === '/' ? '/index.html' : loc;
+      const imgs = (PAGE_IMAGES[key] || [])
+        .map(u => `<image:image><image:loc>${escapeXml(absUrl(u))}</image:loc></image:image>`).join('');
+      return `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${feedPages.has(loc) ? today : STATIC_LASTMOD}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority>${imgs}</url>`;
+    });
 
     props.forEach(pr => {
       const lm = new Date(pr.priceUpdatedAt || pr.createdAt || Date.now()).toISOString().slice(0, 10);
       // Image entry: gets listing photos indexed in Google Images, which is a
       // real discovery channel for property searches.
+      // Every photograph on the listing, not just the cover. A buyer
+      // searching Google Images for "2br condo bgc balcony" is looking at
+      // photograph six, not photograph one. Capped at six per listing.
       let img = '';
-      if (pr.mainImage) {
-        const src = absUrl(optimizeCloudinary(pr.mainImage));
-        img = `<image:image><image:loc>${escapeXml(src)}</image:loc><image:title>${escapeXml(pr.title || 'Property')}</image:title></image:image>`;
-      }
+      const shots = [pr.mainImage, ...(pr.gallery || [])].filter(Boolean).slice(0, 6);
+      const caption = escapeXml([pr.title, pr.location].filter(Boolean).join(' - ') || 'Property');
+      img = shots.map(sh =>
+        `<image:image><image:loc>${escapeXml(absUrl(optimizeCloudinary(sh)))}</image:loc><image:title>${caption}</image:title></image:image>`
+      ).join('');
       urls.push(`  <url><loc>${SITE_URL}/property/${pr._id}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority>${img}</url>`);
     });
 

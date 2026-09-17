@@ -1,10 +1,17 @@
 # Robots file for GLRA Realty
-# Allows all search engines to crawl the public site
+# The public site is open to every search engine.
 
 User-agent: *
 Allow: /
-Disallow: /admin.html
+
+# The API answers JSON, never a page worth indexing.
 Disallow: /api/
 
-# Sitemap location
+# The two sign-in portals are NOT listed here on purpose. Both send
+# "X-Robots-Tag: noindex, nofollow" and carry a noindex meta tag, which is the
+# reliable way to keep a page out of the results: a crawler has to be allowed
+# in to read "do not index me". Disallowing them here would instead have
+# advertised where they are - robots.txt is the first file any scanner asks
+# for - while leaving them eligible to appear as a bare URL.
+
 Sitemap: https://glrarealty.com/sitemap.xml

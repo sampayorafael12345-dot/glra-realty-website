@@ -31,20 +31,32 @@
   ready(function(){
     upgradeLoader();
 
-    // 1) Inject LIVE top strip if not present — same wording as the homepage.
-    //    Uses the saved listings count (written by index/properties pages) when available.
-    if(!document.querySelector('.ab-top-strip')){
-      var liveMsg = 'LIVE · By appointment only';
-      try {
-        var pc = JSON.parse(localStorage.getItem('glraPropsCache_v1') || 'null');
-        if(pc && Array.isArray(pc.props) && pc.props.length){
-          var n = pc.props.length;
-          liveMsg = 'LIVE · ' + n + (n === 1 ? ' listing' : ' listings') + ' open right now';
-        }
-      } catch(e){}
+    // 1) The LIVE top strip is in the markup now, so the browser has it before
+    //    it paints anything. Injecting it here used to drop the whole page by
+    //    37 pixels a second after load - 0.120 CLS on the properties page,
+    //    over Google's 0.10 line and a ranking signal in its own right. All
+    //    that is left is to write the real listing count into it, which is a
+    //    text change inside a fixed-height bar and so cannot move anything.
+    //    The create-it branch stays, for any page not carrying the markup.
+    var strip = document.querySelector('.ab-top-strip');
+    var liveMsg = null;
+    try {
+      var pc = JSON.parse(localStorage.getItem('glraPropsCache_v1') || 'null');
+      if(pc && Array.isArray(pc.props) && pc.props.length){
+        var n = pc.props.length;
+        liveMsg = 'LIVE · ' + n + (n === 1 ? ' listing' : ' listings') + ' open right now';
+      }
+    } catch(e){}
+    if(strip){
+      if(liveMsg){
+        var label = strip.querySelector('span');
+        if(label) label.innerHTML = '<span class="live"></span>' + liveMsg;
+      }
+    } else {
       var top = document.createElement('div');
       top.className = 'ab-top-strip';
-      top.innerHTML = '<span><span class="live"></span>' + liveMsg + '</span><span>MAKATI · SINCE 2014</span>';
+      top.innerHTML = '<span><span class="live"></span>' + (liveMsg || 'LIVE · By appointment only')
+        + '</span><span>MAKATI · SINCE 2014</span>';
       document.body.insertBefore(top, document.body.firstChild);
     }
 
