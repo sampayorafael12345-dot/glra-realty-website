@@ -223,7 +223,14 @@ app.use(helmet.contentSecurityPolicy({
     // three lists above, so every visit logged a violation and the policy
     // could never be promoted out of report-only. Naming them one at a time
     // cannot work; a visitor in Singapore gets a different letter.
-    'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com'],
+    // The currency switcher on properties.html fetches live exchange rates from
+    // jsDelivr, with a Cloudflare Pages mirror as its documented fallback.
+    // Neither was listed, so enforcing this policy today would have silently
+    // frozen every price in USD/AED/SGD at whatever the fallback rate is. This
+    // is exactly what report-only is for, and exactly why it was worth
+    // inventorying every external host in the codebase before promoting it.
+    'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com',
+      'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
     'worker-src': ["'self'"],                            // service worker
@@ -786,6 +793,292 @@ const PAGE_IMAGES = (() => {
   return map;
 })();
 
+
+// ══ AREA PAGES ══════════════════════════════════════════════
+// "Condos for sale in Makati" is a search; "what Makati is like to live in" is
+// a different one, and the neighbourhood guides only answer the second. These
+// answer the first, out of the live inventory, so they are never out of date.
+//
+// Matching runs against the WHOLE location string. Splitting on the first comma
+// does not work here: `location` is free text a broker types, and its first
+// segment is as often a street, a building or a plus code as it is a city.
+const AREAS = [
+  ['makati',      'Makati',                 /\b(makati|legaspi village|salcedo village|rockwell|poblacion)\b/i, 'living-in-makati.html'],
+  ['bgc',         'Bonifacio Global City',  /\b(bgc|bonifacio global|forbestown|mckinley|fort bonifacio|uptown bonifacio)\b/i, 'living-in-bgc.html'],
+  ['taguig',      'Taguig',                 /\btaguig\b/i, 'living-in-bgc.html'],
+  ['quezon-city', 'Quezon City',            /\b(quezon city|vertis north|eastwood|katipunan|cubao|diliman|novaliches|pasong putik)\b/i, ''],
+  ['manila',      'Manila',                 /\b(manila city|city of manila|ermita|malate|sampaloc|binondo|intramuros|paco|santa cruz)\b/i, ''],
+  ['mandaluyong', 'Mandaluyong',            /\b(mandaluyong|wack wack|greenfield district)\b/i, ''],
+  ['pasig',       'Pasig',                  /\b(pasig|oranbo|caniogan|kapitolyo|ortigas east|ortigas center)\b/i, ''],
+  ['pasay',       'Pasay',                  /\b(pasay|mall of asia|\bmoa\b|bay area)\b/i, ''],
+  ['alabang',     'Alabang and Muntinlupa', /\b(alabang|muntinlupa|filinvest city)\b/i, 'living-in-alabang.html'],
+  ['paranaque',   'Paranaque',              /\b(para\u00f1aque|paranaque|bf homes|better living|sucat)\b/i, ''],
+  ['san-juan',    'San Juan',               /\bsan juan\b/i, ''],
+  ['las-pinas',   'Las Pinas',              /\b(las pi\u00f1as|las pinas|bf international)\b/i, ''],
+  ['cebu',        'Cebu',                   /\bcebu\b/i, ''],
+  ['tagaytay',    'Tagaytay',               /\btagaytay\b/i, ''],
+  ['cavite',      'Cavite',                 /\b(cavite|dasmari\u00f1as|dasmarinas|imus|bacoor|silang)\b/i, ''],
+  ['laguna',      'Laguna',                 /\b(laguna|sta\.? rosa|santa rosa|bi\u00f1an|binan|calamba|los ba\u00f1os)\b/i, ''],
+  ['rizal',       'Rizal',                  /\b(rizal|antipolo|taytay|cainta|angono)\b/i, ''],
+  ['bulacan',     'Bulacan',                /\b(bulacan|malolos|meycauayan|san jose del monte)\b/i, ''],
+  ['batangas',    'Batangas',               /\b(batangas|lipa|nasugbu|talisay)\b/i, ''],
+  ['quezon-prov', 'Quezon Province',        /\b(tayabas|candelaria|lucena)\b/i, ''],
+  ['bataan',      'Bataan',                 /\b(bataan|mariveles|balanga)\b/i, ''],
+  ['boracay',     'Boracay',                /\bboracay\b/i, '']
+];
+const AREA_BY_SLUG = new Map(AREAS.map(a => [a[0], a]));
+
+// A page needs real inventory behind it. One listing is a thin page, and thin
+// pages cost more than they earn.
+const AREA_MIN_LISTINGS = 3;
+const AREA_TTL_MS = 5 * 60 * 1000;
+let _areaCache = { at: 0, counts: null };
+
+function areaHaystack(p) {
+  return ((p.location || '') + ' ' + (p.title || '')).toLowerCase();
+}
+
+async function areaListings(area) {
+  const rows = await Property.find({ status: 'available' })
+    .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
+  const mine = rows.filter(p => area[2].test(areaHaystack(p)));
+  mine.forEach(optimizePropertyImages);
+  return mine;
+}
+
+// How many listings each area has right now, for the sitemap and for the
+// cross-links at the foot of every area page. Cached: it is one query used by
+// every one of these pages.
+async function areaCounts() {
+  if (_areaCache.counts && Date.now() - _areaCache.at < AREA_TTL_MS) return _areaCache.counts;
+  const counts = {};
+  try {
+    const rows = await Property.find({ status: 'available' })
+      .select('location title').lean();
+    AREAS.forEach(a => {
+      counts[a[0]] = rows.filter(p => a[2].test(areaHaystack(p))).length;
+    });
+    _areaCache = { at: Date.now(), counts };
+  } catch (e) { return _areaCache.counts || {}; }
+  return counts;
+}
+function invalidateAreaCache() { _areaCache = { at: 0, counts: null }; }
+
+// The areas that currently have a page, for the chips on properties.html.
+// Served from the server so there is one list of areas, not two.
+app.get('/api/areas', async (req, res) => {
+  try {
+    const counts = await areaCounts();
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+    res.json(AREAS
+      .filter(a => (counts[a[0]] || 0) >= AREA_MIN_LISTINGS)
+      .map(a => ({ slug: a[0], name: a[1], count: counts[a[0]] })));
+  } catch (e) { res.json([]); }
+});
+
+app.get('/properties/:slug', async (req, res, next) => {
+  const area = AREA_BY_SLUG.get(String(req.params.slug || '').toLowerCase());
+  if (!area) return next();
+  try {
+    const rows = await areaListings(area);
+    // Below the threshold there is no page. A 302 rather than a 404: the
+    // listings genuinely are on the main list, and an area that is quiet this
+    // month may have six listings next month.
+    if (rows.length < AREA_MIN_LISTINGS) return res.redirect(302, '/properties.html');
+    const counts = await areaCounts();
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+    res.send(buildAreaPageHtml(area, rows, counts));
+  } catch (err) {
+    console.error('area page error:', err.message);
+    return res.redirect(302, '/properties.html');
+  }
+});
+
+function peso(n) { return '\u20b1' + Number(n || 0).toLocaleString('en-PH'); }
+
+function buildAreaPageHtml(area, rows, counts) {
+  const [slug, name, , guide] = area;
+  const canonical = `${SITE_URL}/properties/${slug}`;
+  const forSale = rows.filter(p => !/LEASE$/i.test(String(p.listingType || '')) || /SALE/i.test(String(p.listingType || '')));
+  const sale = rows.filter(p => /SALE/i.test(String(p.listingType || '')));
+  const lease = rows.filter(p => /LEASE/i.test(String(p.listingType || '')));
+  const salePrices = sale.map(p => p.price).filter(n => n > 0).sort((a, b) => a - b);
+  const leasePrices = lease.map(p => p.monthlyRental || p.price).filter(n => n > 0).sort((a, b) => a - b);
+  const kinds = [...new Set(rows.map(p => String(p.propertyType || '').trim()).filter(Boolean))];
+
+  // The opening sentence is written from the real numbers rather than being a
+  // template with a place name dropped into it.
+  const bits = [];
+  if (sale.length) {
+    bits.push(salePrices.length
+      ? `${sale.length} ${sale.length === 1 ? 'property' : 'properties'} for sale from ${peso(salePrices[0])} to ${peso(salePrices[salePrices.length - 1])}`
+      : `${sale.length} for sale`);
+  }
+  if (lease.length) {
+    bits.push(leasePrices.length
+      ? `${lease.length} for lease from ${peso(leasePrices[0])} a month`
+      : `${lease.length} for lease`);
+  }
+  const summary = `GLRA Realty currently has ${bits.join(' and ')} in ${name}.`
+    + (kinds.length ? ` Mostly ${kinds.slice(0, 3).join(', ').toLowerCase()}.` : '');
+
+  const metaDesc = `${sale.length + lease.length} properties for sale and lease in ${name}, Philippines`
+    + (salePrices.length ? `, from ${peso(salePrices[0])}` : '')
+    + `. Handled directly by a PRC-licensed broker.`;
+
+  const card = p => {
+    const isLease = /LEASE/i.test(String(p.listingType || '')) && !/SALE/i.test(String(p.listingType || ''));
+    const amount = isLease ? (p.monthlyRental || p.price) : (p.price || p.monthlyRental);
+    const img = p.mainImage ? absUrl(optimizeCloudinary(p.mainImage)) : '/img/social-card.png';
+    const specs = [p.bedrooms ? p.bedrooms + ' BR' : '', p.bathrooms ? p.bathrooms + ' BA' : '',
+                   p.sqm ? p.sqm + ' sqm' : ''].filter(Boolean).join(' \u00b7 ');
+    return `<a class="ar-card" href="/property/${String(p._id)}">
+      <img src="${esc(img)}" alt="${esc(p.title || 'Property')}" loading="lazy" width="320" height="200">
+      <span class="ar-badge">${esc(String(p.listingType || 'FOR SALE').toUpperCase())}</span>
+      <span class="ar-t">${esc(p.title || 'Property')}</span>
+      <span class="ar-l">${esc(p.location || '')}</span>
+      ${specs ? `<span class="ar-s">${esc(specs)}</span>` : ''}
+      <span class="ar-p">${amount ? esc(peso(amount) + (isLease ? '/mo' : '')) : 'Price on request'}</span>
+    </a>`;
+  };
+
+  const others = AREAS.filter(a => a[0] !== slug && (counts[a[0]] || 0) >= AREA_MIN_LISTINGS)
+    .map(a => `<a href="/properties/${a[0]}">${esc(a[1])} <b>${counts[a[0]]}</b></a>`).join('');
+
+  const jsonld = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': canonical,
+        url: canonical,
+        name: `Property for sale and lease in ${name}`,
+        description: metaDesc,
+        inLanguage: 'en-PH',
+        isPartOf: { '@id': SITE_URL + '/#organization' },
+        about: { '@type': 'Place', name: name + ', Philippines' }
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: rows.length,
+        itemListElement: rows.slice(0, 30).map((p, i) => ({
+          '@type': 'ListItem', position: i + 1,
+          url: `${SITE_URL}/property/${String(p._id)}`,
+          name: p.title || 'Property'
+        }))
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL + '/' },
+          { '@type': 'ListItem', position: 2, name: 'Properties', item: SITE_URL + '/properties.html' },
+          { '@type': 'ListItem', position: 3, name: name, item: canonical }
+        ]
+      }
+    ]
+  }).replace(/</g, '\\u003c');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<title>Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty</title>
+<meta name="description" content="${esc(metaDesc)}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="${esc(canonical)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty">
+<meta property="og:description" content="${esc(metaDesc)}">
+<meta property="og:image" content="${esc(rows[0] && rows[0].mainImage ? absUrl(optimizeCloudinary(rows[0].mainImage)) : SITE_URL + '/img/social-card.png')}">
+<meta property="og:url" content="${esc(canonical)}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script type="application/ld+json">${jsonld}</script>
+<style>
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00}
+body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36}
+html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:'Inter',system-ui,sans-serif;line-height:1.5;font-weight:500}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.ar-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:2px solid var(--line);background:var(--paper)}
+.ar-nav img{height:50px;width:auto}
+.ar-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
+.ar-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
+.ar-wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
+.ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px}
+.ar-crumbs a:hover{color:var(--hot)}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-transform:uppercase;line-height:1.02;margin-bottom:12px}
+.ar-sum{font-size:17px;color:var(--gray);max-width:70ch;margin-bottom:8px}
+.ar-guide{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px;margin-bottom:26px}
+.ar-guide a{border-bottom:2px solid var(--hot)}
+.ar-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin:34px 0 16px}
+.ar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.ar-card{display:block;border:2px solid var(--line);background:var(--paper2);padding-bottom:14px;position:relative}
+.ar-card:hover{border-color:var(--hot)}
+.ar-card img{width:100%;height:190px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:12px}
+.ar-badge{position:absolute;top:10px;left:10px;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.4px;font-weight:700;padding:5px 9px}
+.ar-t{display:block;padding:0 14px;font-size:15px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:5px}
+.ar-l{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:7px}
+.ar-s{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--gray);margin-bottom:7px}
+.ar-p{display:block;padding:0 14px;font-size:17px;font-weight:900;color:var(--hot);letter-spacing:-.4px}
+.ar-others{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
+.ar-others a{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.6px;text-transform:uppercase;border:2px solid var(--line);padding:8px 13px}
+.ar-others a:hover{border-color:var(--hot);color:var(--hot)}
+.ar-others b{color:var(--hot)}
+.ar-cta{border:2px solid var(--line);background:var(--paper2);padding:24px;margin-top:38px}
+.ar-cta h2{font-size:22px;font-weight:900;letter-spacing:-.6px;text-transform:uppercase;margin-bottom:8px}
+.ar-cta p{color:var(--gray);margin-bottom:14px;max-width:62ch}
+.ar-cta a{display:inline-block;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;padding:13px 22px}
+.ar-foot{border-top:2px solid var(--line);padding:22px 24px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--gray)}
+@media(max-width:560px){.ar-wrap{padding:20px 16px 46px}.ar-nav{padding:14px 16px}}
+</style>
+</head>
+<body>
+<nav class="ar-nav">
+  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo.png" alt="GLRA Realty" data-logo-auto></a>
+  <a href="/properties.html" class="ar-back">\u2190 All listings</a>
+</nav>
+<div class="ar-wrap">
+  <nav class="ar-crumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a> <span>/</span> <a href="/properties.html">Properties</a> <span>/</span> <span aria-current="page">${esc(name)}</span>
+  </nav>
+  <h1>Property in ${esc(name)}</h1>
+  <p class="ar-sum">${esc(summary)}</p>
+  ${guide ? `<p class="ar-guide">Thinking about the area itself? Read the <a href="/${guide}">${esc(name)} neighbourhood guide</a>.</p>` : '<div style="height:18px"></div>'}
+
+  ${sale.length ? `<div class="ar-label">For sale in ${esc(name)} (${sale.length})</div>
+  <div class="ar-grid">${sale.map(card).join('')}</div>` : ''}
+
+  ${lease.length ? `<div class="ar-label">For lease in ${esc(name)} (${lease.length})</div>
+  <div class="ar-grid">${lease.map(card).join('')}</div>` : ''}
+
+  ${others ? `<div class="ar-label">Other areas</div><div class="ar-others">${others}</div>` : ''}
+
+  <div class="ar-cta">
+    <h2>Not seeing it?</h2>
+    <p>Not everything is listed publicly, and some owners ask us to keep a unit off the website. Tell Catherine what you are after in ${esc(name)} and she will check what is actually available.</p>
+    <a href="/#contact">Ask about ${esc(name)} \u2192</a>
+  </div>
+</div>
+<div class="ar-foot">
+  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
+</div>
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
+</body>
+</html>`;
+}
+
+
+
 // Build a fully server-rendered, SEO-rich detail page for one property.
 // Crawlers and social-share scrapers get real <title>, meta description,
 // Open Graph image, and JSON-LD; humans get a styled page with an inquiry form.
@@ -827,6 +1120,10 @@ function buildPropertyPageHtml(p, related) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   const gallery = (p.gallery || []).filter(Boolean);
+
+  // Which area page, if any, this listing belongs under. Needed by both the
+  // structured data and the visible breadcrumb below.
+  const ownArea = AREAS.find(a => a[2].test(((p.location || '') + ' ' + (p.title || '')).toLowerCase()));
 
   // The listing, the home itself, and the offer, as one connected graph.
   // `Product` alone said nothing about floor area, bedrooms or where it is,
@@ -889,7 +1186,9 @@ function buildPropertyPageHtml(p, related) {
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL + '/' },
           { '@type': 'ListItem', position: 2, name: 'Properties', item: SITE_URL + '/properties.html' },
-          ...(loc ? [{ '@type': 'ListItem', position: 3, name: loc, item: SITE_URL + '/properties.html?search=' + encodeURIComponent(loc) }] : []),
+          ...(ownArea
+            ? [{ '@type': 'ListItem', position: 3, name: ownArea[1], item: SITE_URL + '/properties/' + ownArea[0] }]
+            : loc ? [{ '@type': 'ListItem', position: 3, name: loc, item: SITE_URL + '/properties.html?search=' + encodeURIComponent(loc) }] : []),
           { '@type': 'ListItem', position: loc ? 4 : 3, name: title, item: canonical }
         ]
       }
@@ -899,10 +1198,17 @@ function buildPropertyPageHtml(p, related) {
   // The visible trail. Google will only draw a breadcrumb in the result if it
   // can see one, and a person two clicks deep from a Facebook share needs a
   // way back up that is not the browser's back button.
+// If this listing sits in one of the areas that has its own page, the
+  // breadcrumb points there rather than at a search query: a better
+  // destination for a reader, and what makes the area pages reachable without
+  // JavaScript from every listing in that area.
+  const areaCrumb = ownArea
+    ? `<a href="/properties/${ownArea[0]}">${esc(ownArea[1])}</a>`
+    : (loc ? `<a href="/properties.html?search=${encodeURIComponent(loc)}">${esc(loc)}</a>` : '');
   const crumbHtml = `<nav class="pg-crumbs" aria-label="Breadcrumb">
     <a href="/">Home</a> <span>/</span>
-    <a href="/properties.html">Properties</a>${loc ? ` <span>/</span>
-    <a href="/properties.html?search=${encodeURIComponent(loc)}">${esc(loc)}</a>` : ''}
+    <a href="/properties.html">Properties</a>${areaCrumb ? ` <span>/</span>
+    ${areaCrumb}` : ''}
     <span>/</span> <span aria-current="page">${esc(title)}</span>
   </nav>`;
 
@@ -1157,6 +1463,11 @@ async function buildSitemap(req, res) {
       ['/estate-tax.html', 'monthly', '0.6'], ['/savings-goal.html', 'monthly', '0.6'],
       ['/zonal.html', 'monthly', '0.6'], ['/ercf.html', 'monthly', '0.6'],
       ['/cost-of-ownership.html', 'monthly', '0.6'], ['/guide.html', 'monthly', '0.6'],
+      // Added Sept 2026: the three calculators a Philippine broker is asked about
+      // that the site could not answer. A notch above the other tools because
+      // each targets a high-volume search of its own.
+      ['/pre-selling.html', 'monthly', '0.75'], ['/property-tax.html', 'monthly', '0.75'],
+      ['/bir-deadlines.html', 'monthly', '0.75'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
       ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5'],
@@ -1176,13 +1487,24 @@ async function buildSitemap(req, res) {
     // pasted into <image:loc> and balloon the sitemap to megabytes.
     props.forEach(externalizeInlineImages);
 
+    // Area pages, but only the ones that currently clear the minimum. An area
+    // that drops to two listings stops being a page and stops being in here,
+    // rather than sitting in the sitemap redirecting.
+    const counts = await areaCounts();
+    AREAS.forEach(a => {
+      if ((counts[a[0]] || 0) >= AREA_MIN_LISTINGS) {
+        staticPages.push(['/properties/' + a[0], 'daily', '0.85']);
+      }
+    });
+
     // The listing index genuinely changes whenever inventory does.
     const feedPages = new Set(['/', '/properties.html']);
     const urls = staticPages.map(([loc, freq, pri]) => {
       const key = loc === '/' ? '/index.html' : loc;
       const imgs = (PAGE_IMAGES[key] || [])
         .map(u => `<image:image><image:loc>${escapeXml(absUrl(u))}</image:loc></image:image>`).join('');
-      return `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${feedPages.has(loc) ? today : STATIC_LASTMOD}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority>${imgs}</url>`;
+      const fresh = feedPages.has(loc) || loc.startsWith('/properties/');
+      return `  <url><loc>${SITE_URL}${loc}</loc><lastmod>${fresh ? today : STATIC_LASTMOD}</lastmod><changefreq>${freq}</changefreq><priority>${pri}</priority>${imgs}</url>`;
     });
 
     props.forEach(pr => {
@@ -2394,6 +2716,7 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
+    invalidateAreaCache();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -2453,6 +2776,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
+    invalidateAreaCache();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -2468,6 +2792,7 @@ app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properti
     if (property) await logAudit(req, 'DELETE', 'Property', req.params.id, property.title, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
+    invalidateAreaCache();
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -3230,6 +3555,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     await logAudit(req, 'BULK_CREATE', 'Property', '', `${added} added`, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
+    invalidateAreaCache();
     res.json({ success: true, added });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -4046,6 +4372,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, { source: 'submission', submissionId: sub._id });
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
+    invalidateAreaCache();
     res.json({ success: true, propertyId: property._id, submission: sub });
   } catch (err) {
     console.error('Submission import error:', err);

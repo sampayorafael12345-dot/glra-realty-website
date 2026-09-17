@@ -3734,7 +3734,7 @@ function renderTopViewed(){
   el.innerHTML=top.map((p,i)=>`
     <div class="tv-row">
       <div class="tv-rank">${i+1}</div>
-      <img class="tv-thumb" src="${p.mainImage||'https://via.placeholder.com/44x34?text=—'}" alt="" loading="lazy">
+      <img class="tv-thumb" src="${p.mainImage||'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%23e8e4dd'/%3E%3C/svg%3E'}" alt="" loading="lazy">
       <div class="tv-main">
         <div class="tv-title" title="${esc(p.title)}">${esc(p.title||'Untitled')}</div>
         <div class="tv-meta">${esc(p.propertyType||'—')} · ${esc(p.listingType||'—')}</div>
@@ -3897,7 +3897,7 @@ function renderProps(props){
   const b=document.getElementById('propTbody');
   if(!props.length){b.innerHTML=`<tr><td colspan="8"><div class="empty-st"><i class="fas fa-home"></i><p>No properties found</p></div></td></tr>`;return}
   b.innerHTML=props.map(p=>`<tr>
-    <td><img class="tbl-img" src="${p.mainImage||'https://via.placeholder.com/50x38?text=—'}" alt="" loading="lazy"></td>
+    <td><img class="tbl-img" src="${p.mainImage||'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 3'%3E%3Crect width='4' height='3' fill='%23e8e4dd'/%3E%3C/svg%3E'}" alt="" loading="lazy"></td>
     <td><div style="font-weight:600;font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.title)}">${esc(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(p.location)}</div>${p.featured?'<span class="badge b-feat" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
     <td style="font-size:12px;color:var(--gray)">${esc(p.propertyType||'—')}</td>
     <td><span class="badge ${p.listingType==='FOR SALE'?'b-sale':'b-lease'}">${esc(p.listingType||'—')}</span></td>
