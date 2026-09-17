@@ -500,8 +500,12 @@ const PERMISSION_KEYS = [
   'bulkmail_send',       // compose + send bulk emails from the admin (admins always have this)
   'titling_view',        // see the Titling tab
   'titling_manage',      // add / edit / delete titling jobs
-  'notarial_view',       // see the Notarial tab
-  'notarial_manage',     // add / edit / delete notarial records + cash ledger
+  // The Notarial tab was replaced by Cases in September 2026. The two keys are
+  // kept so existing staff accounts keep loading, but nothing reads them now.
+  'notarial_view',
+  'notarial_manage',
+  'cases_view',          // see the Cases tab (a law-firm matter is privileged)
+  'cases_manage',        // open / edit cases, log hearings, record fees
   'leasing_view',        // see the Leasing tab (leases, rent roll, statements)
   'leasing_manage'       // add / edit leases, record payments, send tenant emails
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
@@ -552,6 +556,10 @@ function defaultPermissionsForRole(role) {
     titling_manage: false,
     notarial_view: false,
     notarial_manage: false,
+    // Case files are covered by lawyer-client confidentiality, so a new staff
+    // account starts with no access at all and an admin grants it deliberately.
+    cases_view: false,
+    cases_manage: false,
     leasing_view: false,
     leasing_manage: false
   };
@@ -789,6 +797,219 @@ agentNotificationSchema.index({ account: 1, dedupeKey: 1 }, { unique: true });
 // lives here: who owns it, who rents it, the terms, every peso that came in,
 // the documents, the email trail. Money math (schedule, balance, overdue) is
 // NOT stored — it is recomputed from `payments` + the terms on every read by
+
+// ── LAW FIRM: CASES ─────────────────────────────────────────
+// One Case document is the whole life of a legal matter, from the intake
+// interview to the entry of judgment. It replaced the Notarial tab in the
+// admin (the notarial records above are kept but no longer shown).
+//
+// Design rule, same as leasing: money is never stored as a running total.
+// The fees owed, the payments received and the balance are all recomputed on
+// every read from the charge list plus the payment list, so correcting one
+// entry corrects every figure that depends on it.
+//
+// The stages are written to fit civil, criminal, labour and administrative
+// matters with one vocabulary, because a small firm runs all of them off one
+// board:
+//   intake       - engaged, conflict check, no filing yet
+//   pre_filing   - demand letter, barangay conciliation, drafting the pleading
+//   filed        - filed and pending (summons / answer / preliminary investigation)
+//   pre_trial    - pre-trial, court-annexed mediation, JDR
+//   trial        - hearings and presentation of evidence
+//   decision     - submitted for decision / awaiting promulgation
+//   post_judgment- appeal, motion for reconsideration, execution
+//   closed       - terminated, withdrawn, settled or fully executed
+//   on_hold      - archived / dormant / client unresponsive
+const CASE_STAGES = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial',
+                     'decision', 'post_judgment', 'closed', 'on_hold'];
+
+// A court date. `purpose` is free text so it can hold anything from
+// "Arraignment" to "Presentation of defence evidence, 3rd witness".
+const caseHearingSchema = new mongoose.Schema({
+  date:      { type: Date, default: null },
+  time:      { type: String, default: '', trim: true, maxlength: 20 },   // "08:30 AM"
+  purpose:   { type: String, default: '', trim: true, maxlength: 300 },
+  venue:     { type: String, default: '', trim: true, maxlength: 300 },
+  appearedBy:{ type: String, default: '', trim: true, maxlength: 200 },  // which lawyer went
+  result:    { type: String, default: '', trim: true, maxlength: 2000 }, // what happened
+  reset:     { type: Boolean, default: false },                          // hearing was reset/cancelled
+  billed:    { type: Boolean, default: false },                          // appearance fee already charged
+  notified:  { type: Boolean, default: false }                           // client was reminded
+}, { timestamps: true });
+
+// A dated obligation. `rule` records WHY the date is what it is, which is the
+// part a lawyer needs when a deadline is questioned months later.
+const caseDeadlineSchema = new mongoose.Schema({
+  title:     { type: String, required: true, trim: true, maxlength: 300 },
+  dueDate:   { type: Date, default: null },
+  rule:      { type: String, default: '', trim: true, maxlength: 300 },  // "Answer - 30 calendar days from service of summons"
+  critical:  { type: Boolean, default: false },   // missing it kills the case
+  done:      { type: Boolean, default: false },
+  doneDate:  { type: Date, default: null },
+  doneBy:    { type: String, default: '', trim: true, maxlength: 200 },
+  notes:     { type: String, default: '', maxlength: 2000 }
+}, { timestamps: true });
+
+// Anything filed with, or received from, the court or the other side.
+const caseFilingSchema = new mongoose.Schema({
+  title:     { type: String, required: true, trim: true, maxlength: 300 },
+  direction: { type: String, enum: ['filed', 'received'], default: 'filed' },
+  date:      { type: Date, default: null },
+  mode:      { type: String, default: '', trim: true, maxlength: 60 },   // Personal / Registered mail / E-filing / Courier
+  by:        { type: String, default: '', trim: true, maxlength: 200 },
+  notes:     { type: String, default: '', maxlength: 3000 }
+}, { timestamps: true });
+
+// Billable work. Kept even for fixed-fee matters, because it is the evidence
+// behind a fee if the client ever queries it or a court assesses it.
+const caseTimeSchema = new mongoose.Schema({
+  date:        { type: Date, default: null },
+  description: { type: String, default: '', trim: true, maxlength: 500 },
+  hours:       { type: Number, default: 0 },
+  rate:        { type: Number, default: 0 },
+  billable:    { type: Boolean, default: true },
+  billed:      { type: Boolean, default: false },
+  by:          { type: String, default: '', trim: true, maxlength: 200 }
+}, { timestamps: true });
+
+// What the client owes. Acceptance fee, each appearance, filing and docket
+// fees advanced by the firm, transcripts, travel.
+const caseChargeSchema = new mongoose.Schema({
+  kind:   { type: String, default: 'professional', trim: true, maxlength: 40 },
+  label:  { type: String, default: '', trim: true, maxlength: 300 },
+  amount: { type: Number, default: 0 },
+  date:   { type: Date, default: null },
+  reimbursable: { type: Boolean, default: false },   // firm advanced it, client repays at cost
+  notes:  { type: String, default: '', maxlength: 1000 }
+}, { timestamps: true });
+
+const casePaymentSchema = new mongoose.Schema({
+  date:      { type: Date, default: null },
+  amount:    { type: Number, default: 0 },
+  mode:      { type: String, default: 'Cash', trim: true, maxlength: 40 },
+  reference: { type: String, default: '', trim: true, maxlength: 120 },
+  label:     { type: String, default: '', trim: true, maxlength: 200 },
+  receiptNo: { type: String, default: '', trim: true, maxlength: 40 },
+  notes:     { type: String, default: '', maxlength: 1000 }
+}, { timestamps: true });
+
+// Case documents live in Cloudinary as authenticated resources, exactly like
+// the owner-intake papers: the bytes never sit in this database and the admin
+// mints a short-lived signed link to open one. These are privileged.
+const caseFileSchema = new mongoose.Schema({
+  publicId:     { type: String, required: true },
+  resourceType: { type: String, default: 'image' },
+  format:       { type: String, default: '' },
+  bytes:        { type: Number, default: 0 },
+  name:         { type: String, default: '', maxlength: 200 },
+  label:        { type: String, default: '', trim: true, maxlength: 200 },
+  uploadedByName: { type: String, default: '' },
+  uploadedAt:   { type: Date, default: Date.now }
+});
+
+const caseNoteSchema = new mongoose.Schema({
+  body:   { type: String, default: '', maxlength: 8000 },
+  byName: { type: String, default: '' },
+  at:     { type: Date, default: Date.now }
+}, { _id: true });
+
+const caseHistorySchema = new mongoose.Schema({
+  at:     { type: Date, default: Date.now },
+  what:   { type: String, default: '', maxlength: 500 },
+  byName: { type: String, default: '' }
+}, { _id: false });
+
+// A party on the other side. Stored as its own list rather than one text field
+// so the conflict check can search it: before taking a new client the firm has
+// to know whether that person is already an adverse party in an open matter.
+const casePartySchema = new mongoose.Schema({
+  name:    { type: String, default: '', trim: true, maxlength: 250 },
+  role:    { type: String, default: '', trim: true, maxlength: 80 },  // Defendant / Respondent / Accused / Oppositor
+  counsel: { type: String, default: '', trim: true, maxlength: 250 },
+  contact: { type: String, default: '', trim: true, maxlength: 200 }
+}, { _id: false });
+
+const caseSchema = new mongoose.Schema({
+  // ── identity ──
+  caseRef:      { type: String, default: '', trim: true, index: true, maxlength: 40 },  // firm's own file no. "C-2026-0001"
+  title:        { type: String, required: true, trim: true, maxlength: 400 },           // "People v. Dela Cruz"
+  docketNumber: { type: String, default: '', trim: true, index: true, maxlength: 120 }, // the court's number
+  court:        { type: String, default: '', trim: true, maxlength: 200 },
+  branch:       { type: String, default: '', trim: true, maxlength: 120 },
+  courtCity:    { type: String, default: '', trim: true, maxlength: 160 },
+  judge:        { type: String, default: '', trim: true, maxlength: 200 },
+
+  // ── classification ──
+  caseType:     { type: String, default: '', trim: true, maxlength: 60 },   // civil / criminal / labor / family / ...
+  natureOfAction: { type: String, default: '', trim: true, maxlength: 300 },// "Unlawful Detainer", "Estafa", "Illegal Dismissal"
+  stage:        { type: String, default: 'intake', trim: true, maxlength: 40 },
+  priority:     { type: String, enum: ['normal', 'high', 'urgent'], default: 'normal' },
+
+  // ── our client ──
+  clientName:   { type: String, required: true, trim: true, index: true, maxlength: 250 },
+  clientPhone:  { type: String, default: '', trim: true, maxlength: 50 },
+  clientEmail:  { type: String, default: '', trim: true, lowercase: true, maxlength: 120 },
+  clientAddress:{ type: String, default: '', trim: true, maxlength: 400 },
+  clientKind:   { type: String, enum: ['', 'individual', 'company', 'government'], default: '' },
+  clientRole:   { type: String, default: '', trim: true, maxlength: 80 },   // Plaintiff / Accused / Complainant...
+  account:      { type: String, default: '', trim: true, maxlength: 200 },  // retainer client / referring firm
+
+  // ── the other side ──
+  adverseParties: { type: [casePartySchema], default: [] },
+
+  // ── our team ──
+  leadCounsel:  { type: String, default: '', trim: true, maxlength: 200 },
+  collaborating:{ type: String, default: '', trim: true, maxlength: 300 },
+
+  // ── key dates ──
+  dateEngaged:  { type: Date, default: null },
+  dateFiled:    { type: Date, default: null },
+  prescriptiveDate: { type: Date, default: null },  // the last day to file. The most dangerous date in the file.
+  dateClosed:   { type: Date, default: null },
+  outcome:      { type: String, default: '', trim: true, maxlength: 300 },
+
+  // ── barangay conciliation (a condition precedent for many civil suits) ──
+  barangayRequired: { type: Boolean, default: false },
+  barangayName: { type: String, default: '', trim: true, maxlength: 200 },
+  cfaIssued:    { type: Boolean, default: false },   // Certificate to File Action in hand
+  cfaDate:      { type: Date, default: null },
+
+  // ── money ──
+  feeArrangement: { type: String, default: '', trim: true, maxlength: 40 },
+  acceptanceFee:  { type: Number, default: 0 },
+  appearanceFee:  { type: Number, default: 0 },   // per hearing attended
+  retainerAmount: { type: Number, default: 0 },   // per month, for retainer clients
+  hourlyRate:     { type: Number, default: 0 },
+  contingencyPct: { type: Number, default: 0 },
+  charges:      { type: [caseChargeSchema],  default: [] },
+  payments:     { type: [casePaymentSchema], default: [] },
+  timeEntries:  { type: [caseTimeSchema],    default: [] },
+
+  // ── the file ──
+  hearings:     { type: [caseHearingSchema],  default: [] },
+  deadlines:    { type: [caseDeadlineSchema], default: [] },
+  filings:      { type: [caseFilingSchema],   default: [] },
+  files:        { type: [caseFileSchema],     default: [] },
+  notes:        { type: [caseNoteSchema],     default: [] },
+  history:      { type: [caseHistorySchema],  default: [] },
+  summary:      { type: String, default: '', maxlength: 8000 },   // facts of the case
+
+  // ── conflict check (Canon III, CPRA: the firm must clear conflicts first) ──
+  conflictCheckedAt:   { type: Date, default: null },
+  conflictCheckedBy:   { type: String, default: '', trim: true, maxlength: 200 },
+  conflictNotes:       { type: String, default: '', maxlength: 2000 },
+
+  autoEmails:   { type: Boolean, default: true },   // hearing reminders to this client
+  reminderKeys: { type: mongoose.Schema.Types.Mixed, default: {} },
+  createdBy:     { type: String, default: '' },
+  createdByName: { type: String, default: '' }
+}, { timestamps: true });
+
+// The board groups by stage and the lists sort by the next thing that happens.
+caseSchema.index({ stage: 1, updatedAt: -1 });
+caseSchema.index({ clientName: 'text', title: 'text', docketNumber: 'text' });
+
+
 // server/leasing.js, so a corrected payment can never leave a stale balance.
 const LEASE_STAGES = ['prospect', 'viewing', 'application', 'contract', 'active', 'renewal', 'ended', 'on_hold'];
 
@@ -865,22 +1086,44 @@ const leaseSchema = new mongoose.Schema({
   // ── the owner (lessor) ──
   ownerName:    { type: String, default: '', trim: true, maxlength: 200 },
   ownerPhone:   { type: String, default: '', trim: true, maxlength: 50 },
+  ownerPhone2:  { type: String, default: '', trim: true, maxlength: 50 },
   ownerEmail:   { type: String, default: '', trim: true, maxlength: 120 },
   ownerAddress: { type: String, default: '', trim: true, maxlength: 300 },
+  // Identity as a lease contract recites it, plus the TIN the lessor needs in
+  // order to declare the rental income.
+  ownerCivilStatus: { type: String, default: '', trim: true, maxlength: 40 },
+  ownerSpouse:  { type: String, default: '', trim: true, maxlength: 200 },
+  ownerIdType:  { type: String, default: '', trim: true, maxlength: 60 },
+  ownerIdNo:    { type: String, default: '', trim: true, maxlength: 60 },
+  ownerTin:     { type: String, default: '', trim: true, maxlength: 40 },
+  // Where an SPA holder or property manager signs instead of the owner.
+  ownerRep:     { type: String, default: '', trim: true, maxlength: 200 },
+  ownerRepPhone:{ type: String, default: '', trim: true, maxlength: 50 },
+  // Where the owner's share is sent on a GLRA-managed unit. Admin-only: this
+  // never appears on a tenant statement or on the public site.
+  ownerRemittance: { type: String, default: '', trim: true, maxlength: 400 },
   managedByGLRA:    { type: Boolean, default: false },   // GLRA collects rent for the owner
   managementFeePct: { type: Number, default: 0 },        // % of collected rent kept as management fee
   // ── the tenant (lessee) ──
   tenantName:       { type: String, default: '', trim: true, maxlength: 200 },
   tenantPhone:      { type: String, default: '', trim: true, maxlength: 50 },
   tenantEmail:      { type: String, default: '', trim: true, maxlength: 120 },
+  tenantPhone2:     { type: String, default: '', trim: true, maxlength: 50 },
   tenantAddress:    { type: String, default: '', trim: true, maxlength: 300 },
   tenantIdType:     { type: String, default: '', trim: true, maxlength: 60 },
   tenantIdNo:       { type: String, default: '', trim: true, maxlength: 60 },
+  tenantTin:        { type: String, default: '', trim: true, maxlength: 40 },
+  tenantNationality:{ type: String, default: '', trim: true, maxlength: 60 },
+  tenantCivilStatus:{ type: String, default: '', trim: true, maxlength: 40 },
+  tenantSpouse:     { type: String, default: '', trim: true, maxlength: 200 },
   tenantOccupation: { type: String, default: '', trim: true, maxlength: 120 },
   tenantCompany:    { type: String, default: '', trim: true, maxlength: 120 },
+  tenantWorkAddress:{ type: String, default: '', trim: true, maxlength: 300 },
   occupants:        { type: Number, default: 1 },
   emergencyName:    { type: String, default: '', trim: true, maxlength: 200 },
   emergencyPhone:   { type: String, default: '', trim: true, maxlength: 50 },
+  emergencyRelation:{ type: String, default: '', trim: true, maxlength: 60 },
+  emergencyAddress: { type: String, default: '', trim: true, maxlength: 300 },
   // ── terms ──
   startDate:      { type: Date, default: null },
   endDate:        { type: Date, default: null },
@@ -978,6 +1221,7 @@ const AgentNotification = mongoose.model('AgentNotification', agentNotificationS
 const Lease             = mongoose.model('Lease',             leaseSchema);
 const Setting           = mongoose.model('Setting',           settingSchema);
 const Counter           = mongoose.model('Counter',           counterSchema);
+const Case              = mongoose.model('Case',              caseSchema);
 
 module.exports = {
   // models
@@ -1006,8 +1250,10 @@ module.exports = {
   Lease,
   Setting,
   Counter,
+  Case,
   AGENT_LEAD_STAGES,
   LEASE_STAGES,
+  CASE_STAGES,
   // permissions
   PERMISSION_KEYS,
   defaultPermissionsForRole

@@ -320,11 +320,16 @@ function sanitizeLeaseBody(b, opts = {}) {
   if (b.propertyId !== undefined) out.propertyId = /^[a-f0-9]{24}$/i.test(String(b.propertyId || '')) ? b.propertyId : null;
   str('propertyTitle', 200); str('unit', 80); str('address', 300); str('propertyType', 60);
   oneOf('furnished', ['', 'unfurnished', 'semi', 'full']); int('parkingSlots', 0, 20); bool('hideListingWhileActive');
-  str('ownerName', 200); str('ownerPhone', 50); email('ownerEmail'); str('ownerAddress', 300);
+  str('ownerName', 200); str('ownerPhone', 50); str('ownerPhone2', 50); email('ownerEmail'); str('ownerAddress', 300);
+  str('ownerCivilStatus', 40); str('ownerSpouse', 200); str('ownerIdType', 60); str('ownerIdNo', 60);
+  str('ownerTin', 40); str('ownerRep', 200); str('ownerRepPhone', 50); str('ownerRemittance', 400);
   bool('managedByGLRA'); num('managementFeePct', 0, 100);
-  str('tenantName', 200); str('tenantPhone', 50); email('tenantEmail'); str('tenantAddress', 300);
+  str('tenantName', 200); str('tenantPhone', 50); str('tenantPhone2', 50); email('tenantEmail'); str('tenantAddress', 300);
   str('tenantIdType', 60); str('tenantIdNo', 60); str('tenantOccupation', 120); str('tenantCompany', 120);
+  str('tenantTin', 40); str('tenantNationality', 60); str('tenantCivilStatus', 40); str('tenantSpouse', 200);
+  str('tenantWorkAddress', 300);
   int('occupants', 0, 99); str('emergencyName', 200); str('emergencyPhone', 50);
+  str('emergencyRelation', 60); str('emergencyAddress', 300);
   date('startDate'); date('endDate'); int('termMonths', 1, 360); num('monthlyRent', 0, 1e9);
   int('dueDay', 1, 31); int('graceDays', 0, 60); num('escalationPct', 0, 100);
   num('depositMonths', 0, 24); num('depositAmount', 0, 1e9); num('advanceMonths', 0, 24); num('advanceAmount', 0, 1e9);

@@ -1054,6 +1054,14 @@ const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
 registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
 startLeasingTick({ sendEmail, esc });
 
+// The law firm's matters — routes under /api/admin/cases* (cases_view /
+// cases_manage) plus the token-only court-diary ICS feed. This replaced the
+// Notarial tab in September 2026; the notarial records themselves are still in
+// the database and still served by the /api/admin/notarial* routes below.
+const { registerCaseRoutes, startCasesTick } = require('./server/cases');
+registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
+startCasesTick({ sendEmail, esc });
+
 
 
 // ============ SUBSCRIPTION ROUTES ============

@@ -1427,8 +1427,9 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Email Campaigns</a>
       <div class="sb-section" data-perm="titling_view" style="margin-top:6px;display:none">Titling</div>
       <a class="nav-item" data-perm="titling_view" onclick="switchTab('titling')" style="display:none"><i class="fas fa-stamp"></i> Titling Jobs <span class="nav-badge" id="titlingBadge" style="display:none">0</span></a>
-      <div class="sb-section" data-perm="notarial_view" style="margin-top:6px;display:none">Notarial</div>
-      <a class="nav-item" data-perm="notarial_view" onclick="switchTab('notarial')" style="display:none"><i class="fas fa-file-signature"></i> Notarial <span class="nav-badge" id="notarialBadge" style="display:none">0</span></a>
+      <div class="sb-section" data-perm="cases_view" style="margin-top:6px;display:none">Law Office</div>
+      <a class="nav-item" data-perm="cases_view" onclick="switchTab('cases')" style="display:none"><i class="fas fa-scale-balanced"></i> Cases <span class="nav-badge" id="casesBadge" style="display:none">0</span></a>
+      <div class="sb-section" data-perm="leasing_view" style="margin-top:6px;display:none">Rentals</div>
       <a class="nav-item" data-perm="leasing_view" onclick="switchTab('leasing')" style="display:none"><i class="fas fa-key"></i> Leasing <span class="nav-badge" id="leasingBadge" style="display:none">0</span></a>
       <!-- Agents section — admin only, its own group (broker's team view + door into the workspace) -->
       <div class="sb-section admin-only" style="margin-top:6px;display:none">Agents</div>
@@ -1513,6 +1514,12 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div class="panel" data-perm="leasing_view" style="display:none">
           <div class="panel-head"><div class="panel-title"><i class="fas fa-key"></i> Leasing · this month</div><button class="hdr-btn" onclick="switchTab('leasing')">Open board</button></div>
           <div class="panel-body" id="dashLeasing"><div class="dash-loading">Loading…</div></div>
+        </div>
+
+        <!-- CASES (only if the user can see the law-office matters) -->
+        <div class="panel" data-perm="cases_view" id="dashCasesPanel" style="display:none">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-scale-balanced"></i> Court diary · next 7 days</div><button class="hdr-btn" onclick="switchTab('cases')">Open board</button></div>
+          <div class="panel-body"><div class="dash-loading">Loading…</div></div>
         </div>
 
         <!-- ADMIN-ONLY ANALYTICS (website visitors + team activity) -->
@@ -1961,66 +1968,6 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       </div>
 
       <!-- NOTARIAL (Lucena notarial business — documents, clients & liquidation) -->
-      <div id="tab-notarial" style="display:none">
-        <div style="margin-bottom:14px;display:inline-flex;border:1px solid var(--border-color);flex-wrap:wrap">
-          <button class="hdr-btn" id="ntViewDocsBtn" onclick="setNotarialView('docs')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
-          <button class="hdr-btn" id="ntViewBoardBtn" onclick="setNotarialView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
-          <button class="hdr-btn" id="ntViewCashBtn" onclick="setNotarialView('cash')" style="border:none"><i class="fas fa-coins"></i> Cash &amp; Liquidation</button>
-        </div>
-
-        <!-- DOCUMENTS (LIST) VIEW -->
-        <div id="notarialDocsView">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialSearch" placeholder="Search client, account, document…" oninput="renderNotarial()"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="hdr-btn" onclick="exportNotarialCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
-              <button class="hdr-btn primary" id="addNotarialBtn" onclick="openNotarialModal()" style="display:none"><i class="fas fa-plus"></i> Add Notarized Doc</button>
-            </div>
-          </div>
-          <div id="notarialTypeFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-          <div id="notarialSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px"></div>
-          <div id="notarialTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
-          <div id="notarialBulkBar" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:12px;border:2px solid var(--gold);background:var(--card-bg)"></div>
-          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead id="notarialThead"><tr><th>Client</th><th>Document</th><th>Register</th><th>Date</th><th>Fee</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="notarialTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
-          </table></div></div></div>
-        </div>
-
-        <!-- BOARD VIEW (drag a card between stages to advance it) -->
-        <div id="notarialBoardView" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-            <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="notarialBoardSearch" placeholder="Search client, account, document…" oninput="renderNotarialBoard()"></div>
-            <button class="hdr-btn primary" id="addNotarialBtn2" onclick="openNotarialModal()" style="display:none"><i class="fas fa-plus"></i> Add Notarized Doc</button>
-          </div>
-          <div style="font-size:11px;color:var(--gray);margin-bottom:10px"><i class="fas fa-hand-pointer"></i> Drag a card to the next column as each step is done.</div>
-          <div id="notarialBoardWrap" style="overflow-x:auto;padding-bottom:10px">
-            <div id="notarialBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
-          </div>
-        </div>
-
-        <!-- CASH & LIQUIDATION VIEW -->
-        <div id="notarialCashView" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div class="fsearch" style="flex:1;min-width:200px;max-width:340px"><i class="fas fa-search"></i><input type="text" id="cashSearch" placeholder="Search person, purpose…" oninput="renderCash()"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button class="hdr-btn" onclick="exportCashCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
-              <span id="cashAddWrap" style="display:none;gap:8px;flex-wrap:wrap">
-                <button class="hdr-btn primary" onclick="openNotarialCash('request')"><i class="fas fa-hand-holding-usd"></i> Cash request</button>
-                <button class="hdr-btn primary" onclick="openNotarialCash('fund_in')"><i class="fas fa-piggy-bank"></i> Client funds</button>
-                <button class="hdr-btn primary" onclick="openNotarialCash('receipt')"><i class="fas fa-plus"></i> Money received</button>
-              </span>
-            </div>
-          </div>
-          <div id="cashSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
-          <div id="cashFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
-          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead id="cashThead"><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
-            <tbody id="cashTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
-          </table></div></div></div>
-        </div>
-      </div>
-
       <!-- NOTARIAL CASH ENTRY MODAL -->
       <div class="modal-ov" id="cashModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
         <div style="background:var(--card-bg);max-width:680px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
@@ -2054,60 +2001,198 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       </div>
 
       <!-- NOTARIAL ADD/EDIT MODAL -->
-      <div class="modal-ov" id="notarialModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:840px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
-          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="notarialModalTitle">Add Notarized Document</div>
-            <button onclick="closeNotarialModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+      <!-- CASES (law-firm matters: board, court diary, deadlines, ledgers) -->
+      <style>
+      /* The Cases tab reuses the .ls-* vocabulary so the two boards look like
+         one product. Only what is genuinely new to a law file lives here. */
+      .cs-heat{position:absolute;left:0;top:0;bottom:0;width:3px}
+      .cs-card{position:relative;padding-left:13px !important}
+      .cs-due{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.4px;white-space:nowrap}
+      .cs-day{border:1px solid var(--border-color);background:var(--card-bg);margin-bottom:10px}
+      .cs-day-h{background:var(--gray-light);padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:center}
+      .cs-day-h.today{background:#ff3d00;color:#fff}
+      .cs-row{display:flex;gap:12px;padding:10px 12px;border-top:1px solid var(--border-color);cursor:pointer;align-items:flex-start}
+      .cs-row:hover{background:var(--gray-light)}
+      .cs-row .w{width:74px;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray);padding-top:2px}
+      .cs-row .b{flex:1;min-width:0}
+      .cs-row .t{font-size:13.5px;font-weight:600;line-height:1.35}
+      .cs-row .s{font-size:11.5px;color:var(--gray);margin-top:2px;line-height:1.5}
+      .cs-conf{border:2px solid var(--border-color);padding:14px;margin-top:12px;background:var(--card-bg)}
+      .cs-conf.hit{border-color:#dc2626}
+      .cs-conf.clear{border-color:#059669}
+      .cs-party{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+      @media(max-width:700px){.cs-party{grid-template-columns:1fr 1fr;}}
+      .cs-dl{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-color);align-items:flex-start}
+      .cs-dl input[type=checkbox]{width:17px;height:17px;accent-color:#ff3d00;margin-top:2px;flex-shrink:0}
+      .cs-dl.done .t{text-decoration:line-through;opacity:.55}
+      .cs-mono{font-family:'JetBrains Mono',monospace;font-size:10.5px}
+      </style>
+      <div id="tab-cases" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="csSearch" placeholder="Search client, case title, docket, court…" oninput="renderCases()"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="display:inline-flex;border:1px solid var(--border-color);flex-wrap:wrap">
+              <button class="hdr-btn" id="csViewBoardBtn" onclick="setCasesView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
+              <button class="hdr-btn" id="csViewListBtn" onclick="setCasesView('list')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
+              <button class="hdr-btn" id="csViewDiaryBtn" onclick="setCasesView('diary')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-gavel"></i> Court diary</button>
+              <button class="hdr-btn" id="csViewSettingsBtn" onclick="setCasesView('settings')" style="border:none"><i class="fas fa-sliders-h"></i> Settings</button>
+            </div>
+            <button class="hdr-btn" onclick="openConflictCheck()"><i class="fas fa-user-shield"></i> Conflict check</button>
+            <button class="hdr-btn" onclick="exportCasesCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button class="hdr-btn primary" id="addCaseBtn" onclick="openCaseModal()" style="display:none"><i class="fas fa-plus"></i> New case</button>
           </div>
-          <div style="padding:24px;overflow-y:auto;min-height:0">
-            <input type="hidden" id="ntId">
+        </div>
+        <div class="ls-kpis" id="csSummary"></div>
 
-            <div class="tl-sec" style="margin-top:0">Classification &amp; stage</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
-              <div class="fg"><label class="flbl">Client type</label><select id="ntClientType" class="finput" onchange="ntToggleAccount()"><option value="">— One-off / none —</option><option value="walkin">Walk-in</option><option value="retainer">Retainer</option><option value="monthly_billing">Monthly Billing</option></select></div>
-              <div class="fg" id="ntAccountWrap"><label class="flbl">Account / Company</label><input type="text" list="ntAccountList" id="ntAccount" class="finput" placeholder="e.g. RCBC, City Savings"><datalist id="ntAccountList"></datalist></div>
-              <div class="fg"><label class="flbl">Stage</label><select id="ntStage" class="finput"></select></div>
+        <!-- BOARD -->
+        <div id="csBoardWrap" style="overflow-x:auto;padding-bottom:10px">
+          <div id="csBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
+        </div>
+
+        <!-- LIST -->
+        <div id="csListWrap" style="display:none">
+          <div id="csChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
+            <thead id="csThead"></thead>
+            <tbody id="csTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
+          </table></div></div></div>
+        </div>
+
+        <!-- COURT DIARY -->
+        <div id="csDiaryWrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="display:inline-flex;align-items:center;gap:6px">
+              <span class="ls-note" style="margin-right:4px">Show the next</span>
+              <select id="csDiaryDays" class="finput" style="padding:7px 10px;font-size:13px;width:auto" onchange="loadCaseDiary()">
+                <option value="7">7 days</option><option value="14">14 days</option>
+                <option value="30" selected>30 days</option><option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </select>
             </div>
-
-            <div class="tl-sec">Client &amp; document</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-              <div class="fg"><label class="flbl">Client name *</label><input type="text" id="ntClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
-              <div class="fg"><label class="flbl">Phone</label><input type="text" id="ntClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
-              <div class="fg"><label class="flbl">Email</label><input type="email" id="ntClientEmail" class="finput" placeholder="client@email.com"></div>
-              <div class="fg"><label class="flbl">Document type</label><select id="ntDocType" class="finput" onchange="ntToggleDocOther()"></select></div>
-              <div class="fg" id="ntDocOtherWrap" style="display:none;grid-column:1/-1"><label class="flbl">Specify document (Other)</label><input type="text" id="ntDocTypeOther" class="finput" placeholder="Type the exact document name"></div>
-              <div class="fg"><label class="flbl">No. of copies</label><input type="number" min="0" step="1" id="ntCopies" class="finput" placeholder="1"></div>
-              <div class="fg"><label class="flbl">Notary public</label><input type="text" list="ntNotaryList" id="ntNotaryName" class="finput" placeholder="Commissioned notary"><datalist id="ntNotaryList"></datalist></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="hdr-btn" onclick="exportDiaryCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+              <button class="hdr-btn primary" onclick="csDownload('/api/admin/cases/docket.pdf?days='+encodeURIComponent(document.getElementById('csDiaryDays').value),'court-diary.pdf')"><i class="fas fa-file-pdf"></i> Download diary</button>
             </div>
+          </div>
+          <div id="csDiary"><div class="empty-st"><p>Loading…</p></div></div>
+          <div class="ls-note" style="margin-top:8px">Hearings, deadlines and prescriptive periods from every open matter. Always check a setting against the court's own notice of hearing before you rely on it.</div>
+        </div>
 
-            <div class="tl-sec">Notarial register</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px">
-              <div class="fg"><label class="flbl">Doc No.</label><input type="text" id="ntDocNo" class="finput" placeholder="e.g. 123"></div>
-              <div class="fg"><label class="flbl">Page No.</label><input type="text" id="ntPageNo" class="finput" placeholder="e.g. 25"></div>
-              <div class="fg"><label class="flbl">Book No.</label><input type="text" id="ntBookNo" class="finput" placeholder="e.g. V"></div>
-              <div class="fg"><label class="flbl">Series of</label><input type="text" id="ntSeries" class="finput" placeholder="e.g. 2026"></div>
-              <div class="fg"><label class="flbl">Date notarized</label><input type="date" id="ntDate" class="finput"></div>
-              <div class="fg"><label class="flbl">Fee (₱)</label><input type="number" min="0" step="any" id="ntFee" class="finput" oninput="notarialPayRecalc()" placeholder="0"></div>
+        <!-- SETTINGS -->
+        <div id="csSettingsWrap" style="display:none">
+          <div class="dash-two">
+            <div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-building-columns"></i> The firm</div></div>
+                <div class="panel-body">
+                  <div class="ls-note" style="margin-bottom:14px">This name and address are what appear on the case documents, the statements of account and the receipts. The law office is a separate business from the realty, so leaving these blank prints a neutral heading rather than the GLRA Realty letterhead.</div>
+                  <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+                    <div class="fg full"><label class="flbl" for="csSetFirmName">Firm name</label><input type="text" id="csSetFirmName" class="finput" maxlength="200" placeholder="e.g. Sampayo &amp; Associates"></div>
+                    <div class="fg full"><label class="flbl" for="csSetFirmAddress">Office address</label><input type="text" id="csSetFirmAddress" class="finput" maxlength="400" placeholder="17F, 252 Sen. Gil J. Puyat Ave., Makati City"></div>
+                    <div class="fg full"><label class="flbl" for="csSetFirmContact">Contact line</label><input type="text" id="csSetFirmContact" class="finput" maxlength="300" placeholder="0917 177 4572 · glrarealty@gmail.com"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-bell"></i> Reminders</div></div>
+                <div class="panel-body">
+                  <div class="ls-note" style="margin-bottom:14px">The reminder engine runs every half hour. Client mail only goes out between 8am and 8pm Manila time, only for matters whose "Email this client" switch is on, and each message is sent once. Deadline and prescription warnings go to the firm at any hour.</div>
+                  <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+                    <div class="fg"><label class="flbl" for="csSetHearingDays">Remind the client, days before a hearing</label><input type="number" id="csSetHearingDays" class="finput" min="0" max="30"><div class="ls-note">0 switches hearing reminders off.</div></div>
+                    <div class="fg"><label class="flbl" for="csSetDeadlineDays">Warn us, days before a deadline</label><input type="number" id="csSetDeadlineDays" class="finput" min="0" max="60"></div>
+                    <div class="fg"><label class="flbl" for="csSetPrescDays">Start warning about prescription, days ahead</label><input type="number" id="csSetPrescDays" class="finput" min="0" max="730"></div>
+                    <div class="fg"><label class="flbl" for="csSetIdleDays">Flag a matter with no activity for</label><input type="number" id="csSetIdleDays" class="finput" min="0" max="365"><div class="ls-note">Days. 0 switches it off.</div></div>
+                    <div class="fg"><label class="flbl" for="csSetDigestHour">Morning diary hour (Manila)</label><input type="number" id="csSetDigestHour" class="finput" min="0" max="23"></div>
+                    <div class="fg"><label class="flbl" for="csSetNotifyEmail">Send the diary and warnings to</label><input type="email" id="csSetNotifyEmail" class="finput" placeholder="glrarealty@gmail.com"></div>
+                    <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="csSetDigest"> Email me a morning court diary whenever something is set, due or lapsing</label></div>
+                    <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="csSetClientEmails"> Allow automatic hearing reminders to clients</label></div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="hdr-btn primary" id="csSetSaveBtn" onclick="saveCasesSettings()"><i class="fas fa-save"></i> Save settings</button></div>
+                </div>
+              </div>
             </div>
-
-            <div class="tl-sec">Payments</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-              <label class="flbl" style="margin:0">Payments received (with mode of payment)</label>
-              <button type="button" class="hdr-btn" onclick="ntAddPayment()"><i class="fas fa-plus"></i> Add payment</button>
-            </div>
-            <div id="ntPayments"></div>
-            <div id="ntPaySummary" style="margin-top:14px"></div>
-
-            <div class="fg" style="margin-top:16px"><label class="flbl">Remarks</label><textarea id="ntNotes" class="finput" rows="2" placeholder="Notes, follow-ups…"></textarea></div>
-
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
-              <button class="hdr-btn" onclick="closeNotarialModal()">Cancel</button>
-              <button class="hdr-btn primary" id="ntSaveBtn" onclick="saveNotarial()"><i class="fas fa-save"></i> Save</button>
+            <div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-calendar-alt"></i> Court diary on your phone</div></div>
+                <div class="panel-body">
+                  <div class="ls-note">Every hearing, deadline and prescriptive date as a calendar you can subscribe to on a phone or in Google Calendar ("Other calendars → From URL"). Hearings alarm a day ahead, deadlines two days, prescription a week. The link is the password: anyone holding it can read your court dates and client names, so keep it private and regenerate it if it leaks.</div>
+                  <div id="csCalFeed" style="margin-top:12px"></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-scale-balanced"></i> About the deadline presets</div></div>
+                <div class="panel-body">
+                  <div class="ls-note">When you add a deadline you can pick a preset, and it fills in a date by counting calendar days from the trigger you give it. Each preset names the rule it comes from so you can check it.
+                  <br><br><b>They are a starting point, not advice.</b> Periods change — the 2019 Amendments moved the answer in an ordinary civil action from 15 days to 30, and the 2022 Rules on Expedited Procedures rewrote first-level practice. Court orders also set their own periods that override the default. Always confirm against the order in front of you, and edit the date freely.</div>
+                  <div id="csRulesList" style="margin-top:12px"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- CONFLICT CHECK MODAL -->
+      <div class="modal-ov" id="conflictModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2100;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:640px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:0 auto">
+          <div style="background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div><div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff">Conflict check</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:2px">Before you take the engagement</div></div>
+            <button class="hdr-btn" onclick="closeConflictCheck()" aria-label="Close"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:22px">
+            <div class="ls-note" style="margin-bottom:12px">Search every matter in this system for a name — on either side. A name that is already an <b>adverse party in an open case</b> is the one that stops a new engagement; an existing client is only something to be aware of.</div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="conflictQ" class="finput" placeholder="Name of the person or company" maxlength="120" onkeydown="if(event.key==='Enter')runConflictCheck()">
+              <button class="hdr-btn primary" onclick="runConflictCheck()"><i class="fas fa-search"></i> Check</button>
+            </div>
+            <div id="conflictResult"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASE MODAL -->
+      <div class="modal-ov" id="caseModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:1040px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:0 auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px);min-height:min(560px,calc(100vh - 48px))">
+          <div style="background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5;flex-wrap:wrap">
+            <div style="min-width:0">
+              <div id="caseModalTitle" style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;line-height:1.15">New case</div>
+              <div id="caseModalSub" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:3px"></div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <button class="hdr-btn" id="caseAdvanceBtn" onclick="caseAdvance()" style="display:none"></button>
+              <button class="hdr-btn" id="casePdfSummaryBtn" onclick="casePdf('summary')" style="display:none" title="One-page picture of where the matter stands"><i class="fas fa-file-pdf"></i> Summary</button>
+              <button class="hdr-btn" id="casePdfStatementBtn" onclick="casePdf('statement')" style="display:none" title="What the client owes — safe to send out"><i class="fas fa-file-invoice-dollar"></i> Statement</button>
+              <button class="hdr-btn" id="casePdfFullBtn" onclick="casePdf('full')" style="display:none" title="The whole internal file"><i class="fas fa-folder-open"></i> Full file</button>
+              <button class="hdr-btn" onclick="closeCaseModal()" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div style="padding:0 22px;flex-shrink:0;border-bottom:1px solid var(--border-color)">
+            <div class="ls-tabs" style="margin:0;border-bottom:none">
+              <button class="ls-tab active" id="caTabDetails" onclick="caShowTab('details')">Details</button>
+              <button class="ls-tab" id="caTabCourt" onclick="caShowTab('court')" disabled>Hearings &amp; deadlines</button>
+              <button class="ls-tab" id="caTabLedger" onclick="caShowTab('ledger')" disabled>Fees</button>
+              <button class="ls-tab" id="caTabDocs" onclick="caShowTab('docs')" disabled>Documents</button>
+              <button class="ls-tab" id="caTabActivity" onclick="caShowTab('activity')" disabled>Notes &amp; activity</button>
+            </div>
+          </div>
+          <div id="caScroll" style="padding:22px;overflow-y:auto;flex:1">
+            <div id="caPane-details"></div>
+            <div id="caPane-court" style="display:none"></div>
+            <div id="caPane-ledger" style="display:none"></div>
+            <div id="caPane-docs" style="display:none"></div>
+            <div id="caPane-activity" style="display:none"></div>
+          </div>
+          <div id="caFooter" style="padding:14px 22px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;gap:10px;flex-shrink:0;flex-wrap:wrap">
+            <button class="hdr-btn" id="caDeleteBtn" onclick="deleteCase()" style="display:none;color:#dc2626;border-color:#dc2626"><i class="fas fa-trash"></i> Delete case</button>
+            <div style="display:flex;gap:10px;margin-left:auto">
+              <button class="hdr-btn" onclick="closeCaseModal()">Close</button>
+              <button class="hdr-btn primary" id="caSaveBtn" onclick="caSave()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="caFileInput" style="display:none" onchange="caUploadFile(this)">
 
       <!-- ACCOUNTS (admin only) -->
       <!-- LEASING (rentals from prospect to move-out: board, rent roll, ledgers, statements) -->
@@ -2945,8 +3030,8 @@ const PERM_DEFS = [
   { key: 'bulkmail_send',           name: 'Send Email Campaigns',   desc: 'Can compose + send email campaigns to subscribers / pasted lists' },
   { key: 'titling_view',            name: 'View Titling',            desc: 'Can see the Titling tab and titling jobs' },
   { key: 'titling_manage',          name: 'Manage Titling',          desc: 'Can add, edit, and delete titling jobs' },
-  { key: 'notarial_view',           name: 'View Notarial',           desc: 'Can see the Notarial tab and records' },
-  { key: 'notarial_manage',         name: 'Manage Notarial',         desc: 'Can add, edit, and delete notarial records' },
+  { key: 'cases_view',              name: 'View Cases',              desc: 'Can see the Cases tab: matters, hearings, deadlines, fees. Case files are privileged.' },
+  { key: 'cases_manage',            name: 'Manage Cases',            desc: 'Can open/edit cases, log hearings and deadlines, record fees, email clients' },
   { key: 'leasing_view',            name: 'View Leasing',            desc: 'Can see the Leasing tab: leases, rent roll, statements' },
   { key: 'leasing_manage',          name: 'Manage Leasing',          desc: 'Can add/edit leases, record payments, upload documents, email tenants' }
 ];
@@ -3286,7 +3371,7 @@ function loadAll(){
   if(hasPerm('tasks_view')) loadTasksData();
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
-  if(hasPerm('notarial_view')) loadNotarial();
+  if(hasPerm('cases_view')) loadCases();
   if(hasPerm('leasing_view')) loadLeasing();
   if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
   renderDashboard();
@@ -3367,6 +3452,7 @@ function renderDashboard(){
   try{ renderTopViewed(); }catch(e){}
   try{ renderTitlingPipe(); }catch(e){}
   try{ renderLeasingPanel(); }catch(e){}
+  try{ renderCasesPanel(); }catch(e){}
 }
 
 function renderNeedsAttention(){
@@ -3399,6 +3485,12 @@ function renderNeedsAttention(){
     tiles.push({n:live.filter(l=>l.computed&&l.computed.overdueCount>0).length, lbl:'Leases with overdue rent', one:'Lease with overdue rent', ico:'fa-key', tab:'leasing'});
     tiles.push({n:live.filter(l=>l.computed&&l.computed.daysToEnd!==null&&l.computed.daysToEnd>=0&&l.computed.daysToEnd<=30).length, lbl:'Leases ending in 30 days', one:'Lease ending in 30 days', ico:'fa-calendar-times', tab:'leasing'});
   }
+  // Law office: the two things that actually end a case if missed.
+  if(hasPerm('cases_view') && window.csData){
+    const open=window.csData.filter(c=>['intake','pre_filing','filed','pre_trial','trial','decision','post_judgment'].includes(c.stage));
+    tiles.push({n:open.filter(c=>c.computed&&c.computed.missedCount>0).length, lbl:'Cases with a missed deadline', one:'Case with a missed deadline', ico:'fa-flag', tab:'cases'});
+    tiles.push({n:open.filter(c=>c.computed&&c.computed.prescription&&['critical','lapsed'].includes(c.computed.prescription.status)).length, lbl:'Prescriptive periods closing', one:'Prescriptive period closing', ico:'fa-hourglass-end', tab:'cases'});
+  }
   const anyHot=tiles.some(t=>t.n>0);
   if(!anyHot){
     wrap.innerHTML=`<div class="na-clear" style="grid-column:1/-1"><i class="fas fa-circle-check"></i> All caught up — nothing needs your attention</div>`;
@@ -3423,6 +3515,8 @@ function renderQuickActions(){
   if(hasPerm('bulkmail_send')) acts.push({ico:'fa-paper-plane',lbl:'Email campaign',fn:"switchTab('bulkmail')"});
   if(hasPerm('titling_manage')) acts.push({ico:'fa-stamp',lbl:'New titling job',fn:"switchTab('titling')"});
   if(hasPerm('leasing_manage')) acts.push({ico:'fa-key',lbl:'New lease',fn:"switchTab('leasing');openLeaseModal()"});
+  if(hasPerm('cases_manage')) acts.push({ico:'fa-scale-balanced',lbl:'New case',fn:"switchTab('cases');openCaseModal()"});
+  if(hasPerm('cases_view')) acts.push({ico:'fa-user-shield',lbl:'Conflict check',fn:"switchTab('cases');openConflictCheck()"});
   if(hasPerm('hero_upload')) acts.push({ico:'fa-images',lbl:'Hero images',fn:"switchTab('hero')"});
   acts.push({ico:'fa-file-csv',lbl:'Export inquiries',fn:"exportInquiriesCSV()"});
   wrap.innerHTML=acts.map(a=>`<button type="button" class="qa-btn" onclick="${a.fn}"><i class="fas ${a.ico}"></i> ${a.lbl}</button>`).join('');
@@ -4722,7 +4816,7 @@ function landOnAllowedTab(){
     if(t==='tasks') return hasPerm('tasks_view');
     if(t==='submissions') return hasPerm('submissions_view');
     if(t==='titling') return hasPerm('titling_view');
-    if(t==='notarial') return hasPerm('notarial_view');
+    if(t==='cases') return hasPerm('cases_view');
     return false;
   }) || 'properties';
   switchTab(first);
@@ -8779,8 +8873,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',notarial:'Notarial',agents:'Agents',leasing:'Leasing'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',notarial:'Notarized documents, clients, and payments — Lucena',agents:'Your field agents — scorecards, pipelines, and lead journals',leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing'};
+  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',cases:'Matters the firm is handling — hearings, deadlines, documents and fees',agents:'Your field agents — scorecards, pipelines, and lead journals',leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
   // Add property button only on properties tab for admins
@@ -8838,10 +8932,11 @@ function switchTab(name){
     loadTitling();
     if(titlingView==='cash') loadTitlingCashAll();
   }
-  // Refresh notarial records on tab visit
-  if(name==='notarial' && hasPerm('notarial_view')){
-    loadNotarial();
-    setNotarialView(notarialView);
+  // Refresh the case files on tab visit
+  if(name==='cases' && hasPerm('cases_view')){
+    loadCases();
+    if(csView==='diary') loadCaseDiary();
+    if(csView==='settings') renderCasesSettings();
   }
   // Refresh leases on tab visit
   if(name==='leasing' && hasPerm('leasing_view')){
@@ -9156,21 +9251,38 @@ const LE_FIELDS = [
   { k: 'tenantName', l: 'Tenant name *', t: 'text', ph: 'Full name' },
   { k: 'tenantPhone', l: 'Phone', t: 'tel', ph: '+63 9XX XXX XXXX' },
   { k: 'tenantEmail', l: 'Email', t: 'email', ph: 'tenant@email.com', hint: 'Needed for reminders, receipts and statements.' },
+  { k: 'tenantPhone2', l: 'Other phone', t: 'tel', hint: 'Viber, work line, a relative.' },
   { k: 'tenantAddress', l: 'Permanent address', t: 'text', cls: 'two' },
   { k: 'occupants', l: 'Occupants', t: 'number', min: 0, max: 99 },
+  { k: 'tenantNationality', l: 'Nationality', t: 'text', ph: 'Filipino' },
+  { k: 'tenantCivilStatus', l: 'Civil status', t: 'select', opts: [['', '—'], ['single', 'Single'], ['married', 'Married'], ['widowed', 'Widowed'], ['separated', 'Separated']] },
+  { k: 'tenantSpouse', l: 'Spouse', t: 'text', hint: 'A contract names the spouse where the lessee is married.' },
   { k: 'tenantIdType', l: 'ID presented', t: 'text', ph: 'e.g. Passport, UMID, Driver’s licence' },
   { k: 'tenantIdNo', l: 'ID number', t: 'text' },
+  { k: 'tenantTin', l: 'TIN', t: 'text', ph: '000-000-000-000' },
   { k: 'tenantOccupation', l: 'Occupation', t: 'text' },
   { k: 'tenantCompany', l: 'Employer / business', t: 'text' },
+  { k: 'tenantWorkAddress', l: 'Work address', t: 'text', cls: 'two' },
   { k: 'emergencyName', l: 'Emergency contact', t: 'text' },
+  { k: 'emergencyRelation', l: 'Relationship', t: 'text', ph: 'Sister, employer…' },
   { k: 'emergencyPhone', l: 'Emergency phone', t: 'tel' },
+  { k: 'emergencyAddress', l: 'Emergency contact address', t: 'text', cls: 'two' },
   { sec: 'Owner (lessor)' },
   { k: 'ownerName', l: 'Owner name', t: 'text' },
   { k: 'ownerPhone', l: 'Phone', t: 'tel' },
+  { k: 'ownerPhone2', l: 'Other phone', t: 'tel' },
   { k: 'ownerEmail', l: 'Email', t: 'email', hint: 'For owner statements.' },
   { k: 'ownerAddress', l: 'Address', t: 'text', cls: 'two' },
+  { k: 'ownerCivilStatus', l: 'Civil status', t: 'select', opts: [['', '—'], ['single', 'Single'], ['married', 'Married'], ['widowed', 'Widowed'], ['separated', 'Separated']] },
+  { k: 'ownerSpouse', l: 'Spouse', t: 'text', hint: 'Where the property is conjugal the spouse normally has to consent.' },
+  { k: 'ownerIdType', l: 'ID presented', t: 'text' },
+  { k: 'ownerIdNo', l: 'ID number', t: 'text' },
+  { k: 'ownerTin', l: 'TIN', t: 'text', ph: '000-000-000-000', hint: 'The lessor declares the rental income.' },
+  { k: 'ownerRep', l: 'Signing representative', t: 'text', hint: 'If an attorney-in-fact signs instead of the owner.' },
+  { k: 'ownerRepPhone', l: 'Representative phone', t: 'tel' },
   { k: 'managedByGLRA', l: '', t: 'check', cl: 'GLRA collects the rent for this owner (managed unit)' },
   { k: 'managementFeePct', l: 'Management fee (% of rent)', t: 'number', min: 0, max: 100, step: 0.5 },
+  { k: 'ownerRemittance', l: 'Where to remit the owner’s share', t: 'text', cls: 'two', ph: 'BPI 1234-5678-90 (Juan Dela Cruz) / GCash 0917…', hint: 'Admin-only. It is printed on the owner statement and never on anything the tenant sees.' },
   { sec: 'Lease terms' },
   { k: 'startDate', l: 'Start date', t: 'date', on: 'leSyncTerms()' },
   { k: 'termMonths', l: 'Term (months)', t: 'number', min: 1, max: 360, on: 'leSyncTerms()' },
@@ -9589,6 +9701,1167 @@ async function leAddNote(){
 }
 
 // ── dashboard panel ──
+// ══════════════════════════════════════════════════════════════════════════
+// CASES — the law firm's matters. Replaced the Notarial tab in Sept 2026.
+// Every figure on screen comes from case.computed, which the server rebuilds
+// on each read, so nothing here recalculates money or dates independently.
+// ══════════════════════════════════════════════════════════════════════════
+let csData = [], csMeta = { today: '', stages: {}, flow: [], ref: {}, settings: {} };
+let csView = localStorage.getItem('glra_cs_view') || 'board';
+let csFilter = 'all', csCurrent = null, csTab = 'details', csDiaryItems = [];
+const csSort = { key: 'urgency', dir: 'desc' };
+const CS_ORDER = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment', 'closed', 'on_hold'];
+const CS_OPEN = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment'];
+
+const csPeso = n => { const v = Math.round((Number(n) || 0) * 100) / 100; return (v < 0 ? '-' : '') + '₱' + Math.abs(v).toLocaleString('en-PH', Number.isInteger(v) ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+const csNum = v => parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0;
+const csStage = k => csMeta.stages[k] || { label: k, color: '#94a3b8' };
+const csCourt = c => [c.court, c.branch && ('Br. ' + c.branch), c.courtCity].filter(Boolean).join(' ');
+const csTypeLabel = k => ((csMeta.ref.caseTypes || []).find(t => t.key === k) || {}).label || k || '';
+// 'YYYY-MM-DD' -> "Sep 17, 2026". Parsed as UTC so it never shifts a day.
+function csDate(k){ if(!k) return ''; const [y,m,d] = String(k).slice(0,10).split('-').map(Number); if(!y) return ''; return new Date(Date.UTC(y, m-1, d)).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' }); }
+function csDay(k){ if(!k) return ''; const [y,m,d] = String(k).slice(0,10).split('-').map(Number); return new Date(Date.UTC(y, m-1, d)).toLocaleDateString('en-PH', { weekday:'long', timeZone:'UTC' }); }
+function csRel(n){ if(n === null || n === undefined) return ''; if(n === 0) return 'today'; if(n === 1) return 'tomorrow'; if(n === -1) return 'yesterday'; return n > 0 ? 'in ' + n + ' days' : Math.abs(n) + ' days ago'; }
+// How loud a matter is, used to sort and to colour the strip on its card.
+function csHeatColor(c){
+  const k = c.computed || {};
+  if(k.prescription && k.prescription.status === 'lapsed') return '#dc2626';
+  if(k.missedCount) return '#dc2626';
+  if(k.prescription && k.prescription.status === 'critical') return '#dc2626';
+  if(k.dueSoonCount) return '#d97706';
+  if(k.nextHearing && k.nextHearing.daysAway <= 3) return '#2563eb';
+  return '';
+}
+
+// ── load ──
+async function loadCases(){
+  if(!hasPerm('cases_view')) return;
+  try{
+    const r = await apiFetch('/api/admin/cases'); const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'load failed');
+    csData = Array.isArray(d.cases) ? d.cases : [];
+    csMeta = { today: d.today || new Date().toISOString().slice(0,10), stages: d.stages || {}, flow: d.flow || CS_OPEN, ref: d.ref || {}, settings: d.settings || {} };
+    window.csData = csData;
+    csUpdateBadge();
+    if(csCurrent){ const fresh = csData.find(x => x._id === csCurrent._id); if(fresh) csCurrent = fresh; }
+    renderCases(); renderDashboard();
+  }catch(e){ console.error('loadCases', e); }
+}
+function csUpdateBadge(){
+  const b = document.getElementById('casesBadge'); if(!b) return;
+  // The badge counts what will actually hurt: a missed deadline or a
+  // prescriptive period about to lapse.
+  const n = csData.filter(c => CS_OPEN.includes(c.stage) && c.computed &&
+    (c.computed.missedCount > 0 || (c.computed.prescription && ['critical','lapsed'].includes(c.computed.prescription.status)))).length;
+  b.textContent = n; b.style.display = n > 0 ? '' : 'none';
+}
+function csUpsert(doc){
+  const i = csData.findIndex(x => x._id === doc._id);
+  if(i >= 0) csData[i] = doc; else csData.unshift(doc);
+  window.csData = csData; csUpdateBadge();
+  if(csCurrent && csCurrent._id === doc._id) csCurrent = doc;
+}
+function setCasesView(v){
+  csView = v; localStorage.setItem('glra_cs_view', v); renderCases();
+  if(v === 'diary') loadCaseDiary();
+  if(v === 'settings') renderCasesSettings();
+}
+function setCsFilter(k){
+  csFilter = (csFilter === k) ? 'all' : k;
+  if(csView === 'board' && csFilter !== 'all'){ csView = 'list'; localStorage.setItem('glra_cs_view','list'); }
+  renderCases();
+}
+function setCsSort(key){ toggleSort(csSort, key, (key === 'client' || key === 'title' || key === 'court') ? 'asc' : 'desc'); renderCases(); }
+
+// ── render ──
+function renderCases(){
+  const wrap = document.getElementById('tab-cases'); if(!wrap) return;
+  const canManage = hasPerm('cases_manage');
+  ['board','list','diary','settings'].forEach(v => {
+    const w = document.getElementById('cs' + v.charAt(0).toUpperCase() + v.slice(1) + 'Wrap'); if(w) w.style.display = csView === v ? '' : 'none';
+    const b = document.getElementById('csView' + v.charAt(0).toUpperCase() + v.slice(1) + 'Btn'); if(b){ b.style.background = csView === v ? '#ff3d00' : ''; b.style.color = csView === v ? '#fff' : ''; }
+  });
+  const addBtn = document.getElementById('addCaseBtn'); if(addBtn) addBtn.style.display = canManage ? '' : 'none';
+
+  // headline numbers
+  const open = csData.filter(c => CS_OPEN.includes(c.stage));
+  const week = open.filter(c => c.computed && c.computed.nextHearing && c.computed.nextHearing.daysAway <= 7);
+  const missed = open.filter(c => c.computed && c.computed.missedCount > 0);
+  const dueSoon = open.filter(c => c.computed && c.computed.dueSoonCount > 0);
+  const presc = open.filter(c => c.computed && c.computed.prescription && ['critical','warning','lapsed'].includes(c.computed.prescription.status));
+  const owed = csData.reduce((s, c) => s + ((c.computed && c.computed.balance > 0) ? c.computed.balance : 0), 0);
+  const sum = document.getElementById('csSummary');
+  if(sum){
+    const card = (key, k, v, s, color) => `<div class="ls-kpi click ${csFilter === key ? 'on' : ''}" onclick="setCsFilter('${key}')"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s}</div></div>`;
+    sum.innerHTML =
+        card('open', 'Open matters', open.length, `${csData.length} in total`)
+      + card('week', 'Hearings this week', week.length, week.length ? 'next 7 days' : 'nothing set')
+      + card('missed', 'Missed deadlines', missed.length, missed.length ? 'act on these first' : 'none missed', missed.length ? '#dc2626' : 'inherit')
+      + card('soon', 'Deadlines due soon', dueSoon.length, 'within 7 days', dueSoon.length ? '#d97706' : 'inherit')
+      + card('presc', 'Prescription closing', presc.length, presc.length ? 'check the last day to file' : 'none near', presc.length ? '#b45309' : 'inherit')
+      + card('owed', 'Unpaid fees', csPeso(owed), 'across every matter');
+  }
+
+  const q = (document.getElementById('csSearch')?.value || '').toLowerCase().trim();
+  const matchQ = c => !q || [c.title, c.clientName, c.docketNumber, c.court, c.branch, c.courtCity,
+      c.caseRef, c.natureOfAction, c.leadCounsel, c.judge, c.clientEmail, c.clientPhone,
+      ...(c.adverseParties || []).map(p => p.name + ' ' + p.counsel)]
+    .some(v => (v || '').toLowerCase().includes(q));
+  const searched = csData.filter(matchQ);
+
+  if(csView === 'board'){ renderCsBoard(searched, canManage); return; }
+  if(csView !== 'list') return;
+
+  const chips = document.getElementById('csChips');
+  if(chips){
+    const chip = (key, label, n) => `<button type="button" class="hdr-btn" onclick="setCsFilter('${key}')" style="${csFilter === key ? 'background:#ff3d00;color:#fff;border-color:#ff3d00' : ''}">${esc(label)} <span style="opacity:.7">${n}</span></button>`;
+    chips.innerHTML = chip('all','All',csData.length) + CS_ORDER.map(s => chip(s, csStage(s).label, csData.filter(c => c.stage === s).length)).join('');
+  }
+
+  let rows = searched.slice();
+  const F = {
+    open:  c => CS_OPEN.includes(c.stage),
+    week:  c => c.computed && c.computed.nextHearing && c.computed.nextHearing.daysAway <= 7,
+    missed:c => c.computed && c.computed.missedCount > 0,
+    soon:  c => c.computed && c.computed.dueSoonCount > 0,
+    presc: c => c.computed && c.computed.prescription && ['critical','warning','lapsed'].includes(c.computed.prescription.status),
+    owed:  c => c.computed && c.computed.balance > 0.005
+  };
+  if(F[csFilter]) rows = rows.filter(F[csFilter]);
+  else if(CS_ORDER.includes(csFilter)) rows = rows.filter(c => c.stage === csFilter);
+
+  const dir = csSort.dir === 'asc' ? 1 : -1;
+  const val = c => ({
+    urgency: (c.computed ? c.computed.heat : 0),
+    client:  (c.clientName || '').toLowerCase(),
+    title:   (c.title || '').toLowerCase(),
+    court:   csCourt(c).toLowerCase(),
+    stage:   CS_ORDER.indexOf(c.stage),
+    hearing: (c.computed && c.computed.nextHearing) ? c.computed.nextHearing.date : '9999',
+    balance: (c.computed ? c.computed.balance : 0),
+    updated: c.updatedAt || ''
+  })[csSort.key];
+  rows.sort((a,b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+
+  const th = (key, label) => `<th class="sortable" onclick="setCsSort('${key}')">${esc(label)}${csSort.key === key ? ' <i class="fas fa-caret-' + (csSort.dir === 'asc' ? 'up' : 'down') + '"></i>' : ''}</th>`;
+  const thead = document.getElementById('csThead');
+  if(thead) thead.innerHTML = `<tr>${th('title','Case')}${th('client','Client')}${th('court','Court')}${th('stage','Stage')}${th('hearing','Next hearing')}<th>Deadlines</th>${th('balance','Balance')}<th></th></tr>`;
+
+  const tb = document.getElementById('csTbody'); if(!tb) return;
+  if(!rows.length){ tb.innerHTML = `<tr><td colspan="8"><div class="empty-st"><i class="fas fa-scale-balanced"></i><p>${csData.length ? 'No matter matches that filter.' : 'No cases yet. Press “New case” to open the first file.'}</p></div></td></tr>`; return; }
+  tb.innerHTML = rows.map(c => {
+    const k = c.computed || {};
+    const heat = csHeatColor(c);
+    const chips = [];
+    if(k.missedCount) chips.push(`<span class="ls-chip bad">${k.missedCount} missed</span>`);
+    if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
+    if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">prescribed</span>');
+    else if(k.prescription && k.prescription.status === 'critical') chips.push(`<span class="ls-chip bad">prescribes ${csRel(k.prescription.daysLeft)}</span>`);
+    if(!chips.length && k.openDeadlineCount) chips.push(`<span class="ls-chip dim">${k.openDeadlineCount} open</span>`);
+    if(!chips.length) chips.push('<span class="ls-chip dim">none</span>');
+    return `<tr style="cursor:pointer" onclick="openCaseModal('${c._id}')">
+      <td><div style="font-weight:600;${heat ? 'border-left:3px solid ' + heat + ';padding-left:7px;margin-left:-7px' : ''}">${esc(c.title || 'Untitled')}</div>
+        <div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-top:2px">${esc(c.caseRef || '')}${c.docketNumber ? ' · ' + esc(c.docketNumber) : ''}</div>
+        ${c.natureOfAction ? `<div style="font-size:11.5px;color:var(--gray);margin-top:2px">${esc(c.natureOfAction)}</div>` : ''}</td>
+      <td><div>${esc(c.clientName || '')}</div>${c.clientRole ? `<div style="font-size:11px;color:var(--gray)">${esc(c.clientRole)}</div>` : ''}</td>
+      <td style="font-size:12px">${esc(csCourt(c)) || '<span style="color:var(--gray)">—</span>'}</td>
+      <td><span class="ls-pill" style="background:${csStage(c.stage).color}">${esc(csStage(c.stage).label)}</span></td>
+      <td class="cs-due">${k.nextHearing ? esc(csDate(k.nextHearing.date)) + `<div style="color:var(--gray)">${esc(csRel(k.nextHearing.daysAway))}</div>` : '<span style="color:var(--gray)">—</span>'}</td>
+      <td>${chips.join('')}</td>
+      <td class="money">${k.balance > 0.005 ? csPeso(k.balance) : '<span style="color:var(--gray)">—</span>'}</td>
+      <td onclick="event.stopPropagation()"><button class="icon-btn" title="Open the file" onclick="openCaseModal('${c._id}')"><i class="fas fa-folder-open"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── board ──
+function renderCsBoard(rows, canManage){
+  const board = document.getElementById('csBoard'); if(!board) return;
+  board.innerHTML = CS_ORDER.map(stage => {
+    const meta = csStage(stage);
+    const items = rows.filter(c => c.stage === stage)
+      .sort((a,b) => (b.computed ? b.computed.heat : 0) - (a.computed ? a.computed.heat : 0)
+        || ((a.computed && a.computed.nextHearing ? a.computed.nextHearing.date : '9999')
+            .localeCompare(b.computed && b.computed.nextHearing ? b.computed.nextHearing.date : '9999')));
+    return `<div class="tl-col" style="width:268px;flex-shrink:0;border:1px solid var(--border-color);background:var(--gray-light);padding:10px"
+        ondragover="csDragOver(event)" ondragleave="csDragLeave(event)" ondrop="csDrop(event,'${stage}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:${meta.color}">${esc(meta.label)}</div>
+        <div style="font-size:11px;color:var(--gray)">${items.length}</div>
+      </div>
+      ${meta.hint ? `<div style="font-size:10.5px;color:var(--gray);line-height:1.45;margin-bottom:8px">${esc(meta.hint)}</div>` : ''}
+      <div>${items.map(c => csCard(c, canManage)).join('') || '<div style="font-size:11.5px;color:var(--gray);padding:10px 2px">Nothing here.</div>'}</div>
+    </div>`;
+  }).join('');
+}
+function csCard(c, canManage){
+  const k = c.computed || {};
+  const heat = csHeatColor(c);
+  const chips = [];
+  if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">PRESCRIBED</span>');
+  else if(k.prescription && ['critical','warning'].includes(k.prescription.status)) chips.push(`<span class="ls-chip ${k.prescription.status === 'critical' ? 'bad' : 'warn'}">prescribes ${esc(csRel(k.prescription.daysLeft))}</span>`);
+  if(k.missedCount) chips.push(`<span class="ls-chip bad">${k.missedCount} missed</span>`);
+  if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
+  if(k.balance > 0.005) chips.push(`<span class="ls-chip dim">${csPeso(k.balance)} unpaid</span>`);
+  if(c.priority === 'urgent') chips.push('<span class="ls-chip bad">urgent</span>');
+  else if(c.priority === 'high') chips.push('<span class="ls-chip warn">high</span>');
+  return `<div class="ls-card cs-card ${canManage ? '' : 'view'}" ${canManage ? `draggable="true" ondragstart="csDragStart(event,'${c._id}')" ondragend="csDragEnd(event)"` : ''} onclick="openCaseModal('${c._id}')">
+    ${heat ? `<span class="cs-heat" style="background:${heat}"></span>` : ''}
+    <div style="font-size:13px;font-weight:600;line-height:1.3">${esc(c.title || 'Untitled')}</div>
+    <div style="font-size:11px;color:var(--gray);margin-top:3px">${esc(c.clientName || '')}${c.clientRole ? ' · ' + esc(c.clientRole) : ''}</div>
+    ${c.natureOfAction ? `<div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(c.natureOfAction)}</div>` : ''}
+    ${csCourt(c) ? `<div style="font-size:10.5px;color:var(--gray);margin-top:3px;font-family:'JetBrains Mono',monospace">${esc(csCourt(c))}</div>` : ''}
+    ${k.nextHearing ? `<div style="font-size:11.5px;margin-top:6px;color:#2563eb;font-weight:600"><i class="fas fa-gavel" style="font-size:10px"></i> ${esc(csDate(k.nextHearing.date))} · ${esc(csRel(k.nextHearing.daysAway))}</div>` : ''}
+    ${k.nextDeadline && !k.nextDeadline.done ? `<div style="font-size:11px;margin-top:3px;color:${k.nextDeadline.status === 'missed' ? '#dc2626' : 'var(--gray)'}"><i class="fas fa-flag" style="font-size:9px"></i> ${esc(k.nextDeadline.title)} · ${esc(csRel(k.nextDeadline.daysAway))}</div>` : ''}
+    <div>${chips.join('')}</div>
+  </div>`;
+}
+let csDragId = null;
+function csDragStart(ev, id){ csDragId = id; ev.currentTarget.classList.add('dragging'); try{ ev.dataTransfer.setData('text/plain', id); ev.dataTransfer.effectAllowed = 'move'; }catch(e){} }
+function csDragEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('#csBoard .tl-col').forEach(c => c.classList.remove('dragover')); }
+function csDragOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add('dragover'); try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){} }
+function csDragLeave(ev){ ev.currentTarget.classList.remove('dragover'); }
+function csDrop(ev, stage){ ev.preventDefault(); ev.currentTarget.classList.remove('dragover'); const id = csDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain')); csDragId = null; if(id) csMove(id, stage); }
+async function csMove(id, stage){
+  const c = csData.find(x => x._id === id); if(!c || c.stage === stage) return;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${id}/stage`, { method:'POST', body: JSON.stringify({ stage }) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not move the case');
+    csUpsert(d); renderCases(); renderDashboard();
+    showToast(`Moved to ${csStage(stage).label}`);
+  }catch(e){ showToast(e.message, true); loadCases(); }
+}
+async function caseAdvance(){
+  if(!csCurrent) return;
+  const i = csMeta.flow.indexOf(csCurrent.stage);
+  if(i < 0 || i >= csMeta.flow.length - 1) return;
+  await csMove(csCurrent._id, csMeta.flow[i + 1]);
+  const fresh = csData.find(x => x._id === csCurrent._id);
+  if(fresh){ csCurrent = fresh; caRenderModal(); }
+}
+
+// ── court diary ──
+async function loadCaseDiary(){
+  const el = document.getElementById('csDiary'); if(!el) return;
+  const days = document.getElementById('csDiaryDays')?.value || 30;
+  el.innerHTML = '<div class="empty-st"><p>Loading…</p></div>';
+  try{
+    const r = await apiFetch('/api/admin/cases/calendar?days=' + encodeURIComponent(days));
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'load failed');
+    csDiaryItems = d.items || [];
+    renderCaseDiary(d);
+  }catch(e){ el.innerHTML = `<div class="empty-st"><p>Could not load the diary.</p></div>`; }
+}
+function renderCaseDiary(d){
+  const el = document.getElementById('csDiary'); if(!el) return;
+  const items = d.items || [];
+  if(!items.length){ el.innerHTML = `<div class="empty-st"><i class="fas fa-calendar-check"></i><p>Nothing is set in this period.</p></div>`; return; }
+  const groups = [];
+  items.forEach(it => {
+    const last = groups[groups.length - 1];
+    if(last && last.date === it.date) last.items.push(it); else groups.push({ date: it.date, items: [it] });
+  });
+  el.innerHTML = groups.map(g => {
+    const isToday = g.date === d.today;
+    return `<div class="cs-day">
+      <div class="cs-day-h ${isToday ? 'today' : ''}">
+        <span>${esc(csDay(g.date))} · ${esc(csDate(g.date))}${isToday ? ' · TODAY' : ''}</span>
+        <span style="opacity:.7">${g.items.length} item${g.items.length === 1 ? '' : 's'}</span>
+      </div>
+      ${g.items.map(it => {
+        const icon = it.kind === 'hearing' ? 'fa-gavel' : it.kind === 'prescription' ? 'fa-hourglass-end' : 'fa-flag';
+        const col = it.kind === 'prescription' ? '#dc2626' : it.kind === 'deadline' ? (it.status === 'missed' ? '#dc2626' : it.critical ? '#b45309' : 'var(--gray)') : '#2563eb';
+        return `<div class="cs-row" onclick="openCaseModal('${it.caseId}','${it.kind === 'hearing' ? 'court' : 'court'}')">
+          <div class="w">${it.kind === 'hearing' ? esc(it.time || '—') : `<i class="fas ${icon}" style="color:${col}"></i>`}</div>
+          <div class="b">
+            <div class="t"><i class="fas ${icon}" style="color:${col};font-size:11px;margin-right:5px"></i>${esc(it.title || '')}${it.critical ? ' <span class="ls-chip bad">critical</span>' : ''}</div>
+            <div class="s">${esc(it.caseTitle || '')}${it.caseRef ? ' · ' + esc(it.caseRef) : ''}<br>${esc(it.client || '')}${it.court ? ' · ' + esc(it.court) : ''}${it.rule ? '<br><span class="cs-mono">' + esc(it.rule) + '</span>' : ''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+function exportDiaryCSV(){
+  if(!csDiaryItems.length) return showToast('Nothing to export', true);
+  const rows = [['Date','Time','Kind','What','Case','Reference','Client','Court','Basis']];
+  csDiaryItems.forEach(i => rows.push([i.date, i.time || '', i.kind, i.title || '', i.caseTitle || '', i.caseRef || '', i.client || '', i.court || '', i.rule || '']));
+  csvDownload(rows, 'court-diary.csv');
+}
+function exportCasesCSV(){
+  if(!csData.length) return showToast('Nothing to export', true);
+  const rows = [['Reference','Case','Docket','Court','Branch','City','Type','Nature','Stage','Client','Role','Lead counsel','Engaged','Filed','Prescribes','Next hearing','Open deadlines','Missed','Billed','Paid','Balance']];
+  csData.forEach(c => { const k = c.computed || {};
+    rows.push([c.caseRef||'', c.title||'', c.docketNumber||'', c.court||'', c.branch||'', c.courtCity||'',
+      csTypeLabel(c.caseType), c.natureOfAction||'', csStage(c.stage).label, c.clientName||'', c.clientRole||'',
+      c.leadCounsel||'', (c.dateEngaged||'').slice(0,10), (c.dateFiled||'').slice(0,10),
+      (c.prescriptiveDate||'').slice(0,10), k.nextHearing ? k.nextHearing.date : '',
+      k.openDeadlineCount||0, k.missedCount||0, k.billed||0, k.paid||0, k.balance||0]); });
+  csvDownload(rows, 'cases.csv');
+}
+function csvDownload(rows, name){
+  const csv = rows.map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8' });
+  const u = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 60000);
+}
+async function csDownload(url, filename){
+  showLoad('Building PDF…');
+  try{
+    const r = await apiFetch(url);
+    if(!r.ok){ let msg = 'Could not build the PDF'; try{ msg = (await r.json()).error || msg; }catch(e){} showToast(msg, true); return; }
+    const blob = await r.blob(); const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = u; a.download = filename || 'document.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 60000);
+  }catch(e){ showToast('Download failed', true); }
+  finally{ hideLoad(); }
+}
+
+// ── settings ──
+function renderCasesSettings(){
+  const s = csMeta.settings || {};
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v == null ? '' : v; };
+  const chk = (id, v) => { const el = document.getElementById(id); if(el) el.checked = !!v; };
+  set('csSetFirmName', s.firmName); set('csSetFirmAddress', s.firmAddress); set('csSetFirmContact', s.firmContact);
+  set('csSetHearingDays', s.hearingReminderDays); set('csSetDeadlineDays', s.deadlineAlertDays);
+  set('csSetPrescDays', s.prescriptionAlertDays); set('csSetIdleDays', s.idleAlertDays);
+  set('csSetDigestHour', s.digestHour); set('csSetNotifyEmail', s.notifyEmail);
+  chk('csSetDigest', s.digestEnabled); chk('csSetClientEmails', s.clientEmailsEnabled);
+  const canManage = hasPerm('cases_manage');
+  const saveBtn = document.getElementById('csSetSaveBtn'); if(saveBtn) saveBtn.style.display = canManage ? '' : 'none';
+  document.querySelectorAll('#csSettingsWrap input, #csSettingsWrap textarea').forEach(el => { el.disabled = !canManage; });
+
+  const feed = document.getElementById('csCalFeed');
+  if(feed){
+    feed.innerHTML = s.calendarLinked
+      ? `<div class="ls-note" style="margin-bottom:8px">A link is active. For safety it is only shown once, when it is created.</div>
+         ${CU && CU.role === 'admin' ? `<button class="hdr-btn" onclick="regenCaseCal()"><i class="fas fa-rotate"></i> Create a new link (the old one stops working)</button>` : '<div class="ls-note">Only an administrator can regenerate it.</div>'}`
+      : (CU && CU.role === 'admin'
+          ? `<button class="hdr-btn primary" onclick="regenCaseCal()"><i class="fas fa-link"></i> Create the calendar link</button>`
+          : '<div class="ls-note">No link yet. Only an administrator can create one.</div>');
+  }
+  const rules = document.getElementById('csRulesList');
+  if(rules){
+    rules.innerHTML = (csMeta.ref.deadlineRules || []).filter(r => r.key !== 'custom').map(r =>
+      `<div style="padding:6px 0;border-bottom:1px solid var(--border-color)">
+        <div style="font-size:12.5px;font-weight:600">${esc(r.label)} <span style="color:var(--gray);font-weight:400">— ${r.days < 0 ? Math.abs(r.days) + ' days before ' : r.days + ' days from '}${esc(r.from || '')}</span></div>
+        <div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-top:2px">${esc(r.rule)}</div>
+      </div>`).join('');
+  }
+}
+async function saveCasesSettings(){
+  const val = id => document.getElementById(id)?.value || '';
+  const chk = id => !!document.getElementById(id)?.checked;
+  const body = {
+    firmName: val('csSetFirmName'), firmAddress: val('csSetFirmAddress'), firmContact: val('csSetFirmContact'),
+    hearingReminderDays: csNum(val('csSetHearingDays')), deadlineAlertDays: csNum(val('csSetDeadlineDays')),
+    prescriptionAlertDays: csNum(val('csSetPrescDays')), idleAlertDays: csNum(val('csSetIdleDays')),
+    digestHour: csNum(val('csSetDigestHour')), notifyEmail: val('csSetNotifyEmail'),
+    digestEnabled: chk('csSetDigest'), clientEmailsEnabled: chk('csSetClientEmails')
+  };
+  try{
+    const r = await apiFetch('/api/admin/cases/settings', { method:'PUT', body: JSON.stringify(body) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Save failed');
+    csMeta.settings = d; renderCasesSettings(); showToast('Settings saved');
+  }catch(e){ showToast(e.message, true); }
+}
+async function regenCaseCal(){
+  if(csMeta.settings.calendarLinked && !confirm('Create a new calendar link? Any device using the old link will stop updating.')) return;
+  try{
+    const r = await apiFetch('/api/admin/cases/calendar-token', { method:'POST' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not create the link');
+    csMeta.settings.calendarLinked = true;
+    const url = location.origin + d.url;
+    const feed = document.getElementById('csCalFeed');
+    if(feed) feed.innerHTML = `<div class="ls-note" style="margin-bottom:6px"><b>Copy this now — it is not shown again.</b></div>
+      <input type="text" class="finput" readonly value="${esc(url)}" onclick="this.select()" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="hdr-btn" onclick="navigator.clipboard.writeText('${esc(url)}').then(()=>showToast('Link copied'))"><i class="fas fa-copy"></i> Copy</button></div>`;
+  }catch(e){ showToast(e.message, true); }
+}
+
+// ── conflict check ──
+function openConflictCheck(prefill){
+  const m = document.getElementById('conflictModal'); if(!m) return;
+  m.style.display = 'flex';
+  const q = document.getElementById('conflictQ');
+  if(q){ q.value = prefill || ''; setTimeout(() => q.focus(), 50); }
+  const res = document.getElementById('conflictResult'); if(res) res.innerHTML = '';
+  if(prefill) runConflictCheck();
+}
+function closeConflictCheck(){ const m = document.getElementById('conflictModal'); if(m) m.style.display = 'none'; }
+async function runConflictCheck(){
+  const q = (document.getElementById('conflictQ')?.value || '').trim();
+  const res = document.getElementById('conflictResult'); if(!res) return;
+  if(q.length < 2){ res.innerHTML = '<div class="cs-conf">Type at least two characters.</div>'; return; }
+  res.innerHTML = '<div class="cs-conf">Searching…</div>';
+  try{
+    const r = await apiFetch('/api/admin/cases/conflict-check?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Search failed');
+    if(!d.hits.length){
+      res.innerHTML = `<div class="cs-conf clear"><b style="color:#059669"><i class="fas fa-check"></i> No match.</b><div class="ls-note" style="margin-top:6px">“${esc(q)}” does not appear on either side of any matter in this system. That clears this system only — it does not clear a conflict your records elsewhere would show.</div></div>`;
+      return;
+    }
+    res.innerHTML = `<div class="cs-conf ${d.blocking ? 'hit' : ''}">
+      <b style="color:${d.blocking ? '#dc2626' : '#b45309'}"><i class="fas fa-${d.blocking ? 'triangle-exclamation' : 'circle-info'}"></i>
+        ${d.blocking ? 'Adverse party in an open matter' : 'Found, but not adverse in an open matter'}</b>
+      <div class="ls-note" style="margin:6px 0 10px">${d.blocking
+        ? 'Taking this engagement would put the firm against someone it is already acting against. Do not proceed without resolving it.'
+        : 'Review these before accepting the engagement.'}</div>
+      ${d.hits.map(h => `<div style="padding:8px 0;border-top:1px solid var(--border-color);cursor:pointer" onclick="closeConflictCheck();openCaseModal('${h.id}')">
+        <div style="font-size:13px;font-weight:600">${esc(h.title || '')}</div>
+        <div style="font-size:11.5px;color:var(--gray);margin-top:2px">
+          ${esc(h.caseRef || '')} · <span class="ls-pill" style="background:${csStage(h.stage).color};font-size:10px">${esc(csStage(h.stage).label)}</span>
+          · matched as <b>${esc(h.matchedAs)}</b>${h.open ? '' : ' (closed)'}
+        </div>
+        <div style="font-size:11.5px;color:var(--gray);margin-top:2px">Client: ${esc(h.clientName || '')}${h.adverse && h.adverse.length ? ' · Against: ' + esc(h.adverse.join(', ')) : ''}</div>
+      </div>`).join('')}
+    </div>`;
+  }catch(e){ res.innerHTML = `<div class="cs-conf">${esc(e.message)}</div>`; }
+}
+
+// ══ CASE MODAL ════════════════════════════════════════════════════════════
+function closeCaseModal(){ const m = document.getElementById('caseModal'); if(m) m.style.display = 'none'; csCurrent = null; }
+function caShowTab(t){
+  csTab = t;
+  ['details','court','ledger','docs','activity'].forEach(k => {
+    const p = document.getElementById('caPane-' + k); if(p) p.style.display = k === t ? '' : 'none';
+    const b = document.getElementById('caTab' + k.charAt(0).toUpperCase() + k.slice(1)); if(b) b.classList.toggle('active', k === t);
+  });
+  const sc = document.getElementById('caScroll'); if(sc) sc.scrollTop = 0;
+  caRenderPane();
+}
+function openCaseModal(id, tab){
+  const m = document.getElementById('caseModal'); if(!m) return;
+  csCurrent = id ? (csData.find(c => c._id === id) || null) : null;
+  csTab = tab || 'details';
+  m.style.display = 'flex';
+  const sc = document.getElementById('caScroll'); if(sc) sc.scrollTop = 0;
+  caRenderModal();
+  caShowTab(csTab);
+}
+function caRenderModal(){
+  const c = csCurrent;
+  const canManage = hasPerm('cases_manage');
+  const isNew = !c;
+  document.getElementById('caseModalTitle').textContent = isNew ? 'New case' : (c.title || 'Untitled');
+  document.getElementById('caseModalSub').textContent = isNew ? 'Open a file' :
+    [c.caseRef, c.docketNumber, csStage(c.stage).label].filter(Boolean).join(' · ');
+  ['caTabCourt','caTabLedger','caTabDocs','caTabActivity'].forEach(k => { const b = document.getElementById(k); if(b) b.disabled = isNew; });
+  ['casePdfSummaryBtn','casePdfStatementBtn','casePdfFullBtn'].forEach(k => { const b = document.getElementById(k); if(b) b.style.display = isNew ? 'none' : ''; });
+  const del = document.getElementById('caDeleteBtn');
+  if(del) del.style.display = (!isNew && CU && CU.role === 'admin') ? '' : 'none';
+  const save = document.getElementById('caSaveBtn'); if(save) save.style.display = canManage ? '' : 'none';
+  const adv = document.getElementById('caseAdvanceBtn');
+  if(adv){
+    const i = isNew ? -1 : csMeta.flow.indexOf(c.stage);
+    const can = canManage && i >= 0 && i < csMeta.flow.length - 1;
+    adv.style.display = can ? '' : 'none';
+    if(can) adv.innerHTML = `<i class="fas fa-arrow-right"></i> ${esc(csStage(csMeta.flow[i + 1]).label)}`;
+  }
+}
+
+// The Details form is generated from one spec so the labels, the order and the
+// help text live in a single place.
+const CA_FIELDS = [
+  { s: 'The matter' },
+  { k:'title', l:'Case title', w:'two', ph:'e.g. Reyes v. Dela Cruz', req:true, hint:'How the case is captioned, or a plain description before it is filed.' },
+  { k:'caseType', l:'Type', t:'select', opts:() => (csMeta.ref.caseTypes || []).map(t => [t.key, t.label]) },
+  { k:'natureOfAction', l:'Nature of action', list:'caNatureList', hint:'Suggestions change with the type. Free text — write what the pleading says.' },
+  { k:'docketNumber', l:'Docket / case number', ph:'Civil Case No. R-MKT-26-01234-CV' },
+  { k:'priority', l:'Priority', t:'select', opts:() => [['normal','Normal'],['high','High'],['urgent','Urgent']] },
+  { k:'court', l:'Court or tribunal', t:'select', opts:() => (csMeta.ref.courts || []).map(c => [c, c]), blank:'—' },
+  { k:'branch', l:'Branch', ph:'138' },
+  { k:'courtCity', l:'Court city', ph:'Makati City' },
+  { k:'judge', l:'Judge / hearing officer', ph:'Hon. …' },
+  { k:'leadCounsel', l:'Lead counsel', ph:'Atty. …' },
+  { k:'collaborating', l:'Collaborating counsel' },
+
+  { s: 'Our client' },
+  { k:'clientName', l:'Client name', req:true },
+  { k:'clientRole', l:'Appearing as', list:'caRoleList', hint:'Plaintiff, Accused, Petitioner…' },
+  { k:'clientKind', l:'Client is a', t:'select', opts:() => [['','—'],['individual','Individual'],['company','Company'],['government','Government']] },
+  { k:'clientPhone', l:'Mobile', t:'tel' },
+  { k:'clientEmail', l:'Email', t:'email', hint:'Hearing reminders go here.' },
+  { k:'clientAddress', l:'Address' },
+  { k:'account', l:'Retainer / referring firm', hint:'Leave blank for a walk-in.' },
+
+  { s: 'Key dates', note:'The prescriptive date is the last day the action can be brought. Set it during intake — it is the one date that cannot be recovered from.' },
+  { k:'dateEngaged', l:'Engaged on', t:'date' },
+  { k:'dateFiled', l:'Filed on', t:'date' },
+  { k:'prescriptiveDate', l:'Prescribes on', t:'date', hint:'Last day to file.' },
+  { k:'dateClosed', l:'Closed on', t:'date' },
+  { k:'outcome', l:'Outcome', w:'two', ph:'e.g. Settled; compromise approved 14 Aug 2026' },
+
+  { s: 'Barangay conciliation', note:'Where the Katarungang Pambarangay applies, filing without a Certificate to File Action exposes the complaint to dismissal for failure to comply with a condition precedent.' },
+  { k:'barangayRequired', l:'This matter needs barangay conciliation', t:'check', w:'full' },
+  { k:'barangayName', l:'Barangay' },
+  { k:'cfaIssued', l:'Certificate to File Action issued', t:'check' },
+  { k:'cfaDate', l:'Certificate dated', t:'date' },
+
+  { s: 'Fees' },
+  { k:'feeArrangement', l:'Arrangement', t:'select', opts:() => [['','—']].concat((csMeta.ref.feeArrangements || []).map(f => [f.key, f.label])) },
+  { k:'acceptanceFee', l:'Acceptance fee (₱)', t:'money' },
+  { k:'appearanceFee', l:'Appearance fee, per hearing (₱)', t:'money' },
+  { k:'retainerAmount', l:'Retainer, per month (₱)', t:'money' },
+  { k:'hourlyRate', l:'Hourly rate (₱)', t:'money' },
+  { k:'contingencyPct', l:'Contingency (% of recovery)', t:'money' },
+
+  { s: 'The file' },
+  { k:'summary', l:'Facts of the case', t:'textarea', w:'full', rows:5 },
+  { k:'conflictNotes', l:'Conflict-check notes', t:'textarea', w:'full', rows:2 },
+  { k:'autoEmails', l:'Send this client automatic hearing reminders', t:'check', w:'full' }
+];
+
+function caFieldHtml(f, c, canManage){
+  if(f.s) return `<div class="full" style="margin:6px 0 -4px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">${esc(f.s)}</div>${f.note ? `<div class="ls-note" style="margin-top:4px">${esc(f.note)}</div>` : ''}<div style="height:1px;background:var(--border-color);margin-top:8px"></div></div>`;
+  const id = 'ca_' + f.k;
+  const raw = c ? c[f.k] : undefined;
+  const dis = canManage ? '' : ' disabled';
+  const cls = f.w === 'full' ? 'full' : f.w === 'two' ? 'two' : '';
+  if(f.t === 'check'){
+    // NOT inside .fg on purpose: the admin theme turns a .fg label into a tiny
+    // uppercase caption, which reads wrong next to a checkbox.
+    return `<div class="${cls || 'full'}" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="${id}"${raw ? ' checked' : ''}${dis}> ${esc(f.l)}</label></div>`;
+  }
+  let input;
+  if(f.t === 'select'){
+    const opts = (f.opts ? f.opts() : []);
+    const cur = raw == null ? '' : String(raw);
+    const known = opts.some(o => String(o[0]) === cur);
+    input = `<select id="${id}" class="finput"${dis}>`
+      + (f.blank && !opts.some(o => o[0] === '') ? `<option value="">${esc(f.blank)}</option>` : '')
+      // A value saved before an option was renamed must not silently vanish.
+      + (cur && !known ? `<option value="${escA(cur)}" selected>${esc(cur)} (not in the list)</option>` : '')
+      + opts.map(o => `<option value="${escA(String(o[0]))}"${String(o[0]) === cur ? ' selected' : ''}>${esc(o[1])}</option>`).join('')
+      + '</select>';
+  } else if(f.t === 'textarea'){
+    input = `<textarea id="${id}" class="finput" rows="${f.rows || 3}"${dis} placeholder="${escA(f.ph || '')}">${esc(raw || '')}</textarea>`;
+  } else if(f.t === 'date'){
+    input = `<input type="date" id="${id}" class="finput" value="${escA(String(raw || '').slice(0,10))}"${dis}>`;
+  } else if(f.t === 'money'){
+    input = `<input type="number" id="${id}" class="finput" step="0.01" min="0" value="${escA(raw == null || raw === 0 ? '' : String(raw))}"${dis} placeholder="0">`;
+  } else {
+    input = `<input type="${f.t || 'text'}" id="${id}" class="finput" value="${escA(raw == null ? '' : String(raw))}"${dis} placeholder="${escA(f.ph || '')}"${f.list ? ` list="${f.list}"` : ''}${f.t === 'tel' ? ' inputmode="tel" autocomplete="off"' : ''}>`;
+  }
+  return `<div class="fg ${cls}"><label class="flbl" for="${id}">${esc(f.l)}${f.req ? ' *' : ''}</label>${input}${f.hint ? `<div class="ls-note" style="margin-top:4px">${esc(f.hint)}</div>` : ''}</div>`;
+}
+
+function caRenderPane(){
+  const c = csCurrent, canManage = hasPerm('cases_manage');
+  if(csTab === 'details'){
+    const el = document.getElementById('caPane-details');
+    el.innerHTML = `<div class="ls-grid">${CA_FIELDS.map(f => caFieldHtml(f, c, canManage)).join('')}</div>
+      <datalist id="caNatureList"></datalist>
+      <datalist id="caRoleList">${(csMeta.ref.clientRoles || []).map(r => `<option value="${escA(r)}">`).join('')}</datalist>
+      <div class="full" style="margin-top:18px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">The other side</div>
+        <div class="ls-note" style="margin:4px 0 10px">Recorded as a list, not free text, so the conflict check can search it before the firm takes a new client.</div>
+        <div id="caParties"></div>
+        ${canManage ? `<button class="hdr-btn" onclick="caAddParty()"><i class="fas fa-plus"></i> Add a party</button>` : ''}
+        ${c ? `<button class="hdr-btn" onclick="openConflictCheck(document.getElementById('ca_clientName').value)"><i class="fas fa-user-shield"></i> Run a conflict check</button>` : ''}
+      </div>`;
+    caRenderParties();
+    caSyncNatures();
+    const typeSel = document.getElementById('ca_caseType');
+    if(typeSel) typeSel.addEventListener('change', caSyncNatures);
+    return;
+  }
+  if(!c) return;
+  if(csTab === 'court') return caRenderCourt();
+  if(csTab === 'ledger') return caRenderLedger();
+  if(csTab === 'docs') return caRenderDocs();
+  if(csTab === 'activity') return caRenderActivity();
+}
+function caSyncNatures(){
+  const dl = document.getElementById('caNatureList'); if(!dl) return;
+  const t = document.getElementById('ca_caseType')?.value || '';
+  const list = (csMeta.ref.natures || {})[t] || [];
+  dl.innerHTML = list.map(n => `<option value="${escA(n)}">`).join('');
+}
+let caParties = [];
+function caRenderParties(){
+  const host = document.getElementById('caParties'); if(!host) return;
+  if(csCurrent && !host.dataset.loaded){ caParties = JSON.parse(JSON.stringify(csCurrent.adverseParties || [])); host.dataset.loaded = '1'; }
+  else if(!csCurrent && !host.dataset.loaded){ caParties = []; host.dataset.loaded = '1'; }
+  const canManage = hasPerm('cases_manage');
+  host.innerHTML = caParties.length ? caParties.map((p, i) => `<div class="cs-party">
+      <input type="text" class="finput" placeholder="Name" value="${escA(p.name || '')}" oninput="caParties[${i}].name=this.value"${canManage ? '' : ' disabled'}>
+      <input type="text" class="finput" placeholder="As (Defendant…)" value="${escA(p.role || '')}" oninput="caParties[${i}].role=this.value"${canManage ? '' : ' disabled'}>
+      <input type="text" class="finput" placeholder="Their counsel" value="${escA(p.counsel || '')}" oninput="caParties[${i}].counsel=this.value"${canManage ? '' : ' disabled'}>
+      <input type="text" class="finput" placeholder="Contact" value="${escA(p.contact || '')}" oninput="caParties[${i}].contact=this.value"${canManage ? '' : ' disabled'}>
+      ${canManage ? `<button class="icon-btn" title="Remove" onclick="caParties.splice(${i},1);caRenderParties()"><i class="fas fa-times"></i></button>` : '<span></span>'}
+    </div>`).join('') : '<div class="ls-note" style="margin-bottom:8px">Nobody recorded yet.</div>';
+}
+function caAddParty(){ caParties.push({ name:'', role:'', counsel:'', contact:'' }); caRenderParties(); }
+
+function caRead(){
+  const out = { adverseParties: caParties.filter(p => (p.name || '').trim() || (p.counsel || '').trim()) };
+  CA_FIELDS.forEach(f => {
+    if(f.s) return;
+    const el = document.getElementById('ca_' + f.k); if(!el) return;
+    if(f.t === 'check') out[f.k] = !!el.checked;
+    else if(f.t === 'money') out[f.k] = csNum(el.value);
+    else out[f.k] = el.value;
+  });
+  return out;
+}
+async function caSave(){
+  const body = caRead();
+  if(!(body.title || '').trim()) return showToast('A case title is required', true);
+  if(!(body.clientName || '').trim()) return showToast('A client name is required', true);
+  showLoad('Saving…');
+  try{
+    const isNew = !csCurrent;
+    const url = isNew ? '/api/admin/cases' : `/api/admin/cases/${csCurrent._id}`;
+    const r = await apiFetch(url, { method: isNew ? 'POST' : 'PUT', body: JSON.stringify(body) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Save failed');
+    csUpsert(d); csCurrent = d;
+    const host = document.getElementById('caParties'); if(host) delete host.dataset.loaded;
+    renderCases(); renderDashboard(); caRenderModal(); caShowTab(isNew ? 'court' : csTab);
+    showToast(isNew ? `Case opened · ${d.caseRef}` : 'Saved');
+  }catch(e){ showToast(e.message, true); }
+  finally{ hideLoad(); }
+}
+async function deleteCase(){
+  if(!csCurrent) return;
+  if(!confirm(`Delete “${csCurrent.title}” and everything in it? This cannot be undone.`)) return;
+  if(!confirm('This removes the whole case file, including its documents. Really delete?')) return;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}`, { method:'DELETE' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Delete failed');
+    csData = csData.filter(c => c._id !== csCurrent._id); window.csData = csData;
+    closeCaseModal(); csUpdateBadge(); renderCases(); renderDashboard(); showToast('Case deleted');
+  }catch(e){ showToast(e.message, true); }
+}
+function casePdf(mode){
+  if(!csCurrent) return;
+  csDownload(`/api/admin/cases/${csCurrent._id}/pdf?mode=${mode}`,
+    `${csCurrent.caseRef || 'case'}-${mode}.pdf`);
+}
+
+// ── pane: hearings & deadlines ──
+function caRenderCourt(){
+  const c = csCurrent, k = c.computed || {}, canManage = hasPerm('cases_manage');
+  const presc = k.prescription;
+  const banner = presc ? `<div class="ls-inline" style="border-style:solid;border-width:2px;border-color:${presc.status === 'ok' ? 'var(--border-color)' : presc.status === 'warning' ? '#b45309' : '#dc2626'};margin-top:0">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:${presc.status === 'ok' ? 'var(--gray)' : presc.status === 'warning' ? '#b45309' : '#dc2626'};font-weight:700">Prescriptive period</div>
+      <div style="font-size:15px;font-weight:700;margin-top:4px;color:${presc.status === 'lapsed' || presc.status === 'critical' ? '#dc2626' : 'inherit'}">
+        ${presc.status === 'lapsed' ? `Lapsed on ${esc(csDate(presc.date))} — ${Math.abs(presc.daysLeft)} days ago` : `${esc(csDate(presc.date))} · ${esc(csRel(presc.daysLeft))}`}</div>
+      <div class="ls-note" style="margin-top:3px">The last day the action can be brought. Change it on the Details tab.</div>
+    </div>` : `<div class="ls-inline" style="margin-top:0"><div class="ls-note">No prescriptive date set. If this matter has one, put it on the Details tab — it is the only date that cannot be recovered from.</div></div>`;
+
+  const hearings = (k.hearings || []).slice().reverse();
+  const deadlines = k.deadlines || [];
+  const rules = csMeta.ref.deadlineRules || [];
+
+  document.getElementById('caPane-court').innerHTML = banner + `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Deadlines</div>
+      ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caDlForm')"><i class="fas fa-plus"></i> Add a deadline</button>` : ''}
+    </div>
+    <div id="caDlForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+        <div class="fg full"><label class="flbl" for="caDlRule">Preset</label>
+          <select id="caDlRule" class="finput" onchange="caDlPreset()">
+            <option value="">— choose a rule, or write your own below —</option>
+            ${rules.map(r => `<option value="${escA(r.key)}">${esc(r.label)}${r.key === 'custom' ? '' : ' · ' + (r.days < 0 ? Math.abs(r.days) + 'd before' : r.days + 'd')}</option>`).join('')}
+          </select>
+          <div class="ls-note" id="caDlRuleNote" style="margin-top:4px">A preset fills in the date by counting calendar days. Confirm it against the order in front of you — periods change and a court order can set its own.</div></div>
+        <div class="fg"><label class="flbl" for="caDlFrom">Count from</label><input type="date" id="caDlFrom" class="finput" onchange="caDlPreset(true)"><div class="ls-note">The date of service, receipt or the hearing.</div></div>
+        <div class="fg"><label class="flbl" for="caDlDue">Due on</label><input type="date" id="caDlDue" class="finput"></div>
+        <div class="fg full"><label class="flbl" for="caDlTitle">What is due</label><input type="text" id="caDlTitle" class="finput" maxlength="300" placeholder="e.g. Answer"></div>
+        <div class="fg full"><label class="flbl" for="caDlBasis">Basis</label><input type="text" id="caDlBasis" class="finput" maxlength="300" placeholder="Rule 11 §1, as amended"></div>
+        <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="caDlCritical" checked> Critical — missing it could end the case</label></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caDlForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddDeadline()"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div>${deadlines.length ? deadlines.map(d => {
+      const col = d.done ? 'var(--gray)' : d.status === 'missed' ? '#dc2626' : d.status === 'today' || d.status === 'urgent' ? '#b45309' : d.status === 'soon' ? '#2563eb' : 'var(--gray)';
+      return `<div class="cs-dl ${d.done ? 'done' : ''}">
+        <input type="checkbox" ${d.done ? 'checked' : ''} ${canManage ? `onchange="caDeadlineDone('${d.id}',this.checked)"` : 'disabled'} title="Mark as done">
+        <div style="flex:1;min-width:0">
+          <div class="t" style="font-size:13.5px;font-weight:600">${esc(d.title)}${d.critical ? ' <span class="ls-chip bad">critical</span>' : ''}</div>
+          <div style="font-size:11.5px;color:${col};margin-top:2px">${d.dueDate ? esc(csDate(d.dueDate)) + ' · ' + esc(d.done ? 'done ' + csDate(d.doneDate) : csRel(d.daysAway)) : 'No date set'}</div>
+          ${d.rule ? `<div style="font-size:10.5px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-top:2px">${esc(d.rule)}</div>` : ''}
+        </div>
+        ${canManage ? `<button class="icon-btn" title="Remove" onclick="caDelSub('deadlines','${d.id}')"><i class="fas fa-trash"></i></button>` : ''}
+      </div>`; }).join('') : '<div class="ls-note" style="padding:8px 0">Nothing due.</div>'}</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Hearings</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${canManage && k.unbilledAppearances ? `<button class="hdr-btn" onclick="caBillAppearances()"><i class="fas fa-coins"></i> Bill ${k.unbilledAppearances} appearance${k.unbilledAppearances === 1 ? '' : 's'} (${csPeso(k.unbilledAppearanceValue)})</button>` : ''}
+        ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caHrForm')"><i class="fas fa-plus"></i> Add a hearing</button>` : ''}
+      </div>
+    </div>
+    <div id="caHrForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="fg"><label class="flbl" for="caHrDate">Date</label><input type="date" id="caHrDate" class="finput"></div>
+        <div class="fg"><label class="flbl" for="caHrTime">Time</label><input type="text" id="caHrTime" class="finput" maxlength="20" placeholder="08:30 AM"></div>
+        <div class="fg"><label class="flbl" for="caHrBy">Who appears</label><input type="text" id="caHrBy" class="finput" maxlength="200" placeholder="Atty. …"></div>
+        <div class="fg two"><label class="flbl" for="caHrPurpose">Purpose</label><input type="text" id="caHrPurpose" class="finput" maxlength="300" list="caPurposeList" placeholder="Pre-trial"><datalist id="caPurposeList">${(csMeta.ref.hearingPurposes || []).map(p => `<option value="${escA(p)}">`).join('')}</datalist></div>
+        <div class="fg"><label class="flbl" for="caHrVenue">Venue</label><input type="text" id="caHrVenue" class="finput" maxlength="300" placeholder="Courtroom 4"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caHrForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddHearing()"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div>${hearings.length ? hearings.map(h => `<div style="padding:10px 0;border-bottom:1px solid var(--border-color);display:flex;gap:10px;align-items:flex-start">
+        <div style="width:96px;flex-shrink:0">
+          <div style="font-size:12.5px;font-weight:600">${esc(csDate(h.date)) || '—'}</div>
+          <div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace">${esc(h.time || '')}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:600">${esc(h.purpose || 'Hearing')}
+            ${h.reset ? '<span class="ls-chip dim">reset</span>' : h.past ? '<span class="ls-chip ok">held</span>' : `<span class="ls-chip info">${esc(csRel(h.daysAway))}</span>`}
+            ${h.billed ? '<span class="ls-chip dim">billed</span>' : ''}
+            ${h.notified ? '<span class="ls-chip dim">client told</span>' : ''}</div>
+          ${h.venue ? `<div style="font-size:11.5px;color:var(--gray);margin-top:2px">${esc(h.venue)}</div>` : ''}
+          ${h.appearedBy ? `<div style="font-size:11.5px;color:var(--gray);margin-top:2px">Appeared: ${esc(h.appearedBy)}</div>` : ''}
+          ${h.result ? `<div style="font-size:12.5px;margin-top:4px;white-space:pre-wrap">${esc(h.result)}</div>` : ''}
+          ${canManage ? `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="hdr-btn" style="font-size:10px;padding:3px 8px" onclick="caHearingResult('${h.id}')"><i class="fas fa-pen"></i> ${h.result ? 'Edit' : 'Record'} what happened</button>
+            <button class="hdr-btn" style="font-size:10px;padding:3px 8px" onclick="caHearingReset('${h.id}',${!h.reset})">${h.reset ? 'Un-reset' : 'Mark reset'}</button>
+            ${(!h.past && csCurrent.clientEmail) ? `<button class="hdr-btn" style="font-size:10px;padding:3px 8px" onclick="caEmail('hearing','${h.id}')"><i class="fas fa-envelope"></i> Remind the client</button>` : ''}
+          </div>` : ''}
+        </div>
+        ${canManage ? `<button class="icon-btn" title="Remove" onclick="caDelSub('hearings','${h.id}')"><i class="fas fa-trash"></i></button>` : ''}
+      </div>`).join('') : '<div class="ls-note" style="padding:8px 0">No hearings recorded.</div>'}</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Filed and received</div>
+      ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caFlForm')"><i class="fas fa-plus"></i> Add</button>` : ''}
+    </div>
+    <div id="caFlForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+        <div class="fg two"><label class="flbl" for="caFlTitle">Document</label><input type="text" id="caFlTitle" class="finput" maxlength="300" placeholder="Complaint for Unlawful Detainer"></div>
+        <div class="fg"><label class="flbl" for="caFlDir">Direction</label><select id="caFlDir" class="finput"><option value="filed">We filed it</option><option value="received">We received it</option></select></div>
+        <div class="fg"><label class="flbl" for="caFlDate">Date</label><input type="date" id="caFlDate" class="finput"></div>
+        <div class="fg"><label class="flbl" for="caFlMode">How</label><input type="text" id="caFlMode" class="finput" maxlength="60" placeholder="Personal / Registered mail / E-filing"></div>
+        <div class="fg"><label class="flbl" for="caFlBy">By</label><input type="text" id="caFlBy" class="finput" maxlength="200"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caFlForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddFiling()"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div>${(k.filings || []).length ? k.filings.map(f => `<div style="padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;gap:10px;align-items:flex-start">
+        <div style="width:96px;flex-shrink:0;font-size:12px;color:var(--gray)">${esc(csDate(f.date)) || '—'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${esc(f.title)} <span class="ls-chip ${f.direction === 'received' ? 'info' : 'dim'}">${f.direction === 'received' ? 'received' : 'filed'}</span></div>
+          <div style="font-size:11.5px;color:var(--gray)">${[f.mode, f.by].filter(Boolean).map(esc).join(' · ')}</div>
+        </div>
+        ${canManage ? `<button class="icon-btn" title="Remove" onclick="caDelSub('filings','${f.id}')"><i class="fas fa-trash"></i></button>` : ''}
+      </div>`).join('') : '<div class="ls-note" style="padding:8px 0">Nothing recorded.</div>'}</div>`;
+}
+function caToggleForm(id){ const el = document.getElementById(id); if(el) el.style.display = el.style.display === 'none' ? '' : 'none'; }
+// Fills the date from the chosen preset by counting calendar days.
+function caDlPreset(keepTitle){
+  const key = document.getElementById('caDlRule')?.value;
+  const rule = (csMeta.ref.deadlineRules || []).find(r => r.key === key);
+  const note = document.getElementById('caDlRuleNote');
+  if(!rule){ if(note) note.textContent = 'A preset fills in the date by counting calendar days. Confirm it against the order in front of you — periods change and a court order can set its own.'; return; }
+  if(!keepTitle){
+    const t = document.getElementById('caDlTitle'); if(t && rule.key !== 'custom') t.value = rule.label;
+    const b = document.getElementById('caDlBasis'); if(b) b.value = rule.rule || '';
+    const cr = document.getElementById('caDlCritical'); if(cr) cr.checked = !!rule.critical;
+  }
+  if(note) note.textContent = rule.key === 'custom' ? 'Set the date yourself.'
+    : `${rule.days < 0 ? Math.abs(rule.days) + ' calendar days BEFORE ' : rule.days + ' calendar days from '}${rule.from}. ${rule.rule}`;
+  const from = document.getElementById('caDlFrom')?.value;
+  if(from && rule.days){
+    const [y,m,d] = from.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m-1, d));
+    dt.setUTCDate(dt.getUTCDate() + rule.days);
+    const due = document.getElementById('caDlDue');
+    if(due) due.value = dt.toISOString().slice(0,10);
+  }
+}
+async function caPost(path, body, okMsg){
+  showLoad('Saving…');
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}${path}`, { method:'POST', body: JSON.stringify(body || {}) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Save failed');
+    csUpsert(d); csCurrent = d; renderCases(); renderDashboard(); caRenderModal(); caRenderPane();
+    if(okMsg) showToast(okMsg);
+    return true;
+  }catch(e){ showToast(e.message, true); return false; }
+  finally{ hideLoad(); }
+}
+async function caPut(path, body, okMsg){
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}${path}`, { method:'PUT', body: JSON.stringify(body || {}) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Save failed');
+    csUpsert(d); csCurrent = d; renderCases(); renderDashboard(); caRenderPane();
+    if(okMsg) showToast(okMsg);
+  }catch(e){ showToast(e.message, true); }
+}
+async function caDelSub(kind, id){
+  if(!confirm('Remove this entry?')) return;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/${kind}/${id}`, { method:'DELETE' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not remove it');
+    csUpsert(d); csCurrent = d; renderCases(); renderDashboard(); caRenderPane(); showToast('Removed');
+  }catch(e){ showToast(e.message, true); }
+}
+const caVal = id => (document.getElementById(id)?.value || '').trim();
+async function caAddDeadline(){
+  const title = caVal('caDlTitle');
+  if(!title) return showToast('What is due?', true);
+  if(await caPost('/deadlines', { title, dueDate: caVal('caDlDue'), rule: caVal('caDlBasis'),
+      critical: !!document.getElementById('caDlCritical')?.checked }, 'Deadline added')){
+    ['caDlTitle','caDlBasis','caDlDue','caDlFrom'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+async function caAddHearing(){
+  const date = caVal('caHrDate');
+  if(!date) return showToast('Pick a date', true);
+  if(await caPost('/hearings', { date, time: caVal('caHrTime'), purpose: caVal('caHrPurpose'),
+      venue: caVal('caHrVenue'), appearedBy: caVal('caHrBy') }, 'Hearing added')){
+    ['caHrDate','caHrTime','caHrPurpose','caHrVenue'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+async function caAddFiling(){
+  const title = caVal('caFlTitle');
+  if(!title) return showToast('What document?', true);
+  if(await caPost('/filings', { title, direction: caVal('caFlDir'), date: caVal('caFlDate'),
+      mode: caVal('caFlMode'), by: caVal('caFlBy') }, 'Recorded')){
+    ['caFlTitle','caFlDate','caFlMode','caFlBy'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+function caDeadlineDone(id, done){ caPut(`/deadlines/${id}`, { done }, done ? 'Marked done' : 'Reopened'); }
+function caHearingReset(id, reset){ caPut(`/hearings/${id}`, { reset }); }
+function caHearingResult(id){
+  const h = (csCurrent.computed.hearings || []).find(x => x.id === id);
+  const result = prompt('What happened at this hearing?', (h && h.result) || '');
+  if(result === null) return;
+  const appearedBy = prompt('Who appeared for us?', (h && h.appearedBy) || '') || '';
+  caPut(`/hearings/${id}`, { result, appearedBy }, 'Recorded');
+}
+function caBillAppearances(){
+  const k = csCurrent.computed;
+  if(!confirm(`Raise ${k.unbilledAppearances} appearance charge${k.unbilledAppearances === 1 ? '' : 's'} at ${csPeso(csCurrent.appearanceFee)} each, totalling ${csPeso(k.unbilledAppearanceValue)}?`)) return;
+  caPost('/bill-appearances', {}, 'Appearances billed');
+}
+
+// ── pane: fees ──
+function caRenderLedger(){
+  const c = csCurrent, k = c.computed || {}, canManage = hasPerm('cases_manage');
+  const kinds = csMeta.ref.chargeKinds || [];
+  document.getElementById('caPane-ledger').innerHTML = `
+    <div class="ls-kpis">
+      <div class="ls-kpi"><div class="k">Billed</div><div class="v">${csPeso(k.billed)}</div><div class="s">${(k.charges||[]).length} entr${(k.charges||[]).length === 1 ? 'y' : 'ies'}</div></div>
+      <div class="ls-kpi"><div class="k">Received</div><div class="v" style="color:#059669">${csPeso(k.paid)}</div><div class="s">${(k.payments||[]).length} payment${(k.payments||[]).length === 1 ? '' : 's'}</div></div>
+      <div class="ls-kpi"><div class="k">Balance</div><div class="v" style="color:${k.balance > 0.005 ? '#dc2626' : '#059669'}">${csPeso(k.balance)}</div><div class="s">${k.balance > 0.005 ? 'outstanding' : 'settled'}</div></div>
+      <div class="ls-kpi"><div class="k">Advanced by us</div><div class="v">${csPeso(k.disbursements)}</div><div class="s">reimbursed at cost</div></div>
+      <div class="ls-kpi"><div class="k">Time logged</div><div class="v">${(k.hoursTotal||0).toFixed(2)}h</div><div class="s">${csPeso(k.unbilledTime)} unbilled</div></div>
+    </div>
+    ${c.clientEmail ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="hdr-btn" onclick="caEmail('statement')"><i class="fas fa-paper-plane"></i> Email the statement</button>
+      <button class="hdr-btn" onclick="casePdf('statement')"><i class="fas fa-file-pdf"></i> Download the statement</button>
+    </div>` : '<div class="ls-note" style="margin-bottom:14px">Add a client email on the Details tab to send a statement.</div>'}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Charges</div>
+      ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caChForm')"><i class="fas fa-plus"></i> Add a charge</button>` : ''}
+    </div>
+    <div id="caChForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><label class="flbl" for="caChKind">Kind</label><select id="caChKind" class="finput" onchange="caChKindPick()">${kinds.map(x => `<option value="${escA(x.key)}">${esc(x.label)}</option>`).join('')}</select></div>
+        <div class="fg"><label class="flbl" for="caChAmount">Amount (₱)</label><input type="number" id="caChAmount" class="finput" step="0.01" min="0"></div>
+        <div class="fg two"><label class="flbl" for="caChLabel">Particulars</label><input type="text" id="caChLabel" class="finput" maxlength="300"></div>
+        <div class="fg"><label class="flbl" for="caChDate">Date</label><input type="date" id="caChDate" class="finput"></div>
+        <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="caChReimb"> The firm advanced this — the client repays it at cost</label></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caChForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddCharge()"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Date</th><th>Particulars</th><th></th><th style="text-align:right">Amount</th><th></th></tr></thead>
+      <tbody>${(k.charges || []).length ? k.charges.map(ch => `<tr>
+        <td style="white-space:nowrap">${esc(csDate(ch.date))}</td>
+        <td>${esc(ch.label || ((kinds.find(x => x.key === ch.kind) || {}).label) || ch.kind)}</td>
+        <td>${ch.reimbursable ? '<span class="ls-chip dim">advanced</span>' : ''}</td>
+        <td class="money" style="text-align:right">${csPeso(ch.amount)}</td>
+        <td>${canManage ? `<button class="icon-btn" title="Remove" onclick="caDelSub('charges','${ch.id}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('')
+        : '<tr><td colspan="5"><div class="ls-note" style="padding:6px 0">Nothing billed yet.</div></td></tr>'}</tbody>
+      ${(k.charges || []).length ? `<tfoot><tr><td colspan="3" style="font-weight:700">Total billed</td><td class="money" style="text-align:right;font-weight:700">${csPeso(k.billed)}</td><td></td></tr></tfoot>` : ''}
+    </table></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Payments received</div>
+      ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caPmForm')"><i class="fas fa-plus"></i> Record a payment</button>` : ''}
+    </div>
+    <div id="caPmForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><label class="flbl" for="caPmAmount">Amount (₱)</label><input type="number" id="caPmAmount" class="finput" step="0.01" min="0"></div>
+        <div class="fg"><label class="flbl" for="caPmDate">Date</label><input type="date" id="caPmDate" class="finput"></div>
+        <div class="fg"><label class="flbl" for="caPmMode">Mode</label><select id="caPmMode" class="finput"><option>Cash</option><option>GCash</option><option>Bank transfer</option><option>Check</option><option>Other</option></select></div>
+        <div class="fg"><label class="flbl" for="caPmRef">Reference</label><input type="text" id="caPmRef" class="finput" maxlength="120" placeholder="BPI 8842"></div>
+        <div class="fg two"><label class="flbl" for="caPmLabel">In payment of</label><input type="text" id="caPmLabel" class="finput" maxlength="200" placeholder="Acceptance fee"></div>
+      </div>
+      <div class="ls-note" style="margin-top:8px">A numbered acknowledgement receipt is issued automatically. It is not a BIR official receipt, and the document says so.</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caPmForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddPayment()"><i class="fas fa-plus"></i> Record</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Date</th><th>Receipt</th><th>For</th><th>Mode</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+      <tbody>${(k.payments || []).length ? k.payments.map(p => `<tr>
+        <td style="white-space:nowrap">${esc(csDate(p.date))}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${esc(p.receiptNo || '')}</td>
+        <td>${esc(p.label || '')}${p.reference ? `<div style="font-size:11px;color:var(--gray)">${esc(p.reference)}</div>` : ''}</td>
+        <td>${esc(p.mode || '')}</td>
+        <td class="money" style="text-align:right;color:#059669">${csPeso(p.amount)}</td>
+        <td style="white-space:nowrap">
+          <button class="icon-btn" title="Receipt PDF" onclick="csDownload('/api/admin/cases/${c._id}/receipt/${p.id}','${escA(p.receiptNo || 'receipt')}.pdf')"><i class="fas fa-file-pdf"></i></button>
+          ${c.clientEmail ? `<button class="icon-btn" title="Email the receipt" onclick="caEmail('receipt','${p.id}')"><i class="fas fa-envelope"></i></button>` : ''}
+          ${canManage ? `<button class="icon-btn" title="Delete" onclick="caDelPayment('${p.id}')"><i class="fas fa-trash"></i></button>` : ''}
+        </td></tr>`).join('')
+        : '<tr><td colspan="6"><div class="ls-note" style="padding:6px 0">Nothing received yet.</div></td></tr>'}</tbody>
+      ${(k.payments || []).length ? `<tfoot><tr><td colspan="4" style="font-weight:700">Total received</td><td class="money" style="text-align:right;font-weight:700;color:#059669">${csPeso(k.paid)}</td><td></td></tr></tfoot>` : ''}
+    </table></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 8px;flex-wrap:wrap">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700">Time</div>
+      ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caTmForm')"><i class="fas fa-plus"></i> Log time</button>` : ''}
+    </div>
+    <div id="caTmForm" class="ls-inline" style="display:none">
+      <div class="ls-grid" style="grid-template-columns:1fr 1fr">
+        <div class="fg two"><label class="flbl" for="caTmDesc">Work done</label><input type="text" id="caTmDesc" class="finput" maxlength="500" placeholder="Drafting the answer"></div>
+        <div class="fg"><label class="flbl" for="caTmHours">Hours</label><input type="number" id="caTmHours" class="finput" step="0.25" min="0"></div>
+        <div class="fg"><label class="flbl" for="caTmRate">Rate (₱/h)</label><input type="number" id="caTmRate" class="finput" step="0.01" min="0" placeholder="${escA(String(c.hourlyRate || ''))}"><div class="ls-note">Blank uses the case rate.</div></div>
+        <div class="fg"><label class="flbl" for="caTmDate">Date</label><input type="date" id="caTmDate" class="finput"></div>
+        <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="caTmBillable" checked> Billable</label></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="hdr-btn" onclick="caToggleForm('caTmForm')">Cancel</button>
+        <button class="hdr-btn primary" onclick="caAddTime()"><i class="fas fa-plus"></i> Log</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Date</th><th>Work done</th><th>By</th><th style="text-align:right">Hours</th><th style="text-align:right">Value</th><th></th></tr></thead>
+      <tbody>${(k.timeEntries || []).length ? k.timeEntries.map(t => `<tr>
+        <td style="white-space:nowrap">${esc(csDate(t.date))}</td>
+        <td>${esc(t.description || '')}${!t.billable ? ' <span class="ls-chip dim">not billable</span>' : ''}</td>
+        <td>${esc(t.by || '')}</td>
+        <td class="money" style="text-align:right">${t.hours.toFixed(2)}</td>
+        <td class="money" style="text-align:right">${t.billable ? csPeso(t.value) : '—'}</td>
+        <td>${canManage ? `<button class="icon-btn" title="Remove" onclick="caDelSub('time','${t.id}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('')
+        : '<tr><td colspan="6"><div class="ls-note" style="padding:6px 0">No time logged.</div></td></tr>'}</tbody></table></div>`;
+}
+function caChKindPick(){
+  const k = document.getElementById('caChKind')?.value;
+  const lbl = document.getElementById('caChLabel');
+  const amt = document.getElementById('caChAmount');
+  const kinds = csMeta.ref.chargeKinds || [];
+  if(lbl && !lbl.value) lbl.value = ((kinds.find(x => x.key === k) || {}).label) || '';
+  const reimb = document.getElementById('caChReimb');
+  if(reimb) reimb.checked = ['filing_fee','sheriff','transcript','publication','travel','expert'].includes(k);
+  if(amt && !amt.value){
+    if(k === 'acceptance' && csCurrent.acceptanceFee) amt.value = csCurrent.acceptanceFee;
+    if(k === 'appearance' && csCurrent.appearanceFee) amt.value = csCurrent.appearanceFee;
+    if(k === 'retainer' && csCurrent.retainerAmount) amt.value = csCurrent.retainerAmount;
+  }
+}
+async function caAddCharge(){
+  const amount = csNum(caVal('caChAmount'));
+  if(amount <= 0) return showToast('Enter an amount', true);
+  if(await caPost('/charges', { kind: caVal('caChKind'), label: caVal('caChLabel'), amount,
+      date: caVal('caChDate'), reimbursable: !!document.getElementById('caChReimb')?.checked }, 'Charge added')){
+    ['caChLabel','caChAmount','caChDate'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+async function caAddPayment(){
+  const amount = csNum(caVal('caPmAmount'));
+  if(amount <= 0) return showToast('Enter an amount', true);
+  if(await caPost('/payments', { amount, date: caVal('caPmDate'), mode: caVal('caPmMode'),
+      reference: caVal('caPmRef'), label: caVal('caPmLabel') }, 'Payment recorded')){
+    ['caPmAmount','caPmDate','caPmRef','caPmLabel'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+async function caAddTime(){
+  const hours = csNum(caVal('caTmHours'));
+  if(hours <= 0) return showToast('How many hours?', true);
+  if(await caPost('/time', { description: caVal('caTmDesc'), hours, rate: csNum(caVal('caTmRate')),
+      date: caVal('caTmDate'), billable: !!document.getElementById('caTmBillable')?.checked }, 'Time logged')){
+    ['caTmDesc','caTmHours','caTmDate'].forEach(i => { const el = document.getElementById(i); if(el) el.value = ''; });
+  }
+}
+async function caDelPayment(pid){
+  if(!confirm('Delete this payment? The receipt number is not reused.')) return;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/payments/${pid}`, { method:'DELETE' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not delete it');
+    csUpsert(d); csCurrent = d; renderCases(); renderDashboard(); caRenderPane(); showToast('Payment deleted');
+  }catch(e){ showToast(e.message, true); }
+}
+
+// ── pane: documents ──
+function caRenderDocs(){
+  const c = csCurrent, canManage = hasPerm('cases_manage');
+  const files = c.files || [];
+  document.getElementById('caPane-docs').innerHTML = `
+    <div class="ls-note" style="margin-bottom:12px">Pleadings, orders, IDs, proof of payment. Files are stored privately and opened through a link that expires after five minutes — they are never on the public website. These are privileged: only staff with case access can see them.</div>
+    ${canManage ? `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <input type="text" id="caFileLabel" class="finput" placeholder="Label, e.g. Order dated 15 July 2026" maxlength="200" style="max-width:340px">
+      <button class="hdr-btn primary" onclick="document.getElementById('caFileInput').click()"><i class="fas fa-upload"></i> Upload</button>
+    </div>` : ''}
+    ${files.length ? `<div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Label</th><th>File</th><th>Uploaded</th><th></th></tr></thead>
+      <tbody>${files.map(f => `<tr>
+        <td>${esc(f.label || 'Document')}</td>
+        <td style="font-size:12px;color:var(--gray)">${esc(f.name || '')} ${f.bytes ? `<span style="white-space:nowrap">· ${(f.bytes/1024).toFixed(0)} KB</span>` : ''}</td>
+        <td style="font-size:12px;color:var(--gray)">${esc(csDate(f.uploadedAt))}${f.uploadedByName ? '<br>' + esc(f.uploadedByName) : ''}</td>
+        <td style="white-space:nowrap">
+          <button class="icon-btn" title="Open" onclick="caOpenFile('${f._id}')"><i class="fas fa-up-right-from-square"></i></button>
+          ${canManage ? `<button class="icon-btn" title="Delete" onclick="caDelFile('${f._id}')"><i class="fas fa-trash"></i></button>` : ''}
+        </td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="empty-st"><i class="fas fa-folder-open"></i><p>No documents yet.</p></div>'}`;
+}
+async function caUploadFile(input){
+  const file = input.files && input.files[0]; if(!file) return;
+  const label = document.getElementById('caFileLabel')?.value || '';
+  const fd = new FormData(); fd.append('file', file); fd.append('label', label);
+  showLoad('Uploading…');
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files`, { method:'POST', body: fd });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Upload failed');
+    csUpsert(d); csCurrent = d; caRenderPane(); showToast('Uploaded');
+    const lb = document.getElementById('caFileLabel'); if(lb) lb.value = '';
+  }catch(e){ showToast(e.message, true); }
+  finally{ hideLoad(); input.value = ''; }
+}
+async function caOpenFile(fid){
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}/link`);
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not open it');
+    window.open(d.url, '_blank', 'noopener');
+  }catch(e){ showToast(e.message, true); }
+}
+async function caDelFile(fid){
+  if(!confirm('Delete this document? It is removed from storage as well.')) return;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}`, { method:'DELETE' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not delete it');
+    csUpsert(d); csCurrent = d; caRenderPane(); showToast('Deleted');
+  }catch(e){ showToast(e.message, true); }
+}
+
+// ── pane: notes & activity ──
+function caRenderActivity(){
+  const c = csCurrent, canManage = hasPerm('cases_manage');
+  const notes = (c.notes || []).slice().sort((a,b) => String(b.at).localeCompare(String(a.at)));
+  const hist = (c.history || []).slice().reverse();
+  document.getElementById('caPane-activity').innerHTML = `
+    ${c.clientEmail ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="hdr-btn" onclick="caEmail('update')"><i class="fas fa-envelope"></i> Write to the client</button>
+      <button class="hdr-btn" onclick="caEmail('engagement')"><i class="fas fa-handshake"></i> Send the engagement note</button>
+    </div>` : ''}
+    ${canManage ? `<div class="ls-inline" style="margin-top:0">
+      <div class="fg"><label class="flbl" for="caNoteBody">Add a note</label><textarea id="caNoteBody" class="finput" rows="3" placeholder="What happened, what the client said, what to do next…"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="hdr-btn primary" onclick="caAddNote()"><i class="fas fa-plus"></i> Add note</button></div>
+    </div>` : ''}
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700;margin:18px 0 8px">Notes</div>
+    ${notes.length ? notes.map(n => `<div class="ls-log">
+        <div class="m">${esc(csDate(n.at))}${n.byName ? ' · ' + esc(n.byName) : ''}</div>
+        <div class="t">${esc(n.body || '')}</div>
+        ${canManage ? `<button class="hdr-btn" style="font-size:10px;padding:2px 7px;margin-top:4px" onclick="caDelSub('notes','${n._id}')">Remove</button>` : ''}
+      </div>`).join('') : '<div class="ls-note">No notes yet.</div>'}
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#ff3d00;font-weight:700;margin:22px 0 8px">Activity</div>
+    ${hist.length ? hist.map(h => `<div style="display:flex;gap:10px;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border-color)">
+        <div style="width:110px;flex-shrink:0;color:var(--gray);font-family:'JetBrains Mono',monospace;font-size:11px">${esc(csDate(h.at))}</div>
+        <div style="flex:1">${esc(h.what || '')}</div>
+        <div style="color:var(--gray)">${esc(h.byName || '')}</div>
+      </div>`).join('') : '<div class="ls-note">Nothing yet.</div>'}`;
+}
+async function caAddNote(){
+  const body = caVal('caNoteBody');
+  if(!body) return showToast('Write something first', true);
+  if(await caPost('/notes', { body }, 'Note added')){
+    const el = document.getElementById('caNoteBody'); if(el) el.value = '';
+  }
+}
+
+// ── email composer ──
+async function caEmail(kind, refId){
+  const c = csCurrent; if(!c) return;
+  if(!c.clientEmail) return showToast('This client has no email address', true);
+  let message = '', subject = '';
+  if(kind === 'update' || kind === 'custom'){
+    message = prompt('What would you like to say?', '');
+    if(message === null) return;
+    if(!message.trim()) return showToast('Nothing to send', true);
+  }
+  const body = { kind, message, subject };
+  if(kind === 'receipt') body.paymentId = refId;
+  if(kind === 'hearing') body.hearingId = refId;
+  showLoad('Preparing…');
+  let preview;
+  try{
+    const r = await apiFetch(`/api/admin/cases/${c._id}/email-preview`, { method:'POST', body: JSON.stringify(body) });
+    preview = await r.json();
+    if(!r.ok) throw new Error(preview.error || 'Could not build the message');
+  }catch(e){ hideLoad(); return showToast(e.message, true); }
+  finally{ hideLoad(); }
+  if(!confirm(`Send to ${preview.to}?\n\nSubject: ${preview.subject}`)) return;
+  showLoad('Sending…');
+  try{
+    const r = await apiFetch(`/api/admin/cases/${c._id}/email`, { method:'POST', body: JSON.stringify(body) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'The email could not be sent');
+    csUpsert(d); csCurrent = d; caRenderPane(); showToast('Sent to ' + preview.to);
+  }catch(e){ showToast(e.message, true); }
+  finally{ hideLoad(); }
+}
+
+// ── dashboard panel ──
+function renderCasesPanel(){
+  const host = document.getElementById('dashCasesPanel'); if(!host) return;
+  if(!hasPerm('cases_view')){ host.style.display = 'none'; return; }
+  host.style.display = '';
+  const open = csData.filter(c => CS_OPEN.includes(c.stage));
+  const today = csMeta.today;
+  const soon = [];
+  open.forEach(c => {
+    const k = c.computed || {};
+    (k.hearings || []).forEach(h => { if(h.date >= today && !h.reset && h.daysAway <= 7) soon.push({ d: h.date, t: h.purpose || 'Hearing', c, kind:'hearing', away:h.daysAway }); });
+    (k.deadlines || []).forEach(x => { if(!x.done && x.dueDate && x.daysAway !== null && x.daysAway <= 7) soon.push({ d: x.dueDate, t: x.title, c, kind:'deadline', away:x.daysAway, missed:x.status === 'missed' }); });
+  });
+  soon.sort((a,b) => a.d.localeCompare(b.d));
+  const body = host.querySelector('.panel-body');
+  if(!body) return;
+  body.innerHTML = soon.length
+    ? soon.slice(0, 6).map(s => `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border-color);cursor:pointer;align-items:flex-start" onclick="switchTab('cases');openCaseModal('${s.c._id}','court')">
+        <div style="width:78px;flex-shrink:0;font-size:11px;color:${s.missed ? '#dc2626' : 'var(--gray)'};font-family:'JetBrains Mono',monospace">${esc(csDate(s.d))}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:600"><i class="fas fa-${s.kind === 'hearing' ? 'gavel' : 'flag'}" style="font-size:10px;color:${s.kind === 'hearing' ? '#2563eb' : '#b45309'}"></i> ${esc(s.t)}</div>
+          <div style="font-size:11px;color:var(--gray)">${esc(s.c.title || '')}</div>
+        </div>
+        <div style="font-size:11px;color:${s.missed ? '#dc2626' : 'var(--gray)'};white-space:nowrap">${esc(s.missed ? 'missed' : csRel(s.away))}</div>
+      </div>`).join('')
+    : '<div class="ls-note">Nothing set in the next seven days.</div>';
+}
+
 function renderLeasingPanel(){
   const el = document.getElementById('dashLeasing'); if(!el || !hasPerm('leasing_view')) return;
   if(!window.lsData){ el.innerHTML = '<div class="dash-loading">Loading…</div>'; return; }

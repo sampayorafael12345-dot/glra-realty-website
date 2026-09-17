@@ -265,11 +265,47 @@ async function leasePdf(l, c, mode, H) {
   // Parties
   if (mode !== 'tenant') {
     y = section(doc, y, 'Tenant (lessee)', ctx);
-    y = kvGrid(doc, y, [['Name', l.tenantName], ['Phone', l.tenantPhone], ['Email', l.tenantEmail], ['Occupation', [l.tenantOccupation, l.tenantCompany].filter(Boolean).join(' · ')], ['Occupants', l.occupants], ['Permanent address', l.tenantAddress], ...(mode === 'full' ? [['ID presented', [l.tenantIdType, l.tenantIdNo].filter(Boolean).join(' ')], ['Emergency contact', [l.emergencyName, l.emergencyPhone].filter(Boolean).join(' · ')]] : [])], ctx);
+    y = kvGrid(doc, y, [
+      ['Name', l.tenantName],
+      ['Phone', [l.tenantPhone, l.tenantPhone2].filter(Boolean).join(' / ')],
+      ['Email', l.tenantEmail],
+      ['Occupation', [l.tenantOccupation, l.tenantCompany].filter(Boolean).join(' · ')],
+      ['Occupants', l.occupants],
+      ['Permanent address', l.tenantAddress],
+      // The identity block is what a contract recites; it stays off the
+      // owner's copy, which only needs to know who is in the unit.
+      ...(mode === 'full' ? [
+        ['Nationality', l.tenantNationality],
+        ['Civil status', l.tenantCivilStatus],
+        ['Spouse', l.tenantSpouse],
+        ['ID presented', [l.tenantIdType, l.tenantIdNo].filter(Boolean).join(' ')],
+        ['TIN', l.tenantTin],
+        ['Work address', l.tenantWorkAddress],
+        ['Emergency contact', [l.emergencyName, l.emergencyRelation && '(' + l.emergencyRelation + ')', l.emergencyPhone].filter(Boolean).join(' ')],
+        ['Emergency address', l.emergencyAddress]
+      ] : [])], ctx);
   }
   if (mode !== 'owner') {
     y = section(doc, y, 'Owner (lessor)', ctx);
-    y = kvGrid(doc, y, mode === 'tenant' ? [['Name', l.ownerName], ['Managed by', 'GLRA Realty']] : [['Name', l.ownerName], ['Phone', l.ownerPhone], ['Email', l.ownerEmail], ['Address', l.ownerAddress], ['Rent collection', l.managedByGLRA ? `GLRA collects, ${l.managementFeePct || 0}% management fee` : 'Owner collects directly']], ctx);
+    // A tenant sees the lessor's name and nothing else: not the phone, not the
+    // TIN, and never the account the rent is remitted to.
+    y = kvGrid(doc, y, mode === 'tenant'
+      ? [['Name', l.ownerName], ['Managed by', 'GLRA Realty']]
+      : [
+        ['Name', l.ownerName],
+        ['Phone', [l.ownerPhone, l.ownerPhone2].filter(Boolean).join(' / ')],
+        ['Email', l.ownerEmail],
+        ['Address', l.ownerAddress],
+        ['Civil status', l.ownerCivilStatus],
+        ['Spouse', l.ownerSpouse],
+        ...(mode === 'full' ? [
+          ['ID presented', [l.ownerIdType, l.ownerIdNo].filter(Boolean).join(' ')],
+          ['TIN', l.ownerTin]
+        ] : []),
+        ['Signing representative', [l.ownerRep, l.ownerRepPhone].filter(Boolean).join(' · ')],
+        ['Rent collection', l.managedByGLRA ? `GLRA collects, ${l.managementFeePct || 0}% management fee` : 'Owner collects directly'],
+        ['Remitted to', l.ownerRemittance]
+      ], ctx);
   }
 
   // Terms
@@ -327,6 +363,10 @@ async function leasePdf(l, c, mode, H) {
     y = section(doc, y, 'Remittance summary', ctx);
     const fee = Math.round(c.credits.rent * (Number(l.managementFeePct) || 0)) / 100;
     y = kvGrid(doc, y, [['Rent collected to date', H.peso(c.credits.rent)], [`Management fee (${l.managementFeePct || 0}%)`, H.peso(fee)], ['Net due to owner', H.peso(c.credits.rent - fee)], ['Deposit held in trust', H.peso(c.deposit.held)]], ctx, 4);
+    // Where that net amount goes. It belongs beside the figure rather than in
+    // the parties block, which the owner statement omits (it is addressed to
+    // the owner, so repeating their own details back at them is noise).
+    if (l.ownerRemittance) y = kvGrid(doc, y, [['Remitted to', l.ownerRemittance]], ctx, 1);
   }
 
   // Internal trail (full profile only)
