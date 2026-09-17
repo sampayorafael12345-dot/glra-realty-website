@@ -7,6 +7,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+const os = require('os');
 const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
 const brevo = require('@getbrevo/brevo');
@@ -46,8 +47,15 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled promise rejection:', reason && reason.stack ? reason.stack : reason);
 });
+// An uncaught exception means the process is in a state nobody reasoned
+// about — a half-written response, a released connection, a listener that
+// never bound. Carrying on serves visitors from a broken process; the site
+// looks up while nothing works. Log it, then exit so Render starts a fresh
+// one. (Proved in testing: a port clash was swallowed here and the process
+// stayed "alive" for minutes with no listener attached.)
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err && err.stack ? err.stack : err);
+  setTimeout(() => process.exit(1), 250).unref();
 });
 
 // ============ HTML ESCAPE HELPER (used in email templates) ============
@@ -201,7 +209,7 @@ app.use(helmet.contentSecurityPolicy({
     // policy can never be promoted out of report-only.
     'script-src': ["'self'", "'unsafe-inline'",
       'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-      'https://www.clarity.ms', 'https://c.clarity.ms', 'https://scripts.clarity.ms'],
+      'https://*.clarity.ms'],
     'style-src': ["'self'", "'unsafe-inline'",
       'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
     'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
@@ -209,9 +217,13 @@ app.use(helmet.contentSecurityPolicy({
     // placeholders and the admin's local image previews before upload.
     'img-src': ["'self'", 'data:', 'blob:',
       'https://res.cloudinary.com', 'https://images.unsplash.com',
-      'https://www.clarity.ms', 'https://c.clarity.ms', 'https://c.bing.com'],
-    'connect-src': ["'self'", 'https://www.clarity.ms', 'https://c.clarity.ms',
-      'https://b.clarity.ms', 'https://api.cloudinary.com'],
+      'https://*.clarity.ms', 'https://c.bing.com'],
+    // Clarity's beacon host is region-sharded — a.clarity.ms through
+    // z.clarity.ms. The live page uses n.clarity.ms, which was on none of the
+    // three lists above, so every visit logged a violation and the policy
+    // could never be promoted out of report-only. Naming them one at a time
+    // cannot work; a visitor in Singapore gets a different letter.
+    'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
     'worker-src': ["'self'"],                            // service worker
@@ -442,7 +454,11 @@ const bulkEmailLimiter = rateLimit({
 });
 
 // ============ UPLOADS ============
-const uploadsDir = path.join(__dirname, 'public/uploads');
+// Everything uploaded here is on its way to Cloudinary and is deleted the
+// moment that finishes. It must NOT be staged inside public/ — express.static
+// serves that whole folder, so for the length of the round trip an owner's
+// land title sat at a public URL. The OS temp directory is off the web root.
+const uploadsDir = path.join(os.tmpdir(), 'glra-uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -452,7 +468,7 @@ const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'i
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/uploads/');
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const safeExt = path.extname(file.originalname).toLowerCase().replace(/[^a-z0-9.]/g, '');
@@ -532,6 +548,30 @@ const {
   logAudit, seedDefaultAdmin
 } = require('./server/auth');
 
+// ── FIELD AGENTS ARE NOT OFFICE STAFF ──────────────────────
+// Agents sign in through agent.html, but the sign-in route is the shared
+// /api/admin/login, so an agent walks away holding the same kind of token an
+// employee holds. Every /api/admin route protected by verifyToken alone
+// therefore answered them — the whole customer list, every listing's
+// commission, the staff directory. Their own API is /api/agent/*; agent.html
+// never calls an authenticated /api/admin route, so shutting the door here
+// costs them nothing.
+//
+// Placed before the admin routes are declared, and it deliberately does NOT
+// cover the four unauthenticated ones (login, signup, forgot/reset password)
+// which agents do use — those carry no token, so `req.user` is unset and this
+// middleware passes them straight through.
+app.use('/api/admin', (req, res, next) => {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) return next();
+  let role;
+  try { role = jwt.verify(auth.slice(7), JWT_SECRET).role; } catch (e) { return next(); }
+  if (role === 'agent') {
+    return res.status(403).json({ error: 'This is the office dashboard. Please use your Agent Workspace at /agent.html.' });
+  }
+  next();
+});
+
 // ============ EMAIL TEMPLATES ============
 // Email header/footer (used by every transactional message) live in
 // server/email-templates.js. Edit there once → every email rebrands at the
@@ -563,16 +603,37 @@ const PUBLIC_PROPERTY_FIELDS = [
   'views', 'createdAt'
 ].join(' ');
 
+// ── THE PUBLIC LISTINGS FEED ────────────────────────────────
+// Every visitor to the home page and the properties page waits on this before
+// a single card can be drawn, and it is the same answer for all of them.
+// Timed against production: a bare DB ping costs 0.43s, this costs 1.73s - so
+// about 1.3 seconds per visitor goes on re-running a query whose result has
+// not changed. Holding the finished JSON for a minute removes that for
+// everyone but the first caller.
+//
+// The string is cached, not the array: re-serialising 150 KB of JSON on every
+// request is itself part of the cost. Invalidated the moment a listing is
+// created, edited, deleted, bulk-imported or brought in from a submission -
+// the same five places that already refresh the chatbot's copy - so Catherine
+// never has to wait out a timer to see her own edit.
+const PUBLIC_LIST_TTL_MS = 60 * 1000;
+let _publicListCache = { at: 0, body: null };
+function invalidatePublicListingsCache() { _publicListCache = { at: 0, body: null }; }
+
 app.get('/api/properties', async (req, res) => {
   try {
+    if (_publicListCache.body && Date.now() - _publicListCache.at < PUBLIC_LIST_TTL_MS) {
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      return res.type('application/json').send(_publicListCache.body);
+    }
     const properties = await Property.find({ status: 'available' })
       .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
     properties.forEach(optimizePropertyImages);
-    // A minute of freshness: repeat views and back-navigation are served from
-    // the browser instead of re-hitting Render. An admin edit shows up on the
-    // next minute, and the pages already re-render when the data changes.
+    _publicListCache = { at: Date.now(), body: JSON.stringify(properties) };
+    // A minute of freshness for the browser too: repeat views and back-
+    // navigation never reach Render at all.
     res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    res.json(properties);
+    res.type('application/json').send(_publicListCache.body);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -953,10 +1014,44 @@ async function buildSitemap(req, res) {
   }
 }
 
+// A hero photograph kept in the database as a base64 "data:" string is served
+// here as a real image instead of being pasted into the JSON. See
+// externalizeHeroImage below for why that matters so much on this particular
+// endpoint. Immutable caching is safe: the id changes when the picture does.
+app.get('/api/hero-image/:id', async (req, res) => {
+  try {
+    const h = await HeroImage.findById(req.params.id, { url: 1 }).lean();
+    const m = h && isDataUri(h.url) && h.url.match(/^data:([\w.+/-]+);base64,(.+)$/);
+    if (!m) return res.status(404).end();
+    const buf = Buffer.from(m[2], 'base64');
+    res.set('Content-Type', m[1]);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Content-Length', String(buf.length));
+    return res.end(buf);
+  } catch (err) {
+    return res.status(404).end();
+  }
+});
+
+// The home page asks for this before it can draw anything above the fold, so
+// it is the most performance-sensitive request on the whole site. With the
+// photographs inline it answered 2.5 MB and took three and a half seconds.
+// Handing back a short URL makes the JSON a few hundred bytes, lets the
+// browser fetch the four pictures in parallel, and - the part that compounds -
+// lets it cache them, so a returning visitor downloads none of it again.
+function externalizeHeroImage(h) {
+  if (h && h._id && isDataUri(h.url)) h.url = `/api/hero-image/${String(h._id)}`;
+  return h;
+}
+
 app.get('/api/hero-images', async (req, res) => {
   try {
     const images = await HeroImage.find().sort({ order: 1 }).lean();
-    images.forEach(i => { if (i.url) i.url = optimizeCloudinary(i.url); });
+    images.forEach(i => {
+      externalizeHeroImage(i);
+      if (i.url) i.url = optimizeCloudinary(i.url);
+    });
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
     res.json(images);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -1277,10 +1372,19 @@ app.post('/api/wishlist',
   }
 );
 
-// The wishlist is keyed by email alone (no login on the public site), so the
-// read and delete routes are rate-limited like every other public write to
-// keep someone from walking through addresses.
-app.get('/api/wishlist/:email', publicWriteLimiter, async (req, res) => {
+// Reading a wishlist back, and deleting from it, USED TO BE public routes
+// keyed on the email address alone. There is no login on the public site, so
+// anyone who knew (or guessed) a customer's address could read the complete
+// list of properties that person had saved, or quietly delete it. A wishlist
+// is a behavioural profile of a named individual - personal information under
+// the Data Privacy Act, and exactly what a rival brokerage would like to have.
+//
+// Nothing has ever called them: the public pages only POST to /api/wishlist,
+// and the dashboard reads the whole table through the authenticated
+// /api/admin/wishlist. They are staff-only now. If a "my saved properties"
+// page is ever built for visitors it needs a one-time emailed link, not a
+// bare address in the URL.
+app.get('/api/wishlist/:email', verifyToken, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1293,11 +1397,12 @@ app.get('/api/wishlist/:email', publicWriteLimiter, async (req, res) => {
   }
 });
 
-app.delete('/api/wishlist/:email/:propertyId', publicWriteLimiter, async (req, res) => {
+app.delete('/api/wishlist/:email/:propertyId', verifyToken, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     const propertyId = String(req.params.propertyId);
     await Wishlist.findOneAndDelete({ email, propertyId });
+    await logAudit(req, 'DELETE', 'Wishlist', propertyId, email, null);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -1364,11 +1469,16 @@ app.post('/api/price-alert',
   }
 );
 
-app.get('/api/price-alert/check/:propertyId', publicWriteLimiter, async (req, res) => {
+// "How many people are waiting for this listing to drop?" is a question only
+// a rival brokerage asks, and this answered it for any listing, to anyone, by
+// id. No page on the site calls it; the dashboard has its own
+// /api/admin/price-alerts. Staff-only now, and countDocuments instead of
+// pulling every matching row back just to measure the array.
+app.get('/api/price-alert/check/:propertyId', verifyToken, async (req, res) => {
   try {
     const propertyId = String(req.params.propertyId);
-    const alerts = await PriceAlert.find({ propertyId, isNotified: false });
-    res.json({ count: alerts.length });
+    const count = await PriceAlert.countDocuments({ propertyId, isNotified: false });
+    res.json({ count });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -1626,9 +1736,15 @@ app.post('/api/admin/logout', verifyToken, async (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/admin/accounts', verifyToken, async (req, res) => {
+app.get('/api/admin/accounts', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const accounts = await Account.find({}, { password: 0 }).sort({ createdAt: 1 });
+    // resetTokenHash / resetTokenExpires are password-reset plumbing and
+    // loginHistory is a list of colleagues' IP addresses and devices. None of
+    // the three is shown anywhere in the dashboard, so none should leave the
+    // server.
+    const accounts = await Account.find({},
+      { password: 0, resetTokenHash: 0, resetTokenExpires: 0, loginHistory: 0 })
+      .sort({ createdAt: 1 });
     res.json(accounts);
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -2017,9 +2133,17 @@ app.get('/api/admin/alert-logs', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Fields on a listing that belong to the brokerage rather than to whoever is
+// signed in: what GLRA earns on the deal, and the free-text `notes` box, which
+// on any listing imported from a "List your property" submission holds the
+// owner's name, mobile number and email address.
+const OWNER_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission', 'notes'];
+
 app.get('/api/admin/all-properties', verifyToken, async (req, res) => {
   try {
-    const properties = await Property.find().sort({ createdAt: -1 });
+    const q = Property.find().sort({ createdAt: -1 });
+    if (req.user.role !== 'admin') OWNER_ONLY_PROPERTY_FIELDS.forEach(f => q.select('-' + f));
+    const properties = await q;
     res.json(properties);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -2049,14 +2173,35 @@ app.patch('/api/admin/inquiries/:id', verifyToken, async (req, res) => {
   }
 });
 
+// A mongoose ValidationError or CastError is the person's typing, not the
+// server falling over: "10,5M" in the price box, a required field left blank.
+// Answer with the field that is wrong so the dashboard can say which one.
+function schemaProblem(err) {
+  if (!err) return null;
+  if (err.name === 'CastError') {
+    return `"${err.value}" is not a valid ${err.kind === 'Number' ? 'number' : err.kind} for ${err.path}.`;
+  }
+  if (err.name === 'ValidationError') {
+    const parts = Object.values(err.errors || {}).map(e =>
+      e.name === 'CastError'
+        ? `${e.path} must be a ${e.kind === 'Number' ? 'number' : e.kind}`
+        : (e.message || `${e.path} is invalid`));
+    return parts.length ? parts.join('; ') : 'Some fields are invalid.';
+  }
+  return null;
+}
+
 app.post('/api/admin/properties', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
     const property = new Property(req.body);
     await property.save();
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
     invalidateChatListingsCache();
+    invalidatePublicListingsCache();
     res.json(property);
   } catch (err) {
+    const why = schemaProblem(err);
+    if (why) return res.status(400).json({ error: why });
     console.error('Add property error:', err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -2111,8 +2256,11 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     const property = await Property.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, null);
     invalidateChatListingsCache();
+    invalidatePublicListingsCache();
     res.json(property);
   } catch (err) {
+    const why = schemaProblem(err);
+    if (why) return res.status(400).json({ error: why });
     console.error('Error updating property:', err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -2123,6 +2271,7 @@ app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properti
     const property = await Property.findByIdAndDelete(req.params.id);
     if (property) await logAudit(req, 'DELETE', 'Property', req.params.id, property.title, null);
     invalidateChatListingsCache();
+    invalidatePublicListingsCache();
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -2884,6 +3033,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     }
     await logAudit(req, 'BULK_CREATE', 'Property', '', `${added} added`, null);
     invalidateChatListingsCache();
+    invalidatePublicListingsCache();
     res.json({ success: true, added });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -2913,7 +3063,10 @@ app.post('/api/admin/upload-property-image', verifyToken, requirePermission('pro
 // Hero images
 app.get('/api/admin/hero-images', verifyToken, async (req, res) => {
   try {
-    const images = await HeroImage.find().sort({ order: 1 });
+    // .lean() + the same swap, or the Hero tab downloads 2.5 MB of base64
+    // every time Catherine opens it, just to draw four thumbnails.
+    const images = await HeroImage.find().sort({ order: 1 }).lean();
+    images.forEach(externalizeHeroImage);
     res.json(images);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -3696,6 +3849,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     await logAudit(req, 'IMPORT', 'PropertySubmission', sub._id, sub.title, { propertyId: property._id });
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, { source: 'submission', submissionId: sub._id });
     invalidateChatListingsCache();
+    invalidatePublicListingsCache();
     res.json({ success: true, propertyId: property._id, submission: sub });
   } catch (err) {
     console.error('Submission import error:', err);

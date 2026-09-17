@@ -407,18 +407,25 @@ footer{padding:80px 5% 30px !important}
    features. Removable: delete to revert.
    ============================================ */
 
-/* (V3-A) SKIP TO CONTENT — invisible until keyboard-focused */
+/* (V3-A) SKIP TO CONTENT — invisible until keyboard-focused.
+   This is the first thing a keyboard or screen-reader user meets on every
+   page, so it has to be readable the instant it appears. It used to be white
+   on the old gold (#c8a96e) — 2.26:1, well under the 4.5:1 line, and a colour
+   that is no longer anywhere else on the site. Near-black with an orange rule
+   reads at 18:1 and matches the rest of the design. */
 .skip-to-content{
   position:fixed;top:-100px;left:8px;
-  background:var(--gold);color:#fff;
+  background:#0a0a0a;color:#fff;
+  border:2px solid #ff3d00;
   padding:14px 22px;z-index:9999;
-  font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
+  font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
   text-decoration:none;border-radius:0;
   transition:top .25s cubic-bezier(.2,.7,.2,1);
-  font-family:'DM Sans',sans-serif;
+  font-family:'JetBrains Mono','DM Sans',monospace,sans-serif;
   box-shadow:0 8px 24px rgba(0,0,0,0.3);
 }
-.skip-to-content:focus{top:8px;outline:2px solid #fff;outline-offset:2px}
+.skip-to-content:focus{top:8px;outline:2px solid #ff3d00;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.skip-to-content{transition:none}}
 
 /* (V3-B) ACTIVE NAV STATE — current page highlighted */
 .nav-links > a.gl-active:not(.contact-btn-nav),

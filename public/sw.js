@@ -2,7 +2,7 @@
 // Strategy:
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v92';
+const CACHE_VERSION = 'glra-cache-v93';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -36,6 +36,9 @@ function isHTMLRequest(req){
   // pages and re-fetch them every time — they're immutable images, so let them
   // fall through to the cache-first branch.
   if (url.pathname.startsWith('/api/property-image/')) return false;
+  // Same for the home page's hero photographs, which are served from the
+  // database through /api/hero-image/<id>. Immutable, so cache-first.
+  if (url.pathname.startsWith('/api/hero-image/')) return false;
   const accept = req.headers.get('accept') || '';
   if (accept.includes('text/html')) return true;
   return url.pathname.endsWith('.html') || url.pathname === '/' || !url.pathname.includes('.');
