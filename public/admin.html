@@ -1329,6 +1329,153 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
   .sub-stat-num{font-size:23px}
   .sub-detail-grid{grid-template-columns:1fr}
 }
+
+/* ══ ADMIN UI PASS — September 2026 ══════════════════════════════════════
+   Everything below is additive and sits at the end of the stylesheet so it
+   wins on equal specificity without needing !important where possible. */
+
+/* 1. THE MENU NO LONGER SHOWS A SCROLLBAR.
+      The whole sidebar used to scroll, so a bright orange bar ran down it and
+      the user block scrolled out of reach. Now the brand and the user block
+      are pinned and only the list of links scrolls — silently. */
+.sidebar{overflow:hidden}
+.sb-head,.sb-foot{flex:0 0 auto}
+.sb-nav{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:none;-ms-overflow-style:none}
+.sb-nav::-webkit-scrollbar{width:0;height:0;display:none}
+/* A tighter rhythm, so on most screens the menu fits with no scrolling at all. */
+.nav-item{padding:8px 20px !important}
+.sb-section{padding:9px 20px 3px !important}
+/* When it does scroll, fade the last item so it reads as "there is more". */
+.sb-nav{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 18px),transparent);
+        mask-image:linear-gradient(180deg,#000 calc(100% - 18px),transparent)}
+.sb-nav.sb-nofade{-webkit-mask-image:none;mask-image:none}
+
+/* 2. SCROLLBARS ELSEWHERE still carry the brand colour but stop shouting;
+      a solid orange bar beside every table was the loudest thing on screen. */
+*::-webkit-scrollbar{width:9px;height:9px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(255,61,0,.32) !important;border-radius:0 !important}
+*::-webkit-scrollbar-thumb:hover{background:rgba(255,61,0,.75) !important}
+
+/* 3. A FOCUS RING FOR KEYBOARD USERS. The inputs deliberately drop the default
+      outline in favour of a border colour, which left anyone tabbing through
+      the page with nothing to follow. :focus-visible never shows on a mouse
+      click, so this costs the mouse user nothing. */
+:focus-visible{outline:2px solid #ff3d00;outline-offset:2px}
+.nav-item:focus-visible,.ls-tab:focus-visible{outline-offset:-2px}
+.finput:focus-visible,.fsearch input:focus-visible,.fsel:focus-visible{outline-offset:0}
+
+/* 4. THE MOBILE MENU gets a backdrop, so it reads as a layer over the page
+      instead of a panel welded to it, and tapping outside closes it. */
+.sb-backdrop{position:fixed;inset:0;background:rgba(5,12,22,.55);z-index:299;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;border:0}
+.sb-backdrop.on{opacity:1;pointer-events:auto}
+@media(min-width:769px){.sb-backdrop{display:none}}
+
+/* 5. LONG TABLES keep their headings in view while the body scrolls. */
+.tbl-wrap{position:relative}
+.tbl-wrap thead th{position:sticky;top:0;z-index:2;background:var(--card-bg)}
+
+/* 6. MODALS. A dialog now locks the page behind it, so the background no
+      longer scrolls away under the cursor while you are filling a form. */
+body.modal-open{overflow:hidden}
+.modal-ov{-webkit-overflow-scrolling:touch}
+
+/* 7. SMALL CONSISTENCY FIXES seen across the tabs.
+      Disabled controls looked identical to live ones; tap targets on the
+      icon buttons were under the 24px minimum; and the danger buttons had
+      three different reds between tabs. */
+button:disabled,.hdr-btn:disabled,.finput:disabled,input:disabled,select:disabled,textarea:disabled{
+  opacity:.55;cursor:not-allowed}
+.icon-btn{min-width:30px;min-height:30px;display:inline-flex;align-items:center;justify-content:center}
+.hdr-btn.danger,.sb-btn.danger,button.danger{color:#dc2626 !important;border-color:#dc2626 !important}
+.hdr-btn.danger:hover,button.danger:hover{background:#dc2626 !important;color:#fff !important}
+
+/* 8. Respect a reduced-motion preference. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
+}
+
+/* ══ READABLE LABELS ═════════════════════════════════════════════════════ */
+:root{
+  --txt-hot:#bd2d00;      /* 5.14:1 on the card, 4.51:1 on its own tint */
+  --txt-ok:#0a7551;       /* 4.96 / 4.58 */
+  --txt-warn:#8c5a06;     /* 5.07 / 4.57 */
+  --txt-info:#2d63bb;     /* 5.03 / 4.52 */
+  --txt-bad:#bf2121;      /* 5.24 / 4.54 */
+  --txt-muted:#636363;    /* 5.22 / 4.54 */
+  --fill-hot:#de3500;     /* white on this clears 4.55:1 */
+}
+body.dark-mode{
+  /* On the dark paper the original brights are the readable ones. */
+  --txt-hot:#ff7a4d; --txt-ok:#34d399; --txt-warn:#fbbf24;
+  --txt-info:#7aa7f7; --txt-bad:#f87171; --txt-muted:#9a9082;
+  --fill-hot:#de3500;
+}
+
+/* Small text that used a raw brand colour */
+.b-sale,.b-admin,.b-feat{color:var(--txt-hot) !important}
+.b-lease,.b-avail{color:var(--txt-ok) !important}
+.b-sold{color:var(--txt-bad) !important}
+.b-emp{color:var(--txt-info) !important}
+.pres-state.on{color:var(--txt-ok) !important}
+.pres-state.idle{color:var(--txt-warn) !important}
+.pres-state.off{color:var(--txt-muted) !important}
+.pres-tag,.bm-count,.audit-user-count{color:var(--txt-hot) !important}
+.audit-user-count span{color:var(--txt-muted) !important}
+.ls-chip.bad{color:var(--txt-bad) !important}
+.ls-chip.warn{color:var(--txt-warn) !important}
+.ls-chip.ok{color:var(--txt-ok) !important}
+.ls-chip.info{color:var(--txt-info) !important}
+.ls-chip.dim{color:var(--txt-muted) !important}
+.act.act-edit{color:var(--txt-info) !important}
+.act.act-del{color:var(--txt-bad) !important}
+.act.act-view{color:var(--txt-info) !important}
+
+/* Templates that set the colour inline through the brand token. The token
+   itself has to stay #ff3d00 — it fills the buttons — so only the inline
+   TEXT uses are redirected. */
+[style*="color:var(--gold)"]{color:var(--txt-hot) !important}
+[style*="color: var(--gold)"]{color:var(--txt-hot) !important}
+
+/* White text on a solid orange chip: darken the chip, not the text. */
+.nav-badge,.pres-av,.user-av{background:var(--fill-hot) !important}
+/* Big stat numbers in a semantic colour still have to clear 3:1. */
+.pc-num,.stat-num,.sub-stat-num{color:var(--text-color)}
+.pc-num[style*="#f59e0b"],.sub-stat-num.hot{color:var(--txt-warn) !important}
+
+/* Audit-log action chips: coloured text on a tint of the same colour. */
+.a-create{color:var(--txt-ok) !important}
+.a-update{color:var(--txt-info) !important}
+.a-delete{color:var(--txt-bad) !important}
+.a-login{color:var(--txt-hot) !important}
+
+/* Cases: the two inline colours in the board and diary sat just under the line. */
+.cs-row .t,.cs-due,.cs-day-h{color:inherit}
+[style*="color:#dc2626"],[style*="color:#DC2626"]{color:var(--txt-bad) !important}
+[style*="color:#2563eb"],[style*="color:#2563EB"]{color:var(--txt-info) !important}
+[style*="color:#b45309"],[style*="color:#d97706"]{color:var(--txt-warn) !important}
+[style*="color:#059669"],[style*="color:#10b981"]{color:var(--txt-ok) !important}
+/* The audit-log action chips are class-less spans coloured inline. */
+[style*="color:#3b82f6"],[style*="color:#2563EB"]{color:var(--txt-info) !important}
+[style*="color:#ef4444"],[style*="color:#EF4444"]{color:var(--txt-bad) !important}
+[style*="color:#f59e0b"],[style*="color:#F59E0B"]{color:var(--txt-warn) !important}
+/* The two palest Cases stage colours only need darkening on the light card;
+   on the dark card the originals are the readable ones. */
+body:not(.dark-mode) [style*="color:#8b5cf6"]{color:#6d3fd4 !important}
+body:not(.dark-mode) [style*="color:#64748b"]{color:#4b5563 !important}
+
+/* The menu's section headings were the faintest text in the whole dashboard. */
+.sb-section{color:#8a8378 !important}      /* 5.28:1 on the near-black menu */
+body.dark-mode .sb-section{color:#8a8378 !important}
+
+/* The muted grey used for captions sat a hair under the line on the light
+   card. On the DARK card the same value is far too dark (3.2:1), so dark mode
+   keeps the pale grey the theme already uses elsewhere. */
+:root{--gray:#636363 !important;--ab-gray:#636363 !important}
+body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
 </style>
 </head>
 <body>
@@ -1341,8 +1488,8 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
     <div class="login-logo" style="flex-direction:column;align-items:center;text-align:center;gap:14px"><img src="/img/logo.png" alt="GLRA" style="height:110px;width:auto"><div class="login-portal-label">Admin Portal</div></div>
     <div class="login-title" style="text-align:center">Welcome Back</div>
     <div class="login-sub" style="text-align:center">Sign in to manage your listings and team</div>
-    <div class="login-field"><label>Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
-    <div class="login-field"><label>Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="login-field"><label for="lgEmail">Email Address</label><input type="email" id="lgEmail" placeholder="admin@glrarealty.com" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="login-field"><label for="lgPass">Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
     <div class="login-error" id="lgErr">Invalid email or password.</div>
     <div class="login-switch"><a onclick="showForgot(true)">Forgot password?</a></div>
@@ -1354,7 +1501,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
     <div class="login-title" style="text-align:center">Forgot Password</div>
     <div class="login-sub" style="text-align:center">Enter your email and we'll send you a link to choose a new password.</div>
     <div id="fpForm">
-      <div class="login-field"><label>Email Address</label><input type="email" id="fpEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')forgotPassword()"></div>
+      <div class="login-field"><label for="fpEmail">Email Address</label><input type="email" id="fpEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')forgotPassword()"></div>
       <button class="login-btn" id="fpBtn" onclick="forgotPassword()"><i class="fas fa-envelope"></i> Send Reset Link</button>
       <div class="login-error" id="fpErr"></div>
     </div>
@@ -1371,8 +1518,8 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
     <div class="login-title" style="text-align:center">Choose a New Password</div>
     <div class="login-sub" style="text-align:center">Almost done — pick a new password for your account.</div>
     <div id="rpForm">
-      <div class="login-field"><label>New Password</label><input type="password" id="rpPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')resetPassword()"></div>
-      <div class="login-field"><label>Confirm New Password</label><input type="password" id="rpPass2" placeholder="Repeat your new password" onkeydown="if(event.key==='Enter')resetPassword()"></div>
+      <div class="login-field"><label for="rpPass">New Password</label><input type="password" id="rpPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')resetPassword()"></div>
+      <div class="login-field"><label for="rpPass2">Confirm New Password</label><input type="password" id="rpPass2" placeholder="Repeat your new password" onkeydown="if(event.key==='Enter')resetPassword()"></div>
       <button class="login-btn" id="rpBtn" onclick="resetPassword()"><i class="fas fa-key"></i> Set New Password</button>
       <div class="login-error" id="rpErr"></div>
     </div>
@@ -1389,10 +1536,10 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
     <div class="login-title" style="text-align:center">Request an Account</div>
     <div class="login-sub" style="text-align:center">Fill this in and the administrator will review your request. You can sign in once approved.</div>
     <div id="suForm">
-      <div class="login-field"><label>Full Name</label><input type="text" id="suName" placeholder="e.g. Juan dela Cruz" onkeydown="if(event.key==='Enter')signup()"></div>
-      <div class="login-field"><label>Email Address</label><input type="email" id="suEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signup()"></div>
-      <div class="login-field"><label>Password</label><input type="password" id="suPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')signup()"></div>
-      <div class="login-field"><label>Confirm Password</label><input type="password" id="suPass2" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label for="suName">Full Name</label><input type="text" id="suName" placeholder="e.g. Juan dela Cruz" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label for="suEmail">Email Address</label><input type="email" id="suEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label for="suPass">Password</label><input type="password" id="suPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label for="suPass2">Confirm Password</label><input type="password" id="suPass2" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')signup()"></div>
       <button class="login-btn" id="suBtn" onclick="signup()"><i class="fas fa-user-plus"></i> Send Request</button>
       <div class="login-error" id="suErr"></div>
     </div>
@@ -1408,6 +1555,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 <!-- SHELL -->
 <div class="admin-shell" id="adminShell">
   <!-- SIDEBAR -->
+  <button class="sb-backdrop" id="sbBackdrop" type="button" aria-label="Close the menu" tabindex="-1" onclick="closeSidebar()"></button>
   <aside class="sidebar" id="sidebar">
     <div class="sb-head"><img src="/img/hero-logo.png" alt="GLRA"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
     <nav class="sb-nav">
@@ -1455,7 +1603,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
   <div class="main-content">
     <header class="main-header">
       <div class="hdr-left">
-        <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open the menu" aria-expanded="false" aria-controls="sidebar" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
         <div><div class="page-title" id="pageTitle">Dashboard</div><div class="page-sub" id="pageSub">Welcome back</div></div>
       </div>
       <div class="hdr-right">
@@ -1471,11 +1619,11 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <!-- DASHBOARD -->
       <div id="tab-dashboard">
         <div class="stats-grid">
-          <div class="stat-card"><div class="stat-ico ico-gold"><i class="fas fa-home"></i></div><div><div class="stat-num" id="st-props">—</div><div class="stat-lbl">Properties</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-gold"><i class="fas fa-home"></i></div><div><div class="stat-num" id="st-props">—</div><div class="stat-lbl" id="statLblProperties">Properties</div></div></div>
           <div class="stat-card"><div class="stat-ico ico-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-num" id="st-avail">—</div><div class="stat-lbl">Available</div></div></div>
-          <div class="stat-card"><div class="stat-ico ico-blue"><i class="fas fa-envelope"></i></div><div><div class="stat-num" id="st-inq">—</div><div class="stat-lbl">Inquiries</div></div></div>
-          <div class="stat-card"><div class="stat-ico ico-orange"><i class="fas fa-users"></i></div><div><div class="stat-num" id="st-subs">—</div><div class="stat-lbl">Subscribers</div></div></div>
-          <div class="stat-card"><div class="stat-ico ico-purple"><i class="fas fa-bell"></i></div><div><div class="stat-num" id="st-alerts">—</div><div class="stat-lbl">Price Alerts</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-blue"><i class="fas fa-envelope"></i></div><div><div class="stat-num" id="st-inq">—</div><div class="stat-lbl" id="statLblInquiries">Inquiries</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-orange"><i class="fas fa-users"></i></div><div><div class="stat-num" id="st-subs">—</div><div class="stat-lbl" id="statLblSubscribers">Subscribers</div></div></div>
+          <div class="stat-card"><div class="stat-ico ico-purple"><i class="fas fa-bell"></i></div><div><div class="stat-num" id="st-alerts">—</div><div class="stat-lbl" id="statLblAlerts">Price Alerts</div></div></div>
         </div>
 
         <!-- NEEDS ATTENTION -->
@@ -1543,12 +1691,12 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <div id="tab-properties" style="display:none">
         <div class="filter-bar">
           <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="pSearch" placeholder="Search title or location..." oninput="filterProps()"></div>
-          <select class="fsel" id="pType" onchange="filterProps()"><option value="">All Types</option><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select>
-          <select class="fsel" id="pStatus" onchange="filterProps()"><option value="">All Status</option><option value="available">Available</option><option value="sold">Sold/Leased</option></select>
-          <select class="fsel" id="pListing" onchange="filterProps()"><option value="">All Listings</option><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option></select>
+          <select class="fsel" id="pType" onchange="filterProps()" aria-label="Filter by property type"><option value="">All Types</option><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select>
+          <select class="fsel" id="pStatus" onchange="filterProps()" aria-label="Filter by status"><option value="">All Status</option><option value="available">Available</option><option value="sold">Sold/Leased</option></select>
+          <select class="fsel" id="pListing" onchange="filterProps()" aria-label="Filter by listing type"><option value="">All Listings</option><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option></select>
           <div class="res-count" id="pCount"></div>
         </div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Image</th><th>Property</th><th>Type</th><th>Listing</th><th>Price</th><th>Views</th><th>Status</th><th>Actions</th></tr></thead><tbody id="propTbody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Image</th><th scope="col">Property</th><th scope="col">Type</th><th scope="col">Listing</th><th scope="col">Price</th><th scope="col">Views</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody id="propTbody"></tbody></table></div></div></div>
       </div>
 
       <!-- HERO IMAGES -->
@@ -1565,14 +1713,14 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       <!-- INQUIRIES -->
       <div id="tab-inquiries" style="display:none">
         <div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="hdr-btn" onclick="exportInquiriesCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Property</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inqTbody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Property</th><th scope="col">Message</th><th scope="col">Date</th><th scope="col">Actions</th></tr></thead><tbody id="inqTbody"></tbody></table></div></div></div>
       </div>
 
       <!-- AGENTS -->
       <div id="tab-agents" style="display:none">
         <div class="panel">
           <div class="panel-head"><div class="panel-title"><i class="fas fa-id-badge"></i> Agent Roster</div><div style="display:flex;gap:8px"><a class="hdr-btn" href="/agent.html" target="_blank" style="text-decoration:none"><i class="fas fa-briefcase"></i> Open Agent Workspace</a><button class="hdr-btn" onclick="loadAgentsTab()"><i class="fas fa-rotate"></i> Refresh</button></div></div>
-          <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>GCI Goal</th><th>Leads</th><th>Active</th><th>Closed</th><th>Today's Actions</th><th>Last Seen</th><th></th></tr></thead><tbody id="agentsTbody"><tr><td colspan="8"><div class="empty-st"><i class="fas fa-id-badge"></i><p>Loading…</p></div></td></tr></tbody></table></div></div>
+          <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">GCI Goal</th><th scope="col">Leads</th><th scope="col">Active</th><th scope="col">Closed</th><th scope="col">Today's Actions</th><th scope="col">Last Seen</th><th scope="col"></th></tr></thead><tbody id="agentsTbody"><tr><td colspan="8"><div class="empty-st"><i class="fas fa-id-badge"></i><p>Loading…</p></div></td></tr></tbody></table></div></div>
         </div>
         <div id="agentDetail"></div>
       </div>
@@ -1603,15 +1751,15 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <!-- People -->
         <div class="sub-toolbar">
           <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="subSearch" placeholder="Search email, name or calculator..." oninput="renderSubscribers()"></div>
-          <select class="fsel" id="subSource" onchange="renderSubscribers()">
+          <select class="fsel" id="subSource" onchange="renderSubscribers()" aria-label="Filter by source">
             <option value="">All sources</option>
           </select>
-          <select class="fsel" id="subCalcFilter" onchange="renderSubscribers()">
+          <select class="fsel" id="subCalcFilter" onchange="renderSubscribers()" aria-label="Filter by calculator use">
             <option value="">Everyone</option>
             <option value="yes">Calculator users only</option>
             <option value="no">Never used a calculator</option>
           </select>
-          <select class="fsel" id="subSort" onchange="renderSubscribers()">
+          <select class="fsel" id="subSort" onchange="renderSubscribers()" aria-label="Sort subscribers">
             <option value="recent">Newest first</option>
             <option value="calc">Most calculator use</option>
             <option value="active">Recently active</option>
@@ -1628,7 +1776,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           <div class="panel-body" style="padding:0">
             <div class="tbl-wrap">
               <table>
-                <thead><tr><th style="width:44px"></th><th>Email</th><th>Source</th><th>Calculators Used</th><th>Last Active</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th style="width:44px" scope="col"></th><th scope="col">Email</th><th scope="col">Source</th><th scope="col">Calculators Used</th><th scope="col">Last Active</th><th scope="col">Joined</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
                 <tbody id="subTbody"></tbody>
               </table>
             </div>
@@ -1638,7 +1786,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 
       <!-- ALERTS -->
       <div id="tab-alerts" style="display:none">
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Property</th><th>Price</th><th>Status</th></tr></thead><tbody id="alertTbody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Email</th><th scope="col">Property</th><th scope="col">Price</th><th scope="col">Status</th></tr></thead><tbody id="alertTbody"></tbody></table></div></div></div>
       </div>
 
       <!-- BULK EMAIL -->
@@ -1679,14 +1827,14 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
                 </div>
 
                 <div id="bmSrc-paste" class="bm-source" style="display:none">
-                  <label class="flbl" style="margin-bottom:6px;display:block">Paste emails (one per line, or separated by commas / spaces / semicolons)</label>
+                  <label class="flbl" style="margin-bottom:6px;display:block" for="bmPaste">Paste emails (one per line, or separated by commas / spaces / semicolons)</label>
                   <textarea id="bmPaste" rows="9" placeholder="anna@example.com&#10;bob@example.com, carla@example.com&#10;diego@example.com; emma@example.com" oninput="bmParsePasted()"></textarea>
                   <div class="field-hint" id="bmPasteHint">Detected: 0 valid · 0 invalid</div>
 
                   <div class="bm-saved" style="margin-top:14px;padding-top:14px;border-top:2px solid var(--ab-line)">
-                    <label class="flbl" style="margin-bottom:8px;display:block"><i class="fas fa-bookmark"></i> Saved lists</label>
+                    <label class="flbl" style="margin-bottom:8px;display:block" for="bmSavedSel"><i class="fas fa-bookmark"></i> Saved lists</label>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                      <select id="bmSavedSel" class="finput" style="flex:1;min-width:160px"><option value="">— Pick a saved list —</option></select>
+                      <select id="bmSavedSel" class="finput" style="flex:1;min-width:160px" aria-label="Saved lists"><option value="">— Pick a saved list —</option></select>
                       <button class="hdr-btn" onclick="bmLoadSaved()" title="Load into the paste box"><i class="fas fa-folder-open"></i> Load</button>
                       <button class="hdr-btn" onclick="bmAppendSaved()" title="Append to current paste box"><i class="fas fa-plus"></i> Append</button>
                       <button class="hdr-btn danger" onclick="bmDeleteSaved()" title="Delete this saved list"><i class="fas fa-trash"></i> Delete</button>
@@ -1719,18 +1867,18 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div class="panel-body">
 
                 <div class="fg" style="margin-bottom:14px">
-                  <label class="flbl">Subject</label>
+                  <label class="flbl" for="bmSubject">Subject</label>
                   <input type="text" id="bmSubject" class="finput" placeholder="e.g. Premier Listings — May 2026" oninput="bmRenderPreview()">
                 </div>
 
                 <div class="fg" style="margin-bottom:14px">
-                  <label class="flbl">Sender name</label>
+                  <label class="flbl" for="bmFromName">Sender name</label>
                   <input type="text" id="bmFromName" class="finput" value="GLRA Realty" placeholder="GLRA Realty">
                 </div>
 
                 <div class="fg" style="margin-bottom:14px">
-                  <label class="flbl">Quick template</label>
-                  <select id="bmTemplate" class="finput" onchange="bmApplyTemplate()">
+                  <label class="flbl" for="bmTemplate">Quick template</label>
+                  <select id="bmTemplate" class="finput" onchange="bmApplyTemplate()" aria-label="Quick template">
                     <option value="">— Choose a template —</option>
                     <option value="featured">Featured Listings showcase</option>
                     <option value="newlisting">New listing announcement</option>
@@ -1740,14 +1888,14 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
                 </div>
 
                 <div class="fg" style="margin-bottom:14px">
-                  <label class="flbl">Attach property cards (optional)</label>
+                  <label class="flbl" for="bmPropSearch">Attach property cards (optional)</label>
                   <div class="fsearch" style="margin-bottom:8px"><i class="fas fa-search"></i><input type="text" id="bmPropSearch" placeholder="Search property..." oninput="bmRenderPropPicker()"></div>
                   <div class="bm-props-list" id="bmPropsList"><div class="empty-st"><p>Loading…</p></div></div>
                   <div class="field-hint" id="bmPropsCount">0 properties selected</div>
                 </div>
 
                 <div class="fg">
-                  <label class="flbl">Message body</label>
+                  <label class="flbl" for="bmBody">Message body</label>
                   <textarea id="bmBody" class="finput" rows="9" placeholder="Write your message — blank lines create paragraphs. Selected property cards are inserted after this message." oninput="bmRenderPreview()"></textarea>
                 </div>
               </div>
@@ -1773,8 +1921,8 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div class="panel-body">
                 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
                   <div class="fg" style="flex:1;min-width:220px;margin:0">
-                    <label class="flbl">Send at (your local time)</label>
-                    <input type="datetime-local" id="bmSendAt" class="finput">
+                    <label class="flbl" for="bmSendAt">Send at (your local time)</label>
+                    <input type="datetime-local" id="bmSendAt" class="finput" aria-label="Send at">
                   </div>
                   <button class="hdr-btn primary" id="bmScheduleBtn" onclick="bmSchedule()"><i class="fas fa-calendar-plus"></i> Schedule</button>
                 </div>
@@ -1818,7 +1966,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div id="titlingTotals" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
         <!-- LIST VIEW -->
         <div id="titlingListWrap" class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-          <thead id="titlingThead"><tr><th>Client</th><th>Branch</th><th>Property / Title No.</th><th>Stage</th><th>Balance</th><th>Updated</th><th>Actions</th></tr></thead>
+          <thead id="titlingThead"><tr><th scope="col">Client</th><th scope="col">Branch</th><th scope="col">Property / Title No.</th><th scope="col">Stage</th><th scope="col">Balance</th><th scope="col">Updated</th><th scope="col">Actions</th></tr></thead>
           <tbody id="titlingTbody"><tr><td colspan="7"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
         </table></div></div></div>
         <!-- BOARD VIEW (drag a card between columns to move its stage) -->
@@ -1841,7 +1989,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           <div id="tlCashSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
           <div id="tlCashFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
           <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table>
-            <thead id="tlCashThead"><tr><th>Date</th><th>Type</th><th>Who / Purpose</th><th>Amount</th><th>Mode</th><th>Status</th><th>Proof</th><th>Actions</th></tr></thead>
+            <thead id="tlCashThead"><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Who / Purpose</th><th scope="col">Amount</th><th scope="col">Mode</th><th scope="col">Status</th><th scope="col">Proof</th><th scope="col">Actions</th></tr></thead>
             <tbody id="tlCashTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
         </div>
@@ -1852,7 +2000,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div style="background:var(--card-bg);max-width:920px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
           <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="titlingModalTitle">Add Titling Job</div>
-            <button onclick="closeTitlingModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+            <button onclick="closeTitlingModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer" aria-label="Close"><i class="fas fa-times"></i></button>
           </div>
           <div style="padding:24px;overflow-y:auto;min-height:0">
             <input type="hidden" id="tlId">
@@ -1860,35 +2008,35 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
             <!-- ── Client & property ── -->
             <div class="tl-sec" style="margin-top:0">Client &amp; property</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-              <div class="fg"><label class="flbl">Branch</label><input type="text" list="tlBranchList" id="tlBranch" class="finput" placeholder="Pick or type a branch"><datalist id="tlBranchList"></datalist></div>
-              <div class="fg"><label class="flbl">Client name *</label><input type="text" id="tlClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
-              <div class="fg"><label class="flbl">Phone</label><input type="text" id="tlClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
-              <div class="fg"><label class="flbl">Email</label><input type="email" id="tlClientEmail" class="finput" placeholder="client@email.com"></div>
-              <div class="fg"><label class="flbl">Transaction</label><select id="tlServiceType" class="finput">
+              <div class="fg"><label class="flbl" for="tlBranch">Branch</label><input type="text" list="tlBranchList" id="tlBranch" class="finput" placeholder="Pick or type a branch"><datalist id="tlBranchList"></datalist></div>
+              <div class="fg"><label class="flbl" for="tlClientName">Client name *</label><input type="text" id="tlClientName" class="finput" placeholder="e.g. Juan Dela Cruz"></div>
+              <div class="fg"><label class="flbl" for="tlClientPhone">Phone</label><input type="text" id="tlClientPhone" class="finput" placeholder="+63 9XX XXX XXXX"></div>
+              <div class="fg"><label class="flbl" for="tlClientEmail">Email</label><input type="email" id="tlClientEmail" class="finput" placeholder="client@email.com"></div>
+              <div class="fg"><label class="flbl" for="tlServiceType">Transaction</label><select id="tlServiceType" class="finput" aria-label="Service type">
                 <option>Transfer of Title</option><option>Original Title</option><option>Transfer of Tax Declaration</option><option>Cancellation of Mortgage</option><option>Subdivision of Title</option><option>Consolidation of Titles</option><option>Reconstitution</option><option>Correction / Annotation</option><option>Other</option>
               </select></div>
-              <div class="fg"><label class="flbl">Mode of acquisition</label><input type="text" list="tlModeList" id="tlMode" class="finput" placeholder="Pick or type"><datalist id="tlModeList"></datalist></div>
-              <div class="fg"><label class="flbl">Title number (TCT/CCT/OCT)</label><input type="text" id="tlTitleNumber" class="finput" placeholder="e.g. T-175713"></div>
-              <div class="fg"><label class="flbl">Tax Dec number</label><input type="text" id="tlTaxDecNo" class="finput" placeholder="e.g. 4059"></div>
-              <div class="fg"><label class="flbl">Property type</label><input type="text" id="tlPropertyType" class="finput" placeholder="e.g. Lot / House &amp; Lot / Condo"></div>
-              <div class="fg" style="grid-column:1/-1"><label class="flbl">Property location</label><input type="text" id="tlPropertyLocation" class="finput" placeholder="e.g. Buensuceso, Gumaca, Quezon"></div>
+              <div class="fg"><label class="flbl" for="tlMode">Mode of acquisition</label><input type="text" list="tlModeList" id="tlMode" class="finput" placeholder="Pick or type"><datalist id="tlModeList"></datalist></div>
+              <div class="fg"><label class="flbl" for="tlTitleNumber">Title number (TCT/CCT/OCT)</label><input type="text" id="tlTitleNumber" class="finput" placeholder="e.g. T-175713"></div>
+              <div class="fg"><label class="flbl" for="tlTaxDecNo">Tax Dec number</label><input type="text" id="tlTaxDecNo" class="finput" placeholder="e.g. 4059"></div>
+              <div class="fg"><label class="flbl" for="tlPropertyType">Property type</label><input type="text" id="tlPropertyType" class="finput" placeholder="e.g. Lot / House &amp; Lot / Condo"></div>
+              <div class="fg" style="grid-column:1/-1"><label class="flbl" for="tlPropertyLocation">Property location</label><input type="text" id="tlPropertyLocation" class="finput" placeholder="e.g. Buensuceso, Gumaca, Quezon"></div>
             </div>
 
             <!-- ── Status & timeline ── -->
             <div class="tl-sec">Status &amp; timeline</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-              <div class="fg"><label class="flbl">Current stage</label><select id="tlStatus" class="finput">
+              <div class="fg"><label class="flbl" for="tlStatus">Current stage</label><select id="tlStatus" class="finput" aria-label="Status">
                 <option value="documents">Documents (endorsed to GLRA)</option><option value="bir">BIR / eCAR</option><option value="transfer_tax">Transfer Tax (Treasurer's)</option><option value="registry">Registry of Deeds</option><option value="tax_dec">Assessor's / New Tax Dec</option><option value="completed">Released / Completed</option><option value="lra">LRA / Court</option><option value="on_hold">On hold</option>
               </select></div>
-              <div class="fg"><label class="flbl">Target completion</label><input type="date" id="tlTargetDate" class="finput"></div>
+              <div class="fg"><label class="flbl" for="tlTargetDate">Target completion</label><input type="date" id="tlTargetDate" class="finput" aria-label="Target date"></div>
             </div>
             <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin:10px 0 8px">Milestones — tap <i class="fas fa-clock"></i> to stamp today</div>
             <div id="tlTimeline" style="display:flex;flex-direction:column;gap:8px"></div>
-            <div class="fg" style="margin-top:14px"><label class="flbl">Lacking / pending</label><textarea id="tlLacking" class="finput" rows="2" placeholder="What's still missing — e.g. CTC of owner's ID, tax clearance from Treasurer's…"></textarea></div>
+            <div class="fg" style="margin-top:14px"><label class="flbl" for="tlLacking">Lacking / pending</label><textarea id="tlLacking" class="finput" rows="2" placeholder="What's still missing — e.g. CTC of owner's ID, tax clearance from Treasurer's…"></textarea></div>
             <div class="fg" style="margin-top:6px"><label class="flbl">Documents collected</label>
               <div id="tlDocs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px;margin-top:6px"></div>
             </div>
-            <div class="fg" style="margin-top:6px"><label class="flbl">Remarks</label><textarea id="tlNotes" class="finput" rows="3" placeholder="Updates, follow-ups, reference numbers…"></textarea></div>
+            <div class="fg" style="margin-top:6px"><label class="flbl" for="tlNotes">Remarks</label><textarea id="tlNotes" class="finput" rows="3" placeholder="Updates, follow-ups, reference numbers…"></textarea></div>
 
             <!-- ── Liquidation ── -->
             <div class="tl-sec">Liquidation</div>
@@ -1903,7 +2051,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
             </div>
             <div id="tlExpenses"></div>
             <datalist id="tlExpCatList"></datalist>
-            <div class="fg" style="margin-top:16px;max-width:280px"><label class="flbl">Professional / service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingLiqRecalc()" placeholder="0"></div>
+            <div class="fg" style="margin-top:16px;max-width:280px"><label class="flbl" for="tlServiceFee">Professional / service fee (₱)</label><input type="number" min="0" step="any" id="tlServiceFee" class="finput" oninput="titlingLiqRecalc()" placeholder="0"></div>
             <div id="tlLiqSummary" style="margin-top:14px"></div>
 
             <!-- ── Money requests (employee cash advances + proof) ── -->
@@ -1911,7 +2059,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
             <div id="tlCashWrap"></div>
 
             <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
-              <button class="hdr-btn" onclick="closeTitlingModal()">Cancel</button>
+              <button class="hdr-btn" onclick="closeTitlingModal()" aria-label="Close">Cancel</button>
               <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
             </div>
           </div>
@@ -1923,7 +2071,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div style="background:var(--card-bg);max-width:820px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
           <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600"><i class="fas fa-file-import" style="font-size:16px"></i> Import Titling Jobs</div>
-            <button onclick="tlImpClose()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+            <button onclick="tlImpClose()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer" aria-label="Close"><i class="fas fa-times"></i></button>
           </div>
           <div style="padding:24px;overflow-y:auto;min-height:0">
             <!-- Step 1: choose file -->
@@ -1957,7 +2105,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               </div>
               <div style="max-height:420px;overflow:auto;border:1px solid var(--border-color)">
                 <table style="width:100%;border-collapse:collapse;font-size:12px">
-                  <thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Client</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Branch</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Location</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Title No.</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)">Stage</th></tr></thead>
+                  <thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)" scope="col">Client</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)" scope="col">Branch</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)" scope="col">Location</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)" scope="col">Title No.</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--border-color)" scope="col">Stage</th></tr></thead>
                   <tbody id="tlImpTbody"></tbody>
                 </table>
               </div>
@@ -1973,21 +2121,21 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div style="background:var(--card-bg);max-width:680px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
           <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5">
             <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600" id="cashModalTitle">Cash entry</div>
-            <button onclick="closeCashModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer"><i class="fas fa-times"></i></button>
+            <button onclick="closeCashModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer" aria-label="Close"><i class="fas fa-times"></i></button>
           </div>
           <div style="padding:24px;overflow-y:auto;min-height:0">
             <input type="hidden" id="cashId"><input type="hidden" id="cashKind">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-              <div class="fg" id="cashDirGroup" style="display:none"><label class="flbl">Direction</label><select id="cashDir" class="finput"><option value="fund_in">Money IN (received to hold)</option><option value="fund_out">Money OUT (returned / paid for client)</option></select></div>
-              <div class="fg"><label class="flbl">Date</label><input type="date" id="cashDate" class="finput"></div>
-              <div class="fg"><label class="flbl" id="cashPersonLbl">Person</label><input type="text" id="cashPerson" class="finput" placeholder="Name"></div>
-              <div class="fg" style="grid-column:1/-1"><label class="flbl" id="cashPurposeLbl">Purpose</label><input type="text" id="cashPurpose" class="finput" placeholder="What is this for?"></div>
-              <div class="fg"><label class="flbl">Amount (₱)</label><input type="number" min="0" step="any" id="cashAmount" class="finput" placeholder="0"></div>
-              <div class="fg" id="cashModeGroup"><label class="flbl">Mode of payment</label><select id="cashMode" class="finput"><option>Cash</option><option>GCash</option><option>Bank transfer</option><option>Check</option><option>Other</option></select></div>
-              <div class="fg" id="cashStatusGroup" style="display:none"><label class="flbl">Status</label><select id="cashStatus" class="finput" onchange="cashToggleSpent()"><option value="requested">Requested</option><option value="released">Released (given)</option><option value="liquidated">Liquidated (spent)</option></select></div>
-              <div class="fg" id="cashSpentGroup" style="display:none"><label class="flbl">Actually spent (₱)</label><input type="number" min="0" step="any" id="cashSpent" class="finput" placeholder="0"></div>
+              <div class="fg" id="cashDirGroup" style="display:none"><label class="flbl" for="cashDir">Direction</label><select id="cashDir" class="finput" aria-label="Money in or out"><option value="fund_in">Money IN (received to hold)</option><option value="fund_out">Money OUT (returned / paid for client)</option></select></div>
+              <div class="fg"><label class="flbl" for="cashDate">Date</label><input type="date" id="cashDate" class="finput" aria-label="Date"></div>
+              <div class="fg"><label class="flbl" id="cashPersonLbl" for="cashPerson">Person</label><input type="text" id="cashPerson" class="finput" placeholder="Name"></div>
+              <div class="fg" style="grid-column:1/-1"><label class="flbl" id="cashPurposeLbl" for="cashPurpose">Purpose</label><input type="text" id="cashPurpose" class="finput" placeholder="What is this for?"></div>
+              <div class="fg"><label class="flbl" for="cashAmount">Amount (₱)</label><input type="number" min="0" step="any" id="cashAmount" class="finput" placeholder="0"></div>
+              <div class="fg" id="cashModeGroup"><label class="flbl" for="cashMode">Mode of payment</label><select id="cashMode" class="finput" aria-label="Mode of payment"><option>Cash</option><option>GCash</option><option>Bank transfer</option><option>Check</option><option>Other</option></select></div>
+              <div class="fg" id="cashStatusGroup" style="display:none"><label class="flbl" for="cashStatus">Status</label><select id="cashStatus" class="finput" onchange="cashToggleSpent()" aria-label="Status"><option value="requested">Requested</option><option value="released">Released (given)</option><option value="liquidated">Liquidated (spent)</option></select></div>
+              <div class="fg" id="cashSpentGroup" style="display:none"><label class="flbl" for="cashSpent">Actually spent (₱)</label><input type="number" min="0" step="any" id="cashSpent" class="finput" placeholder="0"></div>
             </div>
-            <div class="fg" style="margin-top:6px"><label class="flbl">Note</label><textarea id="cashNote" class="finput" rows="2" placeholder="Optional"></textarea></div>
+            <div class="fg" style="margin-top:6px"><label class="flbl" for="cashNote">Note</label><textarea id="cashNote" class="finput" rows="2" placeholder="Optional"></textarea></div>
 
             <div class="tl-sec">Proof (photos / PDF)</div>
             <div id="cashProofArea"></div>
@@ -2063,7 +2211,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
             <div style="display:inline-flex;align-items:center;gap:6px">
               <span class="ls-note" style="margin-right:4px">Show the next</span>
-              <select id="csDiaryDays" class="finput" style="padding:7px 10px;font-size:13px;width:auto" onchange="loadCaseDiary()">
+              <select id="csDiaryDays" class="finput" style="padding:7px 10px;font-size:13px;width:auto" onchange="loadCaseDiary()" aria-label="How many days of the diary to show">
                 <option value="7">7 days</option><option value="14">14 days</option>
                 <option value="30" selected>30 days</option><option value="60">60 days</option>
                 <option value="90">90 days</option>
@@ -2160,7 +2308,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div id="caseModalSub" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:3px"></div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-              <button class="hdr-btn" id="caseAdvanceBtn" onclick="caseAdvance()" style="display:none"></button>
+              <button class="hdr-btn" id="caseAdvanceBtn" aria-label="Move this case to the next stage" onclick="caseAdvance()" style="display:none"></button>
               <button class="hdr-btn" id="casePdfSummaryBtn" onclick="casePdf('summary')" style="display:none" title="One-page picture of where the matter stands"><i class="fas fa-file-pdf"></i> Summary</button>
               <button class="hdr-btn" id="casePdfStatementBtn" onclick="casePdf('statement')" style="display:none" title="What the client owes — safe to send out"><i class="fas fa-file-invoice-dollar"></i> Statement</button>
               <button class="hdr-btn" id="casePdfFullBtn" onclick="casePdf('full')" style="display:none" title="The whole internal file"><i class="fas fa-folder-open"></i> Full file</button>
@@ -2275,7 +2423,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
             <div style="display:inline-flex;align-items:center;gap:6px">
               <button class="hdr-btn" onclick="lsRollNav(-1)" title="Previous month"><i class="fas fa-chevron-left"></i></button>
-              <input type="month" id="lsRollMonth" class="finput" style="padding:7px 10px;font-size:13px" onchange="loadRentRoll(this.value)">
+              <input type="month" id="lsRollMonth" class="finput" style="padding:7px 10px;font-size:13px" onchange="loadRentRoll(this.value)" aria-label="Rent roll month">
               <button class="hdr-btn" onclick="lsRollNav(1)" title="Next month"><i class="fas fa-chevron-right"></i></button>
               <button class="hdr-btn" onclick="loadRentRoll(lsMeta.today.slice(0,7))">This month</button>
             </div>
@@ -2286,7 +2434,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           </div>
           <div class="ls-kpis" id="lsRollTotals"></div>
           <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
-            <thead><tr><th>Tenant</th><th>Property</th><th>Owner</th><th>Due</th><th>Rent</th><th>Charges</th><th>Collected</th><th>Balance</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th scope="col">Tenant</th><th scope="col">Property</th><th scope="col">Owner</th><th scope="col">Due</th><th scope="col">Rent</th><th scope="col">Charges</th><th scope="col">Collected</th><th scope="col">Balance</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
             <tbody id="lsRollTbody"><tr><td colspan="10"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
           <div class="ls-note" style="margin-top:8px">Payments are applied to the oldest unpaid rent first, so a month shows as paid only once every earlier month is settled. Association dues, utilities and other charges dated in the month ride along in the Charges column.</div>
@@ -2300,13 +2448,13 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div class="panel-body">
                 <div class="ls-note" style="margin-bottom:14px">The reminder engine runs every half hour. Each message goes out once per lease per month, only to leases whose "Automatic emails" switch is on, and only between 8am and 8pm Manila time.</div>
                 <div class="ls-grid" style="grid-template-columns:1fr 1fr">
-                  <div class="fg"><label class="flbl">Rent reminder, days before due</label><input type="number" id="lsSetReminderDays" class="finput" min="0" max="30"><div class="ls-note">0 switches reminders off.</div></div>
-                  <div class="fg"><label class="flbl">Broker digest hour (Manila)</label><input type="number" id="lsSetDigestHour" class="finput" min="5" max="20"></div>
+                  <div class="fg"><label class="flbl" for="lsSetReminderDays">Rent reminder, days before due</label><input type="number" id="lsSetReminderDays" class="finput" min="0" max="30" aria-label="Rent reminder, days before due"><div class="ls-note">0 switches reminders off.</div></div>
+                  <div class="fg"><label class="flbl" for="lsSetDigestHour">Broker digest hour (Manila)</label><input type="number" id="lsSetDigestHour" class="finput" min="5" max="20" aria-label="Digest hour"></div>
                   <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="lsSetOverdue"> Send an overdue notice when the grace period lapses, and a follow-up a week later</label></div>
                   <div class="full" style="display:flex;align-items:center"><label class="ls-sw"><input type="checkbox" id="lsSetDigest"> Email me a morning digest whenever rent is overdue, due soon, a lease is ending, or a deposit is pending</label></div>
-                  <div class="fg full"><label class="flbl">Send the digest and expiry alerts to</label><input type="email" id="lsSetNotifyEmail" class="finput" placeholder="glrarealty@gmail.com"></div>
-                  <div class="fg full"><label class="flbl">Lease-ending alerts (days before the end date)</label><input type="text" id="lsSetExpiryDays" class="finput" placeholder="60, 30, 7"><div class="ls-note">Comma-separated. Each threshold alerts once per lease.</div></div>
-                  <div class="fg full"><label class="flbl">How tenants can pay (shown in reminders and statements)</label><textarea id="lsSetPayInstructions" class="finput" rows="4" placeholder="e.g. BPI savings 1234-5678-90 (Catherine SB Sampayo) · GCash 0917 177 4572 · Send the reference number after paying."></textarea><div class="ls-note">Only tenants of leases you manage receive this. It is never shown on the public website.</div></div>
+                  <div class="fg full"><label class="flbl" for="lsSetNotifyEmail">Send the digest and expiry alerts to</label><input type="email" id="lsSetNotifyEmail" class="finput" placeholder="glrarealty@gmail.com"></div>
+                  <div class="fg full"><label class="flbl" for="lsSetExpiryDays">Lease-ending alerts (days before the end date)</label><input type="text" id="lsSetExpiryDays" class="finput" placeholder="60, 30, 7"><div class="ls-note">Comma-separated. Each threshold alerts once per lease.</div></div>
+                  <div class="fg full"><label class="flbl" for="lsSetPayInstructions">How tenants can pay (shown in reminders and statements)</label><textarea id="lsSetPayInstructions" class="finput" rows="4" placeholder="e.g. BPI savings 1234-5678-90 (Catherine SB Sampayo) · GCash 0917 177 4572 · Send the reference number after paying."></textarea><div class="ls-note">Only tenants of leases you manage receive this. It is never shown on the public website.</div></div>
                 </div>
               </div>
             </div>
@@ -2315,10 +2463,10 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
                 <div class="panel-head"><div class="panel-title"><i class="fas fa-sliders-h"></i> Defaults for new leases</div></div>
                 <div class="panel-body">
                   <div class="ls-grid" style="grid-template-columns:1fr 1fr">
-                    <div class="fg"><label class="flbl">Rent due day</label><input type="number" id="lsSetDueDay" class="finput" min="1" max="31"></div>
-                    <div class="fg"><label class="flbl">Grace days</label><input type="number" id="lsSetGraceDays" class="finput" min="0" max="60"></div>
-                    <div class="fg"><label class="flbl">Deposit (months)</label><input type="number" id="lsSetDepositMonths" class="finput" min="0" max="24" step="0.5"></div>
-                    <div class="fg"><label class="flbl">Advance rent (months)</label><input type="number" id="lsSetAdvanceMonths" class="finput" min="0" max="24" step="0.5"></div>
+                    <div class="fg"><label class="flbl" for="lsSetDueDay">Rent due day</label><input type="number" id="lsSetDueDay" class="finput" min="1" max="31" aria-label="Default rent due day"></div>
+                    <div class="fg"><label class="flbl" for="lsSetGraceDays">Grace days</label><input type="number" id="lsSetGraceDays" class="finput" min="0" max="60" aria-label="Default grace days"></div>
+                    <div class="fg"><label class="flbl" for="lsSetDepositMonths">Deposit (months)</label><input type="number" id="lsSetDepositMonths" class="finput" min="0" max="24" step="0.5" aria-label="Default deposit in months"></div>
+                    <div class="fg"><label class="flbl" for="lsSetAdvanceMonths">Advance rent (months)</label><input type="number" id="lsSetAdvanceMonths" class="finput" min="0" max="24" step="0.5" aria-label="Default advance in months"></div>
                   </div>
                   <div class="ls-note" style="margin-top:12px">Rent Control Act (RA 9653) covers residential units renting up to ₱10,000 a month in Metro Manila and other highly urbanised cities (₱5,000 elsewhere): at most one month advance and two months deposit, and a capped yearly increase (1% for 2026 under NHSB Resolution 2024-01 for continuing tenants). Units above the threshold are not covered.</div>
                   <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="hdr-btn primary" id="lsSetSaveBtn" onclick="saveLeasingSettings()"><i class="fas fa-save"></i> Save settings</button></div>
@@ -2345,7 +2493,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:4px" id="leSub"></div>
             </div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="leHeadBtns"></div>
-            <button onclick="closeLeaseModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;margin-left:auto"><i class="fas fa-times"></i></button>
+            <button onclick="closeLeaseModal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;margin-left:auto" aria-label="Close"><i class="fas fa-times"></i></button>
           </div>
           <div id="leScroll" style="padding:18px 24px 24px;overflow-y:auto;min-height:0">
             <div class="ls-tabs" id="leTabs">
@@ -2359,7 +2507,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <div id="leForm"></div>
               <div style="display:flex;justify-content:space-between;gap:10px;margin-top:22px;flex-wrap:wrap">
                 <div><button class="hdr-btn danger" id="leDeleteBtn" onclick="deleteLease()" style="display:none"><i class="fas fa-trash"></i> Delete lease</button></div>
-                <div style="display:flex;gap:10px"><button class="hdr-btn" onclick="closeLeaseModal()">Cancel</button><button class="hdr-btn primary" id="leSaveBtn" onclick="leSave()"><i class="fas fa-save"></i> Save</button></div>
+                <div style="display:flex;gap:10px"><button class="hdr-btn" onclick="closeLeaseModal()" aria-label="Close">Cancel</button><button class="hdr-btn primary" id="leSaveBtn" onclick="leSave()"><i class="fas fa-save"></i> Save</button></div>
               </div>
             </div>
             <div id="lePane-ledger" style="display:none"></div>
@@ -2384,7 +2532,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <div class="panel" style="margin-top:20px">
           <div class="panel-head"><div class="panel-title"><i class="fas fa-shield-alt"></i> Permission Reference</div></div>
           <div class="panel-body" style="padding:0">
-            <div class="tbl-wrap"><table><thead><tr><th>Permission</th><th>Admin</th><th>Employee</th></tr></thead><tbody>
+            <div class="tbl-wrap"><table><thead><tr><th scope="col">Permission</th><th scope="col">Admin</th><th scope="col">Employee</th></tr></thead><tbody>
               <tr><td>View dashboard &amp; stats</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
               <tr><td>View &amp; browse properties</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-check" style="color:#10b981"></i></td></tr>
               <tr><td>Add new property listings</td><td><i class="fas fa-check" style="color:#10b981"></i></td><td><i class="fas fa-times" style="color:#ef4444"></i></td></tr>
@@ -2442,7 +2590,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <!-- Filters -->
         <div class="filter-bar">
           <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search by user, action, or what..." oninput="filterAuditLog()"></div>
-          <select class="fsel" id="auditActionFilter" onchange="filterAuditLog()">
+          <select class="fsel" id="auditActionFilter" onchange="filterAuditLog()" aria-label="Filter by action">
             <option value="">All Actions</option>
             <option value="LOGIN">Login</option>
             <option value="LOGOUT">Logout</option>
@@ -2458,10 +2606,10 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
             <option value="BULK_CREATE">Bulk Create</option>
             <option value="BULK_EMAIL">Bulk Email</option>
           </select>
-          <select class="fsel" id="auditUserFilter" onchange="filterAuditLog()">
+          <select class="fsel" id="auditUserFilter" onchange="filterAuditLog()" aria-label="Filter by user">
             <option value="">All Users</option>
           </select>
-          <select class="fsel" id="auditRangeFilter" onchange="filterAuditLog()">
+          <select class="fsel" id="auditRangeFilter" onchange="filterAuditLog()" aria-label="Filter by date range">
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="7d">Last 7 Days</option>
@@ -2473,7 +2621,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
           <button class="hdr-btn" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
           <div class="res-count" id="auditCount"></div>
         </div>
-        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Description</th><th>Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
+        <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Time</th><th scope="col">User</th><th scope="col">Role</th><th scope="col">Action</th><th scope="col">Description</th><th scope="col">Details</th></tr></thead><tbody id="auditBody"></tbody></table></div></div></div>
       </div>
 
       <!-- PROPERTY SUBMISSIONS (public form pipeline) -->
@@ -2488,15 +2636,15 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 
         <!-- Filter bar -->
         <div class="filter-bar">
-          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="subSearch" placeholder="Search by title, location, name, or email..." oninput="renderSubmissions()"></div>
+          <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="submSearch" aria-label="Search submissions" placeholder="Search by title, location, name, or email..." oninput="renderSubmissions()"></div>
           <button class="hdr-btn" onclick="loadSubmissions()"><i class="fas fa-sync-alt"></i> Refresh</button>
-          <div class="res-count" id="subCount"></div>
+          <div class="res-count" id="submCount"></div>
         </div>
 
         <div class="panel"><div class="panel-body" style="padding:0">
           <div class="tbl-wrap">
             <table class="subs-table">
-              <thead><tr><th>Photo</th><th>Property</th><th>Submitted by</th><th>Type</th><th>Price</th><th>Status</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Photo</th><th scope="col">Property</th><th scope="col">Submitted by</th><th scope="col">Type</th><th scope="col">Price</th><th scope="col">Status</th><th scope="col">Date</th><th style="text-align:right" scope="col">Actions</th></tr></thead>
               <tbody id="submTbody"></tbody>
             </table>
           </div>
@@ -2524,16 +2672,16 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <!-- Toolbar: search + filters + view toggle -->
         <div class="tasks-toolbar">
           <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="tFilterSearch" placeholder="Search tasks..." oninput="renderTasks()"></div>
-          <select class="fsel" id="tFilterAssignee" onchange="renderTasks()"><option value="">All Assignees</option></select>
-          <select class="fsel" id="tFilterCategory" onchange="renderTasks()"><option value="">All Categories</option></select>
-          <select class="fsel" id="tFilterPriority" onchange="renderTasks()">
+          <select class="fsel" id="tFilterAssignee" onchange="renderTasks()" aria-label="Filter by assignee"><option value="">All Assignees</option></select>
+          <select class="fsel" id="tFilterCategory" onchange="renderTasks()" aria-label="Filter by category"><option value="">All Categories</option></select>
+          <select class="fsel" id="tFilterPriority" onchange="renderTasks()" aria-label="Filter by priority">
             <option value="">All Priorities</option>
             <option value="critical">Critical</option>
             <option value="high">High</option>
             <option value="medium">Medium</option>
             <option value="low">Low</option>
           </select>
-          <select class="fsel" id="tSortBy" onchange="renderTasks()">
+          <select class="fsel" id="tSortBy" onchange="renderTasks()" aria-label="Sort tasks">
             <option value="updated">Recently Updated</option>
             <option value="due">Due Date (Soonest)</option>
             <option value="priority">Priority (High → Low)</option>
@@ -2582,14 +2730,14 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
               <table class="tasks-table">
                 <thead>
                   <tr>
-                    <th class="t-check"><input type="checkbox" id="tSelAll" onchange="toggleSelectAll(this.checked)"></th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Assignees</th>
-                    <th>Due</th>
-                    <th>Updated</th>
-                    <th style="text-align:right">Actions</th>
+                    <th class="t-check" scope="col"><input type="checkbox" id="tSelAll" onchange="toggleSelectAll(this.checked)" aria-label="Select all tasks"></th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Priority</th>
+                    <th scope="col">Assignees</th>
+                    <th scope="col">Due</th>
+                    <th scope="col">Updated</th>
+                    <th style="text-align:right" scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tTableBody"></tbody>
@@ -2656,41 +2804,41 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 <!-- PROPERTY MODAL -->
 <div class="modal-ov" id="propModal">
   <div class="modal-box">
-    <div class="modal-hd"><div class="modal-title" id="propModalTitle">Add Property</div><button class="modal-close" onclick="closePropModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-hd"><div class="modal-title" id="propModalTitle">Add Property</div><button class="modal-close" onclick="closePropModal()" aria-label="Close"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
       <form id="propForm">
         <input type="hidden" id="editId">
         <div class="form-grid">
           <div class="fsec">Basic Information</div>
-          <div class="fg full"><label>Property Title *</label><input type="text" id="pTitle" placeholder="e.g. 2BR Condo at The Fort, BGC" required></div>
-          <div class="fg"><label>Property Type</label><select id="pType2"><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select></div>
-          <div class="fg"><label>Listing Type</label><select id="pListing2"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale &amp; Lease</option></select></div>
-          <div class="fg full"><label>Location / Address *</label><input type="text" id="pLoc" placeholder="e.g. Taguig City, Metro Manila" required></div>
-          <div class="fg full"><label>Map Location (Google Maps)</label><input type="text" id="pMapLoc" placeholder="e.g. BGC, Taguig"></div>
+          <div class="fg full"><label for="pTitle">Property Title *</label><input type="text" id="pTitle" placeholder="e.g. 2BR Condo at The Fort, BGC" required></div>
+          <div class="fg"><label for="pType2">Property Type</label><select id="pType2"><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select></div>
+          <div class="fg"><label for="pListing2">Listing Type</label><select id="pListing2"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale &amp; Lease</option></select></div>
+          <div class="fg full"><label for="pLoc">Location / Address *</label><input type="text" id="pLoc" placeholder="e.g. Taguig City, Metro Manila" required></div>
+          <div class="fg full"><label for="pMapLoc">Map Location (Google Maps)</label><input type="text" id="pMapLoc" placeholder="e.g. BGC, Taguig"></div>
           <div class="fsec">Pricing</div>
-          <div class="fg"><label>Selling / Contract Price (₱)</label><input type="text" id="pPrice" placeholder="0" oninput="fmtField(this)"></div>
-          <div class="fg"><label>Monthly Rental (₱)</label><input type="text" id="pRental" placeholder="0" oninput="fmtField(this)"></div>
+          <div class="fg"><label for="pPrice">Selling / Contract Price (₱)</label><input type="text" id="pPrice" placeholder="0" oninput="fmtField(this)"></div>
+          <div class="fg"><label for="pRental">Monthly Rental (₱)</label><input type="text" id="pRental" placeholder="0" oninput="fmtField(this)"></div>
           <div class="fsec">Details</div>
-          <div class="fg"><label>Bedrooms</label><input type="number" id="pBed" value="1" min="0" max="20"></div>
-          <div class="fg"><label>Bathrooms</label><input type="number" id="pBath" value="1" min="0" max="20"></div>
-          <div class="fg"><label>Floor Area (sqm)</label><input type="number" id="pSqm" value="0" min="0" step="0.01"></div>
-          <div class="fg"><label>Parking Slots</label><input type="number" id="pPark" value="0" min="0" max="20"></div>
-          <div class="fg"><label>Floor Number</label><input type="text" id="pFloor" placeholder="e.g. 12th, Ground"></div>
-          <div class="fg"><label>Status</label><select id="pStat"><option value="available">Available</option><option value="sold">Sold / Leased</option></select></div>
+          <div class="fg"><label for="pBed">Bedrooms</label><input type="number" id="pBed" value="1" min="0" max="20"></div>
+          <div class="fg"><label for="pBath">Bathrooms</label><input type="number" id="pBath" value="1" min="0" max="20"></div>
+          <div class="fg"><label for="pSqm">Floor Area (sqm)</label><input type="number" id="pSqm" value="0" min="0" step="0.01"></div>
+          <div class="fg"><label for="pPark">Parking Slots</label><input type="number" id="pPark" value="0" min="0" max="20"></div>
+          <div class="fg"><label for="pFloor">Floor Number</label><input type="text" id="pFloor" placeholder="e.g. 12th, Ground"></div>
+          <div class="fg"><label for="pStat">Status</label><select id="pStat"><option value="available">Available</option><option value="sold">Sold / Leased</option></select></div>
           <div class="fsec">Settings</div>
           <div class="fg full"><label>Featured Listing</label><div class="sw-row"><label class="sw"><input type="checkbox" id="pFeatured"><div class="sw-sl"></div></label><span class="sw-lbl">Show in Featured section on homepage</span></div></div>
           <div class="fsec">Description</div>
-          <div class="fg full"><label>Property Description</label><textarea id="pDesc" rows="5" placeholder="Describe the property, amenities, nearby landmarks..."></textarea></div>
+          <div class="fg full"><label for="pDesc">Property Description</label><textarea id="pDesc" rows="5" placeholder="Describe the property, amenities, nearby landmarks..."></textarea></div>
           <div class="fsec">Images</div>
           <div class="fg full">
-            <label>Main Image</label>
+            <label for="mainImgInp">Main Image</label>
             <div class="upload-zone" onclick="document.getElementById('mainImgInp').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload main photo</p><input type="file" id="mainImgInp" accept="image/*" onchange="uploadMain(this)"></div>
             <div id="mainPreview" style="margin-top:10px"></div>
             <input type="hidden" id="pMainImg">
             <div class="uprog" id="mainProg"><div class="uprog-bar"><div class="uprog-fill" id="mainProgFill"></div></div></div>
           </div>
           <div class="fg full">
-            <label>Gallery Photos</label>
+            <label for="gallInp">Gallery Photos</label>
             <div class="upload-zone" onclick="document.getElementById('gallInp').click()"><i class="fas fa-images"></i><p>Click to add more photos</p><input type="file" id="gallInp" accept="image/*" multiple onchange="uploadGallery(this)"></div>
             <div id="gallPreview" class="img-row" style="margin-top:10px"></div>
             <input type="hidden" id="pGallery">
@@ -2698,7 +2846,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         </div>
         <div class="form-actions">
           <button type="submit" class="fbtn primary"><i class="fas fa-save"></i> Save Property</button>
-          <button type="button" class="fbtn secondary" onclick="closePropModal()">Cancel</button>
+          <button type="button" class="fbtn secondary" onclick="closePropModal()" aria-label="Close">Cancel</button>
         </div>
       </form>
     </div>
@@ -2708,14 +2856,14 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 <!-- ACCOUNT MODAL -->
 <div class="modal-ov" id="accModal">
   <div class="modal-box" style="max-width:460px">
-    <div class="modal-hd"><div class="modal-title" id="accModalTitle">Add Account</div><button class="modal-close" onclick="closeAccModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-hd"><div class="modal-title" id="accModalTitle">Add Account</div><button class="modal-close" onclick="closeAccModal()" aria-label="Close"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
       <input type="hidden" id="accEditId">
       <div class="form-grid">
-        <div class="fg full"><label>Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
-        <div class="fg full"><label>Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
-        <div class="fg full"><label>Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
-        <div class="fg full"><label>Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
+        <div class="fg full"><label for="accName">Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
+        <div class="fg full"><label for="accEmail">Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
+        <div class="fg full"><label for="accPass">Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
+        <div class="fg full"><label for="accRole">Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
         <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
         <!-- Granular permissions (only relevant for employees; ignored for admins) -->
         <div class="fg full" id="accPermsWrap">
@@ -2731,7 +2879,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       </div>
       <div class="form-actions">
         <button class="fbtn primary" id="saveAccBtn" onclick="saveAccount()"><i class="fas fa-save"></i> Save Account</button>
-        <button class="fbtn secondary" onclick="closeAccModal()">Cancel</button>
+        <button class="fbtn secondary" onclick="closeAccModal()" aria-label="Close">Cancel</button>
       </div>
     </div>
   </div>
@@ -2740,7 +2888,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 <!-- SIGNUP APPROVAL MODAL -->
 <div class="modal-ov" id="apModal">
   <div class="modal-box" style="max-width:460px">
-    <div class="modal-hd"><div class="modal-title">Approve Account Request</div><button class="modal-close" onclick="closeApModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-hd"><div class="modal-title">Approve Account Request</div><button class="modal-close" onclick="closeApModal()" aria-label="Close"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
       <!-- Who is asking -->
       <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border-color);background:rgba(200,169,110,.05);margin-bottom:18px">
@@ -2752,7 +2900,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         </div>
       </div>
       <div class="form-grid">
-        <div class="fg full"><label>Role</label><select id="apRole" onchange="apRoleChange()"><option value="employee">Employee (Staff)</option><option value="agent">Agent (Agent Workspace only)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below. Agents get NO admin access — they work in the separate Agent Workspace (agent.html).</div></div>
+        <div class="fg full"><label for="apRole">Role</label><select id="apRole" onchange="apRoleChange()"><option value="employee">Employee (Staff)</option><option value="agent">Agent (Agent Workspace only)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below. Agents get NO admin access — they work in the separate Agent Workspace (agent.html).</div></div>
         <div class="fg full" id="apPermsWrap">
           <label>What can they access?</label>
           <div class="field-hint" style="margin-bottom:10px">Tick exactly what this person is allowed to do. You can change this anytime later by editing their account.</div>
@@ -2766,7 +2914,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
       </div>
       <div class="form-actions">
         <button class="fbtn primary" id="apBtn" onclick="approveAccount()"><i class="fas fa-user-check"></i> Approve Account</button>
-        <button class="fbtn secondary" onclick="closeApModal()">Cancel</button>
+        <button class="fbtn secondary" onclick="closeApModal()" aria-label="Close">Cancel</button>
       </div>
     </div>
   </div>
@@ -2777,20 +2925,20 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 <!-- NEW TASK MODAL -->
 <div class="modal-ov" id="taskModal">
   <div class="modal-box" style="max-width:560px">
-    <div class="modal-hd"><div class="modal-title">New Task</div><button class="modal-close" onclick="closeTaskModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-hd"><div class="modal-title">New Task</div><button class="modal-close" onclick="closeTaskModal()" aria-label="Close"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
       <form id="taskForm" onsubmit="event.preventDefault();submitNewTask()">
         <div class="tasks-form-grid">
-          <div class="fg tf-full"><label class="flbl">Title *</label><input type="text" id="ntTitle" class="finput" required maxlength="200" placeholder="What needs to be done?"></div>
-          <div class="fg tf-full"><label class="flbl">Description</label><textarea id="ntDesc" class="finput" rows="3" maxlength="5000" placeholder="Optional details, context, links..."></textarea></div>
-          <div class="fg"><label class="flbl">Category</label><input type="text" id="ntCategory" class="finput" maxlength="60" placeholder="e.g. Real Estate, Law Firm" list="ntCategoryList"><datalist id="ntCategoryList"></datalist></div>
-          <div class="fg"><label class="flbl">Reference</label><input type="text" id="ntReference" class="finput" maxlength="200" placeholder="e.g. case #, listing ID"></div>
-          <div class="fg"><label class="flbl">Status</label><select id="ntStatus" class="finput"><option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="stuck">Stuck</option><option value="done">Done</option></select></div>
-          <div class="fg"><label class="flbl">Priority</label><select id="ntPriority" class="finput"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
-          <div class="fg"><label class="flbl">Due Date</label><input type="date" id="ntDueDate" class="finput"></div>
+          <div class="fg tf-full"><label class="flbl" for="ntTitle">Title *</label><input type="text" id="ntTitle" class="finput" required maxlength="200" placeholder="What needs to be done?"></div>
+          <div class="fg tf-full"><label class="flbl" for="ntDesc">Description</label><textarea id="ntDesc" class="finput" rows="3" maxlength="5000" placeholder="Optional details, context, links..."></textarea></div>
+          <div class="fg"><label class="flbl" for="ntCategory">Category</label><input type="text" id="ntCategory" class="finput" maxlength="60" placeholder="e.g. Real Estate, Law Firm" list="ntCategoryList"><datalist id="ntCategoryList"></datalist></div>
+          <div class="fg"><label class="flbl" for="ntReference">Reference</label><input type="text" id="ntReference" class="finput" maxlength="200" placeholder="e.g. case #, listing ID"></div>
+          <div class="fg"><label class="flbl" for="ntStatus">Status</label><select id="ntStatus" class="finput"><option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="stuck">Stuck</option><option value="done">Done</option></select></div>
+          <div class="fg"><label class="flbl" for="ntPriority">Priority</label><select id="ntPriority" class="finput"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
+          <div class="fg"><label class="flbl" for="ntDueDate">Due Date</label><input type="date" id="ntDueDate" class="finput"></div>
           <div class="fg"><label class="flbl">&nbsp;</label></div>
           <div class="fg tf-full">
-            <label class="flbl">Assignees</label>
+            <label class="flbl" for="ntAssigneeSearch">Assignees</label>
             <div class="assignee-picker">
               <div class="assignee-input" id="ntAssigneeInput" onclick="this.querySelector('input').focus()">
                 <input type="text" id="ntAssigneeSearch" placeholder="Type to search employees..." oninput="filterAssigneeDropdown('nt')" onfocus="openAssigneeDropdown('nt')" onblur="setTimeout(()=>closeAssigneeDropdown('nt'),200)">
@@ -2801,7 +2949,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         </div>
         <div class="form-actions" style="display:flex;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid var(--border-color)">
           <button type="submit" class="fbtn primary"><i class="fas fa-save"></i> Create Task</button>
-          <button type="button" class="fbtn secondary" onclick="closeTaskModal()">Cancel</button>
+          <button type="button" class="fbtn secondary" onclick="closeTaskModal()" aria-label="Close">Cancel</button>
         </div>
       </form>
     </div>
@@ -2820,7 +2968,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <span id="spListingType" style="font-size:10.5px;color:var(--gray)"></span>
       </div>
     </div>
-    <button class="task-panel-close" onclick="closeSubPanel()"><i class="fas fa-times"></i></button>
+    <button class="task-panel-close" onclick="closeSubPanel()" aria-label="Close"><i class="fas fa-times"></i></button>
   </div>
   <div class="task-panel-body">
 
@@ -2901,7 +3049,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
         <span id="tpRefPill" style="font-size:10.5px;color:var(--gray)"></span>
       </div>
     </div>
-    <button class="task-panel-close" onclick="closeTaskPanel()"><i class="fas fa-times"></i></button>
+    <button class="task-panel-close" onclick="closeTaskPanel()" aria-label="Close"><i class="fas fa-times"></i></button>
   </div>
   <div class="task-panel-body">
 
@@ -2978,7 +3126,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
     <div class="modal-hd"><div class="modal-title">Assign Selected Tasks</div><button class="modal-close" onclick="closeBulkAssignModal()"><i class="fas fa-times"></i></button></div>
     <div class="modal-body">
       <div class="fg tf-full">
-        <label class="flbl">Assignees</label>
+        <label class="flbl" for="baAssigneeSearch">Assignees</label>
         <div class="assignee-picker">
           <div class="assignee-input" id="baAssigneeInput" onclick="this.querySelector('input').focus()">
             <input type="text" id="baAssigneeSearch" placeholder="Type to search..." oninput="filterAssigneeDropdown('ba')" onfocus="openAssigneeDropdown('ba')" onblur="setTimeout(()=>closeAssigneeDropdown('ba'),200)">
@@ -3218,7 +3366,8 @@ async function login(){
       document.getElementById('userName').textContent=d.name||email;
       document.getElementById('userRole').textContent=d.role==='admin'?'Administrator':'Staff Employee';
       document.getElementById('userAv').textContent=(d.name||email)[0].toUpperCase();
-      document.getElementById('pageSub').textContent=`Welcome back, ${(d.name||'').split(' ')[0]||email}`;
+      window.__greeting = `Welcome back, ${(d.name||'').split(' ')[0]||email}`;
+      document.getElementById('pageSub').textContent = window.__greeting;
       applyRoleUI(); // Apply role restrictions BEFORE loading data
       loadAll();
       landOnAllowedTab();
@@ -3381,6 +3530,12 @@ function refreshAll(){loadAll();showToast('Data refreshed')}
 async function loadStats(){
   try{
     const s=await apiFetch('/api/admin/stats').then(r=>r.json());
+    // One listing should read "1 Property", not "1 Properties".
+    const plural=(id,n,one,many)=>{const e=document.getElementById(id);if(e)e.textContent=(n===1?one:many);};
+    plural('statLblProperties', s.totalProperties||0, 'Property', 'Properties');
+    plural('statLblInquiries',  s.totalInquiries||0,  'Inquiry',  'Inquiries');
+    plural('statLblSubscribers',s.subscribers||0,     'Subscriber','Subscribers');
+    plural('statLblAlerts',     s.activeAlerts||0,    'Price Alert','Price Alerts');
     document.getElementById('st-props').textContent=s.totalProperties||0;
     document.getElementById('st-avail').textContent=s.availableProperties||0;
     document.getElementById('st-inq').textContent=s.totalInquiries||0;
@@ -3750,9 +3905,9 @@ function renderProps(props){
     <td style="font-size:12px;color:var(--gray)"><i class="far fa-eye" style="color:var(--gold);margin-right:4px"></i>${(p.views||0).toLocaleString()}</td>
     <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
     <td><div class="act-btns">
-      ${hasPerm('properties_edit')?`<button class="act act-edit" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
-      ${hasPerm('properties_delete')?`<button class="act act-del" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
-      <button class="act act-view" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
+      ${hasPerm('properties_edit')?`<button class="act act-edit" title="Edit this listing" aria-label="Edit ${esc(p.title)}" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
+      ${hasPerm('properties_delete')?`<button class="act act-del" title="Delete this listing" aria-label="Delete ${esc(p.title)}" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
+      <button class="act act-view" title="See it on the website" aria-label="View ${esc(p.title)} on the website" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
     </div></td>
   </tr>`).join('');
 }
@@ -4233,7 +4388,7 @@ async function loadAccounts(){
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="act act-edit" onclick="openEditAccountById('${a._id}')"><i class="fas fa-edit"></i> Edit</button>
-            ${a.email !== CU?.email ? `<button class="act act-del" onclick="deleteAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--gold)">You</span>'}
+            ${a.email !== CU?.email ? `<button class="act act-del" title="Delete this account" aria-label="Delete the account for ${esc(a.name || a.email)}" onclick="deleteAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--gold)">You</span>'}
           </div>
         </div>
       </div>`).join('');
@@ -4799,7 +4954,8 @@ async function restoreSession(){
     document.getElementById('userName').textContent = d.name || d.email;
     document.getElementById('userRole').textContent = d.role === 'admin' ? 'Administrator' : 'Staff Employee';
     document.getElementById('userAv').textContent = (d.name || d.email)[0].toUpperCase();
-    document.getElementById('pageSub').textContent = `Welcome back, ${(d.name || '').split(' ')[0] || d.email}`;
+    window.__greeting = `Welcome back, ${(d.name || '').split(' ')[0] || d.email}`;
+    document.getElementById('pageSub').textContent = window.__greeting;
     applyRoleUI();
     loadAll();
     landOnAllowedTab();
@@ -4859,7 +5015,7 @@ async function loadSubmissions(){
 }
 
 function getFilteredSubs(){
-  const search = (document.getElementById('subSearch')?.value || '').toLowerCase().trim();
+  const search = (document.getElementById('submSearch')?.value || '').toLowerCase().trim();
   const statusCardActive = document.querySelector('#tab-submissions .tasks-stat.active')?.dataset.subFilter || '';
   return allSubmissions.filter(s => {
     if(statusCardActive && s.status !== statusCardActive) return false;
@@ -4873,7 +5029,7 @@ function getFilteredSubs(){
 
 function renderSubmissions(){
   const tbody = document.getElementById('submTbody');
-  const cnt = document.getElementById('subCount');
+  const cnt = document.getElementById('submCount');
   if(!tbody) return;
   const filtered = getFilteredSubs();
   if(cnt) cnt.textContent = `${filtered.length} ${filtered.length===1?'submission':'submissions'}`;
@@ -8874,9 +9030,27 @@ function switchTab(name){
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
   const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing'};
-  const subs={tasks:'See what your team is working on',submissions:'Listings submitted by owners — review and import',bulkmail:'Send listings or announcements to your contacts',titling:'Track land-title transfers from documents to released title',cases:'Matters the firm is handling — hearings, deadlines, documents and fees',agents:'Your field agents — scorecards, pipelines, and lead journals',leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders'};
+  const subs={
+    dashboard:'Everything that needs you today, in one place',
+    properties:'Your listings — add, edit and publish what the website shows',
+    hero:'The photographs that open the homepage',
+    inquiries:'Enquiries from the website — assign them and reply',
+    subscribers:'People who asked to hear from you',
+    alerts:'Buyers watching a listing for a price drop',
+    accounts:'Who can sign in, and what each of them may do',
+    auditlog:'A record of every change made in this dashboard',
+    tasks:'See what your team is working on',
+    submissions:'Listings submitted by owners — review and import',
+    bulkmail:'Send listings or announcements to your contacts',
+    titling:'Track land-title transfers from documents to released title',
+    cases:'Matters the firm is handling — hearings, deadlines, documents and fees',
+    agents:'Your field agents — scorecards, pipelines, and lead journals',
+    leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
-  if(subs[name]) document.getElementById('pageSub').textContent = subs[name];
+  const subEl = document.getElementById('pageSub');
+  // The dashboard keeps its personalised greeting; every other tab gets its
+  // own line, and none of them inherits a stale one from the tab before.
+  if(subEl) subEl.textContent = (name === 'dashboard' && window.__greeting) ? window.__greeting : (subs[name] || '');
   // Add property button only on properties tab for admins
   const addBtn=document.getElementById('addPropBtn');
   if(addBtn)addBtn.style.display=(name==='properties'&&hasPerm('properties_create'))?'':'none';
@@ -10873,6 +11047,224 @@ function renderLeasingPanel(){
   const kpi = (k, v, s, color) => `<div class="ls-kpi"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s || ''}</div></div>`;
   el.innerHTML = strip + `<div class="ls-kpis" style="margin-bottom:0">${kpi('Expected · ' + lsM(month).split(' ')[0], lsPeso(ms.expected), `${live.length} active lease${live.length === 1 ? '' : 's'}`)}${kpi('Collected', lsPeso(ms.collected), ms.expected ? Math.round(ms.collected / ms.expected * 100) + '% of expected' : '', '#059669')}${kpi('Overdue', overdue.length, overdue.length ? lsPeso(overdue.reduce((s, l) => s + l.computed.overdueAmount, 0)) + ' outstanding' : 'nothing overdue', overdue.length ? '#dc2626' : 'inherit')}${kpi('Ending ≤ 60 days', ending.length, ending.length ? ending.map(l => lsWho(l)).slice(0, 2).join(', ') : 'none', ending.length ? '#b45309' : 'inherit')}</div>`;
 }
+
+// ══ DIALOG MANAGER ════════════════════════════════════════════════════════
+// The admin grew eighteen popups, each opened and closed by its own pair of
+// functions. None of them closed on Escape, none closed when you clicked the
+// dark area outside, none stopped the page behind from scrolling, and most
+// never moved the keyboard into the dialog. Rather than rewrite eighteen pairs
+// of functions, this watches the overlays and supplies the shared behaviour.
+//
+// Each entry maps an overlay's id to the function that closes it PROPERLY —
+// calling that, rather than just hiding the element, keeps whatever state
+// those functions reset (draft rows, selections, the current record).
+(function () {
+  const CLOSERS = {
+    propModal: 'closePropModal', accModal: 'closeAccModal', apModal: 'closeApModal',
+    taskModal: 'closeTaskModal', titlingModal: 'closeTitlingModal', cashModal: 'closeCashModal',
+    leaseModal: 'closeLeaseModal', caseModal: 'closeCaseModal', conflictModal: 'closeConflictCheck',
+    impModal: 'impClose', tlImpModal: 'tlImpClose', bulkAssignModal: 'closeBulkAssignModal'
+  };
+  // Slide-over panels already have Escape handling of their own; they are
+  // listed so the manager knows they count as "something is open".
+  const PANELS = { taskPanel: 'closeTaskPanel', subPanel: 'closeSubPanel' };
+
+  const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),' +
+                    'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  // The two slide-over panels are never display:none — they sit off-canvas and
+  // slide in, so for them "open" means the class and nothing else. Treating
+  // them like the modals made them look permanently open, which sent every
+  // Escape to a panel instead of the dialog on screen and left the page
+  // scroll-locked for good.
+  const shown = el => {
+    if (!el) return false;
+    if (PANELS[el.id]) return el.classList.contains('open');
+    if (el.classList.contains('open')) return true;
+    const cs = getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  };
+  const ids = () => Object.keys(CLOSERS).concat(Object.keys(PANELS));
+  const openOnes = () => ids().map(id => document.getElementById(id)).filter(shown);
+
+  // Where focus was before the dialog opened, so it can be handed back.
+  const returnTo = new WeakMap();
+
+  function closeById(id) {
+    const fn = CLOSERS[id] || PANELS[id];
+    if (fn && typeof window[fn] === 'function') { try { window[fn](); return true; } catch (e) {} }
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.classList.remove('open'); }
+    return true;
+  }
+
+  // Escape closes the top-most dialog. Top-most = highest z-index, so the
+  // conflict check (2100) closes before the case file (2000) underneath it.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const open = openOnes();
+    if (!open.length) return;
+    // Let a native picker or an open datalist take the key first.
+    const ae = document.activeElement;
+    if (ae && ae.tagName === 'SELECT' && ae.matches(':focus')) { /* still fine to close */ }
+    open.sort((a, b) => (+getComputedStyle(b).zIndex || 0) - (+getComputedStyle(a).zIndex || 0));
+    e.stopPropagation();
+    closeById(open[0].id);
+  }, true);
+
+  // Clicking the dark area closes. mousedown AND mouseup must both land on the
+  // backdrop, otherwise selecting text inside the dialog and releasing outside
+  // would throw the form away.
+  let downOn = null;
+  document.addEventListener('mousedown', e => { downOn = e.target; }, true);
+  document.addEventListener('click', e => {
+    const el = e.target;
+    if (!el || !el.id || !CLOSERS[el.id]) return;   // panels are not click-out
+    if (downOn !== el) return;
+    if (!shown(el)) return;
+    closeById(el.id);
+  }, true);
+
+  // Keep Tab inside the dialog.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const open = openOnes();
+    if (!open.length) return;
+    open.sort((a, b) => (+getComputedStyle(b).zIndex || 0) - (+getComputedStyle(a).zIndex || 0));
+    const box = open[0];
+    const items = [...box.querySelectorAll(FOCUSABLE)].filter(n => n.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  });
+
+  // React to a dialog appearing or disappearing: lock the page, move the
+  // keyboard in, hand focus back on the way out.
+  function sync(el, wasOpen) {
+    const isOpen = shown(el);
+    if (isOpen === wasOpen) return isOpen;
+    if (isOpen) {
+      returnTo.set(el, document.activeElement);
+      el.setAttribute('role', el.getAttribute('role') || 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      // Focus the first real control, skipping the close button so the
+      // keyboard lands where the work is.
+      setTimeout(() => {
+        if (!shown(el) || el.contains(document.activeElement)) return;
+        const items = [...el.querySelectorAll(FOCUSABLE)].filter(n => n.offsetParent !== null);
+        const target = items.find(n => !/close|times/i.test(n.className + ' ' + (n.getAttribute('onclick') || ''))) || items[0];
+        if (target) { try { target.focus({ preventScroll: true }); } catch (e) { target.focus(); } }
+      }, 60);
+    } else {
+      el.removeAttribute('aria-modal');
+      const back = returnTo.get(el);
+      if (back && document.body.contains(back)) { try { back.focus({ preventScroll: true }); } catch (e) {} }
+      returnTo.delete(el);
+    }
+    document.body.classList.toggle('modal-open', openOnes().length > 0);
+    return isOpen;
+  }
+
+  function watch() {
+    ids().forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.dlgWatched) return;
+      el.dataset.dlgWatched = '1';
+      let state = shown(el);
+      new MutationObserver(() => { state = sync(el, state); })
+        .observe(el, { attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch);
+  else watch();
+  // Modals are static markup, but re-run once after boot in case a tab injects one.
+  setTimeout(watch, 1500);
+  window.__closeTopDialog = () => { const o = openOnes(); if (o.length) closeById(o[0].id); };
+  window.__anyDialogOpen = () => openOnes().length > 0;
+})();
+
+// ══ SIDEBAR ═══════════════════════════════════════════════════════════════
+// The menu used to be toggled by an inline classList.toggle with no backdrop,
+// no scroll lock and no state on the button for a screen reader.
+function openSidebar(){
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  const tg = document.getElementById('sidebarToggle');
+  if(sb) sb.classList.add('open');
+  if(bd){ bd.classList.add('on'); bd.tabIndex = 0; }
+  if(tg){ tg.setAttribute('aria-expanded','true'); tg.setAttribute('aria-label','Close the menu'); }
+  if(window.innerWidth <= 768) document.body.classList.add('modal-open');
+}
+function closeSidebar(){
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  const tg = document.getElementById('sidebarToggle');
+  if(sb) sb.classList.remove('open');
+  if(bd){ bd.classList.remove('on'); bd.tabIndex = -1; }
+  if(tg){ tg.setAttribute('aria-expanded','false'); tg.setAttribute('aria-label','Open the menu'); }
+  const dialogStillOpen = (typeof window.__anyDialogOpen === 'function') && window.__anyDialogOpen();
+  if(!dialogStillOpen) document.body.classList.remove('modal-open');
+}
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  if(sb && sb.classList.contains('open')) closeSidebar(); else openSidebar();
+}
+// Escape closes the menu when no dialog is on top of it.
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  const sb = document.getElementById('sidebar');
+  if(sb && sb.classList.contains('open') && window.innerWidth <= 768) closeSidebar();
+});
+// Choosing a destination on a phone should put the menu away.
+document.addEventListener('click', e => {
+  const item = e.target.closest && e.target.closest('.sb-nav .nav-item');
+  if(item && window.innerWidth <= 768) setTimeout(closeSidebar, 80);
+});
+// Drop the "there is more below" fade once the menu is fully scrolled, and
+// skip it entirely when nothing is cut off.
+function syncNavFade(){
+  const nav = document.querySelector('.sb-nav'); if(!nav) return;
+  const atEnd = nav.scrollTop + nav.clientHeight >= nav.scrollHeight - 2;
+  const fits  = nav.scrollHeight <= nav.clientHeight + 2;
+  nav.classList.toggle('sb-nofade', fits || atEnd);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.querySelector('.sb-nav');
+  if(nav) nav.addEventListener('scroll', syncNavFade, { passive:true });
+  window.addEventListener('resize', syncNavFade);
+  setTimeout(syncNavFade, 300);
+  setTimeout(syncNavFade, 1500);   // again once permissions have shown/hidden items
+});
+
+
+// Tables in this dashboard are rendered from template strings, so a column
+// heading created after load never picked up the scope="col" that the static
+// markup has. This stamps them as they appear. It only does work when a node
+// containing a table is actually added.
+(function () {
+  function stamp(root) {
+    (root.querySelectorAll ? root.querySelectorAll('thead th:not([scope])') : []).forEach(th => th.setAttribute('scope', 'col'));
+  }
+  const run = () => stamp(document);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+  const obs = new MutationObserver(muts => {
+    for (const m of muts) {
+      for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.tagName === 'TH' && n.closest('thead')) { n.setAttribute('scope', 'col'); continue; }
+        if (n.querySelector && n.querySelector('thead th:not([scope])')) stamp(n);
+      }
+    }
+  });
+  const start = () => {
+    const host = document.querySelector('.main-content') || document.body;
+    obs.observe(host, { childList: true, subtree: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 </script>
 
 <!-- (legacy account modal removed — the live ACCOUNT MODAL is defined earlier in this file) -->
@@ -10895,7 +11287,7 @@ function renderLeasingPanel(){
   <div class="modal-box" style="max-width:980px">
     <div class="modal-hd">
       <div class="modal-title"><i class="fas fa-file-import"></i> <span style="margin-left:8px">Import Properties</span></div>
-      <button class="modal-close" onclick="impClose()"><i class="fas fa-times"></i></button>
+      <button class="modal-close" onclick="impClose()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body" style="padding:24px">
 
@@ -10938,7 +11330,7 @@ function renderLeasingPanel(){
 
         <div style="max-height:420px;overflow:auto;border:2px solid var(--ab-line);background:var(--ab-paper)">
           <table class="imp-tbl" id="impTable">
-            <thead><tr><th>Title</th><th>Location</th><th>Type</th><th>Listing</th><th>Price</th><th>BR / BA / sqm</th><th>Status</th></tr></thead>
+            <thead><tr><th scope="col">Title</th><th scope="col">Location</th><th scope="col">Type</th><th scope="col">Listing</th><th scope="col">Price</th><th scope="col">BR / BA / sqm</th><th scope="col">Status</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
