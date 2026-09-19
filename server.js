@@ -233,6 +233,10 @@ app.use(helmet.contentSecurityPolicy({
       'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
+    // Without this, manifest-src falls back to default-src. That happens to be
+    // 'self' and so happens to work - but the day this policy is enforced is
+    // not the day to find out by having every home-screen icon stop working.
+    'manifest-src': ["'self'"],
     'worker-src': ["'self'"],                            // service worker
     ...CSP_BASELINE
   }
@@ -393,6 +397,12 @@ app.use(express.static('public', {
         res.setHeader('X-Robots-Tag',
           'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
       }
+    } else if (/manifest\.json$/i.test(path) || /\.webmanifest$/i.test(path)) {
+      // The registered type for a web app manifest. Browsers accept
+      // application/json today, but the icon and the launch URL for an app
+      // someone has put on their home screen is not a good place to be
+      // relying on leniency.
+      res.setHeader('Content-Type', 'application/manifest+json; charset=UTF-8');
     } else if (/\.(css|js)$/i.test(path)) {
       // These are requested with ?v=<CACHE_VERSION> now, so a changed file
       // arrives under a new URL and a cached one can never be stale. That
