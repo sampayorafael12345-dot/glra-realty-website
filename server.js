@@ -1151,7 +1151,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/a11y.js?v=103" defer></script>
 </body>
 </html>`;
 }
@@ -1560,8 +1560,8 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=102"></script>
-<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/main.js?v=103"></script>
+<script src="/js/a11y.js?v=103" defer></script>
 </body>
 </html>`;
 }

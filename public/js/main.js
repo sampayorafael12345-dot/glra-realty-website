@@ -1065,42 +1065,9 @@ window.glraOpenPrintGate = function (label, collectFn) {
     });
   });
 
-  /* 3) Larger-text accessibility toggle ---------------------------------- */
-  if (!document.getElementById('glraTextSizeStyle')) {
-    var css =
-      'html.glra-large-text{zoom:1.15}' +
-      '.floating-buttons .btn-textsize{background:#0a0a0a !important;color:#fff !important;font-weight:800 !important;' +
-      'font-family:Inter,system-ui,sans-serif !important;font-size:15px !important;letter-spacing:.5px !important}' +
-      'html.glra-large-text .floating-buttons .btn-textsize{background:#ff3d00 !important;color:#fff !important}';
-    var s = document.createElement('style');
-    s.id = 'glraTextSizeStyle';
-    s.textContent = css;
-    document.head.appendChild(s);
-  }
-  /* Apply saved preference right away (before paint where possible). */
-  try {
-    if (localStorage.getItem('glraLargeText') === '1') document.documentElement.classList.add('glra-large-text');
-  } catch(e){}
-  window.glraToggleTextSize = function(){
-    var on = document.documentElement.classList.toggle('glra-large-text');
-    try { localStorage.setItem('glraLargeText', on ? '1' : '0'); } catch(e){}
-    if (typeof showToast === 'function') showToast(on ? 'Larger text turned on' : 'Larger text turned off');
-  };
-  /* Inject an "A+" button into every floating-buttons cluster, before the dark-mode button. */
-  ready(function(){
-    document.querySelectorAll('.floating-buttons').forEach(function(container){
-      if (container.querySelector('.btn-textsize')) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'floating-btn btn-textsize';
-      btn.setAttribute('aria-label', 'Toggle larger text');
-      btn.setAttribute('title', 'Larger text');
-      btn.textContent = 'A+';
-      btn.addEventListener('click', window.glraToggleTextSize);
-      var dm = container.querySelector('.btn-darkmode');
-      if (dm) container.insertBefore(btn, dm);
-      else container.appendChild(btn);
-    });
-  });
+  /* 3) The "A+" larger-text button was removed (Sept 2026): phones and
+     browsers already zoom, and it crowded the contact buttons. Forget the
+     old setting so nobody is left with a saved preference. */
+  try { localStorage.removeItem('glraLargeText'); } catch(e){}
 })();
 /* OUTREACH-V4-END */
