@@ -1969,3 +1969,19 @@ html body .toast,html body.dark-mode .toast{
   border-left:4px solid #ff3d00 !important;
 }
 html body .toast.err,html body.dark-mode .toast.err{border-left-color:#ef4444 !important}
+
+/* ── The focus ring on a clickable div ──────────────────────────────────────
+   A property card is a <div role="button" tabindex="0">. Chrome matches
+   :focus-visible on those even for a plain mouse click, which a real <a> or
+   <button> never does — so the card alone would light up when clicked while
+   every genuine control behaved.
+
+   Native controls keep the standard :focus-visible ring. Anything that is only
+   a button by role waits for the visitor to actually be navigating by
+   keyboard, which is what body.gl-keyboard means. */
+html body :is([role="button"],[tabindex]):not(a):not(button):not(input):not(select):not(textarea):focus-visible{
+  outline:0 !important;
+}
+html body.gl-keyboard :is([role="button"],[tabindex]):not(a):not(button):not(input):not(select):not(textarea):focus-visible{
+  outline:3px solid var(--ab-hot) !important;outline-offset:2px !important;
+}

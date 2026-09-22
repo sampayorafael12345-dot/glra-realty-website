@@ -51,7 +51,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=100">
+<link rel="stylesheet" href="/css/styles.css?v=101">
 
 <style>
 /* ════════════════════════════════════════════════════════════
@@ -925,7 +925,7 @@ html.dark-mode-pre .loader-bar,body.dark-mode .loader-bar{background:#1a1a17}
 .modal-share-buttons{display:flex;gap:8px;flex-wrap:wrap}
 .share-btn{padding:9px 14px;background:var(--ab-paper);border:1px solid var(--ab-line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;cursor:pointer;color:var(--ab-ink)}
 .share-btn:hover{background:var(--ab-ink);color:var(--ab-paper)}
-.modal-description{padding:14px 0;line-height:1.6;font-size:14px;color:var(--ab-ink-soft)}
+.modal-description{padding:14px 0;line-height:1.6;font-size:14px;color:var(--ab-ink-soft);/* Descriptions are written one item per line. Without this the browser collapses every line break and runs the whole thing together. */white-space:pre-wrap;overflow-wrap:anywhere}
 .map-container iframe{width:100%;height:280px;border:1px solid var(--ab-line)}
 .modal-inquire-btn{width:100%;padding:18px;background:var(--ab-hot);color:#fff;border:0;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer}
 .modal-inquire-btn:hover{background:var(--ab-ink)}
@@ -1351,6 +1351,22 @@ html body .toast,html body.dark-mode .toast{
   border-left:4px solid #ff3d00 !important;
 }
 html body .toast.err,html body.dark-mode .toast.err{border-left-color:#ef4444 !important}
+
+/* ── The focus ring on a clickable div ──────────────────────────────────────
+   A property card is a <div role="button" tabindex="0">. Chrome matches
+   :focus-visible on those even for a plain mouse click, which a real <a> or
+   <button> never does -- so the card lit up with a heavy orange rectangle
+   after you clicked it and dismissed the pop-up.
+
+   Native controls keep the standard ring. Anything that is only a button by
+   role waits until the visitor is actually navigating by keyboard, which is
+   what body.gl-keyboard means. */
+html body :is([role="button"],[tabindex]):not(a):not(button):not(input):not(select):not(textarea):focus-visible{
+  outline:0 !important;
+}
+html body.gl-keyboard :is([role="button"],[tabindex]):not(a):not(button):not(input):not(select):not(textarea):focus-visible{
+  outline:3px solid var(--ab-hot) !important;outline-offset:2px !important;
+}
 </style>
 <!-- FAQPage: these six questions are already on the page; publishing them
      as structured data is what makes Google eligible to show them as an
@@ -1835,7 +1851,7 @@ html body .toast.err,html body.dark-mode .toast.err{border-left-color:#ef4444 !i
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/main.js?v=100"></script>
+<script src="/js/main.js?v=101"></script>
 <script>
 function initLazyLoading(){const io=new IntersectionObserver((e,obs)=>{e.forEach(e=>{if(e.isIntersecting){const i=e.target;if(i.dataset.src){i.src=i.dataset.src;i.classList.remove('lazy')}obs.unobserve(i)}})},{rootMargin:'50px'});document.querySelectorAll('img[data-src]').forEach(i=>io.observe(i))}
 function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters');const b=document.getElementById('advancedFilterBtn');f.classList.toggle('show');b.classList.toggle('active')}
@@ -2141,8 +2157,8 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
 })();
 loadHeroImages();loadProperties();
 </script>
-<script src="/js/chat.js?v=100" defer></script>
-<script src="/js/description.js?v=100" defer></script>
-<script src="/js/a11y.js?v=100" defer></script>
+<script src="/js/chat.js?v=101" defer></script>
+<script src="/js/description.js?v=101" defer></script>
+<script src="/js/a11y.js?v=101" defer></script>
 </body>
 </html>

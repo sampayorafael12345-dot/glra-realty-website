@@ -935,7 +935,14 @@ window.glraOpenPrintGate = function (label, collectFn) {
 
   /* 4) Keyboard-only focus rings — only show outline when user is tabbing */
   (function(){
-    var keyboardEvents = ['Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' ','Escape'];
+    // Keys that MOVE focus. Escape, Enter and Space were in here too, and
+    // that is what put an orange ring around a property card after a plain
+    // mouse click: you click the card, the pop-up opens, you press Escape to
+    // dismiss it, Escape flips the page into keyboard mode, focus returns to
+    // the card, and the ring lights up on something you never tabbed to.
+    // Escape dismisses, Enter and Space activate what is already focused --
+    // none of the three navigates, so none of them should turn the rings on.
+    var keyboardEvents = ['Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End','PageUp','PageDown'];
     document.addEventListener('keydown', function(e){
       if (keyboardEvents.indexOf(e.key) !== -1) document.body.classList.add('gl-keyboard');
     });
