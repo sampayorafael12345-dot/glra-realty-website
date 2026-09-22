@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
 
 <!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
@@ -12,7 +12,7 @@
 <meta name="keywords" content="BIR zonal value Philippines,zonal value Metro Manila,zonal value Visayas,zonal value Mindanao,property tax Philippines,capital gains tax,documentary stamp tax">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://glrarealty.com/zonal.html">
-<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#ff3d00">
@@ -29,15 +29,15 @@
 <meta name="twitter:description" content="Look up BIR zonal values for any city or province across the Philippines and estimate Capital Gains Tax and Documentary Stamp Tax.">
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Zonal Value","item":"https://glrarealty.com/zonal.html"}]}</script>
-<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"BIR Zonal Value Lookup","description":"Look up BIR Zonal Values for any property in the Philippines","applicationCategory":"Real Estate Tool","url":"https://glrarealty.com/zonal.html","creator":{"@type":"RealEstateAgent","name":"GLRA Realty"}}</script>
-<link rel="stylesheet" href="/css/styles.css?v=98">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=98">
+<link rel="stylesheet" href="/css/styles.css?v=99">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=99">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -51,11 +51,11 @@
 .search-box button:hover{background:var(--gold-dark)}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:6px 16px;border:1px solid rgba(255,61,0,.3);color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;transition:var(--transition);letter-spacing:.5px;border-radius:2px}
-.chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,61,0,.08)}
+.chip:hover{border-color:var(--gold);color:var(--ab-hot-text,#c02e00);background:rgba(255,61,0,.08)}
 /* REGION TABS */
 .region-tabs{max-width:960px;margin:32px auto 0;padding:0 5%;display:flex;flex-wrap:wrap;gap:8px}
 .region-tab{padding:8px 18px;border:1px solid var(--border-color);background:transparent;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--gray);transition:var(--transition);letter-spacing:.5px}
-.region-tab:hover,.region-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(255,61,0,.06)}
+.region-tab:hover,.region-tab.active{border-color:var(--gold);color:var(--ab-hot-text,#c02e00);background:rgba(255,61,0,.06)}
 /* RESULTS */
 .results-section{max-width:960px;margin:0 auto;padding:36px 5% 60px}
 .result-count{font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:20px;text-transform:uppercase}
@@ -64,16 +64,16 @@ body.dark-mode .result-card{background:#1a1a17;border-color:#3a3a36}
 .result-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
 .rc-header{background:var(--navy);padding:18px 26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(255,61,0,.2)}
 .rc-location{font-family:'Inter',serif;font-size:24px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
-.rc-region{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+.rc-region{font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
 .rc-stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border-color)}
 .rc-stat{padding:18px;text-align:center;border-right:1px solid var(--border-color)}
 .rc-stat:last-child{border-right:none}
 .rc-stat-label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:7px}
-.rc-stat-value{font-family:'Inter',serif;font-size:24px;font-weight:600;color:var(--gold)}
+.rc-stat-value{font-family:'Inter',serif;font-size:24px;font-weight:600;color:var(--ab-hot-text,#c02e00)}
 .rc-stat-sub{font-size:11px;color:var(--gray);margin-top:3px}
 .rc-body{padding:22px 26px}
 .rc-desc{font-size:13px;color:var(--gray);line-height:1.75;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border-color)}
-.rc-taxes-title{font-size:11px;font-weight:600;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.rc-taxes-title{font-size:11px;font-weight:600;color:var(--ab-hot-text,#c02e00);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px}
 .taxes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:14px}
 .tax-row{padding:12px 16px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;transition:var(--transition)}
 body.dark-mode .tax-row{border-color:#3a3a36}
@@ -82,7 +82,7 @@ body.dark-mode .tax-row{border-color:#3a3a36}
 .tax-amount{font-size:14px;font-weight:600;color:var(--text-color);font-family:'Inter',serif}
 .tax-total{background:var(--navy);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,61,0,.2)}
 .tax-total .tax-name{color:rgba(255,255,255,.7);font-weight:500;font-size:13px}
-.tax-total .tax-amount{font-size:18px;color:var(--gold);font-family:'Inter',serif}
+.tax-total .tax-amount{font-size:18px;color:var(--ab-hot-text,#c02e00);font-family:'Inter',serif}
 .sqm-control{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;border:1px solid var(--border-color);background:var(--gray-light)}
 body.dark-mode .sqm-control{background:#0e0e0c;border-color:#3a3a36}
 .sqm-control label{font-size:12px;color:var(--gray);white-space:nowrap;letter-spacing:.5px}
@@ -93,18 +93,18 @@ body.dark-mode .sqm-control{background:#0e0e0c;border-color:#3a3a36}
 .rc-btn{padding:10px 20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--transition);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:7px;border-radius:2px}
 .rc-btn-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
 .rc-btn-primary:hover{background:var(--gold-dark)}
-.rc-btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.rc-btn-outline{background:transparent;color:var(--ab-hot-text,#c02e00);border:1px solid var(--gold)}
 .rc-btn-outline:hover{background:var(--gold);color:#fff}
 /* EMPTY STATE */
 .empty-state{text-align:center;padding:70px 20px;border:1px solid rgba(255,61,0,.15);background:rgba(255,61,0,.03)}
 body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,61,0,.1)}
-.empty-state i{font-size:48px;color:var(--gold);margin-bottom:20px;display:block}
+.empty-state i{font-size:48px;color:var(--ab-hot-text,#c02e00);margin-bottom:20px;display:block}
 .empty-state h3{font-family:'Inter',serif;font-size:28px;color:var(--text-color);margin-bottom:10px}
 .empty-state p{color:var(--gray);font-size:14px;line-height:1.7}
 /* DISCLAIMER */
 .disclaimer-box{max-width:960px;margin:0 auto;padding:0 5% 50px}
 .disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
-.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+.disclaimer i{color:var(--ab-hot-text,#c02e00);flex-shrink:0;margin-top:2px}
 @media(max-width:768px){
   .search-box{flex-direction:column}
   .search-box button{width:100%;justify-content:center}
@@ -120,7 +120,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 <div class="loader" id="loader"><div><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -128,7 +128,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
     <div class="nav-dropdown">
       <a>MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
       <div class="nav-dropdown-menu">
-        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--ab-hot-text,#c02e00)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
         <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
         <a href="/tools.html">All Tools &amp; Calculators</a>
         <a href="/about.html">About Us</a>
@@ -164,10 +164,11 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
+<main id="main">
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
+  <img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" loading="lazy" decoding="async">
   <div class="print-title">BIR Zonal Value Lookup Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -182,7 +183,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 <div class="search-section">
   <div class="search-wrap">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search any city, municipality, or province (e.g. Makati, Cebu, Davao, Iloilo)..." onkeydown="if(event.key==='Enter')doSearch()">
+      <input type="text" id="searchInput" aria-label="Search for a city, municipality or province" placeholder="Search any city, municipality, or province (e.g. Makati, Cebu, Davao, Iloilo)..." onkeydown="if(event.key==='Enter')doSearch()">
       <button onclick="doSearch()"><i class="fas fa-search"></i> Search</button>
     </div>
     <div class="chip-row">
@@ -205,7 +206,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 <div class="results-section">
   <div class="result-count" id="resultCount"></div>
   <div id="emptyState" class="empty-state">
-    <i class="fas fa-map-of-philippines" style="font-size:48px;color:var(--gold);margin-bottom:20px;display:block"></i>
+    <i class="fas fa-map-of-philippines" style="font-size:48px;color:var(--ab-hot-text,#c02e00);margin-bottom:20px;display:block"></i>
     <i class="fas fa-map-marked-alt"></i>
     <h3>Search Any City in the Philippines</h3>
     <p>We have zonal value data for cities and municipalities across all regions — Metro Manila, Visayas, Mindanao, and more.<br>Enter a location above or click a quick search chip to get started.</p>
@@ -222,16 +223,17 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>Disclaimer:</strong> Zonal values shown are estimates based on general BIR data and prevailing market information. Actual BIR zonal values vary by specific street, barangay, and land classification. Always verify with the <a href="https://www.bir.gov.ph" target="_blank" rel="noopener" style="color:var(--gold)">official BIR website</a> or your local Revenue District Office before any transaction. Use our <a href="/calculator.html" style="color:var(--gold)">Closing Fees Calculator</a> for complete fee computation.</div>
+    <div><strong>Disclaimer:</strong> Zonal values shown are estimates based on general BIR data and prevailing market information. Actual BIR zonal values vary by specific street, barangay, and land classification. Always verify with the <a href="https://www.bir.gov.ph" target="_blank" rel="noopener" style="color:var(--ab-hot-text,#c02e00)">official BIR website</a> or your local Revenue District Office before any transaction. Use our <a href="/calculator.html" style="color:var(--ab-hot-text,#c02e00)">Closing Fees Calculator</a> for complete fee computation.</div>
   </div>
 </div>
 
+</main>
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p><div class="footer-social"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572"><i class="fas fa-phone-alt"></i></a></div></div>
+    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p><div class="footer-social"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="GLRA Realty on Instagram"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Message GLRA Realty on Messenger"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572" aria-label="Call GLRA Realty on 0917 177 4572"><i class="fas fa-phone-alt"></i></a></div></div>
     <div class="footer-col"><h4>Properties</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li><li><a href="/properties.html">All Listings</a></li></ul></div>
     <div class="footer-col"><h4>Resources</h4><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li><li><a href="/guide.html">Documentation Guide</a></li><li><a href="/calculator.html">Closing Fees Calculator</a></li><li><a href="/zonal.html">Zonal Value Lookup</a></li><li><a href="/blog.html">Real Estate Blog</a></li></ul></div>
-    <div class="footer-col"><h4>Company</h4><ul><li><a href="/about.html">About Us</a></li><li><a href="/testimonials.html">Testimonials</a></li><li><a href="/#contact">Contact</a></li></ul><h4 style="margin-top:18px">Contact</h4><p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p><p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p></div>
+    <div class="footer-col"><h4>Company</h4><ul><li><a href="/about.html">About Us</a></li><li><a href="/testimonials.html">Testimonials</a></li><li><a href="/#contact">Contact</a></li></ul><h4 style="margin-top:18px">Contact</h4><p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p><p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p></div>
   </div>
   <hr class="footer-divider">
   <div class="footer-bottom"><p>&copy; 2026 GLRA Realty Group. All rights reserved.</p><div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div></div>
@@ -245,9 +247,9 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
   <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
   <button class="floating-btn btn-darkmode" id="dmBtn" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
-<a href="#" class="back-to-top" id="backToTop"><i class="fas fa-arrow-up"></i></a>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=98"></script>
+<script src="/js/main.js?v=99"></script>
 <script>
 // Short alias for the shared escapeHtml helper
 const esc = escapeHtml;
@@ -470,7 +472,7 @@ function render(hits){
     return `<div class="result-card">
       <div class="rc-header">
         <div>
-          <div class="rc-location"><i class="fas fa-map-marker-alt" style="font-size:16px;color:var(--gold)"></i>${esc(r.l)}</div>
+          <div class="rc-location"><i class="fas fa-map-marker-alt" style="font-size:16px;color:var(--ab-hot-text,#c02e00)"></i>${esc(r.l)}</div>
           <div class="rc-region">${esc(r.r)}</div>
         </div>
         <a href="https://www.bir.gov.ph/index.php/zonal-value.html" target="_blank" rel="noopener" class="rc-btn rc-btn-outline" style="font-size:11px"><i class="fas fa-external-link-alt"></i> Official BIR</a>
@@ -528,7 +530,8 @@ function buildRegionTabs(){
 }
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=98" defer></script>
-<script src="/js/chat.js?v=98" defer></script>
+<script src="/js/brutalist-shell.js?v=99" defer></script>
+<script src="/js/a11y.js?v=99" defer></script>
+<script src="/js/chat.js?v=99" defer></script>
 </body>
 </html>

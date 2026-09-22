@@ -20,7 +20,7 @@
   --card-bg:#f1eee9 !important;
   --border-color:#0a0a0a !important;
   --text-color:#0a0a0a !important;
-  --gray:#6a6a6a !important;
+  --gray:#656565 !important;
   --shadow-sm:6px 6px 0 #0a0a0a !important;
   --shadow-md:6px 6px 0 #0a0a0a !important;
   --shadow-lg:8px 8px 0 #0a0a0a !important;
@@ -30,12 +30,26 @@
   --ab-paper-2:#e8e4dd;
   --ab-ink:#0a0a0a;
   --ab-ink-soft:#2a2a2a;
-  --ab-gray:#6a6a6a;
+  --ab-gray:#656565;
   --ab-line:#0a0a0a;
   --ab-hot:#ff3d00;
   --ab-hot-deep:#cc2f00;
+  /* Same hue and saturation as --ab-hot, dark enough to clear 4.5:1 as text
+     on every light surface here. Fills and borders keep --ab-hot. */
+  --ab-hot-text:#c02e00;
+  /* An orange fill that keeps WHITE text legible at 13px: 4.52:1. For the
+     nav CTA and the small orange badges, not for large orange blocks. */
+  --ab-hot-btn:#df3500;
+  /* #10b981 reads at 2.19:1 on paper. Same hue, dark enough to read. */
+  --ab-green-text:#0a7552;
+  /* Form-field text size. 16px below 768px, because Safari on iPhone zooms
+     the page in on focus for anything smaller and never zooms back out. */
+  --ab-field-size:14px;
 }
 body.dark-mode{
+  --ab-hot-text:#ff3d00;
+  --ab-hot-btn:#df3500;
+  --ab-green-text:#10b981;
   --gold:#ff3d00 !important;
   --gold-dark:#cc2f00 !important;
   --gold-light:rgba(255,61,0,0.12) !important;
@@ -74,7 +88,7 @@ h4{font-size:18px !important;letter-spacing:-.4px !important}
 
 /* ── LINKS ── */
 a{color:inherit;text-decoration:none}
-a:hover{color:var(--ab-hot)}
+a:hover{color:var(--ab-hot-text,#c02e00)}
 
 /* ── LEGACY NAVBAR (.navbar from styles.css) → BRUTALIST NAV ── */
 .navbar{
@@ -135,7 +149,7 @@ a:hover{color:var(--ab-hot)}
   letter-spacing:-.5px !important;text-transform:uppercase !important;color:#fff !important;
   padding:16px 4px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
 }
-.mobile-overlay-links a:hover{color:var(--ab-hot) !important;padding-left:14px !important}
+.mobile-overlay-links a:hover{color:var(--ab-hot-text,#c02e00) !important;padding-left:14px !important}
 
 /* ── PAGE HERO ── */
 .page-hero{
@@ -146,7 +160,7 @@ a:hover{color:var(--ab-hot)}
 .page-hero::before{display:none !important}
 .page-hero .eyebrow{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;
-  text-transform:uppercase !important;color:var(--ab-hot) !important;font-weight:700 !important;
+  text-transform:uppercase !important;color:var(--ab-hot-text,#c02e00) !important;font-weight:700 !important;
   margin-bottom:14px !important;display:block !important;
 }
 .page-hero h1{
@@ -166,12 +180,18 @@ textarea,select,
 .form-input,.zonal-search-input{
   background:var(--ab-paper) !important;color:var(--ab-ink) !important;
   border:2px solid var(--ab-line) !important;border-radius:0 !important;
-  padding:13px 16px !important;font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:500 !important;
+  padding:13px 16px !important;font-family:'Inter',sans-serif !important;font-size:var(--ab-field-size,14px) !important;font-weight:500 !important;
   transition:border-color .15s,background .15s !important;box-shadow:none !important;
 }
 input:focus,textarea:focus,select:focus,
 .form-input:focus,.zonal-search-input:focus{
-  outline:0 !important;border-color:var(--ab-hot) !important;background:var(--ab-paper-2) !important;
+  border-color:var(--ab-hot) !important;background:var(--ab-paper-2) !important;
+}
+/* Clicking a field should not draw a ring; arriving by keyboard must. The
+   blanket `outline:0` that used to sit in the rule above removed both. */
+input:focus:not(:focus-visible),textarea:focus:not(:focus-visible),select:focus:not(:focus-visible),
+.form-input:focus:not(:focus-visible),.zonal-search-input:focus:not(:focus-visible){
+  outline:0 !important;
 }
 /* Range sliders — flat track + SQUARE orange thumb (round thumbs clashed with the
    square brutalist look and rendered "off"). Applies to every calculator slider. */
@@ -241,7 +261,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
   padding-bottom:32px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
 }
 .footer-col h4{
-  font-family:'JetBrains Mono',monospace !important;color:var(--ab-hot) !important;
+  font-family:'JetBrains Mono',monospace !important;color:var(--ab-hot-text,#c02e00) !important;
   font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;
   font-weight:700 !important;margin-bottom:14px !important;
 }
@@ -249,7 +269,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
   color:rgba(241,238,233,.85) !important;font-size:14px !important;font-weight:600 !important;
   font-family:'Inter',sans-serif !important;line-height:1.6 !important;
 }
-.footer-col a:hover,.footer-col ul li a:hover{color:var(--ab-hot) !important}
+.footer-col a:hover,.footer-col ul li a:hover{color:var(--ab-hot-text,#c02e00) !important}
 .footer-col ul{gap:8px !important}
 .footer-social{margin-top:16px !important;gap:10px !important}
 .footer-social a{
@@ -265,7 +285,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
 }
 .footer-bottom p{color:rgba(241,238,233,.68) !important;font-size:11px !important;letter-spacing:1.5px !important}
 .footer-bottom-links a{color:rgba(241,238,233,.68) !important;font-size:11px !important;letter-spacing:1.5px !important}
-.footer-bottom-links a:hover{color:var(--ab-hot) !important}
+.footer-bottom-links a:hover{color:var(--ab-hot-text,#c02e00) !important}
 
 /* ── FLOATING BUTTONS ──
    The global "button { padding:14px 24px !important }" rule above would
@@ -344,7 +364,7 @@ body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:v
 @media(max-width:1100px){.trust-grid{grid-template-columns:repeat(3,1fr) !important}.trust-item:nth-child(3n){border-right:0 !important}}
 @media(max-width:600px){.trust-grid{grid-template-columns:1fr 1fr !important}.trust-item:nth-child(2n){border-right:0 !important}}
 .trust-item .trust-icon{
-  background:transparent !important;color:var(--ab-hot) !important;
+  background:transparent !important;color:var(--ab-hot-text,#c02e00) !important;
   width:auto !important;height:auto !important;font-size:14px !important;border-radius:0 !important;margin-bottom:4px !important;
 }
 .trust-item .trust-label{
@@ -378,8 +398,8 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 .fee-label,.cost-label{font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:600 !important;color:var(--ab-ink) !important}
 .fee-value,.cost-value{font-family:'Inter',sans-serif !important;font-size:16px !important;font-weight:900 !important;color:var(--ab-ink) !important;letter-spacing:-.5px !important}
 .fee-row.total,.cost-row.total{border-top:2px solid var(--ab-line) !important;border-bottom:0 !important;padding-top:16px !important;margin-top:8px !important}
-.fee-row.total .fee-value,.cost-row.total .cost-value{color:var(--ab-hot) !important;font-size:24px !important}
-.tax-basis,strong.tax-basis{color:var(--ab-hot) !important}
+.fee-row.total .fee-value,.cost-row.total .cost-value{color:var(--ab-hot-text,#c02e00) !important;font-size:24px !important}
+.tax-basis,strong.tax-basis{color:var(--ab-hot-text,#c02e00) !important}
 
 /* Section / card titles inside calculator pages */
 .input-card h3,.results-card h3,.summary-card h3{
@@ -388,14 +408,14 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
   margin-bottom:18px !important;padding-bottom:14px !important;border-bottom:2px solid var(--ab-line) !important;
   display:flex !important;align-items:center !important;gap:10px !important;
 }
-.input-card h3 i,.results-card h3 i,.summary-card h3 i{color:var(--ab-hot) !important}
+.input-card h3 i,.results-card h3 i,.summary-card h3 i{color:var(--ab-hot-text,#c02e00) !important}
 
 /* Hint text under inputs */
 .input-hint,.zonal-hint{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1px !important;
   color:var(--ab-gray) !important;font-weight:600 !important;text-transform:none !important;
 }
-.input-hint i,.zonal-hint i{color:var(--ab-hot) !important}
+.input-hint i,.zonal-hint i{color:var(--ab-hot-text,#c02e00) !important}
 
 /* Asset selector cards */
 .asset-option,.option-card{
@@ -418,7 +438,7 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 .search-field-wrapper .search-icon{
   position:absolute !important;left:18px !important;top:50% !important;
   transform:translateY(-50%) !important;
-  color:var(--ab-hot) !important;font-size:13px !important;z-index:2 !important;
+  color:var(--ab-hot-text,#c02e00) !important;font-size:13px !important;z-index:2 !important;
   pointer-events:none !important;
 }
 .dropdown-selected{padding:13px 16px !important;font-family:'Inter',sans-serif !important;font-weight:600 !important;font-size:14px !important;color:var(--ab-ink) !important}
@@ -440,13 +460,13 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 }
 .summary-result,.summary-amount{
   font-family:'Inter',sans-serif !important;font-size:36px !important;font-weight:900 !important;
-  letter-spacing:-1.5px !important;color:var(--ab-hot) !important;line-height:1 !important;
+  letter-spacing:-1.5px !important;color:var(--ab-hot-text,#c02e00) !important;line-height:1 !important;
 }
 
 /* Section eyebrow used across pages */
 .eyebrow,.section-eyebrow{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:2px !important;
-  text-transform:uppercase !important;color:var(--ab-hot) !important;font-weight:700 !important;
+  text-transform:uppercase !important;color:var(--ab-hot-text,#c02e00) !important;font-weight:700 !important;
 }
 
 /* Brutalist top-strip injected by brutalist-shell.js — ALWAYS dark with light text, both modes */
@@ -539,7 +559,7 @@ html body.dark-mode .comm-btn.active{background:var(--ab-hot) !important;color:#
 html body.dark-mode .navbar{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
 html body.dark-mode .nav-links a{color:var(--ab-ink) !important}
 html body.dark-mode .nav-links a:hover{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important}
-html body.dark-mode .contact-btn-nav,html body.dark-mode a.contact-btn-nav{background:var(--ab-hot) !important;color:#fff !important}
+html body.dark-mode .contact-btn-nav,html body.dark-mode a.contact-btn-nav{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
 html body.dark-mode .nav-dropdown-menu{background:var(--ab-paper) !important;border-color:var(--ab-line) !important;box-shadow:6px 6px 0 var(--ab-paper-2) !important}
 html body.dark-mode .nav-dropdown-menu a{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important;background:transparent !important}
 html body.dark-mode .nav-dropdown-menu a:hover,
@@ -549,7 +569,7 @@ html body.dark-mode .nav-dropdown-menu a.active *{color:#fff !important}
 html body.dark-mode .page-hero{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
 html body.dark-mode .page-hero h1{color:var(--ab-ink) !important}
 html body.dark-mode .page-hero p{color:var(--ab-ink-soft) !important}
-html body.dark-mode .page-hero .eyebrow{color:var(--ab-hot) !important}
+html body.dark-mode .page-hero .eyebrow{color:var(--ab-hot-text,#c02e00) !important}
 html body.dark-mode footer{background:#000 !important;color:var(--ab-paper) !important}
 html body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
 html body.dark-mode .trust-item{border-color:var(--ab-line) !important}
@@ -560,25 +580,25 @@ html body.dark-mode .fee-row,html body.dark-mode .cost-row{border-bottom-color:v
 html body.dark-mode .fee-label,html body.dark-mode .cost-label,
 html body.dark-mode .fee-value,html body.dark-mode .cost-value{color:var(--ab-ink) !important}
 html body.dark-mode .fee-row.total .fee-value,html body.dark-mode .cost-row.total .cost-value,
-html body.dark-mode .tax-basis,html body.dark-mode strong.tax-basis{color:var(--ab-hot) !important}
-html body.dark-mode .summary-result,html body.dark-mode .summary-amount{color:var(--ab-hot) !important}
+html body.dark-mode .tax-basis,html body.dark-mode strong.tax-basis{color:var(--ab-hot-text,#c02e00) !important}
+html body.dark-mode .summary-result,html body.dark-mode .summary-amount{color:var(--ab-hot-text,#c02e00) !important}
 html body.dark-mode .input-card h3,
 html body.dark-mode .results-card h3,
 html body.dark-mode .summary-card h3{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important}
 html body.dark-mode .input-card h3 i,
 html body.dark-mode .results-card h3 i,
-html body.dark-mode .summary-card h3 i{color:var(--ab-hot) !important}
+html body.dark-mode .summary-card h3 i{color:var(--ab-hot-text,#c02e00) !important}
 
 /* ════════════════════════════════════════════════════════════
    LOGO COLOR SWAP — handled by syncLogos() in main.js, which repoints
-   each logo image's source between /img/logo.png (black) and
-   /img/hero-logo.png (white) on every dark-mode toggle. No CSS filter,
+   each logo image's source between /img/logo-384.png (black) and
+   /img/hero-logo-384.png (white) on every dark-mode toggle. No CSS filter,
    so the actual artwork is preserved (transparency, anti-aliasing, etc.).
    ════════════════════════════════════════════════════════════ */
 .navbar .logo img,.ab-brand img{filter:none !important}
 /* Dark mode shows the white logo INSTANTLY via CSS — no flash of the black logo
    while waiting for main.js syncLogos() to swap the src on slow loads */
-body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
+body.dark-mode .navbar .logo img{content:url("/img/hero-logo-384.png")}
 
 /* ════════════════════════════════════════════════════════════
    TOOLS / GUIDES DROPDOWN — consistent font with rest of nav
@@ -590,7 +610,7 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
 }
 
 /* Mobile side-menu section labels (canonical overlay injected by brutalist-shell.js) */
-.mo-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-hot);font-weight:700;padding:20px 4px 6px;text-align:left}
+.mo-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);font-weight:700;padding:20px 4px 6px;text-align:left}
 
 /* ════════════════════════════════════════════════════════════
    MOBILE / TABLET RESPONSIVENESS
@@ -702,7 +722,7 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
   .result-headline .value,.summary-amount,.summary-result,.range-bar .value,
   .fee-row.total .fee-value,.fee-row.total .fee-label,
   .cost-row.total .cost-value,.cost-row.total .cost-label,
-  .result-mini.gold .value{color:#ff3d00 !important}
+  .result-mini.gold .value{color:var(--ab-hot-text,#c02e00) !important}
 
   /* ── RESULTS / OUTPUT — show cleanly with borders ── */
   .results-card,.summary-card,.result-card,.fee-card,.amort-card,
@@ -808,14 +828,15 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
 }
 .glra-print-gate-card *{color:#0d1b2a !important}
 .glra-print-gate-card h3{color:#0a0a0a !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.5px !important}
-.glra-print-gate-card > i{color:#ff3d00 !important}
+.glra-print-gate-card > i{color:var(--ab-hot-text,#c02e00) !important}
 .glra-print-gate-card p{color:#555 !important;font-size:13px !important}
 .glra-print-gate-card input{
   background:#fff !important;color:#0d1b2a !important;
   border:2px solid #0a0a0a !important;border-radius:0 !important;
   padding:14px !important;
 }
-.glra-print-gate-card input:focus{border-color:#ff3d00 !important;outline:0 !important}
+.glra-print-gate-card input:focus:not(:focus-visible){border-color:#ff3d00 !important;outline:0 !important}
+.glra-print-gate-card input:focus-visible{border-color:#ff3d00 !important}
 .glra-print-gate-submit{
   background:#0a0a0a !important;color:#fff !important;
   border:0 !important;border-radius:0 !important;
@@ -825,7 +846,7 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
 .glra-print-gate-submit:hover{background:#ff3d00 !important;color:#fff !important}
 .glra-print-gate-submit *{color:#fff !important}
 .glra-print-gate-close{color:#999 !important;background:transparent !important}
-.glra-print-gate-close:hover{color:#ff3d00 !important}
+.glra-print-gate-close:hover{color:var(--ab-hot-text,#c02e00) !important}
 .glra-print-gate-fine{color:#888 !important;font-size:11px !important}
 
 /* ════════════════════════════════════════════════════════════
@@ -874,14 +895,14 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo.png")}
    ════════════════════════════════════════════════════════════ */
 .ab-top-strip,.ab-top-strip *{color:#f1eee9 !important}
 footer,footer p,footer .footer-col p,footer .footer-col a,footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
-footer .footer-col h4{color:var(--ab-hot) !important}
+footer .footer-col h4{color:var(--ab-hot-text,#c02e00) !important}
 footer .footer-bottom,footer .footer-bottom p,footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 footer .footer-social a{color:#f1eee9 !important}
 
 /* Dark-mode footer override (was using var(--ab-paper) which inverts to dark) */
 html body.dark-mode footer{background:#000 !important;color:#f1eee9 !important}
 html body.dark-mode footer *{color:#f1eee9 !important}
-html body.dark-mode footer .footer-col h4{color:var(--ab-hot) !important}
+html body.dark-mode footer .footer-col h4{color:var(--ab-hot-text,#c02e00) !important}
 html body.dark-mode footer .footer-col a,html body.dark-mode footer .footer-col p,html body.dark-mode footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
 html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 
@@ -916,7 +937,7 @@ html body.dark-mode .calc-card-header h2{
   letter-spacing:-.5px !important;font-size:17px !important;line-height:1 !important;
   display:flex !important;align-items:center !important;gap:10px !important;
 }
-.calc-card-header h2 i{color:var(--ab-hot) !important;font-size:16px !important}
+.calc-card-header h2 i{color:var(--ab-hot-text,#c02e00) !important;font-size:16px !important}
 .calc-card-header p,
 html body.dark-mode .calc-card-header p{
   color:rgba(241,238,233,.7) !important;
@@ -938,9 +959,10 @@ html body.dark-mode .input-group input,html body.dark-mode .input-group select{
   background:var(--ab-paper) !important;color:var(--ab-ink) !important;
   border:2px solid var(--ab-line) !important;border-radius:0 !important;
   padding:12px 14px !important;font-family:'Inter',sans-serif !important;
-  font-size:14px !important;font-weight:600 !important;
+  font-size:var(--ab-field-size,14px) !important;font-weight:600 !important;
 }
-.input-group input:focus,.input-group select:focus{border-color:var(--ab-hot) !important;outline:0 !important}
+.input-group input:focus:not(:focus-visible),.input-group select:focus:not(:focus-visible){border-color:var(--ab-hot) !important;outline:0 !important}
+.input-group input:focus-visible,.input-group select:focus-visible{border-color:var(--ab-hot) !important}
 .input-hint,
 html body.dark-mode .input-hint{
   color:var(--ab-gray) !important;
@@ -970,7 +992,7 @@ html body.dark-mode .tax-total *{color:#f1eee9 !important}
 .result-headline .value,.result-summary .value,.headline-total .value,
 .headline-total .amount,.yield-headline .value,.yield-headline .rate,
 .result-headline strong,.tax-total .amount{
-  color:var(--ab-hot) !important;
+  color:var(--ab-hot-text,#c02e00) !important;
   font-family:'Inter','Segoe UI',sans-serif !important;
   font-weight:900 !important;letter-spacing:-1px !important;
 }
@@ -1020,7 +1042,7 @@ html body.dark-mode .breakdown-table tr.total-row td{
 }
 .result-mini .label{color:var(--ab-gray) !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;text-transform:uppercase !important;font-weight:700 !important}
 .result-mini .value{color:var(--ab-ink) !important;font-family:'Inter',sans-serif !important;font-weight:900 !important;letter-spacing:-.5px !important;font-size:20px !important}
-.result-mini.gold .value{color:var(--ab-hot) !important}
+.result-mini.gold .value{color:var(--ab-hot-text,#c02e00) !important}
 .result-mini .sub{color:var(--ab-gray) !important;font-size:11px !important;font-weight:500 !important}
 
 /* ════════════════════════════════════════════════════════════
@@ -1044,13 +1066,13 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:
   font-family:'Inter','Segoe UI',sans-serif !important;
   font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.3px !important;
 }
-.result-header h3 i,.summary-item h4 i,.desired-result h3 i,.section-header h2 i{color:var(--ab-hot) !important}
+.result-header h3 i,.summary-item h4 i,.desired-result h3 i,.section-header h2 i{color:var(--ab-hot-text,#c02e00) !important}
 
 /* 3) CTA buttons (affordability results etc.) — keep text readable on hover.
       Was turning orange-on-orange (invisible) / the outline one didn't fill. */
 .cta-primary{background:var(--ab-hot) !important;color:#fff !important;border:1px solid var(--ab-hot) !important}
 .cta-primary:hover{background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a !important}
-.cta-outline{background:transparent !important;color:var(--ab-hot) !important;border:1px solid var(--ab-hot) !important}
+.cta-outline{background:transparent !important;color:var(--ab-hot-text,#c02e00) !important;border:1px solid var(--ab-hot) !important}
 .cta-outline:hover{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
 
 /* 4) Range sliders — clean light track + small SQUARE orange thumb (refined). */
@@ -1070,7 +1092,7 @@ html body .page-hero,html body.dark-mode .page-hero{
 }
 html body .page-hero h1,html body.dark-mode .page-hero h1{color:#f1eee9 !important}
 html body .page-hero p,html body.dark-mode .page-hero p{color:rgba(241,238,233,.82) !important}
-html body .page-hero .eyebrow,html body.dark-mode .page-hero .eyebrow{color:#ff3d00 !important}
+html body .page-hero .eyebrow,html body.dark-mode .page-hero .eyebrow{color:var(--ab-hot-text,#c02e00) !important}
 
 /* 6) Mobile slide-out menu must stay dark (it used the flipping ink var, so it
       turned cream in dark mode and hid its white links). */
@@ -1089,7 +1111,7 @@ html body .mobile-overlay .close-menu,html body.dark-mode .mobile-overlay .close
       rendering black on some pages / scroll states). */
 html body .navbar .contact-btn-nav,html body .navbar.scrolled .contact-btn-nav,
 html body .navbar:not(.scrolled) .contact-btn-nav,html body a.contact-btn-nav{
-  background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00 !important;
+  background:var(--ab-hot-btn,#df3500) !important;color:#fff !important;border-color:var(--ab-hot-btn,#df3500) !important;
 }
 html body .navbar .contact-btn-nav:hover,html body a.contact-btn-nav:hover{background:#0a0a0a !important;color:#fff !important}
 
@@ -1105,7 +1127,7 @@ html body .listing-toggle .lt-sub{display:block !important;margin-top:3px !impor
 
 /* 11) list-property hero title — was black-on-black (invisible) in light mode. */
 html body .list-hero h1{color:#f1eee9 !important}
-html body .list-hero .eyebrow{color:var(--ab-hot) !important}
+html body .list-hero .eyebrow{color:var(--ab-hot-text,#c02e00) !important}
 
 /* 12) Navbar — keep the logo + links in their "scrolled" inset position at ALL
        times (was sitting at the screen edges at the top, then jumping inward on
@@ -1180,11 +1202,11 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
 .mo-label{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
   letter-spacing:2px !important;text-transform:uppercase !important;
-  color:var(--ab-hot) !important;font-weight:700 !important;padding:20px 4px 6px !important;
+  color:var(--ab-hot-text,#c02e00) !important;font-weight:700 !important;padding:20px 4px 6px !important;
   text-align:left !important;
 }
 /* Active page in mobile menu: brand orange, not legacy gold */
-.mobile-overlay-links a.gl-active{color:var(--ab-hot) !important}
+.mobile-overlay-links a.gl-active{color:var(--ab-hot-text,#c02e00) !important}
 /* Users who ask for less motion get a still page */
 @media(prefers-reduced-motion:reduce){
   .ab-top-strip .live{animation:none !important}
@@ -1206,7 +1228,7 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
   /* …but keep the key money figures in GLRA orange */
   .result-headline .value,.result-summary .value,.headline-total .value,
   .headline-total .amount,.yield-headline .value,.yield-headline .rate,
-  .result-headline strong,.tax-total .amount,.summary-item .amount{color:#ff3d00 !important}
+  .result-headline strong,.tax-total .amount,.summary-item .amount{color:var(--ab-hot-text,#c02e00) !important}
   /* Bigger letterhead logo on every printed report */
   .print-only-header img{height:96px !important;margin-bottom:14px !important}
 }
@@ -1436,7 +1458,7 @@ input.is-invalid,textarea.is-invalid,.form-input.is-invalid{
 .field-error{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;
   letter-spacing:1.2px !important;text-transform:uppercase !important;
-  color:var(--ab-hot) !important;font-weight:700 !important;
+  color:var(--ab-hot-text,#c02e00) !important;font-weight:700 !important;
   margin-top:6px !important;display:block !important;
 }
 /* Disabled controls read as unavailable rather than merely faint. */
@@ -1487,7 +1509,7 @@ button[aria-disabled="true"]{
   padding:52px 28px !important;
   grid-column:1/-1 !important;
 }
-.empty-state i{color:var(--ab-hot) !important}
+.empty-state i{color:var(--ab-hot-text,#c02e00) !important}
 .empty-state p{
   font-family:'JetBrains Mono',monospace !important;font-size:12px !important;
   letter-spacing:1.2px !important;color:var(--ab-gray) !important;
@@ -1495,7 +1517,7 @@ button[aria-disabled="true"]{
   max-width:46ch !important;margin-left:auto !important;margin-right:auto !important;
 }
 .empty-state a{
-  color:var(--ab-hot) !important;font-weight:700 !important;
+  color:var(--ab-hot-text,#c02e00) !important;font-weight:700 !important;
   border-bottom:2px solid var(--ab-hot) !important;padding-bottom:1px !important;
 }
 
@@ -1584,5 +1606,332 @@ button[aria-disabled="true"]{
   .presets button,.preset-btn,.chip-btn{
     padding:9px 12px !important;
     min-height:36px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI/UX PASS — 22 Sept 2026
+   Written against the ui-ux-pro-max checklist. Each block names the rule it
+   answers. Nothing here changes the brand: no new colours, no new typefaces,
+   no new spacing scale. It fixes things that were unreachable, invisible or
+   unreadable.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* `hover-vs-tap`, `keyboard-nav`. The Tools and Guides menus opened on :hover
+   alone, which meant 26 links — every calculator on this site — could not be
+   reached by keyboard and could not be opened by tapping on a phone with a
+   pointer. a11y.js toggles .ab-open; this is the rule that shows the menu for
+   any route in that is not a mouse hovering. */
+.nav-dropdown.ab-open > .nav-dropdown-menu{display:block !important}
+.nav-dropdown > [aria-expanded]{cursor:pointer}
+/* `state-clarity` — the trigger has to look different while its menu is down. */
+.nav-dropdown.ab-open > [aria-expanded="true"]{color:var(--ab-hot-text,#c02e00) !important}
+
+/* `focus-states`, `focus-appearance` (WCAG 2.2). Range sliders carried
+   `outline:none !important` at a specificity the shared focus ring could not
+   beat, so the only keyboard-operable control on most calculator pages was
+   also the one with no focus indicator at all. */
+html body input[type="range"]:focus-visible,
+html body .input-group input[type="range"]:focus-visible,
+html body.dark-mode .input-group input[type="range"]:focus-visible{
+  outline:3px solid var(--ab-hot) !important;outline-offset:4px !important;
+}
+
+/* `focus-not-obscured` (WCAG 2.2 AA). The nav is fixed. Without a scroll
+   margin, tabbing to a control just under it lands that control behind the
+   bar — focused, highlighted, and completely hidden. */
+:target,
+a:focus-visible,button:focus-visible,input:focus-visible,
+select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  scroll-margin-top:140px;
+}
+
+/* `web-target-size` (WCAG 2.2 AA: 24x24 CSS px) and `touch-target-size`
+   (44x44 on touch). Applied only where a control is genuinely small, and only
+   on touch, so desktop density is untouched. */
+@media (hover:none) and (pointer:coarse){
+  .mobile-menu-btn,.close-menu,.back-to-top,
+  .floating-buttons .floating-btn,.floating-buttons .fab-toggle{
+    min-width:44px;min-height:44px;
+    display:flex !important;align-items:center;justify-content:center;
+  }
+  .mobile-overlay-links a{min-height:44px;display:flex;align-items:center}
+  .nav-dropdown-menu a{min-height:44px;display:flex !important;align-items:center}
+}
+
+/* `number-tabular`. Peso figures re-flowed by a pixel or two on every
+   keystroke while a calculator recalculated, because the default figures in
+   Inter are proportional. Tabular figures hold the column still. */
+.result-value,.result-amount,.big-number,.mortgage-result .amount,
+.modal-price,.prop-price,.stat-value,.calc-result,.output-value,
+.price,.amount,td.num,.tabular{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:'tnum' 1;
+}
+
+/* `long-token-wrapping`. A long unbroken string — an email address, a
+   reference number, a pasted URL — used to push its own container wider than
+   the phone screen. `anywhere` lets it reflow; `break-all` is deliberately not
+   used, because it would also chop ordinary prose mid-word. */
+p,li,dd,td,th,figcaption,blockquote,
+.card p,.panel p,.faq-a,.note,.input-hint{
+  overflow-wrap:anywhere;
+}
+
+/* `heading-line-balance`. A two-line heading that leaves one word stranded on
+   the second line reads as a mistake. This is a hint the browser may ignore,
+   which is the right kind of fix for typography. */
+h1,h2,h3,.page-hero h1,.section-title{text-wrap:balance}
+p.lead,.page-hero p,.section-sub{text-wrap:pretty}
+
+/* `reduced-motion`. A backstop for anything that gained an animation without
+   its own media query. Kept to 0.01ms rather than `none` so animation-end
+   handlers still fire and nothing hangs waiting for one. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* `disabled-states`. A disabled control looked identical to an enabled one on
+   several forms, so people kept clicking a button that was never going to
+   respond. */
+button[disabled],input[disabled],select[disabled],textarea[disabled],
+button:disabled,.btn.disabled,[aria-disabled="true"]{
+  opacity:.45 !important;cursor:not-allowed !important;
+}
+
+/* `cursor-pointer`. Anything given a click handler should say so. */
+[role="button"],[onclick]{cursor:pointer}
+
+/* The skip link has been styled in styles.css for months with no page ever
+   containing the link. a11y.js inserts it now; this keeps it above the fixed
+   top strip and the navbar, which both sit at high z-index. */
+.skip-to-content{z-index:2147483647 !important}
+
+/* Visible to a screen reader, invisible on screen. Used where a symbol carries
+   meaning a reader cannot infer — the star rating row, for one. Clipped rather
+   than `display:none`, which would take it out of the accessibility tree too. */
+.sr-only{
+  position:absolute !important;width:1px !important;height:1px !important;
+  padding:0 !important;margin:-1px !important;overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important;
+}
+
+/* ── Contrast: small white text on an orange fill ───────────────────────────
+   White on #ff3d00 is 3.55:1. Every one of these carries a label under 18px,
+   where WCAG asks 4.5:1, so the fill goes down to #df3500 -- same hue, same
+   saturation, the smallest step that clears it (4.52:1). Measured in the
+   browser across 20 pages; this is the complete list of fills that actually
+   carry small white text, so no other orange on the site moves.
+
+   The nav's "List property" button alone accounts for 18 of them, on every
+   public page. */
+/* superseded: handled by --ab-hot-btn on the source rule */
+/* The same controls in dark mode sit on ink, where the brighter fill reads
+   better and white on it is unchanged, so only the light theme moves. */
+body.dark-mode a.contact-btn-nav,body.dark-mode a.cta,body.dark-mode a.cta-primary,
+body.dark-mode a.btn-gold,body.dark-mode a.primary,body.dark-mode span.photo-tag,
+body.dark-mode span.doc-tag.need,body.dark-mode div.t-avatar,
+body.dark-mode div.testimonial-avatar,body.dark-mode button.listings-tab.active,
+body.dark-mode button.comm-btn.active,body.dark-mode section.cta-section{
+  background:var(--ab-hot-btn,#df3500) !important;
+}
+
+/* The "New" pill on the tools index was white on #10b981 at 9px: 2.54:1, the
+   worst pairing on the site. Same green, dark enough for white to clear. */
+.tool-tag.new,.tag-new,.badge-new{background:#0c875e !important}
+
+/* Orange text keeps its brightness anywhere the surface underneath is dark.
+   Custom properties inherit, so setting the token on the container is enough
+   for everything inside it -- and #c02e00 on ink would be 3.34:1, a
+   regression, which is exactly what this prevents. */
+.ab-top-strip,footer,.footer,.cta-section,.dark-section,.hero,.page-hero,
+.prop-hero,.search-card .advanced-filters,.stat-band,.ab-dark,
+.mobile-overlay,.mobile-overlay-links,.coverage-section,.nh-card-image,
+.loader,.navbar.scrolled,body.dark-mode{
+  --ab-hot-text:#ff3d00;
+  --ab-hot-btn:#df3500;
+  --ab-green-text:#10b981;
+}
+
+/* ── Two headings that were invisible on about.html ─────────────────────────
+   Both pre-date this pass; both come from the palette flip.
+
+   "Our Core Values": `.section-header h2` is bundled into a rule that forces
+   #f1eee9, written for the headings inside the calculators' DARK result
+   panels. On About the same class sits on paper, so the heading was cream on
+   cream. The dark ones (.result-header, .summary-item, .desired-result,
+   .nh-card-image, all verified to sit on a dark fill or gradient) keep it.
+
+   "Coverage Areas": the section's background is var(--navy), which the theme
+   redefined to #0a0a0a, but h1-h6 are forced to var(--ab-ink) -- also
+   #0a0a0a. Black on black. */
+.section-card .section-header h2,.section-header h2{color:var(--ab-ink) !important}
+/* On About the .section-header sits on paper in light mode and on #1a1a17 in
+   dark, so this one does follow the mode. */
+body.dark-mode .section-header h2{color:#f1eee9 !important}
+.coverage-section h1,.coverage-section h2,.coverage-section h3,
+.coverage-section p,.coverage-section li,.coverage-section span{color:#f1eee9 !important}
+.coverage-section .eyebrow,.coverage-section a{color:#ff3d00 !important}
+
+/* The navbar's List-property button is set by `html body .navbar
+   .contact-btn-nav`, which out-specifies a plain class selector. Matching that
+   depth is the only way to darken the fill under its 13px white label. */
+/* superseded: handled by --ab-hot-btn on the source rule */
+html body.dark-mode .navbar a.contact-btn-nav,
+html body.dark-mode a.contact-btn-nav{background:var(--ab-hot-btn,#df3500) !important}
+
+/* Money that moved the wrong way was drawn in #10b981 on paper: 2.19:1, worse
+   than the orange. Same hue, dark enough to read. The fill colour of the
+   success chips is untouched. */
+.text-green,.positive,.pos,.delta-down,.saving,.savings-value,
+[class*="green"]:not([class*="bg"]):not([class*="fill"]){color:#0a7552}
+body.dark-mode .text-green,body.dark-mode .positive,body.dark-mode .pos,
+body.dark-mode .delta-down,body.dark-mode .saving,body.dark-mode .savings-value{color:#10b981}
+
+/* The listings filter panel is an ink surface sitting inside a light page, so
+   the muted grey it inherits (#656565) lands at 3.40:1 on it. */
+.advanced-filters,.filter-grid,.search-card .advanced-filters{--gray:#797979}
+
+/* ── Corrections to the block above, after measuring the result ─────────────
+
+   `.section-header` means two different things on this site. On About it is a
+   plain centred heading on paper. On the Doc Guide it sits inside
+   `.section-card` and that card's header has a #0a0a0a fill. Forcing ink on
+   both fixed one and broke the other, so the card case goes back to cream --
+   it was right all along, for the surface it is actually on. */
+.section-card .section-header h2{color:#f1eee9 !important}
+body.dark-mode .section-card .section-header h2{color:#f1eee9 !important}
+
+/* The mobile menu is a full-screen ink panel, so everything in it keeps the
+   bright orange regardless of which page it is on. */
+.mobile-overlay .mo-label,.mobile-overlay-links .mo-label,.mo-label{color:#ff3d00 !important}
+.mobile-overlay a.gl-active,.mobile-overlay-links a.gl-active{color:#ff3d00 !important}
+
+/* The nav's list-property button is `.cta` on some pages and
+   `.contact-btn-nav` on others, both at a specificity a bare class cannot
+   reach. Scoped to the navbar so no other .cta on the site is touched. */
+html body .navbar a.cta,html body .nav-links a.cta,
+html body nav a.cta{background:#df3500 !important}
+html body.dark-mode .navbar a.cta,html body.dark-mode .nav-links a.cta,
+html body.dark-mode nav a.cta{background:#ff3d00 !important}
+/* superseded: handled by --ab-hot-btn on the source rule */
+html body.dark-mode span.photo-tag,html body.dark-mode .photo-tag{background:#ff3d00 !important}
+
+/* Money shown in green: the "amount saved" and "price reduced" figures. */
+.v.minus,.v.plus,.val.minus,td.minus,span.minus{color:#0a7552}
+body.dark-mode .v.minus,body.dark-mode .v.plus,body.dark-mode .val.minus,
+body.dark-mode td.minus,body.dark-mode span.minus{color:#10b981}
+
+/* The listings filter panel is an ink surface inside a light page; the greys
+   inside it are hardcoded rather than taken from --gray. */
+.advanced-filters,.advanced-filters *,.filter-grid,.filter-grid *,
+.filter-group label,.filter-group span{--gray:#797979}
+.advanced-filters .filter-group label,.filter-grid label{color:#c9c9c9 !important}
+
+/* Small orange badges whose label is white at 11px or less. Sharing one token
+   with the nav CTA means the light/dark split is stated once. */
+.cta-primary,.btn-gold,.doc-tag.need,.t-avatar,.testimonial-avatar,
+.listings-tab.active,.comm-btn.active,.photo-tag{background:var(--ab-hot-btn,#df3500) !important}
+
+/* ── Last eight, each measured individually ────────────────────────────────
+   Everything below is a specific element on a specific surface, not a pattern.
+   Written with the depth each one needs to actually win. */
+
+/* The footer is an ink slab, so the orange headings in it keep the bright
+   value. The token on `footer` alone was being out-specified by the pages'
+   own `.footer-col h4` rules. */
+html body footer,html body footer *,html body .footer,html body .footer *{--ab-hot-text:#ff3d00}
+
+/* The home page's closing invitation is white-at-92% on an orange band at
+   16px, which needs 4.5:1. Full white on the darker fill clears it. */
+html body section.cta-section{background:var(--ab-hot-btn,#df3500) !important}
+html body section.cta-section p,html body section.cta-section li{color:#fff !important}
+
+/* The FAQ eyebrow is the last hardcoded #6a6a6a on a tinted card. */
+html body .faq-section .section-eyebrow,html body .section-header .section-eyebrow{color:#656565 !important}
+
+/* Zonal and Cost-of-ownership search buttons: white at 11px on an orange fill. */
+html body .search-section .search-box button,html body .search-box button{
+  background:var(--ab-hot-btn,#df3500) !important;
+  /* Pure white, not the paper cream: on #df3500 that is 4.52:1 against 3.91. */
+  color:#fff !important;
+}
+html body .search-section .search-box button *,html body .search-box button *{color:#fff !important}
+
+/* Loan comparison's two panel badges are 9px white on a mid green and a mid
+   blue: 2.54:1 and 3.68:1, the two worst pairings left on the site. */
+html body .loan-panel .badge{background:#0a7552 !important}
+html body .loan-panel.bank .badge{background:#1d4ed8 !important}
+
+/* The list-property legal note's lead-in used --gold-dark (#cc2f00), which is
+   fine on paper but 4.13:1 on this warmer card. */
+html body .legal-note .hd{color:var(--ab-hot-text,#c02e00) !important}
+
+/* The closing-fees disclaimer sits on the warmest tint on the site, where the
+   shared muted grey lands at 4.18:1. */
+html body .disclaimer,html body .disclaimer *{color:#5c5c5c !important}
+html body.dark-mode .disclaimer,html body.dark-mode .disclaimer *{color:#b9b2a6 !important}
+
+/* `.cta-strip` closes the three neighbourhood guides with an ink band, but
+   h1-h6 are forced to var(--ab-ink) globally, so its 56px heading was black on
+   black on all three pages. Same shape of bug as About's "Coverage Areas". */
+/* moved into the three pages whose .cta-strip is actually dark */
+
+/* One more small white label on an orange fill. */
+html body a.cta-row{background:var(--ab-hot-btn,#df3500) !important}
+
+/* Fills that carry white text at 12px or less and were reaching for --gold,
+   which this theme redefines to #ff3d00 (white on it: 3.55:1). */
+html body a.btn-gold,html body .btn-gold{background:var(--ab-hot-btn,#df3500) !important;border-color:var(--ab-hot-btn,#df3500) !important}
+html body a.cta-row > span{background:var(--ab-hot-btn,#df3500) !important}
+
+/* The Doc Guide's table headers are an ink band. */
+html body .doc-table thead,html body .doc-table th{--ab-hot-text:#ff3d00}
+
+/* ── iOS input zoom, on the public pages ───────────────────────────────────
+   Safari on iPhone zooms the whole page in when a control with a font-size
+   under 16px takes focus, and it does not zoom back out on blur. The dashboard
+   got this fix in September; the public site never did -- so every tap on a
+   calculator field, and all twenty fields on the list-your-property form, left
+   the page magnified and drifting under the thumb. That is the customer-facing
+   side of the site.
+
+   16px is the threshold, not a preference: anything below it triggers the
+   zoom. Desktop is untouched. The min-width:0 lines are here because a field
+   that grows inside a flex row will otherwise refuse to shrink and push the
+   row past the screen edge -- which is exactly what happened on the dashboard
+   when this rule went in there. */
+@media(max-width:768px){
+  :root{--ab-field-size:16px}
+  /* The token covers the theme's own rules. These selectors cover any page
+     that sets its own field size with !important and beats a plain `input`. */
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),
+  html body select:not([type=hidden]),html body textarea:not([type=hidden]),
+  html body.dark-mode input:not([type=checkbox]):not([type=radio]):not([type=range]),
+  html body.dark-mode select,html body.dark-mode textarea,
+  html body .contact-form .form-input,html body .contact-form input,
+  html body .contact-form textarea,html body .contact-form select,
+  input,select,textarea,
+  .form-input,.finput,.fsel,.zonal-search-input,.search-field-wrapper input{
+    font-size:var(--ab-field-size,16px) !important;
+  }
+  input[type=checkbox],input[type=radio],input[type=range]{font-size:inherit !important}
+  .input-group,.input-group input,.input-group select,
+  .search-row,.search-field-wrapper,.price-range-group,.price-range-group input,
+  .filter-group,.filter-group select,.form-row,.form-row > *{min-width:0}
+  /* 24x24 is the WCAG 2.2 AA floor for a pointer target. */
+  .price-range-group input,.filter-group select,.chip,.chip-btn,.preset-btn{min-height:44px}
+  /* The menu button, at the width where it is the only way to navigate.
+     Keyed to width rather than (pointer:coarse) because that query is the one
+     a phone answers, and a narrow window on a laptop is the one it does not -
+     the button is the same 35px in both. */
+  .mobile-menu-btn,.ab-nav-mobile-btn,.close-menu{
+    min-width:44px;min-height:44px;
+    display:inline-flex !important;align-items:center;justify-content:center;
   }
 }

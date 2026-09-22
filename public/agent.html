@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Private workspace for GLRA Realty agents: goals, daily actions, lead journal, pipeline, and calendar.">
 <meta name="theme-color" id="themeColor" content="#f4f2ee">
-<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-dark-180.png">
 <link rel="manifest" href="/agent-manifest.json">
 <meta name="apple-mobile-web-app-title" content="GLRA Agent">
@@ -710,7 +710,7 @@
 <main id="authView">
   <div class="authtop"><button class="iconbtn themeBtn" onclick="flipTheme()" title="Switch between light and dark"></button></div>
   <div class="masthead">
-    <img class="logo" src="/img/logo.png" alt="GLRA Realty">
+    <img class="logo" src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384">
     <div class="mk">GLRA Realty</div>
     <h1>Agent <span>Workspace</span></h1>
     <div class="rule"></div>
@@ -747,7 +747,7 @@
   <!-- desktop -->
   <aside class="side">
     <div class="sidehead">
-      <img class="logo" src="/img/logo.png" alt="GLRA Realty">
+      <img class="logo" src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384">
       <div class="wm">Agent Workspace<span>GLRA Realty</span></div>
     </div>
     <nav class="sidenav" id="sideNav"></nav>
@@ -767,7 +767,7 @@
 
   <!-- phone -->
   <header class="topbar">
-    <img class="brand logo" src="/img/logo.png" alt="GLRA Realty">
+    <img class="brand logo" src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384">
     <div class="wm">Agent Workspace<span>GLRA Realty</span></div>
     <div class="sp"></div>
     <a class="iconbtn" id="adminLinkTop" href="admin.html" title="Back to the Admin Portal" style="display:none"></a>
@@ -778,7 +778,7 @@
   <div id="bellPanel"></div>
 
   <div class="content">
-    <main>
+    <main id="main" tabindex="-1">
       <div id="tab-gps"></div>
       <div id="tab-actions" style="display:none"></div>
       <div id="tab-report" style="display:none"></div>
@@ -990,8 +990,8 @@ async function api(path, opts = {}) {
 }
 
 // ═════════ theme ═════════
-// Light is the default. The logo has to swap with it: /img/logo.png is dark
-// artwork for light backgrounds and /img/hero-logo.png is the light version
+// Light is the default. The logo has to swap with it: /img/logo-384.png is dark
+// artwork for light backgrounds and /img/hero-logo-384.png is the light version
 // for dark ones, so using one file for both makes it nearly invisible in one
 // of the two modes.
 function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
@@ -1009,7 +1009,7 @@ function applyTheme(t) {
   const meta = $('themeColor');
   if (meta) meta.setAttribute('content', t === 'dark' ? '#0a0a0b' : '#f4f2ee');
   document.querySelectorAll('img.logo').forEach(img => {
-    img.src = t === 'dark' ? '/img/hero-logo.png' : '/img/logo.png';
+    img.src = t === 'dark' ? '/img/hero-logo-384.png' : '/img/logo-384.png';
   });
   // The button shows what you would switch TO, which is what people expect.
   document.querySelectorAll('.themeBtn').forEach(b => { b.innerHTML = t === 'dark' ? ICON.sun : ICON.moon; });
@@ -2158,5 +2158,6 @@ buildChrome();
 applyTheme(currentTheme());
 if (localStorage.getItem(TK)) enterApp();
 </script>
+<script src="/js/a11y.js?v=99" defer></script>
 </body>
 </html>

@@ -21,8 +21,8 @@
     wrap.className = 'loader-logo-wrap';
     wrap.dataset.abUpgraded = '1';
     wrap.innerHTML =
-        '<img src="/img/logo.png" alt="GLRA Realty" class="loader-logo-img loader-logo-light">'
-      + '<img src="/img/hero-logo.png" alt="GLRA Realty" class="loader-logo-img loader-logo-dark">'
+        '<img src="/img/logo-384.png" alt="GLRA Realty" class="loader-logo-img loader-logo-light">'
+      + '<img src="/img/hero-logo-384.png" alt="GLRA Realty" class="loader-logo-img loader-logo-dark">'
       + '<div class="loader-tagline">Licensed Real Estate Broker</div>';
     logo.replaceWith(wrap);
   }

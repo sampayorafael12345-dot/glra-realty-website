@@ -1156,6 +1156,8 @@ function buildPropertyPageHtml(p, related) {
     }
   };
   if (p.sqm) residence.floorSize = { '@type': 'QuantitativeValue', value: Number(p.sqm), unitCode: 'MTK' };
+  // A lot listing has no floor size, so without this Google sees no area at all.
+  if (p.landArea) residence.lotSize = { '@type': 'QuantitativeValue', value: Number(p.landArea), unitCode: 'MTK' };
   if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
   if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
   if (galleryAbs.length || ogImg) residence.photo = galleryAbs.length ? galleryAbs : [ogImg];
@@ -1247,6 +1249,9 @@ function buildPropertyPageHtml(p, related) {
     .concat(p.bedrooms ? [['Bedrooms', p.bedrooms]] : [])
     .concat(p.bathrooms ? [['Bathrooms', p.bathrooms]] : [])
     .concat(p.sqm ? [['Floor area', p.sqm + ' sqm']] : [])
+    // A vacant lot, a farm or a house-and-lot: the lot is the material number,
+    // and for the lots it is the only one there is.
+    .concat(p.landArea ? [['Lot area', Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
     .concat(p.parking ? [['Parking', p.parking]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
   const thumbsHtml = gallery.length

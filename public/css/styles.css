@@ -9,7 +9,7 @@
 :root{
   --gold:#c8a96e;--gold-dark:#a8894e;--gold-light:rgba(200,169,110,0.12);
   --navy:#0d1b2a;--navy-mid:#1a2d42;
-  --gray:#7f8c8d;--gray-light:#f0f2f5;
+  --gray:#7f8c8d;--gray-light:#f0f2f5;--ab-hot-text:#c02e00;--ab-hot-btn:#df3500;--ab-green-text:#0a7552;
   --white:#fff;--card-bg:#fff;--border-color:#cfd4da;--text-color:#1a2332;
   --shadow-sm:0 1px 4px rgba(0,0,0,.08), 0 2px 12px rgba(0,0,0,.06);
   --shadow-md:0 4px 14px rgba(0,0,0,.10), 0 8px 30px rgba(0,0,0,.08);
@@ -19,7 +19,10 @@
 }
 body.dark-mode{
   --gray-light:#111b27;--white:#0d1b2a;--card-bg:#1a2840;
-  --border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8
+  --border-color:#2a3f58;--text-color:#e8edf2;--gray:#9baab8;
+  /* On ink, #ff3d00 is 5.45:1 and the darkened text variant would be 3.34:1,
+     so the mode flip reverses which of the two is the readable one. */
+  --ab-hot-text:#ff3d00;--ab-hot-btn:#df3500;--ab-green-text:#10b981
 }
 
 html{scroll-behavior:smooth}
@@ -35,8 +38,8 @@ body.dark-mode .navbar{background:#0a1520}
 .logo img{height:48px;width:auto;display:block}
 .nav-links{display:flex;gap:28px;align-items:center}
 .nav-links a{text-decoration:none;color:rgba(255,255,255,.78);font-weight:400;transition:var(--transition);font-size:13px;letter-spacing:1.5px;text-transform:uppercase}
-.nav-links a:hover,.nav-links a.active{color:var(--gold)}
-.contact-btn-nav{border:1px solid var(--gold);padding:8px 22px;border-radius:2px;color:var(--gold)!important}
+.nav-links a:hover,.nav-links a.active{color:var(--ab-hot-text,#c02e00)}
+.contact-btn-nav{border:1px solid var(--gold);padding:8px 22px;border-radius:2px;color:var(--ab-hot-text,#c02e00)!important}
 .contact-btn-nav:hover{background:var(--gold);color:#fff!important}
 .mobile-menu-btn{display:none;font-size:22px;cursor:pointer;color:#fff}
 
@@ -47,7 +50,7 @@ body.dark-mode .navbar{background:#0a1520}
 .mobile-overlay.active .close-menu,.mobile-overlay.open .close-menu{visibility:visible;opacity:1}
 .mobile-overlay-links{display:flex;flex-direction:column;gap:18px;text-align:center;width:100%;max-width:320px;padding:8px 0 24px}
 .mobile-overlay-links a{color:#fff;text-decoration:none;font-size:18px;font-family:'Cormorant Garamond',serif;font-weight:500;letter-spacing:1.5px;transition:var(--transition);padding:6px 0}
-.mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--gold)}
+.mobile-overlay-links a:hover,.mobile-overlay-links a:active{color:var(--ab-hot-text,#c02e00)}
 
 /* ── NAV DROPDOWN (More menu) ── */
 .nav-dropdown{position:relative}
@@ -59,12 +62,12 @@ body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
 .nav-dropdown:hover .nav-dropdown-menu{display:block}
 .nav-dropdown-menu a{display:block;padding:10px 20px;font-size:13px;color:var(--text-color)!important;text-decoration:none;transition:var(--transition);border-bottom:1px solid var(--border-color);text-transform:none;letter-spacing:.5px}
 .nav-dropdown-menu a:last-child{border-bottom:none}
-.nav-dropdown-menu a:hover{color:var(--gold)!important;background:var(--gray-light);padding-left:26px}
+.nav-dropdown-menu a:hover{color:var(--ab-hot-text,#c02e00)!important;background:var(--gray-light);padding-left:26px}
 
 /* ── PAGE HERO (top banner on inner pages) ── */
 .page-hero{padding:108px 5% 56px;background:var(--navy);text-align:center;border-bottom:1px solid rgba(200,169,110,.15);position:relative;overflow:hidden}
 .page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(200,169,110,.07) 0%,transparent 65%);pointer-events:none}
-.page-hero .eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
+.page-hero .eyebrow{font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:12px}
 .page-hero h1{font-family:'Cormorant Garamond',serif;font-size:46px;color:#fff;font-weight:600;margin-bottom:12px;position:relative}
 .page-hero p{color:rgba(255,255,255,.55);font-size:15px;max-width:560px;margin:0 auto;position:relative}
 
@@ -77,7 +80,7 @@ body.dark-mode .nav-dropdown-menu{background:#1a2840;border-color:#2a3f58}
 .floating-buttons .btn-viber,a.btn-viber{background:#7360f2 !important;color:#fff !important}
 .floating-buttons .btn-messenger,a.btn-messenger{background:#0084ff !important;color:#fff !important}
 .floating-buttons .btn-instagram,a.btn-instagram{background:linear-gradient(45deg,#f09433,#d62976,#962fbf) !important;color:#fff !important}
-.floating-buttons .btn-darkmode{background:var(--navy);color:var(--gold);border:1px solid var(--gold)}
+.floating-buttons .btn-darkmode{background:var(--navy);color:var(--ab-hot-text,#c02e00);border:1px solid var(--gold)}
 body.dark-mode .floating-buttons .btn-darkmode{background:var(--gold);color:#fff}
 .floating-buttons .floating-btn i{display:inline-block;line-height:1}
 
@@ -114,7 +117,7 @@ body.dark-mode .floating-buttons .btn-darkmode{background:var(--gold);color:#fff
 .loader{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
 .loader.hide{opacity:0;visibility:hidden;pointer-events:none}
 .loader-content{text-align:center}
-.loader-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);letter-spacing:8px;margin-bottom:18px}
+.loader-logo{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--ab-hot-text,#c02e00);letter-spacing:8px;margin-bottom:18px}
 .loader-bar{width:100px;height:1px;background:rgba(200,169,110,.2);margin:0 auto;position:relative;overflow:hidden}
 .loader-bar::after{content:'';position:absolute;left:-50%;width:50%;height:100%;background:var(--gold);animation:glraLoading 1.2s infinite}
 @keyframes glraLoading{0%{left:-50%}100%{left:150%}}
@@ -127,10 +130,10 @@ body.dark-mode .floating-buttons .btn-darkmode{background:var(--gold);color:#fff
 /* ── FOOTER ── */
 footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;margin-top:20px}
 .footer-content{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:38px;margin-bottom:38px}
-.footer-col h4{color:var(--gold);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.footer-col h4{color:var(--ab-hot-text,#c02e00);margin-bottom:14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
 .footer-col ul li a{font-size:13px;color:rgba(255,255,255,.4);text-decoration:none;transition:var(--transition)}
-.footer-col ul li a:hover{color:var(--gold)}
+.footer-col ul li a:hover{color:var(--ab-hot-text,#c02e00)}
 .footer-col p{font-size:13px;line-height:1.9;color:rgba(255,255,255,.4)}
 .footer-social{display:flex;gap:10px;margin-top:14px}
 .footer-social a{width:34px;height:34px;border:1px solid rgba(200,169,110,.3);display:flex;align-items:center;justify-content:center;transition:var(--transition);color:rgba(255,255,255,.4);font-size:13px}
@@ -140,12 +143,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 .footer-bottom p{font-size:11px;color:rgba(255,255,255,.22);letter-spacing:1px}
 .footer-bottom-links{display:flex;gap:20px}
 .footer-bottom-links a{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:var(--transition)}
-.footer-bottom-links a:hover{color:var(--gold)}
+.footer-bottom-links a:hover{color:var(--ab-hot-text,#c02e00)}
 
 /* ── CURRENCY SWITCHER WIDGET ── */
 .currency-switcher{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(200,169,110,0.3);border-radius:2px;font-size:12px;color:rgba(255,255,255,0.7);transition:var(--transition)}
 .currency-switcher:hover{border-color:var(--gold)}
-.currency-switcher i{color:var(--gold);font-size:13px}
+.currency-switcher i{color:var(--ab-hot-text,#c02e00);font-size:13px}
 .currency-switcher select{background:transparent;border:none;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;padding:4px 0;outline:none;font-weight:500;letter-spacing:.5px}
 .currency-switcher select option{background:var(--navy);color:#fff}
 .currency-rate-note{font-size:10px;color:rgba(255,255,255,0.45);margin-top:6px;letter-spacing:.5px;font-style:italic}
@@ -155,7 +158,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.4);padding:56px 5% 24px;ma
 body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
 .trust-grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:16px;align-items:center;justify-items:center}
 .trust-item{display:flex;align-items:center;gap:12px;padding:8px;width:100%;max-width:220px;justify-content:flex-start}
-.trust-item .trust-icon{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:17px}
+.trust-item .trust-icon{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;color:var(--ab-hot-text,#c02e00);font-size:17px}
 .trust-item .trust-text{display:flex;flex-direction:column;line-height:1.3;min-width:0}
 .trust-item .trust-label{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text-color);white-space:nowrap}
 .trust-item .trust-sub{font-size:10.5px;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
@@ -181,13 +184,13 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
 
 /* ── EMAIL-GATED PRINT/DOWNLOAD BUTTON & MODAL (used by all calculators) ── */
 .print-button-wrapper{text-align:center;margin:36px auto 28px;max-width:1400px;padding:0 5%}
-.print-btn{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:12px 28px;font-weight:500;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.print-btn{background:transparent;color:var(--ab-hot-text,#c02e00);border:1px solid var(--gold);padding:12px 28px;font-weight:500;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif}
 .print-btn:hover{background:var(--gold);color:#fff}
 .glra-print-gate{display:none;position:fixed;inset:0;background:rgba(5,12,22,.88);z-index:3000;align-items:center;justify-content:center}
 .glra-print-gate.show{display:flex}
 .glra-print-gate-card{background:#fff;max-width:420px;width:90%;padding:38px;position:relative;text-align:center;border:1px solid var(--border-color)}
-.glra-print-gate-card>i{font-size:44px;color:var(--gold);margin-bottom:14px;display:block}
-.glra-print-gate-card h3{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:8px}
+.glra-print-gate-card>i{font-size:44px;color:var(--ab-hot-text,#c02e00);margin-bottom:14px;display:block}
+.glra-print-gate-card h3{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--ab-hot-text,#c02e00);margin-bottom:8px}
 .glra-print-gate-card p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.7}
 .glra-print-gate-card input{width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;margin-bottom:14px;font-family:'DM Sans',sans-serif;background:#fff;color:#0d1b2a}
 .glra-print-gate-card input:focus{outline:none;border-color:var(--gold)}
@@ -267,7 +270,7 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
 }
 .page-hero > *{position:relative;z-index:2}
 .page-hero .eyebrow{
-  font-size:11px !important;color:var(--gold) !important;letter-spacing:5px !important;
+  font-size:11px !important;color:var(--ab-hot-text,#c02e00) !important;letter-spacing:5px !important;
   text-transform:uppercase !important;display:block !important;margin-bottom:24px !important;font-weight:500 !important;
   animation:glraSharedFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.1s both;
 }
@@ -283,7 +286,7 @@ body.dark-mode .trust-strip{background:#0a1520;border-color:#2a3f58}
   max-width:640px !important;margin:0 auto !important;line-height:1.65 !important;
   animation:glraSharedFadeUp 1.0s cubic-bezier(.2,.7,.2,1) 0.5s both;
 }
-.page-hero h1 em,.page-hero h1 .accent{color:var(--gold);font-style:italic;font-weight:600}
+.page-hero h1 em,.page-hero h1 .accent{color:var(--ab-hot-text,#c02e00);font-style:italic;font-weight:600}
 @media(max-width:768px){
   .page-hero{padding:120px 5% 70px !important}
   .page-hero h1{font-size:clamp(34px,8vw,52px) !important}
@@ -374,7 +377,7 @@ textarea:focus,select:focus{
 footer{padding:80px 5% 30px !important}
 .footer-col h4{font-weight:600 !important;letter-spacing:3px !important}
 .footer-col ul li a{transition:all .3s cubic-bezier(.2,.7,.2,1) !important;display:inline-block}
-.footer-col ul li a:hover{color:var(--gold) !important;transform:translateX(4px)}
+.footer-col ul li a:hover{color:var(--ab-hot-text,#c02e00) !important;transform:translateX(4px)}
 .footer-social a{transition:all .3s cubic-bezier(.2,.7,.2,1) !important}
 .footer-social a:hover{transform:translateY(-3px)}
 
@@ -388,7 +391,7 @@ footer{padding:80px 5% 30px !important}
 .gl-magnetic{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
 
 /* (R) SECTION HEADER REFINEMENT (used on inner pages) */
-.section-header h2 .accent,.section-header h2 em{color:var(--gold);font-style:italic;font-weight:600}
+.section-header h2 .accent,.section-header h2 em{color:var(--ab-hot-text,#c02e00);font-style:italic;font-weight:600}
 
 /* (S) RESPECT REDUCED MOTION */
 @media(prefers-reduced-motion:reduce){
@@ -430,15 +433,15 @@ footer{padding:80px 5% 30px !important}
 /* (V3-B) ACTIVE NAV STATE — current page highlighted */
 .nav-links > a.gl-active:not(.contact-btn-nav),
 .nav-links > .nav-dropdown.gl-active > a{
-  color:var(--gold) !important;
+  color:var(--ab-hot-text,#c02e00) !important;
 }
 .nav-links > a.gl-active:not(.contact-btn-nav)::after,
 .nav-links > .nav-dropdown.gl-active > a::after{
   width:100% !important;left:0 !important;
 }
-.mobile-overlay-links a.gl-active{color:var(--gold) !important}
+.mobile-overlay-links a.gl-active{color:var(--ab-hot-text,#c02e00) !important}
 /* Inner pages: nav-dropdown menu items can also flag active */
-.nav-dropdown-menu a.gl-active{color:var(--gold) !important;background:rgba(200,169,110,0.05)}
+.nav-dropdown-menu a.gl-active{color:var(--ab-hot-text,#c02e00) !important;background:rgba(200,169,110,0.05)}
 
 /* (V3-C) SKELETON LOADERS — show while properties load */
 .prop-card-skeleton{

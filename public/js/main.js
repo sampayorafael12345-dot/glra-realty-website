@@ -31,14 +31,14 @@ if ('serviceWorker' in navigator) {
 })();
 
 // ── Dark mode toggle ──────────────────────────────────────
-// Repoint each logo image's source between /img/logo.png (black) and
-// /img/hero-logo.png (white) on every navbar/brand mark. Covers
+// Repoint each logo image's source between /img/logo-384.png (black) and
+// /img/hero-logo-384.png (white) on every navbar/brand mark. Covers
 // img[data-logo-auto] for opt-in elements plus the common navbar selectors
 // so inner pages don't need markup changes.
 function syncLogos() {
   const dark = document.body.classList.contains('dark-mode');
   document.querySelectorAll('img[data-logo-auto], .ab-brand img, .navbar .logo img, .ab-mast img').forEach(img => {
-    img.src = dark ? '/img/hero-logo.png' : '/img/logo.png';
+    img.src = dark ? '/img/hero-logo-384.png' : '/img/logo-384.png';
   });
 }
 // Keep the early-theme `html.dark-mode-pre` class in sync with the body
@@ -366,7 +366,7 @@ async function glraBuildAndSavePDF(label, dataOverride) {
   let y = 50;
 
   // Letterhead — company logo centered, then tagline + contact.
-  const logo = await glraLoadLogo('/img/logo.png', 320);
+  const logo = await glraLoadLogo('/img/logo-384.png', 320);
   if (logo) {
     const dispH = 96, dispW = dispH * (logo.w / logo.h);
     doc.addImage(logo.dataURL, 'PNG', (W - dispW) / 2, y, dispW, dispH);

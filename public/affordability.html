@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
 
 <!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
@@ -12,7 +12,7 @@
 <meta name="keywords" content="affordability calculator philippines,how much house can i afford,home loan philippines,debt to income ratio,Pag-IBIG affordability">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://glrarealty.com/affordability.html">
-<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#ff3d00">
@@ -30,14 +30,14 @@
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Home Affordability Calculator","description":"Calculate how much house you can afford based on income, existing debts, available down payment, and bank lending standards in the Philippines.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/affordability.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Affordability","item":"https://glrarealty.com/affordability.html"}]}</script>
-<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=98">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=98">
+<link rel="stylesheet" href="/css/styles.css?v=99">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=99">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -45,12 +45,12 @@
 .calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
 .calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
 .calc-card-header h2{font-family:'Inter',serif;font-size:22px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
-.calc-card-header h2 i{color:var(--gold);font-size:18px}
+.calc-card-header h2 i{color:var(--ab-hot-text,#c02e00);font-size:18px}
 .calc-card-header p{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px}
 .calc-body{padding:26px}
 
 .input-group{margin-bottom:18px}
-.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
+.input-group label{font-size:11px;font-weight:600;color:var(--ab-hot-text,#c02e00);text-transform:uppercase;letter-spacing:1.5px;display:block;margin-bottom:6px}
 .input-group input,.input-group select{width:100%;padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
 .input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
 .input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
@@ -60,11 +60,11 @@
 .dti-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--gold);cursor:pointer;border-radius:50%}
 .dti-slider::-moz-range-thumb{width:18px;height:18px;background:var(--gold);cursor:pointer;border-radius:50%;border:none}
 .dti-display{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray)}
-.dti-display strong{color:var(--gold);font-size:13px}
+.dti-display strong{color:var(--ab-hot-text,#c02e00);font-size:13px}
 
 .result-headline{background:var(--navy);padding:30px 24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:18px}
 .result-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px}
-.result-headline .value{font-family:'Inter',serif;font-size:44px;font-weight:600;color:var(--gold);line-height:1.1}
+.result-headline .value{font-family:'Inter',serif;font-size:44px;font-weight:600;color:var(--ab-hot-text,#c02e00);line-height:1.1}
 .result-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:8px}
 
 .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
@@ -72,10 +72,10 @@
 body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 .result-mini .label{font-size:10px;color:var(--gray);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
 .result-mini .value{font-family:'Inter',serif;font-size:22px;font-weight:600;color:var(--text-color)}
-.result-mini.gold .value{color:var(--gold)}
+.result-mini.gold .value{color:var(--ab-hot-text,#c02e00)}
 
 .range-bar{padding:18px;border:1px solid var(--border-color);background:rgba(255,61,0,.06);text-align:center;margin-bottom:18px}
-.range-bar .label{font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:600}
+.range-bar .label{font-size:10px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:600}
 .range-bar .value{font-family:'Inter',serif;font-size:18px;font-weight:600;color:var(--text-color);line-height:1.4}
 .range-bar .sub{font-size:11px;color:var(--gray);margin-top:6px}
 
@@ -83,12 +83,12 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 .cta-row a{flex:1;min-width:140px;padding:13px 18px;text-align:center;text-decoration:none;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .cta-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
 .cta-primary:hover{background:var(--gold-dark)}
-.cta-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.cta-outline{background:transparent;color:var(--ab-hot-text,#c02e00);border:1px solid var(--gold)}
 .cta-outline:hover{background:var(--gold);color:#fff}
 
 .disclaimer-box{max-width:1100px;margin:0 auto 50px;padding:0 5%}
 .disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
-.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+.disclaimer i{color:var(--ab-hot-text,#c02e00);flex-shrink:0;margin-top:2px}
 
 @media(max-width:900px){
   .calc-container{grid-template-columns:1fr}
@@ -106,7 +106,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -114,7 +114,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
     <div class="nav-dropdown">
       <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
       <div class="nav-dropdown-menu">
-        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--ab-hot-text,#c02e00)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
         <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
         <a href="/tools.html">All Tools &amp; Calculators</a>
         <a href="/about.html">About Us</a>
@@ -151,10 +151,11 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
+<main id="main">
 
 <!-- Print-only branded header (hidden on screen, visible only when printing) -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
+  <img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" loading="lazy" decoding="async">
   <div class="print-title">Affordability Calculator Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -282,10 +283,11 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>How this works:</strong> Banks in the Philippines typically lend up to 80% of the property price (you supply 20%). The maximum monthly payment they'll allow is usually 30-40% of your gross monthly income, minus your existing debts. This calculator uses those standard ratios. Final loan approval depends on credit history, employment status, and the specific lender. Talk to <a href="/#contact" style="color:var(--gold)">Catherine</a> or your bank loan officer for pre-qualification.</div>
+    <div><strong>How this works:</strong> Banks in the Philippines typically lend up to 80% of the property price (you supply 20%). The maximum monthly payment they'll allow is usually 30-40% of your gross monthly income, minus your existing debts. This calculator uses those standard ratios. Final loan approval depends on credit history, employment status, and the specific lender. Talk to <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Catherine</a> or your bank loan officer for pre-qualification.</div>
   </div>
 </div>
 
+</main>
 <footer>
   <div class="footer-content">
     <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
@@ -316,8 +318,8 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
       <li><a href="/#contact">Contact</a></li>
     </ul>
       <h4 style="margin-top:18px">Contact</h4>
-      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
-      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+      <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
   </div>
   <hr class="footer-divider">
@@ -337,7 +339,7 @@ body.dark-mode .result-mini{background:#0e0e0c;border-color:#3a3a36}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=98"></script>
+<script src="/js/main.js?v=99"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -396,7 +398,8 @@ function recalc(){
 document.addEventListener('DOMContentLoaded', recalc);
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=98" defer></script>
-<script src="/js/chat.js?v=98" defer></script>
+<script src="/js/brutalist-shell.js?v=99" defer></script>
+<script src="/js/a11y.js?v=99" defer></script>
+<script src="/js/chat.js?v=99" defer></script>
 </body>
 </html>

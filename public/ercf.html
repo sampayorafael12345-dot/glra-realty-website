@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
 
 <!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
@@ -12,7 +12,7 @@
 <meta name="keywords" content="registration fee calculator philippines,ERCF,LRA registration fee,Registry of Deeds fee,title transfer fee philippines,land registration authority">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://glrarealty.com/ercf.html">
-<link rel="icon" type="image/png" href="/img/favicon.ico.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#ff3d00">
@@ -30,14 +30,14 @@
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"ERCF — Estimate Registration Computation Fee","description":"Calculate the Land Registration Authority (LRA) registration fee for property title transfers in the Philippines, based on the official tiered fee schedule.","applicationCategory":"FinanceApplication","operatingSystem":"Web","url":"https://glrarealty.com/ercf.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Registration Fee","item":"https://glrarealty.com/ercf.html"}]}</script>
-<link rel="preload" href="/img/logo.png" as="image">
+<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=98">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=98">
+<link rel="stylesheet" href="/css/styles.css?v=99">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=99">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -45,47 +45,47 @@
 .calc-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;margin-bottom:28px}
 .calc-card-header{background:var(--navy);padding:18px 24px;border-bottom:1px solid rgba(255,61,0,.2)}
 .calc-card-header h2{font-family:'Inter',serif;font-size:24px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
-.calc-card-header h2 i{color:var(--gold);font-size:20px}
+.calc-card-header h2 i{color:var(--ab-hot-text,#c02e00);font-size:20px}
 .calc-card-header p{font-size:13px;color:rgba(255,255,255,.55);margin-top:6px}
 .calc-body{padding:28px}
 
 .input-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
 .input-group{display:flex;flex-direction:column;gap:6px}
-.input-group label{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}
+.input-group label{font-size:11px;font-weight:600;color:var(--ab-hot-text,#c02e00);text-transform:uppercase;letter-spacing:1.5px}
 .input-group input,.input-group select{padding:13px 16px;border:1px solid var(--border-color);background:var(--white);color:var(--text-color);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:var(--transition)}
 .input-group input:focus,.input-group select:focus{outline:none;border-color:var(--gold)}
 .input-hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
 
 .basis-note{padding:14px 18px;background:rgba(255,61,0,.08);border:1px solid rgba(255,61,0,.25);font-size:13px;color:var(--text-color);line-height:1.7;margin-bottom:24px;display:flex;gap:10px}
-.basis-note i{color:var(--gold);flex-shrink:0;margin-top:3px}
-.basis-note strong{color:var(--gold)}
+.basis-note i{color:var(--ab-hot-text,#c02e00);flex-shrink:0;margin-top:3px}
+.basis-note strong{color:var(--ab-hot-text,#c02e00)}
 
 .result-headline{background:var(--navy);padding:30px 24px;text-align:center;border:1px solid rgba(255,61,0,.2);margin-bottom:20px}
 .result-headline .label{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px}
-.result-headline .value{font-family:'Inter',serif;font-size:48px;font-weight:600;color:var(--gold);line-height:1.1}
+.result-headline .value{font-family:'Inter',serif;font-size:48px;font-weight:600;color:var(--ab-hot-text,#c02e00);line-height:1.1}
 .result-headline .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:8px}
 
 .breakdown-table{width:100%;border-collapse:collapse;border:1px solid var(--border-color);margin-bottom:14px}
-.breakdown-table th{background:var(--navy);color:var(--gold);padding:11px 14px;text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.breakdown-table th{background:var(--navy);color:var(--ab-hot-text,#c02e00);padding:11px 14px;text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
 .breakdown-table th:last-child{text-align:right}
 .breakdown-table td{padding:11px 14px;border-bottom:1px solid var(--border-color);font-size:13px;color:var(--text-color);line-height:1.5}
 .breakdown-table td:last-child{text-align:right;font-weight:600;font-family:'Inter',serif;font-size:15px;white-space:nowrap}
 .breakdown-table tr:last-child td{border-bottom:none}
 .breakdown-table tr.total-row td{background:var(--navy);color:#fff;font-weight:600;border-top:2px solid var(--gold)}
-.breakdown-table tr.total-row td:last-child{color:var(--gold);font-size:20px}
+.breakdown-table tr.total-row td:last-child{color:var(--ab-hot-text,#c02e00);font-size:20px}
 
 .brackets-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-.brackets-table th{background:var(--navy);color:var(--gold);padding:10px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.brackets-table th{background:var(--navy);color:var(--ab-hot-text,#c02e00);padding:10px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
 .brackets-table th:last-child{text-align:right}
 .brackets-table td{padding:9px 12px;border-bottom:1px solid var(--border-color);color:var(--text-color)}
 .brackets-table td:last-child{text-align:right;font-family:'Inter',serif;font-weight:500}
 .brackets-table tr:hover td{background:var(--gold-light)}
 .brackets-table tr.applied td{background:rgba(255,61,0,.15);font-weight:600}
-.brackets-table tr.applied td:first-child::before{content:'▶ ';color:var(--gold)}
+.brackets-table tr.applied td:first-child::before{content:'▶ ';color:var(--ab-hot-text,#c02e00)}
 
 .disclaimer-box{max-width:900px;margin:0 auto 50px;padding:0 5%}
 .disclaimer{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2);font-size:12px;color:var(--gray);line-height:1.75}
-.disclaimer i{color:var(--gold);flex-shrink:0;margin-top:2px}
+.disclaimer i{color:var(--ab-hot-text,#c02e00);flex-shrink:0;margin-top:2px}
 
 @media(max-width:768px){
   .input-row{grid-template-columns:1fr}
@@ -101,7 +101,7 @@
 
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
-  <div class="logo" onclick="location.href='/'"><img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160"></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"></div>
   <div class="nav-links">
     <a href="/">HOME</a>
     <a href="/properties.html">PROPERTIES</a><a href="/tools.html">TOOLS</a>
@@ -109,7 +109,7 @@
     <div class="nav-dropdown">
       <a style="cursor:pointer">MORE <i class="fas fa-chevron-down" style="font-size:9px;margin-left:2px"></i></a>
       <div class="nav-dropdown-menu">
-        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--gold)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
+        <a href="/valuation.html" style="background:rgba(255,61,0,.07);color:var(--ab-hot-text,#c02e00)!important;font-weight:600;border-bottom:1px solid rgba(255,61,0,.25)"><i class="fas fa-home" style="margin-right:8px;font-size:11px"></i>What's My Property Worth?</a>
         <a href="/list-property.html"><i class="fas fa-plus-circle" style="margin-right:8px;font-size:11px"></i>List Your Property</a>
         <a href="/tools.html">All Tools &amp; Calculators</a>
         <a href="/about.html">About Us</a>
@@ -146,10 +146,11 @@
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
 </div>
+<main id="main">
 
 <!-- Print-only branded header -->
 <div class="print-only-header">
-  <img src="/img/logo.png" alt="GLRA Realty" width="2160" height="2160">
+  <img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" loading="lazy" decoding="async">
   <div class="print-title">Registration Fee (ERCF) Calculator Results</div>
   <div class="print-subtitle">GLRA Realty — Licensed Real Estate Broker, Metro Manila &amp; Luzon, Philippines</div>
   <div class="print-meta">glrarealty.com &middot; 0917 177 4572 &middot; glrarealty@gmail.com</div>
@@ -172,7 +173,7 @@
 
       <div class="basis-note">
         <i class="fas fa-info-circle"></i>
-        <div><strong>Note:</strong> The registration fee is computed on the <strong>higher</strong> of: (a) the actual selling price in the Deed of Sale, (b) the BIR zonal value, or (c) the assessor's market value. Use our <a href="/zonal.html" style="color:var(--gold)">Zonal Value Lookup</a> to find the BIR figure for your area.</div>
+        <div><strong>Note:</strong> The registration fee is computed on the <strong>higher</strong> of: (a) the actual selling price in the Deed of Sale, (b) the BIR zonal value, or (c) the assessor's market value. Use our <a href="/zonal.html" style="color:var(--ab-hot-text,#c02e00)">Zonal Value Lookup</a> to find the BIR figure for your area.</div>
       </div>
 
       <div class="input-row">
@@ -238,10 +239,11 @@
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>Disclaimer:</strong> This is an estimate based on the published LRA fee schedule. Actual fees may vary slightly between Registry of Deeds branches, and additional charges (annotation fees, certified true copies, etc.) may apply. Always verify the final amount with your Registry of Deeds before payment. For the complete closing cost picture, use our <a href="/calculator.html" style="color:var(--gold)">Sales Closing Fees Calculator</a>.</div>
+    <div><strong>Disclaimer:</strong> This is an estimate based on the published LRA fee schedule. Actual fees may vary slightly between Registry of Deeds branches, and additional charges (annotation fees, certified true copies, etc.) may apply. Always verify the final amount with your Registry of Deeds before payment. For the complete closing cost picture, use our <a href="/calculator.html" style="color:var(--ab-hot-text,#c02e00)">Sales Closing Fees Calculator</a>.</div>
   </div>
 </div>
 
+</main>
 <footer>
   <div class="footer-content">
     <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
@@ -272,8 +274,8 @@
       <li><a href="/#contact">Contact</a></li>
     </ul>
       <h4 style="margin-top:18px">Contact</h4>
-      <p><i class="fas fa-phone-alt" style="color:var(--gold);margin-right:6px"></i>0917 177 4572</p>
-      <p><i class="fas fa-envelope" style="color:var(--gold);margin-right:6px"></i>glrarealty@gmail.com</p>
+      <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
   </div>
   <hr class="footer-divider">
@@ -293,7 +295,7 @@
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=98"></script>
+<script src="/js/main.js?v=99"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -382,7 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=98" defer></script>
-<script src="/js/chat.js?v=98" defer></script>
+<script src="/js/brutalist-shell.js?v=99" defer></script>
+<script src="/js/a11y.js?v=99" defer></script>
+<script src="/js/chat.js?v=99" defer></script>
 </body>
 </html>
