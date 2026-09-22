@@ -105,6 +105,40 @@ const priceAlertSchema = new mongoose.Schema({
   isNotified: { type: Boolean, default: false }
 });
 
+// ── SAVED SEARCHES (Property Finder email alerts) ──────────
+// A visitor saves the filters they used on /properties.html and gets ONE
+// email when new listings matching them go live. Double opt-in: nothing is
+// sent (and they are not added to Subscriber) until they click the
+// confirmation link. `token` is the only key the public ever holds; it opens
+// the confirm / manage / unsubscribe page and must never be sent to staff
+// screens. `sentPropertyIds` starts as a baseline of everything that already
+// matched at sign-up, so only genuinely new listings are ever emailed.
+const savedSearchSchema = new mongoose.Schema({
+  email: { type: String, required: true, lowercase: true, trim: true },
+  criteria: {
+    category:     { type: String, enum: ['', 'FOR SALE', 'FOR LEASE'], default: '' },
+    q:            { type: String, default: '', maxlength: 80 },
+    propertyType: { type: String, default: '' },
+    minBeds:      { type: Number, default: 0 },
+    minBaths:     { type: Number, default: 0 },
+    minPrice:     { type: Number, default: 0 },
+    maxPrice:     { type: Number, default: 0 }
+  },
+  summary:         { type: String, default: '' },
+  token:           { type: String, required: true, unique: true },
+  confirmed:       { type: Boolean, default: false },
+  confirmedAt:     { type: Date, default: null },
+  active:          { type: Boolean, default: true },
+  sentPropertyIds: { type: [String], default: [] },
+  emailsSent:      { type: Number, default: 0 },
+  lastSentAt:      { type: Date, default: null },
+  vid:             { type: String, default: '' },
+  confirmSentAt:   { type: Date, default: null },
+  createdAt:       { type: Date, default: Date.now }
+});
+savedSearchSchema.index({ confirmed: 1, active: 1 });
+savedSearchSchema.index({ email: 1 });
+
 // ── WISHLIST ────────────────────────────────────────────────
 const wishlistSchema = new mongoose.Schema({
   email: { type: String, required: true },
@@ -1201,6 +1235,7 @@ const Inquiry           = mongoose.model('Inquiry',           inquirySchema);
 const HeroImage         = mongoose.model('HeroImage',         heroImageSchema);
 const Subscriber        = mongoose.model('Subscriber',        subscriberSchema);
 const PriceAlert        = mongoose.model('PriceAlert',        priceAlertSchema);
+const SavedSearch       = mongoose.model('SavedSearch',       savedSearchSchema);
 const Wishlist          = mongoose.model('Wishlist',          wishlistSchema);
 const AlertLog          = mongoose.model('AlertLog',          alertLogSchema);
 const AuditLog          = mongoose.model('AuditLog',          auditLogSchema);
@@ -1230,6 +1265,7 @@ module.exports = {
   HeroImage,
   Subscriber,
   PriceAlert,
+  SavedSearch,
   Wishlist,
   AlertLog,
   AuditLog,

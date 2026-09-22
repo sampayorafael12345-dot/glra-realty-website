@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
+
+<!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
+<script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<title>Your Property Alerts | GLRA Realty</title>
+<meta name="description" content="Confirm, check or stop the new-listing email alerts you set up on GLRA Realty.">
+<meta name="robots" content="noindex">
+<!-- The address bar carries the visitor's private alert key. Never send it on. -->
+<meta name="referrer" content="no-referrer">
+<link rel="canonical" href="https://glrarealty.com/alerts.html">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
+<link rel="preload" href="/img/logo-384.png" as="image">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="/css/styles.css?v=102">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=102">
+
+<style>
+/* ── PAGE-SPECIFIC ── */
+.al-wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px}
+.al-card{border:3px solid var(--ab-line);background:var(--ab-paper);padding:30px 28px;box-shadow:8px 8px 0 var(--ab-line)}
+.al-kicker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);display:block;margin-bottom:12px}
+.al-card h2{font-family:'Inter',sans-serif;font-size:28px;font-weight:900;letter-spacing:-.8px;text-transform:uppercase;color:var(--ab-ink);margin:0 0 14px;line-height:1.1}
+.al-card p{font-size:15.5px;line-height:1.7;color:var(--ab-ink);margin:0 0 14px;max-width:62ch}
+.al-summary{background:var(--ab-paper-2);border-left:4px solid var(--ab-hot);color:var(--ab-ink);padding:16px 18px;margin:6px 0 20px;font-size:16px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+.al-facts{list-style:none;margin:0 0 22px;padding:0;border-top:2px solid var(--ab-line)}
+.al-facts li{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--ab-line);font-size:14px;color:var(--ab-ink)}
+.al-facts .k{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-gray)}
+.al-facts .v{font-weight:600;text-align:right;overflow-wrap:anywhere}
+.al-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border:2px solid currentColor}
+.al-badge.is-on{color:var(--ab-green-text,#0a7552)}
+.al-badge.is-wait{color:var(--ab-hot-text,#c02e00)}
+.al-badge.is-off{color:var(--ab-gray)}
+.al-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+/* Link styled as a secondary button. The theme only restyles <button>. */
+.al-link-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ab-paper);color:var(--ab-ink);border:2px solid var(--ab-ink);padding:12px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none}
+.al-link-btn:hover{background:var(--ab-ink);color:var(--ab-paper)}
+.al-card .al-fine{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;letter-spacing:.4px;color:var(--ab-gray);margin-top:22px !important}
+.al-loading{display:flex;align-items:center;gap:12px}
+.al-card a:not(.al-link-btn){color:var(--ab-hot-text,#c02e00);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:640px){
+  .al-wrap{padding:32px 16px 60px}
+  .al-card{box-shadow:5px 5px 0 var(--ab-line);padding:22px 18px}
+  .al-card h2{font-size:22px}
+  .al-actions > *{width:100%;justify-content:center}
+  .al-facts li{flex-direction:column;gap:2px}
+  .al-facts .v{text-align:left}
+}
+</style>
+</head>
+<body>
+<div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
+
+<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
+  <div class="logo" onclick="location.href='/'"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"></div>
+  <div class="nav-links">
+    <a href="/">HOME</a>
+    <a href="/properties.html">PROPERTIES</a>
+    <a href="/tools.html">TOOLS</a>
+    <a href="/about.html">ABOUT</a>
+    <a href="/#contact" class="contact-btn-nav">CONTACT</a>
+  </div>
+</nav>
+<div class="mobile-overlay" id="mobileOverlay">
+  <div class="close-menu" onclick="closeMobileMenu()"><i class="fas fa-times"></i></div>
+  <div class="mobile-overlay-links">
+    <a href="/" onclick="closeMobileMenu()">Home</a>
+    <a href="/properties.html" onclick="closeMobileMenu()">Properties</a>
+    <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
+    <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
+    <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+</div>
+<main id="main">
+
+<div class="page-hero">
+  <span class="eyebrow">Property Finder</span>
+  <h1>Your Property Alerts</h1>
+  <p>New listings that match your search, emailed to you once, as soon as they go live.</p>
+</div>
+
+<div class="al-wrap">
+  <section class="al-card" id="alCard" aria-live="polite">
+    <p class="al-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading your alert...</p>
+  </section>
+</div>
+
+</main>
+<footer>
+  <div class="footer-content">
+    <div class="footer-col">
+      <h4>GLRA Realty</h4>
+      <p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+      <div class="footer-social">
+        <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Properties</h4><ul>
+      <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
+      <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/list-property.html">Sell Your Property</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Tools</h4><ul>
+      <li><a href="/valuation.html">Property Valuation</a></li>
+      <li><a href="/calculator.html">Closing Fees</a></li>
+      <li><a href="/rent-vs-buy.html">Rent vs Buy</a></li>
+      <li><a href="/loan-comparison.html">Loan Comparison</a></li>
+      <li><a href="/tools.html">All Tools</a></li>
+    </ul></div>
+    <div class="footer-col"><h4>Company</h4><ul>
+      <li><a href="/about.html">About Us</a></li>
+      <li><a href="/testimonials.html">Testimonials</a></li>
+      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+      <h4 style="margin-top:18px">Contact</h4>
+      <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
+      <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
+    </div>
+  </div>
+  <hr class="footer-divider">
+  <div class="footer-bottom">
+    <p>&copy; 2026 GLRA Realty Group. All rights reserved.</p>
+    <div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+
+<div class="floating-buttons">
+  <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
+  <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
+  <a href="https://m.me/glrarealty" class="floating-btn btn-messenger" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
+  <a href="https://instagram.com/glra_realty" class="floating-btn btn-instagram" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+  <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+</div>
+<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+
+<!-- ============================================
+     PROPERTY ALERTS PAGE
+     ?confirm=TOKEN  confirms a new alert with a POST from this script. A
+                     mail scanner that pre-fetches the link only downloads
+                     the HTML and never runs the script, so it cannot
+                     confirm on the person's behalf.
+     ?t=TOKEN        shows the alert and offers "Stop these alerts"
+
+     Runs BEFORE main.js on purpose. The token is the visitor's private key
+     to this alert, and main.js starts Microsoft Clarity, which records the
+     page address. So the token is read, kept for this tab only, and wiped
+     from the address bar before any analytics can see it.
+     ============================================ -->
+<script>
+(function glraAlertsPage(){
+  var card = document.getElementById('alCard');
+  var TOKEN_RE = /^[a-f0-9]{64}$/;
+  var STORE = 'glra_alert_token';
+
+  // 1. Read the token and scrub it from the address bar.
+  var params = new URLSearchParams(location.search);
+  var confirmToken = (params.get('confirm') || '').trim().toLowerCase();
+  var manageToken = (params.get('t') || '').trim().toLowerCase();
+  if (confirmToken || manageToken) {
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  } else {
+    // A reload after the scrub: pick the token back up for this tab.
+    try { manageToken = sessionStorage.getItem(STORE) || ''; } catch (e) {}
+  }
+  function remember(token) { try { sessionStorage.setItem(STORE, token); } catch (e) {} }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // The same search, opened on the properties page.
+  function browseUrl(c) {
+    c = c || {};
+    var p = new URLSearchParams();
+    if (c.q) p.set('search', c.q);
+    if (c.propertyType) p.set('propertyType', c.propertyType);
+    if (c.minBeds > 0) p.set('bedrooms', String(c.minBeds));
+    if (c.minBaths > 0) p.set('baths', String(c.minBaths));
+    if (c.minPrice > 0) p.set('minPrice', String(Math.round(c.minPrice)));
+    if (c.maxPrice > 0) p.set('maxPrice', String(Math.round(c.maxPrice)));
+    if (c.category) p.set('category', c.category);
+    var qs = p.toString();
+    return '/properties.html' + (qs ? '?' + qs : '');
+  }
+
+  function show(html) { card.innerHTML = html; }
+
+  function showProblem(title, text) {
+    show(
+      '<span class="al-kicker">// Property Finder</span>' +
+      '<h2>' + esc(title) + '</h2>' +
+      '<p>' + esc(text) + '</p>' +
+      '<div class="al-actions"><a class="al-link-btn" href="/properties.html"><i class="fas fa-search" aria-hidden="true"></i> Browse properties</a></div>'
+    );
+  }
+
+  function statusBadge(a) {
+    if (!a.active) return '<span class="al-badge is-off">Stopped</span>';
+    if (!a.confirmed) return '<span class="al-badge is-wait">Awaiting confirmation</span>';
+    return '<span class="al-badge is-on">Active</span>';
+  }
+
+  function renderAlert(a, token, justConfirmed) {
+    var sent = Number(a.emailsSent) || 0;
+    var heading, lead;
+    if (justConfirmed && a.active) {
+      heading = "You're all set";
+      lead = "We'll email you as soon as a new listing matching this search goes live. Every email has a link to stop them.";
+    } else if (!a.active) {
+      heading = 'These alerts are stopped';
+      lead = 'You will not get any more emails for this search.';
+    } else {
+      heading = 'Your alert';
+      lead = a.confirmed
+        ? "We'll email you as soon as a new listing matching this search goes live."
+        : 'This alert is waiting for you to click the confirmation link we emailed you.';
+    }
+    show(
+      '<span class="al-kicker">// ' + (justConfirmed && a.active ? 'Confirmed' : 'Property Finder') + '</span>' +
+      '<h2 id="alHeading" tabindex="-1">' + esc(heading) + '</h2>' +
+      '<p>' + esc(lead) + '</p>' +
+      '<div class="al-summary">' + esc(a.summary) + '</div>' +
+      '<ul class="al-facts">' +
+        '<li><span class="k">Status</span><span class="v">' + statusBadge(a) + '</span></li>' +
+        (a.emailMasked ? '<li><span class="k">Sent to</span><span class="v">' + esc(a.emailMasked) + '</span></li>' : '') +
+        '<li><span class="k">Alert emails so far</span><span class="v">' + sent + '</span></li>' +
+      '</ul>' +
+      '<div class="al-actions">' +
+        (a.active ? '<button type="button" id="alStop"><i class="fas fa-bell-slash" aria-hidden="true"></i> Stop these alerts</button>' : '') +
+        '<a class="al-link-btn" href="' + esc(browseUrl(a.criteria)) + '"><i class="fas fa-search" aria-hidden="true"></i> See current matches</a>' +
+        (!a.active ? '<a class="al-link-btn" href="/properties.html"><i class="fas fa-bell" aria-hidden="true"></i> Set up a new alert</a>' : '') +
+      '</div>' +
+      '<p class="al-fine">Questions? Reply to any of our emails or call 0917 177 4572. <a href="/privacy.html#email">How we use your email</a>.</p>'
+    );
+    var stop = document.getElementById('alStop');
+    if (stop) stop.addEventListener('click', function () { stopAlert(token, a, stop); });
+  }
+
+  async function loadAlert(token, justConfirmed) {
+    var r = await fetch('/api/saved-search/' + token, { headers: { 'Accept': 'application/json' } });
+    var d = await r.json().catch(function () { return {}; });
+    if (!r.ok) {
+      showProblem('We could not find this alert', d.error || 'The link may be incomplete, or the alert may have been removed.');
+      return;
+    }
+    renderAlert(d, token, justConfirmed);
+  }
+
+  async function stopAlert(token, a, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Stopping...';
+    try {
+      // No body: nothing to send, and it keeps main.js from adding one.
+      var r = await fetch('/api/saved-search/' + token + '/unsubscribe', { method: 'POST' });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok || !d.success) throw new Error(d.error || 'failed');
+      a.active = false;
+      renderAlert(a, token, false);
+      var h = document.getElementById('alHeading');
+      if (h) h.textContent = 'Stopped';
+      if (h) h.focus();
+      if (typeof window.showToast === 'function') window.showToast('Stopped. No more emails for this search.');
+    } catch (e) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-bell-slash" aria-hidden="true"></i> Stop these alerts';
+      if (typeof window.showToast === 'function') window.showToast('Could not stop the alerts. Please try again.', true);
+    }
+  }
+
+  async function run() {
+    try {
+      if (confirmToken) {
+        if (!TOKEN_RE.test(confirmToken)) {
+          showProblem('This link is not valid', 'It may have been cut short by your email app. Try clicking the button in the email again, or set up a new alert.');
+          return;
+        }
+        remember(confirmToken);
+        show('<p class="al-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Confirming your alert...</p>');
+        var r = await fetch('/api/saved-search/' + confirmToken + '/confirm', { method: 'POST' });
+        var d = await r.json().catch(function () { return {}; });
+        if (!r.ok || !d.success) {
+          showProblem('We could not confirm this alert', d.error || 'Please try the link again in a minute.');
+          return;
+        }
+        await loadAlert(confirmToken, true);
+        return;
+      }
+      if (manageToken) {
+        if (!TOKEN_RE.test(manageToken)) {
+          showProblem('This link is not valid', 'It may have been cut short by your email app. Use the "Manage or stop these alerts" link in one of our emails.');
+          return;
+        }
+        remember(manageToken);
+        await loadAlert(manageToken, false);
+        return;
+      }
+      showProblem('Open this page from your email', 'This page shows an alert when you open it from the link in one of our emails. To set up a new alert, pick your filters on the properties page and choose "Email me new matches".');
+    } catch (e) {
+      showProblem('Something went wrong', 'Please check your connection and reload this page.');
+    }
+  }
+
+  run();
+})();
+</script>
+
+<script src="/js/main.js?v=102"></script>
+<script src="/js/brutalist-shell.js?v=102" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/chat.js?v=102" defer></script>
+</body>
+</html>

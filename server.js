@@ -560,7 +560,7 @@ const MONGODB_URI = MONGODB_CONNECTION;
 // Schemas + compiled models live in ./server/db.js — see that file for all data shapes.
 const db = require('./server/db');
 const {
-  Property, Inquiry, HeroImage, Subscriber, PriceAlert, Wishlist,
+  Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
   TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage,
   PERMISSION_KEYS, defaultPermissionsForRole
@@ -637,12 +637,16 @@ function handleValidation(req, res, next) {
 // instead of silently appearing in the public API. Deliberately excluded:
 // commission / fixedAmount / totalCommission (the brokerage's own economics)
 // and notes (free text that holds the owner's name, email and mobile on any
-// listing imported from a "List your property" submission).
+// listing imported from a "List your property" submission). Also excluded:
+// developer, because the Excel importer maps its "Developer / Owner" column
+// into it and two live listings carried the OWNER's surname there; and
+// pricePerSqm, which the same import filled with commission rates ("0.05").
+// Every page works out price per sqm itself from price and area.
 const PUBLIC_PROPERTY_FIELDS = [
   '_id', 'title', 'location', 'price', 'monthlyRental', 'bedrooms', 'bathrooms',
   'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
   'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
-  'mapLocation', 'pricePerSqm', 'developer', 'previousPrice', 'priceUpdatedAt',
+  'mapLocation', 'previousPrice', 'priceUpdatedAt',
   'views', 'createdAt'
 ].join(' ');
 
@@ -685,6 +689,7 @@ app.get('/api/properties', async (req, res) => {
 // Serves a listing photo that lives in the database as a base64 data: URI as a
 // real image response. Immutable + long-lived: the bytes for a given property
 // image never change, so browsers and the service worker cache it after one hit.
+const SAFE_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
 app.get('/api/property-image/:id/:key', async (req, res) => {
   try {
     const p = await Property.findById(req.params.id, { mainImage: 1, gallery: 1 }).lean();
@@ -693,8 +698,14 @@ app.get('/api/property-image/:id/:key', async (req, res) => {
     const raw = key === 'main' ? p.mainImage : (p.gallery || [])[Number(key)];
     const m = isDataUri(raw) && raw.match(/^data:([\w.+/-]+);base64,(.+)$/);
     if (!m) return res.status(404).end();
+    // Served as an image or not at all. The type used to be whatever the
+    // stored data: string claimed, so a "photo" saved as text/html became a
+    // page running on glrarealty.com.
+    if (!SAFE_IMAGE_TYPES.has(m[1].toLowerCase())) return res.status(404).end();
     const buf = Buffer.from(m[2], 'base64');
-    res.set('Content-Type', m[1]);
+    res.set('Content-Type', m[1].toLowerCase());
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Security-Policy', "default-src 'none'; sandbox");
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
     res.set('Content-Length', String(buf.length));
     return res.end(buf);
@@ -718,7 +729,10 @@ app.get('/api/properties/:id', async (req, res) => {
 
 // View counter — fired by the public site when someone opens a property's
 // details. Pure browsing signal for the admin dashboard; fire-and-forget.
-app.post('/api/properties/:id/view', publicWriteLimiter, async (req, res) => {
+// Its own looser bucket: it fires once per listing opened, and sharing the
+// 30-per-10-minutes form budget meant a buyer who browsed 30 listings got a
+// 429 on the enquiry they then sent.
+app.post('/api/properties/:id/view', trackLimiter, async (req, res) => {
   try {
     await Property.updateOne({ _id: req.params.id }, { $inc: { views: 1 } });
     res.status(204).end();
@@ -753,6 +767,16 @@ function optimizeCloudinary(u) {
   if (u.indexOf('/upload/f_') !== -1 || u.indexOf('/upload/q_') !== -1) return u;
   return u.replace('/upload/', '/upload/f_auto,q_auto/');
 }
+// A small cropped copy for thumbnails and cards. Non-Cloudinary URLs, and
+// ones that already carry a transformation, pass through unchanged.
+function cloudinaryThumb(u, w, h) {
+  if (typeof u !== 'string' || u.indexOf('res.cloudinary.com') === -1) return u;
+  // The plain format/quality step some stored URLs already carry is replaced;
+  // any other existing transformation is someone's deliberate crop, so kept.
+  u = u.replace('/upload/f_auto,q_auto/', '/upload/');
+  if (/\/upload\/[a-z]{1,2}_/.test(u)) return u;
+  return u.replace('/upload/', `/upload/f_auto,q_auto,c_fill,g_auto,w_${w || 184},h_${h || 140}/`);
+}
 function optimizePropertyImages(p) {
   if (!p) return p;
   if (p.mainImage) p.mainImage = optimizeCloudinary(p.mainImage);
@@ -769,8 +793,17 @@ function optimizePropertyImages(p) {
 // and the browser loads the photo as a normal, cacheable, parallel request.
 function isDataUri(v) { return typeof v === 'string' && v.startsWith('data:'); }
 
+// Stock photography is not a photo of the listing. Six listings carried the
+// same Unsplash dining-room picture as their cover, three of them bare
+// agricultural lots, on a site that promises every property is photographed in
+// person. Left out everywhere, so the page shows its own placeholder instead.
+const STOCK_PHOTO_HOSTS = /^https?:\/\/(images\.unsplash\.com|plus\.unsplash\.com|images\.pexels\.com|cdn\.pixabay\.com)\//i;
+function isStockPhoto(v) { return typeof v === 'string' && STOCK_PHOTO_HOSTS.test(v); }
+
 function externalizeInlineImages(p) {
   if (!p || !p._id) return p;
+  if (isStockPhoto(p.mainImage)) p.mainImage = '';
+  if (Array.isArray(p.gallery)) p.gallery = p.gallery.filter(g => !isStockPhoto(g));
   const id = String(p._id);
   if (isDataUri(p.mainImage)) p.mainImage = `/api/property-image/${id}/main`;
   if (Array.isArray(p.gallery)) {
@@ -817,7 +850,9 @@ const PAGE_IMAGES = (() => {
 // does not work here: `location` is free text a broker types, and its first
 // segment is as often a street, a building or a plus code as it is a city.
 const AREAS = [
-  ['makati',      'Makati',                 /\b(makati|legaspi village|salcedo village|rockwell|poblacion)\b/i, 'living-in-makati.html'],
+  // "rockwell center", not "rockwell": Rockwell is also a developer, and
+  // "THE ARTON BY ROCKWELL" (Aurora Blvd, Quezon City) was filed under Makati.
+  ['makati',      'Makati',                 /\b(makati|legaspi village|salcedo village|rockwell center|poblacion)\b/i, 'living-in-makati.html'],
   ['bgc',         'Bonifacio Global City',  /\b(bgc|bonifacio global|forbestown|mckinley|fort bonifacio|uptown bonifacio)\b/i, 'living-in-bgc.html'],
   ['taguig',      'Taguig',                 /\btaguig\b/i, 'living-in-bgc.html'],
   ['quezon-city', 'Quezon City',            /\b(quezon city|vertis north|eastwood|katipunan|cubao|diliman|novaliches|pasong putik)\b/i, ''],
@@ -827,7 +862,9 @@ const AREAS = [
   ['pasay',       'Pasay',                  /\b(pasay|mall of asia|\bmoa\b|bay area)\b/i, ''],
   ['alabang',     'Alabang and Muntinlupa', /\b(alabang|muntinlupa|filinvest city)\b/i, 'living-in-alabang.html'],
   ['paranaque',   'Paranaque',              /\b(para\u00f1aque|paranaque|bf homes|better living|sucat)\b/i, ''],
-  ['san-juan',    'San Juan',               /\bsan juan\b/i, ''],
+  // Not inside a hyphenated road name: a lot on the "Rosario-San Juan-
+  // Candelaria Road" in Quezon province is not in San Juan, Metro Manila.
+  ['san-juan',    'San Juan',               /(?<!-)\bsan juan\b(?!-)/i, ''],
   ['las-pinas',   'Las Pinas',              /\b(las pi\u00f1as|las pinas|bf international)\b/i, ''],
   ['cebu',        'Cebu',                   /\bcebu\b/i, ''],
   ['tagaytay',    'Tagaytay',               /\btagaytay\b/i, ''],
@@ -841,6 +878,8 @@ const AREAS = [
   ['boracay',     'Boracay',                /\bboracay\b/i, '']
 ];
 const AREA_BY_SLUG = new Map(AREAS.map(a => [a[0], a]));
+const METRO_AREA_SLUGS = new Set(['makati', 'bgc', 'taguig', 'quezon-city', 'manila', 'mandaluyong',
+  'pasig', 'pasay', 'alabang', 'paranaque', 'san-juan', 'las-pinas']);
 
 // A page needs real inventory behind it. One listing is a thin page, and thin
 // pages cost more than they earn.
@@ -1112,7 +1151,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=101" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
 </body>
 </html>`;
 }
@@ -1176,14 +1215,17 @@ function buildPropertyPageHtml(p, related) {
   const galleryAbs = [...new Set([rawImg, ...gallery].filter(Boolean))]
     .slice(0, 8).map(g => absUrl(optimizeCloudinary(g)));
   const residence = {
-    '@type': p.propertyType === 'House and Lot' ? 'SingleFamilyResidence'
-      : p.propertyType === 'Lot' ? 'Place' : 'Apartment',
+    // Matched on the words: no listing is typed plain "Lot", so every vacant
+    // lot, farm and office used to be described to Google as an "Apartment".
+    '@type': /house|townhouse/i.test(p.propertyType || '') ? 'SingleFamilyResidence'
+      : /^\s*(condominium|apartment|studio)/i.test(p.propertyType || '') ? 'Apartment' : 'Place',
     '@id': canonical + '#home',
     name: title,
     address: {
       '@type': 'PostalAddress',
       addressLocality: loc || 'Metro Manila',
-      addressRegion: 'Metro Manila',
+      // Every listing used to claim Metro Manila, Boracay and Batangas included.
+      ...(ownArea ? { addressRegion: METRO_AREA_SLUGS.has(ownArea[0]) ? 'Metro Manila' : ownArea[1] } : {}),
       addressCountry: 'PH'
     }
   };
@@ -1198,6 +1240,19 @@ function buildPropertyPageHtml(p, related) {
   if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
   if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
   if (galleryAbs.length || ogImg) residence.photo = galleryAbs.length ? galleryAbs : [ogImg];
+
+  const offerBase = { '@type': 'Offer', priceCurrency: 'PHP', availability: 'https://schema.org/InStock',
+    url: canonical, seller: { '@type': 'RealEstateAgent', name: 'GLRA Realty', url: SITE_URL } };
+  const offersList = [];
+  const forSale = lt === 'FOR SALE' || lt === 'SALE AND LEASE';
+  const rentNum = lt === 'SALE AND LEASE' ? leaseP : (leaseP || saleP);
+  if (forSale && saleP > 0) {
+    offersList.push({ ...offerBase, price: Number(saleP), businessFunction: 'http://purl.org/goodrelations/v1#Sell' });
+  }
+  if (isLease && rentNum > 0) {
+    offersList.push({ ...offerBase, price: Number(rentNum), businessFunction: 'http://purl.org/goodrelations/v1#LeaseOut',
+      priceSpecification: { '@type': 'UnitPriceSpecification', price: Number(rentNum), priceCurrency: 'PHP', unitCode: 'MON' } });
+  }
 
   const listedOn = new Date(p.createdAt || Date.now()).toISOString();
   const updatedOn = new Date(p.priceUpdatedAt || p.createdAt || Date.now()).toISOString();
@@ -1217,17 +1272,11 @@ function buildPropertyPageHtml(p, related) {
         inLanguage: 'en-PH',
         mainEntity: { '@id': canonical + '#home' },
         provider: { '@type': 'RealEstateAgent', name: 'GLRA Realty', url: SITE_URL },
-        offers: {
-          '@type': 'Offer',
-          price: Number(priceNum) || 0,
-          priceCurrency: 'PHP',
-          availability: 'https://schema.org/InStock',
-          businessFunction: isLease
-            ? 'http://purl.org/goodrelations/v1#LeaseOut'
-            : 'http://purl.org/goodrelations/v1#Sell',
-          url: canonical,
-          seller: { '@type': 'RealEstateAgent', name: 'GLRA Realty', url: SITE_URL }
-        }
+        // One offer per deal on the table. A sale-and-lease listing used to send
+        // one "lease" offer carrying the SALE price, so Google was told the
+        // Arton rents for P8,500,000; a listing with no price sent an offer of
+        // 0. Now a sale offer, a monthly lease offer, both, or none.
+        ...(offersList.length ? { offers: offersList.length === 1 ? offersList[0] : offersList } : {})
       },
       residence,
       {
@@ -1269,10 +1318,10 @@ function buildPropertyPageHtml(p, related) {
   <div class="pg-section-label">More listings you may like</div>
   <div class="pg-related">
     ${rel.map(r => {
-      const rLease = String(r.listingType || '').toUpperCase().includes('LEASE');
+      const rLease = String(r.listingType || '').toUpperCase() === 'FOR LEASE';
       const rPrice = rLease ? (r.monthlyRental || r.price || 0) : (r.price || 0);
       const rTxt = rPrice ? ('₱' + Number(rPrice).toLocaleString('en-PH') + (rLease ? '/mo' : '')) : 'Price on request';
-      const rImg = r.mainImage ? absUrl(optimizeCloudinary(r.mainImage)) : '/img/social-card.png';
+      const rImg = r.mainImage && !isStockPhoto(r.mainImage) ? absUrl(cloudinaryThumb(r.mainImage, 400, 280)) : '/img/social-card.png';
       return `<a class="pg-rel" href="/property/${String(r._id)}">
         <img src="${esc(rImg)}" alt="${esc(r.title || 'Property')}" loading="lazy" width="200" height="140">
         <span class="pg-rel-t">${esc(r.title || 'Property')}</span>
@@ -1282,7 +1331,29 @@ function buildPropertyPageHtml(p, related) {
     }).join('')}
   </div>` : '';
 
-  const specRows = [['Type', p.propertyType || '—']]
+  // A price cut is a selling point. It used to show only as a card badge for
+  // 30 days; on the listing page it now stays for as long as the lower price.
+  // Consumer Act Art. 111(a): a former price may be quoted only if it was
+  // actually asked for at least four weeks. Victoria Place was cut 8 days in.
+  const heldFourWeeks = p.priceUpdatedAt && p.createdAt && (new Date(p.priceUpdatedAt) - new Date(p.createdAt)) >= 28 * 864e5;
+  const reducedHtml = (heldFourWeeks && Number(p.previousPrice) > Number(saleP) && Number(saleP) > 0 && lt !== 'FOR LEASE')
+    ? `<div class="pg-reduced">Reduced from ₱${Number(p.previousPrice).toLocaleString('en-PH')}${p.priceUpdatedAt ? ' on ' + new Date(p.priceUpdatedAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric', month: 'long', year: 'numeric' }) : ''}</div>`
+    : '';
+
+  // "BELLAGIO TOWER 3 | 2BR For Sale in BGC, P24M | GLRA Realty". The old
+  // title was the name plus the whole raw address (up to 165 characters) and
+  // never said sale or rent, bedrooms, place or price: the words people type.
+  const shortPeso = n => n >= 1e6 ? '₱' + (Math.round(n / 1e4) / 100).toString() + 'M' : '₱' + Number(n).toLocaleString('en-PH');
+  const dealWord = lt === 'SALE AND LEASE' ? 'For Sale or Rent' : isLease ? 'For Rent' : 'For Sale';
+  const where = ownArea ? ownArea[1] : String(loc).split(',')[0].trim();
+  const rooms = Number(p.bedrooms) > 0 ? `${p.bedrooms}BR ` : '';
+  const pricePart = saleP > 0 && lt !== 'FOR LEASE' ? shortPeso(saleP) : (leaseP || saleP) > 0 ? shortPeso(leaseP || saleP) + '/mo' : '';
+  const seoTitle = `${title.replace(/\s+/g, ' ').trim()} | ${rooms}${dealWord}${where ? ' in ' + where : ''}${pricePart ? ', ' + pricePart : ''} | GLRA Realty`;
+
+  const waHref = 'https://wa.me/639171774572?text=' + encodeURIComponent(
+    `Hi Catherine, I'm interested in ${title.replace(/\s+/g, ' ').trim()}${priceText && priceText !== 'Price on request' ? ' (' + priceText.replace(/\s+/g, ' ') + ')' : ''}. ${canonical}`);
+
+  const specRows = [['Type', String(p.propertyType || '—').trim()]]
     .concat(p.bedrooms ? [['Bedrooms', p.bedrooms]] : [])
     .concat(p.bathrooms ? [['Bathrooms', p.bathrooms]] : [])
     .concat(p.sqm ? [['Floor area', p.sqm + ' sqm']] : [])
@@ -1296,7 +1367,9 @@ function buildPropertyPageHtml(p, related) {
     .concat(p.parking ? [['Parking', p.parking]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
   const thumbsHtml = gallery.length
-    ? `<div class="pg-thumbs">${gallery.map(g => `<img src="${esc(absUrl(optimizeCloudinary(g)))}" alt="${esc(title)}" loading="lazy" onclick="pgSwap(this.src)">`).join('')}</div>`
+    // Drawn at 92x70 but used to download the full 800px photo each. Now a
+    // small, 2x-sharp crop; a click swaps the full-size photo in from data-full.
+    ? `<div class="pg-thumbs">${gallery.map(g => `<img src="${esc(absUrl(cloudinaryThumb(g)))}" data-full="${esc(absUrl(optimizeCloudinary(g)))}" alt="${esc(title)}" loading="lazy" width="92" height="70" onclick="pgSwap(this.dataset.full||this.src)">`).join('')}</div>`
     : '';
 
   return `<!DOCTYPE html>
@@ -1305,19 +1378,19 @@ function buildPropertyPageHtml(p, related) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
-<title>${esc(title)}${loc ? ' — ' + esc(loc) : ''} | GLRA Realty</title>
+<title>${esc(seoTitle)}</title>
 <meta name="description" content="${esc(metaDesc)}">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <link rel="canonical" href="${esc(canonical)}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="${esc(title)} | GLRA Realty">
+<meta property="og:title" content="${esc(seoTitle)}">
 <meta property="og:description" content="${esc(metaDesc)}">
 <meta property="og:image" content="${esc(ogImg)}">${ogIsCloudinary ? `
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">` : ''}
 <meta property="og:url" content="${esc(canonical)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${esc(title)} | GLRA Realty">
+<meta name="twitter:title" content="${esc(seoTitle)}">
 <meta name="twitter:description" content="${esc(metaDesc)}">
 <meta name="twitter:image" content="${esc(ogImg)}">
 <link rel="icon" type="image/png" href="/img/favicon-64.png">
@@ -1351,6 +1424,20 @@ a{color:inherit;text-decoration:none}
 .pg-thumbs img{width:92px;height:70px;object-fit:cover;border:2px solid var(--line);cursor:pointer}
 .pg-thumbs img:hover{border-color:var(--hot)}
 .pg-price{font-size:34px;font-weight:900;color:var(--hot-text);letter-spacing:-1px;margin:6px 0 18px}
+.pg-reduced{margin:-12px 0 18px;font-size:13px;font-weight:700;letter-spacing:.2px}
+.pg-privacy{font-size:12px;line-height:1.5;margin:12px 0 0;opacity:.8}.pg-privacy a{color:inherit}
+.pg-bar{display:none}
+@media(max-width:768px){
+  .pg-bar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:1050;
+    background:var(--paper);border-top:2px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
+  .pg-bar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;
+    color:var(--ink);text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border-left:1px solid var(--line)}
+  .pg-bar a:first-child{border-left:0}
+  .pg-bar i{font-size:18px}
+  .pg-bar .pg-bar-hot{background:var(--hot-btn);color:#fff}
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .floating-buttons{display:none !important}
+}
 .pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
 .pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
@@ -1412,10 +1499,10 @@ a{color:inherit;text-decoration:none}
   <div class="pg-loc"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>
   <img id="pgHero" class="pg-hero-img" src="${esc(heroImg)}" alt="${esc(title)}">
   ${thumbsHtml}
-  <div class="pg-price">${esc(priceText)}</div>
+  <div class="pg-price">${esc(priceText)}</div>${reducedHtml}
   ${specsHtml}
   ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
-  <div class="pg-form">
+  <div class="pg-form" id="inquire">
     <h2>Inquire about this property</h2>
     <form id="pgForm" onsubmit="return pgSubmit(event)">
       <label class="pg-lbl" for="pgName">Full name</label><input type="text" id="pgName" name="name" autocomplete="name" placeholder="Full name" required>
@@ -1423,6 +1510,7 @@ a{color:inherit;text-decoration:none}
       <label class="pg-lbl" for="pgPhone">Phone number <span class="pg-opt">(optional)</span></label><input type="tel" id="pgPhone" name="phone" autocomplete="tel" placeholder="Phone number">
       <label class="pg-lbl" for="pgMsg">Your message</label><textarea id="pgMsg" name="message" placeholder="Your message">I'm interested in ${esc(title)}${loc ? ' (' + esc(loc) + ')' : ''}. Please send me more details.</textarea>
       <button type="submit">Send inquiry →</button>
+      <p class="pg-privacy">Catherine will use these details only to answer you about this property. <a href="/privacy.html">How we handle your data</a>.</p>
     </form>
     <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
   </div>
@@ -1431,6 +1519,15 @@ a{color:inherit;text-decoration:none}
 <footer class="pg-foot">
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a>
 </footer>
+<!-- On a phone the enquiry form is several screens down and the only other
+     way to reach Catherine was one button hiding a menu. This bar stays in
+     reach; its WhatsApp message names this listing and links to it. -->
+<nav class="pg-bar" aria-label="Contact about this property">
+  <a href="tel:+639171774572"><i class="fas fa-phone-alt" aria-hidden="true"></i><span>Call</span></a>
+  <a href="${esc(waHref)}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></a>
+  <a href="viber://chat?number=%2B639171774572"><i class="fab fa-viber" aria-hidden="true"></i><span>Viber</span></a>
+  <a href="#inquire" class="pg-bar-hot"><i class="far fa-envelope" aria-hidden="true"></i><span>Inquire</span></a>
+</nav>
 <div class="floating-buttons">
   <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
   <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
@@ -1463,8 +1560,8 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js"></script>
-<script src="/js/a11y.js?v=101" defer></script>
+<script src="/js/main.js?v=102"></script>
+<script src="/js/a11y.js?v=102" defer></script>
 </body>
 </html>`;
 }
@@ -1474,8 +1571,17 @@ app.get('/property/:id', async (req, res) => {
     // Same whitelist the public API uses: the commission and the owner's
     // contact details in `notes` have no business being loaded into a page
     // renderer, even one that does not print them.
-    const p = await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean();
-    if (!p || p.status !== 'available') return res.redirect(302, '/properties.html');
+    const p = /^[a-f0-9]{24}$/i.test(req.params.id)
+      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean()
+      : null;
+    // A 302 to the listings page looked to Google like a disguised "not
+    // found" it had to keep re-checking. Gone (410) for a listing that existed
+    // and is no longer available, not found (404) for an id that never did,
+    // and a page that sends the person on to what IS available.
+    if (!p || p.status !== 'available') {
+      res.status(p ? 410 : 404).set('Content-Type', 'text/html; charset=utf-8');
+      return res.send(listingGoneHtml(p));
+    }
     // Neighbours to link to. Preference order: same area, then same kind of
     // property, then simply the newest - so the block is never empty and a
     // crawler always has somewhere to go from here.
@@ -1486,6 +1592,22 @@ app.get('/property/:id', async (req, res) => {
     return res.redirect(302, '/properties.html');
   }
 });
+
+function listingGoneHtml(p) {
+  const area = p ? AREAS.find(a => a[2].test(areaHaystack(p))) : null;
+  const t = p ? (p.title || 'This listing') : 'This listing';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No longer available | GLRA Realty</title><meta name="robots" content="noindex, follow">
+<link rel="icon" href="/favicon.ico">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f1eee9;color:#0a0a0a;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+main{max-width:520px}h1{font-size:30px;line-height:1.15;margin:0 0 12px;font-weight:900;letter-spacing:-.5px}p{font-size:16px;line-height:1.6;margin:0 0 22px}
+a.b{display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;padding:13px 20px;font-weight:700;margin:0 8px 10px 0}a.o{background:#c02e00}
+@media(prefers-color-scheme:dark){body{background:#0e0e0c;color:#f1eee9}a.b{background:#f1eee9;color:#0a0a0a}a.o{background:#df3500;color:#fff}}</style></head>
+<body><main><h1>${esc(t)} is no longer on the market.</h1>
+<p>It has been sold, leased or taken off the website. Catherine often knows of similar units that are not listed online.</p>
+${area ? `<a class="b o" href="/properties/${area[0]}">More in ${esc(area[1])}</a>` : ''}<a class="b" href="/properties.html">See all listings</a><a class="b" href="/#contact">Ask Catherine</a>
+</main></body></html>`;
+}
 
 // Up to six other available listings worth linking to from a listing page.
 // Cheap: one indexed query, a small projection, and the result is only used to
@@ -1603,7 +1725,7 @@ async function buildSitemap(req, res) {
       // searching Google Images for "2br condo bgc balcony" is looking at
       // photograph six, not photograph one. Capped at six per listing.
       let img = '';
-      const shots = [pr.mainImage, ...(pr.gallery || [])].filter(Boolean).slice(0, 6);
+      const shots = [pr.mainImage, ...(pr.gallery || [])].filter(g => g && !isStockPhoto(g)).slice(0, 6);
       const caption = escapeXml([pr.title, pr.location].filter(Boolean).join(' - ') || 'Property');
       img = shots.map(sh =>
         `<image:image><image:loc>${escapeXml(absUrl(optimizeCloudinary(sh)))}</image:loc><image:title>${caption}</image:title></image:image>`
@@ -1629,8 +1751,14 @@ app.get('/api/hero-image/:id', async (req, res) => {
     const h = await HeroImage.findById(req.params.id, { url: 1 }).lean();
     const m = h && isDataUri(h.url) && h.url.match(/^data:([\w.+/-]+);base64,(.+)$/);
     if (!m) return res.status(404).end();
+    // Served as an image or not at all. The type used to be whatever the
+    // stored data: string claimed, so a "photo" saved as text/html became a
+    // page running on glrarealty.com.
+    if (!SAFE_IMAGE_TYPES.has(m[1].toLowerCase())) return res.status(404).end();
     const buf = Buffer.from(m[2], 'base64');
-    res.set('Content-Type', m[1]);
+    res.set('Content-Type', m[1].toLowerCase());
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Security-Policy', "default-src 'none'; sandbox");
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
     res.set('Content-Length', String(buf.length));
     return res.end(buf);
@@ -1676,7 +1804,14 @@ app.post('/api/inquiries',
   handleValidation,
   async (req, res) => {
     try {
-      const { name, email, phone = '', message, propertyId = null, propertyTitle = null, vid } = req.body;
+      const { name, email, phone = '', message, propertyId = null, vid } = req.body;
+      // The title is looked up, not taken from the form: it goes into emails,
+      // and a typed-in "title" was a way to put any text in front of anyone.
+      let listing = null;
+      if (propertyId && /^[a-f0-9]{24}$/i.test(String(propertyId))) {
+        listing = await Property.findById(propertyId).select('title location price monthlyRental listingType').lean().catch(() => null);
+      }
+      const propertyTitle = listing ? listing.title : (req.body.propertyTitle ? String(req.body.propertyTitle).slice(0, 120) : null);
       const inquiry = new Inquiry({ name, email, phone, message, propertyId, propertyTitle });
       await inquiry.save();
       console.log('📧 New inquiry from:', name);
@@ -1689,30 +1824,40 @@ app.post('/api/inquiries',
         <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Dear ${esc(name)},</h2>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Thank you for reaching out to GLRA Realty. We have received your inquiry and our team will respond within 24 hours.</p>
 
-        <div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
-          <p style="margin: 0 0 8px 0; font-weight: 600; color: #0a0a0a;">Your Message:</p>
-          <p style="margin: 0; color: #0a0a0a; font-size: 14px; line-height: 1.5;">${esc(message)}</p>
-          ${propertyTitle ? `<p style="margin: 12px 0 0 0; color: #0a0a0a; font-size: 13px;"><strong>Property of Interest:</strong> ${esc(propertyTitle)}</p>` : ''}
-        </div>
+        ${listing ? `<div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
+          <p style="margin: 0; color: #0a0a0a; font-size: 14px;"><strong>Property:</strong> <a href="${SITE_URL}/property/${String(listing._id)}" style="color: #0a0a0a;">${esc(listing.title)}</a></p>
+        </div>` : ''}
 
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">We look forward to assisting you with your real estate needs.</p>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
       ` + getEmailFooter();
+      // The visitor's own message is no longer repeated back: this goes to
+      // whatever address was typed in, so echoing the text let anyone use
+      // GLRA's mail account to deliver their words to a stranger.
       await sendEmail(email, 'Thank you for contacting GLRA Realty', userEmailHtml);
 
       // Admin notification
+      // A Philippine mobile in any common form -> a wa.me link Catherine can tap.
+      const digits = String(phone || '').replace(/[^\d]/g, '');
+      const intl = /^09\d{9}$/.test(digits) ? '63' + digits.slice(1) : /^639\d{9}$/.test(digits) ? digits : /^9\d{9}$/.test(digits) ? '63' + digits : '';
+      const waLink = intl ? `https://wa.me/${intl}` : '';
       const adminEmailHtml = getEmailHeader() + `
         <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Inquiry Received</h2>
         <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(name)}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Email</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(email)}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Phone</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(phone) || 'Not provided'}</td></tr>
-          ${propertyTitle ? `<tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(propertyTitle)}</td></tr>` : ''}
+          ${listing ? `<tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;"><a href="${SITE_URL}/property/${String(listing._id)}" style="color: #0a0a0a;">${esc(listing.title)}</a></td></tr>` : (propertyTitle ? `<tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(propertyTitle)} (as typed)</td></tr>` : '')}
+          ${waLink ? `<tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">WhatsApp</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;"><a href="${waLink}" style="color: #0a0a0a;">Message ${esc(name)} on WhatsApp</a></td></tr>` : ''}
           <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Message</td><td style="padding: 8px 0;">${esc(message)}</td></tr>
         </table>
         <p><a href="https://glrarealty.com/admin.html" style="background-color: #ff3d00; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius:0; display: inline-block;">View in Admin Dashboard</a></p>
       ` + getEmailFooter();
-      await sendEmail('glrarealty@gmail.com', 'New Property Inquiry - GLRA Realty', adminEmailHtml);
+      // Reply goes straight to the buyer, not back to this inbox, and the
+      // subject says who and what so the inbox list alone is enough to triage.
+      const isViewing = /^\s*\[?\s*(viewing request|schedule a viewing)/i.test(message) || /preferred (date|time)/i.test(message);
+      const subj = `${isViewing ? 'Viewing request' : 'New inquiry'}: ${listing ? listing.title : 'General'} - ${name}`.replace(/\s+/g, ' ').slice(0, 140);
+      await sendEmail('glrarealty@gmail.com', subj, adminEmailHtml, 'GLRA Realty', { email, name });
 
       res.json({ success: true });
     } catch (err) {
@@ -1987,10 +2132,11 @@ app.post('/api/wishlist',
 //
 // Nothing has ever called them: the public pages only POST to /api/wishlist,
 // and the dashboard reads the whole table through the authenticated
-// /api/admin/wishlist. They are staff-only now. If a "my saved properties"
+// /api/admin/wishlist. Admin-only: field agents sign in with a staff token, and
+// verifyToken alone let them read or empty any customer's list. If a "my saved properties"
 // page is ever built for visitors it needs a one-time emailed link, not a
 // bare address in the URL.
-app.get('/api/wishlist/:email', verifyToken, async (req, res) => {
+app.get('/api/wishlist/:email', verifyToken, requireAdmin, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -2003,7 +2149,7 @@ app.get('/api/wishlist/:email', verifyToken, async (req, res) => {
   }
 });
 
-app.delete('/api/wishlist/:email/:propertyId', verifyToken, async (req, res) => {
+app.delete('/api/wishlist/:email/:propertyId', verifyToken, requireAdmin, async (req, res) => {
   try {
     const email = String(req.params.email).toLowerCase();
     const propertyId = String(req.params.propertyId);
@@ -2078,13 +2224,571 @@ app.post('/api/price-alert',
 // "How many people are waiting for this listing to drop?" is a question only
 // a rival brokerage asks, and this answered it for any listing, to anyone, by
 // id. No page on the site calls it; the dashboard has its own
-// /api/admin/price-alerts. Staff-only now, and countDocuments instead of
+// /api/admin/price-alerts. Admin-only (agents hold staff tokens too), and countDocuments instead of
 // pulling every matching row back just to measure the array.
-app.get('/api/price-alert/check/:propertyId', verifyToken, async (req, res) => {
+app.get('/api/price-alert/check/:propertyId', verifyToken, requireAdmin, async (req, res) => {
   try {
     const propertyId = String(req.params.propertyId);
     const count = await PriceAlert.countDocuments({ propertyId, isNotified: false });
     res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============ PROPERTY FINDER (saved-search email alerts) ============
+// A visitor on /properties.html saves the filters they are using and is
+// emailed once whenever NEW listings matching them go live.
+//
+// Double opt-in on purpose: the sign-up form only creates an unconfirmed
+// search and sends a confirmation link. Without that step anyone could type a
+// stranger's address and have us email them. Nothing else is sent, and the
+// address is not added to Subscriber, until the link is clicked.
+//
+// The confirmation link opens /alerts.html, which confirms with a POST. It is
+// never a bare GET, because corporate mail scanners fetch every GET link in an
+// email and would "confirm" on the person's behalf.
+//
+// savedSearchMatches() MUST stay in step with applyFilters() in
+// public/properties.html. If the page's filter changes, change this too, or
+// people will be emailed listings the page would not have shown them (or
+// never be emailed ones it would).
+
+const SAVED_SEARCH_TOKEN_RE = /^[a-f0-9]{64}$/;
+const SAVED_SEARCH_MAX_PER_EMAIL = 10;
+const SAVED_SEARCH_EMAIL_CARDS = 6;
+// Wait this long after the last listing edit before sweeping, so one staff
+// editing session (and a fixed typo or a swapped photo) becomes ONE email.
+// Overridable only so the test harness does not have to wait ten minutes.
+const SAVED_SEARCH_DEBOUNCE_MS = Number(process.env.SAVED_SEARCH_DEBOUNCE_MS) || 10 * 60 * 1000;
+const SAVED_SEARCH_SAFETY_MS = 60 * 60 * 1000;
+
+function ssIsForLease(p) {
+  const t = String((p && p.listingType) || '').toUpperCase();
+  return t === 'FOR LEASE' || t === 'SALE AND LEASE';
+}
+function ssIsForSale(p) {
+  const t = String((p && p.listingType) || '').toUpperCase();
+  return t === 'FOR SALE' || t === 'SALE AND LEASE';
+}
+// Property types are typed by hand: "Condominium", "Condominium " and
+// "Condominium - Studio" all mean a condo. Identical to glraBaseType() in
+// public/properties.html; keep the two in step.
+function glraBaseType(t) {
+  return String(t || '').trim().split(/\s+-\s+/)[0].trim().toLowerCase();
+}
+// Which price a range is tested against. A SALE AND LEASE listing has two, and
+// used to be tested on its rent alone, so a buyer's P10M-P30M range never found
+// a P28M condo that was also offered for rent. Now: the sale price on a sale
+// search, the rent on a lease search, and either one when no side is chosen.
+// Identical to glraPriceFits() in public/properties.html and index.html.
+function glraPriceFits(p, cat, mn, mx) {
+  const t = String((p && p.listingType) || '').toUpperCase();
+  const sale = Number(p.price) || 0, rent = Number(p.monthlyRental) || Number(p.price) || 0;
+  let c;
+  if (cat === 'FOR SALE') c = [sale];
+  else if (cat === 'FOR LEASE') c = [rent];
+  else c = t === 'SALE AND LEASE' ? [sale, rent] : [ssIsForLease(p) ? rent : sale];
+  return c.some(v => !(mn > 0 && v < mn) && !(mx > 0 && v > mx));
+}
+
+// Cleans whatever the browser sent into the stored shape. The route validates
+// first; this is the second line of defence and the single place defaults live.
+function normalizeSavedSearchCriteria(raw) {
+  const r = (raw && typeof raw === 'object') ? raw : {};
+  const num = (v, max) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0;
+  };
+  const cat = String(r.category || '').toUpperCase().trim();
+  return {
+    category: (cat === 'FOR SALE' || cat === 'FOR LEASE') ? cat : '',
+    // Lower-cased and trimmed exactly as the page does before comparing.
+    q: String(r.q || '').toLowerCase().trim().slice(0, 80),
+    propertyType: String(r.propertyType || '').trim().slice(0, 60),
+    minBeds: Math.floor(num(r.minBeds, 20)),
+    minBaths: Math.floor(num(r.minBaths, 20)),
+    minPrice: num(r.minPrice, 1e12),
+    maxPrice: num(r.maxPrice, 1e12)
+  };
+}
+
+function savedSearchHasCriteria(c) {
+  return !!(c && (c.category || c.q || c.propertyType || c.minBeds > 0 ||
+    c.minBaths > 0 || c.minPrice > 0 || c.maxPrice > 0));
+}
+
+// One listing against one saved search. Pure: no DB, no dates, no side effects.
+// Mirrors applyFilters() in properties.html rule for rule, including its quirk
+// that a listing with no bedroom count at all is not excluded by a bedroom
+// filter (undefined < 3 is false in JavaScript on both sides).
+function savedSearchMatches(p, c) {
+  if (!p || p.status !== 'available') return false;
+  c = c || {};
+  const q = String(c.q || '').toLowerCase().trim();
+  if (q && !String(p.title || '').toLowerCase().includes(q) &&
+      !String(p.location || '').toLowerCase().includes(q)) return false;
+  if (c.propertyType && glraBaseType(p.propertyType) !== glraBaseType(c.propertyType)) return false;
+  const minBeds = Number(c.minBeds) || 0;
+  if (minBeds && p.bedrooms < minBeds) return false;
+  const minBaths = Number(c.minBaths) || 0;
+  if (minBaths && p.bathrooms < minBaths) return false;
+  const minPrice = Number(c.minPrice) || 0, maxPrice = Number(c.maxPrice) || 0;
+  if (!glraPriceFits(p, c.category, minPrice, maxPrice)) return false;
+  if (c.category === 'FOR SALE' && !ssIsForSale(p)) return false;
+  if (c.category === 'FOR LEASE' && !ssIsForLease(p)) return false;
+  return true;
+}
+
+// "3+ bedroom House and Lot for sale in 'alabang', ₱10,000,000 to ₱30,000,000"
+function describeSavedSearch(raw) {
+  const c = normalizeSavedSearchCriteria(raw);
+  const lease = c.category === 'FOR LEASE';
+  let s = '';
+  if (c.minBeds > 0) s += `${c.minBeds}+ bedroom `;
+  s += c.propertyType || (c.minBeds > 0 ? 'property' : 'Any property');
+  if (c.minBaths > 0) s += ` with ${c.minBaths}+ bathroom${c.minBaths === 1 ? '' : 's'}`;
+  if (c.category === 'FOR SALE') s += ' for sale';
+  else if (lease) s += ' for lease';
+  if (c.q) s += ` in '${c.q}'`;
+  const peso = n => '₱' + Math.round(n).toLocaleString('en-US') + (lease ? '/month' : '');
+  if (c.minPrice > 0 && c.maxPrice > 0) s += `, ${peso(c.minPrice)} to ${peso(c.maxPrice)}`;
+  else if (c.minPrice > 0) s += `, from ${peso(c.minPrice)}`;
+  else if (c.maxPrice > 0) s += `, up to ${peso(c.maxPrice)}`;
+  return s;
+}
+
+// The same search, opened on the properties page (initFromUrl reads these).
+function savedSearchBrowseUrl(raw) {
+  const c = normalizeSavedSearchCriteria(raw);
+  const p = new URLSearchParams();
+  if (c.q) p.set('search', c.q);
+  if (c.propertyType) p.set('propertyType', c.propertyType);
+  if (c.minBeds > 0) p.set('bedrooms', String(c.minBeds));
+  if (c.minBaths > 0) p.set('baths', String(c.minBaths));
+  if (c.minPrice > 0) p.set('minPrice', String(Math.round(c.minPrice)));
+  if (c.maxPrice > 0) p.set('maxPrice', String(Math.round(c.maxPrice)));
+  if (c.category) p.set('category', c.category);
+  const qs = p.toString();
+  return `${SITE_URL}/properties.html${qs ? '?' + qs : ''}`;
+}
+
+function maskEmail(e) {
+  const parts = String(e || '').split('@');
+  if (parts.length !== 2 || !parts[1]) return '***';
+  return (parts[0] ? parts[0][0] : '') + '***@' + parts[1];
+}
+
+// Every available listing, with only the fields matching and the email need.
+// An aggregation rather than find().select() so the two legacy listings whose
+// photo is a multi-megabyte base64 data: URI never leave the database: the
+// photo is passed through only when it is a real http(s) URL, which is also
+// the only kind an email client can load.
+async function loadSavedSearchListings() {
+  return Property.aggregate([
+    { $match: { status: 'available' } },
+    { $sort: { createdAt: -1 } },
+    { $project: {
+      title: 1, location: 1, price: 1, monthlyRental: 1, bedrooms: 1, bathrooms: 1,
+      propertyType: 1, listingType: 1, sqm: 1, landArea: 1, status: 1, createdAt: 1,
+      mainImage: { $cond: [
+        { $eq: [{ $substrCP: [{ $ifNull: ['$mainImage', ''] }, 0, 4] }, 'http'] },
+        '$mainImage', ''
+      ] }
+    } }
+  ]);
+}
+
+function ssPeso(n) { return '₱' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+
+function savedSearchPriceText(p) {
+  const t = String(p.listingType || '').toUpperCase();
+  const sale = Number(p.price) || 0, rent = Number(p.monthlyRental) || 0;
+  if (t === 'SALE AND LEASE') {
+    const parts = [];
+    if (sale > 0) parts.push(ssPeso(sale));
+    if (rent > 0) parts.push(ssPeso(rent) + '/month');
+    return parts.length ? parts.join(' or ') : 'Price on request';
+  }
+  if (t === 'FOR LEASE') {
+    const v = rent || sale;
+    return v > 0 ? ssPeso(v) + '/month' : 'Price on request';
+  }
+  return sale > 0 ? ssPeso(sale) : 'Price on request';
+}
+
+function savedSearchSpecsText(p) {
+  const bits = [];
+  if (Number(p.bedrooms) > 0) bits.push(`${p.bedrooms} BR`);
+  if (Number(p.bathrooms) > 0) bits.push(`${p.bathrooms} TB`);
+  const sqm = Number(p.sqm) || 0, lot = Number(p.landArea) || 0;
+  if (sqm > 0) bits.push(`${sqm.toLocaleString('en-US')} sqm`);
+  else if (lot > 0) bits.push(`${lot.toLocaleString('en-US')} sqm lot`);
+  if (p.propertyType) bits.push(p.propertyType);
+  return bits.join(' · ');
+}
+
+function oneLine(s, max) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, max || 120); }
+
+// Shared paragraph + button styles, matching the price-alert emails.
+const SS_P = 'color: #0a0a0a; line-height: 1.6; font-size: 14px;';
+const SS_BTN = 'background-color: #ff3d00; color: #ffffff; padding: 12px 22px; text-decoration: none; border-radius:0; display: inline-block; font-weight: 600; font-size: 14px;';
+const SS_BOX = 'background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 22px 0; border-radius:0;';
+
+function buildSavedSearchConfirmEmail(search, currentMatches) {
+  const confirmUrl = `${SITE_URL}/alerts.html?confirm=${search.token}`;
+  const browseUrl = savedSearchBrowseUrl(search.criteria);
+  const matchLine = currentMatches === 1
+    ? '1 listing matches right now.'
+    : `${currentMatches} listings match right now.`;
+  const html = getEmailHeader() + `
+    <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Confirm your property alert</h2>
+    <p style="${SS_P}">You asked us to email you when a new listing matches this search:</p>
+    <div style="${SS_BOX}">
+      <p style="margin: 0; font-weight: 600; color: #0a0a0a;">${esc(search.summary)}</p>
+    </div>
+    <p style="${SS_P}">Please confirm it is you. Until you do, we will not send you anything else.</p>
+    <p style="margin: 22px 0;"><a href="${esc(confirmUrl)}" style="${SS_BTN}">Confirm my alert</a></p>
+    <p style="${SS_P}">${esc(matchLine)} <a href="${esc(browseUrl)}" style="color: #ff3d00;">See them on our website</a>. We will only email you about listings that go live after today.</p>
+    <p style="color: #6a6a6a; line-height: 1.6; font-size: 12px;">If you did not ask for this, ignore this email and you will not hear from us again.</p>
+  ` + getEmailFooter();
+  return { subject: 'Confirm your GLRA property alert', html };
+}
+
+function buildSavedSearchAlertEmail(search, listings) {
+  const shown = listings.slice(0, SAVED_SEARCH_EMAIL_CARDS);
+  const extra = listings.length - shown.length;
+  const manageUrl = `${SITE_URL}/alerts.html?t=${search.token}`;
+  const browseUrl = savedSearchBrowseUrl(search.criteria);
+  const n = listings.length;
+  const cards = shown.map(p => {
+    const url = `${SITE_URL}/property/${String(p._id)}`;
+    const img = (typeof p.mainImage === 'string' && /^https?:\/\//i.test(p.mainImage)) ? p.mainImage : '';
+    const specs = savedSearchSpecsText(p);
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 18px 0; border: 2px solid #0a0a0a;">
+      ${img ? `<tr><td style="padding: 0;"><a href="${esc(url)}"><img src="${esc(img)}" alt="${esc(oneLine(p.title))}" width="540" style="display: block; width: 100%; max-width: 540px; height: auto; border: 0;"></a></td></tr>` : ''}
+      <tr><td style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 16px 18px;">
+        <p style="margin: 0 0 6px 0; font-weight: 700; font-size: 16px;"><a href="${esc(url)}" style="color: #0a0a0a; text-decoration: none;">${esc(oneLine(p.title, 160))}</a></p>
+        ${p.location ? `<p style="margin: 0 0 6px 0; color: #0a0a0a; font-size: 13px;">${esc(oneLine(p.location, 200))}</p>` : ''}
+        ${specs ? `<p style="margin: 0 0 8px 0; color: #4a4a4a; font-size: 13px;">${esc(specs)}</p>` : ''}
+        <p style="margin: 0 0 12px 0; color: #ff3d00; font-weight: 700; font-size: 17px;">${esc(savedSearchPriceText(p))}</p>
+        <a href="${esc(url)}" style="background-color: #0a0a0a; color: #ffffff; padding: 9px 16px; text-decoration: none; border-radius:0; display: inline-block; font-size: 13px; font-weight: 600;">View listing</a>
+      </td></tr>
+    </table>`;
+  }).join('');
+
+  const subject = n === 1
+    ? `New match for your search: ${oneLine(shown[0].title, 100) || 'a new listing'}`
+    : `${n} new matches for your search`;
+  const heading = n === 1 ? 'A new listing matches your search' : `${n} new listings match your search`;
+
+  const html = getEmailHeader() + `
+    <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">${esc(heading)}</h2>
+    <p style="${SS_P}">${n === 1 ? 'This just went live' : 'These just went live'} and ${n === 1 ? 'matches' : 'match'} what you asked for:</p>
+    <div style="${SS_BOX}">
+      <p style="margin: 0; font-weight: 600; color: #0a0a0a;">${esc(search.summary)}</p>
+    </div>
+    ${cards}
+    ${extra > 0 ? `<p style="${SS_P}">And ${extra} more. <a href="${esc(browseUrl)}" style="color: #ff3d00;">See every match</a>.</p>` : `<p style="${SS_P}"><a href="${esc(browseUrl)}" style="color: #ff3d00;">See every listing that matches your search</a>.</p>`}
+    <p style="${SS_P}">Want to see one in person? Reply to this email and Catherine will set up a viewing.</p>
+    <p style="color: #6a6a6a; line-height: 1.6; font-size: 12px; margin-top: 22px;">You are getting this because you saved this search on glrarealty.com. <a href="${esc(manageUrl)}" style="color: #0a0a0a;">Manage or stop these alerts</a></p>
+  ` + getEmailFooter();
+  return { subject, html };
+}
+
+// ── The trigger engine ─────────────────────────────────────
+// Loads every available listing once, then for each confirmed, active search
+// finds the matches it has not been sent yet. Everything it finds is recorded
+// as sent (even beyond the six shown in the email), so nobody is ever emailed
+// the same listing twice. A failed send records nothing, so the next sweep
+// retries it. Never throws: a broken sweep must not take the site down.
+let sweepRunning = false;
+async function runSavedSearchSweep() {
+  if (sweepRunning) return { skipped: 'already running' };
+  if (mongoose.connection.readyState !== 1) return { skipped: 'database not connected' };
+  sweepRunning = true;
+  const started = Date.now();
+  const stats = { searches: 0, emailed: 0, failed: 0, listingsSent: 0 };
+  try {
+    if (!brevoApiInstance && !initBrevo()) {
+      // Same as the scheduled-email worker: without Brevo nothing can be sent,
+      // and recording listings as "sent" would lose them for good.
+      console.warn('Saved-search sweep skipped: Brevo not configured');
+      return { skipped: 'email not configured' };
+    }
+    const [listings, searches] = await Promise.all([
+      loadSavedSearchListings(),
+      SavedSearch.find({ confirmed: true, active: true }).lean()
+    ]);
+    stats.searches = searches.length;
+    for (const s of searches) {
+      try {
+        const sent = new Set(s.sentPropertyIds || []);
+        const fresh = listings.filter(p => !sent.has(String(p._id)) && savedSearchMatches(p, s.criteria));
+        if (!fresh.length) continue;
+        const { subject, html } = buildSavedSearchAlertEmail(s, fresh);
+        const r = await sendEmail(s.email, subject, html);
+        if (!r || !r.success) { stats.failed++; continue; }
+        await SavedSearch.updateOne(
+          { _id: s._id },
+          {
+            $addToSet: { sentPropertyIds: { $each: fresh.map(p => String(p._id)) } },
+            $inc: { emailsSent: 1 },
+            $set: { lastSentAt: new Date() }
+          }
+        );
+        stats.emailed++;
+        stats.listingsSent += fresh.length;
+      } catch (e) {
+        stats.failed++;
+        console.error('Saved-search sweep: one search failed:', e.message);
+      }
+    }
+    console.log(`Saved-search sweep: ${stats.searches} active searches, ${stats.emailed} emailed (${stats.listingsSent} listings), ${stats.failed} failed, ${Date.now() - started}ms`);
+    return stats;
+  } catch (err) {
+    console.error('Saved-search sweep error:', err.message);
+    return { ...stats, error: err.message };
+  } finally {
+    sweepRunning = false;
+  }
+}
+
+// Called after a listing is created or edited. Every call pushes the sweep
+// back, so a burst of edits produces one sweep ten minutes after the last one.
+let savedSearchSweepTimer = null;
+function scheduleSavedSearchSweep() {
+  try {
+    if (savedSearchSweepTimer) clearTimeout(savedSearchSweepTimer);
+    savedSearchSweepTimer = setTimeout(() => {
+      savedSearchSweepTimer = null;
+      runSavedSearchSweep().catch(e => console.error('Saved-search sweep error:', e.message));
+    }, SAVED_SEARCH_DEBOUNCE_MS);
+    savedSearchSweepTimer.unref();
+  } catch (e) {
+    console.error('scheduleSavedSearchSweep error:', e.message);
+  }
+}
+
+// Safety net for listings that change some other way (a lease ending and the
+// listing going back on the market, a restart that lost a pending timer).
+// First run two minutes after boot so the database has time to connect.
+setTimeout(() => {
+  runSavedSearchSweep().catch(() => {});
+  setInterval(() => { runSavedSearchSweep().catch(() => {}); }, SAVED_SEARCH_SAFETY_MS).unref();
+}, 2 * 60 * 1000).unref();
+
+// 1. Save a search (unconfirmed) and send the confirmation link.
+app.post('/api/saved-search',
+  publicWriteLimiter,
+  body('email').isEmail().normalizeEmail(),
+  body('criteria').optional().isObject(),
+  body('criteria.category').optional({ values: 'falsy' }).isIn(['FOR SALE', 'FOR LEASE']),
+  body('criteria.q').optional({ values: 'null' }).isString().trim().isLength({ max: 80 }),
+  body('criteria.propertyType').optional({ values: 'null' }).isString().trim().isLength({ max: 60 }),
+  body('criteria.minBeds').optional({ values: 'falsy' }).isInt({ min: 0, max: 20 }).toInt(),
+  body('criteria.minBaths').optional({ values: 'falsy' }).isInt({ min: 0, max: 20 }).toInt(),
+  body('criteria.minPrice').optional({ values: 'falsy' }).isFloat({ min: 0, max: 1e12 }).toFloat(),
+  body('criteria.maxPrice').optional({ values: 'falsy' }).isFloat({ min: 0, max: 1e12 }).toFloat(),
+  body('vid').optional().isString().trim().isLength({ max: 64 }),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const email = String(req.body.email).toLowerCase();
+      const vid = typeof req.body.vid === 'string' ? req.body.vid : '';
+      const criteria = normalizeSavedSearchCriteria(req.body.criteria);
+      if (!savedSearchHasCriteria(criteria)) {
+        return res.status(400).json({ error: 'Pick at least one filter first, such as a location, a property type or a price range.' });
+      }
+      if (criteria.minPrice > 0 && criteria.maxPrice > 0 && criteria.minPrice > criteria.maxPrice) {
+        return res.status(400).json({ error: 'The minimum price is higher than the maximum price.' });
+      }
+
+      const listings = await loadSavedSearchListings();
+      const matching = listings.filter(p => savedSearchMatches(p, criteria));
+      const currentMatches = matching.length;
+
+      // The same search already on file for this address?
+      const same = await SavedSearch.findOne({
+        email, active: true,
+        'criteria.category': criteria.category,
+        'criteria.q': criteria.q,
+        'criteria.propertyType': criteria.propertyType,
+        'criteria.minBeds': criteria.minBeds,
+        'criteria.minBaths': criteria.minBaths,
+        'criteria.minPrice': criteria.minPrice,
+        'criteria.maxPrice': criteria.maxPrice
+      });
+      if (same && same.confirmed) {
+        return res.json({
+          success: true, alreadyActive: true, emailSent: false, currentMatches,
+          message: 'You already have this alert. We will email you when a new match goes live.'
+        });
+      }
+      if (same) {
+        // One confirmation email per quarter hour, however often the form is
+        // sent: otherwise this is a way to fill a stranger's inbox.
+        if (same.confirmSentAt && Date.now() - new Date(same.confirmSentAt).getTime() < 15 * 60 * 1000) {
+          return res.json({
+            success: true, resent: false, emailSent: false, currentMatches,
+            message: 'We already sent you a confirmation link a few minutes ago. Please check your inbox and spam folder.'
+          });
+        }
+        await SavedSearch.updateOne({ _id: same._id }, { $set: { confirmSentAt: new Date() } });
+        const { subject, html } = buildSavedSearchConfirmEmail(same, currentMatches);
+        const r = await sendEmail(email, subject, html);
+        const ok = !!(r && r.success);
+        return res.json({
+          success: true, resent: true, emailSent: ok, currentMatches,
+          message: ok
+            ? 'We sent the confirmation link again. Please check your inbox.'
+            : 'Your search is saved, but we could not send the confirmation email just now. Please try again in a few minutes.'
+        });
+      }
+
+      // Unconfirmed searches cost the address owner an email each, so only a
+      // few may wait for confirmation at once.
+      const pending = await SavedSearch.countDocuments({ email, active: true, confirmed: false });
+      if (pending >= 3) {
+        return res.status(400).json({
+          error: 'Please confirm the alerts already waiting in your inbox before adding another.'
+        });
+      }
+      const activeCount = await SavedSearch.countDocuments({ email, active: true });
+      if (activeCount >= SAVED_SEARCH_MAX_PER_EMAIL) {
+        return res.status(400).json({
+          error: `This email already has ${SAVED_SEARCH_MAX_PER_EMAIL} active alerts. Stop one using the link at the bottom of any alert email, then try again.`
+        });
+      }
+
+      const search = await SavedSearch.create({
+        email,
+        criteria,
+        summary: describeSavedSearch(criteria),
+        token: crypto.randomBytes(32).toString('hex'),
+        // Baseline: everything that matches today counts as already seen, so
+        // the first alert is only ever about a genuinely new listing.
+        sentPropertyIds: matching.map(p => String(p._id)),
+        vid: vid.slice(0, 64),
+        confirmSentAt: new Date()
+      });
+
+      const { subject, html } = buildSavedSearchConfirmEmail(search, currentMatches);
+      const r = await sendEmail(email, subject, html);
+      const ok = !!(r && r.success);
+      res.json({
+        success: true, emailSent: ok, currentMatches,
+        message: ok
+          ? 'Check your inbox to confirm.'
+          : 'Your search is saved, but we could not send the confirmation email just now. Please try again in a few minutes.'
+      });
+    } catch (err) {
+      console.error('Saved search error:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
+// 2. Confirm (called by alerts.html). Idempotent: a second click just answers.
+app.post('/api/saved-search/:token/confirm', publicWriteLimiter, async (req, res) => {
+  try {
+    const token = String(req.params.token || '');
+    if (!SAVED_SEARCH_TOKEN_RE.test(token)) return res.status(400).json({ error: 'This link is not valid.' });
+
+    // Atomic: only the request that actually flips it runs the first-time work,
+    // so a double click never sends Catherine two lead emails. A search that
+    // was stopped before it was ever confirmed stays stopped.
+    const flipped = await SavedSearch.findOneAndUpdate(
+      { token, confirmed: false, active: true },
+      { $set: { confirmed: true, confirmedAt: new Date() } },
+      { new: true }
+    );
+    const search = flipped || await SavedSearch.findOne({ token });
+    if (!search) return res.status(404).json({ error: 'We could not find this alert. It may have been removed.' });
+
+    if (flipped) {
+      const email = search.email;
+      try {
+        await Subscriber.updateOne(
+          { email },
+          { $setOnInsert: { email, source: 'saved_search', preferences: { priceDrops: true } } },
+          { upsert: true }
+        );
+      } catch (e) {
+        // A duplicate-key race means the subscriber already exists: fine.
+        if (e.code !== 11000) console.error('Saved search subscriber upsert failed:', e.message);
+      }
+      // Tie this browser's calculator history to the address only now that the
+      // owner of the address has proved it is theirs.
+      await stitchCalcIdentity(search.vid, email);
+
+      let currentMatches = 0;
+      try {
+        const listings = await loadSavedSearchListings();
+        currentMatches = listings.filter(p => savedSearchMatches(p, search.criteria)).length;
+      } catch (e) { /* the lead email still goes out without the count */ }
+
+      const c = search.criteria || {};
+      const who = c.category === 'FOR LEASE' ? 'A tenant' : c.category === 'FOR SALE' ? 'A buyer' : 'A client';
+      const when = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'full', timeStyle: 'short' });
+      const row = 'padding: 8px 0; border-bottom: 1px solid #e8e8e0;';
+      const leadHtml = getEmailHeader() + `
+        <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Property Finder lead</h2>
+        <p style="${SS_P}">${who} is looking for:</p>
+        <div style="${SS_BOX}">
+          <p style="margin: 0; font-weight: 600; color: #0a0a0a;">${esc(search.summary)}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+          <tr><td style="${row} font-weight: 600; width: 140px;">Email</td><td style="${row}"><a href="mailto:${esc(email)}" style="color: #0a0a0a;">${esc(email)}</a></td></tr>
+          <tr><td style="${row} font-weight: 600;">Matches right now</td><td style="${row}">${currentMatches}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: 600;">Confirmed</td><td style="padding: 8px 0;">${esc(when)}</td></tr>
+        </table>
+        <p style="margin: 20px 0;"><a href="${esc(savedSearchBrowseUrl(c))}" style="${SS_BTN}">See the current matches</a></p>
+        <p style="${SS_P}">They will be emailed automatically when a new listing matches. A quick personal note from you now is usually the best follow-up.</p>
+      ` + getEmailFooter();
+      sendEmail('glrarealty@gmail.com', `Property Finder lead: ${oneLine(search.summary, 110)}`, leadHtml)
+        .catch(e => console.error('Saved search lead email failed:', e.message));
+    }
+
+    // Masked like the manage view: a forwarded link should not hand the address on.
+    res.json({ success: true, summary: search.summary, email: maskEmail(search.email), confirmed: !!search.confirmed, active: !!search.active });
+  } catch (err) {
+    console.error('Saved search confirm error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// 3. What the manage page shows. Never the full address, never other searches.
+app.get('/api/saved-search/:token', trackLimiter, async (req, res) => {
+  try {
+    const token = String(req.params.token || '');
+    if (!SAVED_SEARCH_TOKEN_RE.test(token)) return res.status(400).json({ error: 'This link is not valid.' });
+    const s = await SavedSearch.findOne({ token }).select('email criteria summary confirmed active emailsSent').lean();
+    if (!s) return res.status(404).json({ error: 'We could not find this alert. It may have been removed.' });
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      summary: s.summary,
+      criteria: s.criteria,
+      emailMasked: maskEmail(s.email),
+      confirmed: !!s.confirmed,
+      active: !!s.active,
+      emailsSent: s.emailsSent || 0
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// 4. Stop. Idempotent.
+app.post('/api/saved-search/:token/unsubscribe', publicWriteLimiter, async (req, res) => {
+  try {
+    const token = String(req.params.token || '');
+    if (!SAVED_SEARCH_TOKEN_RE.test(token)) return res.status(400).json({ error: 'This link is not valid.' });
+    const s = await SavedSearch.findOneAndUpdate({ token }, { $set: { active: false } }, { new: true })
+      .select('summary active').lean();
+    if (!s) return res.status(404).json({ error: 'We could not find this alert. It may have been removed.' });
+    res.json({ success: true, summary: s.summary, active: false });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -2501,7 +3205,7 @@ app.post('/api/admin/accounts/:id/decline', verifyToken, requireAdmin, async (re
 app.get('/api/admin/backup', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [
-      properties, inquiries, heroImages, subscribers, priceAlerts, wishlists,
+      properties, inquiries, heroImages, subscribers, priceAlerts, savedSearches, wishlists,
       accounts, tasks, submissions, scheduledEmails, titlingCases, notarialJobs,
       cashEntries, auditLogs, alertLogs
     ] = await Promise.all([
@@ -2510,6 +3214,9 @@ app.get('/api/admin/backup', verifyToken, requireAdmin, async (req, res) => {
       HeroImage.find().lean(),
       Subscriber.find().lean(),
       PriceAlert.find().lean(),
+      // The token is the visitor's key to their manage/unsubscribe page, so it
+      // is left out like the password reset tokens are.
+      SavedSearch.find().select('-token').lean(),
       Wishlist.find().lean(),
       Account.find().select('-password -resetTokenHash -resetTokenExpires').lean(),
       Task.find().lean(),
@@ -2522,7 +3229,7 @@ app.get('/api/admin/backup', verifyToken, requireAdmin, async (req, res) => {
       AlertLog.find().sort({ createdAt: -1 }).limit(5000).lean()
     ]);
     const collections = {
-      properties, inquiries, heroImages, subscribers, priceAlerts, wishlists,
+      properties, inquiries, heroImages, subscribers, priceAlerts, savedSearches, wishlists,
       accounts, tasks, submissions, scheduledEmails, titlingCases, notarialJobs,
       cashEntries, auditLogs, alertLogs
     };
@@ -2725,6 +3432,15 @@ app.get('/api/admin/price-alerts', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Property Finder saved searches, newest first. Without the token: that is
+// the visitor's own key and staff never need it.
+app.get('/api/admin/saved-searches', verifyToken, async (req, res) => {
+  try {
+    const searches = await SavedSearch.find().select('-token').sort({ createdAt: -1 }).lean();
+    res.json(searches);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
 app.get('/api/admin/wishlist', verifyToken, async (req, res) => {
   try {
     const wishlist = await Wishlist.find().sort({ addedAt: -1 });
@@ -2797,14 +3513,28 @@ function schemaProblem(err) {
   return null;
 }
 
+// Fields a listing form may set. The brokerage's economics (commission and
+// its totals) are admin-only to read, so they are admin-only to write too, and
+// nobody sets views, createdAt or the price history by hand.
+const ADMIN_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission'];
+const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt'];
+function stripPrivilegedPropertyFields(body, req) {
+  const out = { ...(body && typeof body === 'object' ? body : {}) };
+  SYSTEM_PROPERTY_FIELDS.forEach(k => delete out[k]);
+  if (!(req.user && req.user.role === 'admin')) ADMIN_ONLY_PROPERTY_FIELDS.forEach(k => delete out[k]);
+  if (typeof out.propertyType === 'string') out.propertyType = out.propertyType.trim();
+  return out;
+}
+
 app.post('/api/admin/properties', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
-    const property = new Property(req.body);
+    const property = new Property(stripPrivilegedPropertyFields(req.body, req));
     await property.save();
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
+    scheduleSavedSearchSweep();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -2818,15 +3548,26 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
   try {
     const oldProperty = await Property.findById(req.params.id);
     if (!oldProperty) return res.status(404).json({ error: 'Property not found' });
-    const updatedData = req.body;
+    const updatedData = stripPrivilegedPropertyFields(req.body, req);
 
-    if (oldProperty.price !== updatedData.price && updatedData.price < oldProperty.price) {
+    // A price must be a real non-negative number. A blank box or "10.5M" used
+    // to arrive as 0 or 10.5 and was treated as a price DROP: every watcher was
+    // emailed "New Price: P0" and then never alerted again.
+    if (updatedData.price !== undefined) {
+      const n = Number(updatedData.price);
+      if (!Number.isFinite(n) || n < 0) return res.status(400).json({ error: 'The price must be a number (no letters or peso signs).' });
+      updatedData.price = n;
+    }
+    let dropAlerts = null;
+    if (updatedData.price !== undefined && updatedData.price > 0 && updatedData.price < oldProperty.price) {
       updatedData.previousPrice = oldProperty.price;
       updatedData.priceUpdatedAt = new Date();
       console.log(`💰 Price drop: ${oldProperty.title}: ₱${oldProperty.price.toLocaleString()} → ₱${updatedData.price.toLocaleString()}`);
 
-      const alerts = await PriceAlert.find({ propertyId: req.params.id, isNotified: false });
-      if (alerts.length > 0) {
+      // Everyone watching at a price above the new one: a watcher alerted at an
+      // earlier drop is alerted again at the next one, instead of never.
+      const alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: updatedData.price } });
+      if (alerts.length > 0) dropAlerts = async () => {
         for (const alert of alerts) {
           const priceDropHtml = getEmailHeader() + `
             <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Price Drop Alert</h2>
@@ -2842,10 +3583,12 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
             <p><a href="https://glrarealty.com/properties.html?property=${encodeURIComponent(req.params.id)}" style="background-color: #ff3d00; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius:0; display: inline-block;">View Property Details</a></p>
             <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
           ` + getEmailFooter();
-          await sendEmail(alert.email, `Price Drop Alert: ${oldProperty.title}`, priceDropHtml);
+          const sent = await sendEmail(alert.email, `Price Drop Alert: ${oldProperty.title}`, priceDropHtml);
+          if (!sent || !sent.success) continue;
 
           alert.isNotified = true;
           alert.notifiedAt = new Date();
+          alert.propertyPrice = Number(updatedData.price);
           await alert.save();
         }
 
@@ -2857,14 +3600,18 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
           newPrice: updatedData.price,
           sentTo: alerts.length
         });
-      }
+      };
     }
 
     const property = await Property.findByIdAndUpdate(req.params.id, updatedData, { new: true });
+    // Only now that the new price is actually saved, and without holding up
+    // the save: one Brevo round trip per watcher used to happen in the request.
+    if (dropAlerts) dropAlerts().catch(e => console.error('Price-drop alerts failed:', e.message));
     await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, null);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
+    scheduleSavedSearchSweep();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -3644,6 +4391,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
+    scheduleSavedSearchSweep();
     res.json({ success: true, added });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -4144,6 +4892,11 @@ app.post('/api/property-submissions/upload-document',
   }
 );
 
+function isSubmittedPhotoUrl(u) {
+  return typeof u === 'string' && u.length <= 500 &&
+    /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/upload\/[^\s"'<>`\\]+$/.test(u);
+}
+
 app.post('/api/property-submissions',
   submissionLimiter,
   [
@@ -4155,8 +4908,12 @@ app.post('/api/property-submissions',
     body('listingType').trim().isIn(['FOR SALE', 'FOR LEASE', 'SALE AND LEASE']).withMessage('Invalid listing type'),
     body('propertyType').trim().isLength({ max: 60 }),
     body('description').optional({ checkFalsy: true }).isLength({ max: 5000 }),
-    body('mainImage').optional({ checkFalsy: true }).isURL(),
-    body('gallery').optional({ checkFalsy: true }).isArray({ max: 20 })
+    // Photos must be what this form's own upload button produces: a Cloudinary
+    // image URL. isURL() alone let quote marks and javascript: through, and a
+    // crafted "photo" ran code in the dashboard of whoever opened the submission.
+    body('mainImage').optional({ checkFalsy: true }).custom(isSubmittedPhotoUrl).withMessage('Invalid photo'),
+    body('gallery').optional({ checkFalsy: true }).isArray({ max: 20 }),
+    body('gallery.*').custom(isSubmittedPhotoUrl).withMessage('Invalid photo')
   ],
   async (req, res) => {
     try {
@@ -4461,6 +5218,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
+    scheduleSavedSearchSweep();
     res.json({ success: true, propertyId: property._id, submission: sub });
   } catch (err) {
     console.error('Submission import error:', err);
@@ -4536,3 +5294,10 @@ app.listen(PORT, '0.0.0.0', () => {
   ╚═══════════════════════════════════════════════════════════════╝
   `);
 });
+
+// Nothing in the app requires server.js; this only lets a test script that
+// loads it in-process reach the Property Finder engine directly.
+module.exports._savedSearchTest = {
+  savedSearchMatches, describeSavedSearch, normalizeSavedSearchCriteria,
+  runSavedSearchSweep, buildSavedSearchAlertEmail
+};

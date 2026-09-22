@@ -1783,7 +1783,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       <div id="tab-properties" style="display:none">
         <div class="filter-bar">
           <div class="fsearch"><i class="fas fa-search"></i><input type="text" id="pSearch" placeholder="Search title or location..." oninput="filterProps()"></div>
-          <select class="fsel" id="pType" onchange="filterProps()" aria-label="Filter by property type"><option value="">All Types</option><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select>
+          <select class="fsel" id="pType" onchange="filterProps()" aria-label="Filter by property type"><option value="">All Types</option><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Agricultural Lot</option><option>Commercial Space</option></select>
           <select class="fsel" id="pStatus" onchange="filterProps()" aria-label="Filter by status"><option value="">All Status</option><option value="available">Available</option><option value="sold">Sold/Leased</option></select>
           <select class="fsel" id="pListing" onchange="filterProps()" aria-label="Filter by listing type"><option value="">All Listings</option><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option></select>
           <div class="res-count" id="pCount"></div>
@@ -1879,6 +1879,14 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       <!-- ALERTS -->
       <div id="tab-alerts" style="display:none">
         <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Email</th><th scope="col">Property</th><th scope="col">Price</th><th scope="col">Status</th></tr></thead><tbody id="alertTbody"></tbody></table></div></div></div>
+        <!-- Property Finder: searches visitors saved on /properties.html -->
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-head">
+            <div class="panel-title"><i class="fas fa-search-location"></i> Saved searches (Property Finder)</div>
+            <div style="font-size:12px;color:var(--gray)" id="ssCount"></div>
+          </div>
+          <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th scope="col">Email</th><th scope="col">Looking for</th><th scope="col">Status</th><th scope="col">Emails sent</th><th scope="col">Created</th></tr></thead><tbody id="savedSearchTbody"></tbody></table></div></div>
+        </div>
       </div>
 
       <!-- BULK EMAIL -->
@@ -2903,7 +2911,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
         <div class="form-grid">
           <div class="fsec">Basic Information</div>
           <div class="fg full"><label for="pTitle">Property Title *</label><input type="text" id="pTitle" placeholder="e.g. 2BR Condo at The Fort, BGC" required></div>
-          <div class="fg"><label for="pType2">Property Type</label><select id="pType2"><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Commercial Space</option></select></div>
+          <div class="fg"><label for="pType2">Property Type</label><select id="pType2"><option>Condominium</option><option>House and Lot</option><option>Townhouse</option><option>Commercial Lot</option><option>Residential Lot</option><option>Agricultural Lot</option><option>Commercial Space</option></select></div>
           <div class="fg"><label for="pListing2">Listing Type</label><select id="pListing2"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale &amp; Lease</option></select></div>
           <div class="fg full"><label for="pLoc">Location / Address *</label><input type="text" id="pLoc" placeholder="e.g. Taguig City, Metro Manila" required></div>
           <div class="fg full"><label for="pMapLoc">Map Location (Google Maps)</label><input type="text" id="pMapLoc" placeholder="e.g. BGC, Taguig"></div>
@@ -3322,7 +3330,18 @@ async function apiFetch(url, opts = {}){
 }
 
 // ── UTILS ─────────────────────────────────────────────────
-const esc = s => {if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML};
+// Escapes quotes as well as < > &: every value printed into an HTML attribute
+// goes through here, and the old textContent/innerHTML version left " and '
+// untouched, which let a public submission break out of src="..." and run code.
+const esc = s => {if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')};
+// A value passed as a JavaScript string inside an inline onclick="...".
+// HTML-decoding runs before the script does, so esc() alone cannot protect a
+// '...' string there: an apostrophe in a title broke the button, and a crafted
+// one ran code. JSON.stringify makes a valid JS string; esc() makes it safe HTML.
+const jsArg = s => esc(JSON.stringify(String(s == null ? '' : s)));
+// Only http(s) links are clickable: a submitted "photo URL" of javascript:...
+// would otherwise run when staff clicked it.
+const safeUrl = u => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '#';
 const fmt = n => '₱'+(n||0).toLocaleString('en-PH');
 const fmtDate = d => d?new Date(d).toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 const fmtDateShort = d => d?new Date(d).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}):'—';
@@ -3345,6 +3364,24 @@ function showRefresh(){
 }
 function fmtField(inp){let v=inp.value.replace(/,/g,'');if(v&&!isNaN(v))inp.value=parseFloat(v).toLocaleString('en-US')}
 function getNum(id){return parseFloat((document.getElementById(id).value||'').replace(/,/g,''))||0}
+// Select a listing's type even when it was typed differently ("Condominium ",
+// "Condominium - Studio"): the base type if the list has it, otherwise the
+// value itself as an extra option, so saving never blanks it.
+function setTypeSelect(sel, raw){
+  const v = String(raw||'').trim() || 'Condominium';
+  const base = v.split(/\s+-\s+/)[0].trim().toLowerCase();
+  const opt = [...sel.options].find(o => o.value.toLowerCase() === v.toLowerCase()) || [...sel.options].find(o => o.value.toLowerCase() === base);
+  if(opt){ sel.value = opt.value; return; }
+  const o = document.createElement('option'); o.value = o.textContent = v; sel.appendChild(o); sel.value = v;
+}
+// A money box must hold digits (commas, spaces and a peso sign are fine).
+// "10.5M" used to save as P10.50 and a blank as P0, and either one emailed
+// every price-alert watcher that the price had dropped.
+function moneyProblem(id, label){
+  const raw = (document.getElementById(id).value||'').replace(/[,\s\u20b1]/g,'');
+  if(raw && !/^\d+(\.\d+)?$/.test(raw)) return label + ': type digits only, for example 12,500,000';
+  return '';
+}
 
 // ── DARK MODE ─────────────────────────────────────────────
 function syncLogos(){
@@ -3999,7 +4036,7 @@ function renderProps(props){
     <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
     <td><div class="act-btns">
       ${hasPerm('properties_edit')?`<button class="act act-edit" title="Edit this listing" aria-label="Edit ${esc(p.title)}" onclick="openEditProp('${p._id}')"><i class="fas fa-edit"></i></button>`:''}
-      ${hasPerm('properties_delete')?`<button class="act act-del" title="Delete this listing" aria-label="Delete ${esc(p.title)}" onclick="deleteProp('${p._id}','${esc(p.title)}')"><i class="fas fa-trash"></i></button>`:''}
+      ${hasPerm('properties_delete')?`<button class="act act-del" title="Delete this listing" aria-label="Delete ${esc(p.title)}" onclick="deleteProp('${p._id}',${jsArg(p.title)})"><i class="fas fa-trash"></i></button>`:''}
       <button class="act act-view" title="See it on the website" aria-label="View ${esc(p.title)} on the website" onclick="window.open('/properties.html?property=${p._id}','_blank')"><i class="fas fa-eye"></i></button>
     </div></td>
   </tr>`).join('');
@@ -4022,7 +4059,7 @@ function openEditProp(id){
   editPropId=id;galleryUrls=[...(p.gallery||[])];
   document.getElementById('editId').value=id;
   document.getElementById('pTitle').value=p.title||'';
-  document.getElementById('pType2').value=p.propertyType||'Condominium';
+  setTypeSelect(document.getElementById('pType2'), p.propertyType);
   document.getElementById('pListing2').value=p.listingType||'FOR SALE';
   document.getElementById('pLoc').value=p.location||'';
   document.getElementById('pMapLoc').value=p.mapLocation||'';
@@ -4041,13 +4078,20 @@ function openEditProp(id){
 }
 
 function closePropModal(){document.getElementById('propModal').classList.remove('open')}
-function rmGall(i){galleryUrls.splice(i,1);document.getElementById('pGallery').value=JSON.stringify(galleryUrls);document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,j)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${j})">&times;</button></div>`).join('')}
+function rmGall(i){galleryUrls.splice(i,1);document.getElementById('pGallery').value=JSON.stringify(galleryUrls);document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,j)=>`<div class="img-thumb"><img src="${esc(u)}"><button class="rm" onclick="rmGall(${j})">&times;</button></div>`).join('')}
 
 document.getElementById('propForm').addEventListener('submit',async function(e){
   e.preventDefault();
   // Saving is allowed if creating + has create perm, OR editing + has edit perm.
   const requiredPerm = editPropId ? 'properties_edit' : 'properties_create';
   if(!hasPerm(requiredPerm)){showToast('You don\'t have permission for this action',true);return}
+  const moneyErr = moneyProblem('pPrice','Price') || moneyProblem('pRental','Monthly rental');
+  if(moneyErr){showToast(moneyErr,true);return}
+  if(editPropId){
+    const before=(allProps.find(x=>x._id===editPropId)||{}).price||0, after=getNum('pPrice');
+    if(before>0 && after>0 && after<before*0.5 &&
+       !confirm('The price is going from '+fmt(before)+' to '+fmt(after)+', less than half.\n\nEveryone with a price alert on this listing will be emailed. Is the new price right?')) return;
+  }
   const btn=this.querySelector('.fbtn.primary');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';showLoad('Saving property...');
   try{
@@ -4179,7 +4223,8 @@ async function toggleInqHandled(id, makeHandled){
 // download. Adds a UTF-8 BOM so Excel opens accents/peso signs correctly.
 function downloadCSV(filename, rows){
   const csv = rows.map(r => r.map(cell => {
-    const s = (cell === null || cell === undefined) ? '' : String(cell);
+    let s = (cell === null || cell === undefined) ? '' : String(cell);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
   }).join(',')).join('\r\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -4434,6 +4479,31 @@ async function loadAlerts(){
       data.map(a=>`<tr><td style="font-size:13px">${esc(a.email)}</td><td style="font-size:12px">${esc(a.propertyTitle||'—')}</td><td style="font-size:13px;color:var(--ab-hot-text,#c02e00);font-family:'Cormorant Garamond',serif">${fmt(a.propertyPrice)}</td><td><span class="badge ${!a.isNotified?'b-avail':'b-sold'}">${a.isNotified?'Notified':'Watching'}</span></td></tr>`).join(''):
       `<tr><td colspan="4"><div class="empty-st"><i class="fas fa-bell"></i><p>No price alerts</p></div></td></tr>`;
   }catch(e){console.error(e)}
+  loadSavedSearches();
+}
+
+// Property Finder saved searches. A confirmed, active one is a warm lead:
+// the person proved the address is theirs and told us exactly what they want.
+async function loadSavedSearches(){
+  const tb=document.getElementById('savedSearchTbody');
+  if(!tb) return;
+  try{
+    const res=await apiFetch('/api/admin/saved-searches');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const live=data.filter(s=>s.active&&s.confirmed).length;
+    const cnt=document.getElementById('ssCount');
+    if(cnt) cnt.textContent=data.length?`${live} active of ${data.length}`:'';
+    tb.innerHTML=data.length?
+      data.map(s=>{
+        const st=!s.active?['b-sold','Stopped']:(!s.confirmed?['b-feat','Awaiting confirmation']:['b-avail','Active']);
+        return `<tr><td style="font-size:13px"><a href="mailto:${esc(s.email)}" style="color:inherit">${esc(s.email)}</a></td><td style="font-size:12px;max-width:380px">${esc(s.summary||'—')}</td><td><span class="badge ${st[0]}">${st[1]}</span></td><td style="font-size:13px">${Number(s.emailsSent)||0}</td><td style="font-size:12px;white-space:nowrap">${esc(fmtDateShort(s.createdAt))}</td></tr>`;
+      }).join(''):
+      `<tr><td colspan="5"><div class="empty-st"><i class="fas fa-search-location"></i><p>No saved searches yet. They appear here when a visitor clicks "Email me new matches" on the properties page.</p></div></td></tr>`;
+  }catch(e){
+    console.error(e);
+    tb.innerHTML=`<tr><td colspan="5"><div class="empty-st"><p>Could not load saved searches.</p></div></td></tr>`;
+  }
 }
 
 // ── HERO IMAGES ───────────────────────────────────────────
@@ -4484,7 +4554,7 @@ async function loadAccounts(){
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="act act-edit" onclick="openEditAccountById('${a._id}')"><i class="fas fa-edit"></i> Edit</button>
-            ${a.email !== CU?.email ? `<button class="act act-del" title="Delete this account" aria-label="Delete the account for ${esc(a.name || a.email)}" onclick="deleteAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--ab-hot-text,#c02e00)">You</span>'}
+            ${a.email !== CU?.email ? `<button class="act act-del" title="Delete this account" aria-label="Delete the account for ${esc(a.name || a.email)}" onclick="deleteAccount('${a._id}',${jsArg(a.name||a.email)})"><i class="fas fa-trash"></i></button>` : '<span style="font-size:11px;color:var(--ab-hot-text,#c02e00)">You</span>'}
           </div>
         </div>
       </div>`).join('');
@@ -4593,7 +4663,7 @@ function renderPendingAccounts(pending){
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button class="hdr-btn primary" onclick="openApprove('${a._id}')"><i class="fas fa-user-check"></i> Approve</button>
-            <button class="act act-del" onclick="declineAccount('${a._id}','${esc(a.name||a.email)}')"><i class="fas fa-user-times"></i> Decline</button>
+            <button class="act act-del" onclick="declineAccount('${a._id}',${jsArg(a.name||a.email)})"><i class="fas fa-user-times"></i> Decline</button>
           </div>
         </div>`).join('')}
       </div>
@@ -4790,7 +4860,7 @@ async function doAssign(){
 // payment lists is stored as JSON text in the cell); JSON is the full copy.
 const BACKUP_SHEETS = {
   properties:'Properties', inquiries:'Inquiries', heroImages:'Hero Images', subscribers:'Subscribers',
-  priceAlerts:'Price Alerts', wishlists:'Wishlists', accounts:'Accounts', tasks:'Tasks',
+  priceAlerts:'Price Alerts', savedSearches:'Saved Searches', wishlists:'Wishlists', accounts:'Accounts', tasks:'Tasks',
   submissions:'Submissions', scheduledEmails:'Scheduled Emails', titlingCases:'Titling Jobs',
   notarialJobs:'Notarial', cashEntries:'Cash Ledger', auditLogs:'Audit Log', alertLogs:'Alert Log'
 };
@@ -5201,7 +5271,7 @@ function renderSubPanel(s){
   const photos = [s.mainImage, ...(s.gallery||[])].filter((v,i,a) => v && a.indexOf(v) === i);
   document.getElementById('spPhotoCount').textContent = photos.length ? `(${photos.length})` : '';
   document.getElementById('spPhotos').innerHTML = photos.length
-    ? photos.map((url, i) => `<a href="${esc(url)}" target="_blank" rel="noopener">${i===0?'<span class="photo-main">Main</span>':''}<img src="${esc(url)}" alt="" loading="lazy"></a>`).join('')
+    ? photos.map((url, i) => `<a href="${esc(safeUrl(url))}" target="_blank" rel="noopener">${i===0?'<span class="photo-main">Main</span>':''}<img src="${esc(url)}" alt="" loading="lazy"></a>`).join('')
     : '<small style="color:var(--gray)">No photos uploaded.</small>';
 
   // Specs
@@ -6158,7 +6228,7 @@ function renderTaskAttachments(t, canEdit){
     const sizeKb = a.size ? Math.round(a.size/1024) : 0;
     const sizeLabel = sizeKb > 1024 ? `${(sizeKb/1024).toFixed(1)} MB` : `${sizeKb} KB`;
     return `<div class="tp-attach">
-      <a href="${esc(a.url)}" target="_blank" rel="noopener">
+      <a href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener">
         <span class="att-icon"><i class="fas ${icon}"></i></span>
         <span class="att-info">
           <span class="att-name" title="${esc(a.filename||'file')}">${esc(a.filename||'file')}</span>
@@ -6552,13 +6622,14 @@ function renderCalendar(filtered){
   const firstDay = new Date(year, month, 1);
   const startDow = firstDay.getDay();
   const startDate = new Date(year, month, 1 - startDow); // start on Sunday of week containing 1st
+  const localKey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   const today = new Date(); today.setHours(0,0,0,0);
   // Bucket tasks by date string
   const buckets = {};
   filtered.forEach(t => {
     if(!t.dueDate) return;
     const d = new Date(t.dueDate); d.setHours(0,0,0,0);
-    const key = d.toISOString().slice(0,10);
+    const key = localKey(d);
     if(!buckets[key]) buckets[key] = [];
     buckets[key].push(t);
   });
@@ -6568,7 +6639,7 @@ function renderCalendar(filtered){
     const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()+i);
     const isOther = d.getMonth() !== month;
     const isToday = d.getTime() === today.getTime();
-    const key = d.toISOString().slice(0,10);
+    const key = localKey(d);
     const list = buckets[key] || [];
     const cell = document.createElement('div');
     cell.className = 'tcal-cell' + (isOther?' tcal-other':'') + (isToday?' tcal-today':'');
@@ -6586,7 +6657,7 @@ function renderCalendar(filtered){
     cell.addEventListener('click', ev => {
       if(ev.target !== cell && !ev.target.classList.contains('tcal-day')) return;
       if(!hasPerm('tasks_create')) return;
-      const dateStr = d.toISOString().slice(0,10);
+      const dateStr = localKey(d);
       const title = prompt(`New task for ${d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}:`);
       if(!title || !title.trim()) return;
       apiFetch('/api/admin/tasks', { method:'POST', body: JSON.stringify({ title: title.trim(), dueDate: dateStr }) })
@@ -7606,7 +7677,7 @@ function impPropType(raw){
   if(/commercial\s*space/i.test(s)) return 'Commercial Space';
   if(/commercial\s*lot/i.test(s)) return 'Commercial Lot';
   if(/residential\s*lot/i.test(s)) return 'Residential Lot';
-  if(/agricultural\s*lot/i.test(s)) return 'Residential Lot'; // closest match in the existing taxonomy
+  if(/agricultural\s*lot/i.test(s)) return 'Agricultural Lot';
   if(/\blot\b/i.test(s)) return 'Residential Lot';
   return s;
 }
@@ -8970,7 +9041,7 @@ function renderCashProof(){
   const items = proofs.map(p=>{
     const isImg=(p.resourceType==='image')|| /\.(jpe?g|png|webp|gif)$/i.test(p.url||'');
     const thumb = isImg ? `<img src="${esc(p.url)}" style="width:60px;height:60px;object-fit:cover;border:1px solid var(--border-color)">` : `<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color)"><i class="fas fa-file-pdf" style="font-size:22px;color:var(--gray)"></i></div>`;
-    return `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border-color);padding:6px;background:var(--card-bg)"><a href="${esc(p.url)}" target="_blank" rel="noopener">${thumb}</a><div style="flex:1;font-size:11px;color:var(--gray);word-break:break-all">${esc(p.filename||'proof')}</div><button type="button" class="act act-del" title="Remove" onclick="deleteCashProof('${esc(p._id)}')"><i class="fas fa-times"></i></button></div>`;
+    return `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border-color);padding:6px;background:var(--card-bg)"><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${thumb}</a><div style="flex:1;font-size:11px;color:var(--gray);word-break:break-all">${esc(p.filename||'proof')}</div><button type="button" class="act act-del" title="Remove" onclick="deleteCashProof('${esc(p._id)}')"><i class="fas fa-times"></i></button></div>`;
   }).join('');
   area.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-bottom:10px">${items||'<div style="font-size:12px;color:var(--gray)">No proof attached yet.</div>'}</div>
     <label class="hdr-btn" style="cursor:pointer;display:inline-block"><i class="fas fa-upload"></i> Add proof <input type="file" accept="image/*,application/pdf" style="display:none" onchange="uploadCashProof(this)"></label>`;
@@ -10351,7 +10422,7 @@ async function regenCaseCal(){
     const feed = document.getElementById('csCalFeed');
     if(feed) feed.innerHTML = `<div class="ls-note" style="margin-bottom:6px"><b>Copy this now — it is not shown again.</b></div>
       <input type="text" class="finput" readonly value="${esc(url)}" onclick="this.select()" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">
-      <div style="display:flex;gap:8px;margin-top:8px"><button class="hdr-btn" onclick="navigator.clipboard.writeText('${esc(url)}').then(()=>showToast('Link copied'))"><i class="fas fa-copy"></i> Copy</button></div>`;
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="hdr-btn" onclick="navigator.clipboard.writeText(${jsArg(url)}).then(()=>showToast('Link copied'))"><i class="fas fa-copy"></i> Copy</button></div>`;
   }catch(e){ showToast(e.message, true); }
 }
 
@@ -11437,6 +11508,6 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script src="/js/a11y.js?v=101" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
 </body>
 </html>

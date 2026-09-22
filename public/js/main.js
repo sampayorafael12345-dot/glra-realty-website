@@ -598,7 +598,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
   // Wrapping fetch here means the newsletter form, wishlist, price alert, PDF
   // gate and valuation enquiry all stitch identity without each page having to
   // know this feature exists. Strictly limited to our own capture endpoints.
-  var IDENTITY_PATHS = ['/api/subscribe', '/api/wishlist', '/api/price-alert', '/api/inquiries'];
+  var IDENTITY_PATHS = ['/api/subscribe', '/api/wishlist', '/api/price-alert', '/api/inquiries', '/api/saved-search'];
   if (typeof window.fetch === 'function') {
     var nativeFetch = window.fetch;
     window.fetch = function (input, init) {
@@ -804,7 +804,9 @@ window.glraOpenPrintGate = function (label, collectFn) {
       el.dataset.glTarget = target;
       el.dataset.glDecimals = decimals;
       el.dataset.glRest = rest;
-      el.textContent = (decimals ? '0.' + '0'.repeat(decimals) : '0') + rest;
+      /* The real figure stays in the page until the count-up starts. Zeroing
+         it here meant Google, screen readers and anyone who never scrolled
+         that far read "0+ Years" and "0+ Clients". */
     });
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(e){
@@ -828,7 +830,9 @@ window.glraOpenPrintGate = function (label, collectFn) {
         }
         observer.unobserve(el);
       });
-    }, { threshold: 0.5 });
+    /* threshold 0: the count starts the moment the first pixel shows, so the
+       real figure is never visibly swapped for a 0 mid-screen. */
+    }, { threshold: 0 });
     document.querySelectorAll('[data-gl-target]').forEach(function(el){ observer.observe(el); });
   });
 
@@ -973,9 +977,12 @@ window.glraOpenPrintGate = function (label, collectFn) {
         var url = new URL(href, location.origin);
         if (url.origin !== location.origin) return;
         if (url.pathname === location.pathname && url.hash) return; /* in-page anchor */
-        e.preventDefault();
+        if (a.hasAttribute('download')) return;
+        /* The fade used to hold every click for 220ms before navigating. Now
+           the browser starts fetching at once and the fade runs meanwhile; the
+           timer only undoes it if the navigation never happens. */
         document.body.classList.add('gl-leaving');
-        setTimeout(function(){ window.location.href = href; }, 220);
+        setTimeout(function(){ document.body.classList.remove('gl-leaving'); }, 2500);
       } catch(_){}
     });
     /* Reset on back/forward navigation */

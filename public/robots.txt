@@ -7,6 +7,17 @@ Allow: /
 # The API answers JSON, never a page worth indexing.
 Disallow: /api/
 
+# ...except the few calls the public pages make to draw themselves. Google
+# renders pages with JavaScript but obeys robots.txt for every request the page
+# makes, so with /api/ shut it rendered the home page and the properties page
+# with EMPTY listing grids and never saw a single listing. The longest matching
+# rule wins, so these override the Disallow above.
+Allow: /api/properties
+Allow: /api/areas
+Allow: /api/hero-images
+Allow: /api/hero-image/
+Allow: /api/property-image/
+
 # The two sign-in portals are NOT listed here on purpose. Both send
 # "X-Robots-Tag: noindex, nofollow" and carry a noindex meta tag, which is the
 # reliable way to keep a page out of the results: a crawler has to be allowed

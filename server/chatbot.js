@@ -241,7 +241,7 @@ async function getAllAvailableListingsCached() {
     const items = await Property.find({ status: 'available' })
       .sort({ featured: -1, createdAt: -1 })
       .limit(CHAT_LISTING_LIMIT)
-      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm propertyType featured developer mainImage')
+      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm landArea propertyType featured mainImage')
       .lean();
     _chatListingCache = { at: now, items };
     return items;
@@ -355,12 +355,19 @@ function scoreListings(message, listings) {
 
 function fmtListing(p, i) {
   const lt = (p.listingType || '').toUpperCase();
-  const isLease = lt.includes('LEASE') || lt.includes('RENT');
-  const price = isLease
-    ? `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`
-    : `₱${Number(p.price || 0).toLocaleString()}`;
-  const dev = p.developer ? `, ${p.developer}` : '';
-  return `${i + 1}. [${p.title}] — ${p.location} — ${price} — ${p.bedrooms || 0}BR / ${p.bathrooms || 0}BA / ${p.sqm || 0}sqm — ${p.propertyType || 'Property'}${dev} — ${isLease ? 'For Lease' : 'For Sale'}`;
+  const both = lt === 'SALE AND LEASE';
+  const isLease = !both && (lt.includes('LEASE') || lt.includes('RENT'));
+  const rent = `₱${Number(p.monthlyRental || p.price || 0).toLocaleString()}/mo`;
+  const sale = `₱${Number(p.price || 0).toLocaleString()}`;
+  const price = both ? `${sale} to buy, or ${rent} to rent` : isLease ? rent : sale;
+  // No "0BR / 0sqm" for a lot: say only what is actually known. The developer
+  // field is left out on purpose; the importer put owners' names in it.
+  const rooms = [p.bedrooms > 0 ? `${p.bedrooms}BR` : '', p.bathrooms > 0 ? `${p.bathrooms}BA` : ''].filter(Boolean).join(' / ');
+  const area = p.sqm > 0 ? `${p.sqm}sqm floor` : '';
+  const lot = p.landArea > 0 ? `${p.landArea}sqm lot` : '';
+  const specs = [rooms, area, lot].filter(Boolean).join(' / ') || 'size on request';
+  const deal = both ? 'For Sale or Lease' : isLease ? 'For Lease' : 'For Sale';
+  return `${i + 1}. [${p.title}] — ${p.location} — ${price} — ${specs} — ${String(p.propertyType || 'Property').trim()} — ${deal}`;
 }
 
 // Server-side derivation of search params from the user's message.

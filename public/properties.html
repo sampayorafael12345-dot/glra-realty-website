@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=101">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=101">
+<link rel="stylesheet" href="/css/styles.css?v=102">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=102">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -317,6 +317,16 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
   .grid{grid-template-columns:1fr}.modal-body{margin:16px;padding:20px}
   .category-tabs{justify-content:flex-start}
 }
+/* Property Finder (saved-search email alerts) */
+html body .ss-cta{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important;padding:11px 16px !important}
+html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+.ss-summary{background:var(--ab-paper-2);border-left:3px solid var(--ab-hot);color:var(--ab-ink);padding:14px 16px;margin:0 0 18px;font-size:14px;font-weight:600;line-height:1.5;text-align:left;overflow-wrap:anywhere}
+.email-modal-content .ss-note{font-size:12px;margin:12px 0 0;color:var(--ab-gray)}
+.email-modal-content .ss-nofilter p{color:var(--ab-ink)}
+#ssModal .submit-btn{justify-content:center}
+.empty-state .ss-empty-btn{margin:2px 0 6px}
+.empty-state .ss-empty-btn i{font-size:inherit;margin:0;display:inline-block;color:inherit}
+@media(max-width:640px){html body .ss-cta{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -396,6 +406,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
             <option value="">All Types</option><option value="Condominium">Condominium</option>
             <option value="House and Lot">House and Lot</option><option value="Townhouse">Townhouse</option>
             <option value="Commercial Lot">Commercial Lot</option><option value="Residential Lot">Residential Lot</option>
+            <option value="Commercial Space">Commercial Space</option><option value="Agricultural Lot">Agricultural Lot</option>
           </select>
         </div>
         <div class="filter-group"><label for="bedroomsSelect">Bedrooms</label>
@@ -457,6 +468,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
     <h2 id="sectionTitle">All Properties</h2>
     <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div class="results-count" id="resultsCount"></div>
+      <button type="button" class="ss-cta" id="ssOpenBtn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me new matches</button>
       <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
         <option value="newest">Sort: Newest First</option>
         <option value="price-asc">Price: Low to High</option>
@@ -491,6 +503,26 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
     <input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle">
     <input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage">
     <button class="submit-btn" onclick="submitWishlist()">Save to Wishlist</button>
+  </div>
+</div>
+<!-- Property Finder: email me new matches for this search -->
+<div id="ssModal" class="email-modal">
+  <div class="email-modal-content" role="dialog" aria-modal="true" aria-labelledby="ssTitle" aria-describedby="ssIntro">
+    <button type="button" class="close-modal-btn" onclick="closeSavedSearchModal()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+    <i class="fas fa-bell modal-icon" aria-hidden="true"></i>
+    <h3 id="ssTitle">Get new matches by email</h3>
+    <p id="ssIntro">When a new listing matching this search goes live, we'll email it to you.</p>
+    <div id="ssSummary" class="ss-summary"></div>
+    <form id="ssForm" novalidate>
+      <label for="ssEmail">Your email</label>
+      <input type="email" id="ssEmail" name="email" placeholder="you@example.com" autocomplete="email" required>
+      <button type="submit" class="submit-btn" id="ssSubmit">Email me new matches</button>
+      <p class="ss-note">We'll send a confirmation link first. One click stops the alerts.</p>
+    </form>
+    <div id="ssNoFilter" class="ss-nofilter" hidden>
+      <p>Set at least one filter first: a location, a property type, bedrooms, bathrooms, a price range, or the For Sale or For Lease tab. Then we can tell you when something new matches.</p>
+      <button type="button" class="submit-btn" onclick="ssGoToFilters()">Set my filters</button>
+    </div>
   </div>
 </div>
 <!-- Property Detail Modal -->
@@ -612,7 +644,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=101"></script>
+<script src="/js/main.js?v=102"></script>
 <script>
 /* ---- LAZY LOADING TRIGGER ---- */
 window.addEventListener('load',()=>{initLazyLoading();});
@@ -625,7 +657,7 @@ function initLazyLoading(){const io=new IntersectionObserver((entries,obs)=>{ent
 /* ---- SEARCH ---- */
 let allPropertyTitles=[];
 function handleSearchInput(val){showSuggestions(val);applyFilters(currentCategory,cachedProperties);}
-function showSuggestions(val){const d=document.getElementById('searchSuggestions');if(!val||val.length<2){d.style.display='none';return;}const f=allPropertyTitles.filter(t=>t.toLowerCase().includes(val.toLowerCase())).slice(0,8);d.innerHTML=f.map(t=>`<div onclick="selectSuggestion('${escapeHtml(t)}')">${escapeHtml(t)}</div>`).join('');d.style.display=f.length?'block':'none';}
+function showSuggestions(val){const d=document.getElementById('searchSuggestions');if(!val||val.length<2){d.style.display='none';return;}const f=allPropertyTitles.filter(t=>t.toLowerCase().includes(val.toLowerCase())).slice(0,8);d.innerHTML=f.map(t=>`<div data-t="${escapeHtml(t)}" onclick="selectSuggestion(this.dataset.t)">${escapeHtml(t)}</div>`).join('');d.style.display=f.length?'block':'none';}
 function selectSuggestion(title){document.getElementById('searchSuggestions').style.display='none';const p=allProperties.find(p=>p.title===title);if(p)openDetail(p._id);else{document.getElementById('locationInput').value=title;applyFilters(currentCategory,cachedProperties);}}
 document.addEventListener('click',e=>{if(!e.target.closest('.search-field-wrapper'))document.getElementById('searchSuggestions').style.display='none';});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('modal').style.display==='block')closeModal();if(document.getElementById('emailModal').style.display==='flex')closeEmailModal();if(document.getElementById('wishlistModal').style.display==='flex')closeWishlistModal();document.getElementById('searchSuggestions').style.display='none';}});
@@ -661,13 +693,28 @@ function shareProperty(platform,property){const url=encodeURIComponent(`${locati
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null,currentCategory='all';
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE';}
 function isForSale(p){const t=(p.listingType||'').toUpperCase();return t==='FOR SALE'||t==='SALE AND LEASE';}
+/* Property types are typed by hand, so the live data holds "Condominium ",
+   "Condominium - Studio" and "Condominium" for the same thing. Compare on the
+   base type so picking "Condominium" finds all three. server.js has the same
+   function for the saved-search alerts; keep the two identical. */
+/* Which price a range is tested against. A SALE AND LEASE listing has two and used to be
+   tested on its rent alone, so a P10M-P30M buyer never saw a P28M condo also offered for rent.
+   Identical to glraPriceFits() in server.js, which the Property Finder emails use. */
+function glraPriceFits(p,cat,mn,mx){const t=(p.listingType||'').toUpperCase();const sale=Number(p.price)||0,rent=Number(p.monthlyRental)||Number(p.price)||0;let c;if(cat==='FOR SALE')c=[sale];else if(cat==='FOR LEASE')c=[rent];else c=t==='SALE AND LEASE'?[sale,rent]:[isForLease(p)?rent:sale];return c.some(v=>!(mn>0&&v<mn)&&!(mx>0&&v>mx));}
+/* Rooms only when there are some: a lot read "0 Bedrooms 0 Bathrooms", and one
+   bedroom read "1 Bedrooms". */
+function glraRooms(n,one,many){n=Number(n)||0;return n>0?n+' '+(n===1?one:many):''}
+/* Rent estimates and loan maths only make sense for a home with a price:
+   the Investor's Corner told a P414.9M commercial lot what it would rent for. */
+function glraIsHome(p){const t=String((p&&p.propertyType)||'').toLowerCase();return !/\blot\b/.test(t)||/house/.test(t)}
+function glraBaseType(t){return String(t||'').trim().split(/\s+-\s+/)[0].trim().toLowerCase();}
 
 /* ---- FRESHNESS + SORT + VIEWS ---- */
 const DAY_MS=24*60*60*1000;
 function daysSince(d){if(!d)return Infinity;const t=new Date(d).getTime();return isNaN(t)?Infinity:(Date.now()-t)/DAY_MS;}
 // One chip per card, most exciting wins: PRICE DROP (last 30 days) beats NEW (last 14 days).
 function freshChip(p){
-  if(p.previousPrice>0&&p.price>0&&p.previousPrice>p.price&&daysSince(p.priceUpdatedAt)<=30)
+  /* Consumer Act Art. 111(a): the former price must have stood four weeks. */if(p.previousPrice>0&&p.price>0&&p.previousPrice>p.price&&daysSince(p.priceUpdatedAt)<=30&&(new Date(p.priceUpdatedAt)-new Date(p.createdAt))>=28*864e5)
     return '<span class="badge-fresh is-drop"><i class="fas fa-arrow-down"></i> PRICE DROP</span>';
   if(daysSince(p.createdAt)<=14)
     return '<span class="badge-fresh is-new">NEW</span>';
@@ -1155,8 +1202,8 @@ async function loadProperties(){
   }
 }
 function initFromUrl(properties){const cat=getParam('category');const search=getParam('search');const pt=getParam('propertyType');const br=getParam('bedrooms');const ba=getParam('baths');const mn=getParam('minPrice');const mx=getParam('maxPrice');const propId=getParam('property');let cat2='all';if(cat==='FOR SALE')cat2='FOR SALE';else if(cat==='FOR LEASE')cat2='FOR LEASE';else if(cat==='featured')cat2='featured';currentCategory=cat2;document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.category===cat2);});const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat2]||'All Properties';if(search)document.getElementById('locationInput').value=search;if(pt)document.getElementById('propertyTypeSelect').value=pt;if(br)document.getElementById('bedroomsSelect').value=br;if(ba)document.getElementById('bathsSelect').value=ba;if(mn)document.getElementById('minPriceInput').value=parseInt(mn).toLocaleString();if(mx)document.getElementById('maxPriceInput').value=parseInt(mx).toLocaleString();applyFilters(cat2,properties);if(propId){setTimeout(()=>{const p=cachedProperties.find(x=>x._id===propId);if(p)openDetail(p._id);},600);}}
-function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&p.propertyType!==pt)return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;const price=isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);if(mn>0&&price<mn)return false;if(mx>0&&price>mx)return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);document.getElementById('resultsCount').innerHTML=`${f.length} ${f.length===1?'property':'properties'} found`;allProperties=f;}
-function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.innerHTML='';if(!properties.length){c.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>No properties match your search.<br><br><a href="/properties.html">Clear filters</a></p></div>';return;}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,80);}
+function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);document.getElementById('resultsCount').innerHTML=`${f.length} ${f.length===1?'property':'properties'} found`;allProperties=f;}
+function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.innerHTML='';if(!properties.length){c.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>Nothing matches yet.</p><button type="button" class="ss-empty-btn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me when one does</button><p><a href="/properties.html">Clear filters</a></p></div>';return;}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,80);}
 /* A listing's size, taken from whichever of the two areas it actually has.
    A vacant lot or a farm has no floor area; a condominium unit has no lot. The
    card used to print `${prop.sqm} sqm` unconditionally, so twelve live listings
@@ -1191,20 +1238,20 @@ function glraAreaLabel(p){
 function glraAreaBasis(p){
   return (Number(p && p.sqm) || 0) || (Number(p && p.landArea) || 0);
 }
-function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',prop.title+' - view details');card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(prop._id)}};const isSale=prop.listingType==='FOR SALE';const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E';const photoN=[prop.mainImage,...(prop.gallery||[])].filter(Boolean).length;const _basis=glraAreaBasis(prop);const psqm=(isForSale(prop)&&prop.price>0&&_basis>0)?`<div class="prop-psqm">${formatPrice(Math.round(prop.price/_basis))} / sqm</div>`:'';const added=addedLabel(prop);card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${img}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openCompare('${prop._id}')" title="Add to compare" data-compare-id="${prop._id}"><i class="fas fa-balance-scale"></i></button><button class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${prop._id}')" title="Ask on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}')" title="Save to wishlist"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}')" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${prop._id}">${escapeHtml(prop.title)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs"><span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span><span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}</div>`;refreshCompareCardState(card, prop._id);const _t=card.querySelector('.prop-title-link');if(_t)_t.addEventListener('click',function(e){if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();});return card;}
+function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',prop.title+' - view details');card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(prop._id)}};const isSale=isForSale(prop);const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E';const photoN=[prop.mainImage,...(prop.gallery||[])].filter(Boolean).length;const _basis=glraAreaBasis(prop);const psqm=(isForSale(prop)&&prop.price>0&&_basis>0)?`<div class="prop-psqm">${formatPrice(Math.round(prop.price/_basis))} / sqm</div>`:'';const added=addedLabel(prop);card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${escapeHtml(img)}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openCompare('${prop._id}')" title="Add to compare" data-compare-id="${prop._id}"><i class="fas fa-balance-scale"></i></button><button class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${prop._id}')" title="Ask on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}')" title="Save to wishlist"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}')" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${prop._id}">${escapeHtml(prop.title)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs">${prop.bedrooms>0?`<span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>`:''}${prop.bathrooms>0?`<span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>`:''}${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${escapeHtml(String(prop.propertyType||'Property').trim())}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}</div>`;refreshCompareCardState(card, prop._id);const _t=card.querySelector('.prop-title-link');if(_t)_t.addEventListener('click',function(e){if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();});return card;}
 /* ---- DETAIL MODAL ---- */
-function openDetail(id){const prop=(cachedProperties||[]).find(x=>x._id===id)||allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;pingView(id);galleryImages=[prop.mainImage,...(prop.gallery||[])].filter(Boolean);let thumbs=galleryImages.map((img,i)=>`<img src="${img}" onclick="changeImg(${i})" class="${i===0?'active':''}" alt="Photo ${i+1}" loading="lazy" decoding="async">`).join('');const mapQ=encodeURIComponent((prop.mapLocation||prop.location)+', Philippines');const mapEmbed=`https://www.google.com/maps?q=${mapQ}&output=embed`;const isSale=prop.listingType==='FOR SALE';const price=getDisplayPrice(prop);const pp=prop.price||0;
+function openDetail(id){const prop=(cachedProperties||[]).find(x=>x._id===id)||allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;pingView(id);galleryImages=[prop.mainImage,...(prop.gallery||[])].filter(Boolean);let thumbs=galleryImages.map((img,i)=>`<img src="${escapeHtml(img)}" onclick="changeImg(${i})" class="${i===0?'active':''}" alt="Photo ${i+1}" loading="lazy" decoding="async">`).join('');const mapQ=encodeURIComponent((prop.mapLocation||prop.location)+', Philippines');const mapEmbed=`https://www.google.com/maps?q=${mapQ}&output=embed`;const isSale=isForSale(prop);const price=getDisplayPrice(prop);const pp=prop.price||0;
 // Investor's Corner — indicative rent range (0.4%–0.5% of price per month) + gross yield
 let investHtml='';
-if(isSale&&pp>0){
+if(isSale&&pp>0&&glraIsHome(prop)){
   const rentLo=Math.round(pp*0.004/1000)*1000,rentHi=Math.round(pp*0.005/1000)*1000;
   investHtml=`<div class="invest-box"><div class="invest-title"><i class="fas fa-chart-line"></i> Investor's Corner</div><p>Properties like this typically rent for around <strong>${formatPrice(rentLo)}-${formatPrice(rentHi)}/month</strong>, a gross rental yield of roughly <strong>4.8-6% per year</strong>. Run your own numbers with our <a href="/rental-yield.html">Rental Yield Calculator</a>.</p><span class="invest-note">*Indicative only, based on typical Metro Manila rental rates. Actual rent depends on the unit, furnishing, and market conditions.</span></div>`;
 }
 // You might also like — same type/area/price bracket
 const sims=similarProps(prop,3);
-const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${escapeHtml(s.title)} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${s.mainImage||''}" alt="${escapeHtml(s.title)}" loading="lazy"><div class="sim-info"><h5>${escapeHtml(s.title)}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
-document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]||''}" alt="${escapeHtml(prop.title)}" loading="lazy" decoding="async"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>${glraAreaLabel(prop)?`<span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&glraAreaBasis(prop)>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/glraAreaBasis(prop)))} / sqm</span>`:''}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--ab-hot-text,#c02e00)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% - Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
-${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(glraDesc(prop.description)||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
+const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${escapeHtml(s.title)} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${escapeHtml(s.mainImage||'')}" alt="${escapeHtml(s.title)}" loading="lazy"><div class="sim-info"><h5>${escapeHtml(s.title)}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
+document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${escapeHtml(galleryImages[0]||'')}" alt="${escapeHtml(prop.title)}" loading="lazy" decoding="async"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${String(prop.listingType||'').toUpperCase()==='SALE AND LEASE'?'FOR SALE OR LEASE':isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs">${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')?`<span class="modal-spec"><i class="fas fa-bed"></i> ${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')}</span>`:''}${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')?`<span class="modal-spec"><i class="fas fa-bath"></i> ${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')}</span>`:''}${glraAreaLabel(prop)?`<span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(String(prop.propertyType||'Property').trim())}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&glraAreaBasis(prop)>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/glraAreaBasis(prop)))} / sqm</span>`:''}</div>${(isSale&&pp>0)?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--ab-hot-text,#c02e00)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.25">6.25% - Pag-IBIG (3-yr fixed)</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11%</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
+${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(glraDesc(prop.description)||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/property/${prop._id}#inquire'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale&&pp>0)calcMortgage(pp);}
 function calcMortgage(price){const dp=parseFloat(document.getElementById('dpSlider')?.value)||20;const term=parseFloat(document.getElementById('loanTerm')?.value)||20;const rate=parseFloat(document.getElementById('intRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageAmt');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:16px">/mo</span>`;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=dp+'%';}
 function updateDP(val,price){const el=document.getElementById('dpSlider');if(el)el.value=val;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=val+'%';calcMortgage(price);}
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i));}}
@@ -1228,9 +1275,179 @@ document.addEventListener('keydown', e => {
 });
 loadProperties();
 </script>
-<script src="/js/brutalist-shell.js?v=101" defer></script>
-<script src="/js/description.js?v=101" defer></script>
-<script src="/js/a11y.js?v=101" defer></script>
-<script src="/js/chat.js?v=101" defer></script>
+<script>
+/* ---- PROPERTY FINDER: "Email me new matches" ----
+   Saves the filters currently on screen as an alert. The server emails a
+   confirmation link first (double opt-in), then one email whenever a NEW
+   listing matching the search goes live.
+
+   The criteria are read from the very same inputs applyFilters() reads, and
+   the server's savedSearchMatches() mirrors applyFilters() rule for rule, so
+   the alert matches exactly what this page would show. The summary text below
+   mirrors describeSavedSearch() in server.js. */
+(function () {
+  var modal = document.getElementById('ssModal');
+  var form = document.getElementById('ssForm');
+  var emailInput = document.getElementById('ssEmail');
+  var submitBtn = document.getElementById('ssSubmit');
+  var summaryBox = document.getElementById('ssSummary');
+  var intro = document.getElementById('ssIntro');
+  var noFilter = document.getElementById('ssNoFilter');
+  if (!modal || !form) return;
+  var returnFocusTo = null;
+
+  function readInt(id) {
+    var el = document.getElementById(id);
+    var n = el ? parseInt(el.value, 10) : 0;
+    return n > 0 ? n : 0;
+  }
+
+  // The filters as applyFilters() sees them right now.
+  function currentCriteria() {
+    var loc = document.getElementById('locationInput');
+    var type = document.getElementById('propertyTypeSelect');
+    var cat = (typeof currentCategory === 'string') ? currentCategory : 'all';
+    return {
+      category: (cat === 'FOR SALE' || cat === 'FOR LEASE') ? cat : '',
+      q: loc ? loc.value.toLowerCase().trim().slice(0, 80) : '',
+      propertyType: type ? type.value : '',
+      minBeds: readInt('bedroomsSelect'),
+      minBaths: readInt('bathsSelect'),
+      minPrice: getRaw('minPriceInput'),
+      maxPrice: getRaw('maxPriceInput')
+    };
+  }
+
+  function hasCriteria(c) {
+    return !!(c.category || c.q || c.propertyType || c.minBeds || c.minBaths || c.minPrice > 0 || c.maxPrice > 0);
+  }
+
+  function describe(c) {
+    var lease = c.category === 'FOR LEASE';
+    var s = '';
+    if (c.minBeds > 0) s += c.minBeds + '+ bedroom ';
+    s += c.propertyType || (c.minBeds > 0 ? 'property' : 'Any property');
+    if (c.minBaths > 0) s += ' with ' + c.minBaths + '+ bathroom' + (c.minBaths === 1 ? '' : 's');
+    if (c.category === 'FOR SALE') s += ' for sale';
+    else if (lease) s += ' for lease';
+    if (c.q) s += " in '" + c.q + "'";
+    function peso(n) { return '₱' + Math.round(n).toLocaleString('en-US') + (lease ? '/month' : ''); }
+    if (c.minPrice > 0 && c.maxPrice > 0) s += ', ' + peso(c.minPrice) + ' to ' + peso(c.maxPrice);
+    else if (c.minPrice > 0) s += ', from ' + peso(c.minPrice);
+    else if (c.maxPrice > 0) s += ', up to ' + peso(c.maxPrice);
+    return s;
+  }
+
+  function matchesText(n) {
+    n = Number(n) || 0;
+    if (n === 0) return 'Nothing matches right now, so the first email will be a brand new listing.';
+    return n === 1 ? '1 listing matches right now.' : n + ' listings match right now.';
+  }
+
+  function isOpen() { return modal.style.display === 'flex'; }
+
+  function render() {
+    var c = currentCriteria();
+    var ok = hasCriteria(c);
+    summaryBox.textContent = ok ? describe(c) : 'No filters set yet';
+    form.hidden = !ok;
+    noFilter.hidden = ok;
+    intro.hidden = !ok;
+    return ok;
+  }
+
+  window.openSavedSearchModal = function (trigger) {
+    returnFocusTo = trigger || document.activeElement;
+    var ok = render();
+    modal.style.display = 'flex';
+    setTimeout(function () {
+      if (ok) emailInput.focus();
+      else noFilter.querySelector('button').focus();
+    }, 30);
+  };
+
+  window.closeSavedSearchModal = function () {
+    if (!isOpen()) return;
+    modal.style.display = 'none';
+    // The trigger may have been the empty-state button, which a re-render
+    // can remove from the page; fall back to the header button.
+    var back = (returnFocusTo && document.body.contains(returnFocusTo)) ? returnFocusTo : document.getElementById('ssOpenBtn');
+    returnFocusTo = null;
+    if (back && back.focus) back.focus();
+  };
+
+  // "Set my filters": close, open the filter panel, put the cursor in search.
+  window.ssGoToFilters = function () {
+    returnFocusTo = null;
+    modal.style.display = 'none';
+    var panel = document.getElementById('advancedFilters');
+    if (panel && !panel.classList.contains('show') && typeof toggleAdvancedFilter === 'function') toggleAdvancedFilter();
+    var loc = document.getElementById('locationInput');
+    if (loc) {
+      loc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      loc.focus({ preventScroll: true });
+    }
+  };
+
+  // Click on the dark backdrop closes; clicks inside the box do not.
+  modal.addEventListener('click', function (e) { if (e.target === modal) window.closeSavedSearchModal(); });
+
+  // Escape closes; Tab stays inside the dialog while it is open.
+  document.addEventListener('keydown', function (e) {
+    if (!isOpen()) return;
+    if (e.key === 'Escape') { e.preventDefault(); window.closeSavedSearchModal(); return; }
+    if (e.key !== 'Tab') return;
+    var items = Array.prototype.filter.call(
+      modal.querySelectorAll('button, input, a[href]'),
+      function (el) { return !el.disabled && el.offsetParent !== null; }
+    );
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var email = emailInput.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('Please enter a valid email', true);
+      emailInput.focus();
+      return;
+    }
+    var criteria = currentCriteria();
+    if (!hasCriteria(criteria)) { render(); return; }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    try {
+      // main.js adds this browser's anonymous id (vid) to the body.
+      var r = await fetch('/api/saved-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, criteria: criteria })
+      });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok || !d.success) {
+        showToast(d.error || 'Could not save your search. Please try again.', true);
+        return;
+      }
+      window.closeSavedSearchModal();
+      emailInput.value = '';
+      if (d.alreadyActive) showToast('You already have this alert. We will email you when a new match goes live.');
+      else if (d.emailSent === false) showToast(d.message || 'Saved, but the confirmation email did not go out. Please try again later.', true);
+      else showToast('Check your inbox to confirm. ' + matchesText(d.currentMatches));
+    } catch (err) {
+      showToast('Network error. Please try again.', true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Email me new matches';
+    }
+  });
+})();
+</script>
+<script src="/js/brutalist-shell.js?v=102" defer></script>
+<script src="/js/description.js?v=102" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/chat.js?v=102" defer></script>
 </body>
 </html>

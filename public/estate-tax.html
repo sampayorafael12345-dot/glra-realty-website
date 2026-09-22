@@ -8,7 +8,7 @@
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
 <title>Estate Tax Calculator Philippines | GLRA Realty</title>
-<meta name="description" content="Estimate Philippine estate tax (6%) and the cost of transferring an inherited title to the heirs, with standard and family-home deductions applied.">
+<meta name="description" content="Estimate Philippine estate tax (6%) and the cost of transferring an inherited title to the heirs, with the standard and family-home deductions and the surviving spouse's half applied.">
 <meta name="keywords" content="estate tax calculator philippines,inheritance tax philippines,transfer inherited property title,extrajudicial settlement cost,estate settlement philippines,6% estate tax">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://glrarealty.com/estate-tax.html">
@@ -36,8 +36,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=101">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=101">
+<link rel="stylesheet" href="/css/styles.css?v=102">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=102">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -163,6 +163,16 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
     </div>
     <div class="calc-body">
 
+      <div class="section-divider">The Person Who Passed Away</div>
+      <div class="input-group">
+        <label for="marital">Were they married when they died?</label>
+        <select id="marital" onchange="recalc()">
+          <option value="single" selected>No, single or widowed</option>
+          <option value="community">Yes, bought during the marriage</option>
+          <option value="exclusive">Yes, but it was theirs alone</option>
+        </select>
+        <div class="input-hint">Half of what a married couple owns together already belongs to the surviving spouse, so only the other half is taxed. "Theirs alone" means inherited or donated to them, or owned before a marriage that took place before 3 August 1988.</div>
+      </div>
       <div class="section-divider">Property &amp; Assets</div>
       <div class="input-group">
         <label for="propVal">Total Property Value (₱)</label>
@@ -181,7 +191,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
           <option value="yes">Yes — the decedent's family home</option>
           <option value="no" selected>No / not applicable</option>
         </select>
-        <div class="input-hint">The family home is deductible up to ₱10,000,000.</div>
+        <div class="input-hint">The family home is deductible up to ₱10,000,000. If the couple owned it together, only half its value counts.</div>
       </div>
       <div class="input-group">
         <label for="debts">Outstanding Debts &amp; Claims (₱)</label>
@@ -216,6 +226,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
         <div class="breakdown-row"><span class="k">Less: Standard deduction</span><span class="v minus" id="rStd">−₱5,000,000</span></div>
         <div class="breakdown-row"><span class="k">Less: Family home</span><span class="v minus" id="rFam">₱0</span></div>
         <div class="breakdown-row"><span class="k">Less: Debts &amp; claims</span><span class="v minus" id="rDebts">₱0</span></div>
+        <div class="breakdown-row" id="rowSpouse" style="display:none"><span class="k">Less: Surviving spouse's half</span><span class="v minus" id="rSpouse">₱0</span></div>
         <div class="breakdown-row"><span class="k">Net taxable estate</span><span class="v" id="rNet">₱0</span></div>
         <div class="breakdown-row total"><span class="k">Estate tax @ 6%</span><span class="v" id="rTax">₱0</span></div>
       </div>
@@ -314,7 +325,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=101"></script>
+<script src="/js/main.js?v=102"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -341,10 +352,22 @@ function recalc(){
   const debts = getRaw('debts');
   const heirs = Math.max(1, parseInt(document.getElementById('heirs').value) || 1);
 
+  // NIRC Sec. 86 as amended by TRAIN, and RR 12-2018. When the property is
+  // the couple's (absolute community or conjugal partnership), the whole of
+  // it goes into the gross estate, but the surviving spouse's half of it, net
+  // of the debts it carries, is taken out before the 6% is applied. A shared
+  // family home counts at half its value for the ₱10M deduction. Ignoring
+  // this taxed the widow on her own half: a ₱16M conjugal condo came out at
+  // ₱660,000 instead of ₱180,000.
+  const shared = document.getElementById('marital').value === 'community';
+
   const gross = propVal + other;
-  const famDeduction = isFamHome ? Math.min(propVal, FAM_HOME_CAP) : 0;
-  const net = Math.max(0, gross - STD_DEDUCTION - famDeduction - debts);
+  const famDeduction = isFamHome ? Math.min(shared ? propVal / 2 : propVal, FAM_HOME_CAP) : 0;
+  const spouseShare = shared ? Math.max(0, gross - debts) / 2 : 0;
+  const net = Math.max(0, gross - STD_DEDUCTION - famDeduction - debts - spouseShare);
   const estateTax = net * 0.06;
+  // What the heirs actually inherit: the deceased's own share, never the spouse's.
+  const inherited = Math.max(0, gross - debts - spouseShare);
 
   // Transfer & processing estimates (rough, based on property value)
   const regFee = propVal * 0.0025 + 5000;   // Registry of Deeds registration (~0.25% + fixed)
@@ -358,6 +381,8 @@ function recalc(){
   document.getElementById('rStd').textContent = '−' + fmtPeso(STD_DEDUCTION);
   document.getElementById('rFam').textContent = '−' + fmtPeso(famDeduction);
   document.getElementById('rDebts').textContent = '−' + fmtPeso(debts);
+  document.getElementById('rowSpouse').style.display = shared ? '' : 'none';
+  document.getElementById('rSpouse').textContent = '−' + fmtPeso(spouseShare);
   document.getElementById('rNet').textContent = fmtPeso(net);
   document.getElementById('rTax').textContent = fmtPeso(estateTax);
 
@@ -369,14 +394,14 @@ function recalc(){
   document.getElementById('tTotal').textContent = fmtPeso(transferTotal);
 
   document.getElementById('mTotal').textContent = fmtPeso(transferTotal);
-  document.getElementById('mShare').textContent = fmtPeso(Math.max(0, (gross - debts)) / heirs);
+  document.getElementById('mShare').textContent = fmtPeso(inherited / heirs);
 }
 
 document.addEventListener('DOMContentLoaded', recalc);
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker/BIR.</div>
-<script src="/js/brutalist-shell.js?v=101" defer></script>
-<script src="/js/a11y.js?v=101" defer></script>
-<script src="/js/chat.js?v=101" defer></script>
+<script src="/js/brutalist-shell.js?v=102" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/chat.js?v=102" defer></script>
 </body>
 </html>

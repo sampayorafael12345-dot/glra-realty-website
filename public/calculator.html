@@ -36,8 +36,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=101">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=101">
+<link rel="stylesheet" href="/css/styles.css?v=102">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=102">
 <style>
 :root{--orange:#ff3d00;--orange-dark:#a8894e;--orange-light:rgba(255,61,0,0.12)}
 /* ── PAGE-SPECIFIC ── */
@@ -549,7 +549,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=101"></script>
+<script src="/js/main.js?v=102"></script>
 <script>
 function goHome(){location.href='/';}
 
@@ -938,10 +938,15 @@ function calculateRegistrationFee(price) {
   return baseFee + lrf + itFee;
 }
 
+// Each tier's rate applies to the whole price, so without a floor the fee fell
+// off a cliff at every boundary: P2,000,000 came to P20,000 but P2,100,000 to
+// P10,500, and P10,000,000 to P50,000 but P10,100,000 to P25,250. The floor is
+// the top of the tier below, so the fee never goes down as the price goes up
+// and every figure that was already above it is unchanged.
 function calculateNotarialFee(price) {
   if (price <= 2000000) return price * 0.01;
-  if (price <= 10000000) return price * 0.005;
-  return price * 0.0025;
+  if (price <= 10000000) return Math.max(20000, price * 0.005);
+  return Math.max(50000, price * 0.0025);
 }
 
 // ============ PDF DOWNLOAD ============
@@ -1006,8 +1011,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=101" defer></script>
-<script src="/js/a11y.js?v=101" defer></script>
-<script src="/js/chat.js?v=101" defer></script>
+<script src="/js/brutalist-shell.js?v=102" defer></script>
+<script src="/js/a11y.js?v=102" defer></script>
+<script src="/js/chat.js?v=102" defer></script>
 </body>
 </html>
