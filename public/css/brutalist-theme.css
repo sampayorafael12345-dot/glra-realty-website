@@ -1935,3 +1935,37 @@ html body .doc-table thead,html body .doc-table th{--ab-hot-text:#ff3d00}
     display:inline-flex !important;align-items:center;justify-content:center;
   }
 }
+
+/* ── The active nav link was invisible in dark mode ─────────────────────────
+   `.nav-links a.active` sets `background:var(--ab-ink); color:var(--ab-paper)`
+   — an ink pill with cream text, which is right in light mode. In dark mode
+   those two tokens swap, so the pill turns cream; and the later, more specific
+   `html body.dark-mode .nav-links a{color:var(--ab-ink)}` then paints the text
+   cream as well. Cream on cream: the link for the page you are on disappears
+   from the navbar on every page.
+
+   Same root cause as the six invisible headings: --ab-ink and --ab-paper are
+   not "dark" and "light", they are "foreground" and "background", and they
+   trade places between modes. */
+html body.dark-mode .nav-links a:hover,
+html body.dark-mode .nav-links a.active,
+html body.dark-mode .nav-links a.gl-active,
+html body.dark-mode .nav-links > a.gl-active:not(.contact-btn-nav){
+  background:var(--ab-ink) !important;
+  color:var(--ab-paper) !important;
+}
+html body.dark-mode .nav-links a:hover *,
+html body.dark-mode .nav-links a.active *,
+html body.dark-mode .nav-links a.gl-active *{color:var(--ab-paper) !important}
+
+/* The toast is a floating slab over whatever is behind it, so it is pinned to
+   ink-and-cream in BOTH modes rather than taking the swapping tokens. On
+   index.html, which does not load brutalist-theme.css, --ab-ink resolved to
+   nothing at all: the background fell through to styles.css's --navy while the
+   text stayed near-black, and the "Failed to load properties" message -- the
+   one that has to be readable when something is wrong -- came out at 1.1:1. */
+html body .toast,html body.dark-mode .toast{
+  background:#0a0a0a !important;color:#f1eee9 !important;
+  border-left:4px solid #ff3d00 !important;
+}
+html body .toast.err,html body.dark-mode .toast.err{border-left-color:#ef4444 !important}

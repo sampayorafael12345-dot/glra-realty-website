@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=99">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=99">
+<link rel="stylesheet" href="/css/styles.css?v=100">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=100">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -612,7 +612,7 @@ body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=99"></script>
+<script src="/js/main.js?v=100"></script>
 <script>
 /* ---- LAZY LOADING TRIGGER ---- */
 window.addEventListener('load',()=>{initLazyLoading();});
@@ -1162,12 +1162,28 @@ function renderProperties(properties){const c=document.getElementById('property-
    card used to print `${prop.sqm} sqm` unconditionally, so twelve live listings
    -- including a 1,976 sqm commercial lot and two multi-hectare farm lots --
    advertised themselves as "0 sqm". */
+/* Types that have no lot of their own: a unit inside a building. For these,
+   a land area can only be the floor area in the wrong box, so it is shown
+   without the word "lot" rather than labelled wrongly. */
+/* The stored description is a Facebook post. description.js strips the emoji,
+   the broker's contact block, the markdown mail link and the hashtags. If that
+   script somehow did not load, fall back to the raw text rather than showing
+   an empty description. */
+function glraDesc(raw){
+  return (typeof window.glraCleanDescription === 'function')
+    ? window.glraCleanDescription(raw)
+    : String(raw == null ? '' : raw);
+}
+function glraHasNoLot(p){
+  return /^(condominium|apartment|office|commercial space|studio)/i.test(
+    String((p && p.propertyType) || '').trim());
+}
 function glraAreaLabel(p){
   var f = Number(p && p.sqm) || 0, l = Number(p && p.landArea) || 0;
   var fs = f.toLocaleString('en-US'), ls = l.toLocaleString('en-US');
-  if (f && l) return fs + ' sqm floor / ' + ls + ' sqm lot';
+  if (f && l) return glraHasNoLot(p) ? fs + ' sqm' : fs + ' sqm floor / ' + ls + ' sqm lot';
   if (f) return fs + ' sqm';
-  if (l) return ls + ' sqm lot';
+  if (l) return glraHasNoLot(p) ? ls + ' sqm' : ls + ' sqm lot';
   return '';
 }
 /* Price per sqm divides by the floor area when there is one and by the lot
@@ -1188,7 +1204,7 @@ if(isSale&&pp>0){
 const sims=similarProps(prop,3);
 const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${escapeHtml(s.title)} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${s.mainImage||''}" alt="${escapeHtml(s.title)}" loading="lazy"><div class="sim-info"><h5>${escapeHtml(s.title)}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
 document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${galleryImages[0]||''}" alt="${escapeHtml(prop.title)}" loading="lazy" decoding="async"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs"><span class="modal-spec"><i class="fas fa-bed"></i> ${prop.bedrooms} Bedrooms</span><span class="modal-spec"><i class="fas fa-bath"></i> ${prop.bathrooms} Bathrooms</span>${glraAreaLabel(prop)?`<span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(prop.propertyType||'Property')}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&glraAreaBasis(prop)>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/glraAreaBasis(prop)))} / sqm</span>`:''}</div>${isSale?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--ab-hot-text,#c02e00)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11% - Pag-IBIG</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
-${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(prop.description||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
+${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(glraDesc(prop.description)||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/#contact-form'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale)calcMortgage(pp);}
 function calcMortgage(price){const dp=parseFloat(document.getElementById('dpSlider')?.value)||20;const term=parseFloat(document.getElementById('loanTerm')?.value)||20;const rate=parseFloat(document.getElementById('intRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageAmt');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:16px">/mo</span>`;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=dp+'%';}
 function updateDP(val,price){const el=document.getElementById('dpSlider');if(el)el.value=val;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=val+'%';calcMortgage(price);}
 function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i));}}
@@ -1212,8 +1228,9 @@ document.addEventListener('keydown', e => {
 });
 loadProperties();
 </script>
-<script src="/js/brutalist-shell.js?v=99" defer></script>
-<script src="/js/a11y.js?v=99" defer></script>
-<script src="/js/chat.js?v=99" defer></script>
+<script src="/js/brutalist-shell.js?v=100" defer></script>
+<script src="/js/description.js?v=100" defer></script>
+<script src="/js/a11y.js?v=100" defer></script>
+<script src="/js/chat.js?v=100" defer></script>
 </body>
 </html>

@@ -2,6 +2,10 @@
 require('dotenv').config();
 
 const express = require('express');
+// Shared with the browser: public/js/description.js is also loaded by the
+// modals on properties.html and index.html, so a listing's description reads
+// identically wherever it is shown.
+const glraCleanDescription = require('./public/js/description.js');
 const crypto = require('crypto');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -1108,7 +1112,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=99" defer></script>
+<script src="/js/a11y.js?v=100" defer></script>
 </body>
 </html>`;
 }
@@ -1147,14 +1151,16 @@ function buildPropertyPageHtml(p, related) {
     : rawImg);
   const heroImg = absUrl(optimizeCloudinary(rawImg)); // optimized (WebP/AVIF) for fast on-page display
   const canonical = `${SITE_URL}/property/${id}`;
-  const descBase = String(p.description || '').replace(/\s+/g, ' ').trim();
+  // Cleaned first: Google was being handed the emoji and hashtags as the
+  // search snippet for every listing.
+  const descBase = glraCleanDescription(p.description).replace(/\s+/g, ' ').trim();
   const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
-  // Display version of the description: keep original line breaks AND put each
-  // emoji-bulleted feature on its own line so long listings read as a tidy list.
-  const descDisplay = String(p.description || '').trim()
-    .replace(/[ \t]*(🔹|🔸|◆|●|•)[ \t]*/gu, '\n$1 ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // Descriptions are written as Facebook posts and imported as typed, so they
+  // arrive with emoji on every line, the broker's own contact block, a markdown
+  // mail link that renders as raw text, and a tail of hashtags. Cleaned at
+  // render time rather than in the database, so the next import cannot bring it
+  // back — which is what kept happening.
+  const descDisplay = glraCleanDescription(p.description);
   const gallery = (p.gallery || []).filter(Boolean);
 
   // Which area page, if any, this listing belongs under. Needed by both the
@@ -1183,7 +1189,12 @@ function buildPropertyPageHtml(p, related) {
   };
   if (p.sqm) residence.floorSize = { '@type': 'QuantitativeValue', value: Number(p.sqm), unitCode: 'MTK' };
   // A lot listing has no floor size, so without this Google sees no area at all.
-  if (p.landArea) residence.lotSize = { '@type': 'QuantitativeValue', value: Number(p.landArea), unitCode: 'MTK' };
+  if (p.landArea) {
+    var _noLot = /^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim());
+    var _area = { '@type': 'QuantitativeValue', value: Number(p.landArea), unitCode: 'MTK' };
+    if (_noLot) { if (!residence.floorSize) residence.floorSize = _area; }
+    else residence.lotSize = _area;
+  }
   if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
   if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
   if (galleryAbs.length || ogImg) residence.photo = galleryAbs.length ? galleryAbs : [ogImg];
@@ -1277,7 +1288,11 @@ function buildPropertyPageHtml(p, related) {
     .concat(p.sqm ? [['Floor area', p.sqm + ' sqm']] : [])
     // A vacant lot, a farm or a house-and-lot: the lot is the material number,
     // and for the lots it is the only one there is.
-    .concat(p.landArea ? [['Lot area', Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
+    // A condominium unit, an apartment, an office or a commercial space inside
+    // a building has no lot. Where one of those carries a land area it is the
+    // floor area in the wrong box, so it is labelled plainly rather than wrongly.
+    .concat(p.landArea ? [[/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) ? 'Floor area' : 'Lot area',
+                           Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
     .concat(p.parking ? [['Parking', p.parking]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
   const thumbsHtml = gallery.length
@@ -1449,7 +1464,7 @@ async function pgSubmit(e){
 }
 </script>
 <script src="/js/main.js"></script>
-<script src="/js/a11y.js?v=99" defer></script>
+<script src="/js/a11y.js?v=100" defer></script>
 </body>
 </html>`;
 }
