@@ -572,7 +572,7 @@ SITE MAP & SERVICES (route the user to the right page):
 
 CALCULATORS & TOOLS:
 - /affordability.html → "How much can I afford?" (income → max price)
-- /amortization.html  → Monthly mortgage payment + amortization schedule
+- /amortization.html  → Monthly mortgage payment + amortization schedule + Pag-IBIG vs bank loan comparison (section /amortization.html#compare)
 - /calculator.html    → Closing fees / total cash to close (CGT 6%, DST 1.5%, transfer, registration, BIR FMV using Sec 6E NIRC)
 - /cost-of-ownership.html → Recurring annual costs (assoc dues, RPT, insurance)
 - /rental-yield.html  → Gross & net rental yield calculator

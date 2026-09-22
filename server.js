@@ -302,6 +302,17 @@ app.use((err, req, res, next) => {
 // Strip MongoDB operator keys ($ne, $gt, etc.) from req.body, req.query, req.params
 app.use(mongoSanitize());
 
+// ── RETIRED PAGES ───────────────────────────────────────────
+// Permanent (301) redirects for pages that were merged into another page, so
+// old links, bookmarks and Google's index carry over to the new home. These
+// must sit BEFORE express.static and the page-view counter below: the counter
+// would otherwise log the dead URL as a view and then the destination again.
+// Sept 2026: the Pag-IBIG vs Bank comparison became the #compare section of
+// amortization.html (the old file is kept outside public/ in _removed-pages).
+app.get(['/loan-comparison.html', '/loan-comparison'], (req, res) => {
+  res.redirect(301, '/amortization.html#compare');
+});
+
 // ── SITE TRAFFIC COUNTER ────────────────────────────────────
 // Counts real public HTML page views (not assets, not /api, not the /admin
 // dashboard) into a per-day tally the admin dashboard reads back. Runs BEFORE
@@ -1151,7 +1162,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=103" defer></script>
+<script src="/js/a11y.js?v=104" defer></script>
 </body>
 </html>`;
 }
@@ -1560,8 +1571,8 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=103"></script>
-<script src="/js/a11y.js?v=103" defer></script>
+<script src="/js/main.js?v=104"></script>
+<script src="/js/a11y.js?v=104" defer></script>
 </body>
 </html>`;
 }
@@ -1661,7 +1672,7 @@ async function buildSitemap(req, res) {
       ['/tools.html', 'monthly', '0.8'], ['/valuation.html', 'monthly', '0.8'],
       ['/calculator.html', 'monthly', '0.6'], ['/affordability.html', 'monthly', '0.6'],
       ['/amortization.html', 'monthly', '0.6'], ['/rental-yield.html', 'monthly', '0.6'],
-      ['/rent-vs-buy.html', 'monthly', '0.6'], ['/loan-comparison.html', 'monthly', '0.6'],
+      ['/rent-vs-buy.html', 'monthly', '0.6'],
       ['/estate-tax.html', 'monthly', '0.6'], ['/savings-goal.html', 'monthly', '0.6'],
       ['/zonal.html', 'monthly', '0.6'], ['/ercf.html', 'monthly', '0.6'],
       ['/cost-of-ownership.html', 'monthly', '0.6'], ['/guide.html', 'monthly', '0.6'],

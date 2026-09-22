@@ -284,7 +284,7 @@ function glraCollectReport() {
   out.title = (hd ? hd.textContent : (document.title || 'Report')).trim();
 
   // Inputs — the user's entries (all calculators wrap fields in .input-group;
-  // the loan-comparison panels use .field)
+  // the Pag-IBIG vs bank panels on amortization.html use .field)
   document.querySelectorAll('.input-group, .loan-panel .field').forEach(function (g) {
     if (g.offsetParent === null) return; // skip fields hidden by the page (inactive modes, N/A fields)
     const labelEl = g.querySelector('label');
@@ -560,12 +560,11 @@ window.glraOpenPrintGate = function (label, collectFn) {
   // the admin reads the same words the visitor saw.
   var TOOLS = {
     'affordability.html':     ['affordability',     'Affordability Calculator'],
-    'amortization.html':      ['amortization',      'Amortization Schedule'],
+    'amortization.html':      ['amortization',      'Home Loan Calculator'],
     'calculator.html':        ['closing-fees',      'Sales Closing Fees Calculator'],
     'cost-of-ownership.html': ['cost-of-ownership', 'Cost of Ownership Calculator'],
     'ercf.html':              ['ercf',              'Registration Fee Calculator'],
     'estate-tax.html':        ['estate-tax',        'Estate Tax Estimate'],
-    'loan-comparison.html':   ['loan-comparison',   'Pag-IBIG vs Bank Loan'],
     'rent-vs-buy.html':       ['rent-vs-buy',       'Rent vs Buy'],
     'rental-yield.html':      ['rental-yield',      'Rental Yield Calculator'],
     'savings-goal.html':      ['savings-goal',      'Down Payment Savings Plan'],
