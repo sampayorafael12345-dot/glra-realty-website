@@ -171,5 +171,10 @@
         });
       } catch(e){}
     }
+
+    // 4) The dark-mode toggle lives in the nav and at the top of the mobile
+    //    menu (main.js builds both). Rebuilding the two above wiped the copies
+    //    main.js had already put there, so ask for them again.
+    if(typeof window.glraMountThemeToggles === 'function') window.glraMountThemeToggles();
   });
 })();

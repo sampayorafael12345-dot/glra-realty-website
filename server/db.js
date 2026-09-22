@@ -39,7 +39,28 @@ const propertySchema = new mongoose.Schema({
   previousPrice: { type: Number, default: 0 },
   priceUpdatedAt: { type: Date, default: null },
   // How many times the public detail view was opened (browsing signal for the admin).
-  views: { type: Number, default: 0 }
+  views: { type: Number, default: 0 },
+  // SYSTEM fields, written only by the location worker in server.js (never by
+  // a form: stripPrivilegedPropertyFields drops them from every admin write).
+  // geo: where OpenStreetMap's Nominatim puts this listing's location text.
+  //   q is the exact text that was looked up, so a changed address is noticed;
+  //   rank is Nominatim's place_rank (16 = a whole city, 26+ = a street), used
+  //   to keep "what's nearby" off listings only known to the nearest city.
+  geo: {
+    lat: { type: Number },
+    lng: { type: Number },
+    q: { type: String },
+    status: { type: String },   // 'ok' | 'none' | 'error'
+    rank: { type: Number },
+    tries: { type: Number },
+    at: { type: Date }
+  },
+  // Closest train stations, malls, hospitals and schools (OpenStreetMap via
+  // Overpass), up to three of each, straight-line metres from geo.
+  nearby: {
+    at: { type: Date },
+    items: [{ _id: false, cat: String, name: String, dist: Number }]
+  }
 });
 
 // Every public page load runs find({status:'available'}).sort({createdAt:-1}) —

@@ -17,53 +17,21 @@
   // High-specificity selectors + !important required to beat the brutalist-theme.css
   // global "button { ... !important }" rule on inner pages.
   var css = `
-button.glra-chat-fab{
-  position:fixed !important;left:14px !important;bottom:74px !important;z-index:1100 !important;
-  width:58px !important;height:58px !important;
-  border:2px solid #0a0a0a !important;border-radius:0 !important;cursor:pointer !important;
-  background:#ff3d00 !important;color:#fff !important;
-  font-size:22px !important;letter-spacing:0 !important;text-transform:none !important;
-  padding:0 !important;box-sizing:border-box !important;
-  display:flex !important;align-items:center !important;justify-content:center !important;
-  box-shadow:4px 4px 0 #0a0a0a !important;
-  transition:transform .15s,background .15s,box-shadow .15s !important;
-  font-family:'Inter','Segoe UI',sans-serif !important;
-}
-button.glra-chat-fab:hover{
-  background:#0a0a0a !important;color:#fff !important;
-  transform:translate(-2px,-2px) !important;
-  box-shadow:6px 6px 0 #ff3d00 !important;
-}
-/* In dark mode the black border + black shadow disappear against the dark page —
-   swap to cream border + orange shadow so the inquiry button reads as a solid edge. */
-body.dark-mode button.glra-chat-fab{
-  border-color:#f1eee9 !important;
-  box-shadow:4px 4px 0 #ff3d00 !important;
-}
-body.dark-mode button.glra-chat-fab:hover{
-  box-shadow:6px 6px 0 #f1eee9 !important;
-}
-button.glra-chat-fab svg{width:30px;height:30px;display:block;pointer-events:none}
-button.glra-chat-fab .glra-chat-pulse{
-  position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:#fff;
-  border:1px solid #0a0a0a;animation:glraChatPulse 1.5s infinite;
-}
+/* No launcher of its own any more: the site-wide contact button that main.js
+   builds has an "Ask our assistant" row, which calls window.glraOpenChat(). */
 @keyframes glraChatPulse{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:768px){
-  button.glra-chat-fab{left:14px !important;bottom:68px !important;width:52px !important;height:52px !important}
-  button.glra-chat-fab svg{width:26px;height:26px}
-}
 
 .glra-chat-panel{
-  position:fixed;left:14px;bottom:84px;width:430px;max-width:calc(100vw - 28px);
+  position:fixed;right:18px;left:auto;bottom:calc(var(--glra-dock,0px) + 18px);width:430px;max-width:calc(100vw - 36px);
   height:640px;max-height:calc(100vh - 110px);
   background:#f1eee9;color:#0a0a0a;border:2px solid #0a0a0a;
   z-index:1101;display:none;flex-direction:column;
   font-family:'Inter','Segoe UI',sans-serif;
   box-shadow:8px 8px 0 #0a0a0a;
 }
-.glra-chat-panel.open{display:flex;animation:glraChatIn .18s ease}
+.glra-chat-panel.open{display:flex;animation:glraChatIn .22s cubic-bezier(.2,.7,.2,1)}
 @keyframes glraChatIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.glra-chat-panel.open{animation:none}}
 @media(max-width:560px){
   .glra-chat-panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none;height:88vh;max-height:none}
 }
@@ -263,7 +231,9 @@ button.glra-chat-send{
 button.glra-chat-send:hover:not(:disabled){background:#ff3d00 !important}
 button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !important}
 
-@media print{button.glra-chat-fab,.glra-chat-panel{display:none !important}}
+button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:-3px !important}
+.glra-contact-bar a i{font-size:12px}
+@media print{.glra-chat-panel{display:none !important}}
 `;
   var styleEl = document.createElement('style');
   styleEl.textContent = css;
@@ -289,31 +259,21 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(t.slice(-MAX_PERSISTED_TURNS))); } catch (e) {}
   }
 
-  // ── 3. SVG bot icon ───────────────────────────────────────────
-  var BOT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">'
-    + '<rect x="4" y="7" width="16" height="12" rx="0"/>'
-    + '<line x1="12" y1="3" x2="12" y2="7"/>'
-    + '<circle cx="12" cy="2.5" r="1" fill="currentColor"/>'
-    + '<circle cx="9" cy="12" r="1.5" fill="currentColor"/>'
-    + '<circle cx="15" cy="12" r="1.5" fill="currentColor"/>'
-    + '<line x1="9" y1="16" x2="15" y2="16"/>'
-    + '<line x1="2" y1="13" x2="4" y2="13"/>'
-    + '<line x1="20" y1="13" x2="22" y2="13"/>'
-    + '</svg>';
-
   function ready(fn) {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
     else fn();
   }
 
+  // Public API. Defined immediately (before the panel exists) so main.js can
+  // tell that the assistant is on this page; calls made before the DOM is
+  // ready are simply run once it is.
+  //   window.glraOpenChat({ returnFocus: el })  - focus goes back to el on close
+  //   window.glraCloseChat()
+  var api = { open: null, close: null };
+  window.glraOpenChat = function (opts) { ready(function () { if (api.open) api.open(opts); }); };
+  window.glraCloseChat = function () { if (api.close) api.close(); };
+
   ready(function () {
-    // Build the FAB
-    var fab = document.createElement('button');
-    fab.type = 'button';
-    fab.className = 'glra-chat-fab';
-    fab.setAttribute('aria-label', 'Open chat with GLRA assistant');
-    fab.innerHTML = '<span class="glra-chat-pulse"></span>' + BOT_SVG;
-    document.body.appendChild(fab);
 
     // Build the panel
     var panel = document.createElement('div');
@@ -332,9 +292,9 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
         '</div>' +
       '</div>' +
       '<div class="glra-contact-bar">' +
-        '<a href="https://m.me/glrarealty" target="_blank" rel="noopener" title="Messenger">💬 Messenger</a>' +
-        '<a href="https://wa.me/639171774572" target="_blank" rel="noopener" title="WhatsApp">📱 WhatsApp</a>' +
-        '<a href="tel:+639171774572" title="Call">📞 Call</a>' +
+        '<a href="https://m.me/glrarealty" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger" aria-hidden="true"></i> Messenger</a>' +
+        '<a href="https://wa.me/639171774572" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>' +
+        '<a href="tel:+639171774572"><i class="fas fa-phone-alt" aria-hidden="true"></i> Call</a>' +
       '</div>' +
       '<div class="glra-chat-body" id="glraChatBody"></div>' +
       '<div class="glra-chat-suggest" id="glraChatSuggest"></div>' +
@@ -495,16 +455,19 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     function greet() {
       var greet = {
         role: 'assistant',
-        text: "Kumusta! I'm Catherine's AI assistant for **GLRA Realty**.\n\nAsk me about properties, closing costs, or the buying process. Try things like *\"3BR condo in Makati under 30M\"* — I'll surface real listings and link you to a filtered search.",
+        text: "Kumusta! I'm Catherine's AI assistant for **GLRA Realty**.\n\nAsk me about properties, closing costs, or the buying process. Try things like *\"3BR condo in Makati under 30M\"*. I'll surface real listings and link you to a filtered search.",
       };
       pushTurn(greet);
       renderSuggest(DEFAULT_SUGGESTIONS);
       try { sessionStorage.setItem(GREETED_KEY, '1'); } catch (e) {}
     }
 
-    function open() {
+    var returnFocus = null;
+    function open(opts) {
+      if (opts && opts.returnFocus) returnFocus = opts.returnFocus;
       panel.classList.add('open');
-      fab.style.display = 'none';
+      // main.js hides the contact button (and back-to-top) while this is up.
+      document.documentElement.classList.add('glra-chat-open');
       try { sessionStorage.setItem(OPEN_KEY, '1'); } catch (e) {}
       if (turns.length === 0) {
         if (sessionStorage.getItem(GREETED_KEY) !== '1') greet();
@@ -519,9 +482,15 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     }
     function close() {
       panel.classList.remove('open');
-      fab.style.display = 'flex';
+      document.documentElement.classList.remove('glra-chat-open');
       try { sessionStorage.setItem(OPEN_KEY, '0'); } catch (e) {}
+      // Back to whatever opened it; failing that, the contact button.
+      var back = (returnFocus && document.contains(returnFocus)) ? returnFocus : document.getElementById('glraContactFab');
+      returnFocus = null;
+      if (back && panel.contains(document.activeElement)) back.focus();
     }
+    api.open = open;
+    api.close = close;
     function clearConversation() {
       turns = [];
       saveTurns(turns);
@@ -530,7 +499,6 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
       greet();
     }
 
-    fab.addEventListener('click', open);
     closeBtn.addEventListener('click', close);
     clearBtn.addEventListener('click', clearConversation);
     document.addEventListener('keydown', function (e) {
@@ -538,7 +506,7 @@ button.glra-chat-send:disabled{opacity:.5 !important;cursor:not-allowed !importa
     });
 
     try {
-      if (sessionStorage.getItem(OPEN_KEY) === '1') setTimeout(open, 50);
+      if (sessionStorage.getItem(OPEN_KEY) === '1') setTimeout(function () { open(); }, 50);
     } catch (e) {}
 
     form.addEventListener('submit', async function (e) {

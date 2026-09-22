@@ -50,11 +50,28 @@ function syncDarkModePre() {
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkMode', isDark);
+  try { localStorage.setItem('darkMode', isDark); } catch (e) {}
   syncDarkModePre();
   const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
   if (btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
   syncLogos();
+  glraSyncThemeToggles();
+}
+
+// Every dark-mode control on the page (the nav icon, the mobile-menu row, and
+// the legacy floating button where one still exists) shows the same state.
+// The icon names the mode you would switch TO: a moon in light mode, a sun in
+// dark. aria-pressed carries the actual state for screen readers.
+function glraSyncThemeToggles() {
+  if (!document.body) return;
+  const isDark = document.body.classList.contains('dark-mode');
+  document.querySelectorAll('.glra-theme-toggle, .glra-theme-row').forEach(b => {
+    b.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    const i = b.querySelector('i');
+    if (i) i.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    const st = b.querySelector('.glra-theme-row-state');
+    if (st) st.textContent = isDark ? 'On' : 'Off';
+  });
 }
 
 // Migrate legacy '1'/'0' values written by an older inline script
@@ -72,6 +89,7 @@ if (localStorage.getItem('darkMode') === 'true') {
     const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
     if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
     syncLogos();
+    glraSyncThemeToggles();
   });
 } else {
   document.addEventListener('DOMContentLoaded', () => {
@@ -79,6 +97,7 @@ if (localStorage.getItem('darkMode') === 'true') {
     const btn = document.getElementById('floatingDarkModeToggle') || document.getElementById('dmBtn');
     if (btn) btn.innerHTML = '<i class="fas fa-moon"></i>';
     syncLogos();
+    glraSyncThemeToggles();
   });
 }
 
@@ -138,109 +157,839 @@ function showToast(message, isError = false) {
 })();
 
 // ── HTML escape helper (used by pages that render dynamic text) ──
+// Escapes quotes too: pages put the result inside attributes (alt="...", data-*).
 function escapeHtml(s) {
-  if (!s) return '';
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  if (s === null || s === undefined || s === '') return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// ── Back-to-top button visibility on scroll ──────────────
-window.addEventListener('scroll', () => {
-  const b = document.getElementById('backToTop');
-  if (b) b.classList[window.scrollY > 120 ? 'add' : 'remove']('show');
-});
-
-// ── Mobile FAB toggle for floating buttons ───────────────
-// On mobile, all the contact buttons (call, WhatsApp, Viber, etc.) are hidden by
-// default and a single FAB appears at the bottom. Tapping it reveals the rest
-// with a staggered animation. Desktop is unaffected (CSS @media handles that).
-//
-// JS-injected styles (!important) are needed because the inline <style> block
-// in index.html overrides the styles.css mobile-hide rule on specificity.
-(function setupFabToggle() {
-  // 1) Inject CSS so we always win on specificity & load order.
-  if (!document.getElementById('glraFabToggleStyle')) {
-    const css = `
-@media(max-width:768px){
-  .floating-buttons{position:fixed !important;bottom:18px !important;right:18px !important;gap:8px !important;z-index:1000 !important}
-  .floating-buttons > *{display:none !important}
-  .floating-buttons > .fab-toggle{display:flex !important}
-  .floating-buttons.expanded > *{display:flex !important;animation:glraFabIn .15s ease both}
-  .floating-buttons .fab-toggle{
-    width:48px !important;height:48px !important;font-size:18px !important;
-    box-sizing:border-box !important;padding:0 !important;
-    align-items:center !important;justify-content:center !important;
-    border:0 !important;border-radius:0 !important;cursor:pointer !important;
-    background:#ff3d00 !important;color:#fff !important;
-    box-shadow:3px 3px 0 #0a0a0a !important;
+/* TITLE-HELPER-START */
+// ── Display title: calm down an ALL-CAPS listing title ─────────────────────
+// "MONARCH PARKSUITES (PASAY CITY)" -> "Monarch Parksuites, Pasay City".
+// server.js implements the SAME spec for the /property/ pages, so the two
+// must stay in step: change one, change the other. Titles already written in
+// mixed case are returned as typed (after emoji and dash clean-up).
+// The \p{...} patterns are built with new RegExp inside a try, never as
+// literals: an older browser that cannot parse them would otherwise throw a
+// SyntaxError that takes the whole of main.js down with it.
+var glraDisplayTitle = (function () {
+  var RX = {};
+  try {
+    RX.pict = new RegExp('\\p{Extended_Pictographic}', 'gu');
+    RX.letter = new RegExp('\\p{L}', 'gu');
+    RX.upper = new RegExp('\\p{Lu}', 'gu');
+    RX.mc = new RegExp('^MC\\p{L}{2}', 'u');
+  } catch (e) {
+    RX.pict = /[☀-➿]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g;
+    RX.letter = /[A-Za-zÀ-ɏ]/g;
+    RX.upper = /[A-ZÀ-Þ]/g;
+    RX.mc = /^MC[A-Za-zÀ-ɏ]{2}/;
   }
-  .floating-buttons .fab-toggle.is-open{background:#0a0a0a !important;color:#fff !important;box-shadow:3px 3px 0 #ff3d00 !important}
-  .floating-buttons .fab-toggle i{pointer-events:none !important}
-}
-@keyframes glraFabIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}
-`;
-    const s = document.createElement('style');
-    s.id = 'glraFabToggleStyle';
-    s.textContent = css;
-    document.head.appendChild(s);
+  var KEEP = {};
+  ('BGC CBD SM SMDC DMCI RLC MRT LRT NCR QC UP BPI BDO RFO HOA LEED MOA BF ' +
+   'II III IV VI VII VIII IX XI XII').split(' ').forEach(function (k) { KEEP[k] = 1; });
+  var SMALL = {};
+  'a an and at by for in of on or the to along near with de del'.split(' ')
+    .forEach(function (k) { SMALL[k] = 1; });
+  var ABBR = { 'BRGY.': 'Brgy.', 'STA.': 'Sta.', 'STO.': 'Sto.', 'ST.': 'St.',
+               'AVE.': 'Ave.', 'BLVD': 'Blvd', 'BLVD.': 'Blvd.' };
+  var INITIALISM = /^([A-Z]\.){2,}$/;
+
+  function cap(p) { return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase(); }
+  function count(s, rx) { var m = s.match(rx); return m ? m.length : 0; }
+
+  function part(p, first) {
+    if (!p) return p;
+    var U = p.toUpperCase();
+    if (KEEP[U]) return U;
+    if (/^\d+BR$/.test(p)) return p;
+    if (U === 'SQM') return 'sqm';
+    if (RX.mc.test(U)) return 'Mc' + cap(p.slice(2));
+    if (SMALL[p.toLowerCase()] && !first) return p.toLowerCase();
+    return cap(p);
   }
 
-  function init() {
-    document.querySelectorAll('.floating-buttons').forEach(container => {
-      if (container.querySelector('.fab-toggle')) return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'floating-btn fab-toggle';
-      btn.setAttribute('aria-label', 'Open contact options');
-      btn.setAttribute('aria-expanded', 'false');
-      btn.innerHTML = '<i class="fas fa-comment-dots"></i>';
+  function word(w, first) {
+    var lead = (w.match(/^\(+/) || [''])[0];
+    var rest = w.slice(lead.length);
+    var trail = rest.match(/[,.)(]*$/)[0];
+    var core = rest.slice(0, rest.length - trail.length);
+    var dots = trail.match(/^\.*/)[0];
+    var after = trail.slice(dots.length);
+    var dotted = core + dots;
+    var out;
+    if (lead) first = true;
+    if (INITIALISM.test(dotted)) out = dotted;
+    else if (ABBR[dotted.toUpperCase()]) out = ABBR[dotted.toUpperCase()];
+    else if (core.toUpperCase() === 'PAG-IBIG') out = 'Pag-IBIG' + dots;
+    else {
+      out = core.split('-').map(function (p, i) { return part(p, first && i === 0); }).join('-') + dots;
+    }
+    return lead + out + after;
+  }
 
-      // Use a handler that stops propagation so the document "tap-outside-to-close"
-      // listener can't fire on the same click and immediately un-toggle.
-      const toggle = (e) => {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        const isOpen = container.classList.toggle('expanded');
-        btn.classList.toggle('is-open', isOpen);
-        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        btn.setAttribute('aria-label', isOpen ? 'Close contact options' : 'Open contact options');
-        btn.innerHTML = isOpen
-          ? '<i class="fas fa-times"></i>'
-          : '<i class="fas fa-comment-dots"></i>';
-      };
-      btn.addEventListener('click', toggle);
-      // iOS occasionally swallows the first click on dynamically-injected
-      // elements — touchend covers that path.
-      btn.addEventListener('touchend', (e) => {
-        // only act on a tap (no drag), and not on multi-touch
-        if (e.changedTouches && e.changedTouches.length === 1) toggle(e);
-      });
+  return function (raw) {
+    var s = String(raw || '');
+    s = s.replace(RX.pict, '').replace(/️/g, '');
+    s = s.replace(/ [—–-] /g, ' - ');
+    s = s.replace(/\s+/g, ' ').trim();
+    var letters = count(s, RX.letter);
+    if (!letters || count(s, RX.upper) / letters < 0.7) return s;
+    var words = s.split(' ');
+    var out = [];
+    for (var i = 0; i < words.length; i++) {
+      var prev = i > 0 ? words[i - 1] : null;
+      var first = i === 0 || prev === '-' || prev === '(';
+      out.push(word(words[i], first));
+    }
+    s = out.join(' ');
+    return s.replace(/ \(([^()]+)\)$/, ', $1');
+  };
+})();
+if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
+/* TITLE-HELPER-END */
 
-      container.appendChild(btn);
+/* SITE-SHELL-START */
+/* ============================================
+   SITE SHELL: one contact button, theme toggles in the nav, back-to-top,
+   image loading polish, view transitions.
+
+   The CSS for all of it is injected from here rather than kept in
+   styles.css, because the /property/ listing pages that server.js builds
+   load main.js but NOT styles.css or brutalist-theme.css. Keeping it here
+   is the only way one set of rules reaches all four stylesheet worlds
+   (index.html, the inner pages, and both server templates).
+
+   Every declaration that a page-level rule could fight carries !important
+   and an id or doubled selector: brutalist-theme.css styles every <button>
+   with !important, and index.html's inline sheet loads after this one.
+   Colours are literals on purpose: --ab-paper and --ab-ink swap between
+   light and dark mode, and the listing pages do not define them at all.
+   ============================================ */
+(function glraShellStyles() {
+  if (typeof document === 'undefined' || document.getElementById('glraShellStyle')) return;
+  var css = [
+    /* ── Contact button + panel ── */
+    '#glraContact{--gc-paper:#f1eee9;--gc-paper2:#e8e4dd;--gc-ink:#0a0a0a;--gc-line:#0a0a0a;--gc-gray:#5f5b55;--gc-hot-btn:#df3500;--gc-hot-text:#c02e00;--gc-shadow:#0a0a0a;--gc-fab-shadow:#0a0a0a;',
+    '  position:fixed;right:18px;bottom:calc(var(--glra-dock,0px) + 18px);z-index:1000;font-family:"Inter","Segoe UI",system-ui,sans-serif;line-height:1.3}',
+    'body.dark-mode #glraContact{--gc-paper:#0e0e0c;--gc-paper2:#1a1a17;--gc-ink:#f1eee9;--gc-line:#3a3a36;--gc-gray:#9a9082;--gc-hot-text:#ff3d00;--gc-shadow:#ff3d00;--gc-fab-shadow:rgba(241,238,233,.85)}',
+    'html.glra-chat-open #glraContact,html.glra-pgbar-on #glraContact{display:none !important}',
+    '#glraContact *{box-sizing:border-box}',
+    /* the FAB */
+    '#glraContact #glraContactFab{display:inline-flex !important;align-items:center !important;justify-content:center !important;gap:10px !important;',
+    '  height:52px !important;min-width:52px !important;width:auto !important;padding:0 18px 0 16px !important;margin:0 !important;',
+    '  background:var(--gc-hot-btn) !important;color:#fff !important;border:2px solid #0a0a0a !important;border-radius:0 !important;',
+    '  box-shadow:4px 4px 0 var(--gc-fab-shadow) !important;cursor:pointer !important;text-decoration:none !important;',
+    '  font-family:"JetBrains Mono",ui-monospace,monospace !important;font-size:11px !important;font-weight:700 !important;letter-spacing:2px !important;text-transform:uppercase !important;line-height:1 !important;',
+    '  transform:none;transition:transform 170ms cubic-bezier(.23,1,.32,1),box-shadow 170ms cubic-bezier(.23,1,.32,1),background-color 170ms ease !important;',
+    '  touch-action:manipulation;-webkit-tap-highlight-color:transparent;view-transition-name:glra-contact}',
+    '#glraContact #glraContactFab i{font-size:16px !important;width:18px;text-align:center;pointer-events:none}',
+    '#glraContact #glraContactFab .glra-contact-fab-lbl{pointer-events:none}',
+    '#glraContact.is-open #glraContactFab{background:#0a0a0a !important;color:#fff !important}',
+    'body.dark-mode #glraContact.is-open #glraContactFab{background:#f1eee9 !important;color:#0a0a0a !important;box-shadow:4px 4px 0 #ff3d00 !important}',
+    '@media (hover:hover) and (pointer:fine){',
+    '  #glraContact #glraContactFab:hover{transform:translate3d(-2px,-2px,0) !important;box-shadow:6px 6px 0 var(--gc-fab-shadow) !important}',
+    '}',
+    '#glraContact #glraContactFab:active{transform:translate3d(2px,2px,0) !important;box-shadow:1px 1px 0 var(--gc-fab-shadow) !important}',
+    '#glraContact #glraContactFab:focus-visible,#glraContact .glra-contact-row:focus-visible,#glraContact .glra-contact-close:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:3px !important}',
+    /* the panel (desktop: popover above the button) */
+    '#glraContact .glra-contact-panel{position:absolute;right:0;bottom:calc(100% + 14px);width:330px;max-width:calc(100vw - 36px);max-height:calc(100vh - 150px);overflow:auto;',
+    '  background:var(--gc-paper);color:var(--gc-ink);border:2px solid var(--gc-line);box-shadow:6px 6px 0 var(--gc-shadow);',
+    '  opacity:0;transform:translate3d(0,8px,0);transform-origin:100% 100%;transition:opacity 200ms cubic-bezier(.2,.7,.2,1),transform 200ms cubic-bezier(.2,.7,.2,1);overscroll-behavior:contain}',
+    'body.dark-mode #glraContact .glra-contact-panel{border-color:#3a3a36}',
+    '#glraContact .glra-contact-panel[hidden]{display:none !important}',
+    '#glraContact.is-open .glra-contact-panel{opacity:1;transform:none}',
+    '#glraContact .glra-contact-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 12px;border-bottom:2px solid var(--gc-line)}',
+    '#glraContact .glra-contact-eyebrow{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gc-hot-text);margin-bottom:5px}',
+    '#glraContact .glra-contact-title{font-family:"Inter","Segoe UI",sans-serif;font-size:19px;font-weight:900;letter-spacing:-.5px;text-transform:uppercase;line-height:1;color:var(--gc-ink)}',
+    '#glraContact .glra-contact-sub{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--gc-gray);margin-top:6px}',
+    '#glraContact .glra-contact-close{display:none !important;flex:0 0 44px !important;width:44px !important;height:44px !important;min-height:44px !important;padding:0 !important;margin:-6px -8px 0 0 !important;',
+    '  align-items:center !important;justify-content:center !important;background:transparent !important;color:var(--gc-ink) !important;border:2px solid var(--gc-line) !important;',
+    '  box-shadow:none !important;font-size:16px !important;letter-spacing:0 !important;cursor:pointer !important;transform:none !important}',
+    '#glraContact .glra-contact-list{display:flex;flex-direction:column}',
+    '#glraContact .glra-contact-row{display:flex !important;align-items:center !important;gap:12px !important;width:100% !important;min-height:52px !important;height:auto !important;',
+    '  padding:8px 14px 8px 12px !important;margin:0 !important;background:transparent !important;color:var(--gc-ink) !important;',
+    '  border:0 !important;border-top:1px solid var(--gc-line) !important;border-radius:0 !important;box-shadow:none !important;',
+    '  font-family:"Inter","Segoe UI",sans-serif !important;font-size:14px !important;font-weight:700 !important;letter-spacing:-.1px !important;text-transform:none !important;',
+    '  text-align:left !important;text-decoration:none !important;cursor:pointer !important;transform:none !important;',
+    '  transition:background-color 170ms ease,color 170ms ease !important;touch-action:manipulation;-webkit-tap-highlight-color:transparent}',
+    '#glraContact .glra-contact-list > .glra-contact-row:first-child{border-top:0 !important}',
+    '#glraContact .glra-contact-row[hidden]{display:none !important}',
+    '#glraContact .glra-contact-ico{flex:0 0 34px;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--gc-line);font-size:15px;color:var(--gc-ink);background:transparent;transition:background-color 170ms ease,color 170ms ease,border-color 170ms ease}',
+    '#glraContact .glra-contact-row.is-primary .glra-contact-ico{background:var(--gc-hot-btn);border-color:var(--gc-hot-btn);color:#fff}',
+    '#glraContact .glra-contact-lbl{flex:1 1 auto;min-width:0}',
+    '#glraContact .glra-contact-meta{flex:0 0 auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gc-gray);transition:color 170ms ease}',
+    '#glraContact .glra-contact-go{flex:0 0 auto;font-size:14px;line-height:1;opacity:.55;transition:transform 170ms cubic-bezier(.23,1,.32,1),opacity 170ms ease}',
+    '#glraContact .glra-contact-row.is-ai{border-top:2px solid var(--gc-line) !important}',
+    '#glraContact .glra-contact-row.is-ai .glra-contact-ico{background:var(--gc-ink);border-color:var(--gc-ink);color:var(--gc-paper)}',
+    '#glraContact .glra-contact-row:hover,#glraContact .glra-contact-row:focus-visible{background:var(--gc-ink) !important;color:var(--gc-paper) !important}',
+    '#glraContact .glra-contact-row:hover .glra-contact-ico,#glraContact .glra-contact-row:focus-visible .glra-contact-ico{border-color:var(--gc-paper);color:var(--gc-paper)}',
+    '#glraContact .glra-contact-row.is-primary:hover .glra-contact-ico,#glraContact .glra-contact-row.is-ai:hover .glra-contact-ico{border-color:var(--gc-paper)}',
+    '#glraContact .glra-contact-row:hover .glra-contact-meta,#glraContact .glra-contact-row:focus-visible .glra-contact-meta{color:var(--gc-paper)}',
+    '#glraContact .glra-contact-row:hover .glra-contact-go{transform:translate3d(3px,0,0);opacity:1}',
+    '#glraContact .glra-contact-row:focus-visible{outline-offset:-3px !important}',
+    '#glraContact .glra-contact-scrim{display:none}',
+    /* phones: a bottom sheet */
+    '@media (max-width:600px){',
+    '  #glraContact{right:14px;bottom:calc(var(--glra-dock,0px) + 14px + env(safe-area-inset-bottom,0px))}',
+    '  #glraContact #glraContactFab{width:56px !important;height:56px !important;min-width:56px !important;padding:0 !important;gap:0 !important}',
+    '  #glraContact #glraContactFab i{font-size:20px !important;width:auto}',
+    '  #glraContact #glraContactFab .glra-contact-fab-lbl{position:absolute !important;width:1px !important;height:1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important}',
+    '  #glraContact .glra-contact-scrim{display:block;position:fixed;inset:0;background:rgba(10,10,10,.5);opacity:0;transition:opacity 240ms ease;z-index:0}',
+    '  #glraContact .glra-contact-scrim[hidden]{display:none}',
+    '  #glraContact.is-open .glra-contact-scrim{opacity:1}',
+    '  #glraContact .glra-contact-panel{position:fixed;left:0;right:0;bottom:0;width:auto;max-width:none;max-height:86vh;z-index:1;',
+    '    border-width:2px 0 0;box-shadow:0 -6px 0 rgba(10,10,10,.08);padding-bottom:env(safe-area-inset-bottom,0px);transform:translate3d(0,100%,0);opacity:1;',
+    '    transition:transform 280ms cubic-bezier(.2,.7,.2,1)}',
+    '  #glraContact.is-open .glra-contact-panel{transform:none}',
+    '  #glraContact .glra-contact-head{padding:16px 16px 14px}',
+    '  #glraContact .glra-contact-close{display:inline-flex !important}',
+    '  #glraContact .glra-contact-row{min-height:56px !important;padding:10px 16px !important;font-size:16px !important}',
+    '}',
+    'html.glra-sheet-open,html.glra-sheet-open body{overflow:hidden !important}',
+
+    /* ── Back to top: after two screens, stacked above the contact button ── */
+    'html body #backToTop.back-to-top{position:fixed !important;left:auto !important;top:auto !important;right:18px !important;',
+    '  bottom:calc(var(--glra-dock,0px) + 18px + 52px + 12px) !important;width:44px !important;height:44px !important;min-width:44px !important;min-height:44px !important;',
+    '  display:flex !important;align-items:center !important;justify-content:center !important;padding:0 !important;',
+    '  background:#f1eee9 !important;color:#0a0a0a !important;border:2px solid #0a0a0a !important;border-radius:0 !important;box-shadow:3px 3px 0 #0a0a0a !important;',
+    '  font-size:14px !important;text-decoration:none !important;z-index:999 !important;',
+    '  opacity:0 !important;visibility:hidden !important;pointer-events:none !important;transform:translate3d(0,10px,0) !important;',
+    '  transition:opacity 240ms ease,transform 240ms cubic-bezier(.2,.7,.2,1),visibility 0s linear 240ms,background-color 170ms ease,color 170ms ease !important}',
+    'body.dark-mode #backToTop.back-to-top{background:#0e0e0c !important;color:#f1eee9 !important;border-color:#f1eee9 !important;box-shadow:3px 3px 0 #ff3d00 !important}',
+    'html body #backToTop.back-to-top.glra-btt-on{opacity:1 !important;visibility:visible !important;pointer-events:auto !important;transform:none !important;transition-delay:0s !important}',
+    'html.glra-contact-open body #backToTop.back-to-top,html.glra-chat-open body #backToTop.back-to-top{opacity:0 !important;visibility:hidden !important;pointer-events:none !important}',
+    'html.glra-pgbar-on body #backToTop.back-to-top{bottom:calc(var(--glra-dock,0px) + 14px) !important}',
+    '@media (hover:hover) and (pointer:fine){html body #backToTop.back-to-top.glra-btt-on:hover{background:#0a0a0a !important;color:#fff !important}',
+    '  body.dark-mode #backToTop.back-to-top.glra-btt-on:hover{background:#f1eee9 !important;color:#0a0a0a !important}}',
+    '@media (max-width:600px){html body #backToTop.back-to-top{right:20px !important;bottom:calc(var(--glra-dock,0px) + 14px + 56px + 12px + env(safe-area-inset-bottom,0px)) !important}}',
+    /* toasts clear the button */
+    'html body .toast{bottom:calc(var(--glra-dock,0px) + 90px) !important}',
+    '@media (max-width:600px){html body .toast{bottom:calc(var(--glra-dock,0px) + 86px) !important;max-width:calc(100vw - 32px)}}',
+
+    /* ── Theme toggle in the navigation ── */
+    'html body button.glra-theme-toggle{display:inline-flex !important;align-items:center !important;justify-content:center !important;align-self:stretch !important;',
+    '  width:48px !important;min-width:48px !important;min-height:42px !important;height:auto !important;padding:0 !important;margin:0 !important;',
+    '  background:transparent !important;color:var(--ab-ink,var(--ink,#0a0a0a)) !important;',
+    '  border:0 !important;border-left:1px solid var(--ab-line,var(--line,#0a0a0a)) !important;border-radius:0 !important;box-shadow:none !important;',
+    '  font-size:15px !important;letter-spacing:0 !important;text-transform:none !important;cursor:pointer !important;transform:none !important;',
+    '  transition:background-color 170ms ease,color 170ms ease !important}',
+    'html body button.glra-theme-toggle i{pointer-events:none;transition:transform 400ms cubic-bezier(.2,.7,.2,1)}',
+    'html body button.glra-theme-toggle:hover{background:var(--ab-ink,var(--ink,#0a0a0a)) !important;color:var(--ab-paper,var(--paper,#f1eee9)) !important}',
+    'html body button.glra-theme-toggle:hover i{transform:rotate(-20deg)}',
+    'html body button.glra-theme-toggle:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:-3px !important}',
+    /* the listing page nav is two boxed links, so the toggle is boxed to match */
+    'html body button.glra-theme-toggle.is-boxed{align-self:center !important;width:44px !important;min-width:44px !important;height:44px !important;min-height:44px !important;',
+    '  margin:0 10px 0 auto !important;border:2px solid var(--line,#0a0a0a) !important;color:var(--ink,#0a0a0a) !important}',
+    'html body button.glra-theme-toggle.is-boxed:hover{background:var(--ink,#0a0a0a) !important;color:var(--paper,#f1eee9) !important}',
+    '@media (max-width:980px){html body .nav-links > button.glra-theme-toggle,html body .ab-nav-links > button.glra-theme-toggle{display:none !important}}',
+    /* the row at the top of the mobile menu (the menu is always an ink panel) */
+    'html body .mobile-overlay button.glra-theme-row{display:flex !important;align-items:center !important;gap:12px !important;width:100% !important;min-height:52px !important;height:auto !important;',
+    '  margin:0 0 6px !important;padding:12px 14px !important;background:transparent !important;color:#f1eee9 !important;',
+    '  border:1px solid rgba(241,238,233,.3) !important;border-radius:0 !important;box-shadow:none !important;cursor:pointer !important;transform:none !important;',
+    '  font-family:"JetBrains Mono",ui-monospace,monospace !important;font-size:12px !important;font-weight:700 !important;letter-spacing:2px !important;text-transform:uppercase !important;text-align:left !important;',
+    '  transition:background-color 170ms ease,border-color 170ms ease !important}',
+    'html body .mobile-overlay button.glra-theme-row i{font-size:15px;width:18px;text-align:center;color:#ff3d00}',
+    'html body .mobile-overlay button.glra-theme-row .glra-theme-row-lbl{flex:1 1 auto}',
+    'html body .mobile-overlay button.glra-theme-row .glra-theme-row-state{padding:4px 8px;border:1px solid rgba(241,238,233,.45);font-size:10px;letter-spacing:1.5px;color:#f1eee9}',
+    'html body .mobile-overlay button.glra-theme-row[aria-pressed="true"] .glra-theme-row-state{background:#ff3d00;border-color:#ff3d00;color:#0a0a0a}',
+    'html body .mobile-overlay button.glra-theme-row:hover{border-color:#ff3d00 !important;background:rgba(241,238,233,.06) !important}',
+    'html body .mobile-overlay button.glra-theme-row:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:2px !important}',
+
+    /* ── Image loading: tinted shimmer, then a fade ── */
+    'html body .glra-ph.glra-ph{background-color:#e8e4dd !important;background-image:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.5) 50%,rgba(255,255,255,0) 70%) !important;',
+    /* transition:none - styles.css eases every background-color over .35s
+       (for the dark-mode switch), which would fade a black box INTO the tint */
+    '  background-size:220% 100% !important;background-repeat:no-repeat !important;animation:glraShimmer 1.6s ease-in-out infinite;transition:none !important}',
+    'body.dark-mode .glra-ph.glra-ph{background-color:#1a1a17 !important;background-image:linear-gradient(100deg,rgba(241,238,233,0) 30%,rgba(241,238,233,.07) 50%,rgba(241,238,233,0) 70%) !important}',
+    '@keyframes glraShimmer{from{background-position:130% 0}to{background-position:-130% 0}}',
+    'html body img.glra-img-wait{opacity:0 !important}',
+    'html body img.glra-img-in{animation:glraImgIn 300ms cubic-bezier(.2,.7,.2,1) both}',
+    '@keyframes glraImgIn{from{opacity:0}to{opacity:1}}',
+
+    /* ── Motion safety ── */
+    '@media (prefers-reduced-motion:reduce){',
+    '  #glraContact,#glraContact *,#backToTop,html body button.glra-theme-toggle,html body button.glra-theme-toggle i{transition:none !important;animation:none !important}',
+    '  html body #backToTop.back-to-top{transform:none !important}',
+    '  html body .glra-ph.glra-ph{animation:none !important;background-image:none !important}',
+    '  html body img.glra-img-in{animation:none !important}',
+    '}',
+    '@media print{#glraContact,#backToTop,.glra-theme-toggle,.glra-theme-row{display:none !important}}',
+    /* the old stack stays in the DOM (inline scripts may look for its
+       dark-mode button) but is never shown */
+    'html body .floating-buttons.glra-legacy-fab{display:none !important}'
+  ].join('\n');
+  var s = document.createElement('style');
+  s.id = 'glraShellStyle';
+  s.textContent = css;
+  (document.head || document.documentElement).appendChild(s);
+})();
+
+(function glraShell() {
+  if (typeof document === 'undefined') return;
+  var PATH = (location.pathname || '').toLowerCase();
+  if (PATH.indexOf('/admin') === 0 || PATH.indexOf('/agent') === 0) return;
+
+  var html = document.documentElement;
+  var mqRM = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var mqSheet = window.matchMedia ? window.matchMedia('(max-width: 600px)') : { matches: false };
+  function RM() { return !!mqRM.matches; }
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+  // Next animation frame, or ~120ms later if frames are not being produced
+  // (a background tab): whichever comes first, and only once.
+  function frame(fn) {
+    var done = false;
+    var run = function () { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(run);
+    setTimeout(run, 120);
+  }
+  function visible(el) {
+    if (!el || !el.getBoundingClientRect) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  }
+
+  /* ── 1. THEME TOGGLES ─────────────────────────────────────────────────
+     Moved out of the floating stack into the navigation. Idempotent:
+     brutalist-shell.js rebuilds the inner pages' nav and mobile menu after
+     this first runs, so it calls this again once it has. */
+  // The Arthaland presentation pages are dark by design and hide the toggle.
+  var NO_TOGGLE = ['data-arth', 'data-eluria', 'data-liv', 'data-lucima', 'data-sondris', 'data-una', 'data-no-theme-toggle'];
+  function themeAllowed() {
+    for (var i = 0; i < NO_TOGGLE.length; i++) if (html.hasAttribute(NO_TOGGLE[i])) return false;
+    return typeof window.toggleDarkMode === 'function';
+  }
+  function onThemeClick(e) {
+    e.preventDefault();
+    window.toggleDarkMode();
+  }
+  function makeToggle(cls) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'glra-theme-toggle' + (cls ? ' ' + cls : '');
+    b.setAttribute('aria-label', 'Dark mode');
+    b.setAttribute('title', 'Dark mode');
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i>';
+    b.addEventListener('click', onThemeClick);
+    return b;
+  }
+  window.glraMountThemeToggles = function () {
+    if (!document.body || !themeAllowed()) return;
+    // Desktop nav: before the orange call-to-action at the end of the links.
+    var bars = document.querySelectorAll('nav.navbar:not([aria-hidden="true"]) .nav-links, .ab-nav-links');
+    Array.prototype.forEach.call(bars, function (links) {
+      if (links.querySelector('.glra-theme-toggle')) return;
+      var cta = links.querySelector(':scope > .contact-btn-nav, :scope > a.cta, :scope > .ab-nav-mobile-btn');
+      links.insertBefore(makeToggle(''), cta || null);
+    });
+    // The listing pages built by server.js have a two-link nav of their own.
+    var pg = document.querySelector('.pg-nav');
+    if (pg && !pg.querySelector('.glra-theme-toggle')) {
+      pg.insertBefore(makeToggle('is-boxed'), pg.querySelector('.pg-back'));
+    }
+    // Mobile menu: a labelled row at the very top, above the first section.
+    var ov = document.querySelector('#mobileOverlay .mobile-overlay-links, .mobile-overlay .mobile-overlay-links');
+    if (ov && !ov.querySelector('.glra-theme-row')) {
+      var r = document.createElement('button');
+      r.type = 'button';
+      r.className = 'glra-theme-row';
+      r.setAttribute('aria-pressed', 'false');
+      r.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i><span class="glra-theme-row-lbl">Dark mode</span><span class="glra-theme-row-state">Off</span>';
+      r.addEventListener('click', onThemeClick);
+      ov.insertBefore(r, ov.firstChild);
+    }
+    glraSyncThemeToggles();
+  };
+  ready(window.glraMountThemeToggles);
+  window.addEventListener('load', window.glraMountThemeToggles);
+
+  /* ── 2. DOCK: bottom bars the floating controls must clear ─────────────
+     .pg-bar is the listing page's phone contact bar; it replaces the
+     contact button outright. .compare-bar (properties.html) only lifts it. */
+  var dockQueued = false;
+  function measureDock() {
+    dockQueued = false;
+    var h = 0, pgOn = false;
+    var pg = document.querySelector('.pg-bar');
+    if (pg && visible(pg)) { pgOn = true; h = Math.max(h, pg.getBoundingClientRect().height); }
+    // Desktop listing pages: the sticky price card already carries the contact
+    // buttons, so the floating one would be a duplicate.
+    var side = document.querySelector('.pg-side');
+    if (side && visible(side)) pgOn = true;
+    var cb = document.querySelector('.compare-bar');
+    if (cb && visible(cb)) h = Math.max(h, cb.getBoundingClientRect().height);
+    html.style.setProperty('--glra-dock', Math.round(h) + 'px');
+    html.classList.toggle('glra-pgbar-on', pgOn);
+    if (pgOn && contact && contact.isOpen()) contact.close(false);
+  }
+  function queueDock() { if (!dockQueued) { dockQueued = true; frame(measureDock); } }
+
+  /* ── 3. ONE CONTACT BUTTON ────────────────────────────────────────────
+     Replaces the six-button stack (call, WhatsApp, Viber, Messenger,
+     Instagram, dark mode) and the chatbot's own bottom-left launcher with a
+     single button and a labelled panel. The rows reuse the page's own link
+     hrefs; channels a page was missing are filled in with the same hrefs
+     every other page uses, so the panel is identical everywhere. */
+  var CANON = {
+    call: { href: 'tel:+639171774572' },
+    whatsapp: { href: 'https://wa.me/639171774572', blank: true },
+    viber: { href: 'viber://chat?number=%2B639171774572' },
+    messenger: { href: 'https://m.me/glrarealty', blank: true },
+    instagram: { href: 'https://instagram.com/glra_realty', blank: true }
+  };
+  var ORDER = ['call', 'whatsapp', 'viber', 'messenger', 'instagram'];
+  var ICON = { call: 'fas fa-phone-alt', whatsapp: 'fab fa-whatsapp', viber: 'fab fa-viber', messenger: 'fab fa-facebook-messenger', instagram: 'fab fa-instagram' };
+
+  function phoneLabel(href) {
+    var d = String(href).replace(/\D/g, '');
+    if (d.indexOf('63') === 0 && d.length === 12) d = '0' + d.slice(2);
+    return d.length === 11 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d;
+  }
+  function kindOf(a) {
+    var c = ' ' + (a.className || '') + ' ', h = a.getAttribute('href') || '';
+    if (/ btn-call /.test(c) || h.indexOf('tel:') === 0) return 'call';
+    if (/ btn-whatsapp /.test(c) || h.indexOf('wa.me') !== -1) return 'whatsapp';
+    if (/ btn-viber /.test(c) || h.indexOf('viber:') === 0) return 'viber';
+    if (/ btn-messenger /.test(c) || h.indexOf('m.me') !== -1) return 'messenger';
+    if (/ btn-instagram /.test(c) || h.indexOf('instagram.com') !== -1) return 'instagram';
+    return null;
+  }
+
+  var contact = null;
+
+  function buildContact() {
+    var legacy = document.querySelector('.floating-buttons');
+    if (!legacy || document.getElementById('glraContact')) return;
+
+    // Collect the page's own links.
+    var links = {};
+    Array.prototype.forEach.call(legacy.querySelectorAll('a[href]'), function (a) {
+      var k = kindOf(a);
+      if (k && !links[k]) links[k] = { href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') };
+    });
+    // A listing page's bar carries a WhatsApp message that names the listing.
+    var pgWa = document.querySelector('.pg-bar a[href*="wa.me"]');
+    if (pgWa) links.whatsapp = { href: pgWa.getAttribute('href'), target: '_blank', rel: 'noopener' };
+
+    legacy.classList.add('glra-legacy-fab');
+    legacy.setAttribute('hidden', '');
+    legacy.setAttribute('aria-hidden', 'true');
+
+    var root = document.createElement('div');
+    root.id = 'glraContact';
+    root.className = 'glra-contact';
+
+    var scrim = document.createElement('div');
+    scrim.className = 'glra-contact-scrim';
+    scrim.hidden = true;
+
+    var panel = document.createElement('div');
+    panel.id = 'glraContactPanel';
+    panel.className = 'glra-contact-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-labelledby', 'glraContactTitle');
+    panel.hidden = true;
+    panel.innerHTML =
+      '<div class="glra-contact-head">' +
+        '<div><div class="glra-contact-eyebrow">// Contact</div>' +
+        '<div class="glra-contact-title" id="glraContactTitle">Talk to Catherine</div>' +
+        '<div class="glra-contact-sub">Licensed real estate broker</div></div>' +
+        '<button type="button" class="glra-contact-close" aria-label="Close contact options"><i class="fas fa-times" aria-hidden="true"></i></button>' +
+      '</div>' +
+      '<div class="glra-contact-list"></div>';
+    var list = panel.querySelector('.glra-contact-list');
+
+    ORDER.forEach(function (k) {
+      var l = links[k] || { href: CANON[k].href, target: CANON[k].blank ? '_blank' : null, rel: CANON[k].blank ? 'noopener' : null };
+      var a = document.createElement('a');
+      a.className = 'glra-contact-row' + (k === 'call' ? ' is-primary' : '');
+      a.href = l.href;
+      if (l.target) a.target = l.target;
+      if (l.rel) a.rel = l.rel;
+      if (k === 'whatsapp') a.setAttribute('data-glra-wa', '');
+      var label, meta;
+      if (k === 'call') { label = 'Call ' + phoneLabel(l.href); meta = ''; }
+      else if (k === 'whatsapp') { label = 'WhatsApp'; meta = 'Message'; }
+      else if (k === 'viber') { label = 'Viber'; meta = 'Message'; }
+      else if (k === 'messenger') { label = 'Messenger'; meta = 'Facebook'; }
+      else { label = 'Instagram'; meta = '@' + (String(l.href).split('instagram.com/')[1] || 'glra_realty').replace(/[/?#].*$/, ''); }
+      a.innerHTML = '<span class="glra-contact-ico"><i class="' + ICON[k] + '" aria-hidden="true"></i></span>' +
+        '<span class="glra-contact-lbl">' + label + '</span>' +
+        (meta ? '<span class="glra-contact-meta">' + meta + '</span>' : '') +
+        '<span class="glra-contact-go" aria-hidden="true">&rarr;</span>';
+      if (l.target === '_blank') a.setAttribute('aria-label', label + ' (opens in a new tab)');
+      list.appendChild(a);
     });
 
-    // Tap outside to close (mobile only)
-    document.addEventListener('click', e => {
-      document.querySelectorAll('.floating-buttons.expanded').forEach(c => {
-        if (!c.contains(e.target)) {
-          c.classList.remove('expanded');
-          const t = c.querySelector('.fab-toggle');
-          if (t) {
-            t.classList.remove('is-open');
-            t.setAttribute('aria-expanded', 'false');
-            t.setAttribute('aria-label', 'Open contact options');
-            t.innerHTML = '<i class="fas fa-comment-dots"></i>';
+    var ai = document.createElement('button');
+    ai.type = 'button';
+    ai.className = 'glra-contact-row is-ai';
+    ai.innerHTML = '<span class="glra-contact-ico"><i class="fas fa-robot" aria-hidden="true"></i></span>' +
+      '<span class="glra-contact-lbl">Ask our assistant</span><span class="glra-contact-meta">AI</span>' +
+      '<span class="glra-contact-go" aria-hidden="true">&rarr;</span>';
+    list.appendChild(ai);
+
+    var fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = 'glraContactFab';
+    fab.className = 'glra-contact-fab';
+    fab.setAttribute('aria-expanded', 'false');
+    fab.setAttribute('aria-controls', 'glraContactPanel');
+    fab.setAttribute('aria-haspopup', 'dialog');
+    fab.setAttribute('aria-label', 'Contact us');
+    fab.innerHTML = '<i class="fas fa-comment-dots" aria-hidden="true"></i><span class="glra-contact-fab-lbl">Contact</span>';
+
+    root.appendChild(scrim);
+    root.appendChild(fab);
+    root.appendChild(panel);
+    // Directly after the old stack, so the tab order is unchanged.
+    legacy.parentNode.insertBefore(root, legacy.nextSibling);
+
+    var open = false, sheet = false, hideTimer = 0;
+    var closeBtn = panel.querySelector('.glra-contact-close');
+
+    function focusables() {
+      return Array.prototype.filter.call(panel.querySelectorAll('a[href],button:not([disabled])'), function (el) {
+        return !el.hidden && (el.offsetWidth || el.offsetHeight);
+      });
+    }
+    function setOpen(v) {
+      open = v;
+      root.classList.toggle('is-open', v);
+      html.classList.toggle('glra-contact-open', v);
+      html.classList.toggle('glra-sheet-open', v && sheet);
+      fab.setAttribute('aria-expanded', v ? 'true' : 'false');
+      fab.setAttribute('aria-label', v ? 'Close contact options' : 'Contact us');
+      fab.innerHTML = v
+        ? '<i class="fas fa-times" aria-hidden="true"></i><span class="glra-contact-fab-lbl">Close</span>'
+        : '<i class="fas fa-comment-dots" aria-hidden="true"></i><span class="glra-contact-fab-lbl">Contact</span>';
+    }
+    function doOpen() {
+      if (open) return;
+      clearTimeout(hideTimer);
+      sheet = !!mqSheet.matches;
+      ai.hidden = typeof window.glraOpenChat !== 'function';
+      if (sheet) panel.setAttribute('aria-modal', 'true'); else panel.removeAttribute('aria-modal');
+      panel.hidden = false;
+      scrim.hidden = !sheet;
+      void panel.offsetWidth;            // commit the closed state so the entrance can run
+      setOpen(true);
+      var firstRow = panel.querySelector('.glra-contact-row:not([hidden])');
+      if (firstRow) firstRow.focus({ preventScroll: true });
+    }
+    function doClose(returnFocus) {
+      if (!open) return;
+      setOpen(false);
+      var done = function () { panel.hidden = true; scrim.hidden = true; };
+      if (RM()) done(); else hideTimer = setTimeout(done, sheet ? 300 : 220);
+      if (returnFocus) fab.focus({ preventScroll: true });
+    }
+    contact = { isOpen: function () { return open; }, close: doClose, open: doOpen, fab: fab };
+
+    fab.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (open) doClose(true); else doOpen();
+    });
+    closeBtn.addEventListener('click', function () { doClose(true); });
+    scrim.addEventListener('click', function () { doClose(true); });
+    list.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a.glra-contact-row');
+      if (a) setTimeout(function () { doClose(false); }, 0);
+    });
+    ai.addEventListener('click', function () {
+      doClose(false);
+      if (typeof window.glraOpenChat === 'function') window.glraOpenChat({ returnFocus: fab });
+    });
+    document.addEventListener('click', function (e) {
+      if (open && !root.contains(e.target)) doClose(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (!open) return;
+      if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); doClose(true); return; }
+      if (e.key === 'Tab' && sheet) {
+        var f = focusables(); if (!f.length) return;
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    // A non-modal popover on desktop: tabbing away from it closes it.
+    root.addEventListener('focusout', function (e) {
+      if (!open || sheet) return;
+      var to = e.relatedTarget;
+      if (to && !root.contains(to)) doClose(false);
+    });
+    var onBreak = function () { if (open) doClose(false); };
+    if (mqSheet.addEventListener) mqSheet.addEventListener('change', onBreak);
+    else if (mqSheet.addListener) mqSheet.addListener(onBreak);
+  }
+
+  /* ── 4. BACK TO TOP ───────────────────────────────────────────────────
+     Appears after two screen heights, never earlier, and sits above the
+     contact button so the two can never overlap. The page's own `.show`
+     toggles are left alone; the CSS above keys on .glra-btt-on only. */
+  function setupBackToTop() {
+    var b = document.getElementById('backToTop');
+    if (!b) return;
+    // Reads two cached numbers and flips one class: cheap enough to run on
+    // every scroll event without a frame throttle.
+    function update() {
+      b.classList.toggle('glra-btt-on', window.scrollY > window.innerHeight * 2);
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+    b.addEventListener('click', function (e) {
+      if (e.defaultPrevented) return;        // index.html scrolls it itself
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: RM() ? 'auto' : 'smooth' });
+      if (e.detail === 0) {                  // keyboard: land focus at the top too
+        var skip = document.querySelector('.skip-to-content');
+        if (skip) skip.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  ready(function () {
+    buildContact();
+    setupBackToTop();
+    measureDock();
+    window.addEventListener('resize', queueDock, { passive: true });
+    var cb = document.querySelector('.compare-bar');
+    if (cb && window.MutationObserver) {
+      new MutationObserver(queueDock).observe(cb, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+  });
+
+  /* ── 5. IMAGE LOADING POLISH ──────────────────────────────────────────
+     While a content image loads, its box shows a tinted shimmer instead of
+     an empty (often black) rectangle; once decoded it fades in over 300ms.
+     - Already-loaded images are left completely alone.
+     - Where the image fills its parent (every listing card), the shimmer
+       goes on the parent and the image fades in over it: a true cross-fade.
+     - Where it does not, the image paints the shimmer as its own background.
+     - An image with no box yet gets no placeholder at all (inventing one
+       would shift the layout); it just fades in.
+     - index.html and properties.html lazy-load with a data: placeholder
+       in src and the real URL in data-src; those count as still loading.
+     Logos, icons, small images and the chat widget are skipped. */
+  var MIN = 64;
+  var SKIP_IN = '#loader, .loader, .glra-chat-panel, #glraContact, .navbar, .ab-nav, .pg-nav, .ar-nav, .logo, .ab-brand, footer, .print-only-header';
+  function isPlaceholder(img) {
+    var ds = img.getAttribute('data-src');
+    return !!ds && img.getAttribute('src') !== ds;
+  }
+  function excluded(img) {
+    if (img.hasAttribute('data-no-fade') || img.hasAttribute('data-logo-auto')) return true;
+    var src = (img.getAttribute('src') || '') + ' ' + (img.getAttribute('data-src') || '');
+    if (/logo|favicon|icon-\d|\.svg(\?|$)/i.test(src)) return true;
+    if (img.closest && img.closest(SKIP_IN)) return true;
+    var aw = parseInt(img.getAttribute('width'), 10), ah = parseInt(img.getAttribute('height'), 10);
+    if (aw && ah && aw < MIN && ah < MIN) return true;
+    var w = img.offsetWidth, h = img.offsetHeight;
+    if (w && w < MIN) return true;
+    if (w && h && h < 48) return true;
+    return false;
+  }
+  function settle(img, host) {
+    img.classList.remove('glra-img-wait', 'glra-ph');
+    var clean = function () {
+      img.classList.remove('glra-img-in');
+      if (host) { host.classList.remove('glra-ph'); host.__glraHost = 0; }
+    };
+    if (RM() || !img.__glraFade) { clean(); return; }
+    img.classList.add('glra-img-in');
+    img.addEventListener('animationend', clean, { once: true });
+    setTimeout(clean, 450);                // in case animations are suppressed
+  }
+  function prep(img) {
+    if (img.__glraImg) return;
+    img.__glraImg = 1;
+    if (excluded(img)) return;
+    var pending = isPlaceholder(img) || !img.complete;
+    if (!pending) {                        // loaded (or already failed): leave it alone,
+      img.classList.remove('glra-img-wait', 'glra-ph', 'glra-img-in');   // bar classes a
+      var pp = img.parentElement;          // carousel clone may have copied from its original
+      if (pp && !pp.__glraHost) pp.classList.remove('glra-ph');
+      return;
+    }
+    var host = null, w = img.offsetWidth, h = img.offsetHeight;
+    if (w >= MIN && h >= 48) {
+      var p = img.parentElement;
+      if (p && p !== document.body && Math.abs(p.clientWidth - w) <= 4 && Math.abs(p.clientHeight - h) <= 4) {
+        host = p;
+        host.__glraHost = 1;
+        host.classList.add('glra-ph');
+        img.classList.add('glra-img-wait');
+        img.__glraFade = 1;
+      } else {
+        img.classList.add('glra-ph');      // shimmer on the image's own box
+        img.__glraFade = 1;
+      }
+    } else {
+      img.classList.add('glra-img-wait');  // no box to hold a placeholder
+      img.__glraFade = 1;
+    }
+    var onLoad = function () {
+      if (isPlaceholder(img)) return;      // the data: stand-in, not the photo
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onErr);
+      settle(img, host);
+    };
+    var onErr = function () {
+      if (isPlaceholder(img)) return;
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onErr);
+      img.__glraFade = 0;
+      settle(img, host);
+    };
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onErr);
+    // Finished between the check above and now? Settle straight away.
+    if (!isPlaceholder(img) && img.complete) onLoad();
+  }
+  var queue = [], qPending = false;
+  function flush() {
+    qPending = false;
+    var q = queue; queue = [];
+    for (var i = 0; i < q.length; i++) if (q[i].isConnected) prep(q[i]);
+  }
+  function enqueue(img) {
+    if (img.__glraImg) return;
+    queue.push(img);
+    if (!qPending) { qPending = true; frame(flush); }
+  }
+  ready(function () {
+    Array.prototype.forEach.call(document.images, enqueue);
+    if (!window.MutationObserver) return;
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var n = added[j];
+          if (n.nodeType !== 1) continue;
+          if (n.tagName === 'IMG') enqueue(n);
+          else if (n.getElementsByTagName) {
+            var imgs = n.getElementsByTagName('img');
+            for (var k = 0; k < imgs.length; k++) enqueue(imgs[k]);
           }
         }
-      });
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+
+  /* ── 6. VIEW TRANSITIONS ──────────────────────────────────────────────
+     styles.css opts every page into cross-document view transitions (a
+     quick root cross-fade). On the way to a listing page, the photo the
+     visitor clicked is named `glra-hero`, and the listing page gives its
+     main photo the same name, so the one morphs into the other. Names must
+     be unique when the old page is captured, so any other element carrying
+     it (a listing page's own hero, when going listing to listing) is
+     cleared first. Browsers without support just navigate. */
+  var HERO = 'glra-hero';
+  var lastClick = null, named = [];
+  document.addEventListener('click', function (e) { lastClick = { el: e.target, t: Date.now() }; }, true);
+
+  function propId(url) {
+    try {
+      var m = new URL(url, location.href).pathname.match(/^\/property\/([^\/?#]+)/);
+      return m ? m[1] : null;
+    } catch (e) { return null; }
+  }
+  function inView(el) {
+    var r = el.getBoundingClientRect();
+    return r.width >= 80 && r.height >= 60 && r.bottom > 0 && r.right > 0 &&
+           r.top < (window.innerHeight || 0) && r.left < (window.innerWidth || 0);
+  }
+  function bestImg(scope) {
+    var best = null, area = 0;
+    Array.prototype.forEach.call(scope.querySelectorAll('img'), function (img) {
+      if (/logo/i.test(img.getAttribute('src') || '') || !inView(img)) return;
+      var r = img.getBoundingClientRect(), a = r.width * r.height;
+      if (a > area) { area = a; best = img; }
+    });
+    return best;
+  }
+  function otherIds(scope, id) {
+    return Array.prototype.some.call(scope.querySelectorAll('a[href*="/property/"]'), function (a) {
+      var o = propId(a.getAttribute('href'));
+      return o && o !== id;
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  // The clicked element's nearest container that holds a photo and does not
+  // also hold links to OTHER listings (which would mean we had climbed into
+  // the whole grid). Falls back to any card linking to the same listing.
+  function heroFor(id) {
+    if (lastClick && Date.now() - lastClick.t < 8000 && lastClick.el && lastClick.el.isConnected) {
+      var el = lastClick.el.nodeType === 1 ? lastClick.el : lastClick.el.parentElement;
+      for (var d = 0; el && d < 7 && el !== document.body; d++, el = el.parentElement) {
+        if (otherIds(el, id)) break;
+        var img = bestImg(el);
+        if (img) return img;
+      }
+    }
+    var links = document.querySelectorAll('a[href*="/property/' + id + '"]');
+    for (var i = 0; i < links.length; i++) {
+      var card = links[i].closest('.prop-card, .pg-rel, .ar-card, article, li') || links[i];
+      var im = bestImg(card);
+      if (im) return im;
+    }
+    return null;
   }
+  function clearHero() {
+    named.forEach(function (el) { el.style.viewTransitionName = ''; });
+    named = [];
+  }
+  function nameHero(img) {
+    clearHero();
+    // Anything else already carrying the name (the listing page's own hero).
+    Array.prototype.forEach.call(document.querySelectorAll('img, [id*="Hero"], [class*="hero"]'), function (el) {
+      if (el !== img && getComputedStyle(el).viewTransitionName === HERO) {
+        el.style.viewTransitionName = 'none';
+        named.push(el);
+      }
+    });
+    img.style.viewTransitionName = HERO;
+    named.push(img);
+  }
+  window.addEventListener('pageswap', function (e) {
+    if (!e.viewTransition) return;
+    var to = e.activation && e.activation.entry && e.activation.entry.url;
+    var id = to && propId(to);
+    if (!id || id === propId(location.href)) return;
+    var img = heroFor(id);
+    if (img) nameHero(img);
+  });
+  // Coming BACK from a listing, name the matching card's photo so the listing
+  // photo morphs back into it. Best effort: cards rendered later than the
+  // first frame (fetched listings on a fresh load) simply cross-fade.
+  window.addEventListener('pagereveal', function (e) {
+    if (!e.viewTransition) return;
+    var act = window.navigation && window.navigation.activation;
+    var from = act && act.from && act.from.url;
+    var id = from && propId(from);
+    if (id && id !== propId(location.href)) {
+      var links = document.querySelectorAll('a[href*="/property/' + id + '"]');
+      for (var i = 0; i < links.length; i++) {
+        var card = links[i].closest('.prop-card, .pg-rel, .ar-card, article, li') || links[i];
+        var im = bestImg(card);
+        if (im) { nameHero(im); break; }
+      }
+    }
+    e.viewTransition.finished.then(clearHero, clearHero);
+  });
+  // A page restored from the back/forward cache must not keep a stale name.
+  window.addEventListener('pageshow', function (e) { if (e.persisted) clearHero(); });
 })();
+/* SITE-SHELL-END */
 
 // ── Email-gated clean PDF DOWNLOAD (shared by all calculators) ──
 // Usage: <button onclick="glraOpenPrintGate('Affordability Calculator')">Download PDF</button>
@@ -961,6 +1710,12 @@ window.glraOpenPrintGate = function (label, collectFn) {
   (function(){
     var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (RM) return;
+    /* Where the browser does cross-document view transitions (styles.css
+       opts in with @view-transition), it cross-fades the pages itself and
+       morphs the listing photo. Fading the body to 0 here as well would hand
+       it a blank page as the "old" snapshot, so the two effects would fight.
+       This fade is now only the fallback for browsers without them. */
+    if (window.CSSViewTransitionRule) return;
     document.addEventListener('click', function(e){
       var a = e.target.closest('a[href]');
       if (!a) return;
@@ -1058,7 +1813,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
   /* 2) WhatsApp pre-filled greeting -------------------------------------- */
   ready(function(){
     var msg = encodeURIComponent("Hi GLRA Realty! I'm interested in your properties and would like to know more.");
-    document.querySelectorAll('a.btn-whatsapp[href*="wa.me"]').forEach(function(a){
+    document.querySelectorAll('a.btn-whatsapp[href*="wa.me"], a[data-glra-wa][href*="wa.me"]').forEach(function(a){
       if (a.href.indexOf('text=') !== -1) return; /* already has a message */
       a.href = a.href.split('?')[0] + '?text=' + msg;
     });

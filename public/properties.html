@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=104">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=104">
+<link rel="stylesheet" href="/css/styles.css?v=105">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=105">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -167,6 +167,8 @@ body.dark-mode .prop-card-image{border-color:#3a3a36 !important}
 .card-action-btn{border-radius:0 !important;width:40px !important;height:40px !important;padding:0 !important;background:rgba(10,10,10,.72) !important;border:1px solid #f1eee9 !important;backdrop-filter:none !important;color:#fff !important}
 .card-action-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important}
 .prop-title{font-family:'Inter',sans-serif !important;font-size:21px !important;font-weight:900 !important;line-height:1.02 !important;letter-spacing:-.8px !important;text-transform:uppercase !important;color:#0a0a0a !important;white-space:normal !important;display:-webkit-box !important;-webkit-line-clamp:2 !important;line-clamp:2 !important;-webkit-box-orient:vertical !important;overflow:hidden !important;text-overflow:clip !important}
+/* Titles now arrive display-cased ("Monarch Parksuites, Pasay City"), so they are no longer forced to capitals. */
+html body .prop-card .prop-title{text-transform:none !important;letter-spacing:-.6px !important;line-height:1.08 !important}
 body.dark-mode .prop-title{color:#f1eee9 !important}
 .prop-location{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.6px !important;text-transform:uppercase !important;color:#656565 !important;font-weight:600 !important}
 .prop-location i{color:var(--ab-hot-text,#c02e00) !important}
@@ -227,7 +229,7 @@ body.dark-mode .modal-mortgage{background:#0e0e0c;border-color:#3a3a36}
 body.dark-mode #modal .modal-body{background:#0e0e0c;border-color:#3a3a36;box-shadow:8px 8px 0 #3a3a36;color:#f1eee9}
 #modal .gallery-main{border:2px solid #0a0a0a}
 #modal .thumb-row img.active{border-color:#ff3d00}
-#modal .modal-details h1{font-family:'Inter',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;color:#0a0a0a}
+#modal .modal-details h1{font-family:'Inter',sans-serif;font-weight:900;text-transform:none;letter-spacing:-.8px;line-height:1.05;color:#0a0a0a}
 body.dark-mode #modal .modal-details h1{color:#f1eee9}
 #modal .modal-specs{border-top:2px solid #0a0a0a;border-bottom:2px solid #0a0a0a}
 body.dark-mode #modal .modal-specs{border-color:#3a3a36}
@@ -260,54 +262,7 @@ body.dark-mode #modal .modal-share{border-color:#3a3a36}
 .close-modal-btn{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 .close-modal-btn:hover{color:var(--ab-hot-text,#c02e00)}
 
-/* ---- COMPARE PROPERTIES ---- */
-.compare-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);padding:14px 5%;display:none;align-items:center;gap:14px;flex-wrap:wrap;z-index:1500;box-shadow:0 -8px 24px rgba(0,0,0,.25)}
-.compare-bar.active{display:flex}
-.compare-bar-label{font-size:12px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;flex-shrink:0}
-.compare-bar-thumbs{display:flex;gap:10px;flex:1;flex-wrap:wrap}
-.compare-thumb{position:relative;width:54px;height:54px;border:1px solid rgba(255,61,0,.3);overflow:hidden}
-.compare-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.compare-thumb .remove{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#ef4444;color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
-.compare-thumb-empty{width:54px;height:54px;border:1px dashed rgba(255,61,0,.25);display:flex;align-items:center;justify-content:center;color:rgba(255,61,0,.4);font-size:18px}
-.compare-bar-actions{display:flex;gap:8px;flex-shrink:0}
-.compare-bar-btn{padding:10px 20px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:var(--transition)}
-.compare-bar-btn.primary{background:var(--gold);color:#fff}
-.compare-bar-btn.primary:hover{background:var(--gold-dark)}
-.compare-bar-btn.primary:disabled{opacity:.5;cursor:not-allowed}
-.compare-bar-btn.outline{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}
-.compare-bar-btn.outline:hover{border-color:var(--gold);color:var(--ab-hot-text,#c02e00)}
-.card-action-btn.compare-active{background:var(--gold) !important;border-color:var(--gold) !important}
-.prop-card.compare-selected{box-shadow:0 0 0 2px var(--gold), var(--shadow-md)}
-
-#compareModal{position:fixed;inset:0;background:rgba(10,10,10,0.96);display:none;z-index:2500;overflow-y:auto;padding:30px 0}
-#compareModal.show{display:block}
-.compare-modal-content{max-width:1100px;margin:0 auto;padding:0 5%}
-.compare-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.compare-modal-head h2{font-family:'Inter',serif;font-size:30px;color:#fff;font-weight:600}
-.compare-modal-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:var(--transition)}
-.compare-modal-close:hover{background:var(--gold)}
-.compare-grid{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden}
-.compare-row{display:grid;border-bottom:1px solid var(--border-color)}
-.compare-row:last-child{border-bottom:none}
-.compare-row.heading-row{background:var(--navy)}
-.compare-cell{padding:14px 16px;font-size:13px;color:var(--text-color);display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-color);min-width:0;word-wrap:break-word}
-.compare-cell:last-child{border-right:none}
-.compare-cell.label-cell{background:var(--gray-light);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);font-weight:600}
-body.dark-mode .compare-cell.label-cell{background:#0e0e0c}
-.compare-cell.heading-cell{padding:0;border-right:1px solid rgba(255,61,0,.2)}
-.compare-cell.heading-cell:last-child{border-right:none}
-.compare-card-head{position:relative;display:flex;flex-direction:column;text-align:center;color:#fff}
-.compare-card-head img{width:100%;height:140px;object-fit:cover}
-.compare-card-head .remove-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
-.compare-card-head .remove-btn:hover{background:#ef4444}
-.compare-card-head h4{font-family:'Inter',serif;font-size:18px;padding:12px 12px 4px;color:#fff;line-height:1.2}
-.compare-card-head .loc{font-size:11px;color:rgba(255,255,255,.6);padding:0 12px 12px}
-.compare-cell.cta-cell{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;padding:12px 14px}
-.compare-cta{flex:1;min-width:0;padding:8px 6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;text-align:center;cursor:pointer;border:1px solid var(--gold);background:transparent;color:var(--ab-hot-text,#c02e00);font-family:'Inter',sans-serif;transition:var(--transition)}
-.compare-cta:hover{background:var(--gold);color:#fff}
-.compare-cta.wa{background:#25d366;color:#fff;border-color:#25d366}
-.compare-cta.wa:hover{filter:brightness(1.1)}
-
+/* ---- COMPARE: styles live in the browse-page layer at the end of this block ---- */
 /* RESPONSIVE */
 @media(max-width:768px){
   .page-hero h1{font-size:34px}
@@ -327,11 +282,255 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
 .empty-state .ss-empty-btn{margin:2px 0 6px}
 .empty-state .ss-empty-btn i{font-size:inherit;margin:0;display:inline-block;color:inherit}
 @media(max-width:640px){html body .ss-cta{width:100%;justify-content:center}}
+
+/* ═══ BROWSE PAGE LAYER (Sept 2026): count, view toggle, map, compare, skeletons ═══ */
+.section-top{align-items:center;scroll-margin-top:140px}
+.results-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+html body .results-count{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--ab-ink);min-width:12ch;min-height:40px;display:inline-flex;align-items:center;padding:0 12px;border:2px solid var(--ab-line);background:var(--ab-paper);font-variant-numeric:tabular-nums;box-sizing:border-box}
+html body .results-count.is-zero{color:var(--ab-hot-text,#c02e00);border-color:var(--ab-hot,#ff3d00)}
+.view-toggle{display:inline-flex;border:2px solid var(--ab-line);background:var(--ab-paper);flex:none}
+html body .vt-btn{appearance:none !important;-webkit-appearance:none !important;border:0 !important;border-radius:0 !important;background:transparent !important;color:var(--ab-ink) !important;font-family:'JetBrains Mono',monospace !important;font-size:11px !important;font-weight:700 !important;letter-spacing:1.6px !important;text-transform:uppercase !important;padding:0 14px !important;min-height:40px !important;display:inline-flex !important;align-items:center !important;gap:7px !important;cursor:pointer !important;transition:background-color .15s,color .15s !important}
+html body .vt-btn + .vt-btn{border-left:2px solid var(--ab-line) !important}
+html body .vt-btn[aria-pressed="true"]{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+html body .vt-btn:not([aria-pressed="true"]):hover{background:var(--ab-paper-2) !important}
+html body .vt-btn i{font-size:12px !important}
+html body .sort-select{min-height:40px;border:2px solid var(--ab-line);border-radius:0;background:var(--ab-paper);color:var(--ab-ink)}
+html body .ss-cta{min-height:40px;border-radius:0}
+.search-btn-main .sb-count{font-variant-numeric:tabular-nums}
+/* Space for the area chips is held before /api/areas answers, so the tabs and
+   the grid below do not jump when they arrive. */
+.popular-chips.is-pending{visibility:hidden;min-height:34px}
+/* On a phone the area chips wrapped to five rows and pushed the results a
+   screen further down; one sideways-scrolling row keeps them to one line. */
+@media(max-width:768px){
+  html body .popular-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-20px;padding-right:20px;min-height:38px}
+  html body .popular-chips::-webkit-scrollbar{display:none}
+  html body .popular-chips > *{flex:none}
+}
+
+/* Cards: mixed-case display titles, compare toggle, map hover link */
+.prop-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
+.prop-foot .prop-added{margin-top:0}
+html body .cmp-toggle{display:inline-flex !important;align-items:center !important;gap:8px !important;min-height:36px !important;padding:0 12px 0 10px !important;margin-left:auto !important;background:transparent !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;color:var(--ab-ink) !important;font:700 10.5px/1 'JetBrains Mono',monospace !important;letter-spacing:1.5px !important;text-transform:uppercase !important;cursor:pointer !important;transition:background-color .15s,color .15s,border-color .15s !important}
+html body .cmp-toggle:hover{border-color:var(--ab-hot,#ff3d00) !important}
+.cmp-box{width:14px;height:14px;border:2px solid currentColor;display:inline-block;position:relative;flex:none;box-sizing:border-box}
+html body .cmp-toggle[aria-pressed="true"]{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-color:var(--ab-ink) !important}
+html body .cmp-toggle[aria-pressed="true"] .cmp-box{background:#ff3d00 !important;border-color:#ff3d00 !important}
+html body .cmp-toggle[aria-pressed="true"] .cmp-box::after{content:'' !important;position:absolute !important;left:3px !important;top:0 !important;width:4px !important;height:8px !important;border:solid #fff !important;border-width:0 2px 2px 0 !important;transform:rotate(45deg) !important}
+html body .prop-card.compare-selected{outline:3px solid #ff3d00;outline-offset:-3px}
+html body .prop-card.is-map-hot{box-shadow:5px 5px 0 #ff3d00 !important;border-color:#ff3d00 !important}
+
+/* Loading placeholders, drawn in the card's own footprint */
+.glra-skel{border:1px solid var(--ab-line);background:var(--ab-paper);pointer-events:none;overflow:hidden}
+.glra-skel-img{aspect-ratio:4/3;background:var(--ab-paper-2);border-bottom:1px solid var(--ab-line);position:relative;overflow:hidden}
+.glra-skel-img::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,61,0,.14),transparent);animation:glraSkel 1.25s linear infinite}
+.glra-skel-body{padding:20px 20px 44px}
+.glra-skel-line{height:12px;background:var(--ab-paper-2);margin:0 0 12px}
+.glra-skel-line.t{height:22px;width:82%}
+.glra-skel-line.t2{height:22px;width:55%;margin-bottom:16px}
+.glra-skel-line.s{height:38px;margin:4px 0 16px}
+.glra-skel-line.p{height:24px;width:46%}
+.glra-skel-line.w40{width:40%}
+@keyframes glraSkel{to{transform:translateX(100%)}}
+
+/* Empty state with a way out */
+.glra-empty{grid-column:1/-1}
+html body .glra-empty .glra-empty-title{font-family:'Inter',sans-serif !important;font-size:26px !important;font-weight:900 !important;letter-spacing:-.8px !important;line-height:1.1 !important;color:var(--ab-ink) !important;margin:0 0 8px;text-transform:none}
+html body .glra-empty .glra-empty-sub{margin:0 0 14px}
+.glra-empty-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 18px}
+html body .glra-chip{display:inline-flex !important;align-items:center !important;gap:8px !important;min-height:38px !important;padding:0 12px !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;font:700 11px/1 'JetBrains Mono',monospace !important;letter-spacing:1.3px !important;text-transform:uppercase !important;cursor:pointer !important}
+html body .glra-chip:hover{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+html body .glra-chip i{font-size:10px !important;color:var(--ab-hot-text,#c02e00) !important;margin:0 !important;display:inline !important}
+.glra-empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+html body .glra-empty .glra-empty-actions i{font-size:inherit;margin:0;display:inline-block;color:inherit !important}
+
+/* One button language for everything this layer adds */
+html body .glra-btn{display:inline-flex !important;align-items:center !important;justify-content:center !important;gap:8px !important;min-height:44px !important;padding:0 18px !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:2px solid var(--ab-ink) !important;border-radius:0 !important;font:700 11px/1 'JetBrains Mono',monospace !important;letter-spacing:1.6px !important;text-transform:uppercase !important;text-decoration:none !important;cursor:pointer !important;box-sizing:border-box !important;transition:background-color .15s,color .15s,border-color .15s,transform .09s !important}
+html body .glra-btn:hover{background:var(--ab-hot-btn,#df3500) !important;border-color:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
+html body .glra-btn:active{transform:translate(1px,1px) !important}
+html body .glra-btn:disabled{opacity:.5 !important;cursor:not-allowed !important;transform:none !important}
+html body .glra-btn-ghost{background:transparent !important;color:var(--ab-ink) !important}
+html body .glra-btn-wa{background:#0a0a0a !important;border-color:#0a0a0a !important;color:#fff !important}
+html body .glra-btn-wa i{color:#25d366 !important}
+html body .glra-btn-wa:hover i{color:#fff !important}
+html body.dark-mode .glra-btn-wa{border-color:#f1eee9 !important}
+:is(.glra-btn,.glra-chip,.vt-btn,.cmp-toggle,.cmp-x,.cmp-close,.cmp-remove,.gallery-open,.thumb-btn,.glra-mapcard-view,.map-sheet-close):focus-visible{outline:3px solid #ff3d00 !important;outline-offset:2px !important}
+
+/* Listing pop-up: photo opens the gallery */
+#modal:focus{outline:none}
+/* The theme forces every h1 to capitals at 72px; the pop-up title is a display title, not a banner. */
+html body #modal .modal-details h1{text-transform:none !important;font-size:clamp(28px,4.2vw,44px) !important;line-height:1.04 !important;letter-spacing:-1.2px !important;color:#0a0a0a !important;margin:14px 0 8px !important;overflow-wrap:anywhere}
+html body.dark-mode #modal .modal-details h1{color:#f1eee9 !important}
+/* The status badge borrowed the card's absolute positioning and floated off to the modal's corner. */
+html body #modal .modal-actions-row .prop-badge{position:static !important}
+html body .gallery-open{display:block !important;width:100% !important;padding:0 !important;margin:0 0 10px !important;border:0 !important;border-radius:0 !important;background:none !important;position:relative !important;cursor:zoom-in !important;line-height:0 !important}
+html body .gallery-open .gallery-main{margin-bottom:0 !important}
+.gallery-hint{position:absolute;right:12px;bottom:12px;background:#0a0a0a;color:#f1eee9;font:700 10.5px/1 'JetBrains Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;padding:9px 11px;display:inline-flex;gap:8px;align-items:center;border:1px solid #f1eee9;transition:background-color .15s}
+html body .gallery-open:hover .gallery-hint{background:#df3500 !important;border-color:#df3500 !important}
+html body .thumb-btn{padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;flex:none !important;cursor:pointer !important;line-height:0 !important}
+
+/* Same-document view transition: card photo becomes the pop-up photo.
+   Scoped to html.glra-vt so the cross-page transitions keep their own timing. */
+html.glra-vt::view-transition-group(glra-hero){animation-duration:.42s;animation-timing-function:cubic-bezier(.23,1,.32,1)}
+html.glra-vt::view-transition-image-pair(glra-hero){overflow:hidden}
+html.glra-vt::view-transition-old(glra-hero),html.glra-vt::view-transition-new(glra-hero){width:100%;height:100%;object-fit:cover}
+html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){animation-duration:.26s}
+
+/* ── MAP VIEW ── */
+.results-layout{position:relative}
+.map-pane{position:relative;border:2px solid var(--ab-line);background:var(--ab-paper-2);height:calc(100svh - 170px);min-height:420px;max-height:860px;scroll-margin-top:84px;box-shadow:5px 5px 0 var(--ab-line);overflow:hidden}
+.map-pane[hidden]{display:none !important}
+#mapCanvas{position:absolute;inset:0;background:#e8e4dd;font-family:'Inter',sans-serif}
+body.dark-mode #mapCanvas{background:#1a1a17}
+@media(min-width:1200px){
+  body.view-map .section{max-width:1720px}
+  body.view-map .results-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+  body.view-map #property-list{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px}
+  body.view-map .map-pane{position:sticky;top:var(--glra-map-top,132px);height:calc(100vh - var(--glra-map-top,132px) - 20px);min-height:480px;max-height:none}
+}
+@media(max-width:1199px){
+  body.view-map #property-list{display:none}
+}
+.map-note{position:absolute;left:10px;top:10px;z-index:800;max-width:calc(100% - 76px);background:var(--ab-paper);color:var(--ab-ink);border:2px solid var(--ab-line);padding:8px 10px;font:700 10.5px/1.35 'JetBrains Mono',monospace;letter-spacing:1.1px;text-transform:uppercase;box-shadow:3px 3px 0 var(--ab-line)}
+.map-note[hidden]{display:none}
+.map-status{position:absolute;inset:0;z-index:900;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:var(--ab-paper-2);text-align:center;padding:20px}
+.map-status[hidden]{display:none}
+.map-status-msg{font:700 11px/1.4 'JetBrains Mono',monospace;letter-spacing:1.6px;text-transform:uppercase;color:var(--ab-ink)}
+#mapCanvas .leaflet-tile-pane{filter:grayscale(.88) contrast(1.04) brightness(1.03)}
+body.dark-mode #mapCanvas .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
+#mapCanvas .leaflet-bar{border:2px solid var(--ab-line);border-radius:0;box-shadow:3px 3px 0 var(--ab-line)}
+#mapCanvas .leaflet-bar a{border-radius:0;background:var(--ab-paper);color:var(--ab-ink);border-bottom:2px solid var(--ab-line);width:38px;height:38px;line-height:36px;font-size:18px}
+#mapCanvas .leaflet-bar a:last-child{border-bottom:0}
+#mapCanvas .leaflet-bar a:hover{background:var(--ab-ink);color:var(--ab-paper)}
+#mapCanvas .leaflet-control-attribution{font:11px/1.4 'Inter',sans-serif;background:rgba(241,238,233,.92);color:#2a2a2a;padding:2px 6px}
+#mapCanvas .leaflet-control-attribution a{color:#0a0a0a;text-decoration:underline}
+body.dark-mode #mapCanvas .leaflet-control-attribution{background:rgba(14,14,12,.9);color:#cfc7b6}
+body.dark-mode #mapCanvas .leaflet-control-attribution a{color:#f1eee9}
+/* price pins */
+#mapCanvas .glra-pin-wrap{background:none;border:0;outline:none}
+.glra-pin{position:absolute;left:0;bottom:7px;transform:translateX(-50%);display:block;white-space:nowrap;background:#0a0a0a;color:#fff;font:700 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.2px;padding:6px 7px;border:2px solid #0a0a0a;box-shadow:2px 2px 0 rgba(10,10,10,.28);cursor:pointer;transition:background-color .15s,border-color .15s,transform .15s}
+.glra-pin::after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-6px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #0a0a0a;transition:border-color .15s}
+#mapCanvas .glra-pin-wrap.is-hot .glra-pin,#mapCanvas .glra-pin-wrap.is-sel .glra-pin,#mapCanvas .glra-pin-wrap:hover .glra-pin{background:#df3500;border-color:#df3500;transform:translateX(-50%) translateY(-2px)}
+#mapCanvas .glra-pin-wrap.is-hot .glra-pin::after,#mapCanvas .glra-pin-wrap.is-sel .glra-pin::after,#mapCanvas .glra-pin-wrap:hover .glra-pin::after{border-top-color:#df3500}
+#mapCanvas .glra-pin-wrap:focus-visible .glra-pin{outline:3px solid #ff3d00;outline-offset:2px}
+body.dark-mode .glra-pin{border-color:#f1eee9;box-shadow:none}
+body.dark-mode .glra-pin::after{border-top-color:#f1eee9}
+/* clusters */
+#mapCanvas .glra-cluster-wrap{background:none;border:0}
+.glra-cluster{display:flex;align-items:center;justify-content:center;width:44px;height:44px;box-sizing:border-box;background:#f1eee9;color:#0a0a0a;border:2px solid #0a0a0a;box-shadow:3px 3px 0 #0a0a0a;font:700 13px/1 'JetBrains Mono',monospace;transition:background-color .15s,color .15s}
+#mapCanvas .glra-cluster-wrap.is-hot .glra-cluster,#mapCanvas .glra-cluster-wrap:hover .glra-cluster{background:#df3500;color:#fff}
+body.dark-mode .glra-cluster{background:#0a0a0a;color:#f1eee9;border-color:#f1eee9;box-shadow:3px 3px 0 #ff3d00}
+/* popup (wide) and bottom card (narrow) share one card */
+#mapCanvas .glra-popup .leaflet-popup-content-wrapper{border-radius:0;padding:0;border:2px solid #0a0a0a;box-shadow:5px 5px 0 #0a0a0a;background:var(--ab-paper);color:var(--ab-ink);overflow:hidden}
+#mapCanvas .glra-popup .leaflet-popup-content{margin:0;line-height:1.3;font-family:'Inter',sans-serif}
+#mapCanvas .glra-popup .leaflet-popup-tip{background:var(--ab-paper);box-shadow:none;border:2px solid #0a0a0a}
+#mapCanvas .glra-popup a.leaflet-popup-close-button{top:6px;right:6px;width:30px;height:30px;line-height:28px;font-size:20px;background:#0a0a0a;color:#fff;z-index:2}
+#mapCanvas .glra-popup a.leaflet-popup-close-button:hover{background:#df3500;color:#fff}
+body.dark-mode #mapCanvas .glra-popup .leaflet-popup-content-wrapper,body.dark-mode #mapCanvas .glra-popup .leaflet-popup-tip{border-color:#f1eee9;box-shadow:5px 5px 0 #ff3d00}
+.glra-mapcard{display:block;font-family:'Inter',sans-serif;color:var(--ab-ink)}
+.glra-mapcard-img{position:relative;aspect-ratio:16/10;background:#0a0a0a;overflow:hidden;border-bottom:2px solid #0a0a0a}
+.glra-mapcard-img img{width:100%;height:100%;object-fit:cover;display:block}
+.glra-mapcard-badge{position:absolute;left:8px;top:8px;background:#0a0a0a;color:#f1eee9;font:700 9.5px/1 'JetBrains Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;padding:5px 7px}
+.glra-mapcard-body{padding:12px 14px 14px}
+.glra-mapcard-price{font-weight:900;font-size:19px;letter-spacing:-.6px;line-height:1.1;color:var(--ab-ink);font-variant-numeric:tabular-nums}
+.glra-mapcard-title{font-weight:800;font-size:14.5px;line-height:1.2;margin:5px 0 6px;color:var(--ab-ink)}
+.glra-mapcard-specs{font:600 10px/1.45 'JetBrains Mono',monospace;letter-spacing:1.1px;text-transform:uppercase;color:var(--ab-gray);margin-bottom:12px}
+html body .glra-mapcard-view{display:flex !important;align-items:center !important;justify-content:center !important;gap:8px !important;width:100% !important;min-height:42px !important;background:var(--ab-ink) !important;color:var(--ab-paper) !important;border:2px solid var(--ab-ink) !important;border-radius:0 !important;font:700 11px/1 'JetBrains Mono',monospace !important;letter-spacing:1.6px !important;text-transform:uppercase !important;cursor:pointer !important}
+html body .glra-mapcard-view:hover{background:#df3500 !important;border-color:#df3500 !important;color:#fff !important}
+.map-sheet{position:absolute;left:10px;right:10px;bottom:30px;z-index:850;background:var(--ab-paper);border:2px solid var(--ab-ink);box-shadow:5px 5px 0 #ff3d00;animation:glraSheetIn .22s cubic-bezier(.23,1,.32,1)}
+.map-sheet[hidden]{display:none}
+.map-sheet .glra-mapcard{display:grid;grid-template-columns:118px minmax(0,1fr)}
+.map-sheet .glra-mapcard-img{aspect-ratio:auto;height:100%;min-height:150px;border-bottom:0;border-right:2px solid var(--ab-ink)}
+.map-sheet .glra-mapcard-body{padding:12px 44px 12px 12px}
+.map-sheet .glra-mapcard-title{font-size:14px}
+.map-sheet .glra-mapcard-price{font-size:17px}
+html body .map-sheet .glra-mapcard-view{letter-spacing:1.1px !important;font-size:10.5px !important;padding:0 8px !important}
+html body .map-sheet-close{position:absolute !important;top:0 !important;right:0 !important;width:40px !important;height:40px !important;background:#0a0a0a !important;color:#fff !important;border:0 !important;border-radius:0 !important;font-size:15px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important}
+html body.dark-mode .map-sheet-close{background:#f1eee9 !important;color:#0a0a0a !important}
+@keyframes glraSheetIn{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── COMPARE: tray + table ── */
+.cmp-tray{position:fixed;z-index:1400;left:12px;right:84px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:8px;background:#0a0a0a;color:#f1eee9;border:2px solid #0a0a0a;box-shadow:5px 5px 0 #ff3d00;box-sizing:border-box;animation:glraTrayIn .22s cubic-bezier(.23,1,.32,1)}
+@keyframes glraTrayIn{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+.cmp-tray[hidden]{display:none}
+body.dark-mode .cmp-tray{border-color:#f1eee9}
+.cmp-tray-label{font:700 11px/1.2 'JetBrains Mono',monospace;letter-spacing:1.6px;text-transform:uppercase;color:#f1eee9;padding-left:6px;flex:none;display:flex;flex-direction:column;gap:3px}
+.cmp-tray-label small{font-size:10px;letter-spacing:1.2px;color:#ff8a5c;font-weight:700}
+.cmp-tray-thumbs{display:flex;gap:8px;list-style:none;margin:0;padding:0;flex:1;min-width:0}
+.cmp-thumb{position:relative;width:48px;height:48px;flex:none;border:2px solid #f1eee9;background:#1a1a17}
+.cmp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cmp-thumb.cmp-empty{border:2px dashed rgba(241,238,233,.35);display:flex;align-items:center;justify-content:center;color:rgba(241,238,233,.45);font-size:13px}
+html body .cmp-x{position:absolute !important;top:-9px !important;right:-9px !important;width:24px !important;height:24px !important;padding:0 !important;background:#f1eee9 !important;color:#0a0a0a !important;border:2px solid #0a0a0a !important;border-radius:0 !important;font-size:10px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important}
+html body .cmp-x::before{content:'' !important;position:absolute !important;inset:-8px !important}
+html body .cmp-x:hover{background:#df3500 !important;color:#fff !important}
+html body .cmp-tray-clear{flex:none !important;min-height:44px !important;padding:0 12px !important;background:transparent !important;color:#f1eee9 !important;border:2px solid rgba(241,238,233,.4) !important;border-radius:0 !important;font:700 10.5px/1 'JetBrains Mono',monospace !important;letter-spacing:1.4px !important;text-transform:uppercase !important;cursor:pointer !important}
+html body .cmp-tray-clear:hover{border-color:#f1eee9 !important}
+html body .cmp-tray-go{flex:none !important;min-height:44px !important;padding:0 16px !important;background:#df3500 !important;color:#fff !important;border:2px solid #df3500 !important;border-radius:0 !important;font:700 11px/1 'JetBrains Mono',monospace !important;letter-spacing:1.6px !important;text-transform:uppercase !important;cursor:pointer !important;white-space:nowrap !important}
+html body .cmp-tray-go:hover:not(:disabled){background:#f1eee9 !important;color:#0a0a0a !important;border-color:#f1eee9 !important}
+html body .cmp-tray-go:disabled{background:transparent !important;border-color:rgba(241,238,233,.4) !important;color:rgba(241,238,233,.7) !important;cursor:not-allowed !important}
+@media(min-width:769px){.cmp-tray{left:50%;right:auto;transform:translateX(-50%);width:min(660px,calc(100vw - 220px));padding:10px 10px 10px 12px}}
+@media(max-width:768px){
+  .cmp-tray-label{display:none}
+  html body .cmp-tray-clear span{display:none !important}
+  html body .cmp-tray-clear{width:44px !important;padding:0 !important}
+  .cmp-thumb{width:42px;height:42px}
+  .cmp-tray-thumbs{gap:10px;padding-top:4px}
+  html body .cmp-tray-go{padding:0 12px !important}
+  /* lift the bottom-left widgets clear of the tray while it is up */
+  body.cmp-tray-on .back-to-top{bottom:92px !important}
+  body.cmp-tray-on button.glra-chat-fab{bottom:140px !important}
+}
+body.cmp-tray-on .toast{bottom:104px !important}
+body.cmp-tray-on footer{padding-bottom:96px}
+
+.cmp-dialog{position:fixed;inset:0;z-index:2600;background:rgba(10,10,10,.95);overflow:auto;overscroll-behavior:contain;padding:28px 0 48px}
+.cmp-dialog[hidden]{display:none}
+.cmp-inner{max-width:1200px;margin:0 auto;padding:0 20px}
+.cmp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+html body .cmp-head h2{font:900 clamp(30px,4.4vw,48px)/1 'Inter',sans-serif !important;letter-spacing:-1.6px !important;color:#f1eee9 !important;margin:0 !important;text-transform:none !important}
+.cmp-sub{font:700 11px/1.5 'JetBrains Mono',monospace;letter-spacing:1.3px;text-transform:uppercase;color:#bdb6ab;margin:10px 0 0}
+html body .cmp-close{width:48px !important;height:48px !important;flex:none !important;background:#f1eee9 !important;color:#0a0a0a !important;border:2px solid #f1eee9 !important;border-radius:0 !important;font-size:18px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important}
+html body .cmp-close:hover{background:#df3500 !important;border-color:#df3500 !important;color:#fff !important}
+.cmp-scroll{overflow-x:auto;background:var(--ab-paper);border:2px solid #f1eee9;box-shadow:8px 8px 0 #ff3d00;-webkit-overflow-scrolling:touch}
+.cmp-table{border-collapse:separate;border-spacing:0;width:100%;min-width:calc(170px + var(--cmp-n,3) * 230px);table-layout:fixed;color:var(--ab-ink);font-family:'Inter',sans-serif;background:var(--ab-paper)}
+html body .cmp-table th,html body .cmp-table td{padding:13px 14px;border:0;border-bottom:1px solid var(--ab-line);border-right:1px solid var(--ab-line);text-align:left;vertical-align:top;font-size:14px;line-height:1.4;background:var(--ab-paper);color:var(--ab-ink)}
+.cmp-table tr > :last-child{border-right:0}
+.cmp-table tbody tr:last-child > *{border-bottom:0}
+html body .cmp-table th[scope="row"],html body .cmp-table .cmp-corner{position:sticky;left:0;z-index:2;width:170px;background:var(--ab-paper-2);font:700 10.5px/1.4 'JetBrains Mono',monospace;letter-spacing:1.3px;text-transform:uppercase;color:var(--ab-ink);box-shadow:2px 0 0 var(--ab-line)}
+.cmp-corner-txt{color:var(--ab-gray)}
+.cmp-note{display:block;font:500 10.5px/1.4 'Inter',sans-serif;letter-spacing:0;text-transform:none;color:var(--ab-gray);margin-top:5px}
+html body .cmp-table .cmp-colhead{font-weight:400;vertical-align:top}
+.cmp-colhead-img{aspect-ratio:4/3;background:#0a0a0a;border:2px solid var(--ab-line);overflow:hidden;margin-bottom:10px}
+.cmp-colhead-img img{width:100%;height:100%;object-fit:cover;display:block}
+.cmp-colhead-title{display:block;font:900 18px/1.12 'Inter',sans-serif;letter-spacing:-.5px;color:var(--ab-ink);margin-bottom:10px;overflow-wrap:anywhere}
+html body .cmp-remove{display:inline-flex !important;align-items:center !important;gap:6px !important;min-height:34px !important;padding:0 10px !important;background:transparent !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;font:700 10px/1 'JetBrains Mono',monospace !important;letter-spacing:1.3px !important;text-transform:uppercase !important;cursor:pointer !important}
+html body .cmp-remove:hover{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+.cmp-val{font-weight:800;font-variant-numeric:tabular-nums}
+.cmp-na{color:var(--ab-gray);font-size:13px}
+html body .cmp-table td.is-best{background:rgba(255,61,0,.07);box-shadow:inset 4px 0 0 #ff3d00}
+body.dark-mode .cmp-table td.is-best{background:rgba(255,61,0,.12)}
+.cmp-best{display:inline-block;margin-left:6px;font:700 9.5px/1 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);border:1px solid currentColor;padding:3px 5px;vertical-align:2px;white-space:nowrap}
+.cmp-actions{display:flex;flex-direction:column;gap:8px}
+html body .cmp-actions .glra-btn{width:100% !important;padding:0 10px !important}
+@media(max-width:640px){
+  .cmp-dialog{padding:14px 0 28px}
+  .cmp-inner{padding:0 12px}
+  .cmp-table{min-width:calc(112px + var(--cmp-n,3) * 196px)}
+  html body .cmp-table th[scope="row"],html body .cmp-table .cmp-corner{width:112px;font-size:9.5px;letter-spacing:1px;padding:11px 9px}
+  html body .cmp-table th,html body .cmp-table td{padding:11px 10px;font-size:13px}
+  .cmp-colhead-title{font-size:15.5px}
+  .cmp-note{font-size:9.5px}
+}
+@media(prefers-reduced-motion:reduce){
+  .glra-skel-img::after{animation:none;display:none}
+  .map-sheet,.cmp-tray{animation:none}
+  html body .glra-pin,html body .glra-pin::after,html body .glra-cluster,html body .vt-btn,html body .cmp-toggle,html body .glra-btn{transition:none !important}
+  #mapCanvas .glra-pin-wrap.is-hot .glra-pin,#mapCanvas .glra-pin-wrap.is-sel .glra-pin,#mapCanvas .glra-pin-wrap:hover .glra-pin{transform:translateX(-50%)}
+}
 </style>
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
-<div class="loader" id="loader"><div class="loader-content"><div class="loader-logo">GLRA</div><div class="loader-bar"></div></div></div>
 <nav class="navbar" id="navbar">
   <div class="mobile-menu-btn" onclick="openMobileMenu()"><i class="fas fa-bars"></i></div>
   <div class="logo" onclick="location.href='/'"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"></div>
@@ -396,7 +595,7 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
         <input type="text" id="locationInput" aria-label="Search listings by city, property name or keyword" placeholder="Search by city, property name, or keyword..." autocomplete="off" oninput="handleSearchInput(this.value)">
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
-      <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
+      <button type="button" class="search-btn-main" onclick="performSearch()"><i class="fas fa-search" aria-hidden="true"></i> <span id="searchBtnLabel">Search</span></button>
       <button type="button" class="filter-toggle-btn" id="advancedFilterBtn" onclick="toggleAdvancedFilter()"><i class="fas fa-sliders-h"></i> Filters <i class="fas fa-chevron-down" id="filterIcon" style="transition:transform .3s"></i></button>
     </div>
     <div class="advanced-filters" id="advancedFilters">
@@ -431,7 +630,7 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
       <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
     </div>
     <!-- Popular searches (built from live listing data) -->
-    <div class="popular-chips" id="popularChips" style="display:none"></div>
+    <div class="popular-chips is-pending" id="popularChips" aria-hidden="true"></div>
     <!-- Currency Switcher -->
     <div style="margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <span style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase">Show prices in:</span>
@@ -464,10 +663,14 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
 </div>
 <!-- Results -->
 <section class="section">
-  <div class="section-top">
+  <div class="section-top" id="resultsTop">
     <h2 id="sectionTitle">All Properties</h2>
-    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div class="results-count" id="resultsCount"></div>
+    <div class="results-meta">
+      <div class="results-count" id="resultsCount" role="status" aria-live="polite" aria-atomic="true">Loading</div>
+      <div class="view-toggle" role="group" aria-label="Show results as">
+        <button type="button" class="vt-btn" data-view="list" aria-pressed="true"><i class="fas fa-th-large" aria-hidden="true"></i> List</button>
+        <button type="button" class="vt-btn" data-view="map" aria-pressed="false"><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Map</button>
+      </div>
       <button type="button" class="ss-cta" id="ssOpenBtn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me new matches</button>
       <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
         <option value="newest">Sort: Newest First</option>
@@ -477,7 +680,22 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
       </select>
     </div>
   </div>
-  <div id="property-list" class="grid"></div>
+  <div class="results-layout" id="resultsLayout">
+    <div id="property-list" class="grid" aria-busy="true">
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+      <div class="glra-skel" aria-hidden="true"><div class="glra-skel-img"></div><div class="glra-skel-body"><div class="glra-skel-line t"></div><div class="glra-skel-line t2"></div><div class="glra-skel-line w40"></div><div class="glra-skel-line s"></div><div class="glra-skel-line p"></div></div></div>
+    </div>
+    <aside class="map-pane" id="mapPane" aria-label="Map of the listings that match" hidden>
+      <div id="mapCanvas"></div>
+      <p class="map-note" id="mapNote" hidden></p>
+      <div class="map-status" id="mapStatus" hidden></div>
+      <div class="map-sheet" id="mapSheet" hidden></div>
+    </aside>
+  </div>
 </section>
 <!-- Price Alert Modal -->
 <div id="emailModal" class="email-modal">
@@ -531,24 +749,27 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
   <div id="modal-content" class="modal-body"></div>
 </div>
 
-<!-- COMPARE BAR (fixed at bottom when properties are selected) -->
-<div id="compareBar" class="compare-bar">
-  <span class="compare-bar-label"><i class="fas fa-balance-scale"></i> Compare (<span id="compareCount">0</span>/3)</span>
-  <div class="compare-bar-thumbs" id="compareThumbs"></div>
-  <div class="compare-bar-actions">
-    <button class="compare-bar-btn outline" onclick="clearCompare()"><i class="fas fa-times"></i> Clear</button>
-    <button class="compare-bar-btn primary" id="compareViewBtn" onclick="showCompareModal()" disabled>Compare Now</button>
-  </div>
+<!-- COMPARE TRAY (bottom, while listings are picked) -->
+<div id="compareBar" class="cmp-tray" role="region" aria-label="Listings picked to compare" hidden>
+  <span class="cmp-tray-label">Compare<small><span id="compareCount">0</span> of 3 picked</small></span>
+  <ul class="cmp-tray-thumbs" id="compareThumbs"></ul>
+  <button type="button" class="cmp-tray-clear" onclick="clearCompare()" aria-label="Clear all picked listings"><i class="fas fa-times" aria-hidden="true"></i><span> Clear</span></button>
+  <button type="button" class="cmp-tray-go" id="compareViewBtn" onclick="showCompareModal(this)" disabled>Compare (0)</button>
 </div>
 
-<!-- COMPARE MODAL -->
-<div id="compareModal">
-  <div class="compare-modal-content">
-    <div class="compare-modal-head">
-      <h2><i class="fas fa-balance-scale" style="color:var(--ab-hot-text,#c02e00)"></i> Compare Properties</h2>
-      <button class="compare-modal-close" onclick="closeCompareModal()" aria-label="Close"><i class="fas fa-times"></i></button>
+<!-- COMPARE DIALOG -->
+<div id="compareModal" class="cmp-dialog" role="dialog" aria-modal="true" aria-labelledby="cmpTitle" aria-describedby="cmpSub" hidden>
+  <div class="cmp-inner">
+    <div class="cmp-head">
+      <div>
+        <h2 id="cmpTitle">Side by side</h2>
+        <p class="cmp-sub" id="cmpSub"></p>
+      </div>
+      <button type="button" class="cmp-close" onclick="closeCompareModal()" aria-label="Close comparison"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
-    <div id="compareGrid" class="compare-grid"></div>
+    <div class="cmp-scroll" tabindex="0" role="region" aria-label="Comparison table. Scroll sideways on small screens.">
+      <table id="compareGrid" class="cmp-table"></table>
+    </div>
   </div>
 </div>
 
@@ -644,7 +865,755 @@ html body .ss-cta:hover{background:var(--ab-ink) !important;color:var(--ab-paper
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=104"></script>
+<script src="/js/main.js?v=105"></script>
+<script src="/js/gallery.js?v=105" defer></script>
+<script>
+/* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
+   Display titles, shareable filters in the URL, the live results count,
+   the map view, compare, the card-to-pop-up view transition and the photo
+   gallery hook. Loaded before the main listing script so every function
+   here exists by the time the first paint (from the local cache) runs.
+   Nothing here may run main-script code at load time: it only defines
+   functions and wires listeners to markup that is already in the page. */
+
+/* Titles are stored the way a broker types them ("MONARCH PARKSUITES
+   (PASAY CITY)"). glraDisplayTitle() in main.js turns them into
+   "Monarch Parksuites, Pasay City". DISPLAY ONLY: search, filters, the
+   suggestion match and the saved-search alert keep using the raw title. */
+function glraTitle(raw){
+  var s = String(raw == null ? '' : raw);
+  if (typeof window.glraDisplayTitle === 'function') {
+    try { var o = window.glraDisplayTitle(s); if (o) return String(o); } catch (e) {}
+  }
+  return s;
+}
+/* Attribute-safe escaping. main.js's escapeHtml() leaves quotes alone, which
+   is fine between tags but not inside alt="..." or data-*="...". */
+function glraEsc(s){
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function GLRA_REDUCED(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function glraWide(){
+  return !!(window.matchMedia && window.matchMedia('(min-width:1200px)').matches);
+}
+function glraCountLabel(n){
+  n = Number(n) || 0;
+  if (n === 0) return 'No homes match';
+  return n === 1 ? '1 home' : n.toLocaleString('en-US') + ' homes';
+}
+/* Find a rendered card by listing id without building a selector from data. */
+function glraCardEl(id){
+  var cards = document.querySelectorAll('#property-list .prop-card[data-id]');
+  for (var i = 0; i < cards.length; i++) if (cards[i].dataset.id === id) return cards[i];
+  return null;
+}
+
+/* ---- Short prices for map pins: P7.5M, P28K/mo (follows the currency switcher) ---- */
+function glraShortMoney(php){
+  var c = (typeof CURRENCY_RATES !== 'undefined' && CURRENCY_RATES[currentCurrency]) || { rate: 1, symbol: '₱' };
+  var v = (Number(php) || 0) * c.rate, a = Math.abs(v), s;
+  function r(x){ return String(x >= 100 ? Math.round(x) : Math.round(x * 10) / 10); }
+  if (a >= 1e9) s = r(v / 1e9) + 'B';
+  else if (a >= 1e6) s = r(v / 1e6) + 'M';
+  else if (a >= 1e3) s = r(v / 1e3) + 'K';
+  else s = String(Math.round(v));
+  return c.symbol + s;
+}
+function glraPinPrice(p){
+  var sale = Number(p.price) || 0, rent = Number(p.monthlyRental) || 0;
+  var leaseOnly = isForLease(p) && !isForSale(p);
+  if (currentCategory === 'FOR LEASE' || leaseOnly) {
+    var m = rent || (leaseOnly ? sale : 0);
+    return m > 0 ? glraShortMoney(m) + '/mo' : 'Ask';
+  }
+  if (sale > 0) return glraShortMoney(sale);
+  return rent > 0 ? glraShortMoney(rent) + '/mo' : 'Ask';
+}
+
+/* ---- Shareable filters: every filter lives in the query string ----
+   replaceState only, so filtering never floods the back button. Keys the
+   page does not manage (utm_*, property=...) are left alone. Incoming links
+   keep working: category=FOR%20SALE from the footers, search=BGC from the
+   living-in pages and listing breadcrumbs, q= as an alias. */
+var GLRA_URL_KEYS = ['category','search','q','propertyType','bedrooms','baths','minPrice','maxPrice','sort','currency','view'];
+var glraView = 'list';
+var glraUrlReady = false;   // never write the URL before the incoming one has been read
+function glraSyncUrl(){
+  if (!glraUrlReady || !(window.history && history.replaceState)) return;
+  try {
+    var u = new URL(location.href);
+    GLRA_URL_KEYS.forEach(function(k){ u.searchParams.delete(k); });
+    function val(id){ var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
+    if (currentCategory && currentCategory !== 'all') u.searchParams.set('category', currentCategory);
+    if (val('locationInput')) u.searchParams.set('search', val('locationInput'));
+    if (val('propertyTypeSelect')) u.searchParams.set('propertyType', val('propertyTypeSelect'));
+    if (val('bedroomsSelect')) u.searchParams.set('bedrooms', val('bedroomsSelect'));
+    if (val('bathsSelect')) u.searchParams.set('baths', val('bathsSelect'));
+    var mn = getRaw('minPriceInput'), mx = getRaw('maxPriceInput');
+    if (mn > 0) u.searchParams.set('minPrice', String(mn));
+    if (mx > 0) u.searchParams.set('maxPrice', String(mx));
+    if (currentSort && currentSort !== 'newest') u.searchParams.set('sort', currentSort);
+    if (currentCurrency && currentCurrency !== 'PHP') u.searchParams.set('currency', currentCurrency);
+    if (glraView === 'map') u.searchParams.set('view', 'map');
+    var next = u.pathname + u.search + u.hash;
+    if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', next);
+  } catch (e) {}
+}
+function glraDropUrlParam(name){
+  if (!(window.history && history.replaceState)) return;
+  try {
+    var u = new URL(location.href);
+    if (!u.searchParams.has(name)) return;
+    u.searchParams.delete(name);
+    history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+  } catch (e) {}
+}
+
+/* ---- Category tabs ---- */
+var GLRA_CAT_TITLES = { 'all': 'All Properties', 'FOR SALE': 'Properties For Sale', 'FOR LEASE': 'Properties For Lease', 'featured': 'Featured Listings' };
+function glraPaintCategory(cat){
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    var on = b.dataset.category === cat;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  var h = document.getElementById('sectionTitle');
+  if (h) h.textContent = GLRA_CAT_TITLES[cat] || 'All Properties';
+}
+function glraSetCategory(cat){
+  currentCategory = GLRA_CAT_TITLES[cat] ? cat : 'all';
+  glraPaintCategory(currentCategory);
+  applyFilters(currentCategory, cachedProperties);
+}
+
+/* ---- After every filter pass: count, URL, map, compare tray ---- */
+function glraAfterFilter(list){
+  var n = list.length;
+  var c = document.getElementById('resultsCount');
+  if (c) { c.textContent = glraCountLabel(n); c.classList.toggle('is-zero', n === 0); }
+  var b = document.getElementById('searchBtnLabel');
+  if (b) b.textContent = n === 0 ? 'No homes match' : 'Show ' + glraCountLabel(n);
+  glraSyncUrl();
+  glraMapUpdate(list);
+  if (typeof renderCompareBar === 'function') renderCompareBar();
+}
+
+/* ---- Empty state: say what to loosen, one tap each ---- */
+function glraEmptyStateHtml(){
+  var chips = [];
+  function has(id){ var e = document.getElementById(id); return !!(e && String(e.value || '').trim()); }
+  if (has('locationInput')) chips.push(['search', 'Clear the search']);
+  if (has('minPriceInput') || has('maxPriceInput')) chips.push(['price', 'Any price']);
+  if (has('propertyTypeSelect')) chips.push(['type', 'Any type']);
+  if (has('bedroomsSelect')) chips.push(['beds', 'Any bedrooms']);
+  if (has('bathsSelect')) chips.push(['baths', 'Any bathrooms']);
+  if (currentCategory && currentCategory !== 'all') chips.push(['cat', 'All categories']);
+  var chipHtml = chips.map(function(c){
+    return '<button type="button" class="glra-chip" data-relax="' + c[0] + '">' + c[1] + ' <i class="fas fa-times" aria-hidden="true"></i></button>';
+  }).join('');
+  return '<div class="empty-state glra-empty" role="status">'
+    + '<i class="fas fa-search" aria-hidden="true"></i>'
+    + '<p class="glra-empty-title">No homes match these filters</p>'
+    + (chips.length ? '<p class="glra-empty-sub">Loosen one to see more:</p><div class="glra-empty-chips">' + chipHtml + '</div>' : '<p class="glra-empty-sub">New listings go live every week.</p>')
+    + '<div class="glra-empty-actions">'
+    + (chips.length ? '<button type="button" class="glra-btn" data-relax="all">Clear all filters</button>' : '')
+    + '<button type="button" class="glra-btn glra-btn-ghost ss-empty-btn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me when one does</button>'
+    + '</div></div>';
+}
+function glraRelax(what){
+  function clear(id){ var e = document.getElementById(id); if (e) e.value = ''; }
+  if (what === 'all') { resetAllFilters(); return; }
+  if (what === 'search') clear('locationInput');
+  else if (what === 'price') { clear('minPriceInput'); clear('maxPriceInput'); }
+  else if (what === 'type') clear('propertyTypeSelect');
+  else if (what === 'beds') clear('bedroomsSelect');
+  else if (what === 'baths') clear('bathsSelect');
+  if (what === 'cat') { glraSetCategory('all'); return; }
+  applyFilters(currentCategory, cachedProperties);
+}
+document.getElementById('property-list').addEventListener('click', function(e){
+  var b = e.target.closest('[data-relax]');
+  if (b) { e.stopPropagation(); glraRelax(b.getAttribute('data-relax')); }
+});
+
+/* ---- Photo gallery (public/js/gallery.js). Without it, photos behave as before. ---- */
+var glraCurIdx = 0;
+function glraHasGallery(){
+  return !!(window.GLRAGallery && typeof window.GLRAGallery.open === 'function');
+}
+function glraGalleryOpen(e){
+  if (e && e.defaultPrevented) return true;
+  try { return !!(window.GLRAGallery && typeof GLRAGallery.isOpen === 'function' && GLRAGallery.isOpen()); } catch (x) { return false; }
+}
+function glraOpenGallery(i, trigger){
+  if (!glraHasGallery() || !currentProperty) return false;
+  var t = glraTitle(currentProperty.title);
+  var imgs = (galleryImages || []).map(function(src, k){ return { src: src, alt: t + ', photo ' + (k + 1) + ' of ' + galleryImages.length }; });
+  if (!imgs.length) return false;
+  try { window.GLRAGallery.open(imgs, Math.max(0, Math.min(i || 0, imgs.length - 1)), { title: t, returnFocus: trigger || document.activeElement }); return true; }
+  catch (e) { return false; }
+}
+function glraThumb(i, btn){
+  changeImg(i);
+  glraOpenGallery(i, btn);
+}
+function glraMainPhotoHtml(imgs, title){
+  var img = '<img id="mainImg" class="gallery-main" src="' + glraEsc(imgs[0] || '') + '" alt="' + glraEsc(title) + '" decoding="async" fetchpriority="high">';
+  if (!glraHasGallery() || !imgs.length) return img;
+  var n = imgs.length;
+  return '<button type="button" class="gallery-open" onclick="glraOpenGallery(glraCurIdx,this)" aria-label="Open photo gallery, ' + n + ' photo' + (n === 1 ? '' : 's') + '">'
+    + img + '<span class="gallery-hint" aria-hidden="true"><i class="fas fa-expand"></i> ' + (n === 1 ? 'View photo' : 'All ' + n + ' photos') + '</span></button>';
+}
+
+/* ---- Listing pop-up: dialog semantics, focus in and back out ---- */
+var glraModalOpener = null;
+function glraModalOpened(){
+  var m = document.getElementById('modal');
+  if (!m) return;
+  var wasOpen = m.getAttribute('data-open') === '1';
+  if (!wasOpen) glraModalOpener = document.activeElement;
+  m.setAttribute('data-open', '1');
+  m.setAttribute('role', 'dialog');
+  m.setAttribute('aria-modal', 'true');
+  m.setAttribute('aria-labelledby', 'modalTitle');
+  m.setAttribute('tabindex', '-1');
+  m.scrollTop = 0;
+  try { m.focus({ preventScroll: true }); } catch (e) {}
+}
+function glraModalClosed(){
+  var m = document.getElementById('modal');
+  if (m) m.removeAttribute('data-open');
+  glraDropUrlParam('property');
+  var back = glraModalOpener;
+  glraModalOpener = null;
+  if (back && document.body.contains(back) && back.focus) { try { back.focus({ preventScroll: true }); } catch (e) {} }
+}
+
+/* ---- Card photo morphs into the pop-up photo (same-document View Transition) ----
+   The name glra-hero is given to exactly one element per snapshot and taken
+   away again afterwards, so it can never be duplicated on the page. */
+function glraInView(el){
+  if (!el) return false;
+  var r = el.getBoundingClientRect();
+  return r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+}
+function glraVTok(img){
+  return !!(document.startViewTransition && !GLRA_REDUCED() && img && img.complete && img.naturalWidth > 8 && !img.classList.contains('lazy') && glraInView(img));
+}
+function glraRunVT(update, cleanup){
+  var root = document.documentElement;
+  root.classList.add('glra-vt');
+  var vt;
+  try { vt = document.startViewTransition(update); }
+  catch (e) { root.classList.remove('glra-vt'); update(); cleanup(); return; }
+  vt.finished.then(cleanup, cleanup).then(function(){ root.classList.remove('glra-vt'); });
+}
+function glraOpenFromCard(id, card){
+  var img = card && card.querySelector('.prop-card-image img');
+  if (!glraVTok(img)) { openDetail(id); return; }
+  img.style.viewTransitionName = 'glra-hero';
+  glraRunVT(function(){
+    img.style.viewTransitionName = '';
+    openDetail(id);
+    var m = document.getElementById('mainImg');
+    if (!m) return;
+    m.style.viewTransitionName = 'glra-hero';
+    if (m.complete || !m.decode) return;
+    return Promise.race([m.decode().catch(function(){}), new Promise(function(r){ setTimeout(r, 280); })]);
+  }, function(){
+    img.style.viewTransitionName = '';
+    var m = document.getElementById('mainImg');
+    if (m) m.style.viewTransitionName = '';
+  });
+}
+function glraCloseWithVT(doClose){
+  var m = document.getElementById('mainImg');
+  var card = currentProperty && glraCardEl(currentProperty._id);
+  var img = card && card.querySelector('.prop-card-image img');
+  if (!(glraVTok(img) && m && glraInView(m))) { doClose(); return; }
+  m.style.viewTransitionName = 'glra-hero';
+  glraRunVT(function(){
+    m.style.viewTransitionName = '';
+    doClose();
+    img.style.viewTransitionName = 'glra-hero';
+  }, function(){ img.style.viewTransitionName = ''; });
+}
+
+/* ======================= MAP VIEW =======================
+   Leaflet is only downloaded the first time someone opens the map. Pins are
+   the listings that pass the current filters, nothing else; a listing with
+   no geo from the API is counted and said so, never guessed. */
+var GLRA_MAP = { map: null, cluster: null, markers: {}, list: [], loading: null, sel: null, hot: null, hotParent: null, sig: '', popup: null };
+var GLRA_LEAFLET = [
+  ['link', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css', 'sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=='],
+  ['link', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css', 'sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg=='],
+  ['script', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=='],
+  ['script', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js', 'sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==']
+];
+function glraLoadAsset(a){
+  return new Promise(function(res, rej){
+    var el = document.createElement(a[0]);
+    if (a[0] === 'link') { el.rel = 'stylesheet'; el.href = a[1]; }
+    else { el.src = a[1]; el.async = false; }
+    el.integrity = a[2];
+    el.crossOrigin = 'anonymous';
+    el.referrerPolicy = 'no-referrer';
+    el.onload = function(){ res(); };
+    el.onerror = function(){ el.remove(); rej(new Error('Could not load ' + a[1])); };
+    document.head.appendChild(el);
+  });
+}
+function glraLoadLeaflet(){
+  if (window.L && window.L.markerClusterGroup) return Promise.resolve();
+  if (GLRA_MAP.loading) return GLRA_MAP.loading;
+  GLRA_MAP.loading = Promise.all([
+    glraLoadAsset(GLRA_LEAFLET[0]),
+    glraLoadAsset(GLRA_LEAFLET[1]),
+    glraLoadAsset(GLRA_LEAFLET[2]).then(function(){ return glraLoadAsset(GLRA_LEAFLET[3]); })
+  ]).catch(function(e){ GLRA_MAP.loading = null; throw e; });
+  return GLRA_MAP.loading;
+}
+function glraGeo(p){
+  var g = p && p.geo;
+  if (!g) return null;
+  var la = Number(g.lat), ln = Number(g.lng);
+  if (!isFinite(la) || !isFinite(ln) || la < 4 || la > 22 || ln < 116 || ln > 127.5) return null;
+  return [la, ln];
+}
+function glraPinIcon(p){
+  return L.divIcon({
+    className: 'glra-pin-wrap',
+    html: '<span class="glra-pin">' + glraEsc(glraPinPrice(p)) + '</span>',
+    iconSize: [0, 0],
+    iconAnchor: [0, 0]
+  });
+}
+function glraMapCardHtml(p, inSheet){
+  var t = glraTitle(p.title);
+  var specs = [p.bedrooms > 0 ? p.bedrooms + ' BR' : '', p.bathrooms > 0 ? p.bathrooms + ' TB' : '', glraAreaLabel(p), String(p.propertyType || '').trim()].filter(Boolean).join(' / ');
+  var badge = String(p.listingType || '').toUpperCase() === 'SALE AND LEASE' ? 'Sale or lease' : (isForSale(p) ? 'For sale' : 'For lease');
+  return '<div class="glra-mapcard">'
+    + '<div class="glra-mapcard-img">' + (p.mainImage ? '<img src="' + glraEsc(p.mainImage) + '" alt="" loading="lazy" decoding="async">' : '') + '<span class="glra-mapcard-badge">' + badge + '</span></div>'
+    + '<div class="glra-mapcard-body">'
+    + '<div class="glra-mapcard-price">' + glraEsc(getDisplayPrice(p)) + '</div>'
+    + '<div class="glra-mapcard-title">' + glraEsc(t) + '</div>'
+    + (specs ? '<div class="glra-mapcard-specs">' + glraEsc(specs) + '</div>' : '')
+    + '<button type="button" class="glra-mapcard-view" data-open-id="' + glraEsc(p._id) + '">View listing <i class="fas fa-arrow-right" aria-hidden="true"></i></button>'
+    + '</div></div>'
+    + (inSheet ? '<button type="button" class="map-sheet-close" data-sheet-close="1" aria-label="Close listing preview"><i class="fas fa-times" aria-hidden="true"></i></button>' : '');
+}
+function glraMapInit(){
+  if (GLRA_MAP.map) return;
+  var reduce = GLRA_REDUCED();
+  var m = L.map('mapCanvas', {
+    zoomControl: false, attributionControl: true, minZoom: 5, maxZoom: 18,
+    zoomAnimation: !reduce, fadeAnimation: !reduce, markerZoomAnimation: !reduce
+  }).setView([14.58, 121.03], 11);
+  L.control.zoom({ position: 'topright' }).addTo(m);
+  m.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, subdomains: 'abc',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+  }).addTo(m);
+  GLRA_MAP.cluster = L.markerClusterGroup({
+    showCoverageOnHover: false, maxClusterRadius: 50, spiderfyOnMaxZoom: true,
+    zoomToBoundsOnClick: true, animate: !reduce, animateAddingMarkers: false,
+    iconCreateFunction: function(c){
+      var n = c.getChildCount();
+      return L.divIcon({ html: '<span class="glra-cluster"><b>' + n + '</b></span>', className: 'glra-cluster-wrap', iconSize: L.point(44, 44) });
+    }
+  });
+  GLRA_MAP.cluster.on('animationend', glraMapRepaintHot);
+  m.on('zoomend', glraMapRepaintHot);
+  m.addLayer(GLRA_MAP.cluster);
+  m.on('click', function(){ if (!glraWide()) glraMapSelect(null); });
+  GLRA_MAP.map = m;
+}
+/* Leaflet recreates a marker's element whenever clustering takes it off and
+   puts it back, so hot/selected state is re-applied on every 'add'. */
+function glraPinDecorate(ev){
+  var mk = ev.target, el = mk.getElement && mk.getElement();
+  if (!el) return;
+  var id = mk._glraId;
+  el.classList.toggle('is-hot', GLRA_MAP.hot === id);
+  el.classList.toggle('is-sel', GLRA_MAP.sel === id);
+  el.setAttribute('aria-label', mk._glraLabel);
+  el.setAttribute('role', 'button');
+}
+function glraMapRepaintHot(){
+  if (GLRA_MAP.hotParent && GLRA_MAP.hotParent.getElement && GLRA_MAP.hotParent.getElement()) GLRA_MAP.hotParent.getElement().classList.remove('is-hot');
+  GLRA_MAP.hotParent = null;
+  var id = GLRA_MAP.hot, mk = id && GLRA_MAP.markers[id];
+  if (!mk || !GLRA_MAP.cluster) return;
+  var parent = GLRA_MAP.cluster.getVisibleParent(mk);
+  var el = parent && parent.getElement && parent.getElement();
+  if (el) { el.classList.add('is-hot'); if (parent !== mk) GLRA_MAP.hotParent = parent; }
+}
+/* Card hover lights its pin (or the cluster hiding it); pin hover lights its card. */
+function glraHot(id, on){
+  var prev = GLRA_MAP.hot;
+  if (!on && prev !== id) return;
+  GLRA_MAP.hot = on ? id : null;
+  if (prev && prev !== GLRA_MAP.hot) {
+    var pc = glraCardEl(prev); if (pc) pc.classList.remove('is-map-hot');
+    var pm = GLRA_MAP.markers[prev];
+    if (pm && pm.getElement && pm.getElement()) { pm.getElement().classList.remove('is-hot'); pm.setZIndexOffset(GLRA_MAP.sel === prev ? 900 : 0); }
+  }
+  if (!GLRA_MAP.map || glraView !== 'map') return;
+  if (on) {
+    var c = glraCardEl(id); if (c) c.classList.add('is-map-hot');
+    var mk = GLRA_MAP.markers[id]; if (mk) mk.setZIndexOffset(1000);
+  }
+  glraMapRepaintHot();
+}
+function glraMapSelect(id){
+  var prev = GLRA_MAP.sel;
+  GLRA_MAP.sel = id;
+  [prev, id].forEach(function(k){
+    var mk = k && GLRA_MAP.markers[k];
+    if (mk && mk.getElement && mk.getElement()) mk.getElement().classList.toggle('is-sel', GLRA_MAP.sel === k);
+    if (mk) mk.setZIndexOffset(GLRA_MAP.sel === k ? 900 : 0);
+  });
+  var sheet = document.getElementById('mapSheet');
+  var pane = document.getElementById('mapPane');
+  if (!id) {
+    if (sheet) { sheet.hidden = true; sheet.innerHTML = ''; }
+    if (pane) pane.classList.remove('has-sheet');
+    if (GLRA_MAP.map) GLRA_MAP.map.closePopup();
+    return;
+  }
+  var p = findPropById(id), mk2 = GLRA_MAP.markers[id];
+  if (!p || !mk2) return;
+  if (glraWide()) {
+    if (sheet) { sheet.hidden = true; sheet.innerHTML = ''; }
+    var pop = L.popup({ className: 'glra-popup', minWidth: 260, maxWidth: 260, offset: [0, -30], autoPanPadding: [24, 24], closeButton: true })
+      .setLatLng(mk2.getLatLng()).setContent(glraMapCardHtml(p, false));
+    /* The popup's own close button has to un-select the pin too. */
+    pop.on('remove', function(){
+      if (GLRA_MAP.popup === pop) GLRA_MAP.popup = null;
+      if (GLRA_MAP.sel === id && glraWide()) glraMapSelect(null);
+    });
+    GLRA_MAP.popup = pop;
+    pop.openOn(GLRA_MAP.map);
+  } else if (sheet) {
+    GLRA_MAP.map.closePopup();
+    sheet.innerHTML = glraMapCardHtml(p, true);
+    sheet.hidden = false;
+    pane.classList.add('has-sheet');
+  }
+}
+function glraMapNote(listLen, shown){
+  var note = document.getElementById('mapNote');
+  if (!note) return;
+  var missing = listLen - shown, txt = '';
+  if (listLen === 0) txt = 'No homes match these filters';
+  else if (shown === 0) txt = listLen === 1 ? 'This listing has no map location yet' : 'None of these ' + listLen + ' listings has a map location yet';
+  else if (missing > 0) txt = missing + (missing === 1 ? ' listing' : ' listings') + ' not shown on the map (no location yet)';
+  note.textContent = txt;
+  note.hidden = !txt;
+}
+function glraMapRender(forceFit){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  var list = GLRA_MAP.list || [];
+  GLRA_MAP.cluster.clearLayers();
+  GLRA_MAP.markers = {};
+  GLRA_MAP.hotParent = null;
+  var pts = [], mks = [];
+  list.forEach(function(p){
+    var g = glraGeo(p);
+    if (!g) return;
+    var label = glraTitle(p.title) + ', ' + glraPinPrice(p);
+    var mk = L.marker(g, { icon: glraPinIcon(p), keyboard: true, title: label, riseOnHover: true });
+    mk._glraId = p._id;
+    mk._glraLabel = label;
+    mk.on('add', glraPinDecorate);
+    mk.on('click', function(){ glraMapSelect(p._id); });
+    mk.on('mouseover', function(){ glraHot(p._id, true); });
+    mk.on('mouseout', function(){ glraHot(p._id, false); });
+    mks.push(mk); pts.push(g);
+    GLRA_MAP.markers[p._id] = mk;
+  });
+  GLRA_MAP.cluster.addLayers(mks);
+  /* Refit only when the set of pins changed, not on a re-sort or a currency switch. */
+  var sig = list.map(function(p){ var g = glraGeo(p); return p._id + (g ? '@' + g.join(',') : ''); }).sort().join('|');
+  if (forceFit || sig !== GLRA_MAP.sig) {
+    if (pts.length) m.fitBounds(L.latLngBounds(pts), { padding: [56, 56], maxZoom: 15, animate: !GLRA_REDUCED() });
+    else m.setView([14.58, 121.03], 11);
+  }
+  GLRA_MAP.sig = sig;
+  glraMapNote(list.length, pts.length);
+  if (GLRA_MAP.sel) {
+    if (GLRA_MAP.markers[GLRA_MAP.sel]) { var keep = GLRA_MAP.sel; GLRA_MAP.sel = null; glraMapSelect(keep); }
+    else glraMapSelect(null);
+  }
+}
+function glraMapUpdate(list){
+  GLRA_MAP.list = list || [];
+  if (GLRA_MAP.map && glraView === 'map') glraMapRender(false);
+}
+function glraMapStatus(html){
+  var s = document.getElementById('mapStatus');
+  if (!s) return;
+  s.innerHTML = html || '';
+  s.hidden = !html;
+}
+function glraMapTop(){
+  var tabs = document.querySelector('.category-tabs-wrap');
+  if (!tabs) return;
+  var top = parseFloat(getComputedStyle(tabs).top) || 76;
+  document.documentElement.style.setProperty('--glra-map-top', Math.round(top + tabs.offsetHeight + 14) + 'px');
+}
+function glraSetView(v, fromUrl){
+  glraView = v === 'map' ? 'map' : 'list';
+  var isMap = glraView === 'map';
+  document.body.classList.toggle('view-map', isMap);
+  document.querySelectorAll('.vt-btn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.view === glraView ? 'true' : 'false'); });
+  var pane = document.getElementById('mapPane');
+  if (pane) pane.hidden = !isMap;
+  glraSyncUrl();
+  if (!isMap) {
+    glraMapSelect(null);
+    if (GLRA_MAP.hot) glraHot(GLRA_MAP.hot, false);
+    return;
+  }
+  glraMapTop();
+  /* On a phone the map is the whole view: bring all of it on screen. */
+  if (!fromUrl && !glraWide() && pane) pane.scrollIntoView({ behavior: GLRA_REDUCED() ? 'auto' : 'smooth', block: 'start' });
+  if (!GLRA_MAP.map) glraMapStatus('<span class="map-status-msg">Loading map</span>');
+  glraLoadLeaflet().then(function(){
+    if (glraView !== 'map') return;
+    glraMapInit();
+    glraMapStatus('');
+    GLRA_MAP.map.invalidateSize(false);
+    glraMapRender(true);
+  }).catch(function(){
+    glraMapStatus('<span class="map-status-msg">The map could not load. Check your connection.</span><button type="button" class="glra-btn" onclick="glraSetView(\'map\')">Try again</button>');
+  });
+}
+(function(){
+  document.querySelectorAll('.vt-btn').forEach(function(b){
+    b.addEventListener('click', function(){ if (glraView !== b.dataset.view) glraSetView(b.dataset.view); });
+  });
+  var pane = document.getElementById('mapPane');
+  if (pane) pane.addEventListener('click', function(e){
+    var open = e.target.closest('[data-open-id]');
+    if (open) { e.preventDefault(); openDetail(open.getAttribute('data-open-id')); return; }
+    if (e.target.closest('[data-sheet-close]')) glraMapSelect(null);
+  });
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(min-width:1200px)');
+    var onChange = function(){
+      if (!GLRA_MAP.map) return;
+      var keep = GLRA_MAP.sel;
+      glraMapSelect(null);
+      glraMapTop();
+      setTimeout(function(){ GLRA_MAP.map.invalidateSize(false); if (keep && glraView === 'map') glraMapSelect(keep); }, 60);
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
+  }
+})();
+
+/* ======================= COMPARE =======================
+   Up to three listings side by side. The selection survives a reload in
+   sessionStorage. The tray sits bottom-centre on desktop and leaves the
+   right-hand 84px free on phones for the floating contact button. */
+var COMPARE_MAX = 3;
+var compareList = (function(){
+  try { var a = JSON.parse(sessionStorage.getItem('glraCompare') || '[]'); return Array.isArray(a) ? a.filter(function(x){ return typeof x === 'string'; }).slice(0, COMPARE_MAX) : []; }
+  catch (e) { return []; }
+})();
+function glraSaveCompare(){
+  try { if (compareList.length) sessionStorage.setItem('glraCompare', JSON.stringify(compareList)); else sessionStorage.removeItem('glraCompare'); } catch (e) {}
+}
+/* Once the fresh list arrives, drop anything that has since been taken down. */
+function glraPruneCompare(){
+  var pool = cachedProperties || [];
+  var before = compareList.length;
+  compareList = compareList.filter(function(id){ return pool.some(function(p){ return p._id === id; }); });
+  if (compareList.length !== before) { glraSaveCompare(); renderCompareBar(); glraRefreshCompareCards(); }
+}
+function openCompare(propId){
+  var idx = compareList.indexOf(propId);
+  if (idx >= 0) {
+    compareList.splice(idx, 1);
+  } else if (compareList.length >= COMPARE_MAX) {
+    showToast('You can compare 3 at a time. Remove one first.');
+    return;
+  } else {
+    compareList.push(propId);
+  }
+  glraSaveCompare();
+  renderCompareBar();
+  glraRefreshCompareCards();
+  var dlg = document.getElementById('compareModal');
+  if (dlg && !dlg.hidden) {
+    if (compareList.length >= 2) showCompareModal(); else closeCompareModal();
+  }
+}
+function refreshCompareCardState(cardEl, propId){
+  var inList = compareList.indexOf(propId) >= 0;
+  cardEl.classList.toggle('compare-selected', inList);
+  var btn = cardEl.querySelector('.cmp-toggle');
+  if (btn) {
+    btn.setAttribute('aria-pressed', inList ? 'true' : 'false');
+    var l = btn.querySelector('.cmp-lbl'); if (l) l.textContent = inList ? 'Comparing' : 'Compare';
+  }
+}
+function glraRefreshCompareCards(){
+  document.querySelectorAll('.prop-card[data-id]').forEach(function(c){ refreshCompareCardState(c, c.dataset.id); });
+}
+function clearCompare(){
+  compareList = [];
+  glraSaveCompare();
+  renderCompareBar();
+  glraRefreshCompareCards();
+  closeCompareModal();
+}
+function renderCompareBar(){
+  var bar = document.getElementById('compareBar');
+  if (!bar) return;
+  var pool = cachedProperties || [];
+  var props = compareList.map(function(id){ return pool.find(function(p){ return p._id === id; }); }).filter(Boolean);
+  var n = compareList.length;
+  var on = n > 0;
+  bar.hidden = !on;
+  document.body.classList.toggle('cmp-tray-on', on);
+  if (!on) return;
+  document.getElementById('compareCount').textContent = String(n);
+  var go = document.getElementById('compareViewBtn');
+  go.textContent = 'Compare (' + n + ')';
+  go.disabled = n < 2;
+  go.title = n < 2 ? 'Pick one more listing to compare' : '';
+  var html = '';
+  props.forEach(function(p){
+    var t = glraTitle(p.title);
+    html += '<li class="cmp-thumb"><img src="' + glraEsc(p.mainImage || '') + '" alt="' + glraEsc(t) + '" loading="lazy" decoding="async">'
+      + '<button type="button" class="cmp-x" data-cmp-remove="' + glraEsc(p._id) + '" aria-label="Remove ' + glraEsc(t) + ' from compare"><i class="fas fa-times" aria-hidden="true"></i></button></li>';
+  });
+  for (var i = props.length; i < COMPARE_MAX; i++) html += '<li class="cmp-thumb cmp-empty" aria-hidden="true"><i class="fas fa-plus"></i></li>';
+  document.getElementById('compareThumbs').innerHTML = html;
+  var hint = document.getElementById('compareHint');
+  if (hint) hint.textContent = n < 2 ? 'Pick one more' : '';
+}
+document.getElementById('compareBar').addEventListener('click', function(e){
+  var x = e.target.closest('[data-cmp-remove]');
+  if (x) openCompare(x.getAttribute('data-cmp-remove'));
+});
+
+/* The table. Money goes through formatPrice(), so the currency switcher
+   applies. A SALE AND LEASE listing fills both the sale and the rent rows. */
+function glraCmpSale(p){ return isForSale(p) && Number(p.price) > 0 ? Number(p.price) : 0; }
+function glraCmpRent(p){
+  if (!isForLease(p)) return 0;
+  var r = Number(p.monthlyRental) || 0;
+  if (!r && String(p.listingType || '').toUpperCase() === 'FOR LEASE') r = Number(p.price) || 0;
+  return r;
+}
+function glraCmpFloor(p){ var f = Number(p.sqm) || 0; if (!f && glraHasNoLot(p)) f = Number(p.landArea) || 0; return f; }
+function glraCmpLot(p){ return glraHasNoLot(p) ? 0 : (Number(p.landArea) || 0); }
+function glraCmpAmort(p){
+  var s = glraCmpSale(p);
+  if (!s) return 0;
+  var loan = s * 0.8, mr = 0.075 / 12, n = 240;
+  return loan * mr * Math.pow(1 + mr, n) / (Math.pow(1 + mr, n) - 1);
+}
+var glraCmpReturn = null;
+function showCompareModal(trigger){
+  var pool = cachedProperties || [];
+  var props = compareList.map(function(id){ return pool.find(function(p){ return p._id === id; }); }).filter(Boolean);
+  if (props.length < 2) { showToast('Pick at least 2 listings to compare'); return; }
+  var dlg = document.getElementById('compareModal');
+  var sqm = function(v){ return Math.round(v).toLocaleString('en-US') + ' sqm'; };
+  var rows = [
+    { label: 'Location', html: function(p){ return glraEsc(p.location || '') || '<span class="cmp-na">Not listed</span>'; } },
+    { label: 'Offered for', html: function(p){ var t = String(p.listingType || '').toUpperCase(); return t === 'SALE AND LEASE' ? 'Sale or lease' : (isForSale(p) ? 'Sale' : 'Lease'); } },
+    { label: 'Sale price', val: glraCmpSale, best: 'min', tag: 'Lowest', fmt: function(v){ return formatPrice(v); }, na: 'Not for sale' },
+    { label: 'Monthly rent', val: glraCmpRent, best: 'min', tag: 'Lowest', fmt: function(v){ return formatPrice(v) + '/mo'; }, na: 'Not for lease' },
+    { label: 'Type', html: function(p){ return glraEsc(String(p.propertyType || 'Property').trim()); } },
+    { label: 'Bedrooms', val: function(p){ return Number(p.bedrooms) || 0; }, fmt: String, na: 'None listed' },
+    { label: 'Bathrooms', val: function(p){ return Number(p.bathrooms) || 0; }, fmt: String, na: 'None listed' },
+    { label: 'Floor area', val: glraCmpFloor, best: 'max', tag: 'Largest', fmt: sqm, na: 'Not listed' },
+    { label: 'Lot area', val: glraCmpLot, best: 'max', tag: 'Largest', fmt: sqm, na: 'No lot' },
+    { label: 'Parking', val: function(p){ return Number(p.parking) || 0; }, best: 'max', tag: 'Most', fmt: function(v){ return v + ' slot' + (v === 1 ? '' : 's'); }, na: 'None listed' },
+    { label: 'Price per sqm', note: 'Sale price over floor area, or lot area when there is no floor area', val: function(p){ var s = glraCmpSale(p), b = glraAreaBasis(p); return s > 0 && b > 0 ? s / b : 0; }, best: 'min', tag: 'Lowest', fmt: function(v){ return formatPrice(Math.round(v)) + '/sqm'; }, na: 'Not available' },
+    { label: 'Est. monthly amortization', note: 'Estimate only: 20% down, 20 years at 7.5%, principal and interest', val: glraCmpAmort, best: 'min', tag: 'Lowest', fmt: function(v){ return formatPrice(Math.round(v)) + '/mo'; }, na: 'Sale listings only' }
+  ];
+  var head = '<thead><tr><th scope="col" class="cmp-corner"><span class="cmp-corner-txt">' + props.length + ' listings</span></th>' + props.map(function(p){
+    var t = glraTitle(p.title);
+    return '<th scope="col" class="cmp-colhead"><div class="cmp-colhead-img">' + (p.mainImage ? '<img src="' + glraEsc(p.mainImage) + '" alt="" loading="lazy" decoding="async">' : '') + '</div>'
+      + '<span class="cmp-colhead-title">' + glraEsc(t) + '</span>'
+      + '<button type="button" class="cmp-remove" data-cmp-remove="' + glraEsc(p._id) + '" aria-label="Remove ' + glraEsc(t) + ' from compare"><i class="fas fa-times" aria-hidden="true"></i> Remove</button></th>';
+  }).join('') + '</tr></thead>';
+  var body = rows.map(function(r){
+    var cells;
+    if (r.val) {
+      var vals = props.map(r.val);
+      var real = vals.filter(function(v){ return v > 0; });
+      var best = null;
+      if (r.best && real.length >= 2) {
+        var b = r.best === 'min' ? Math.min.apply(null, real) : Math.max.apply(null, real);
+        if (real.some(function(v){ return Math.abs(v - b) > 1e-9; })) best = b;
+      }
+      cells = vals.map(function(v){
+        if (!(v > 0)) return '<td><span class="cmp-na">' + r.na + '</span></td>';
+        var isBest = best !== null && Math.abs(v - best) < 1e-9;
+        return '<td' + (isBest ? ' class="is-best"' : '') + '><span class="cmp-val">' + glraEsc(r.fmt(v)) + '</span>' + (isBest ? ' <span class="cmp-best">' + r.tag + '</span>' : '') + '</td>';
+      }).join('');
+    } else {
+      cells = props.map(function(p){ return '<td>' + r.html(p) + '</td>'; }).join('');
+    }
+    return '<tr><th scope="row">' + r.label + (r.note ? '<span class="cmp-note">' + r.note + '</span>' : '') + '</th>' + cells + '</tr>';
+  }).join('');
+  var actions = '<tr class="cmp-actions-row"><th scope="row">Next step</th>' + props.map(function(p){
+    return '<td><div class="cmp-actions"><button type="button" class="glra-btn" data-cmp-open="' + glraEsc(p._id) + '">View listing</button>'
+      + '<a class="glra-btn glra-btn-wa" href="' + glraEsc(whatsappPropertyUrl(p)) + '" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i> Ask on WhatsApp</a></div></td>';
+  }).join('') + '</tr>';
+  var table = document.getElementById('compareGrid');
+  table.style.setProperty('--cmp-n', String(props.length));
+  table.innerHTML = head + '<tbody>' + body + actions + '</tbody>';
+  var sub = document.getElementById('cmpSub');
+  if (sub) sub.textContent = 'Prices in ' + currentCurrency + '. The best figure in a row is marked.';
+  var wasOpen = !dlg.hidden;
+  if (!wasOpen) glraCmpReturn = trigger || document.activeElement;
+  dlg.hidden = false;
+  document.body.style.overflow = 'hidden';
+  if (!wasOpen) { var cl = dlg.querySelector('.cmp-close'); if (cl) cl.focus({ preventScroll: true }); }
+}
+function closeCompareModal(){
+  var dlg = document.getElementById('compareModal');
+  if (!dlg || dlg.hidden) return;
+  dlg.hidden = true;
+  if (document.getElementById('modal').style.display !== 'block') document.body.style.overflow = '';
+  var back = glraCmpReturn;
+  glraCmpReturn = null;
+  if (!(back && document.body.contains(back))) back = document.getElementById('compareViewBtn');
+  if (back && back.focus && back.offsetParent !== null) { try { back.focus({ preventScroll: true }); } catch (e) {} }
+}
+(function(){
+  var dlg = document.getElementById('compareModal');
+  if (!dlg) return;
+  dlg.addEventListener('click', function(e){
+    if (e.target === dlg) { closeCompareModal(); return; }
+    var x = e.target.closest('[data-cmp-remove]');
+    if (x) { openCompare(x.getAttribute('data-cmp-remove')); return; }
+    var o = e.target.closest('[data-cmp-open]');
+    if (o) { var id = o.getAttribute('data-cmp-open'); glraCmpReturn = null; closeCompareModal(); openDetail(id); }
+  });
+  document.addEventListener('keydown', function(e){
+    if (dlg.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeCompareModal(); return; }
+    if (e.key !== 'Tab') return;
+    var items = Array.prototype.filter.call(dlg.querySelectorAll('button, a[href], [tabindex="0"]'), function(el){ return !el.disabled && el.offsetParent !== null; });
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }, true);
+})();
+</script>
 <script>
 /* ---- LAZY LOADING TRIGGER ---- */
 window.addEventListener('load',()=>{initLazyLoading();});
@@ -657,13 +1626,16 @@ function initLazyLoading(){const io=new IntersectionObserver((entries,obs)=>{ent
 /* ---- SEARCH ---- */
 let allPropertyTitles=[];
 function handleSearchInput(val){showSuggestions(val);applyFilters(currentCategory,cachedProperties);}
-function showSuggestions(val){const d=document.getElementById('searchSuggestions');if(!val||val.length<2){d.style.display='none';return;}const f=allPropertyTitles.filter(t=>t.toLowerCase().includes(val.toLowerCase())).slice(0,8);d.innerHTML=f.map(t=>`<div data-t="${escapeHtml(t)}" onclick="selectSuggestion(this.dataset.t)">${escapeHtml(t)}</div>`).join('');d.style.display=f.length?'block':'none';}
+function showSuggestions(val){const d=document.getElementById('searchSuggestions');if(!val||val.length<2){d.style.display='none';return;}const f=allPropertyTitles.filter(t=>t.toLowerCase().includes(val.toLowerCase())).slice(0,8);d.innerHTML=f.map(t=>`<div data-t="${glraEsc(t)}" onclick="selectSuggestion(this.dataset.t)">${glraEsc(glraTitle(t))}</div>`).join('');d.style.display=f.length?'block':'none';}
 function selectSuggestion(title){document.getElementById('searchSuggestions').style.display='none';const p=allProperties.find(p=>p.title===title);if(p)openDetail(p._id);else{document.getElementById('locationInput').value=title;applyFilters(currentCategory,cachedProperties);}}
 document.addEventListener('click',e=>{if(!e.target.closest('.search-field-wrapper'))document.getElementById('searchSuggestions').style.display='none';});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('modal').style.display==='block')closeModal();if(document.getElementById('emailModal').style.display==='flex')closeEmailModal();if(document.getElementById('wishlistModal').style.display==='flex')closeWishlistModal();document.getElementById('searchSuggestions').style.display='none';}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('modal').style.display==='block'&&!glraGalleryOpen(e))closeModal();if(document.getElementById('emailModal').style.display==='flex')closeEmailModal();if(document.getElementById('wishlistModal').style.display==='flex')closeWishlistModal();document.getElementById('searchSuggestions').style.display='none';}});
 function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters');const b=document.getElementById('advancedFilterBtn');const i=document.getElementById('filterIcon');f.classList.toggle('show');b.classList.toggle('active');if(i)i.style.transform=f.classList.contains('show')?'rotate(180deg)':'rotate(0)';}
-function performSearch(){const s=document.getElementById('locationInput').value.trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let url='/properties.html?',p=[];if(s)p.push('search='+encodeURIComponent(s));if(pt)p.push('propertyType='+encodeURIComponent(pt));if(br)p.push('bedrooms='+br);if(ba)p.push('baths='+ba);if(mn>0)p.push('minPrice='+mn);if(mx>0)p.push('maxPrice='+mx);location.href=url+p.join('&');}
-function resetAllFilters(){location.href='/properties.html';}
+/* Filters apply as you type, so Search just takes you to the results (the
+   button reads "Show 23 homes"). It used to reload the page with the same
+   filters in the URL; the URL now keeps itself up to date instead. */
+function performSearch(){applyFilters(currentCategory,cachedProperties);const sg=document.getElementById('searchSuggestions');if(sg)sg.style.display='none';const t=document.getElementById('resultsTop');if(t)t.scrollIntoView({behavior:GLRA_REDUCED()?'auto':'smooth',block:'start'});}
+function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput','propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});glraSetCategory('all');}
 /* ---- PRICE ALERTS ---- */
 
 /* Look a listing up from the already-loaded cache. The modals used to take
@@ -680,7 +1652,7 @@ function findPropById(id){
   var alt = (typeof allProperties !== 'undefined' && allProperties) ? allProperties : [];
   return alt.find(function(x){ return x._id === id; }) || null;
 }
-function openPriceAlertModal(id){var p=findPropById(id);if(!p)return;document.getElementById('modalPropertyId').value=id;document.getElementById('modalPropertyTitle').value=p.title||'';document.getElementById('modalPropertyPrice').value=p.price||0;document.getElementById('modalPropertyName').innerHTML=`Get notified when <strong>${escapeHtml(p.title||'this property')}</strong> price drops`;document.getElementById('emailModal').style.display='flex';}
+function openPriceAlertModal(id){var p=findPropById(id);if(!p)return;document.getElementById('modalPropertyId').value=id;document.getElementById('modalPropertyTitle').value=p.title||'';document.getElementById('modalPropertyPrice').value=p.price||0;document.getElementById('modalPropertyName').innerHTML=`Get notified when <strong>${glraEsc(glraTitle(p.title)||'this property')}</strong> price drops`;document.getElementById('emailModal').style.display='flex';}
 function closeEmailModal(){document.getElementById('emailModal').style.display='none';document.getElementById('modalEmail').value='';}
 async function submitPriceAlert(){const email=document.getElementById('modalEmail').value;const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}const btn=event.target;btn.textContent='Subscribing...';btn.disabled=true;try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json();if(d.success){closeEmailModal();showToast('You will be notified when price drops.');}else showToast('Failed to subscribe.',true);}catch{showToast('Network error.',true);}finally{btn.textContent='Notify Me When Price Drops';btn.disabled=false;}}
 /* ---- WISHLIST ---- */
@@ -688,7 +1660,7 @@ function openWishlistModal(id){var p=findPropById(id);if(!p)return;document.getE
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value='';}
 async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const loc=document.getElementById('wishlistPropertyLocation').value;const img=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:loc,propertyImage:img})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist.');}else showToast('Failed to save.',true);}catch{showToast('Network error.',true);}finally{btn.textContent='Save to Wishlist';btn.disabled=false;}}
 /* ---- SHARE ---- */
-function shareProperty(platform,property){const url=encodeURIComponent(`${location.origin}/property/${property._id}`);const title=encodeURIComponent(property.title);const text=encodeURIComponent(`${property.title} - ${property.location} - ${getDisplayPrice(property)}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger'){/* facebook.com/dialog/send needs a registered FB app id; on phones the Messenger deep link works with none, on desktop we hand the visitor the link */const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(isMobile){location.href=`fb-messenger://share/?link=${url}`;return}navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied — paste it into Messenger');return;}else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied!');return;}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400');}
+function shareProperty(platform,property){const url=encodeURIComponent(`${location.origin}/property/${property._id}`);const title=encodeURIComponent(glraTitle(property.title));const text=encodeURIComponent(`${glraTitle(property.title)} - ${property.location} - ${getDisplayPrice(property)}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger'){/* facebook.com/dialog/send needs a registered FB app id; on phones the Messenger deep link works with none, on desktop we hand the visitor the link */const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(isMobile){location.href=`fb-messenger://share/?link=${url}`;return}navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied — paste it into Messenger');return;}else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied!');return;}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400');}
 /* ---- PROPERTIES DATA ---- */
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null,currentCategory='all';
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE';}
@@ -764,10 +1736,10 @@ function buildPopularChips(props){
       html+=`<a class="pop-chip" href="/properties/${encodeURIComponent(a.slug)}">${escapeHtml(a.name)} (${a.count})</a>`;
     });
     wrap.innerHTML=html+price;
-    wrap.style.display='flex';
+    wrap.style.display='flex';wrap.classList.remove('is-pending');wrap.removeAttribute('aria-hidden');
   }).catch(()=>{
     wrap.innerHTML='<span class="chips-label">Popular:</span>'+price;
-    wrap.style.display='flex';
+    wrap.style.display='flex';wrap.classList.remove('is-pending');wrap.removeAttribute('aria-hidden');
   });
 }
 function chipSearch(loc){
@@ -965,136 +1937,7 @@ function inquireWhatsApp(propId){
   window.open(whatsappPropertyUrl(prop), '_blank', 'noopener');
 }
 
-/* ---- COMPARE PROPERTIES ---- */
-let compareList = JSON.parse(sessionStorage.getItem('glraCompare') || '[]');
-const COMPARE_MAX = 3;
-
-function openCompare(propId){
-  const idx = compareList.indexOf(propId);
-  if(idx >= 0){
-    compareList.splice(idx, 1);
-    showToast('Removed from compare');
-  } else if(compareList.length >= COMPARE_MAX){
-    showToast('You can compare up to ' + COMPARE_MAX + ' properties at a time', true);
-    return;
-  } else {
-    compareList.push(propId);
-    showToast('Added to compare (' + compareList.length + '/' + COMPARE_MAX + ')');
-  }
-  sessionStorage.setItem('glraCompare', JSON.stringify(compareList));
-  renderCompareBar();
-  // Refresh card states
-  document.querySelectorAll('.prop-card').forEach(c => {
-    const btn = c.querySelector('[data-compare-id]');
-    if(btn){ refreshCompareCardState(c, btn.dataset.compareId); }
-  });
-}
-
-function refreshCompareCardState(cardEl, propId){
-  const inList = compareList.includes(propId);
-  cardEl.classList.toggle('compare-selected', inList);
-  const btn = cardEl.querySelector('[data-compare-id="'+propId+'"]');
-  if(btn) btn.classList.toggle('compare-active', inList);
-}
-
-function clearCompare(){
-  compareList = [];
-  sessionStorage.removeItem('glraCompare');
-  renderCompareBar();
-  document.querySelectorAll('.prop-card').forEach(c => {
-    c.classList.remove('compare-selected');
-    c.querySelectorAll('.card-action-btn.compare-active').forEach(b => b.classList.remove('compare-active'));
-  });
-  closeCompareModal();
-}
-
-function renderCompareBar(){
-  const bar = document.getElementById('compareBar');
-  const thumbs = document.getElementById('compareThumbs');
-  const count = document.getElementById('compareCount');
-  const btn = document.getElementById('compareViewBtn');
-  if(!bar) return;
-
-  count.textContent = compareList.length;
-  btn.disabled = compareList.length < 2;
-
-  if(compareList.length === 0){
-    bar.classList.remove('active');
-    thumbs.innerHTML = '';
-    return;
-  }
-  bar.classList.add('active');
-
-  const props = (cachedProperties || []).filter(p => compareList.includes(p._id));
-  let html = '';
-  props.forEach(p => {
-    html += '<div class="compare-thumb"><img src="' + (p.mainImage || '') + '" alt="' + escapeHtml(p.title) + '" title="' + escapeHtml(p.title) + '" loading="lazy" decoding="async"><button class="remove" onclick="openCompare(\'' + p._id + '\')" title="Remove"><i class="fas fa-times"></i></button></div>';
-  });
-  // Empty placeholders
-  for(let i = props.length; i < COMPARE_MAX; i++){
-    html += '<div class="compare-thumb-empty"><i class="fas fa-plus"></i></div>';
-  }
-  thumbs.innerHTML = html;
-}
-
-function showCompareModal(){
-  if(compareList.length < 2){
-    showToast('Please select at least 2 properties to compare', true);
-    return;
-  }
-  const props = (cachedProperties || []).filter(p => compareList.includes(p._id));
-  const cols = props.length + 1; // +1 for label column
-  const colsCSS = '180px ' + props.map(() => '1fr').join(' ');
-  const grid = document.getElementById('compareGrid');
-
-  const headRow = '<div class="compare-row heading-row" style="grid-template-columns:' + colsCSS + '">' +
-    '<div class="compare-cell label-cell" style="background:var(--navy);color:#fff">Property</div>' +
-    props.map(p => `
-      <div class="compare-cell heading-cell">
-        <div class="compare-card-head">
-          <button class="remove-btn" onclick="openCompare('${p._id}')" title="Remove"><i class="fas fa-times"></i></button>
-          <img src="${p.mainImage || ''}" alt="${escapeHtml(p.title)}" loading="lazy" decoding="async">
-          <h4>${escapeHtml(p.title)}</h4>
-          <div class="loc"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.location)}</div>
-        </div>
-      </div>`).join('') + '</div>';
-
-  function row(label, getter){
-    return '<div class="compare-row" style="grid-template-columns:' + colsCSS + '">' +
-      '<div class="compare-cell label-cell">' + label + '</div>' +
-      props.map(p => '<div class="compare-cell">' + getter(p) + '</div>').join('') +
-      '</div>';
-  }
-
-  const ctaRow = '<div class="compare-row" style="grid-template-columns:' + colsCSS + '">' +
-    '<div class="compare-cell label-cell">Action</div>' +
-    props.map(p => `
-      <div class="compare-cell cta-cell">
-        <button class="compare-cta wa" onclick="inquireWhatsApp('${p._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-        <button class="compare-cta" onclick="closeCompareModal();openScheduleViewing('${p._id}')"><i class="far fa-calendar-check"></i> Schedule</button>
-      </div>`).join('') + '</div>';
-
-  grid.innerHTML = headRow +
-    row('Status', p => p.listingType === 'FOR SALE' ? '<span style="color:var(--ab-hot-text,#c02e00);font-weight:600">For Sale</span>' : '<span style="color:var(--ab-hot-text,#c02e00);font-weight:600">For Lease</span>') +
-    row('Price', p => '<span style="font-family:Inter,serif;font-size:18px;font-weight:600;color:var(--ab-hot-text,#c02e00)">' + getDisplayPrice(p) + '</span>') +
-    row('Type', p => escapeHtml(p.propertyType || 'Property')) +
-    row('Bedrooms', p => p.bedrooms || '0') +
-    row('Bathrooms', p => p.bathrooms || '0') +
-    row('Floor Area', p => p.sqm > 0 ? Number(p.sqm).toLocaleString('en-US') + ' sqm' : '-') +
-    row('Lot Area', p => p.landArea > 0 ? Number(p.landArea).toLocaleString('en-US') + ' sqm' : '-') +
-    row('Parking', p => p.parking > 0 ? p.parking + ' slot' + (p.parking > 1 ? 's' : '') : 'None') +
-    row('Featured', p => p.featured ? '<i class="fas fa-star" style="color:var(--ab-hot-text,#c02e00)"></i> Yes' : '-') +
-    row('Price per sqm', p => glraAreaBasis(p) > 0 ? formatPrice(Math.round((p.price || 0) / glraAreaBasis(p))) + '/sqm' : '-') +
-    ctaRow;
-
-  document.getElementById('compareModal').classList.add('show');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeCompareModal(){
-  document.getElementById('compareModal').classList.remove('show');
-  document.body.style.overflow = '';
-}
+/* ---- COMPARE PROPERTIES: see the browse-page layer script above (tray, table, sessionStorage). ---- */
 
 /* ---- SCHEDULE A VIEWING ---- */
 let schedulingPropertyId = null;
@@ -1104,7 +1947,7 @@ function openScheduleViewing(propId){
   if(!prop){ showToast('Property not found', true); return; }
   schedulingPropertyId = propId;
   document.getElementById('scheduleSubtitle').innerHTML =
-    'For: <strong>' + escapeHtml(prop.title) + '</strong> &middot; ' + escapeHtml(prop.location);
+    'For: <strong>' + glraEsc(glraTitle(prop.title)) + '</strong> &middot; ' + glraEsc(prop.location);
   // Default to a date 2 days from now
   const def = new Date();
   def.setDate(def.getDate() + 2);
@@ -1195,15 +2038,37 @@ async function loadProperties(){
     const changed=painted&&JSON.stringify(fresh)!==JSON.stringify(cachedProperties);
     cachedProperties=fresh;
     allPropertyTitles=fresh.map(p=>p.title);
+    glraPruneCompare();
     if(!painted){buildPopularChips(fresh);initFromUrl(fresh);}
     else if(changed){buildPopularChips(fresh);applyFilters(currentCategory,fresh);}
   }catch(e){
     if(!painted){console.error(e);showToast('Failed to load properties',true);}
   }
 }
-function initFromUrl(properties){const cat=getParam('category');const search=getParam('search');const pt=getParam('propertyType');const br=getParam('bedrooms');const ba=getParam('baths');const mn=getParam('minPrice');const mx=getParam('maxPrice');const propId=getParam('property');let cat2='all';if(cat==='FOR SALE')cat2='FOR SALE';else if(cat==='FOR LEASE')cat2='FOR LEASE';else if(cat==='featured')cat2='featured';currentCategory=cat2;document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.category===cat2);});const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat2]||'All Properties';if(search)document.getElementById('locationInput').value=search;if(pt)document.getElementById('propertyTypeSelect').value=pt;if(br)document.getElementById('bedroomsSelect').value=br;if(ba)document.getElementById('bathsSelect').value=ba;if(mn)document.getElementById('minPriceInput').value=parseInt(mn).toLocaleString();if(mx)document.getElementById('maxPriceInput').value=parseInt(mx).toLocaleString();applyFilters(cat2,properties);if(propId){setTimeout(()=>{const p=cachedProperties.find(x=>x._id===propId);if(p)openDetail(p._id);},600);}}
-function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);document.getElementById('resultsCount').innerHTML=`${f.length} ${f.length===1?'property':'properties'} found`;allProperties=f;}
-function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.innerHTML='';if(!properties.length){c.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>Nothing matches yet.</p><button type="button" class="ss-empty-btn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me when one does</button><p><a href="/properties.html">Clear filters</a></p></div>';return;}properties.forEach(p=>c.appendChild(createCard(p)));setTimeout(initLazyLoading,80);}
+function initFromUrl(properties){
+  const P=new URLSearchParams(location.search);
+  const g=k=>(P.get(k)||'').trim();
+  const cu=g('category').toUpperCase();
+  const cat2=cu==='FOR SALE'?'FOR SALE':cu==='FOR LEASE'?'FOR LEASE':cu==='FEATURED'?'featured':'all';
+  currentCategory=cat2;glraPaintCategory(cat2);
+  const search=g('search')||g('q');if(search)document.getElementById('locationInput').value=search;
+  const setSel=(id,v,match)=>{const el=document.getElementById(id);if(!el||!v)return;const o=[].find.call(el.options,x=>match?match(x.value,v):x.value===v);if(o)el.value=o.value;};
+  setSel('propertyTypeSelect',g('propertyType'),(a,b)=>a&&glraBaseType(a)===glraBaseType(b));
+  setSel('bedroomsSelect',g('bedrooms'));setSel('bathsSelect',g('baths'));
+  const mn=parseInt(g('minPrice'),10),mx=parseInt(g('maxPrice'),10);
+  if(mn>0)document.getElementById('minPriceInput').value=mn.toLocaleString('en-US');
+  if(mx>0)document.getElementById('maxPriceInput').value=mx.toLocaleString('en-US');
+  const so=g('sort');if(['newest','price-asc','price-desc','sqm-desc'].includes(so)){currentSort=so;document.getElementById('sortSelect').value=so;}
+  /* A shared link can carry a currency; it applies to this visit without overwriting the visitor's own saved choice. */
+  const cur=g('currency').toUpperCase();if(cur&&CURRENCY_RATES[cur]){currentCurrency=cur;const cs=document.getElementById('currencySelect');if(cs)cs.value=cur;updateCurrencyNote();}
+  glraUrlReady=true;
+  applyFilters(cat2,properties);
+  if(g('view')==='map')glraSetView('map',true);
+  const propId=g('property');
+  if(propId){setTimeout(()=>{const p=(cachedProperties||[]).find(x=>x._id===propId);if(p)openDetail(p._id);},600);}
+}
+function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');let f=[...properties].filter(p=>{if(loc&&!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false;if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);allProperties=f;glraAfterFilter(f);}
+function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.removeAttribute('aria-busy');c.innerHTML='';if(!properties.length){c.innerHTML=glraEmptyStateHtml();return;}const frag=document.createDocumentFragment();properties.forEach(p=>frag.appendChild(createCard(p)));c.appendChild(frag);setTimeout(initLazyLoading,80);}
 /* A listing's size, taken from whichever of the two areas it actually has.
    A vacant lot or a farm has no floor area; a condominium unit has no lot. The
    card used to print `${prop.sqm} sqm` unconditionally, so twelve live listings
@@ -1238,9 +2103,28 @@ function glraAreaLabel(p){
 function glraAreaBasis(p){
   return (Number(p && p.sqm) || 0) || (Number(p && p.landArea) || 0);
 }
-function createCard(prop){const card=document.createElement('div');card.className='prop-card';card.onclick=()=>openDetail(prop._id);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',prop.title+' - view details');card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(prop._id)}};const isSale=isForSale(prop);const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);const img=prop.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E';const photoN=[prop.mainImage,...(prop.gallery||[])].filter(Boolean).length;const _basis=glraAreaBasis(prop);const psqm=(isForSale(prop)&&prop.price>0&&_basis>0)?`<div class="prop-psqm">${formatPrice(Math.round(prop.price/_basis))} / sqm</div>`:'';const added=addedLabel(prop);card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${escapeHtml(img)}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${escapeHtml(prop.title)}" loading="lazy"><div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();openCompare('${prop._id}')" title="Add to compare" data-compare-id="${prop._id}"><i class="fas fa-balance-scale"></i></button><button class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${prop._id}')" title="Ask on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${prop._id}')" title="Save to wishlist"><i class="far fa-heart"></i></button><button class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${prop._id}')" title="Price alert"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${prop._id}">${escapeHtml(prop.title)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs">${prop.bedrooms>0?`<span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>`:''}${prop.bathrooms>0?`<span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>`:''}${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${escapeHtml(String(prop.propertyType||'Property').trim())}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}</div>`;refreshCompareCardState(card, prop._id);const _t=card.querySelector('.prop-title-link');if(_t)_t.addEventListener('click',function(e){if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();});return card;}
+function createCard(prop){
+  const card=document.createElement('div');card.className='prop-card';card.dataset.id=prop._id;
+  const dt=glraTitle(prop.title);
+  const open=()=>glraOpenFromCard(prop._id,card);
+  card.onclick=open;card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',dt+' - view details');
+  /* Only the card itself: Enter on a button inside it must press that button, not open the pop-up. */
+  card.onkeydown=e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};
+  const isSale=isForSale(prop);const parking=prop.parking>0?`<span><i class="fas fa-parking"></i> ${prop.parking}</span>`:'';const price=getDisplayPrice(prop);
+  const img=prop.mainImage||'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3Crect%20width=%224%22%20height=%223%22%20fill=%22%23e8e4dd%22/%3E%3C/svg%3E';
+  const photoN=[prop.mainImage,...(prop.gallery||[])].filter(Boolean).length;const _basis=glraAreaBasis(prop);
+  const psqm=(isForSale(prop)&&prop.price>0&&_basis>0)?`<div class="prop-psqm">${formatPrice(Math.round(prop.price/_basis))} / sqm</div>`:'';
+  const added=addedLabel(prop);const id=glraEsc(prop._id);
+  card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${glraEsc(img)}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${glraEsc(dt)}" loading="lazy"><div class="card-actions"><button type="button" class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${id}')" title="Ask on WhatsApp" aria-label="Ask about ${glraEsc(dt)} on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${id}')" title="Save to wishlist" aria-label="Save ${glraEsc(dt)} to wishlist"><i class="far fa-heart"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${id}')" title="Price alert" aria-label="Price drop alert for ${glraEsc(dt)}"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${id}">${glraEsc(dt)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${glraEsc(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs">${prop.bedrooms>0?`<span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>`:''}${prop.bathrooms>0?`<span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>`:''}${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${glraEsc(String(prop.propertyType||'Property').trim())}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}<div class="prop-foot">${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}<button type="button" class="cmp-toggle" aria-pressed="false" aria-label="Compare ${glraEsc(dt)}"><span class="cmp-box" aria-hidden="true"></span><span class="cmp-lbl">Compare</span></button></div></div>`;
+  refreshCompareCardState(card,prop._id);
+  const cb=card.querySelector('.cmp-toggle');if(cb)cb.addEventListener('click',e=>{e.stopPropagation();openCompare(prop._id);});
+  card.addEventListener('mouseenter',()=>glraHot(prop._id,true));card.addEventListener('mouseleave',()=>glraHot(prop._id,false));
+  card.addEventListener('focusin',()=>glraHot(prop._id,true));card.addEventListener('focusout',e=>{if(!card.contains(e.relatedTarget))glraHot(prop._id,false);});
+  const _t=card.querySelector('.prop-title-link');if(_t)_t.addEventListener('click',function(e){if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();});
+  return card;
+}
 /* ---- DETAIL MODAL ---- */
-function openDetail(id){const prop=(cachedProperties||[]).find(x=>x._id===id)||allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;pingView(id);galleryImages=[prop.mainImage,...(prop.gallery||[])].filter(Boolean);let thumbs=galleryImages.map((img,i)=>`<img src="${escapeHtml(img)}" onclick="changeImg(${i})" class="${i===0?'active':''}" alt="Photo ${i+1}" loading="lazy" decoding="async">`).join('');const mapQ=encodeURIComponent((prop.mapLocation||prop.location)+', Philippines');const mapEmbed=`https://www.google.com/maps?q=${mapQ}&output=embed`;const isSale=isForSale(prop);const price=getDisplayPrice(prop);const pp=prop.price||0;
+function openDetail(id){const prop=(cachedProperties||[]).find(x=>x._id===id)||allProperties.find(x=>x._id===id);if(!prop)return;currentProperty=prop;glraCurIdx=0;pingView(id);galleryImages=[prop.mainImage,...(prop.gallery||[])].filter(Boolean);const dtitle=glraTitle(prop.title);let thumbs=galleryImages.map((img,i)=>`<button type="button" class="thumb-btn" onclick="glraThumb(${i},this)" aria-label="Photo ${i+1} of ${galleryImages.length}"><img src="${glraEsc(img)}" class="${i===0?'active':''}" alt="" loading="lazy" decoding="async"></button>`).join('');const mapQ=encodeURIComponent((prop.mapLocation||prop.location)+', Philippines');const mapEmbed=`https://www.google.com/maps?q=${mapQ}&output=embed`;const isSale=isForSale(prop);const price=getDisplayPrice(prop);const pp=prop.price||0;
 // Investor's Corner — indicative rent range (0.4%–0.5% of price per month) + gross yield
 let investHtml='';
 if(isSale&&pp>0&&glraIsHome(prop)){
@@ -1249,15 +2133,15 @@ if(isSale&&pp>0&&glraIsHome(prop)){
 }
 // You might also like — same type/area/price bracket
 const sims=similarProps(prop,3);
-const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${escapeHtml(s.title)} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${escapeHtml(s.mainImage||'')}" alt="${escapeHtml(s.title)}" loading="lazy"><div class="sim-info"><h5>${escapeHtml(s.title)}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
-document.getElementById('modal-content').innerHTML=`<img id="mainImg" class="gallery-main" src="${escapeHtml(galleryImages[0]||'')}" alt="${escapeHtml(prop.title)}" loading="lazy" decoding="async"><div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${String(prop.listingType||'').toUpperCase()==='SALE AND LEASE'?'FOR SALE OR LEASE':isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1>${escapeHtml(prop.title)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs">${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')?`<span class="modal-spec"><i class="fas fa-bed"></i> ${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')}</span>`:''}${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')?`<span class="modal-spec"><i class="fas fa-bath"></i> ${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')}</span>`:''}${glraAreaLabel(prop)?`<span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(String(prop.propertyType||'Property').trim())}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&glraAreaBasis(prop)>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/glraAreaBasis(prop)))} / sqm</span>`:''}</div>${(isSale&&pp>0)?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--ab-hot-text,#c02e00)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.25">6.25% - Pag-IBIG (3-yr fixed)</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11%</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
-${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(glraDesc(prop.description)||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal();location.href='/property/${prop._id}#inquire'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';if(isSale&&pp>0)calcMortgage(pp);}
+const simHtml=sims.length?`<div class="similar-wrap"><div class="similar-title"><i class="fas fa-home"></i> You Might Also Like</div><div class="similar-strip">${sims.map(s=>`<div class="sim-card" role="button" tabindex="0" aria-label="${glraEsc(glraTitle(s.title))} - view details" onclick="openDetail('${s._id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${s._id}')}"><img src="${escapeHtml(s.mainImage||'')}" alt="${glraEsc(glraTitle(s.title))}" loading="lazy"><div class="sim-info"><h5>${glraEsc(glraTitle(s.title))}</h5><div class="sim-loc"><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00)"></i> ${escapeHtml(s.location)}</div><div class="sim-price">${getDisplayPrice(s)}</div></div></div>`).join('')}</div></div>`:'';
+document.getElementById('modal-content').innerHTML=`${glraMainPhotoHtml(galleryImages,dtitle)}<div class="thumb-row">${thumbs}</div><div class="modal-details"><div class="modal-actions-row"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}" style="display:inline-block">${String(prop.listingType||'').toUpperCase()==='SALE AND LEASE'?'FOR SALE OR LEASE':isSale?'FOR SALE':'FOR LEASE'}</span><div style="display:flex;gap:8px"><button class="modal-btn-sm" onclick="openWishlistModal('${prop._id}')"><i class="far fa-heart"></i> Save</button><button class="modal-btn-sm" onclick="openPriceAlertModal('${prop._id}')"><i class="fas fa-bell"></i> Alert</button></div></div><h1 id="modalTitle">${glraEsc(dtitle)}</h1><div class="prop-location" style="margin-bottom:0"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(prop.location)}</div>${addedLabel(prop)?`<div class="prop-added" style="margin-top:6px"><i class="far fa-clock"></i> ${addedLabel(prop)}</div>`:''}<div class="modal-specs">${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')?`<span class="modal-spec"><i class="fas fa-bed"></i> ${glraRooms(prop.bedrooms,'Bedroom','Bedrooms')}</span>`:''}${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')?`<span class="modal-spec"><i class="fas fa-bath"></i> ${glraRooms(prop.bathrooms,'Bathroom','Bathrooms')}</span>`:''}${glraAreaLabel(prop)?`<span class="modal-spec"><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span class="modal-spec"><i class="fas fa-building"></i> ${escapeHtml(String(prop.propertyType||'Property').trim())}</span>${prop.parking>0?`<span class="modal-spec"><i class="fas fa-parking"></i> ${prop.parking} Parking</span>`:''}</div><div class="modal-price">${price}${(isSale&&pp>0&&glraAreaBasis(prop)>0)?`<span style="font-size:13px;color:var(--gray);font-weight:400;margin-left:10px">${formatPrice(Math.round(pp/glraAreaBasis(prop)))} / sqm</span>`:''}</div>${(isSale&&pp>0)?`<div class="modal-mortgage"><div class="modal-mortgage-title"><i class="fas fa-calculator"></i> Monthly Amortization Estimate</div><div class="mortgage-controls"><div class="mortgage-control"><label for="dpSlider">Down Payment</label><input type="range" id="dpSlider" min="10" max="30" step="5" value="20" oninput="updateDP(this.value,${pp})"><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--gray)">10%</span><span id="dpVal" style="font-size:11px;color:var(--ab-hot-text,#c02e00)">20%</span><span style="font-size:10px;color:var(--gray)">30%</span></div></div><div class="mortgage-control"><label for="loanTerm">Loan Term</label><select id="loanTerm" onchange="calcMortgage(${pp})"><option value="5">5 yrs</option><option value="10">10 yrs</option><option value="15">15 yrs</option><option value="20" selected>20 yrs</option><option value="25">25 yrs</option><option value="30">30 yrs</option></select></div><div class="mortgage-control"><label for="intRate">Interest Rate</label><select id="intRate" onchange="calcMortgage(${pp})"><option value="6">6% - Promo</option><option value="6.25">6.25% - Pag-IBIG (3-yr fixed)</option><option value="6.5">6.5%</option><option value="7">7%</option><option value="7.5" selected>7.5% - Std</option><option value="8">8%</option><option value="9">9%</option><option value="11">11%</option><option value="12">12%</option></select></div></div><div class="mortgage-result"><span class="lbl">Estimated Monthly Payment</span><div class="amount" id="mortgageAmt">₱0<span style="font-size:16px">/mo</span></div></div><p class="mortgage-note">*Principal & interest only, for estimation purposes.</p></div>`:''}
+${investHtml}<div class="modal-share"><div class="modal-share-title"><i class="fas fa-share-alt"></i> Share this property</div><div class="share-btns"><button onclick="shareProperty('facebook',currentProperty)" class="share-btn share-fb"><i class="fab fa-facebook-f"></i> Facebook</button><button onclick="shareProperty('messenger',currentProperty)" class="share-btn share-msgr"><i class="fab fa-facebook-messenger"></i> Messenger</button><button onclick="shareProperty('email',currentProperty)" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</button><button onclick="shareProperty('copy',currentProperty)" class="share-btn share-copy"><i class="fas fa-link"></i> Copy Link</button></div></div><div class="modal-description">${escapeHtml(glraDesc(prop.description)||'Contact us for more details about this property.')}</div><div class="modal-map" style="margin:16px 0"><iframe src="${mapEmbed}" allowfullscreen loading="lazy" title="Property location map"></iframe></div>${simHtml}<div class="modal-cta-row"><button class="modal-inquire-btn" style="background:#25d366;border-color:#25d366;color:#fff" onclick="inquireWhatsApp('${prop._id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><a class="modal-inquire-btn" style="background:#7360f2;border-color:#7360f2;color:#fff;text-decoration:none;text-align:center" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber"></i> Viber</a><a class="modal-inquire-btn" style="text-decoration:none;text-align:center" href="tel:+639171774572"><i class="fas fa-phone"></i> Call</a><button class="modal-inquire-btn" onclick="openScheduleViewing('${prop._id}')"><i class="far fa-calendar-check"></i> Schedule Viewing</button><button class="modal-inquire-btn" style="background:#ff3d00;border-color:#ff3d00;color:#fff" onclick="closeModal(true);location.href='/property/${prop._id}#inquire'"><i class="fas fa-paper-plane"></i> Email Inquire</button></div></div>`;document.getElementById('modal').style.display='block';document.body.style.overflow='hidden';glraModalOpened();if(isSale&&pp>0)calcMortgage(pp);}
 function calcMortgage(price){const dp=parseFloat(document.getElementById('dpSlider')?.value)||20;const term=parseFloat(document.getElementById('loanTerm')?.value)||20;const rate=parseFloat(document.getElementById('intRate')?.value)||7.5;const loan=price*(1-dp/100);const mr=rate/100/12;const tp=term*12;const mp=mr>0&&loan>0?loan*mr*Math.pow(1+mr,tp)/(Math.pow(1+mr,tp)-1):0;const el=document.getElementById('mortgageAmt');if(el)el.innerHTML=`₱${Math.round(mp).toLocaleString()}<span style="font-size:16px">/mo</span>`;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=dp+'%';}
 function updateDP(val,price){const el=document.getElementById('dpSlider');if(el)el.value=val;const dpv=document.getElementById('dpVal');if(dpv)dpv.innerText=val+'%';calcMortgage(price);}
-function changeImg(i){const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i));}}
-function closeModal(){document.getElementById('modal').style.display='none';document.body.style.overflow='auto';}
+function changeImg(i){glraCurIdx=i;const m=document.getElementById('mainImg');const imgs=document.querySelectorAll('.thumb-row img');if(m&&galleryImages[i]){m.src=galleryImages[i];imgs.forEach((img,idx)=>img.classList.toggle('active',idx===i));}}
+function closeModal(instant){const m=document.getElementById('modal');if(!m||m.style.display!=='block')return;(instant===true?(f=>f()):glraCloseWithVT)(()=>{m.style.display='none';document.body.style.overflow='auto';glraModalClosed();});}
 /* ---- CATEGORY TABS ---- */
-document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');const cat=this.dataset.category;currentCategory=cat;const titles={'all':'All Properties','FOR SALE':'Properties For Sale','FOR LEASE':'Properties For Lease','featured':'Featured Listings'};document.getElementById('sectionTitle').innerText=titles[cat]||'All Properties';applyFilters(cat,cachedProperties);const url=new URL(location.href);if(cat==='all')url.searchParams.delete('category');else url.searchParams.set('category',cat);history.pushState({},'',url);});});
+document.querySelectorAll('.tab-btn').forEach(btn=>{btn.addEventListener('click',function(){glraSetCategory(this.dataset.category);});});
 /* ---- INIT ---- */
 // Restore saved currency choice and compare list
 document.addEventListener('DOMContentLoaded', () => {
@@ -1266,12 +2150,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCurrencyNote();
   renderCompareBar();
   loadLiveRates(); // fetch live FX rates in background, refresh prices when ready
-});
-// Close compare modal on Esc
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && document.getElementById('compareModal').classList.contains('show')){
-    closeCompareModal();
-  }
 });
 loadProperties();
 </script>
@@ -1445,9 +2323,9 @@ loadProperties();
   });
 })();
 </script>
-<script src="/js/brutalist-shell.js?v=104" defer></script>
-<script src="/js/description.js?v=104" defer></script>
-<script src="/js/a11y.js?v=104" defer></script>
-<script src="/js/chat.js?v=104" defer></script>
+<script src="/js/brutalist-shell.js?v=105" defer></script>
+<script src="/js/description.js?v=105" defer></script>
+<script src="/js/a11y.js?v=105" defer></script>
+<script src="/js/chat.js?v=105" defer></script>
 </body>
 </html>

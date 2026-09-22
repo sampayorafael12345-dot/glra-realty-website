@@ -221,7 +221,8 @@ app.use(helmet.contentSecurityPolicy({
     // placeholders and the admin's local image previews before upload.
     'img-src': ["'self'", 'data:', 'blob:',
       'https://res.cloudinary.com', 'https://images.unsplash.com',
-      'https://*.clarity.ms', 'https://c.bing.com'],
+      'https://*.clarity.ms', 'https://c.bing.com',
+      'https://*.tile.openstreetmap.org', 'https://tile.openstreetmap.org'],  // properties.html map view
     // Clarity's beacon host is region-sharded — a.clarity.ms through
     // z.clarity.ms. The live page uses n.clarity.ms, which was on none of the
     // three lists above, so every visit logged a violation and the policy
@@ -658,7 +659,10 @@ const PUBLIC_PROPERTY_FIELDS = [
   'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
   'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
   'mapLocation', 'previousPrice', 'priceUpdatedAt',
-  'views', 'createdAt'
+  'views', 'createdAt',
+  // Reduced by publicGeo() to a rounded {lat, lng}; the lookup text, status
+  // and timestamps never leave the server.
+  'geo'
 ].join(' ');
 
 // ── THE PUBLIC LISTINGS FEED ────────────────────────────────
@@ -790,6 +794,7 @@ function cloudinaryThumb(u, w, h) {
 }
 function optimizePropertyImages(p) {
   if (!p) return p;
+  publicGeo(p);
   if (p.mainImage) p.mainImage = optimizeCloudinary(p.mainImage);
   if (Array.isArray(p.gallery)) p.gallery = p.gallery.map(optimizeCloudinary);
   return externalizeInlineImages(p);
@@ -1162,12 +1167,67 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=104" defer></script>
+<script src="/js/a11y.js?v=105" defer></script>
 </body>
 </html>`;
 }
 
 
+
+// ── DISPLAY TITLE ───────────────────────────────────────────
+// Listing titles are typed in capitals ("MONARCH PARKSUITES (PASAY CITY)"),
+// which reads as shouting in a heading and in a Google result. This turns an
+// all-caps title into title case for DISPLAY ONLY; the stored title is left
+// alone and is still what matching, enquiries and URLs use. The same rules are
+// implemented in public/js/main.js (window.glraDisplayTitle) so the browse
+// pages and these server-rendered pages print identical names.
+const DT_KEEP_UPPER = new Set(['BGC', 'CBD', 'SM', 'SMDC', 'DMCI', 'RLC', 'MRT', 'LRT', 'NCR', 'QC', 'UP', 'BPI', 'BDO',
+  'RFO', 'HOA', 'LEED', 'MOA', 'BF', 'II', 'III', 'IV', 'VI', 'VII', 'VIII', 'IX', 'XI', 'XII']);
+const DT_ABBR = { 'BRGY.': 'Brgy.', 'STA.': 'Sta.', 'STO.': 'Sto.', 'ST.': 'St.', 'AVE.': 'Ave.', 'BLVD': 'Blvd', 'BLVD.': 'Blvd.' };
+const DT_SMALL = new Set(['a', 'an', 'and', 'at', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'along', 'near', 'with', 'de', 'del']);
+function glraDisplayTitle(raw) {
+  let s = String(raw || '')
+    .replace(/\p{Extended_Pictographic}/gu, '').replace(/\uFE0F/g, '')
+    .replace(/\s+[\u2014\u2013-]\s+/g, ' - ')
+    .replace(/\s+/g, ' ').trim();
+  const letters = s.match(/\p{L}/gu) || [];
+  const upper = s.match(/\p{Lu}/gu) || [];
+  if (!letters.length || upper.length / letters.length < 0.7) return s;
+
+  const part = (w, first) => {
+    if (!w) return w;
+    const up = w.toUpperCase();
+    if (/^([A-Z]\.){2,}$/.test(w)) return w;
+    if (DT_KEEP_UPPER.has(up)) return up;
+    if (/^\d+BR$/.test(w)) return w;
+    if (up === 'SQM') return 'sqm';
+    if (DT_ABBR[up]) return DT_ABBR[up];
+    if (/^MC\p{L}{2,}/u.test(up)) return 'Mc' + up.charAt(2) + w.slice(3).toLowerCase();
+    const low = w.toLowerCase();
+    if (!first && DT_SMALL.has(low)) return low;
+    return low.charAt(0).toUpperCase() + low.slice(1);
+  };
+  let nextFirst = true;
+  const out = s.split(' ').map(word => {
+    if (word === '-') { nextFirst = true; return word; }
+    const m = word.match(/^(\(*)(.*?)([,.)(]*)$/);
+    const pre = m[1];
+    let core = m[2], suf = m[3];
+    const first = nextFirst || !!pre;
+    nextFirst = false;
+    if (!core) return word;
+    // A trailing full stop may belong to the word itself: "ST.", "A.C.T.".
+    if (suf.charAt(0) === '.') {
+      const dotted = core + '.';
+      if (/^([A-Z]\.){2,}$/.test(dotted)) return pre + dotted + suf.slice(1);
+      if (DT_ABBR[dotted.toUpperCase()]) return pre + DT_ABBR[dotted.toUpperCase()] + suf.slice(1);
+    }
+    if (core.toUpperCase() === 'PAG-IBIG') return pre + 'Pag-IBIG' + suf;
+    core = core.split('-').map((pt, i) => part(pt, first && i === 0)).join('-');
+    return pre + core + suf;
+  }).join(' ');
+  return out.replace(/ \(([^()]+)\)$/, ', $1');
+}
 
 // Build a fully server-rendered, SEO-rich detail page for one property.
 // Crawlers and social-share scrapers get real <title>, meta description,
@@ -1178,7 +1238,10 @@ function buildPropertyPageHtml(p, related) {
   // gallery and the <img> tags below all point at something fetchable rather
   // than embedding megabytes of base64 in the HTML.
   externalizeInlineImages(p);
-  const title = p.title || 'Property';
+  // What people read is the display title (title case, no emoji); the stored
+  // title still goes with the enquiry so it matches the listing in the admin.
+  const rawTitle = p.title || 'Property';
+  const title = glraDisplayTitle(rawTitle) || 'Property';
   const loc = p.location || '';
   const lt = String(p.listingType || 'FOR SALE').toUpperCase();
   const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
@@ -1199,7 +1262,18 @@ function buildPropertyPageHtml(p, related) {
   const ogImg = absUrl(ogIsCloudinary
     ? rawImg.replace('/upload/', '/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/')
     : rawImg);
-  const heroImg = absUrl(optimizeCloudinary(rawImg)); // optimized (WebP/AVIF) for fast on-page display
+  // Sized copies for the hero: a phone downloads a 640px photo, not the
+  // original upload (often a 2000px PNG flyer).
+  const cldWidth = (u, w) => {
+    if (typeof u !== 'string' || u.indexOf('res.cloudinary.com') === -1) return u;
+    u = u.replace('/upload/f_auto,q_auto/', '/upload/');
+    if (/\/upload\/[a-z]{1,2}_/.test(u)) return u;
+    return u.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${w}/`);
+  };
+  const heroIsCld = /res\.cloudinary\.com/.test(rawImg);
+  const heroImg = absUrl(heroIsCld ? cldWidth(rawImg, 1200) : optimizeCloudinary(rawImg));
+  const heroSrcset = heroIsCld ? [640, 960, 1200, 1600].map(w => `${absUrl(cldWidth(rawImg, w))} ${w}w`).join(', ') : '';
+  const heroSizes = '(min-width: 1180px) 760px, (min-width: 1024px) calc(100vw - 420px), calc(100vw - 32px)';
   const canonical = `${SITE_URL}/property/${id}`;
   // Cleaned first: Google was being handed the emoji and hashtags as the
   // search snippet for every listing.
@@ -1250,6 +1324,10 @@ function buildPropertyPageHtml(p, related) {
   }
   if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
   if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
+  // Found to at least district level by the location worker. Rounded to about
+  // 100 m, the same precision the public API gives.
+  const geoOk = !!(p.geo && p.geo.status === 'ok' && Number.isFinite(p.geo.lat) && Number.isFinite(p.geo.lng) && p.geo.rank >= NEARBY_MIN_RANK);
+  if (geoOk) residence.geo = { '@type': 'GeoCoordinates', latitude: Number(p.geo.lat.toFixed(3)), longitude: Number(p.geo.lng.toFixed(3)) };
   if (galleryAbs.length || ogImg) residence.photo = galleryAbs.length ? galleryAbs : [ogImg];
 
   const offerBase = { '@type': 'Offer', priceCurrency: 'PHP', availability: 'https://schema.org/InStock',
@@ -1333,9 +1411,10 @@ function buildPropertyPageHtml(p, related) {
       const rPrice = rLease ? (r.monthlyRental || r.price || 0) : (r.price || 0);
       const rTxt = rPrice ? ('₱' + Number(rPrice).toLocaleString('en-PH') + (rLease ? '/mo' : '')) : 'Price on request';
       const rImg = r.mainImage && !isStockPhoto(r.mainImage) ? absUrl(cloudinaryThumb(r.mainImage, 400, 280)) : '/img/social-card.png';
+      const rTitle = glraDisplayTitle(r.title) || 'Property';
       return `<a class="pg-rel" href="/property/${String(r._id)}">
-        <img src="${esc(rImg)}" alt="${esc(r.title || 'Property')}" loading="lazy" width="200" height="140">
-        <span class="pg-rel-t">${esc(r.title || 'Property')}</span>
+        <img src="${esc(rImg)}" alt="${esc(rTitle)}" loading="lazy" width="200" height="140">
+        <span class="pg-rel-t">${esc(rTitle)}</span>
         <span class="pg-rel-l">${esc(r.location || '')}</span>
         <span class="pg-rel-p">${esc(rTxt)}</span>
       </a>`;
@@ -1377,11 +1456,114 @@ function buildPropertyPageHtml(p, related) {
                            Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
     .concat(p.parking ? [['Parking', p.parking]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
-  const thumbsHtml = gallery.length
-    // Drawn at 92x70 but used to download the full 800px photo each. Now a
-    // small, 2x-sharp crop; a click swaps the full-size photo in from data-full.
-    ? `<div class="pg-thumbs">${gallery.map(g => `<img src="${esc(absUrl(cloudinaryThumb(g)))}" data-full="${esc(absUrl(optimizeCloudinary(g)))}" alt="${esc(title)}" loading="lazy" width="92" height="70" onclick="pgSwap(this.dataset.full||this.src)">`).join('')}</div>`
+
+  // ── Price, the way a buyer reads it. A sale-and-lease listing shows both,
+  // the sale price first; a lease shows the monthly rent.
+  const peso = n => '\u20b1' + Number(n).toLocaleString('en-PH');
+  const priceParts = []; // [amount, suffix, label]
+  if (lt === 'SALE AND LEASE') {
+    if (saleP > 0) priceParts.push([peso(saleP), '', 'For sale']);
+    if (leaseP > 0) priceParts.push([peso(leaseP), '/month', 'For rent']);
+  } else if (isLease) {
+    if ((leaseP || saleP) > 0) priceParts.push([peso(leaseP || saleP), '/month', 'Monthly rent']);
+  } else if (saleP > 0) {
+    priceParts.push([peso(saleP), '', 'Selling price']);
+  }
+  const headPriceHtml = priceParts.length
+    ? `<div class="pg-price">${esc(priceParts[0][0])}${priceParts[0][1] ? `<small>${esc(priceParts[0][1])}</small>` : ''}</div>` +
+      (priceParts[1] ? `<div class="pg-price-alt">or ${esc(priceParts[1][0] + priceParts[1][1])} to rent</div>` : '')
+    : '<div class="pg-price">Price on request</div>';
+
+  // ── The facts people decide on, as one line under the title.
+  const typeTxt = String(p.propertyType || '').trim();
+  const noLot = /^(condominium|apartment|office|commercial space|studio)/i.test(typeTxt);
+  const fmtSqm = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const nBed = Number(p.bedrooms) || 0, nBath = Number(p.bathrooms) || 0;
+  const nSqm = Number(p.sqm) || 0, nLot = Number(p.landArea) || 0;
+  const keyFacts = [];
+  if (nBed > 0) keyFacts.push(['fa-bed', nBed + (nBed === 1 ? ' Bedroom' : ' Bedrooms')]);
+  else if (/studio/i.test(typeTxt)) keyFacts.push(['fa-bed', 'Studio']);
+  if (nBath > 0) keyFacts.push(['fa-bath', nBath + (nBath === 1 ? ' Bath' : ' Baths')]);
+  if (nSqm > 0) keyFacts.push(['fa-ruler-combined', fmtSqm(nSqm) + ' sqm' + (nLot > 0 && !noLot ? ' floor' : '')]);
+  if (nLot > 0 && !noLot) keyFacts.push(['fa-vector-square', fmtSqm(nLot) + ' sqm lot']);
+  else if (nLot > 0 && !(nSqm > 0)) keyFacts.push(['fa-ruler-combined', fmtSqm(nLot) + ' sqm']);
+  if (typeTxt) keyFacts.push([/house|town/i.test(typeTxt) ? 'fa-house' : /lot/i.test(typeTxt) ? 'fa-map' : 'fa-building', typeTxt]);
+  const factsHtml = keyFacts.length
+    ? `<ul class="pg-facts">${keyFacts.map(([ic, t]) => `<li><i class="fas ${ic}" aria-hidden="true"></i>${esc(t)}</li>`).join('')}</ul>`
     : '';
+
+  // ── Photos. The cover first, then the gallery, each once. Clicking any of
+  // them opens the full-screen viewer (/js/gallery.js); without JavaScript the
+  // links still open the photo itself.
+  const photos = [...new Set([p.mainImage, ...gallery].filter(Boolean))];
+  const nPhotos = photos.length;
+  // Safe inside url('...') in a style attribute whatever the URL holds.
+  const cssUrl = u => String(u).replace(/["'()\\\s<>]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
+  const heroHtml = nPhotos
+    ? `<a class="pg-hero" href="${esc(absUrl(optimizeCloudinary(photos[0])))}" data-pg-photo="0" style="--pg-bg:url('${esc(cssUrl(absUrl(cloudinaryThumb(photos[0], 48, 36))))}')" aria-label="${esc(nPhotos > 1 ? `Open the photo gallery, ${nPhotos} photos` : 'Open the photo full screen')}">
+      <img id="pgHero" class="pg-hero-img" src="${esc(heroImg)}"${heroSrcset ? ` srcset="${esc(heroSrcset)}" sizes="${heroSizes}"` : ''} alt="${esc(title)}" fetchpriority="high" style="view-transition-name:glra-hero">
+      <span class="pg-hero-count" aria-hidden="true"><i class="far fa-images"></i>${nPhotos > 1 ? `${nPhotos} photos` : 'View photo'}</span>
+    </a>`
+    : `<div class="pg-hero pg-hero-none">
+      <img id="pgHero" class="pg-hero-img" src="${esc(heroImg)}" alt="" style="view-transition-name:glra-hero">
+      <span class="pg-hero-count">Photos on request</span>
+    </div>`;
+  // Small 2x-sharp crops (12 KB, not the full photo each). On a desktop the
+  // strip is one row of eight; the eighth says how many more there are.
+  const thumbsHtml = nPhotos > 1
+    ? `<div class="pg-thumbs">${photos.map((g, i) => `<a class="pg-thumb" href="${esc(absUrl(optimizeCloudinary(g)))}" data-pg-photo="${i}" aria-label="Photo ${i + 1} of ${nPhotos}"${i === 7 && nPhotos > 8 ? ` data-more="+${nPhotos - 7}"` : ''}><img src="${esc(absUrl(cloudinaryThumb(g)))}" alt="" loading="lazy" width="92" height="70"></a>`).join('')}</div>`
+    : '';
+  const photosJson = JSON.stringify(photos.map(g => absUrl(g))).replace(/</g, '\\u003c');
+
+  // ── What's nearby, from the location worker. Only printed when the listing
+  // was placed to at least district level; distances from the middle of a
+  // city would be made up.
+  const fmtDist = m => m < 1000 ? Math.max(10, Math.round(m / 10) * 10) + ' m' : (m / 1000).toFixed(1) + ' km';
+  const nearItems = geoOk && p.nearby && Array.isArray(p.nearby.items) ? p.nearby.items.filter(x => x && x.name && Number.isFinite(x.dist)) : [];
+  const nearbyHtml = nearItems.length ? `
+    <section class="pg-near" aria-labelledby="pgNearH">
+      <h2 class="pg-section-label" id="pgNearH">What's nearby</h2>
+      <div class="pg-near-grid">${NEARBY_CATS.map(([cat, label, icon]) => {
+        const list = nearItems.filter(x => x.cat === cat);
+        return list.length ? `
+        <div class="pg-near-cat">
+          <h3><i class="fas ${icon}" aria-hidden="true"></i>${esc(label)}</h3>
+          <ul>${list.map(x => `<li><span>${esc(x.name)}</span><b>${esc(fmtDist(x.dist))}</b></li>`).join('')}</ul>
+        </div>` : '';
+      }).join('')}
+      </div>
+      <p class="pg-near-note">Distances are straight-line and approximate. Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+    </section>` : '';
+
+  const mapsQ = String(p.mapLocation || loc || '').replace(/\s+/g, ' ').trim();
+  const locHtml = loc
+    ? (mapsQ
+      ? `<a class="pg-loc" href="https://www.google.com/maps/search/?api=1&amp;query=${esc(encodeURIComponent(mapsQ))}" target="_blank" rel="noopener"><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span>${esc(loc)}</span><span class="pg-loc-map">Map</span></a>`
+      : `<div class="pg-loc"><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span>${esc(loc)}</span></div>`)
+    : '';
+
+  // ── Desktop: the price and every way to reach Catherine stay beside the
+  // photos while the page scrolls. Phones keep the bottom bar instead.
+  const sideHtml = `<aside class="pg-side" aria-label="Price and contact">
+    <div class="pg-card">
+      <span class="pg-card-deal">${esc(lt)}</span>
+      ${priceParts.length
+        ? priceParts.map(([amt, suf, label]) => `<div class="pg-card-row"><span class="pg-card-lbl">${esc(label)}</span><span class="pg-card-price">${esc(amt)}${suf ? `<small>${esc(suf)}</small>` : ''}</span></div>`).join('')
+        : '<div class="pg-card-row"><span class="pg-card-lbl">Price</span><span class="pg-card-price">On request</span></div>'}
+      ${reducedHtml}
+      ${factsHtml}
+      <div class="pg-card-actions">
+        <a class="pg-btn pg-btn-wa" href="${esc(waHref)}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i>WhatsApp Catherine</a>
+        <div class="pg-btn-pair">
+          <a class="pg-btn" href="tel:+639171774572"><i class="fas fa-phone-alt" aria-hidden="true"></i>Call</a>
+          <a class="pg-btn" href="viber://chat?number=%2B639171774572"><i class="fab fa-viber" aria-hidden="true"></i>Viber</a>
+        </div>
+        <a class="pg-btn pg-btn-ink" href="#inquire" data-pg-book><i class="far fa-calendar-check" aria-hidden="true"></i>Book a viewing</a>
+        <button class="pg-btn pg-btn-ghost" type="button" data-pg-share><i class="fas fa-share-nodes" aria-hidden="true"></i><span aria-live="polite">Share this listing</span></button>
+      </div>
+      <p class="pg-card-note">GLRA Realty &middot; +63 917 177 4572</p>
+    </div>
+  </aside>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1409,13 +1591,22 @@ function buildPropertyPageHtml(p, related) {
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preload" as="image" href="${esc(heroImg)}" fetchpriority="high">
+<link rel="preload" as="image" href="${esc(heroImg)}"${heroSrcset ? ` imagesrcset="${esc(heroSrcset)}" imagesizes="${heroSizes}"` : ''} fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
 <style>
-:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500}
-body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500}
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--shadow:#0a0a0a}
+body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500;--shadow:#3a3a36}
+/* Opening a listing from the browse page is a cross-document view transition:
+   the card photo carries view-transition-name glra-hero and so does the photo
+   here. Off for anyone who asks for less motion. */
+@view-transition{navigation:auto}
+@media(prefers-reduced-motion:reduce){
+  @view-transition{navigation:none}
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--paper);color:var(--ink)}
@@ -1426,19 +1617,88 @@ a{color:inherit;text-decoration:none}
 .pg-nav img{height:50px;width:auto}
 .pg-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .pg-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
-.pg-wrap{max-width:1100px;margin:0 auto;padding:30px 24px 60px}
+.pg-wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
 .pg-badge{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
-.pg-title{font-size:38px;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;line-height:1.05;margin-bottom:8px}
-.pg-loc{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:18px}
-.pg-hero-img{width:100%;height:auto;border:2px solid var(--line);margin-bottom:14px}
-.pg-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
-.pg-thumbs img{width:92px;height:70px;object-fit:cover;border:2px solid var(--line);cursor:pointer}
-.pg-thumbs img:hover{border-color:var(--hot)}
-.pg-price{font-size:34px;font-weight:900;color:var(--hot-text);letter-spacing:-1px;margin:6px 0 18px}
-.pg-reduced{margin:-12px 0 18px;font-size:13px;font-weight:700;letter-spacing:.2px}
+.pg-head{margin-bottom:20px}
+/* Title case now (see glraDisplayTitle), so no forced capitals. */
+.pg-title{font-size:clamp(28px,3.6vw,44px);font-weight:900;letter-spacing:-1.2px;line-height:1.06;margin-bottom:10px;overflow-wrap:break-word}
+.pg-loc{display:block;width:fit-content;max-width:100%;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.2px;line-height:1.7;text-transform:uppercase;color:var(--gray);margin-bottom:14px}
+.pg-loc i{color:var(--hot-text);margin-right:7px}
+.pg-loc-map{margin-left:10px;white-space:nowrap;font-weight:700;color:var(--ink);border-bottom:2px solid var(--hot)}
+a.pg-loc:hover .pg-loc-map{color:var(--hot-text)}
+.pg-keyline{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.pg-price{font-size:34px;font-weight:900;color:var(--hot-text);letter-spacing:-1px;line-height:1.1}
+.pg-price small{font-size:.5em;font-weight:800;letter-spacing:0;margin-left:3px;color:var(--gray)}
+.pg-price-alt{font-size:15px;font-weight:800;margin-top:-6px}
+.pg-reduced{font-size:13px;font-weight:700;letter-spacing:.2px}
+.pg-facts{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.pg-facts li{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);background:var(--paper);padding:7px 11px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;line-height:1.2}
+.pg-facts i{color:var(--hot-text);font-size:12px}
+/* Photo frames hold their size before the photo arrives, tinted, so nothing
+   below them moves. Portrait flyers sit on a blurred copy of themselves. */
+.pg-gal{margin-bottom:26px}
+.pg-hero{position:relative;display:block;aspect-ratio:4/3;background:var(--paper2);border:2px solid var(--line);overflow:hidden;isolation:isolate}
+.pg-hero::before{content:'';position:absolute;inset:-30px;background:var(--pg-bg,none) center/cover no-repeat;filter:blur(26px) saturate(1.1);opacity:.55;z-index:-1}
+.pg-hero-img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+a.pg-hero{cursor:zoom-in}
+.pg-hero-count{position:absolute;right:12px;bottom:12px;display:inline-flex;align-items:center;gap:8px;background:#0a0a0a;color:#f1eee9;border:2px solid #f1eee9;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;box-shadow:3px 3px 0 #0a0a0a}
+a.pg-hero:hover .pg-hero-count,a.pg-hero:focus-visible .pg-hero-count{background:var(--hot-btn);border-color:var(--hot-btn);color:#fff}
+.pg-hero-none .pg-hero-img{object-fit:contain;padding:12%}
+.pg-thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:2px 2px 6px;scrollbar-width:thin}
+.pg-thumb{position:relative;display:block;flex:0 0 92px;height:70px;border:2px solid var(--line);background:var(--paper2);scroll-snap-align:start}
+.pg-thumb img{width:100%;height:100%;object-fit:cover}
+.pg-thumb:hover{border-color:var(--hot)}
 .pg-privacy{font-size:12px;line-height:1.5;margin:12px 0 0;opacity:.8}.pg-privacy a{color:inherit}
 .pg-bar{display:none}
-@media(max-width:768px){
+.pg-grid{display:block}
+.pg-side{display:none}
+@media(min-width:1024px){
+  .pg-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+  .pg-side{display:block;position:sticky;top:24px}
+  /* The card carries the price and facts on a desktop. */
+  .pg-head .pg-keyline{display:none}
+  .pg-hero{aspect-ratio:3/2}
+  .pg-thumbs{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));overflow:visible;padding:0}
+  .pg-thumb{flex:none;height:auto;aspect-ratio:4/3}
+  .pg-thumb:nth-child(n+9){display:none}
+  .pg-thumb[data-more]::after{content:attr(data-more);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.62);color:#fff;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;letter-spacing:1px}
+}
+.pg-card{border:2px solid var(--line);background:var(--paper2);padding:22px;box-shadow:6px 6px 0 var(--shadow)}
+.pg-card-deal{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;font-weight:700;padding:5px 10px;margin-bottom:14px}
+.pg-card-row{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;margin-bottom:12px;border-bottom:2px solid var(--line)}
+.pg-card-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--gray);font-weight:700}
+.pg-card-price{font-size:28px;font-weight:900;color:var(--hot-text);letter-spacing:-.8px;line-height:1.15;overflow-wrap:anywhere}
+.pg-card-price small{font-size:14px;font-weight:800;color:var(--gray);margin-left:3px;letter-spacing:0}
+.pg-card .pg-reduced{margin:-2px 0 12px}
+.pg-card .pg-facts{margin:4px 0 18px}
+.pg-card-actions{display:flex;flex-direction:column;gap:10px}
+.pg-btn-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pg-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:48px;padding:12px 14px;border:2px solid var(--ink);border-radius:0;background:var(--paper);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;text-align:center;cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s ease,box-shadow .12s ease,background-color .12s ease,color .12s ease}
+.pg-btn i{font-size:15px}
+.pg-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}
+.pg-btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--shadow)}
+.pg-btn-wa{background:var(--hot-btn);border-color:var(--hot-btn);color:#fff}
+.pg-btn-ink{background:var(--ink);color:var(--paper)}
+.pg-btn-ghost{background:transparent;box-shadow:none;border-color:var(--line)}
+.pg-btn-ghost:hover,.pg-btn-ghost:active{transform:none;box-shadow:none;border-color:var(--hot);color:var(--hot-text)}
+.pg-card-note{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);text-align:center}
+#inquire{scroll-margin-top:20px}
+.pg-near{margin-bottom:36px}
+.pg-near-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pg-near-cat{border:2px solid var(--line);background:var(--paper);padding:14px 16px;min-width:0}
+.pg-near-cat h3{display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.pg-near-cat h3 i{color:var(--hot-text);width:16px;text-align:center;font-size:13px}
+.pg-near-cat ul{list-style:none}
+.pg-near-cat li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--paper2)}
+body.dark-mode .pg-near-cat li{border-top-color:var(--line)}
+.pg-near-cat li:first-child{border-top:0}
+.pg-near-cat li span{font-size:14px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.pg-near-cat li b{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap}
+.pg-near-note{margin-top:10px;font-size:12px;color:var(--gray)}
+.pg-near-note a{text-decoration:underline}
+h2.pg-section-label{font-weight:700}
+@media(prefers-reduced-motion:reduce){.pg-btn{transition:none}.pg-btn:hover,.pg-btn:active{transform:none}}
+@media(max-width:1023px){
   .pg-bar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:1050;
     background:var(--paper);border-top:2px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
   .pg-bar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;
@@ -1461,7 +1721,7 @@ a{color:inherit;text-decoration:none}
 .pg-related{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:40px}
 .pg-rel{display:block;border:2px solid var(--line);background:var(--paper2);padding:0 0 12px}
 .pg-rel:hover{border-color:var(--hot)}
-.pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px}
+.pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px;background:var(--paper2)}
 .pg-rel-t{display:block;padding:0 12px;font-size:14px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:4px}
 .pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
 .pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot-text);letter-spacing:-.3px}
@@ -1495,7 +1755,7 @@ a{color:inherit;text-decoration:none}
 .pg-opt{text-transform:none;letter-spacing:0}
 .pg-foot{--hot-text:#ff3d00}
 .pg-foot a{color:var(--hot-text)}
-@media(max-width:600px){.pg-title{font-size:27px}.pg-price{font-size:26px}}
+@media(max-width:600px){.pg-wrap{padding:18px 16px 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
 </head>
 <body>
@@ -1505,14 +1765,25 @@ a{color:inherit;text-decoration:none}
 </nav>
 <main class="pg-wrap" id="main" tabindex="-1">
   ${crumbHtml}
-  <span class="pg-badge">${esc(lt)}</span>
-  <h1 class="pg-title">${esc(title)}</h1>
-  <div class="pg-loc"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>
-  <img id="pgHero" class="pg-hero-img" src="${esc(heroImg)}" alt="${esc(title)}">
-  ${thumbsHtml}
-  <div class="pg-price">${esc(priceText)}</div>${reducedHtml}
+  <header class="pg-head">
+    <span class="pg-badge">${esc(lt)}</span>
+    <h1 class="pg-title">${esc(title)}</h1>
+    ${locHtml}
+    <div class="pg-keyline">
+      ${headPriceHtml}${reducedHtml}
+      ${factsHtml}
+    </div>
+  </header>
+  <div class="pg-grid">
+  <div class="pg-main">
+  <div class="pg-gal">
+    ${heroHtml}
+    ${thumbsHtml}
+  </div>
+  <div class="pg-section-label">Details</div>
   ${specsHtml}
   ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
+  ${nearbyHtml}
   <div class="pg-form" id="inquire">
     <h2>Inquire about this property</h2>
     <form id="pgForm" onsubmit="return pgSubmit(event)">
@@ -1524,6 +1795,9 @@ a{color:inherit;text-decoration:none}
       <p class="pg-privacy">Catherine will use these details only to answer you about this property. <a href="/privacy.html">How we handle your data</a>.</p>
     </form>
     <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
+  </div>
+  </div>
+  ${sideHtml}
   </div>
   ${relatedHtml}
 </main>
@@ -1545,8 +1819,41 @@ a{color:inherit;text-decoration:none}
   <a href="viber://chat?number=%2B639171774572" class="floating-btn btn-viber" aria-label="Viber"><i class="fab fa-viber"></i></a>
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
+<script type="application/json" id="pgPhotos">${photosJson}</script>
 <script>
-function pgSwap(src){ var h=document.getElementById('pgHero'); if(h) h.src=src; }
+(function(){
+  var photos = [];
+  try { photos = JSON.parse(document.getElementById('pgPhotos').textContent) || []; } catch (e) {}
+  var title = ${JSON.stringify(title).replace(/</g, '\\u003c')};
+  var url = ${JSON.stringify(canonical)};
+  function share(btn){
+    if (navigator.share) { navigator.share({ title: title, url: url }).catch(function(){}); return; }
+    var sp = btn.querySelector('span'), orig = sp ? sp.textContent : '';
+    function say(t){ if (!sp) return; sp.textContent = t; setTimeout(function(){ sp.textContent = orig; }, 2400); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function(){ say('Link copied'); }, function(){ say('Copy the address bar link'); });
+    } else { say('Copy the address bar link'); }
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest ? e.target : null;
+    if (!t) return;
+    var ph = t.closest('[data-pg-photo]');
+    // Ctrl/cmd/shift-click and middle-click still open the photo itself.
+    if (ph && photos.length && window.GLRAGallery && !(e.ctrlKey || e.metaKey || e.shiftKey || e.button)) {
+      e.preventDefault();
+      window.GLRAGallery.open(photos, Number(ph.getAttribute('data-pg-photo')) || 0, { title: title, returnFocus: ph });
+      return;
+    }
+    if (t.closest('[data-pg-book]')) {
+      var m = document.getElementById('pgMsg');
+      if (m && m.value === m.defaultValue) m.value = 'I would like to book a viewing of ' + title + '. Which days and times are available?';
+      setTimeout(function(){ var n = document.getElementById('pgName'); if (n) { try { n.focus({ preventScroll: true }); } catch (_) { n.focus(); } } }, 400);
+      return;
+    }
+    var sh = t.closest('[data-pg-share]');
+    if (sh) { e.preventDefault(); share(sh); }
+  });
+})();
 async function pgSubmit(e){
   e.preventDefault();
   var btn = e.target.querySelector('button');
@@ -1555,9 +1862,9 @@ async function pgSubmit(e){
     name: document.getElementById('pgName').value.trim(),
     email: document.getElementById('pgEmail').value.trim(),
     phone: document.getElementById('pgPhone').value.trim(),
-    message: document.getElementById('pgMsg').value.trim() || ('Inquiry about ' + ${JSON.stringify(title)}),
+    message: document.getElementById('pgMsg').value.trim() || ('Inquiry about ' + ${JSON.stringify(title).replace(/</g, '\\u003c')}),
     propertyId: ${JSON.stringify(id)},
-    propertyTitle: ${JSON.stringify(title)}
+    propertyTitle: ${JSON.stringify(rawTitle).replace(/</g, '\\u003c')}
   };
   if(!payload.name || !payload.email){ result.style.color='#ff3d00'; result.textContent='Please enter your name and email.'; return false; }
   btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Sending...';
@@ -1571,8 +1878,9 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=104"></script>
-<script src="/js/a11y.js?v=104" defer></script>
+<script src="/js/main.js?v=105"></script>
+<script src="/js/a11y.js?v=105" defer></script>
+<script src="/js/gallery.js?v=105" defer></script>
 </body>
 </html>`;
 }
@@ -1583,7 +1891,7 @@ app.get('/property/:id', async (req, res) => {
     // contact details in `notes` have no business being loaded into a page
     // renderer, even one that does not print them.
     const p = /^[a-f0-9]{24}$/i.test(req.params.id)
-      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean()
+      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby').lean()
       : null;
     // A 302 to the listings page looked to Google like a disguised "not
     // found" it had to keep re-checking. Gone (410) for a listing that existed
@@ -2582,6 +2890,416 @@ function scheduleSavedSearchSweep() {
   }
 }
 
+// ══ LOCATION: WHERE EACH LISTING IS, AND WHAT IS NEAR IT ═════════════
+// A background worker gives every active listing a map position (OpenStreetMap
+// Nominatim) and a short list of the nearest train stations, malls, hospitals
+// and schools (OpenStreetMap Overpass). The browse page's map reads the
+// position from /api/properties; the listing page prints "What's nearby".
+//
+// Ground rules, all deliberate:
+//  - Only a listing's own location text is ever sent out. Never anything
+//    about a visitor, and never from inside a request: nothing here blocks or
+//    slows a page.
+//  - Both services are free and run on donated servers. Nominatim's policy is
+//    at most one request a second with an identifying User-Agent; this keeps
+//    1.2 s between requests and 3 s between Overpass queries, one at a time,
+//    and stops a pass after repeated failures instead of hammering.
+//  - Results are written with a plain $set: no updatedAt, no price history, no
+//    price alerts, no saved-search sweep, no audit entry. It is not an edit.
+//  - A lookup that found nothing ('none') is not repeated until the location
+//    text changes; one that failed ('error') is retried with a growing wait.
+//  - GEO_DISABLED=1 turns the whole thing off.
+const GEO_DISABLED = process.env.GEO_DISABLED === '1';
+const GEO_UA = 'GLRA Realty website (https://glrarealty.com; glrarealty@gmail.com)';
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+// OVERPASS_URL may point at another public instance if the main one is busy.
+const OVERPASS_URL = process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter';
+const NOMINATIM_GAP_MS = 1200;
+const OVERPASS_GAP_MS = 3000;
+const NEARBY_RADIUS_M = 2000;
+// Nominatim place_rank: 16 is a whole city, 18-20 a district or barangay, 26
+// and up a street or building. Distances measured from the middle of a city
+// would be fiction, so "what's nearby" needs at least a district.
+const NEARBY_MIN_RANK = 18;
+const NEARBY_MAX_AGE_MS = 90 * 864e5;
+const GEO_DAILY_MS = 24 * 60 * 60 * 1000;
+const GEO_CACHE_FILE = path.join(os.tmpdir(), 'glra-geo-cache.json');
+const GEO_LOCK_FILE = path.join(os.tmpdir(), 'glra-geo.lock');
+const GEO_CACHE_TTL_MS = 30 * 864e5;
+
+// The text a listing is looked up by, and the key that notices it changed.
+function geoQueryFor(p) {
+  const base = String((p && (String(p.mapLocation || '').trim() || p.location)) || '').replace(/\s+/g, ' ').trim();
+  return base ? base + ', Philippines' : '';
+}
+
+// What is actually sent: the same text tidied into something a geocoder can
+// match. Brokers type Google plus codes, the Filipino "Pilipinas", building
+// names in brackets, "corner X" / "near Y" directions and bare postcodes.
+function geoLookupText(q) {
+  const parts = String(q)
+    .replace(/\b[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}\b/gi, ' ')
+    .replace(/[()\u30fb|;]/g, ',')
+    .replace(/\s+[\u2014\u2013-]\s+/g, ',')
+    .replace(/\bPilipinas\b/gi, 'Philippines')
+    .replace(/\bKalakhang Maynila\b/gi, 'Metro Manila')
+    .replace(/\b(brgy|bgy|barangay)\b\.?/gi, ' ')
+    .split(',')
+    .map(s => s.replace(/\s+(via|near|corner|cor\.?|beside|behind|across)\s.*$/i, '').replace(/\s+/g, ' ').trim())
+    .filter(s => s && !/^\d+$/.test(s) && !/^(via|near|corner|cor\.?|beside|behind|across)\b/i.test(s) && !/^philippines$/i.test(s));
+  const seen = new Set();
+  const uniq = parts.filter(s => { const k = s.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  return uniq.length ? uniq.join(', ') + ', Philippines' : '';
+}
+// The one retry: the first comma part is most often a building or unit
+// nobody has mapped, so drop it; a single-part text keeps only its last word
+// group (usually the city).
+function geoSimplify(text) {
+  const parts = String(text).split(',').map(s => s.trim()).filter(s => s && !/^philippines$/i.test(s));
+  if (parts.length >= 2) return parts.slice(1).join(', ') + ', Philippines';
+  return '';
+}
+
+const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+const _geoLast = { n: 0, o: 0 };
+let _overpassGap = OVERPASS_GAP_MS;
+async function geoThrottle(kind, gap) {
+  const wait = _geoLast[kind] + gap - Date.now();
+  if (wait > 0) await sleepMs(wait);
+  _geoLast[kind] = Date.now();
+}
+async function geoFetch(url, init, timeoutMs) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ac.signal });
+  } finally { clearTimeout(t); }
+}
+
+// A small answer cache on local disk. It saves the free services from a
+// repeat question after a restart (and every local test stack from re-asking
+// all 64 listings); production keeps its answers in the database regardless.
+function geoCacheRead() {
+  try { return JSON.parse(fs.readFileSync(GEO_CACHE_FILE, 'utf8')) || {}; } catch (e) { return {}; }
+}
+function geoCacheGet(key) {
+  const c = geoCacheRead()[key];
+  return c && Date.now() - c.t < GEO_CACHE_TTL_MS ? c.v : undefined;
+}
+function geoCachePut(key, v) {
+  try {
+    const c = geoCacheRead();
+    c[key] = { t: Date.now(), v };
+    const tmp = GEO_CACHE_FILE + '.' + process.pid;
+    fs.writeFileSync(tmp, JSON.stringify(c));
+    fs.renameSync(tmp, GEO_CACHE_FILE);
+  } catch (e) { /* a cache that cannot be written is only a slower cache */ }
+}
+// One worker per machine: two processes on one host (a restart overlap, or
+// several local test servers) would otherwise double the request rate.
+function geoLockAcquire() {
+  for (let i = 0; i < 2; i++) {
+    try { fs.writeFileSync(GEO_LOCK_FILE, String(process.pid), { flag: 'wx' }); return true; }
+    catch (e) {
+      if (e.code !== 'EEXIST') return true; // no usable temp dir: just run
+      try {
+        const st = fs.statSync(GEO_LOCK_FILE);
+        const holder = Number(fs.readFileSync(GEO_LOCK_FILE, 'utf8'));
+        let alive = false;
+        try { if (holder && holder !== process.pid) { process.kill(holder, 0); alive = true; } } catch (e3) { alive = e3.code === 'EPERM'; }
+        if (alive && Date.now() - st.mtimeMs < 10 * 60 * 1000) return false;
+        fs.unlinkSync(GEO_LOCK_FILE);
+      } catch (e2) { /* raced with another process; try once more */ }
+    }
+  }
+  return false;
+}
+function geoLockTouch() { try { const n = new Date(); fs.utimesSync(GEO_LOCK_FILE, n, n); } catch (e) {} }
+function geoLockRelease() {
+  try { if (fs.readFileSync(GEO_LOCK_FILE, 'utf8') === String(process.pid)) fs.unlinkSync(GEO_LOCK_FILE); } catch (e) {}
+}
+
+// How far to trust a hit. Nominatim answers a place name with the best-scoring
+// thing that carries it, and in testing "Lucena City" came back as a railway
+// platform, "Mariveles Bataan" as a university and "Fairview, Quezon City" as
+// a car dealer: all in the right town, none of them the listing. Areas and
+// roads are taken at their word; a named point only when every word of its
+// name is in what was asked for (so "Monarch Parksuites" is the building).
+// Anything else counts as town level: fine for a map pin, not for distances.
+const GEO_STOPWORDS = new Set(['the', 'of', 'and', 'de', 'del', 'ng', 'sa']);
+function geoWords(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/).filter(w => w.length > 1 && !GEO_STOPWORDS.has(w));
+}
+function geoHitRank(a, text) {
+  const rank = Number(a.place_rank) || 0;
+  const cat = String(a.category || ''), type = String(a.type || ''), at = String(a.addresstype || '');
+  const TOWN = Math.min(rank, 16);
+  if (cat === 'place' || cat === 'boundary' || cat === 'landuse') return rank;
+  if (cat === 'highway' && at === 'road') return rank;
+  if (/^(railway|public_transport|aeroway)$/.test(cat) || /^(bus_stop|motorway_junction|platform|stop|station)$/.test(type)) return TOWN;
+  const nameW = geoWords(a.name);
+  if (!nameW.length) return rank; // an address match: a building found by its number
+  const asked = new Set(geoWords(text));
+  return nameW.every(w => asked.has(w)) ? rank : TOWN;
+}
+
+// null = looked and found nothing; throws = could not ask.
+async function nominatimLookup(text) {
+  const key = 'n2:' + text;
+  const hit = geoCacheGet(key);
+  if (hit !== undefined) return hit;
+  await geoThrottle('n', NOMINATIM_GAP_MS);
+  let r;
+  try {
+    r = await geoFetch(`${NOMINATIM_URL}?format=jsonv2&limit=1&countrycodes=ph&q=${encodeURIComponent(text)}`,
+      { headers: { 'User-Agent': GEO_UA, 'Accept': 'application/json', 'Accept-Language': 'en' } }, 20000);
+  } finally { _geoLast.n = Date.now(); }
+  if (!r.ok) { const err = new Error('Nominatim HTTP ' + r.status); err.status = r.status; throw err; }
+  const arr = await r.json();
+  const a = Array.isArray(arr) ? arr[0] : null;
+  const lat = a ? Number(a.lat) : NaN, lng = a ? Number(a.lon) : NaN;
+  // Inside the Philippines' bounding box, or it is not an answer.
+  const out = (Number.isFinite(lat) && Number.isFinite(lng) && lat > 4 && lat < 22 && lng > 116 && lng < 127.5)
+    ? { lat, lng, rank: geoHitRank(a, text) } : null;
+  geoCachePut(key, out);
+  return out;
+}
+
+async function geocodeQuery(q) {
+  const first = geoLookupText(q);
+  if (!first) return { status: 'none' };
+  const tries = [first];
+  const simpler = geoSimplify(first);
+  if (simpler && simpler !== first) tries.push(simpler);
+  for (const t of tries) {
+    const hit = await nominatimLookup(t);
+    if (hit) return { status: 'ok', ...hit };
+  }
+  return { status: 'none' };
+}
+
+const NEARBY_CATS = [
+  ['rail', 'Train stations', 'fa-train-subway'],
+  ['mall', 'Malls', 'fa-bag-shopping'],
+  ['hospital', 'Hospitals', 'fa-hospital'],
+  ['school', 'Schools & universities', 'fa-graduation-cap']
+];
+function metresBetween(lat1, lng1, lat2, lng2) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+// Mapped but not carrying passengers as of September 2026: the Metro Manila
+// Subway and the North-South Commuter Railway are being built, MRT-7 is not
+// open, and the PNR's Metro Manila service was suspended in 2024 for the NSCR
+// works. OpenStreetMap already has their stations, and "Bonifacio Global City
+// station, 1.1 km" would read as a working train. Revisit as each line opens.
+const NOT_RUNNING_RAIL = /metro manila subway|\bmmsp\b|north[\s-]*south commuter|\bnscr\b|mrt[\s-]*(line\s*)?7\b|\bpnr\b|philippine national railways/i;
+function nearbyCategory(tags) {
+  if (tags.construction || tags.proposed || tags.disused || tags.abandoned || tags['disused:railway'] || tags['abandoned:railway']) return '';
+  if (tags.railway === 'station') {
+    // Every line running in Metro Manila today (LRT-1, LRT-2, MRT-3) is mapped
+    // as station=light_rail; everything mapped station=subway (the Subway,
+    // MRT-7, the North Triangle Common Station) is still being built.
+    if (tags.station === 'subway' || tags.subway === 'yes') return '';
+    return NOT_RUNNING_RAIL.test([tags.network, tags.operator, tags.line, tags['name:en'], tags.name].filter(Boolean).join(' ')) ? '' : 'rail';
+  }
+  if (tags.shop === 'mall') return 'mall';
+  if (tags.amenity === 'hospital') return 'hospital';
+  if (/^(school|university|college)$/.test(tags.amenity || '')) return 'school';
+  return '';
+}
+async function overpassNearby(lat, lng) {
+  const key = `o3:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const cached = geoCacheGet(key);
+  if (cached !== undefined) return cached;
+  const a = `(around:${NEARBY_RADIUS_M},${lat.toFixed(6)},${lng.toFixed(6)})`;
+  const query = `[out:json][timeout:25];(nwr["railway"="station"]${a};nwr["shop"="mall"]${a};` +
+    `nwr["amenity"="hospital"]${a};nwr["amenity"="school"]${a};nwr["amenity"="university"]${a};nwr["amenity"="college"]${a};);out center tags;`;
+  // Overpass shares two query slots per address and frees one only after a
+  // cool-down that grows with how long the last query ran, so the gap grows
+  // with the work; a busy answer (429/504) gets one patient retry.
+  let r;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await geoThrottle('o', _overpassGap);
+    const t0 = Date.now();
+    try {
+      r = await geoFetch(OVERPASS_URL, {
+        method: 'POST',
+        headers: { 'User-Agent': GEO_UA, 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+        body: 'data=' + encodeURIComponent(query)
+      }, 40000);
+    } finally {
+      _geoLast.o = Date.now();
+      // Measured: a 10 s query here left its slot cooling for about 60 s,
+      // and there are two slots, so about three times the run time apart.
+      _overpassGap = Math.max(OVERPASS_GAP_MS, Math.min(90000, 3 * (Date.now() - t0)));
+    }
+    if (r.status !== 429 && r.status !== 504) break;
+    if (attempt === 0) await sleepMs(45000);
+  }
+  if (!r.ok) { const err = new Error('Overpass HTTP ' + r.status); err.status = r.status; throw err; }
+  const data = await r.json();
+  if (data && data.remark && /runtime error|timed out/i.test(data.remark)) throw new Error('Overpass: ' + data.remark.slice(0, 120));
+  const best = {};
+  (data.elements || []).forEach(el => {
+    const tags = el.tags || {};
+    const cat = nearbyCategory(tags);
+    const name = String(tags['name:en'] || tags.name || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+    const eLat = el.lat != null ? el.lat : el.center && el.center.lat;
+    const eLng = el.lon != null ? el.lon : el.center && el.center.lon;
+    if (!cat || !name || !Number.isFinite(eLat) || !Number.isFinite(eLng)) return;
+    const dist = Math.round(metresBetween(lat, lng, eLat, eLng));
+    // One entry per place: a station is often mapped once per line or platform.
+    const k = cat + '|' + name.toLowerCase().replace(/\b(station|stn)\b/g, '').replace(/[^a-z0-9]+/g, '');
+    if (!best[k] || best[k].dist > dist) best[k] = { cat, name, dist };
+  });
+  const items = [];
+  NEARBY_CATS.forEach(([cat]) => {
+    Object.values(best).filter(x => x.cat === cat).sort((x, y) => x.dist - y.dist).slice(0, 3).forEach(x => items.push(x));
+  });
+  geoCachePut(key, items);
+  return items;
+}
+
+function geoNeedsLookup(p, q, now) {
+  const g = p.geo || {};
+  if (!g.status || g.q !== q) return true;
+  if (g.status === 'error') {
+    const wait = Math.min(GEO_DAILY_MS, 15 * 60 * 1000 * Math.pow(2, Math.max(0, (g.tries || 1) - 1)));
+    return !g.at || now - new Date(g.at).getTime() >= wait;
+  }
+  return false; // 'ok' and 'none' stand until the location text changes
+}
+function nearbyNeeded(p, geo, now) {
+  if (!geo || geo.status !== 'ok' || !(geo.rank >= NEARBY_MIN_RANK)) return false;
+  const n = p.nearby;
+  if (!n || !n.at) return true;
+  const at = new Date(n.at).getTime();
+  if (geo.at && at < new Date(geo.at).getTime()) return true;
+  return now - at > NEARBY_MAX_AGE_MS;
+}
+
+let geoRunning = false, geoRerun = false, geoTimer = null;
+const _nearbyBackoff = new Map(); // listing id -> { until, n } after an Overpass failure
+
+async function runGeoPass() {
+  if (GEO_DISABLED) return null;
+  if (geoRunning) { geoRerun = true; return null; }
+  if (mongoose.connection.readyState !== 1) { scheduleGeoPass(60 * 1000); return null; }
+  if (!geoLockAcquire()) { scheduleGeoPass(10 * 60 * 1000); return null; }
+  geoRunning = true;
+  const started = Date.now();
+  const stats = { listings: 0, looked: 0, ok: 0, none: 0, error: 0, nearby: 0, nearbyFailed: 0 };
+  let geoFails = 0, nearbyFails = 0;
+  try {
+    const rows = await Property.find({ status: 'available' }).select('_id mapLocation location geo nearby').lean();
+    stats.listings = rows.length;
+    // Two rounds: every position first (about a second each), so the map is
+    // complete within minutes; then the slower nearby lists.
+    const placed = [];
+    for (const p of rows) {
+      const now = Date.now();
+      const q = geoQueryFor(p);
+      if (!q) continue;
+      let geo = p.geo;
+      if (geoFails < 3 && geoNeedsLookup(p, q, now)) {
+        stats.looked++;
+        let next;
+        try {
+          next = { ...(await geocodeQuery(q)), q, at: new Date(), tries: 0 };
+          geoFails = 0;
+        } catch (e) {
+          geoFails++;
+          const prevTries = p.geo && p.geo.q === q && p.geo.status === 'error' ? (p.geo.tries || 0) : 0;
+          next = { status: 'error', q, at: new Date(), tries: prevTries + 1 };
+          console.warn('Geo lookup failed:', e.message);
+          // Refused outright (blocked or rate limited): stop asking for now.
+          if (e.status === 403 || e.status === 429) geoFails = 3;
+        }
+        stats[next.status]++;
+        await Property.updateOne({ _id: p._id }, { $set: { geo: next }, $unset: { nearby: 1 } });
+        invalidatePublicListingsCache();
+        geo = next;
+        p.nearby = null;
+        geoLockTouch();
+      }
+      placed.push([p, geo]);
+    }
+    for (const [p, geo] of placed) {
+      const now = Date.now();
+      const id = String(p._id);
+      const bo = _nearbyBackoff.get(id);
+      if (nearbyFails < 3 && nearbyNeeded(p, geo, now) && !(bo && bo.until > now)) {
+        try {
+          const items = await overpassNearby(geo.lat, geo.lng);
+          await Property.updateOne({ _id: p._id }, { $set: { nearby: { at: new Date(), items } } });
+          invalidatePublicListingsCache();
+          _nearbyBackoff.delete(id);
+          stats.nearby++;
+          nearbyFails = 0;
+        } catch (e) {
+          nearbyFails++;
+          stats.nearbyFailed++;
+          const n = (bo ? bo.n : 0) + 1;
+          _nearbyBackoff.set(id, { n, until: Date.now() + Math.min(GEO_DAILY_MS, 15 * 60 * 1000 * Math.pow(2, n - 1)) });
+          console.warn('Nearby lookup failed:', e.message);
+          if (e.status === 403 || e.status === 429) nearbyFails = 3;
+        }
+        geoLockTouch();
+      }
+    }
+    if (geoFails >= 3 || nearbyFails >= 3) scheduleGeoPass(30 * 60 * 1000);
+  } catch (e) {
+    console.error('Geo pass error:', e.message);
+  } finally {
+    geoRunning = false;
+    geoLockRelease();
+    if (stats.looked || stats.nearby || stats.nearbyFailed) {
+      console.log(`Geo pass: ${stats.listings} listings, ${stats.looked} looked up (${stats.ok} ok, ${stats.none} not found, ${stats.error} failed), ${stats.nearby} nearby lists (${stats.nearbyFailed} failed), ${Date.now() - started}ms`);
+    }
+    if (geoRerun) { geoRerun = false; scheduleGeoPass(30 * 1000); }
+  }
+  return stats;
+}
+
+// Called when a listing is created or edited; a burst of edits is one pass.
+function scheduleGeoPass(delayMs) {
+  if (GEO_DISABLED) return;
+  try {
+    if (geoTimer) clearTimeout(geoTimer);
+    geoTimer = setTimeout(() => {
+      geoTimer = null;
+      runGeoPass().catch(e => console.error('Geo pass error:', e.message));
+    }, delayMs == null ? 30 * 1000 : delayMs);
+    geoTimer.unref();
+  } catch (e) {
+    console.error('scheduleGeoPass error:', e.message);
+  }
+}
+if (!GEO_DISABLED) {
+  scheduleGeoPass(60 * 1000);
+  setInterval(() => scheduleGeoPass(1000), GEO_DAILY_MS).unref();
+}
+
+// What the public API may say about a listing's position: rounded to three
+// decimals (about 100 m, approximate on purpose) and only when it was found.
+// `approx` marks a position known only to the nearest city or town.
+function publicGeo(p) {
+  if (!p) return p;
+  const g = p.geo;
+  if (g && g.status === 'ok' && Number.isFinite(g.lat) && Number.isFinite(g.lng)) {
+    p.geo = { lat: Number(g.lat.toFixed(3)), lng: Number(g.lng.toFixed(3)) };
+    if (!(g.rank >= NEARBY_MIN_RANK)) p.geo.approx = true;
+  } else {
+    delete p.geo;
+  }
+  delete p.nearby;
+  return p;
+}
+
 // Safety net for listings that change some other way (a lease ending and the
 // listing going back on the market, a restart that lost a pending timer).
 // First run two minutes after boot so the database has time to connect.
@@ -3528,7 +4246,9 @@ function schemaProblem(err) {
 // its totals) are admin-only to read, so they are admin-only to write too, and
 // nobody sets views, createdAt or the price history by hand.
 const ADMIN_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission'];
-const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt'];
+// geo and nearby belong to the location worker. The edit form round-trips the
+// whole listing, so without this every save would write back a stale copy.
+const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt', 'geo', 'nearby'];
 function stripPrivilegedPropertyFields(body, req) {
   const out = { ...(body && typeof body === 'object' ? body : {}) };
   SYSTEM_PROPERTY_FIELDS.forEach(k => delete out[k]);
@@ -3546,6 +4266,7 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
     invalidatePublicListingsCache();
     invalidateAreaCache();
     scheduleSavedSearchSweep();
+    scheduleGeoPass();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -3623,6 +4344,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     invalidatePublicListingsCache();
     invalidateAreaCache();
     scheduleSavedSearchSweep();
+    scheduleGeoPass();
     res.json(property);
   } catch (err) {
     const why = schemaProblem(err);
@@ -4394,7 +5116,9 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     for (const prop of properties) {
       const existing = await Property.findOne({ title: prop.title, location: prop.location });
       if (!existing) {
-        await new Property(prop).save();
+        const clean = { ...(prop && typeof prop === 'object' ? prop : {}) };
+        delete clean.geo; delete clean.nearby; // written only by the location worker
+        await new Property(clean).save();
         added++;
       }
     }
@@ -4403,6 +5127,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     invalidatePublicListingsCache();
     invalidateAreaCache();
     scheduleSavedSearchSweep();
+    scheduleGeoPass();
     res.json({ success: true, added });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -5230,6 +5955,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     invalidatePublicListingsCache();
     invalidateAreaCache();
     scheduleSavedSearchSweep();
+    scheduleGeoPass();
     res.json({ success: true, propertyId: property._id, submission: sub });
   } catch (err) {
     console.error('Submission import error:', err);
@@ -5308,6 +6034,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
 // Nothing in the app requires server.js; this only lets a test script that
 // loads it in-process reach the Property Finder engine directly.
+module.exports._displayTitle = glraDisplayTitle;
 module.exports._savedSearchTest = {
   savedSearchMatches, describeSavedSearch, normalizeSavedSearchCriteria,
   runSavedSearchSweep, buildSavedSearchAlertEmail
