@@ -993,7 +993,7 @@ function buildAreaPageHtml(area, rows, counts) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <title>Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty</title>
 <meta name="description" content="${esc(metaDesc)}">
@@ -1005,14 +1005,15 @@ function buildAreaPageHtml(area, rows, counts) {
 <meta property="og:image" content="${esc(rows[0] && rows[0].mainImage ? absUrl(optimizeCloudinary(rows[0].mainImage)) : SITE_URL + '/img/social-card.png')}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
 <style>
-:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00}
-body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36}
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500}
+body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500}
 html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--paper);color:var(--ink)}
@@ -1025,7 +1026,7 @@ a{color:inherit;text-decoration:none}
 .ar-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
 .ar-wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
 .ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px}
-.ar-crumbs a:hover{color:var(--hot)}
+.ar-crumbs a:hover{color:var(--hot-text)}
 h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-transform:uppercase;line-height:1.02;margin-bottom:12px}
 .ar-sum{font-size:17px;color:var(--gray);max-width:70ch;margin-bottom:8px}
 .ar-guide{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.5px;margin-bottom:26px}
@@ -1039,25 +1040,49 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 .ar-t{display:block;padding:0 14px;font-size:15px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:5px}
 .ar-l{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:7px}
 .ar-s{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--gray);margin-bottom:7px}
-.ar-p{display:block;padding:0 14px;font-size:17px;font-weight:900;color:var(--hot);letter-spacing:-.4px}
+.ar-p{display:block;padding:0 14px;font-size:17px;font-weight:900;color:var(--hot-text);letter-spacing:-.4px}
 .ar-others{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
 .ar-others a{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.6px;text-transform:uppercase;border:2px solid var(--line);padding:8px 13px}
-.ar-others a:hover{border-color:var(--hot);color:var(--hot)}
-.ar-others b{color:var(--hot)}
+.ar-others a:hover{border-color:var(--hot);color:var(--hot-text)}
+.ar-others b{color:var(--hot-text)}
 .ar-cta{border:2px solid var(--line);background:var(--paper2);padding:24px;margin-top:38px}
 .ar-cta h2{font-size:22px;font-weight:900;letter-spacing:-.6px;text-transform:uppercase;margin-bottom:8px}
 .ar-cta p{color:var(--gray);margin-bottom:14px;max-width:62ch}
-.ar-cta a{display:inline-block;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;padding:13px 22px}
+.ar-cta a{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;padding:13px 22px}
+/* a11y.js inserts this link on every page; the rule it needs lives in
+   styles.css, which this template does not load. Without it the link is just
+   visible text at the top of the page. */
+.skip-to-content{position:fixed;top:-100px;left:8px;background:#0a0a0a;color:#fff;border:2px solid var(--hot);padding:14px 22px;z-index:2147483647;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:top .25s cubic-bezier(.2,.7,.2,1)}
+.skip-to-content:focus{top:8px;outline:2px solid var(--hot);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.skip-to-content{transition:none}}
+/* main.js injects these and only sizes them below 768px; the desktop sizing is
+   in styles.css, which this template does not load either. */
+.floating-buttons{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+.floating-buttons > *{width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:0;border:2px solid var(--line);background:var(--ink);color:var(--paper);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;border-radius:0}
+.floating-buttons > *:hover{background:var(--hot-btn);color:#fff;border-color:var(--hot-btn)}
+:is(a,button,input,textarea,select,[tabindex]):focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+/* 24x24 CSS px is the WCAG 2.2 AA floor for any pointer, not just touch. */
+.ar-crumbs a,.ar-others a{display:inline-block;min-height:24px;line-height:24px}
 .ar-foot{border-top:2px solid var(--line);padding:22px 24px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--gray)}
+/* A pointer target under 24x24 fails WCAG 2.2 AA, and 44 is the comfortable
+   size on a phone. This page's nav is two links and nothing else. */
+@media(max-width:768px){
+  .ar-nav a,.ar-crumbs a,.ar-cta a{min-height:44px;display:inline-flex;align-items:center}
+  .ar-others a{min-height:44px;display:inline-flex;align-items:center}
+}
+/* Matches viewport-fit=cover, or the nav sits under the notch in landscape. */
+@supports(padding:max(0px)){
+  .ar-nav{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+}
 @media(max-width:560px){.ar-wrap{padding:20px 16px 46px}.ar-nav{padding:14px 16px}}
 </style>
 </head>
 <body>
 <nav class="ar-nav">
-  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo.png" alt="GLRA Realty" data-logo-auto></a>
+  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" data-logo-auto></a>
   <a href="/properties.html" class="ar-back">\u2190 All listings</a>
 </nav>
-<div class="ar-wrap">
+<main class="ar-wrap" id="main" tabindex="-1">
   <nav class="ar-crumbs" aria-label="Breadcrumb">
     <a href="/">Home</a> <span>/</span> <a href="/properties.html">Properties</a> <span>/</span> <span aria-current="page">${esc(name)}</span>
   </nav>
@@ -1078,11 +1103,12 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
     <p>Not everything is listed publicly, and some owners ask us to keep a unit off the website. Tell Catherine what you are after in ${esc(name)} and she will check what is actually available.</p>
     <a href="/#contact">Ask about ${esc(name)} \u2192</a>
   </div>
-</div>
-<div class="ar-foot">
+</main>
+<footer class="ar-foot">
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
-</div>
+</footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
+<script src="/js/a11y.js?v=99" defer></script>
 </body>
 </html>`;
 }
@@ -1262,7 +1288,7 @@ function buildPropertyPageHtml(p, related) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <title>${esc(title)}${loc ? ' — ' + esc(loc) : ''} | GLRA Realty</title>
 <meta name="description" content="${esc(metaDesc)}">
@@ -1279,7 +1305,8 @@ function buildPropertyPageHtml(p, related) {
 <meta name="twitter:title" content="${esc(title)} | GLRA Realty">
 <meta name="twitter:description" content="${esc(metaDesc)}">
 <meta name="twitter:image" content="${esc(ogImg)}">
-<link rel="apple-touch-icon" href="/img/logo.png">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1288,8 +1315,8 @@ function buildPropertyPageHtml(p, related) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
 <style>
-:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#6a6a6a;--line:#0a0a0a;--hot:#ff3d00}
-body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36}
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500}
+body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500}
 html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--paper);color:var(--ink)}
@@ -1301,22 +1328,22 @@ a{color:inherit;text-decoration:none}
 .pg-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .pg-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
 .pg-wrap{max-width:1100px;margin:0 auto;padding:30px 24px 60px}
-.pg-badge{display:inline-block;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
+.pg-badge{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
 .pg-title{font-size:38px;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;line-height:1.05;margin-bottom:8px}
 .pg-loc{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:18px}
 .pg-hero-img{width:100%;height:auto;border:2px solid var(--line);margin-bottom:14px}
 .pg-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
 .pg-thumbs img{width:92px;height:70px;object-fit:cover;border:2px solid var(--line);cursor:pointer}
 .pg-thumbs img:hover{border-color:var(--hot)}
-.pg-price{font-size:34px;font-weight:900;color:var(--hot);letter-spacing:-1px;margin:6px 0 18px}
+.pg-price{font-size:34px;font-weight:900;color:var(--hot-text);letter-spacing:-1px;margin:6px 0 18px}
 .pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
 .pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
 .pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px}
 .pg-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.pg-crumbs a{border-bottom:1px solid transparent}
-.pg-crumbs a:hover{color:var(--hot);border-bottom-color:var(--hot)}
+.pg-crumbs a{border-bottom:1px solid transparent;display:inline-flex;align-items:center;min-height:24px}
+.pg-crumbs a:hover{color:var(--hot-text);border-bottom-color:var(--hot)}
 .pg-crumbs span[aria-current]{color:var(--ink);font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pg-related{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:40px}
 .pg-rel{display:block;border:2px solid var(--line);background:var(--paper2);padding:0 0 12px}
@@ -1324,24 +1351,46 @@ a{color:inherit;text-decoration:none}
 .pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px}
 .pg-rel-t{display:block;padding:0 12px;font-size:14px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:4px}
 .pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
-.pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot);letter-spacing:-.3px}
+.pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot-text);letter-spacing:-.3px}
 .pg-form{border:2px solid var(--line);padding:26px;background:var(--paper2)}
 .pg-form h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:16px}
 .pg-form input,.pg-form textarea{width:100%;padding:14px 16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:12px}
 .pg-form textarea{min-height:110px;resize:vertical}
 .pg-form button{background:var(--ink);color:var(--paper);border:0;padding:16px 28px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer}
-.pg-form button:hover{background:var(--hot);color:#fff}
+.pg-form button:hover{background:var(--hot-btn);color:#fff}
+/* a11y.js inserts this link on every page; the rule it needs lives in
+   styles.css, which this template does not load. Without it the link is just
+   visible text at the top of the page. */
+.skip-to-content{position:fixed;top:-100px;left:8px;background:#0a0a0a;color:#fff;border:2px solid var(--hot);padding:14px 22px;z-index:2147483647;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:top .25s cubic-bezier(.2,.7,.2,1)}
+.skip-to-content:focus{top:8px;outline:2px solid var(--hot);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.skip-to-content{transition:none}}
+/* main.js injects these and only sizes them below 768px; the desktop sizing is
+   in styles.css, which this template does not load either. */
+.floating-buttons{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+.floating-buttons > *{width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:0;border:2px solid var(--line);background:var(--ink);color:var(--paper);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;border-radius:0}
+.floating-buttons > *:hover{background:var(--hot-btn);color:#fff;border-color:var(--hot-btn)}
+:is(a,button,input,textarea,select,[tabindex]):focus-visible{outline:3px solid var(--hot);outline-offset:2px}
 .pg-foot{background:#0a0a0a;color:#f1eee9;text-align:center;padding:28px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;line-height:1.9}
-.pg-foot a{color:var(--hot)}
+@media(max-width:768px){
+  .pg-form input,.pg-form textarea,.pg-form select,.pg-form button{font-size:16px}
+  .pg-nav a,.pg-form button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+}
+@supports(padding:max(0px)){
+  .pg-nav{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+}
+.pg-lbl{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:14px 0 6px}
+.pg-opt{text-transform:none;letter-spacing:0}
+.pg-foot{--hot-text:#ff3d00}
+.pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-title{font-size:27px}.pg-price{font-size:26px}}
 </style>
 </head>
 <body>
 <nav class="pg-nav">
-  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo.png" alt="GLRA Realty" data-logo-auto></a>
+  <a href="/" aria-label="GLRA Realty home"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" data-logo-auto></a>
   <a href="/properties.html" class="pg-back">← All listings</a>
 </nav>
-<div class="pg-wrap">
+<main class="pg-wrap" id="main" tabindex="-1">
   ${crumbHtml}
   <span class="pg-badge">${esc(lt)}</span>
   <h1 class="pg-title">${esc(title)}</h1>
@@ -1354,19 +1403,19 @@ a{color:inherit;text-decoration:none}
   <div class="pg-form">
     <h2>Inquire about this property</h2>
     <form id="pgForm" onsubmit="return pgSubmit(event)">
-      <input type="text" id="pgName" placeholder="Full name" required>
-      <input type="email" id="pgEmail" placeholder="Email address" required>
-      <input type="tel" id="pgPhone" placeholder="Phone number">
-      <textarea id="pgMsg" placeholder="Your message">I'm interested in ${esc(title)}${loc ? ' (' + esc(loc) + ')' : ''}. Please send me more details.</textarea>
+      <label class="pg-lbl" for="pgName">Full name</label><input type="text" id="pgName" name="name" autocomplete="name" placeholder="Full name" required>
+      <label class="pg-lbl" for="pgEmail">Email address</label><input type="email" id="pgEmail" name="email" autocomplete="email" placeholder="Email address" required>
+      <label class="pg-lbl" for="pgPhone">Phone number <span class="pg-opt">(optional)</span></label><input type="tel" id="pgPhone" name="phone" autocomplete="tel" placeholder="Phone number">
+      <label class="pg-lbl" for="pgMsg">Your message</label><textarea id="pgMsg" name="message" placeholder="Your message">I'm interested in ${esc(title)}${loc ? ' (' + esc(loc) + ')' : ''}. Please send me more details.</textarea>
       <button type="submit">Send inquiry →</button>
     </form>
     <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
   </div>
   ${relatedHtml}
-</div>
-<div class="pg-foot">
+</main>
+<footer class="pg-foot">
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a>
-</div>
+</footer>
 <div class="floating-buttons">
   <a href="tel:+639171774572" class="floating-btn btn-call" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
   <a href="https://wa.me/639171774572" class="floating-btn btn-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
@@ -1400,6 +1449,7 @@ async function pgSubmit(e){
 }
 </script>
 <script src="/js/main.js"></script>
+<script src="/js/a11y.js?v=99" defer></script>
 </body>
 </html>`;
 }
