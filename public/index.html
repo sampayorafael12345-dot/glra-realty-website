@@ -2123,7 +2123,7 @@ async function loadProperties(){
     allPropertyTitles=fresh.map(p=>p.title);
     if(!painted||changed)renderAllSections(fresh);
   }catch(e){
-    if(!painted){console.error(e);showToast('Failed to load properties',true)}
+    if(!painted){console.error(e);showToast('Failed to load properties',true);loadHeroImages()}
   }
 }
 function renderAllSections(properties){
@@ -2162,7 +2162,7 @@ function populateHeroFromListings(properties){
   if(!wrapper)return;
   const featured=properties.filter(p=>p.featured&&p.mainImage).slice(0,5);
   const pool=featured.length?featured:properties.filter(p=>p.mainImage).slice(0,5);
-  if(!pool.length)return;
+  if(!pool.length){loadHeroImages();return;}
   wrapper.innerHTML='';
   // A sized copy of each photo; only the first loads straight away, the other
   // four once the page has finished loading, so they don't compete with it.
@@ -2362,7 +2362,9 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   ud.textContent = String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()];
 })();
-loadHeroImages();loadProperties();
+/* The slider shows the featured listings; the admin's own hero photos are
+   only the fallback (fetching both downloaded ~2 MB for nothing). */
+loadProperties();
 </script>
 <script src="/js/chat.js?v=108" defer></script>
 <script src="/js/description.js?v=108" defer></script>
