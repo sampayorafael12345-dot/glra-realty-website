@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=114">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=114">
+<link rel="stylesheet" href="/css/styles.css?v=115">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=115">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -640,7 +640,18 @@ html body button.pr-stat:focus-visible{outline:3px solid #ff3d00 !important;outl
 @media(prefers-reduced-motion:reduce){.pr-dot,.pr-tile.is-ph{animation:none}.pr-tile img{transition:none}}
 html body .search-float{padding:0 var(--glra-pad) !important;margin-top:-64px}
 html body .search-card{max-width:none !important;margin:0 !important}
-html body .reset-filters-btn{margin-left:0 !important;padding-left:0 !important}
+/* The theme paints every button as a solid block; on the dark search card
+   this one reads better as an outline, with its own padding back. */
+html body .reset-filters-btn{width:auto !important;margin:18px 0 0 !important;padding:12px 20px !important;background:transparent !important;color:rgba(241,238,233,.82) !important;border:1px solid rgba(241,238,233,.32) !important}
+@media(hover:hover){html body .reset-filters-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}}
+html body .reset-filters-btn:active{transform:none !important}
+/* The sticky tabs sat one layer below the cards' own buttons (10 vs 9), so
+   the share, save and alert icons slid over them on scroll. The search box
+   comes back on top while in use, so its suggestions still cover the tabs. */
+html body .category-tabs-wrap{z-index:60 !important}
+html body .search-float{z-index:50 !important}
+html body .search-float:focus-within{z-index:70 !important}
+html body .map-pane{isolation:isolate}
 html body .category-tabs{max-width:none !important;padding:0 var(--glra-pad) !important}
 html body .section{max-width:none !important;padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
 html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spacing:-1px !important;line-height:1 !important}
@@ -1013,10 +1024,10 @@ html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spaci
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=114"></script>
-<script src="/js/smart-search.js?v=114"></script>
-<script src="/js/glra-maps.js?v=114"></script>
-<script src="/js/gallery.js?v=114" defer></script>
+<script src="/js/main.js?v=115"></script>
+<script src="/js/smart-search.js?v=115"></script>
+<script src="/js/glra-maps.js?v=115"></script>
+<script src="/js/gallery.js?v=115" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
    Display titles, shareable filters in the URL, the live results count,
@@ -2834,9 +2845,9 @@ loadProperties();
   });
 })();
 </script>
-<script src="/js/brutalist-shell.js?v=114" defer></script>
-<script src="/js/description.js?v=114" defer></script>
-<script src="/js/a11y.js?v=114" defer></script>
-<script src="/js/chat.js?v=114" defer></script>
+<script src="/js/brutalist-shell.js?v=115" defer></script>
+<script src="/js/description.js?v=115" defer></script>
+<script src="/js/a11y.js?v=115" defer></script>
+<script src="/js/chat.js?v=115" defer></script>
 </body>
 </html>

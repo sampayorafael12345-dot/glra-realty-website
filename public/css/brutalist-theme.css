@@ -1998,7 +1998,11 @@ html body.gl-keyboard :is([role="button"],[tabindex]):not(a):not(button):not(inp
 :root{--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2))}
 @media(max-width:980px){:root{--glra-gut:24px}}
 @media(max-width:560px){:root{--glra-gut:24px}}
-html body nav.navbar{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+/* .navbar.scrolled (added past 50px of scroll) outranked the rule above and
+   put the old 5% sides back, so the logo and links slid sideways on scroll.
+   Both states now share the column, and the same height on phones. */
+html body nav.navbar,html body nav.navbar.scrolled{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+@media(max-width:980px){html body nav.navbar.scrolled{padding-top:8px !important;padding-bottom:8px !important}}
 html body .ab-top-strip{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
 html body .page-hero{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
 html body .page-hero h1{margin-left:0 !important;margin-right:0 !important;max-width:none !important}
