@@ -235,7 +235,10 @@ app.use(helmet.contentSecurityPolicy({
     // is exactly what report-only is for, and exactly why it was worth
     // inventorying every external host in the codebase before promoting it.
     'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com',
-      'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev'],
+      'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev',
+      // Flood hazard layer (js/glra-maps.js): UP NOAH PMTiles on Hugging Face,
+      // which answers with a redirect to its CDN.
+      'https://huggingface.co', 'https://*.hf.co'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
     // Without this, manifest-src falls back to default-src. That happens to be
@@ -1526,10 +1529,24 @@ function buildPropertyPageHtml(p, related) {
   // city would be made up.
   const fmtDist = m => m < 1000 ? Math.max(10, Math.round(m / 10) * 10) + ' m' : (m / 1000).toFixed(1) + ' km';
   const nearItems = geoOk && p.nearby && Array.isArray(p.nearby.items) ? p.nearby.items.filter(x => x && x.name && Number.isFinite(x.dist)) : [];
-  const nearbyHtml = nearItems.length ? `
+  // The neighbourhood map (js/glra-maps.js) centres on the same 3-decimal
+  // position the public API gives out (about 100 m, approximate on purpose);
+  // the places around it are public and keep their own positions.
+  const nbLat = geoOk ? Number(p.geo.lat.toFixed(3)) : null;
+  const nbLng = geoOk ? Number(p.geo.lng.toFixed(3)) : null;
+  const nbPoints = nearItems.filter(x => Number.isFinite(x.lat) && Number.isFinite(x.lng))
+    .map(x => ({ cat: x.cat, name: x.name, dist: x.dist, lat: x.lat, lng: x.lng }));
+  const nbMapHtml = geoOk ? `
+      <div class="pg-map-tools">
+        <button type="button" class="pg-map-btn" id="pgFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i> Flood hazard</button>
+        <a class="pg-map-btn" href="https://www.google.com/maps/@?api=1&amp;map_action=pano&amp;viewpoint=${nbLat},${nbLng}" target="_blank" rel="noopener"><i class="fas fa-street-view" aria-hidden="true"></i> Street View</a>
+      </div>
+      <div class="pg-near-map" id="pgNearMap" role="region" aria-label="Map of the neighbourhood" data-lat="${nbLat}" data-lng="${nbLng}" data-points="${esc(JSON.stringify(nbPoints))}"></div>` : '';
+  const nearbyHtml = geoOk ? `
     <section class="pg-near" aria-labelledby="pgNearH">
-      <h2 class="pg-section-label" id="pgNearH">What's nearby</h2>
-      <div class="pg-near-grid">${NEARBY_CATS.map(([cat, label, icon]) => {
+      <h2 class="pg-section-label" id="pgNearH">${nearItems.length ? "The neighbourhood" : "On the map"}</h2>
+      ${nbMapHtml}
+      ${nearItems.length ? `<div class="pg-near-grid">${NEARBY_CATS.map(([cat, label, icon]) => {
         const list = nearItems.filter(x => x.cat === cat);
         return list.length ? `
         <div class="pg-near-cat">
@@ -1537,8 +1554,8 @@ function buildPropertyPageHtml(p, related) {
           <ul>${list.map(x => `<li><span>${esc(x.name)}</span><b>${esc(fmtDist(x.dist))}</b></li>`).join('')}</ul>
         </div>` : '';
       }).join('')}
-      </div>
-      <p class="pg-near-note">Distances are straight-line and approximate. Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+      </div>` : ''}
+      <p class="pg-near-note">The pin marks the approximate area, not the exact unit. Distances are straight-line. Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
     </section>` : '';
 
   const mapsQ = String(p.mapLocation || loc || '').replace(/\s+/g, ' ').trim();
@@ -1702,6 +1719,16 @@ body.dark-mode .pg-near-cat li{border-top-color:var(--line)}
 .pg-near-cat li span{font-size:14px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:anywhere}
 .pg-near-cat li b{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap}
 .pg-near-note{margin-top:10px;font-size:12px;color:var(--gray)}
+.pg-map-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pg-map-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;background:var(--paper);color:var(--ink);border:2px solid var(--line);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;text-decoration:none}
+.pg-map-btn:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.pg-map-btn[aria-pressed="true"]{background:#1f5fbf;border-color:#1f5fbf;color:#fff}
+.pg-map-btn:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+.pg-near-map{height:380px;border:2px solid var(--line);background:var(--paper2);margin-bottom:12px;position:relative;z-index:0}
+@media(max-width:600px){.pg-near-map{height:300px}}
+.pg-near-map .leaflet-tile-pane{filter:grayscale(.85) contrast(1.04) brightness(1.03)}
+body.dark-mode .pg-near-map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
+.pg-near-map .leaflet-bar a{border-radius:0}
 .pg-near-note a{text-decoration:underline}
 h2.pg-section-label{font-weight:700}
 @media(prefers-reduced-motion:reduce){.pg-btn{transition:none}.pg-btn:hover,.pg-btn:active{transform:none}}
@@ -1892,6 +1919,7 @@ async function pgSubmit(e){
 <script src="/js/main.js?v=108"></script>
 <script src="/js/a11y.js?v=108" defer></script>
 <script src="/js/gallery.js?v=108" defer></script>
+${geoOk ? '<script src="/js/glra-maps.js?v=109" defer></script>' : ''}
 </body>
 </html>`;
 }
@@ -3331,7 +3359,7 @@ function nearbyCategory(tags) {
   return '';
 }
 async function overpassNearby(lat, lng) {
-  const key = `o3:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const key = `o4:${lat.toFixed(4)},${lng.toFixed(4)}`;
   const cached = geoCacheGet(key);
   if (cached !== undefined) return cached;
   const a = `(around:${NEARBY_RADIUS_M},${lat.toFixed(6)},${lng.toFixed(6)})`;
@@ -3373,7 +3401,8 @@ async function overpassNearby(lat, lng) {
     const dist = Math.round(metresBetween(lat, lng, eLat, eLng));
     // One entry per place: a station is often mapped once per line or platform.
     const k = cat + '|' + name.toLowerCase().replace(/\b(station|stn)\b/g, '').replace(/[^a-z0-9]+/g, '');
-    if (!best[k] || best[k].dist > dist) best[k] = { cat, name, dist };
+    // lat/lng (about 1 m) put the place on the listing page's neighbourhood map.
+    if (!best[k] || best[k].dist > dist) best[k] = { cat, name, dist, lat: Number(eLat.toFixed(5)), lng: Number(eLng.toFixed(5)) };
   });
   const items = [];
   NEARBY_CATS.forEach(([cat]) => {
@@ -3396,6 +3425,8 @@ function nearbyNeeded(p, geo, now) {
   if (!geo || geo.status !== 'ok' || !(geo.rank >= NEARBY_MIN_RANK)) return false;
   const n = p.nearby;
   if (!n || !n.at) return true;
+  // Lists saved before places carried a position: fetch again for the map.
+  if (Array.isArray(n.items) && n.items.length && !Number.isFinite(n.items[0].lat)) return true;
   const at = new Date(n.at).getTime();
   if (geo.at && at < new Date(geo.at).getTime()) return true;
   return now - at > NEARBY_MAX_AGE_MS;

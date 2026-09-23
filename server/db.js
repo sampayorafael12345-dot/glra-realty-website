@@ -64,7 +64,7 @@ const propertySchema = new mongoose.Schema({
   // Overpass), up to three of each, straight-line metres from geo.
   nearby: {
     at: { type: Date },
-    items: [{ _id: false, cat: String, name: String, dist: Number }]
+    items: [{ _id: false, cat: String, name: String, dist: Number, lat: Number, lng: Number }]
   }
 });
 

@@ -551,6 +551,51 @@ html body .grid .prop-price{margin-top:auto !important;padding-top:16px}
 html body .grid .prop-psqm{min-height:15px}
 html body .grid .prop-foot{margin-top:14px;padding-top:14px;border-top:1px solid var(--ab-line);flex-wrap:nowrap}
 body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
+/* ═══ MAP EXTRAS: distance to work, price colours, draw area, flood ═══ */
+.glra-sr{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important}
+.near-pick{position:relative;display:inline-flex;align-items:center}
+.near-pick>i{position:absolute;left:12px;font-size:12px;color:#ff3d00;pointer-events:none}
+html body .near-pick select{min-height:40px;padding:0 12px 0 32px;border:2px solid var(--ab-line);border-radius:0;background:var(--ab-paper);color:var(--ab-ink);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+html body .area-chip{min-height:40px;padding:0 12px !important;background:#1f5fbf !important;color:#fff !important;border:0 !important;font-size:10.5px !important;letter-spacing:1px !important}
+html body .area-chip[hidden]{display:none !important}
+html body .area-chip:hover{background:#ff3d00 !important}
+.prop-near{display:flex;align-items:center;gap:6px;margin:-4px 0 10px;font:700 10.5px/1.3 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#1f5fbf}
+body.dark-mode .prop-near{color:#7fb0ff}
+.glra-mapcard-near{font:700 10px/1.4 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:#1f5fbf;margin:-6px 0 12px}
+body.dark-mode .glra-mapcard-near{color:#7fb0ff}
+.glra-mapctl{display:flex;flex-direction:column;gap:6px;margin-top:8px !important}
+html body .glra-mapctl-btn{display:flex !important;align-items:center !important;gap:8px !important;min-height:38px;padding:0 12px !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;box-shadow:3px 3px 0 var(--ab-line) !important;font:700 10.5px/1 'JetBrains Mono',monospace !important;letter-spacing:1px !important;text-transform:uppercase !important;white-space:nowrap}
+html body .glra-mapctl-btn[hidden]{display:none !important}
+html body .glra-mapctl-btn i{width:14px;text-align:center;color:#ff3d00}
+html body .glra-mapctl-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .glra-mapctl-btn:hover i{color:#fff}
+html body .glra-mapctl-btn[aria-pressed="true"]{background:#1f5fbf !important;border-color:#1f5fbf !important;color:#fff !important}
+html body .glra-mapctl-btn[aria-pressed="true"] i{color:#fff}
+@media(max-width:700px){html body .glra-mapctl-btn span{display:none}html body .glra-mapctl-btn{width:40px;justify-content:center !important;padding:0 !important}}
+.map-draw-hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:800;margin:0;background:#1f5fbf;color:#fff;padding:9px 14px;font:700 11px/1.3 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;box-shadow:3px 3px 0 #0a0a0a;white-space:nowrap}
+.map-draw-hint[hidden]{display:none}
+#mapCanvas.is-drawing{cursor:crosshair;touch-action:none}
+#mapCanvas.is-drawing .leaflet-interactive{cursor:crosshair}
+#mapCanvas .glra-area{fill:#1f5fbf;fill-opacity:.08;stroke:#1f5fbf;stroke-width:3;stroke-dasharray:8 6}
+#mapCanvas .glra-area-live{fill-opacity:.14}
+.glra-place-wrap{background:none;border:0}
+.glra-place{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1f5fbf;color:#fff;border:3px solid #fff;box-shadow:0 0 0 2px #1f5fbf,0 2px 6px rgba(0,0,0,.35);font-size:13px}
+#mapCanvas .glra-pin-wrap.pb0 .glra-pin{background:#8a857d;border-color:#8a857d}#mapCanvas .glra-pin-wrap.pb0 .glra-pin::after{border-top-color:#8a857d}
+#mapCanvas .glra-pin-wrap.pb1 .glra-pin{background:#0f7a55;border-color:#0f7a55}#mapCanvas .glra-pin-wrap.pb1 .glra-pin::after{border-top-color:#0f7a55}
+#mapCanvas .glra-pin-wrap.pb2 .glra-pin{background:#4d8f1f;border-color:#4d8f1f}#mapCanvas .glra-pin-wrap.pb2 .glra-pin::after{border-top-color:#4d8f1f}
+#mapCanvas .glra-pin-wrap.pb3 .glra-pin{background:#a36b00;border-color:#a36b00}#mapCanvas .glra-pin-wrap.pb3 .glra-pin::after{border-top-color:#a36b00}
+#mapCanvas .glra-pin-wrap.pb4 .glra-pin{background:#c24a0e;border-color:#c24a0e}#mapCanvas .glra-pin-wrap.pb4 .glra-pin::after{border-top-color:#c24a0e}
+#mapCanvas .glra-pin-wrap.pb5 .glra-pin{background:#b0122c;border-color:#b0122c}#mapCanvas .glra-pin-wrap.pb5 .glra-pin::after{border-top-color:#b0122c}
+body.dark-mode #mapCanvas .glra-pin-wrap[class*=" pb"] .glra-pin{border-color:#f1eee9}
+.glra-psqm-legend{background:var(--ab-paper);color:var(--ab-ink);border:2px solid var(--ab-line);box-shadow:3px 3px 0 var(--ab-line);padding:9px 11px;max-width:250px;font:12px/1.4 'Inter',sans-serif}
+.glra-psqm-t{font:700 10px/1.3 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:7px}
+.glra-psqm-scale{display:flex;align-items:center;gap:3px;font:700 9.5px/1 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px}
+.glra-psqm-scale span{margin:0 4px}
+.glra-psqm-scale i{display:block;width:22px;height:12px}
+.glra-psqm-scale .pb1{background:#0f7a55}.glra-psqm-scale .pb2{background:#4d8f1f}.glra-psqm-scale .pb3{background:#a36b00}.glra-psqm-scale .pb4{background:#c24a0e}.glra-psqm-scale .pb5{background:#b0122c}
+.glra-psqm-legend p{margin:6px 0 0;font-size:11px;opacity:.8}
+@media(max-width:560px){.glra-psqm-legend p{display:none}.glra-psqm-legend{max-width:200px}}
+#mapCanvas .glra-flood-legend{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -695,6 +740,23 @@ body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
         <button type="button" class="vt-btn" data-view="list" aria-pressed="true"><i class="fas fa-th-large" aria-hidden="true"></i> List</button>
         <button type="button" class="vt-btn" data-view="map" aria-pressed="false"><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Map</button>
       </div>
+      <div class="near-pick">
+        <i class="fas fa-briefcase" aria-hidden="true"></i>
+        <select id="nearSelect" aria-label="Show the distance to where you work" onchange="glraSetNear(this.value)">
+          <option value="">Distance to work</option>
+          <option value="makati">Makati CBD</option>
+          <option value="bgc">BGC</option>
+          <option value="ortigas">Ortigas Center</option>
+          <option value="alabang">Alabang</option>
+          <option value="bay">Bay Area (MOA)</option>
+          <option value="eastwood">Eastwood</option>
+          <option value="qc">Vertis North, QC</option>
+          <option value="manila">Manila (Ermita)</option>
+          <option value="me">My location</option>
+        </select>
+        <span class="glra-sr" id="nearStatus" role="status" aria-live="polite"></span>
+      </div>
+      <button type="button" class="area-chip" id="areaChip" hidden onclick="glraSetArea(null)"><span></span> <i class="fas fa-times" aria-hidden="true"></i><b class="glra-sr"> Remove</b></button>
       <button type="button" class="ss-cta" id="ssOpenBtn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me new matches</button>
       <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
         <option value="newest">Sort: Newest First</option>
@@ -716,6 +778,7 @@ body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
     <aside class="map-pane" id="mapPane" aria-label="Map of the listings that match" hidden>
       <div id="mapCanvas"></div>
       <p class="map-note" id="mapNote" hidden></p>
+      <p class="map-draw-hint" id="mapDrawHint" hidden></p>
       <div class="map-status" id="mapStatus" hidden></div>
       <div class="map-sheet" id="mapSheet" hidden></div>
     </aside>
@@ -891,6 +954,7 @@ body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <script src="/js/main.js?v=108"></script>
 <script src="/js/smart-search.js?v=108"></script>
+<script src="/js/glra-maps.js?v=109"></script>
 <script src="/js/gallery.js?v=108" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
@@ -962,7 +1026,7 @@ function glraPinPrice(p){
    page does not manage (utm_*, property=...) are left alone. Incoming links
    keep working: category=FOR%20SALE from the footers, search=BGC from the
    living-in pages and listing breadcrumbs, q= as an alias. */
-var GLRA_URL_KEYS = ['category','search','q','propertyType','bedrooms','baths','minPrice','maxPrice','sort','currency','view'];
+var GLRA_URL_KEYS = ['category','search','q','propertyType','bedrooms','baths','minPrice','maxPrice','sort','currency','view','near','area'];
 var glraView = 'list';
 var glraUrlReady = false;   // never write the URL before the incoming one has been read
 function glraSyncUrl(){
@@ -979,7 +1043,10 @@ function glraSyncUrl(){
     var mn = getRaw('minPriceInput'), mx = getRaw('maxPriceInput');
     if (mn > 0) u.searchParams.set('minPrice', String(mn));
     if (mx > 0) u.searchParams.set('maxPrice', String(mx));
-    if (currentSort && currentSort !== 'newest') u.searchParams.set('sort', currentSort);
+    if (currentSort && currentSort !== 'newest' && !(currentSort === 'near' && (!GLRA_NEAR || GLRA_NEAR.key === 'me'))) u.searchParams.set('sort', currentSort);
+    /* "My location" never goes into a link: the address bar is shareable. */
+    if (GLRA_NEAR && GLRA_NEAR.key !== 'me') u.searchParams.set('near', GLRA_NEAR.key);
+    if (GLRA_AREA) u.searchParams.set('area', [GLRA_AREA.lat.toFixed(4), GLRA_AREA.lng.toFixed(4), GLRA_AREA.r].join(','));
     if (currentCurrency && currentCurrency !== 'PHP') u.searchParams.set('currency', currentCurrency);
     if (glraView === 'map') u.searchParams.set('view', 'map');
     var next = u.pathname + u.search + u.hash;
@@ -1035,6 +1102,7 @@ function glraEmptyStateHtml(){
   if (has('bedroomsSelect')) chips.push(['beds', 'Any bedrooms']);
   if (has('bathsSelect')) chips.push(['baths', 'Any bathrooms']);
   if (currentCategory && currentCategory !== 'all') chips.push(['cat', 'All categories']);
+  if (GLRA_AREA) chips.push(['area', 'Remove the drawn area']);
   var chipHtml = chips.map(function(c){
     return '<button type="button" class="glra-chip" data-relax="' + c[0] + '">' + c[1] + ' <i class="fas fa-times" aria-hidden="true"></i></button>';
   }).join('');
@@ -1055,6 +1123,7 @@ function glraRelax(what){
   else if (what === 'type') clear('propertyTypeSelect');
   else if (what === 'beds') clear('bedroomsSelect');
   else if (what === 'baths') clear('bathsSelect');
+  else if (what === 'area') { glraSetArea(null, true); }
   if (what === 'cat') { glraSetCategory('all'); return; }
   applyFilters(currentCategory, cachedProperties);
 }
@@ -1208,9 +1277,10 @@ function glraGeo(p){
   return [la, ln];
 }
 function glraPinIcon(p){
+  var band = GLRA_MAP.psqm ? glraPsqmBand(p, GLRA_MAP.cuts || {}) : -1;
   return L.divIcon({
-    className: 'glra-pin-wrap',
-    html: '<span class="glra-pin">' + glraEsc(glraPinPrice(p)) + '</span>',
+    className: 'glra-pin-wrap' + (band >= 0 ? ' pb' + band : ''),
+    html: '<span class="glra-pin">' + glraEsc(GLRA_MAP.psqm ? glraPsqmText(p) : glraPinPrice(p)) + '</span>',
     iconSize: [0, 0],
     iconAnchor: [0, 0]
   });
@@ -1225,6 +1295,7 @@ function glraMapCardHtml(p, inSheet){
     + '<div class="glra-mapcard-price">' + glraEsc(getDisplayPrice(p)) + '</div>'
     + '<div class="glra-mapcard-title">' + glraEsc(t) + '</div>'
     + (specs ? '<div class="glra-mapcard-specs">' + glraEsc(specs) + '</div>' : '')
+    + (glraNearText(p) ? '<div class="glra-mapcard-near"><i class="fas fa-route" aria-hidden="true"></i> ' + glraEsc(glraNearText(p)) + '</div>' : '')
     + '<button type="button" class="glra-mapcard-view" data-open-id="' + glraEsc(p._id) + '">View listing <i class="fas fa-arrow-right" aria-hidden="true"></i></button>'
     + '</div></div>'
     + (inSheet ? '<button type="button" class="map-sheet-close" data-sheet-close="1" aria-label="Close listing preview"><i class="fas fa-times" aria-hidden="true"></i></button>' : '');
@@ -1257,6 +1328,10 @@ function glraMapInit(){
   m.addLayer(GLRA_MAP.cluster);
   m.on('click', function(){ if (!glraWide()) glraMapSelect(null); });
   GLRA_MAP.map = m;
+  glraMapControls(m);
+  glraDrawWire();
+  glraAreaShape();
+  glraPsqmLegend();
 }
 /* Leaflet recreates a marker's element whenever clustering takes it off and
    puts it back, so hot/selected state is re-applied on every 'add'. */
@@ -1345,6 +1420,8 @@ function glraMapRender(forceFit){
   var m = GLRA_MAP.map;
   if (!m) return;
   var list = GLRA_MAP.list || [];
+  GLRA_MAP.cuts = glraPsqmBands(list);
+  glraPlaceMarker();
   GLRA_MAP.cluster.clearLayers();
   GLRA_MAP.markers = {};
   GLRA_MAP.hotParent = null;
@@ -1352,7 +1429,7 @@ function glraMapRender(forceFit){
   list.forEach(function(p){
     var g = glraGeo(p);
     if (!g) return;
-    var label = glraTitle(p.title) + ', ' + glraPinPrice(p);
+    var label = glraTitle(p.title) + ', ' + (GLRA_MAP.psqm ? glraPsqmText(p) : glraPinPrice(p));
     var mk = L.marker(g, { icon: glraPinIcon(p), keyboard: true, title: label, riseOnHover: true });
     mk._glraId = p._id;
     mk._glraLabel = label;
@@ -1454,6 +1531,271 @@ function glraSetView(v, fromUrl){
     if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
   }
 })();
+
+/* ======================= MAP EXTRAS =======================
+   Distance to work, price-per-sqm pin colours, draw-your-area and the flood
+   layer (js/glra-maps.js). Positions are the API's 3-decimal ones (~100 m),
+   so every distance is straight-line and approximate. */
+var GLRA_PLACES = {
+  makati:   { n: 'Makati CBD',      lat: 14.5547, lng: 121.0244 },
+  bgc:      { n: 'BGC',             lat: 14.5507, lng: 121.0509 },
+  ortigas:  { n: 'Ortigas Center',  lat: 14.5866, lng: 121.0614 },
+  alabang:  { n: 'Alabang',         lat: 14.4190, lng: 121.0390 },
+  bay:      { n: 'Bay Area (MOA)',  lat: 14.5352, lng: 120.9822 },
+  eastwood: { n: 'Eastwood',        lat: 14.6093, lng: 121.0799 },
+  qc:       { n: 'Vertis North, QC', lat: 14.6526, lng: 121.0373 },
+  manila:   { n: 'Manila (Ermita)', lat: 14.5896, lng: 120.9811 }
+};
+var GLRA_NEAR = null;   // { key, n, lat, lng }
+var GLRA_AREA = null;   // { lat, lng, r } r in metres
+function glraKm(la1, ln1, la2, ln2){
+  var R = 6371, d = Math.PI / 180;
+  var a = Math.sin((la2 - la1) * d / 2), b = Math.sin((ln2 - ln1) * d / 2);
+  return 2 * R * Math.asin(Math.sqrt(a * a + Math.cos(la1 * d) * Math.cos(la2 * d) * b * b));
+}
+function glraNearKm(p){
+  var g = glraGeo(p);
+  return (GLRA_NEAR && g) ? glraKm(GLRA_NEAR.lat, GLRA_NEAR.lng, g[0], g[1]) : null;
+}
+function glraNearText(p){
+  var km = glraNearKm(p);
+  if (km === null) return '';
+  var v = km < 1 ? '< 1 km' : (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km';
+  return (p.geo && p.geo.approx ? 'About ' : '') + v + (GLRA_NEAR.key === 'me' ? ' from you' : ' to ' + GLRA_NEAR.n);
+}
+function glraNearChip(p){
+  var t = glraNearText(p);
+  return t ? '<div class="prop-near"><i class="fas fa-route" aria-hidden="true"></i> ' + glraEsc(t) + '</div>' : '';
+}
+function glraInArea(p){
+  if (!GLRA_AREA) return true;
+  var g = glraGeo(p);
+  return !!g && glraKm(GLRA_AREA.lat, GLRA_AREA.lng, g[0], g[1]) * 1000 <= GLRA_AREA.r;
+}
+function glraRefilter(){ applyFilters(currentCategory, cachedProperties); }
+/* The "Closest to ..." sort option only exists while a place is chosen. */
+function glraSyncNearSort(){
+  var sel = document.getElementById('sortSelect');
+  if (!sel) return;
+  var opt = sel.querySelector('option[value="near"]');
+  if (GLRA_NEAR) {
+    if (!opt) { opt = document.createElement('option'); opt.value = 'near'; sel.insertBefore(opt, sel.firstChild); }
+    opt.textContent = GLRA_NEAR.key === 'me' ? 'Closest to me' : 'Closest to ' + GLRA_NEAR.n;
+  } else if (opt) {
+    opt.remove();
+    if (currentSort === 'near') currentSort = 'newest';
+  }
+  sel.value = currentSort;
+}
+function glraSetNear(key, quiet){
+  var sel = document.getElementById('nearSelect');
+  function done(){
+    glraSyncNearSort();
+    var st = document.getElementById('nearStatus');
+    if (st) st.textContent = GLRA_NEAR ? 'Showing distances ' + (GLRA_NEAR.key === 'me' ? 'from your location' : 'to ' + GLRA_NEAR.n) + ', closest first' : '';
+    if (!quiet) glraRefilter();
+  }
+  if (!key) { GLRA_NEAR = null; done(); return; }
+  if (key === 'me') {
+    if (!navigator.geolocation) { if (sel) sel.value = ''; return; }
+    if (sel) sel.disabled = true;
+    navigator.geolocation.getCurrentPosition(function(pos){
+      if (sel) sel.disabled = false;
+      GLRA_NEAR = { key: 'me', n: 'you', lat: pos.coords.latitude, lng: pos.coords.longitude };
+      currentSort = 'near';
+      done();
+    }, function(){
+      if (sel) { sel.disabled = false; sel.value = GLRA_NEAR ? GLRA_NEAR.key : ''; }
+      var st = document.getElementById('nearStatus');
+      if (st) st.textContent = 'Your location is not available. Pick an area instead.';
+    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+    return;
+  }
+  var pl = GLRA_PLACES[key];
+  if (!pl) { GLRA_NEAR = null; if (sel) sel.value = ''; done(); return; }
+  GLRA_NEAR = { key: key, n: pl.n, lat: pl.lat, lng: pl.lng };
+  if (sel) sel.value = key;
+  currentSort = 'near';
+  done();
+}
+
+/* ---- Price per sqm: each pin coloured against the other homes shown ---- */
+function glraPsqm(p){
+  var area = glraAreaBasis(p);
+  if (!(area > 0)) return 0;
+  var sale = Number(p.price) || 0, rent = Number(p.monthlyRental) || 0;
+  var leaseOnly = isForLease(p) && !isForSale(p);
+  var lease = currentCategory === 'FOR LEASE' || leaseOnly || !(sale > 0);
+  var v = lease ? (rent || (leaseOnly ? sale : 0)) : sale;
+  return v > 0 ? v / area : 0;
+}
+function glraPsqmIsRent(p){
+  var sale = Number(p.price) || 0;
+  return currentCategory === 'FOR LEASE' || (isForLease(p) && !isForSale(p)) || !(sale > 0);
+}
+/* Quintile cut points, sales and rents apart (a rent per sqm is not a price per sqm). */
+function glraPsqmBands(list){
+  var groups = { sale: [], rent: [] };
+  list.forEach(function(p){ var v = glraPsqm(p); if (v > 0) groups[glraPsqmIsRent(p) ? 'rent' : 'sale'].push(v); });
+  var cuts = {};
+  Object.keys(groups).forEach(function(k){
+    var a = groups[k].sort(function(x, y){ return x - y; });
+    cuts[k] = a.length ? [0.2, 0.4, 0.6, 0.8].map(function(q){ return a[Math.min(a.length - 1, Math.floor(q * a.length))]; }) : [];
+  });
+  return cuts;
+}
+function glraPsqmBand(p, cuts){
+  var v = glraPsqm(p);
+  if (!(v > 0)) return 0;
+  var c = cuts[glraPsqmIsRent(p) ? 'rent' : 'sale'] || [];
+  var b = 1;
+  c.forEach(function(x){ if (v > x) b++; });
+  return Math.min(5, b);
+}
+function glraPsqmText(p){
+  var v = glraPsqm(p);
+  return v > 0 ? glraShortMoney(v) + (glraPsqmIsRent(p) ? '/sqm/mo' : '/sqm') : 'Size n/a';
+}
+
+/* ---- Map controls ---- */
+function glraMapControls(m){
+  var Ctl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd: function(){
+      var d = L.DomUtil.create('div', 'glra-mapctl');
+      d.innerHTML =
+        '<button type="button" class="glra-mapctl-btn" id="mapDrawBtn" aria-pressed="false" title="Draw a circle to see only the homes inside it"><i class="fas fa-draw-polygon" aria-hidden="true"></i><span>Draw area</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapClearAreaBtn" hidden title="Remove the circle"><i class="fas fa-times" aria-hidden="true"></i><span>Clear area</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapPsqmBtn" aria-pressed="false" title="Colour pins by price per square metre"><i class="fas fa-palette" aria-hidden="true"></i><span>Price / sqm</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapFloodBtn" aria-pressed="false" title="Show UP NOAH flood hazard areas"><i class="fas fa-water" aria-hidden="true"></i><span>Flood hazard</span></button>';
+      L.DomEvent.disableClickPropagation(d);
+      L.DomEvent.disableScrollPropagation(d);
+      return d;
+    }
+  });
+  new Ctl().addTo(m);
+  document.getElementById('mapDrawBtn').addEventListener('click', function(){ glraDrawMode(!GLRA_MAP.drawing); });
+  document.getElementById('mapClearAreaBtn').addEventListener('click', function(){ glraSetArea(null); });
+  document.getElementById('mapPsqmBtn').addEventListener('click', function(){
+    GLRA_MAP.psqm = !GLRA_MAP.psqm;
+    this.setAttribute('aria-pressed', GLRA_MAP.psqm ? 'true' : 'false');
+    glraPsqmLegend();
+    glraMapRender(false);
+  });
+  if (window.GLRAMaps) GLRAMaps.floodButton(document.getElementById('mapFloodBtn'), function(){ return GLRA_MAP.map; });
+  else document.getElementById('mapFloodBtn').hidden = true;
+}
+function glraPsqmLegend(){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  if (!GLRA_MAP.psqmLegend) {
+    var Leg = L.Control.extend({
+      options: { position: 'bottomleft' },
+      onAdd: function(){
+        var d = L.DomUtil.create('div', 'glra-psqm-legend');
+        d.innerHTML = '<div class="glra-psqm-t">Price per sqm, against the other homes shown</div>'
+          + '<div class="glra-psqm-scale"><span>Lower</span><i class="pb1"></i><i class="pb2"></i><i class="pb3"></i><i class="pb4"></i><i class="pb5"></i><span>Higher</span></div>'
+          + '<p>Rentals are compared with rentals. Grey: size not listed.</p>';
+        L.DomEvent.disableClickPropagation(d);
+        return d;
+      }
+    });
+    GLRA_MAP.psqmLegend = new Leg();
+  }
+  if (GLRA_MAP.psqm) GLRA_MAP.psqmLegend.addTo(m); else GLRA_MAP.psqmLegend.remove();
+}
+
+/* ---- Draw your area: press and drag to draw a circle ---- */
+function glraDrawMode(on){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  var el = m.getContainer(), btn = document.getElementById('mapDrawBtn');
+  GLRA_MAP.drawing = !!on;
+  if (btn) {
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.querySelector('span').textContent = on ? 'Cancel' : (GLRA_AREA ? 'Redraw' : 'Draw area');
+  }
+  el.classList.toggle('is-drawing', !!on);
+  if (on) {
+    m.dragging.disable(); m.touchZoom.disable(); m.doubleClickZoom.disable(); m.boxZoom.disable();
+    glraMapStatusHint('Press and drag on the map to draw your area');
+  } else {
+    m.dragging.enable(); m.touchZoom.enable(); m.doubleClickZoom.enable(); m.boxZoom.enable();
+    glraMapStatusHint('');
+  }
+}
+function glraMapStatusHint(t){
+  var h = document.getElementById('mapDrawHint');
+  if (!h) return;
+  h.textContent = t;
+  h.hidden = !t;
+}
+function glraDrawWire(){
+  var m = GLRA_MAP.map, el = m.getContainer();
+  var start = null, circle = null, pid = null;
+  function ll(e){ return m.mouseEventToLatLng(e); }
+  el.addEventListener('pointerdown', function(e){
+    if (!GLRA_MAP.drawing || (e.button && e.button !== 0) || e.target.closest('.leaflet-control')) return;
+    e.preventDefault(); e.stopPropagation();
+    pid = e.pointerId;
+    try { el.setPointerCapture(pid); } catch (x) {}
+    start = ll(e);
+    if (circle) circle.remove();
+    circle = L.circle(start, { radius: 1, className: 'glra-area glra-area-live', interactive: false }).addTo(m);
+  }, true);
+  el.addEventListener('pointermove', function(e){
+    if (!start || e.pointerId !== pid) return;
+    e.preventDefault();
+    circle.setRadius(Math.max(1, start.distanceTo(ll(e))));
+  }, true);
+  function finish(e){
+    if (!start || (e && e.pointerId !== pid)) return;
+    var r = circle ? circle.getRadius() : 0, c = start;
+    if (circle) { circle.remove(); circle = null; }
+    start = null;
+    try { el.releasePointerCapture(pid); } catch (x) {}
+    glraDrawMode(false);
+    /* A tap, not a drag: draw a 1.5 km circle round the spot. */
+    glraSetArea({ lat: c.lat, lng: c.lng, r: r < 150 ? 1500 : Math.min(r, 60000) });
+  }
+  el.addEventListener('pointerup', finish, true);
+  el.addEventListener('pointercancel', function(){ if (circle) circle.remove(); circle = null; start = null; glraDrawMode(false); }, true);
+}
+function glraAreaChipText(){
+  if (!GLRA_AREA) return '';
+  var km = GLRA_AREA.r / 1000;
+  return 'Your drawn area (' + (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km radius)';
+}
+function glraSetArea(a, quiet){
+  GLRA_AREA = a ? { lat: Number(a.lat.toFixed(5)), lng: Number(a.lng.toFixed(5)), r: Math.round(a.r) } : null;
+  var chip = document.getElementById('areaChip');
+  if (chip) { chip.hidden = !GLRA_AREA; var s = chip.querySelector('span'); if (s) s.textContent = glraAreaChipText(); }
+  var clr = document.getElementById('mapClearAreaBtn');
+  if (clr) clr.hidden = !GLRA_AREA;
+  var db = document.getElementById('mapDrawBtn');
+  if (db && !GLRA_MAP.drawing) db.querySelector('span').textContent = GLRA_AREA ? 'Redraw' : 'Draw area';
+  glraAreaShape();
+  if (!quiet) glraRefilter();
+}
+function glraAreaShape(){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  if (GLRA_MAP.areaLayer) { GLRA_MAP.areaLayer.remove(); GLRA_MAP.areaLayer = null; }
+  if (GLRA_AREA) {
+    GLRA_MAP.areaLayer = L.circle([GLRA_AREA.lat, GLRA_AREA.lng], { radius: GLRA_AREA.r, className: 'glra-area', interactive: false }).addTo(m);
+  }
+}
+function glraPlaceMarker(){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  if (GLRA_MAP.placeMk) { GLRA_MAP.placeMk.remove(); GLRA_MAP.placeMk = null; }
+  if (!GLRA_NEAR) return;
+  GLRA_MAP.placeMk = L.marker([GLRA_NEAR.lat, GLRA_NEAR.lng], {
+    icon: L.divIcon({ className: 'glra-place-wrap', html: '<span class="glra-place"><i class="fas ' + (GLRA_NEAR.key === 'me' ? 'fa-location-crosshairs' : 'fa-briefcase') + '" aria-hidden="true"></i></span>', iconSize: [32, 32], iconAnchor: [16, 16] }),
+    title: GLRA_NEAR.key === 'me' ? 'You are here' : GLRA_NEAR.n, keyboard: false, zIndexOffset: 1200, interactive: true
+  }).addTo(m);
+  GLRA_MAP.placeMk.bindTooltip(GLRA_NEAR.key === 'me' ? 'You are here' : GLRA_NEAR.n, { direction: 'top', offset: [0, -14] });
+}
 
 /* ======================= COMPARE =======================
    Up to three listings side by side. The selection survives a reload in
@@ -1674,7 +2016,7 @@ function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters
    button reads "Show 23 homes"). It used to reload the page with the same
    filters in the URL; the URL now keeps itself up to date instead. */
 function performSearch(){applyFilters(currentCategory,cachedProperties);const sg=document.getElementById('searchSuggestions');if(sg)sg.style.display='none';const t=document.getElementById('resultsTop');if(t)t.scrollIntoView({behavior:GLRA_REDUCED()?'auto':'smooth',block:'start'});}
-function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput','propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});glraSetCategory('all');}
+function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput','propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});glraSetArea(null,true);glraSetCategory('all');}
 /* ---- PRICE ALERTS ---- */
 
 /* Look a listing up from the already-loaded cache. The modals used to take
@@ -1747,6 +2089,7 @@ function sortProperties(list){
   if(currentSort==='price-asc')f.sort((a,b)=>effectivePrice(a)-effectivePrice(b));
   else if(currentSort==='price-desc')f.sort((a,b)=>effectivePrice(b)-effectivePrice(a));
   else if(currentSort==='sqm-desc')f.sort((a,b)=>glraAreaBasis(b)-glraAreaBasis(a));
+  else if(currentSort==='near'&&GLRA_NEAR){const d=p=>{const k=glraNearKm(p);return k===null?Infinity:k;};f.sort((a,b)=>d(a)-d(b));}
   else f.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
   return f;
 }
@@ -2097,7 +2440,9 @@ function initFromUrl(properties){
   const mn=parseInt(g('minPrice'),10),mx=parseInt(g('maxPrice'),10);
   if(mn>0)document.getElementById('minPriceInput').value=mn.toLocaleString('en-US');
   if(mx>0)document.getElementById('maxPriceInput').value=mx.toLocaleString('en-US');
-  const so=g('sort');if(['newest','price-asc','price-desc','sqm-desc'].includes(so)){currentSort=so;document.getElementById('sortSelect').value=so;}
+  const nr=g('near');if(nr&&GLRA_PLACES[nr])glraSetNear(nr,true);
+  const ar=g('area').split(',').map(Number);if(ar.length===3&&ar.every(isFinite)&&ar[2]>0&&Math.abs(ar[0])<=90&&Math.abs(ar[1])<=180)glraSetArea({lat:ar[0],lng:ar[1],r:Math.min(ar[2],60000)},true);
+  const so=g('sort');if(['newest','price-asc','price-desc','sqm-desc'].includes(so)||(so==='near'&&GLRA_NEAR)){currentSort=so;document.getElementById('sortSelect').value=so;}
   /* A shared link can carry a currency; it applies to this visit without overwriting the visitor's own saved choice. */
   const cur=g('currency').toUpperCase();if(cur&&CURRENCY_RATES[cur]){currentCurrency=cur;const cs=document.getElementById('currencySelect');if(cs)cs.value=cur;updateCurrencyNote();}
   glraUrlReady=true;
@@ -2106,7 +2451,7 @@ function initFromUrl(properties){
   const propId=g('property');
   if(propId){setTimeout(()=>{const p=(cachedProperties||[]).find(x=>x._id===propId);if(p)openDetail(p._id);},600);}
 }
-function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);allProperties=f;if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),sq);glraAfterFilter(f);}
+function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;if(!glraInArea(p))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);allProperties=f;if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),sq);glraAfterFilter(f);}
 function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.removeAttribute('aria-busy');c.innerHTML='';if(!properties.length){c.innerHTML=glraEmptyStateHtml();return;}const frag=document.createDocumentFragment();properties.forEach(p=>frag.appendChild(createCard(p)));c.appendChild(frag);setTimeout(initLazyLoading,80);}
 /* A listing's size, taken from whichever of the two areas it actually has.
    A vacant lot or a farm has no floor area; a condominium unit has no lot. The
@@ -2154,7 +2499,7 @@ function createCard(prop){
   const photoN=[prop.mainImage,...(prop.gallery||[])].filter(Boolean).length;const _basis=glraAreaBasis(prop);
   const psqm=(isForSale(prop)&&prop.price>0&&_basis>0)?`<div class="prop-psqm">${formatPrice(Math.round(prop.price/_basis))} / sqm</div>`:'<div class="prop-psqm" aria-hidden="true"></div>';
   const added=addedLabel(prop);const id=glraEsc(prop._id);
-  card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${glraEsc((window.glraImgSize||(u=>u))(img,720))}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${glraEsc(dt)}" loading="lazy"><div class="card-actions"><button type="button" class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${id}')" title="Ask on WhatsApp" aria-label="Ask about ${glraEsc(dt)} on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${id}')" title="Save to wishlist" aria-label="Save ${glraEsc(dt)} to wishlist"><i class="far fa-heart"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${id}')" title="Price alert" aria-label="Price drop alert for ${glraEsc(dt)}"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${id}">${glraEsc(dt)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${glraEsc(prop.location)}</div><div class="prop-divider"></div><div class="prop-specs">${prop.bedrooms>0?`<span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>`:''}${prop.bathrooms>0?`<span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>`:''}${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${glraEsc(String(prop.propertyType||'Property').trim())}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}<div class="prop-foot">${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}<button type="button" class="cmp-toggle" aria-pressed="false" aria-label="Compare ${glraEsc(dt)}"><span class="cmp-box" aria-hidden="true"></span><span class="cmp-lbl">Compare</span></button></div></div>`;
+  card.innerHTML=`<div class="prop-card-image"><span class="prop-badge ${isSale?'badge-sale':'badge-lease'}">${isSale?'FOR SALE':'FOR LEASE'}</span>${freshChip(prop)}${prop.featured?'<span class="badge-featured"><i class="fas fa-star"></i> FEATURED</span>':''}${photoN>1?`<span class="photo-count"><i class="fas fa-camera"></i> ${photoN}</span>`:''}<img class="lazy" data-src="${glraEsc((window.glraImgSize||(u=>u))(img,720))}" src="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%204%203%22%3E%3C/svg%3E" alt="${glraEsc(dt)}" loading="lazy"><div class="card-actions"><button type="button" class="card-action-btn" onclick="event.stopPropagation();inquireWhatsApp('${id}')" title="Ask on WhatsApp" aria-label="Ask about ${glraEsc(dt)} on WhatsApp" style="background:#25d366"><i class="fab fa-whatsapp"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openWishlistModal('${id}')" title="Save to wishlist" aria-label="Save ${glraEsc(dt)} to wishlist"><i class="far fa-heart"></i></button><button type="button" class="card-action-btn" onclick="event.stopPropagation();openPriceAlertModal('${id}')" title="Price alert" aria-label="Price drop alert for ${glraEsc(dt)}"><i class="fas fa-bell"></i></button></div></div><div class="prop-info"><h3 class="prop-title"><a class="prop-title-link" href="/property/${id}">${glraEsc(dt)}</a></h3><div class="prop-location"><i class="fas fa-map-marker-alt"></i> ${glraEsc(prop.location)}</div>${glraNearChip(prop)}<div class="prop-divider"></div><div class="prop-specs">${prop.bedrooms>0?`<span><i class="fas fa-bed"></i> ${prop.bedrooms} BR</span>`:''}${prop.bathrooms>0?`<span><i class="fas fa-bath"></i> ${prop.bathrooms} TB</span>`:''}${glraAreaLabel(prop)?`<span><i class="fas fa-ruler-combined"></i> ${glraAreaLabel(prop)}</span>`:''}<span><i class="fas fa-building"></i> ${glraEsc(String(prop.propertyType||'Property').trim())}</span>${parking}</div><div class="prop-price">${price}</div>${psqm}<div class="prop-foot">${added?`<div class="prop-added"><i class="far fa-clock"></i> ${added}</div>`:''}<button type="button" class="cmp-toggle" aria-pressed="false" aria-label="Compare ${glraEsc(dt)}"><span class="cmp-box" aria-hidden="true"></span><span class="cmp-lbl">Compare</span></button></div></div>`;
   refreshCompareCardState(card,prop._id);
   const cb=card.querySelector('.cmp-toggle');if(cb)cb.addEventListener('click',e=>{e.stopPropagation();openCompare(prop._id);});
   card.addEventListener('mouseenter',()=>glraHot(prop._id,true));card.addEventListener('mouseleave',()=>glraHot(prop._id,false));
