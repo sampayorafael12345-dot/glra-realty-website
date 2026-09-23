@@ -164,6 +164,16 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// ── Sized photo URL: ask Cloudinary for a card-sized copy ──
+// Listing photos are stored as .../image/upload/f_auto,q_auto/v123/... and
+// cards used to download the full original. c_limit never enlarges.
+function glraImgSize(url, w) {
+  var u = String(url || '');
+  var m = u.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(?:f_auto,q_auto\/)?(v\d+\/.*)$/);
+  return m ? m[1] + 'f_auto,q_auto,c_limit,w_' + (w | 0) + '/' + m[2] : u;
+}
+if (typeof window !== 'undefined') window.glraImgSize = glraImgSize;
+
 /* TITLE-HELPER-START */
 // ── Display title: calm down an ALL-CAPS listing title ─────────────────────
 // "MONARCH PARKSUITES (PASAY CITY)" -> "Monarch Parksuites, Pasay City".
@@ -1825,3 +1835,124 @@ window.glraOpenPrintGate = function (label, collectFn) {
   try { localStorage.removeItem('glraLargeText'); } catch(e){}
 })();
 /* OUTREACH-V4-END */
+
+/* RECENTLY-VIEWED-START */
+/* ── Recently viewed ──────────────────────────────────────────────────────
+   Remembers the last listings a visitor opened (a listing page, or a pop-up
+   on the home or browse page) in THIS browser only, and shows them as a small
+   strip on the home and browse pages. Nothing is sent to the server; "Clear"
+   forgets them. */
+(function () {
+  'use strict';
+  var KEY = 'glraRecent', MAX = 12;
+  function read() {
+    try { var a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? a.filter(function (x) { return /^[a-f0-9]{24}$/i.test(x); }) : []; }
+    catch (e) { return []; }
+  }
+  function write(a) { try { localStorage.setItem(KEY, JSON.stringify(a.slice(0, MAX))); } catch (e) {} }
+  function remember(id) {
+    id = String(id || '');
+    if (!/^[a-f0-9]{24}$/i.test(id)) return;
+    var a = read().filter(function (x) { return x !== id; });
+    a.unshift(id); write(a);
+  }
+  window.glraRememberViewed = remember;
+
+  var m = location.pathname.match(/^\/property\/([a-f0-9]{24})\/?$/i);
+  if (m) remember(m[1]);
+
+  function listings() {
+    try { if (typeof cachedProperties !== 'undefined' && Array.isArray(cachedProperties) && cachedProperties.length) return cachedProperties; } catch (e) {}
+    return null;
+  }
+  function shortPrice(p) {
+    var lt = String(p.listingType || '').toUpperCase();
+    var lease = lt === 'FOR LEASE';
+    var n = lease ? (Number(p.monthlyRental) || Number(p.price) || 0) : (Number(p.price) || Number(p.monthlyRental) || 0);
+    if (!(n > 0)) return 'Price on request';
+    var t = n >= 1e6 ? '₱' + (Math.round(n / 1e4) / 100) + 'M' : n >= 1e3 ? '₱' + Math.round(n / 1e3) + 'K' : '₱' + n;
+    return lease ? t + '/mo' : t;
+  }
+  function esc(s) { return typeof escapeHtml === 'function' ? escapeHtml(s) : String(s || ''); }
+  function title(t) { return typeof window.glraDisplayTitle === 'function' ? window.glraDisplayTitle(t) : t; }
+  function size(u) { return typeof window.glraImgSize === 'function' ? window.glraImgSize(u, 320) : u; }
+
+  function render() {
+    var all = listings(); if (!all) return false;
+    // Browse page: above the results block (which is a list/map grid, so the
+    // strip must not become one of its cells). Home page: after Featured.
+    var list = document.getElementById('property-list');
+    var anchor = list ? (document.getElementById('resultsLayout') || list) : document.getElementById('featured');
+    if (!anchor) return true;
+    var byId = {}; all.forEach(function (p) { byId[p._id] = p; });
+    var items = read().map(function (id) { return byId[id]; }).filter(Boolean).slice(0, 8);
+    var box = document.getElementById('glraRecent');
+    if (items.length < 1) { if (box) box.remove(); return true; }
+    if (!box) {
+      box = document.createElement('section');
+      box.id = 'glraRecent';
+      box.className = 'glra-recent';
+      box.setAttribute('aria-labelledby', 'glraRecentH');
+      if (anchor.id === 'featured') anchor.parentNode.insertBefore(box, anchor.nextSibling);
+      else anchor.parentNode.insertBefore(box, anchor);
+    }
+    box.innerHTML = '<div class="glra-recent-head"><h2 id="glraRecentH">Recently viewed</h2>' +
+      '<button type="button" class="glra-recent-clear">Clear</button></div><ul class="glra-recent-list">' +
+      items.map(function (p) {
+        return '<li><a href="/property/' + esc(p._id) + '" data-id="' + esc(p._id) + '">' +
+          '<span class="glra-recent-img">' + (p.mainImage ? '<img src="' + esc(size(p.mainImage)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>' +
+          '<span class="glra-recent-t">' + esc(title(p.title)) + '</span>' +
+          '<span class="glra-recent-p">' + esc(shortPrice(p)) + '</span></a></li>';
+      }).join('') + '</ul>';
+    box.querySelector('.glra-recent-clear').addEventListener('click', function () {
+      write([]); box.remove();
+    });
+    box.querySelectorAll('a[data-id]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        if (typeof window.openDetail === 'function' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+          e.preventDefault(); window.openDetail(a.getAttribute('data-id'));
+        }
+      });
+    });
+    return true;
+  }
+
+  function start() {
+    // Wrap the pop-up opener so pop-up views count too.
+    if (typeof window.openDetail === 'function' && !window.openDetail.__glraRecent) {
+      var orig = window.openDetail;
+      window.openDetail = function (id) { remember(id); return orig.apply(this, arguments); };
+      window.openDetail.__glraRecent = true;
+    }
+    var tries = 0;
+    (function wait() {
+      if (render() || ++tries > 40) return;
+      setTimeout(wait, 400);
+    })();
+  }
+  if (!/^\/(?:index\.html)?$|^\/properties\.html$/.test(location.pathname)) return;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+
+  if (!document.getElementById('glraRecentStyle')) {
+    var st = document.createElement('style');
+    st.id = 'glraRecentStyle';
+    st.textContent =
+      '.glra-recent{max-width:1400px;margin:0 auto 22px;padding:0 5%}' +
+      '#featured+.glra-recent{margin-top:10px}' +
+      '.glra-recent-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}' +
+      '.glra-recent-head h2{font-family:"JetBrains Mono",monospace!important;font-size:11px!important;font-weight:700!important;letter-spacing:2px!important;text-transform:uppercase!important;margin:0!important;color:inherit}' +
+      'html body .glra-recent-clear{font-family:"JetBrains Mono",monospace!important;font-size:10px!important;letter-spacing:1px!important;text-transform:uppercase!important;background:transparent!important;color:inherit!important;border:1px solid currentColor!important;padding:5px 9px!important;cursor:pointer;box-shadow:none!important}' +
+      '.glra-recent-list{list-style:none;margin:0;padding:0 0 6px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,170px);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory}' +
+      '.glra-recent-list li{scroll-snap-align:start}' +
+      '.glra-recent-list a{display:block;color:inherit;text-decoration:none;border:2px solid #0a0a0a;background:#fff;height:100%}' +
+      'body.dark-mode .glra-recent-list a{border-color:#f1eee9;background:#151513}' +
+      '.glra-recent-list a:hover,.glra-recent-list a:focus-visible{box-shadow:4px 4px 0 #ff3d00}' +
+      '.glra-recent-img{display:block;aspect-ratio:4/3;background:#e8e4dd;overflow:hidden}' +
+      '.glra-recent-img img{width:100%;height:100%;object-fit:cover;display:block}' +
+      '.glra-recent-t{display:block;padding:8px 9px 2px;font-size:12px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
+      '.glra-recent-p{display:block;padding:0 9px 9px;font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;color:#c02e00}' +
+      'body.dark-mode .glra-recent-p{color:#ff6a3d}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+})();
+/* RECENTLY-VIEWED-END */

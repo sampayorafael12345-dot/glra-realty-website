@@ -217,6 +217,8 @@
         var open = isOpen();
         if (opener) opener.setAttribute('aria-expanded', open ? 'true' : 'false');
         overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+        // A hidden menu must not be reachable with Tab either.
+        overlay.inert = !open;
         if (open) {
           lastFocus = document.activeElement;
           var f = focusables(overlay);
@@ -228,6 +230,7 @@
       }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
 
       overlay.setAttribute('aria-hidden', isOpen() ? 'false' : 'true');
+      overlay.inert = !isOpen();
 
       document.addEventListener('keydown', function (e) {
         if (!isOpen()) return;

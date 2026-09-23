@@ -1167,7 +1167,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=105" defer></script>
+<script src="/js/a11y.js?v=108" defer></script>
 </body>
 </html>`;
 }
@@ -1560,6 +1560,7 @@ function buildPropertyPageHtml(p, related) {
         </div>
         <a class="pg-btn pg-btn-ink" href="#inquire" data-pg-book><i class="far fa-calendar-check" aria-hidden="true"></i>Book a viewing</a>
         <button class="pg-btn pg-btn-ghost" type="button" data-pg-share><i class="fas fa-share-nodes" aria-hidden="true"></i><span aria-live="polite">Share this listing</span></button>
+        <a class="pg-btn pg-btn-ghost" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download brochure</a>
       </div>
       <p class="pg-card-note">GLRA Realty &middot; +63 917 177 4572</p>
     </div>
@@ -1710,6 +1711,9 @@ h2.pg-section-label{font-weight:700}
   .floating-buttons{display:none !important}
 }
 .pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
+.pg-brochure{display:inline-flex;align-items:center;gap:8px;margin:-10px 0 26px;padding:11px 14px;border:2px solid var(--ink,#0a0a0a);color:inherit;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.pg-brochure:hover,.pg-brochure:focus-visible{background:#ff3d00;border-color:#ff3d00;color:#fff}
+@media(min-width:1024px){.pg-brochure{display:none}}
 .pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
@@ -1782,6 +1786,7 @@ h2.pg-section-label{font-weight:700}
   </div>
   <div class="pg-section-label">Details</div>
   ${specsHtml}
+  <a class="pg-brochure" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download the brochure (PDF)</a>
   ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
   ${nearbyHtml}
   <div class="pg-form" id="inquire">
@@ -1878,12 +1883,212 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=105"></script>
-<script src="/js/a11y.js?v=105" defer></script>
-<script src="/js/gallery.js?v=105" defer></script>
+<script src="/js/main.js?v=108"></script>
+<script src="/js/a11y.js?v=108" defer></script>
+<script src="/js/gallery.js?v=108" defer></script>
 </body>
 </html>`;
 }
+
+// ── Printable brochure: /property/:id/brochure ───────────────────────────
+// One A4 page per listing that Catherine can hand out at a viewing or send on
+// Viber: photos, price, facts, what's nearby, contact details and a QR code
+// back to the listing. It is plain HTML with print styles, so "Save as PDF"
+// in any phone or desktop browser produces the PDF; no PDF engine needed.
+function buildBrochureHtml(p) {
+  externalizeInlineImages(p);
+  const id = String(p._id);
+  const title = glraDisplayTitle(p.title || 'Property') || 'Property';
+  const loc = String(p.location || '').trim();
+  const lt = String(p.listingType || 'FOR SALE').toUpperCase();
+  const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
+  const saleP = Number(p.price) || 0, leaseP = Number(p.monthlyRental) || 0;
+  const pesoTxt = n => '₱' + Number(n).toLocaleString('en-PH');
+  const prices = [];
+  if (lt === 'SALE AND LEASE') {
+    if (saleP > 0) prices.push(['For sale', pesoTxt(saleP), '']);
+    if (leaseP > 0) prices.push(['For rent', pesoTxt(leaseP), '/month']);
+  } else if (isLease) {
+    if ((leaseP || saleP) > 0) prices.push(['Monthly rent', pesoTxt(leaseP || saleP), '/month']);
+  } else if (saleP > 0) {
+    prices.push(['Selling price', pesoTxt(saleP), '']);
+  }
+  const typeTxt = String(p.propertyType || '').trim();
+  const noLot = /^(condominium|apartment|office|commercial space|studio)/i.test(typeTxt);
+  const fmtSqm = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' sqm';
+  const facts = [];
+  if (typeTxt) facts.push(['Type', typeTxt]);
+  if (Number(p.bedrooms) > 0) facts.push(['Bedrooms', String(p.bedrooms)]);
+  if (Number(p.bathrooms) > 0) facts.push(['Bathrooms', String(p.bathrooms)]);
+  if (Number(p.sqm) > 0) facts.push(['Floor area', fmtSqm(p.sqm)]);
+  if (Number(p.landArea) > 0) facts.push([noLot ? 'Floor area' : 'Lot area', fmtSqm(p.landArea)]);
+  if (Number(p.parking) > 0) facts.push(['Parking', String(p.parking)]);
+  if (Number(saleP) > 0 && lt !== 'FOR LEASE') {
+    const basis = noLot ? (Number(p.sqm) || Number(p.landArea) || 0) : (Number(p.landArea) || Number(p.sqm) || 0);
+    if (basis > 0) facts.push(['Price per sqm', pesoTxt(Math.round(saleP / basis))]);
+  }
+
+  const photos = [...new Set([p.mainImage, ...(p.gallery || [])].filter(Boolean))].filter(u => !isStockPhoto(u));
+  const cldSized = (u, t) => {
+    if (typeof u !== 'string' || u.indexOf('res.cloudinary.com') === -1) return absUrl(u);
+    u = u.replace('/upload/f_auto,q_auto/', '/upload/');
+    if (/\/upload\/[a-z]{1,2}_/.test(u)) return u;
+    return u.replace('/upload/', `/upload/${t}/`);
+  };
+  const hero = photos[0] ? cldSized(photos[0], 'f_auto,q_auto,c_limit,w_1400') : '';
+  const extra = photos.slice(1, 5).map(u => cldSized(u, 'f_auto,q_auto,c_fill,g_auto,w_480,h_360'));
+
+  // Brochure copy: no emoji or bullet glyphs, no line that just repeats the
+  // title, and short enough to keep the page to one sheet of A4.
+  const titleHead = String(p.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim().slice(0, 20);
+  let desc = glraCleanDescription(p.description)
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{2022}\u{25AA}\u{25CF}]/gu, '')
+    .split('\n').map(l => l.replace(/^\s*[-*]\s*/, '').trim())
+    .filter(l => l && !(titleHead && l.toLowerCase().replace(/[^a-z0-9 ]/g, '').includes(titleHead)))
+    // Facebook-style posts put every fact on its own short line; run them
+    // together so the text takes a paragraph, not half the page.
+    .map(l => l.replace(/[:\s]+$/, '')).join(' · ').replace(/\s+/g, ' ').trim();
+  if (desc.length > 520) desc = desc.slice(0, 520).replace(/\s+\S*$/, '').replace(/[\s·,;:]+$/, '') + '...';
+
+  const geoOk = !!(p.geo && p.geo.status === 'ok' && p.geo.rank >= NEARBY_MIN_RANK);
+  const near = geoOk && p.nearby && Array.isArray(p.nearby.items) ? p.nearby.items.filter(x => x && x.name && Number.isFinite(x.dist)) : [];
+  const fmtDist = m => m < 1000 ? Math.max(10, Math.round(m / 10) * 10) + ' m' : (m / 1000).toFixed(1) + ' km';
+  const nearHtml = near.length ? `<section class="b-near"><h2>What's nearby</h2><div class="b-near-grid">${NEARBY_CATS.map(([cat, label]) => {
+    const list = near.filter(x => x.cat === cat).slice(0, 3);
+    return list.length ? `<div><h3>${esc(label)}</h3><ul>${list.map(x => `<li><span>${esc(x.name)}</span><b>${esc(fmtDist(x.dist))}</b></li>`).join('')}</ul></div>` : '';
+  }).join('')}</div><p class="b-fine">Straight-line distances, approximate. Map data &copy; OpenStreetMap contributors.</p></section>` : '';
+
+  const url = `${SITE_URL}/property/${id}`;
+  const printed = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric', month: 'long', year: 'numeric' });
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>${esc(title)} - Brochure | GLRA Realty</title>
+<link rel="canonical" href="${esc(url)}">
+<link rel="icon" type="image/png" href="/img/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{background:#d9d5ce;color:#0a0a0a;font-family:Inter,system-ui,sans-serif;font-size:12px;line-height:1.45}
+.b-bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;padding:12px 16px;background:#0a0a0a;color:#f1eee9;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.b-bar a,.b-bar button{font:inherit;color:#0a0a0a;background:#f1eee9;border:2px solid #f1eee9;padding:10px 16px;cursor:pointer;text-decoration:none;font-weight:700}
+.b-bar button{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.b-bar a:focus-visible,.b-bar button:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+.b-page{width:210mm;min-height:297mm;margin:20px auto;background:#fff;padding:12mm 12mm 10mm;box-shadow:6px 6px 0 #0a0a0a;display:flex;flex-direction:column}
+.b-head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0a0a0a;padding-bottom:8px}
+.b-head img{height:30px;width:auto}
+.b-head span{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#555}
+.b-deal{display:inline-block;margin:12px 0 6px;background:#ff3d00;color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 8px}
+h1{font-size:25px;font-weight:900;letter-spacing:-.6px;line-height:1.1}
+.b-loc{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-top:5px}
+.b-hero{margin-top:10px;height:80mm;background:#e8e4dd;border:2px solid #0a0a0a;overflow:hidden}
+.b-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.b-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.b-thumbs img{width:100%;height:23mm;object-fit:cover;display:block;border:1px solid #0a0a0a;background:#e8e4dd}
+.b-mid{display:grid;grid-template-columns:1.05fr 1fr;gap:14px;margin-top:12px}
+.b-price{border:2px solid #0a0a0a;padding:10px 12px}
+.b-price div+div{margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
+.b-price small{display:block;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:#555}
+.b-price b{font-size:22px;font-weight:900;letter-spacing:-.5px;color:#c02e00}
+.b-price b em{font-style:normal;font-size:12px;color:#555;font-weight:600}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td{padding:4px 0;border-bottom:1px solid #e5e2dc;font-size:11px}
+td:first-child{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:#555;width:42%}
+td:last-child{font-weight:700;text-align:right}
+.b-desc h2,.b-near h2{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+.b-desc p{font-size:10px;line-height:1.45;color:#222}
+.b-near{margin-top:12px;border-top:2px solid #0a0a0a;padding-top:8px}
+.b-near-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.b-near h3{font-size:10px;font-weight:800;margin-bottom:3px}
+.b-near li{list-style:none;display:flex;justify-content:space-between;gap:6px;font-size:9.5px;padding:2px 0;border-bottom:1px dotted #ccc}
+.b-near li b{white-space:nowrap}
+.b-fine{font-size:8px;color:#777;margin-top:5px}
+.b-foot{margin-top:auto;padding-top:10px;border-top:3px solid #0a0a0a;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.b-contact b{display:block;font-size:14px;font-weight:900}
+.b-contact span{display:block;font-size:10.5px}
+.b-contact .b-fine{margin-top:6px}
+.b-qr{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;text-align:right;color:#555}
+#bQr{width:26mm;height:26mm;display:flex;align-items:center;justify-content:center}
+#bQr img,#bQr canvas{width:26mm!important;height:26mm!important}
+@media screen and (max-width:820px){
+  body{background:#fff}
+  .b-page{width:auto;min-height:0;margin:0;box-shadow:none;padding:16px}
+  .b-hero{height:56vw}
+  .b-thumbs img{height:18vw}
+  .b-mid{grid-template-columns:1fr}
+  .b-near-grid{grid-template-columns:1fr 1fr}
+  .b-foot{flex-direction:column;align-items:flex-start}
+  .b-qr{text-align:left}
+}
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .b-bar{display:none}
+  .b-page{margin:0;box-shadow:none;width:210mm;min-height:297mm}
+  .b-near,.b-foot,.b-mid{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="b-bar"><a href="/property/${esc(id)}">Back to the listing</a><button type="button" id="bPrint">Save as PDF / Print</button></div>
+<main class="b-page">
+  <header class="b-head"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384"><span>Licensed Real Estate Broker &middot; Metro Manila &amp; Luzon</span></header>
+  <span class="b-deal">${esc(lt === 'SALE AND LEASE' ? 'For sale or lease' : isLease ? 'For lease' : 'For sale')}</span>
+  <h1>${esc(title)}</h1>
+  ${loc ? `<div class="b-loc">${esc(loc)}</div>` : ''}
+  ${hero ? `<div class="b-hero"><img src="${esc(hero)}" alt="${esc(title)}"></div>` : ''}
+  ${extra.length ? `<div class="b-thumbs">${extra.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>` : ''}
+  <div class="b-mid">
+    <div>
+      <div class="b-price">${prices.length ? prices.map(([l, a, s]) => `<div><small>${esc(l)}</small><b>${esc(a)}${s ? `<em>${esc(s)}</em>` : ''}</b></div>`).join('') : '<div><small>Price</small><b>On request</b></div>'}</div>
+      ${facts.length ? `<table>${facts.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>` : ''}
+    </div>
+    ${desc ? `<div class="b-desc"><h2>About this property</h2><p>${esc(desc)}</p></div>` : '<div></div>'}
+  </div>
+  ${nearHtml}
+  <footer class="b-foot">
+    <div class="b-contact">
+      <b>Catherine SB Sampayo</b>
+      <span>GLRA Realty &middot; Licensed Real Estate Broker</span>
+      <span>0917 177 4572 &middot; glrarealty@gmail.com</span>
+      <span>17F, 252 Sen. Gil J. Puyat Ave., Makati</span>
+      <p class="b-fine">Prices, availability and details are subject to change without notice. Printed ${esc(printed)}.</p>
+    </div>
+    <div class="b-qr"><span>Scan for photos<br>and the latest price</span><div id="bQr" data-url="${esc(url)}"></div></div>
+  </footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var box=document.getElementById('bQr');
+  try{ new QRCode(box,{text:box.getAttribute('data-url'),width:256,height:256,correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){ box.textContent=box.getAttribute('data-url').replace(/^https?:\\/\\//,''); box.style.fontSize='8px'; }
+  document.getElementById('bPrint').addEventListener('click',function(){ window.print(); });
+})();
+</script>
+</body>
+</html>`;
+}
+
+app.get('/property/:id/brochure', async (req, res) => {
+  try {
+    const p = /^[a-f0-9]{24}$/i.test(req.params.id)
+      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby').lean()
+      : null;
+    if (!p || p.status !== 'available') return res.redirect(302, '/property/' + encodeURIComponent(req.params.id));
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+    res.send(buildBrochureHtml(p));
+  } catch (err) {
+    return res.redirect(302, '/properties.html');
+  }
+});
 
 app.get('/property/:id', async (req, res) => {
   try {
@@ -1933,31 +2138,39 @@ ${area ? `<a class="b o" href="/properties/${area[0]}">More in ${esc(area[1])}</
 // print six anchors.
 const RELATED_FIELDS = '_id title location price monthlyRental listingType mainImage propertyType';
 async function findRelatedListings(p) {
-  const id = p._id;
-  const out = [];
-  const seen = new Set([String(id)]);
-  const push = rows => rows.forEach(r => {
-    if (out.length >= 6 || seen.has(String(r._id))) return;
-    seen.add(String(r._id)); out.push(r);
-  });
-  // The first word or two of a location is the area name ("Makati City, Metro
-  // Manila" -> "Makati"). A prefix match keeps it to one index range.
-  const area = String(p.location || '').split(/[,\-]/)[0].trim();
+  // Scored, not just "same area first": a P7M condo should suggest other
+  // condos in its price range, not a P400M lot that happens to share a city.
+  const id = String(p._id);
+  const lt = x => String(x.listingType || '').toUpperCase();
+  const sells = x => lt(x) === 'FOR SALE' || lt(x) === 'SALE AND LEASE';
+  const rents = x => lt(x) === 'FOR LEASE' || lt(x) === 'SALE AND LEASE';
+  const base = x => String(x.propertyType || '').trim().split(/\s+-\s+/)[0].trim().toLowerCase();
+  const areaOf = x => String(x.location || '').split(/[,\-]/)[0].trim().toLowerCase();
+  const priceOf = (x, sale) => sale ? (Number(x.price) || 0) : (Number(x.monthlyRental) || Number(x.price) || 0);
+  const mySale = sells(p), myArea = areaOf(p), myType = base(p);
+  const myPrice = priceOf(p, mySale), myBeds = Number(p.bedrooms) || 0;
+  let out = [];
   try {
-    if (area.length >= 3) {
-      push(await Property.find({
-        status: 'available', _id: { $ne: id },
-        location: new RegExp('^' + area.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-      }).select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
-    }
-    if (out.length < 6 && p.propertyType) {
-      push(await Property.find({ status: 'available', _id: { $ne: id }, propertyType: p.propertyType })
-        .select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
-    }
-    if (out.length < 6) {
-      push(await Property.find({ status: 'available', _id: { $ne: id } })
-        .select(RELATED_FIELDS).sort({ createdAt: -1 }).limit(6).lean());
-    }
+    const rows = await Property.find({ status: 'available', _id: { $ne: p._id } })
+      .select(RELATED_FIELDS + ' bedrooms createdAt').lean();
+    out = rows.map(r => {
+      let score = 0;
+      if (mySale ? sells(r) : rents(r)) score += 3;
+      if (myType && base(r) === myType) score += 3;
+      if (myArea.length >= 3 && areaOf(r) === myArea) score += 3;
+      const rp = priceOf(r, mySale);
+      if (myPrice > 0 && rp > 0) {
+        const ratio = rp / myPrice;
+        if (ratio >= 0.65 && ratio <= 1.35) score += 2;
+        else if (ratio >= 0.4 && ratio <= 1.6) score += 1;
+      }
+      if (myBeds > 0 && (Number(r.bedrooms) || 0) === myBeds) score += 1;
+      return { r, score, t: new Date(r.createdAt || 0).getTime() };
+    })
+      .filter(x => String(x.r._id) !== id)
+      .sort((a, b) => b.score - a.score || b.t - a.t)
+      .slice(0, 6)
+      .map(x => { delete x.r.bedrooms; delete x.r.createdAt; return x.r; });
   } catch (e) { /* a listing page must render even if this query fails */ }
   out.forEach(optimizePropertyImages);
   return out;
