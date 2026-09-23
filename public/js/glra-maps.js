@@ -58,7 +58,24 @@
     '.glra-nb-home{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#ff3d00;color:#fff;border:2px solid #0a0a0a;box-shadow:2px 2px 0 #0a0a0a;font-size:14px}' +
     '.glra-nb-poi{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#0a0a0a;color:#fff;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:11px}' +
     '.glra-nb-rail{background:#6d28d9}.glra-nb-mall{background:#c2410c}.glra-nb-hospital{background:#b91c1c}.glra-nb-school{background:#15803d}' +
-    '.glra-nb-fail{padding:24px;text-align:center;font-size:14px}';
+    '.glra-nb-fail{padding:24px;text-align:center;font-size:14px}' +
+    /* Full screen: beats the pages' own sizing (sticky map pane, fixed heights). */
+    '.glra-full{position:fixed !important;inset:0 !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;height:100dvh !important;max-height:none !important;min-height:0 !important;margin:0 !important;border:0 !important;box-shadow:none !important;z-index:2147482000 !important;background:#e8e4dd}' +
+    '.glra-full #mapCanvas{height:100% !important}' +
+    'body.dark-mode .glra-full{background:#1a1a17}' +
+    'html.glra-full-open,html.glra-full-open body{overflow:hidden !important}' +
+    '.glra-fs-ctl{border:2px solid #0a0a0a !important;border-radius:0 !important;box-shadow:3px 3px 0 #0a0a0a !important}' +
+    'body.dark-mode .glra-fs-ctl{border-color:#3a3a36 !important;box-shadow:3px 3px 0 #3a3a36 !important}' +
+    'html body .glra-fs-btn{display:flex !important;align-items:center !important;justify-content:center !important;width:38px !important;height:38px !important;padding:0 !important;margin:0 !important;border:0 !important;border-radius:0 !important;background:#f1eee9 !important;color:#0a0a0a !important;font-size:15px !important;cursor:pointer !important;box-shadow:none !important;transform:none !important}' +
+    'body.dark-mode .glra-fs-btn{background:#0e0e0c !important;color:#f1eee9 !important}' +
+    'html body .glra-fs-btn:hover{background:#ff3d00 !important;color:#fff !important}' +
+    'html body .glra-fs-btn:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:2px !important}' +
+    '.glra-map-logo{display:block;margin:0 10px 6px 0 !important;background:rgba(241,238,233,.92);border:2px solid #0a0a0a;box-shadow:2px 2px 0 #0a0a0a;line-height:0}' +
+    '.glra-map-logo img{width:74px;height:40px;object-fit:cover;object-position:50% 46%;display:block}' +
+    '.glra-map-logo .glra-map-logo-d{display:none}' +
+    'body.dark-mode .glra-map-logo{background:rgba(14,14,12,.9);border-color:#3a3a36;box-shadow:2px 2px 0 #3a3a36}' +
+    'body.dark-mode .glra-map-logo .glra-map-logo-l{display:none}body.dark-mode .glra-map-logo .glra-map-logo-d{display:block}' +
+    '@media(max-width:560px){.glra-map-logo img{width:60px;height:32px}}';
   function injectCss() {
     if (document.getElementById('glraMapsCss')) return;
     var st = document.createElement('style');
@@ -160,6 +177,68 @@
     });
   }
 
+  /* ── Full screen ──────────────────────────────────────────────
+     A fixed overlay (works on iPhones, which have no element fullscreen),
+     plus the real Fullscreen API where the browser has it, so the browser
+     bars go too. Esc, the button or leaving browser fullscreen all exit. */
+  function fullscreenControl(map, target, position) {
+    target = target || map.getContainer();
+    var btn;
+    function isFull() { return target.classList.contains('glra-full'); }
+    function paint() {
+      var on = isFull();
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen map');
+      btn.title = on ? 'Exit full screen (Esc)' : 'Full screen map';
+      btn.innerHTML = '<i class="fas ' + (on ? 'fa-compress' : 'fa-expand') + '" aria-hidden="true"></i>';
+    }
+    function set(on) {
+      if (on === isFull()) return;
+      target.classList.toggle('glra-full', on);
+      document.documentElement.classList.toggle('glra-full-open', on);
+      try {
+        if (on && target.requestFullscreen && !document.fullscreenElement) target.requestFullscreen().catch(function () {});
+        if (!on && document.fullscreenElement === target && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+      } catch (e) {}
+      paint();
+      setTimeout(function () { map.invalidateSize(false); }, 80);
+      setTimeout(function () { map.invalidateSize(false); }, 400);
+      if (typeof target._glraOnFull === 'function') target._glraOnFull(on);
+    }
+    var Ctl = L.Control.extend({
+      options: { position: position || 'topright' },
+      onAdd: function () {
+        var d = L.DomUtil.create('div', 'leaflet-bar glra-fs-ctl');
+        btn = L.DomUtil.create('button', 'glra-fs-btn', d);
+        btn.type = 'button';
+        paint();
+        L.DomEvent.disableClickPropagation(d);
+        L.DomEvent.on(btn, 'click', function (e) { L.DomEvent.stop(e); set(!isFull()); });
+        return d;
+      }
+    });
+    new Ctl().addTo(map);
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && isFull()) set(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isFull()) set(false); });
+    return { set: set, isFull: isFull };
+  }
+
+  /* ── GLRA logo on the map ─────────────────────────────────── */
+  function logoControl(map) {
+    var Ctl = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd: function () {
+        var a = L.DomUtil.create('a', 'glra-map-logo');
+        a.href = '/';
+        a.setAttribute('aria-label', 'GLRA Realty home');
+        a.innerHTML = '<img class="glra-map-logo-l" src="/img/logo-384.png" alt="" width="384" height="384"><img class="glra-map-logo-d" src="/img/hero-logo-384.png" alt="" width="384" height="384">';
+        L.DomEvent.disableClickPropagation(a);
+        return a;
+      }
+    });
+    return new Ctl().addTo(map);
+  }
+
   function streetViewUrl(lat, lng) {
     return 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + Number(lat).toFixed(5) + ',' + Number(lng).toFixed(5);
   }
@@ -181,6 +260,8 @@
       var map = L.map(el, { scrollWheelZoom: false, zoomAnimation: !r, fadeAnimation: !r, markerZoomAnimation: !r }).setView([lat, lng], 15);
       map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
       osm(map);
+      fullscreenControl(map, el, 'topleft');
+      logoControl(map);
       var home = L.marker([lat, lng], {
         icon: L.divIcon({ className: 'glra-nb-home-wrap', html: '<span class="glra-nb-home"><i class="fas fa-house" aria-hidden="true"></i></span>', iconSize: [34, 34], iconAnchor: [17, 17] }),
         title: 'This listing (approximate)', keyboard: true, zIndexOffset: 1000
@@ -223,6 +304,8 @@
     osm: osm,
     floodToggle: floodToggle,
     floodButton: floodButton,
+    fullscreenControl: fullscreenControl,
+    logoControl: logoControl,
     streetViewUrl: streetViewUrl,
     neighbourhood: neighbourhood
   };

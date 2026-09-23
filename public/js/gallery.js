@@ -68,6 +68,23 @@
     '@media (max-width:600px){.glg-nav{width:40px;height:52px;background:rgba(10,10,10,.6)}.glg-prev{left:4px}.glg-next{right:4px}',
     '.glg-title{font-size:13px}.glg-thumb{width:64px;height:48px}.glg-zoombtn{display:none}}',
     '@media (hover:none){.glg-btn:hover{background:#0a0a0a;border-color:rgba(241,238,233,.35);color:#f1eee9}}',
+    /* The site theme styles every <button> with !important (solid ink fill,
+       14px 24px padding, a press that moves it down 1px and shrinks it). On
+       these 44px buttons the padding squeezed the icon to nothing, leaving
+       blank boxes, and the press knocked the side arrows off their centring. */
+    '.glg-root .glg-btn{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:44px !important;height:44px !important;',
+    'padding:0 !important;margin:0 !important;background:#0a0a0a !important;color:#f1eee9 !important;border:2px solid rgba(241,238,233,.35) !important;',
+    'border-radius:0 !important;box-shadow:none !important;font:700 12px/1 "JetBrains Mono",ui-monospace,monospace !important;letter-spacing:1px !important;',
+    'text-transform:none !important;gap:0 !important;transform:none !important;transition:background-color .15s,border-color .15s !important}',
+    '.glg-root .glg-btn:hover{background:#df3500 !important;border-color:#df3500 !important;color:#fff !important}',
+    '.glg-root .glg-btn[aria-pressed="true"]{background:#f1eee9 !important;color:#0a0a0a !important;border-color:#f1eee9 !important}',
+    '.glg-root .glg-btn:active{transform:none !important;background:#df3500 !important;border-color:#df3500 !important}',
+    '.glg-root .glg-nav,.glg-root .glg-nav:hover,.glg-root .glg-nav:active{transform:translateY(-50%) !important;width:48px !important;height:64px !important}',
+    '.glg-root .glg-thumb{padding:0 !important;margin:0 !important;background:#1a1a17 !important;border:2px solid transparent !important;box-shadow:none !important;transform:none !important;display:block !important;width:80px !important;height:60px !important}',
+    '.glg-root .glg-thumb[aria-current="true"]{border-color:#ff3d00 !important}',
+    '@media (max-width:600px){.glg-root .glg-nav,.glg-root .glg-nav:hover,.glg-root .glg-nav:active{width:40px !important;height:52px !important}.glg-root .glg-thumb{width:64px !important;height:48px !important}}',
+    '@media (prefers-reduced-motion:reduce){.glg-root .glg-btn{transition:none !important}}',
+    '@media (hover:none){.glg-root .glg-btn:hover{background:#0a0a0a !important;border-color:rgba(241,238,233,.35) !important;color:#f1eee9 !important}}',
     '@media (prefers-reduced-motion:reduce){.glg-root,.glg-track.glg-anim,.glg-slide img,.glg-slide img.glg-zanim,.glg-btn,.glg-thumb{transition:none}}'
   ].join('');
 

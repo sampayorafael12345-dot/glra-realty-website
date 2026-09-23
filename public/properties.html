@@ -554,8 +554,8 @@ body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
 /* ═══ MAP EXTRAS: distance to work, price colours, draw area, flood ═══ */
 .glra-sr{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important}
 .near-pick{position:relative;display:inline-flex;align-items:center}
-.near-pick>i{position:absolute;left:12px;font-size:12px;color:#ff3d00;pointer-events:none}
-html body .near-pick select{min-height:40px;padding:0 12px 0 32px;border:2px solid var(--ab-line);border-radius:0;background:var(--ab-paper);color:var(--ab-ink);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.near-pick>i{position:absolute;left:13px;top:50%;transform:translateY(-50%);z-index:1;font-size:13px;color:#ff3d00;pointer-events:none}
+html body .near-pick select{min-height:40px;height:auto;padding:10px 34px 10px 36px !important;border:2px solid var(--ab-line);border-radius:0;background:var(--ab-paper);color:var(--ab-ink);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
 html body .area-chip{min-height:40px;padding:0 12px !important;background:#1f5fbf !important;color:#fff !important;border:0 !important;font-size:10.5px !important;letter-spacing:1px !important}
 html body .area-chip[hidden]{display:none !important}
 html body .area-chip:hover{background:#ff3d00 !important}
@@ -579,6 +579,10 @@ html body .glra-mapctl-btn[aria-pressed="true"] i{color:#fff}
 #mapCanvas .glra-area{fill:#1f5fbf;fill-opacity:.08;stroke:#1f5fbf;stroke-width:3;stroke-dasharray:8 6}
 #mapCanvas .glra-area-live{fill-opacity:.14}
 .glra-place-wrap{background:none;border:0}
+.glra-area-x-wrap{background:none;border:0;cursor:pointer}
+.glra-area-x{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#1f5fbf;color:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);font-size:13px}
+.glra-area-x-wrap:hover .glra-area-x,.glra-area-x-wrap:focus-visible .glra-area-x{background:#ff3d00}
+.glra-area-x-wrap:focus-visible{outline:3px solid #ff3d00;outline-offset:2px;border-radius:50%}
 .glra-place{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1f5fbf;color:#fff;border:3px solid #fff;box-shadow:0 0 0 2px #1f5fbf,0 2px 6px rgba(0,0,0,.35);font-size:13px}
 #mapCanvas .glra-pin-wrap.pb0 .glra-pin{background:#8a857d;border-color:#8a857d}#mapCanvas .glra-pin-wrap.pb0 .glra-pin::after{border-top-color:#8a857d}
 #mapCanvas .glra-pin-wrap.pb1 .glra-pin{background:#0f7a55;border-color:#0f7a55}#mapCanvas .glra-pin-wrap.pb1 .glra-pin::after{border-top-color:#0f7a55}
@@ -954,8 +958,8 @@ body.dark-mode #mapCanvas .glra-pin-wrap[class*=" pb"] .glra-pin{border-color:#f
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <script src="/js/main.js?v=108"></script>
 <script src="/js/smart-search.js?v=108"></script>
-<script src="/js/glra-maps.js?v=109"></script>
-<script src="/js/gallery.js?v=108" defer></script>
+<script src="/js/glra-maps.js?v=110"></script>
+<script src="/js/gallery.js?v=110" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
    Display titles, shareable filters in the URL, the live results count,
@@ -1308,6 +1312,7 @@ function glraMapInit(){
     zoomAnimation: !reduce, fadeAnimation: !reduce, markerZoomAnimation: !reduce
   }).setView([14.58, 121.03], 11);
   L.control.zoom({ position: 'topright' }).addTo(m);
+  if (window.GLRAMaps) { GLRAMaps.fullscreenControl(m, document.getElementById('mapPane'), 'topright'); GLRAMaps.logoControl(m); }
   m.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
   // OSM's tile policy requires a Referer; the site-wide no-referrer header
   // gets tiles swapped for an "Access blocked" image, so send just our origin.
@@ -1732,16 +1737,17 @@ function glraMapStatusHint(t){
 }
 function glraDrawWire(){
   var m = GLRA_MAP.map, el = m.getContainer();
-  var start = null, circle = null, pid = null;
+  var start = null, circle = null, pid = null, sx = 0, sy = 0;
   function ll(e){ return m.mouseEventToLatLng(e); }
   el.addEventListener('pointerdown', function(e){
-    if (!GLRA_MAP.drawing || (e.button && e.button !== 0) || e.target.closest('.leaflet-control')) return;
+    if (!GLRA_MAP.drawing || (e.button && e.button !== 0) || e.target.closest('.leaflet-control,.glra-area-x-wrap')) return;
     e.preventDefault(); e.stopPropagation();
     pid = e.pointerId;
     try { el.setPointerCapture(pid); } catch (x) {}
-    start = ll(e);
+    start = ll(e); sx = e.clientX; sy = e.clientY;
     if (circle) circle.remove();
     circle = L.circle(start, { radius: 1, className: 'glra-area glra-area-live', interactive: false }).addTo(m);
+    GLRA_MAP.liveCircle = circle;
   }, true);
   el.addEventListener('pointermove', function(e){
     if (!start || e.pointerId !== pid) return;
@@ -1751,15 +1757,21 @@ function glraDrawWire(){
   function finish(e){
     if (!start || (e && e.pointerId !== pid)) return;
     var r = circle ? circle.getRadius() : 0, c = start;
+    var px = e ? Math.hypot(e.clientX - sx, e.clientY - sy) : 0;
     if (circle) { circle.remove(); circle = null; }
+    GLRA_MAP.liveCircle = null;
     start = null;
     try { el.releasePointerCapture(pid); } catch (x) {}
+    /* A tap is not a circle: stay in drawing mode and say how. */
+    if (px < 12) { glraMapStatusHint('Press and drag to draw. Esc or Cancel to stop.'); return; }
     glraDrawMode(false);
-    /* A tap, not a drag: draw a 1.5 km circle round the spot. */
-    glraSetArea({ lat: c.lat, lng: c.lng, r: r < 150 ? 1500 : Math.min(r, 60000) });
+    glraSetArea({ lat: c.lat, lng: c.lng, r: Math.min(r, 60000) });
   }
   el.addEventListener('pointerup', finish, true);
-  el.addEventListener('pointercancel', function(){ if (circle) circle.remove(); circle = null; start = null; glraDrawMode(false); }, true);
+  el.addEventListener('pointercancel', function(){ if (circle) circle.remove(); circle = null; GLRA_MAP.liveCircle = null; start = null; glraDrawMode(false); }, true);
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && GLRA_MAP.drawing) { if (circle) circle.remove(); circle = null; GLRA_MAP.liveCircle = null; start = null; glraDrawMode(false); }
+  });
 }
 function glraAreaChipText(){
   if (!GLRA_AREA) return '';
@@ -1767,6 +1779,9 @@ function glraAreaChipText(){
   return 'Your drawn area (' + (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km radius)';
 }
 function glraSetArea(a, quiet){
+  /* Clearing always ends drawing too, or the next tap would start a new circle. */
+  if (!a && GLRA_MAP.drawing) glraDrawMode(false);
+  if (GLRA_MAP.liveCircle) { GLRA_MAP.liveCircle.remove(); GLRA_MAP.liveCircle = null; }
   GLRA_AREA = a ? { lat: Number(a.lat.toFixed(5)), lng: Number(a.lng.toFixed(5)), r: Math.round(a.r) } : null;
   var chip = document.getElementById('areaChip');
   if (chip) { chip.hidden = !GLRA_AREA; var s = chip.querySelector('span'); if (s) s.textContent = glraAreaChipText(); }
@@ -1781,8 +1796,18 @@ function glraAreaShape(){
   var m = GLRA_MAP.map;
   if (!m) return;
   if (GLRA_MAP.areaLayer) { GLRA_MAP.areaLayer.remove(); GLRA_MAP.areaLayer = null; }
+  if (GLRA_MAP.areaX) { GLRA_MAP.areaX.remove(); GLRA_MAP.areaX = null; }
   if (GLRA_AREA) {
     GLRA_MAP.areaLayer = L.circle([GLRA_AREA.lat, GLRA_AREA.lng], { radius: GLRA_AREA.r, className: 'glra-area', interactive: false }).addTo(m);
+    /* A remove button sitting on the circle's edge, top right (45 degrees). */
+    var d = GLRA_AREA.r / 111320 * Math.SQRT1_2;
+    GLRA_MAP.areaX = L.marker([GLRA_AREA.lat + d, GLRA_AREA.lng + d / Math.cos(GLRA_AREA.lat * Math.PI / 180)], {
+      icon: L.divIcon({ className: 'glra-area-x-wrap', html: '<span class="glra-area-x" aria-hidden="true"><i class="fas fa-times"></i></span>', iconSize: [30, 30], iconAnchor: [15, 15] }),
+      keyboard: true, title: 'Remove the drawn area', zIndexOffset: 1500
+    }).addTo(m);
+    GLRA_MAP.areaX.on('click', function(ev){ if (ev.originalEvent) L.DomEvent.stop(ev.originalEvent); glraSetArea(null); });
+    GLRA_MAP.areaX.on('add', function(){ var e2 = GLRA_MAP.areaX && GLRA_MAP.areaX.getElement(); if (e2) { e2.setAttribute('role', 'button'); e2.setAttribute('aria-label', 'Remove the drawn area'); } });
+    var e3 = GLRA_MAP.areaX.getElement(); if (e3) { e3.setAttribute('role', 'button'); e3.setAttribute('aria-label', 'Remove the drawn area'); }
   }
 }
 function glraPlaceMarker(){

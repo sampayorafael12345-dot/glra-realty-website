@@ -1918,8 +1918,8 @@ async function pgSubmit(e){
 </script>
 <script src="/js/main.js?v=108"></script>
 <script src="/js/a11y.js?v=108" defer></script>
-<script src="/js/gallery.js?v=108" defer></script>
-${geoOk ? '<script src="/js/glra-maps.js?v=109" defer></script>' : ''}
+<script src="/js/gallery.js?v=110" defer></script>
+${geoOk ? '<script src="/js/glra-maps.js?v=110" defer></script>' : ''}
 </body>
 </html>`;
 }
