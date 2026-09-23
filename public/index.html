@@ -51,7 +51,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=115">
+<link rel="stylesheet" href="/css/styles.css?v=116">
 
 <style>
 /* ════════════════════════════════════════════════════════════
@@ -1186,6 +1186,30 @@ body.dark-mode .arth-feat .section-eyebrow{color:rgba(236,235,231,.6) !important
 .arth-feat .section-header > p,
 body.dark-mode .arth-feat .section-header > p{color:rgba(236,235,231,.72) !important}
 
+/* The map band (js/glra-maps.js draws it). Same 1480px measure as the
+   Arthaland wall above, so the two frames line up. */
+.home-map-wrap{max-width:1480px;margin:0 auto;padding:0 40px 56px;box-sizing:border-box}
+.home-map-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;margin:0 0 14px}
+.home-map-key{display:inline-flex;align-items:center;gap:8px;font:700 10.5px/1 'JetBrains Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-gray)}
+.hm-dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff3d00;border:2px solid #fff;box-shadow:0 0 0 1.5px #0a0a0a}
+.hm-dot.is-lease{background:#1f5fbf}
+.home-map-sp{flex:1 1 auto}
+html body .home-map-btn{display:inline-flex !important;align-items:center !important;gap:8px !important;min-height:42px;padding:0 16px !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;box-shadow:3px 3px 0 var(--ab-line) !important;font:700 10.5px/1 'JetBrains Mono',monospace !important;letter-spacing:1.4px !important;text-transform:uppercase !important;text-decoration:none !important;cursor:pointer;transform:none !important}
+html body .home-map-btn i{color:#ff3d00}
+html body .home-map-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .home-map-btn:hover i{color:#fff}
+html body .home-map-btn[aria-pressed="true"]{background:#0a0a0a !important;border-color:#0a0a0a !important;color:#f1eee9 !important}
+body.dark-mode .home-map-btn[aria-pressed="true"]{background:#f1eee9 !important;border-color:#f1eee9 !important;color:#0a0a0a !important}
+html body .home-map-btn.is-cta{background:#ff3d00 !important;border-color:#0a0a0a !important;color:#fff !important}
+html body .home-map-btn.is-cta i{color:#fff}
+html body .home-map-btn.is-cta:hover{background:#0a0a0a !important}
+.home-map{position:relative;z-index:0;height:clamp(420px,62vh,640px);border:2px solid var(--ab-line);box-shadow:6px 6px 0 var(--ab-line);background:#e8e4dd}
+body.dark-mode .home-map{background:#1a1a17}
+.home-map .leaflet-tile-pane{filter:grayscale(.8) contrast(1.04) brightness(1.03)}
+body.dark-mode .home-map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
+.home-map.glra-full{box-shadow:none}
+@media(max-width:980px){.home-map-wrap{padding:0 24px 44px}}
+@media(max-width:560px){.home-map-sp{display:none}.home-map{height:440px;box-shadow:4px 4px 0 var(--ab-line)}html body .home-map-btn{min-height:40px;padding:0 12px !important}html body .home-map-btn.is-cta{width:100%;justify-content:center !important}}
 /* The wall: five buildings side by side, hairline-divided like every other
    grid on this page, and aligned to the same 1480px measure. */
 .arth-wall{
@@ -1725,6 +1749,28 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
 </section>
 
 <!-- RESOURCES -->
+<!-- THE MAP -->
+<!-- Leaflet and the pins load only when this scrolls near (js/glra-maps.js). -->
+<section class="section home-map-sec" id="map" aria-labelledby="homeMapH">
+  <div class="section-header">
+    <div></div>
+    <h2 id="homeMapH">Every listing.<br><em>One map.</em></h2>
+    <span class="section-eyebrow">THE MAP</span>
+    <p>All <b data-home-count>our</b> homes for sale and lease, and Arthaland's five buildings. Tap a dot for the price, switch on the train lines, or open the full map to draw your own search area.</p>
+  </div>
+  <div class="home-map-wrap">
+    <div class="home-map-tools">
+      <span class="home-map-key"><i class="hm-dot" aria-hidden="true"></i>For sale</span>
+      <span class="home-map-key"><i class="hm-dot is-lease" aria-hidden="true"></i>For lease</span>
+      <span class="home-map-sp"></span>
+      <button type="button" class="home-map-btn" id="homeArthaBtn" aria-pressed="true"><i class="fas fa-building" aria-hidden="true"></i> Arthaland</button>
+      <button type="button" class="home-map-btn" id="homeRailBtn" aria-pressed="false"><i class="fas fa-train-subway" aria-hidden="true"></i> Trains</button>
+      <a class="home-map-btn is-cta" href="/properties.html?view=map"><i class="fas fa-map-location-dot" aria-hidden="true"></i> Open the full map</a>
+    </div>
+    <div class="home-map" id="homeMap" role="region" aria-label="Map of GLRA listings and the Arthaland buildings"></div>
+  </div>
+</section>
+
 <section class="resources-section">
   <div class="section-header">
     <div></div>
@@ -1898,9 +1944,10 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/main.js?v=115"></script>
-<script src="/js/smart-search.js?v=115"></script>
-<script src="/js/gallery.js?v=115" defer></script>
+<script src="/js/main.js?v=116"></script>
+<script src="/js/glra-maps.js?v=116" defer></script>
+<script src="/js/smart-search.js?v=116"></script>
+<script src="/js/gallery.js?v=116" defer></script>
 <script>
 /* ==== HOME PAGE LISTING LAYER (Sept 2026) ================================
    Display titles, the photo gallery hook, the card-to-pop-up view
@@ -2142,6 +2189,7 @@ function renderAllSections(properties){
   renderProperties(properties.filter(p=>isForSale(p)).slice(0,6),'sale-list');
   renderProperties(properties.filter(p=>isForLease(p)).slice(0,6),'lease-list');
   allProperties=properties;
+  if(window.GLRAMaps)GLRAMaps.homeData(properties);else window.__glraHomeList=properties;
   populateHeroFromListings(properties);
   setTimeout(initLazyLoading,100);
 }
@@ -2374,8 +2422,8 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
    only the fallback (fetching both downloaded ~2 MB for nothing). */
 loadProperties();
 </script>
-<script src="/js/chat.js?v=115" defer></script>
-<script src="/js/description.js?v=115" defer></script>
-<script src="/js/a11y.js?v=115" defer></script>
+<script src="/js/chat.js?v=116" defer></script>
+<script src="/js/description.js?v=116" defer></script>
+<script src="/js/a11y.js?v=116" defer></script>
 </body>
 </html>

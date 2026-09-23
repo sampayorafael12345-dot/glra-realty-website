@@ -2973,6 +2973,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
           <div class="fg"><label for="pListing2">Listing Type</label><select id="pListing2"><option value="FOR SALE">For Sale</option><option value="FOR LEASE">For Lease</option><option value="SALE AND LEASE">Sale &amp; Lease</option></select></div>
           <div class="fg full"><label for="pLoc">Location / Address *</label><input type="text" id="pLoc" placeholder="e.g. Taguig City, Metro Manila" required></div>
           <div class="fg full"><label for="pMapLoc">Map Location (Google Maps)</label><input type="text" id="pMapLoc" placeholder="e.g. BGC, Taguig"></div>
+          <div class="fg"><label for="pFacing">Unit faces (optional)</label><select id="pFacing"><option value="">Not set</option><option value="N">North</option><option value="NE">Northeast</option><option value="E">East</option><option value="SE">Southeast</option><option value="S">South</option><option value="SW">Southwest</option><option value="W">West</option><option value="NW">Northwest</option></select><small class="fhint">Where the main windows point. The listing page's sun path then says how much sun the unit gets.</small></div>
           <div class="fsec">Pricing</div>
           <div class="fg"><label for="pPrice">Selling / Contract Price (₱)</label><input type="text" id="pPrice" placeholder="0" oninput="fmtField(this)"></div>
           <div class="fg"><label for="pRental">Monthly Rental (₱)</label><input type="text" id="pRental" placeholder="0" oninput="fmtField(this)"></div>
@@ -4269,6 +4270,7 @@ function openEditProp(id){
   document.getElementById('pListing2').value=p.listingType||'FOR SALE';
   document.getElementById('pLoc').value=p.location||'';
   document.getElementById('pMapLoc').value=p.mapLocation||'';
+  document.getElementById('pFacing').value=p.facing||'';
   document.getElementById('pPrice').value=p.price?p.price.toLocaleString('en-US'):'';
   document.getElementById('pRental').value=p.monthlyRental?p.monthlyRental.toLocaleString('en-US'):'';
   document.getElementById('pBed').value=p.bedrooms||0;document.getElementById('pBath').value=p.bathrooms||0;
@@ -4304,7 +4306,7 @@ document.getElementById('propForm').addEventListener('submit',async function(e){
     const data={
       title:document.getElementById('pTitle').value,propertyType:document.getElementById('pType2').value,
       listingType:document.getElementById('pListing2').value,location:document.getElementById('pLoc').value,
-      mapLocation:document.getElementById('pMapLoc').value,price:getNum('pPrice'),monthlyRental:getNum('pRental'),
+      mapLocation:document.getElementById('pMapLoc').value,facing:document.getElementById('pFacing').value,price:getNum('pPrice'),monthlyRental:getNum('pRental'),
       bedrooms:parseInt(document.getElementById('pBed').value)||0,bathrooms:parseInt(document.getElementById('pBath').value)||0,
       sqm:parseFloat(document.getElementById('pSqm').value)||0,
       landArea:parseFloat(document.getElementById('pLandArea').value)||0,
@@ -11873,6 +11875,6 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script src="/js/a11y.js?v=115" defer></script>
+<script src="/js/a11y.js?v=116" defer></script>
 </body>
 </html>

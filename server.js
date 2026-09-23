@@ -238,14 +238,18 @@ app.use(helmet.contentSecurityPolicy({
       'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev',
       // Flood hazard layer (js/glra-maps.js): UP NOAH PMTiles on Hugging Face,
       // which answers with a redirect to its CDN.
-      'https://huggingface.co', 'https://*.hf.co'],
+      'https://huggingface.co', 'https://*.hf.co',
+      // 3D view (js/glra-maps.js): OpenFreeMap's style, tiles, fonts and icons.
+      'https://tiles.openfreemap.org'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
     'media-src': ["'self'"],
     // Without this, manifest-src falls back to default-src. That happens to be
     // 'self' and so happens to work - but the day this policy is enforced is
     // not the day to find out by having every home-screen icon stop working.
     'manifest-src': ["'self'"],
-    'worker-src': ["'self'"],                            // service worker
+    // 'self': the service worker. blob:: the 3D map's tile workers, which
+    // MapLibre builds from its own bundle.
+    'worker-src': ["'self'", 'blob:'],
     ...CSP_BASELINE
   }
 }));
@@ -668,7 +672,7 @@ const PUBLIC_PROPERTY_FIELDS = [
   'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
   'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
   'mapLocation', 'previousPrice', 'priceUpdatedAt',
-  'views', 'createdAt',
+  'views', 'createdAt', 'facing',
   // Reduced by publicGeo() to a rounded {lat, lng}; the lookup text, status
   // and timestamps never leave the server.
   'geo'
@@ -1177,7 +1181,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=115" defer></script>
+<script src="/js/a11y.js?v=116" defer></script>
 </body>
 </html>`;
 }
@@ -1242,7 +1246,159 @@ function glraDisplayTitle(raw) {
 // Build a fully server-rendered, SEO-rich detail page for one property.
 // Crawlers and social-share scrapers get real <title>, meta description,
 // Open Graph image, and JSON-LD; humans get a styled page with an inquiry form.
-function buildPropertyPageHtml(p, related) {
+// ── Lifestyle score (listing page) ─────────────────────────────────────────
+// Six everyday needs, each scored 0 to 100 from what OpenStreetMap has around
+// the listing: counts within 500 m and 1 km (nearby.life) and the nearest
+// station, hospital and school (nearby.items, within 2 km). A guide for
+// comparing listings on this site, and the page says so.
+const LIFE_AXES = [
+  ['transit', 'Transit', 'fa-train-subway'],
+  ['grocery', 'Groceries', 'fa-basket-shopping'],
+  ['dining', 'Dining', 'fa-utensils'],
+  ['park', 'Parks', 'fa-tree'],
+  ['health', 'Health', 'fa-kit-medical'],
+  ['school', 'Schools', 'fa-graduation-cap']
+];
+function lifeScores(nearby) {
+  const life = nearby && nearby.life;
+  if (!life || typeof life !== 'object') return null;
+  const items = Array.isArray(nearby.items) ? nearby.items : [];
+  const nearest = cat => items.filter(x => x.cat === cat && Number.isFinite(x.dist)).sort((a, b) => a.dist - b.dist)[0] || null;
+  const ring = (k, a, b) => {
+    const c = Array.isArray(life[k]) ? life[k] : [0, 0];
+    const n5 = Number(c[0]) || 0, n10 = Math.max(n5, Number(c[1]) || 0);
+    return { n5, n10, s: Math.min(100, a * n5 + b * (n10 - n5)) };
+  };
+  const byDist = (d, steps) => { for (const [m, v] of steps) if (d <= m) return v; return 0; };
+  const fmt = m => m < 1000 ? Math.max(10, Math.round(m / 10) * 10) + ' m' : (m / 1000).toFixed(1) + ' km';
+  const out = {};
+  const rail = nearest('rail'), tr = ring('transit', 14, 3);
+  const railS = rail ? byDist(rail.dist, [[500, 100], [1000, 80], [1500, 62], [2000, 45]]) : 0;
+  out.transit = { s: Math.max(railS, Math.min(70, tr.s)), note: rail ? `${rail.name}, ${fmt(rail.dist)}` : (tr.n10 ? `${tr.n10} bus or transport stops within 1 km` : 'No station or mapped stop within reach') };
+  const g = ring('grocery', 20, 5);
+  out.grocery = { s: g.s, note: g.n10 ? `${g.n10} supermarkets, groceries or markets within 1 km` : 'None mapped within 1 km' };
+  const d = ring('dining', 5, 1.5);
+  out.dining = { s: d.s, note: d.n10 ? `${d.n10} restaurants and cafes within 1 km` : 'None mapped within 1 km' };
+  const pk = ring('park', 35, 12);
+  out.park = { s: pk.s, note: pk.n10 ? `${pk.n10} parks or playgrounds within 1 km` : 'None mapped within 1 km' };
+  const h = ring('health', 20, 6), hosp = nearest('hospital');
+  const hospS = hosp ? byDist(hosp.dist, [[1000, 30], [2000, 15]]) : 0;
+  out.health = { s: Math.min(100, h.s + hospS), note: hosp ? `${hosp.name}, ${fmt(hosp.dist)}` + (h.n10 ? `; ${h.n10} clinics and pharmacies within 1 km` : '') : (h.n10 ? `${h.n10} clinics and pharmacies within 1 km` : 'None mapped within 1 km') };
+  const sc = ring('school', 30, 10), sch = nearest('school');
+  const schS = sch ? byDist(sch.dist, [[500, 100], [1000, 80], [2000, 55]]) : 0;
+  out.school = { s: Math.max(schS, sc.s), note: sch ? `${sch.name}, ${fmt(sch.dist)}` : (sc.n10 ? `${sc.n10} schools within 1 km` : 'None mapped within 1 km') };
+  LIFE_AXES.forEach(([k]) => { out[k].s = Math.round(out[k].s); });
+  out.total = Math.round(LIFE_AXES.reduce((a, [k]) => a + out[k].s, 0) / LIFE_AXES.length);
+  return out;
+}
+function lifeHtml(nearby, esc) {
+  const L = lifeScores(nearby);
+  if (!L) return '';
+  const band = L.total >= 80 ? 'Nearly everything within walking distance'
+    : L.total >= 60 ? 'Most daily errands on foot'
+    : L.total >= 40 ? 'Some errands on foot'
+    : 'Most errands need a ride';
+  const R = 88, cx = 110, cy = 110, n = LIFE_AXES.length;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n;
+    return [(cx + r * Math.cos(a)).toFixed(1), (cy + r * Math.sin(a)).toFixed(1)];
+  };
+  const rings = [0.25, 0.5, 0.75, 1].map(f => `<polygon class="pg-life-grid" points="${LIFE_AXES.map((_, i) => pt(i, R * f).join(',')).join(' ')}"/>`).join('');
+  const spokes = LIFE_AXES.map((_, i) => { const [x, y] = pt(i, R); return `<line class="pg-life-grid" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`; }).join('');
+  const shape = `<polygon class="pg-life-shape" points="${LIFE_AXES.map(([k], i) => pt(i, Math.max(4, R * L[k].s / 100)).join(',')).join(' ')}"/>`;
+  const labels = LIFE_AXES.map(([k, lbl], i) => {
+    const [x, y] = pt(i, R + 20);
+    const anchor = Math.abs(x - cx) < 5 ? 'middle' : (x > cx ? 'start' : 'end');
+    return `<text x="${x}" y="${Number(y) + 4}" text-anchor="${anchor}">${esc(lbl)}</text>`;
+  }).join('');
+  return `
+      <div class="pg-life">
+        <div class="pg-life-head">
+          <div class="pg-life-score"><b>${L.total}</b><span>/ 100</span></div>
+          <div><h3>Lifestyle score</h3><p>${esc(band)}</p></div>
+        </div>
+        <div class="pg-life-body">
+          <svg class="pg-life-radar" viewBox="-60 -8 340 236" aria-hidden="true" focusable="false">${rings}${spokes}${shape}${labels}</svg>
+          <ul class="pg-life-list">${LIFE_AXES.map(([k, lbl, icon]) => `
+            <li><i class="fas ${icon}" aria-hidden="true"></i><span><b>${esc(lbl)}</b><small>${esc(L[k].note)}</small></span><em><span class="pg-life-bar"><span style="width:${L[k].s}%"></span></span>${L[k].s}</em></li>`).join('')}
+          </ul>
+        </div>
+        <p class="pg-near-note">Worked out from OpenStreetMap: places within 500 m and 1 km (about a 6- and 12-minute walk), and stations, hospitals and schools within 2 km. A guide for comparing listings, not an official rating. Newer and provincial areas are often under-mapped, so they can score lower than they deserve.</p>
+      </div>`;
+}
+
+// ── How the asking price compares (listing page) ──────────────────────────
+// Price per square metre against the other live listings of the same kind,
+// in the same city, on the same side (sale or lease). Floor area, or lot area
+// for lots. Asking prices on this site only, and the page says so.
+function compGroup(x) {
+  const t = String(x.propertyType || '').toLowerCase();
+  if (/house|townhouse|villa|duplex/.test(t)) return 'house';
+  if (/\blot\b|land|farm|agricultural/.test(t)) return 'lot';
+  if (/commercial|office|retail|warehouse|building|space/.test(t)) return 'commercial';
+  return 'condo';
+}
+const COMP_WORDS = { condo: ['condominium', 'condominiums'], house: ['house', 'houses'], lot: ['lot', 'lots'], commercial: ['commercial space', 'commercial spaces'] };
+function compSells(x) { const t = String(x.listingType || '').toUpperCase(); return t === 'FOR SALE' || t === 'SALE AND LEASE'; }
+function compPsqm(x, sale) {
+  const price = sale ? (Number(x.price) || 0) : (Number(x.monthlyRental) || Number(x.price) || 0);
+  const area = compGroup(x) === 'lot' ? (Number(x.landArea) || Number(x.sqm) || 0) : (Number(x.sqm) || Number(x.landArea) || 0);
+  return price > 0 && area > 0 ? price / area : 0;
+}
+function compCity(x) {
+  const a = AREAS.find(ar => ar[2].test(areaHaystack(x)));
+  return a ? [a[0], a[1]] : null;
+}
+async function findPriceComparables(p) {
+  try {
+    const sale = compSells(p), city = compCity(p), grp = compGroup(p);
+    const mine = compPsqm(p, sale);
+    if (!city || !mine) return null;
+    const rows = await Property.find({ status: 'available', _id: { $ne: p._id } })
+      .select('title location price monthlyRental sqm landArea propertyType listingType').lean();
+    const others = rows.filter(r => (sale ? compSells(r) : String(r.listingType || '').toUpperCase() !== 'FOR SALE') &&
+      compGroup(r) === grp && (compCity(r) || [])[0] === city[0])
+      .map(r => compPsqm(r, sale)).filter(v => v > 0);
+    if (others.length < 3) return null;
+    return { sale, city: city[1], grp, mine, others };
+  } catch (e) { return null; }
+}
+function priceStripHtml(c, esc) {
+  if (!c) return '';
+  const all = c.others.concat([c.mine]).sort((a, b) => a - b);
+  const sorted = c.others.slice().sort((a, b) => a - b);
+  const mid = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+  const lo = all[0], hi = all[all.length - 1];
+  const useLog = hi / lo > 3;
+  const pos = v => {
+    if (hi === lo) return 50;
+    const f = useLog ? Math.log(v / lo) / Math.log(hi / lo) : (v - lo) / (hi - lo);
+    return (3 + f * 94).toFixed(1);
+  };
+  const money = v => v >= 1e6 ? '₱' + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M' : v >= 1e4 ? '₱' + Math.round(v / 1e3).toLocaleString('en-US') + 'k' : '₱' + Math.round(v).toLocaleString('en-US');
+  const unit = c.sale ? '/sqm' : '/sqm a month';
+  const diff = (c.mine - mid) / mid;
+  const words = COMP_WORDS[c.grp] || ['listing', 'listings'];
+  const kind = `${c.others.length} other ${words[1]} ${c.sale ? 'for sale' : 'for lease'} in ${c.city}`;
+  const rel = Math.abs(diff) < 0.05 ? `About the same as the typical asking price for the ${kind} on GLRA.`
+    : `${Math.round(Math.abs(diff) * 100)}% ${diff < 0 ? 'below' : 'above'} the typical asking price for the ${kind} on GLRA.`;
+  const exact = '₱' + Math.round(c.mine).toLocaleString('en-US');
+  return `
+    <section class="pg-cmp" aria-labelledby="pgCmpH">
+      <h2 class="pg-section-label" id="pgCmpH">How the price compares</h2>
+      <p class="pg-cmp-lead"><b>${esc(exact)} per sqm${c.sale ? '' : ' a month'}.</b> ${esc(rel)}</p>
+      <div class="pg-cmp-strip" aria-hidden="true">
+        <span class="pg-cmp-axis"></span>
+        ${sorted.map(v => `<span class="pg-cmp-dot" style="left:${pos(v)}%" title="${esc(money(v) + unit)}"></span>`).join('')}
+        <span class="pg-cmp-mid" style="left:${pos(mid)}%"><em>Typical ${esc(money(mid))}</em></span>
+        <span class="pg-cmp-dot is-me" style="left:${pos(c.mine)}%"><em>This listing</em></span>
+      </div>
+      <div class="pg-cmp-scale" aria-hidden="true"><span>${esc(money(lo) + unit)}</span><span>${esc(money(hi) + unit)}</span></div>
+      <p class="pg-near-note">Each dot is one live listing. Asking prices, not what homes sold for; per square metre of ${c.grp === 'lot' ? 'lot' : 'floor'} area. Typical means the middle of the others.</p>
+    </section>`;
+}
+
+function buildPropertyPageHtml(p, related, comps) {
   const id = String(p._id);
   // Turn any base64 photo into a real image URL first, so the og:image, the
   // gallery and the <img> tags below all point at something fetchable rather
@@ -1537,12 +1693,18 @@ function buildPropertyPageHtml(p, related) {
   const nbLng = geoOk ? Number(p.geo.lng.toFixed(3)) : null;
   const nbPoints = nearItems.filter(x => Number.isFinite(x.lat) && Number.isFinite(x.lng))
     .map(x => ({ cat: x.cat, name: x.name, dist: x.dist, lat: x.lat, lng: x.lng }));
+  const facing = /^(N|NE|E|SE|S|SW|W|NW)$/.test(String(p.facing || '')) ? p.facing : '';
   const nbMapHtml = geoOk ? `
       <div class="pg-map-tools">
+        <button type="button" class="pg-map-btn" id="pgTravelBtn" aria-pressed="false"><i class="fas fa-car" aria-hidden="true"></i> Travel time</button>
+        <button type="button" class="pg-map-btn" id="pgRailBtn" aria-pressed="false"><i class="fas fa-train-subway" aria-hidden="true"></i> Trains</button>
+        <button type="button" class="pg-map-btn" id="pgSunBtn" aria-pressed="false"><i class="fas fa-sun" aria-hidden="true"></i> Sun path</button>
+        <button type="button" class="pg-map-btn" id="pg3dBtn"><i class="fas fa-cube" aria-hidden="true"></i> 3D view</button>
         <button type="button" class="pg-map-btn" id="pgFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i> Flood hazard</button>
+        <button type="button" class="pg-map-btn" id="pgFaultBtn" aria-pressed="false"><i class="fas fa-house-crack" aria-hidden="true"></i> Fault lines</button>
         <a class="pg-map-btn" href="https://www.google.com/maps/@?api=1&amp;map_action=pano&amp;viewpoint=${nbLat},${nbLng}" target="_blank" rel="noopener"><i class="fas fa-street-view" aria-hidden="true"></i> Street View</a>
       </div>
-      <div class="pg-near-map" id="pgNearMap" role="region" aria-label="Map of the neighbourhood" data-lat="${nbLat}" data-lng="${nbLng}" data-points="${esc(JSON.stringify(nbPoints))}"></div>` : '';
+      <div class="pg-near-map" id="pgNearMap" role="region" aria-label="Map of the neighbourhood" data-lat="${nbLat}" data-lng="${nbLng}" data-facing="${esc(facing)}" data-title="${esc(glraDisplayTitle ? glraDisplayTitle(p.title) : (p.title || ''))}" data-points="${esc(JSON.stringify(nbPoints))}"></div>` : '';
   const nearbyHtml = geoOk ? `
     <section class="pg-near" aria-labelledby="pgNearH">
       <h2 class="pg-section-label" id="pgNearH">${nearItems.length ? "The neighbourhood" : "On the map"}</h2>
@@ -1557,7 +1719,9 @@ function buildPropertyPageHtml(p, related) {
       }).join('')}
       </div>` : ''}
       <p class="pg-near-note">The pin marks the approximate area, not the exact unit. Distances are straight-line. Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+      ${lifeHtml(p.nearby, esc)}
     </section>` : '';
+  const cmpHtml = priceStripHtml(comps, esc);
 
   const mapsQ = String(p.mapLocation || loc || '').replace(/\s+/g, ' ').trim();
   const locHtml = loc
@@ -1722,13 +1886,51 @@ body.dark-mode .pg-near-cat li{border-top-color:var(--line)}
 .pg-near-cat li span{font-size:14px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:anywhere}
 .pg-near-cat li b{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap}
 .pg-near-note{margin-top:10px;font-size:12px;color:var(--gray)}
-.pg-map-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-.pg-map-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;background:var(--paper);color:var(--ink);border:2px solid var(--line);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;text-decoration:none}
+.pg-map-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pg-map-btn{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 11px;background:var(--paper);color:var(--ink);border:2px solid var(--line);font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;text-decoration:none}
 .pg-map-btn:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
 .pg-map-btn[aria-pressed="true"]{background:#1f5fbf;border-color:#1f5fbf;color:#fff}
 .pg-map-btn:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
 .pg-near-map{height:380px;border:2px solid var(--line);background:var(--paper2);margin-bottom:12px;position:relative;z-index:0}
 @media(max-width:600px){.pg-near-map{height:300px}}
+.pg-map-btn[hidden]{display:none}
+.pg-map-btn[disabled]{opacity:.7;cursor:progress}
+.pg-life{border:2px solid var(--line);background:var(--paper);padding:18px 20px;margin-top:16px}
+.pg-life-head{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.pg-life-score{display:flex;align-items:baseline;gap:4px;background:#0a0a0a;color:#f1eee9;padding:10px 14px;flex:0 0 auto}
+body.dark-mode .pg-life-score{background:#f1eee9;color:#0a0a0a}
+.pg-life-score b{font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1}
+.pg-life-score span{font:700 11px/1 'JetBrains Mono',monospace;opacity:.7}
+.pg-life-head h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.pg-life-head p{font-size:17px;font-weight:700;line-height:1.25}
+.pg-life-body{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:10px 24px;align-items:center}
+@media(max-width:700px){.pg-life-body{grid-template-columns:1fr}.pg-life-radar{max-width:300px;margin:0 auto}}
+.pg-life-radar{width:100%;height:auto;display:block;overflow:visible}
+.pg-life-radar .pg-life-grid{fill:none;stroke:var(--line);stroke-width:1;opacity:.35}
+.pg-life-radar .pg-life-shape{fill:rgba(255,61,0,.22);stroke:#ff3d00;stroke-width:2.5;stroke-linejoin:round}
+.pg-life-radar text{font:700 10.5px 'JetBrains Mono',monospace;fill:var(--ink);letter-spacing:.5px;text-transform:uppercase}
+.pg-life-list{list-style:none;margin:0}
+.pg-life-list li{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--paper2)}
+body.dark-mode .pg-life-list li{border-top-color:var(--line)}
+.pg-life-list li:first-child{border-top:0}
+.pg-life-list i{color:var(--hot-text);text-align:center}
+.pg-life-list span b{display:block;font-size:14px}
+.pg-life-list small{display:block;font-size:12px;color:var(--gray);line-height:1.35;overflow-wrap:anywhere}
+.pg-life-list em{display:flex;align-items:center;gap:8px;font:700 13px/1 'JetBrains Mono',monospace;font-style:normal;min-width:92px;justify-content:flex-end}
+.pg-life-bar{display:block;width:56px;height:6px;background:var(--paper2)}
+body.dark-mode .pg-life-bar{background:var(--line)}
+.pg-life-bar span{display:block;height:100%;background:#ff3d00}
+.pg-cmp{margin-bottom:36px}
+.pg-cmp-lead{font-size:15px;line-height:1.5;margin-bottom:26px;max-width:78ch}
+.pg-cmp-strip{position:relative;height:46px;margin:0 6px}
+.pg-cmp-axis{position:absolute;left:0;right:0;top:22px;height:2px;background:var(--line)}
+.pg-cmp-dot{position:absolute;top:16px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);opacity:.75}
+.pg-cmp-dot.is-me{top:12px;width:22px;height:22px;margin-left:-11px;background:#ff3d00;border-color:#0a0a0a;opacity:1;z-index:2}
+.pg-cmp-dot em,.pg-cmp-mid em{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-style:normal}
+.pg-cmp-dot.is-me em{bottom:calc(100% + 6px);color:var(--hot-text)}
+.pg-cmp-mid{position:absolute;top:8px;height:30px;width:0;border-left:2px dashed var(--gray)}
+.pg-cmp-mid em{top:calc(100% + 6px);color:var(--gray)}
+.pg-cmp-scale{display:flex;justify-content:space-between;font:700 10.5px/1 'JetBrains Mono',monospace;color:var(--gray);margin-top:22px;letter-spacing:.5px}
 .pg-near-map .leaflet-tile-pane{filter:grayscale(.85) contrast(1.04) brightness(1.03)}
 body.dark-mode .pg-near-map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
 .pg-near-map .leaflet-bar a{border-radius:0}
@@ -1824,6 +2026,7 @@ h2.pg-section-label{font-weight:700}
   ${specsHtml}
   <a class="pg-brochure" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download the brochure (PDF)</a>
   ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
+  ${cmpHtml}
   ${nearbyHtml}
   <div class="pg-form" id="inquire">
     <h2>Inquire about this property</h2>
@@ -1919,10 +2122,10 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=115"></script>
-<script src="/js/a11y.js?v=115" defer></script>
-<script src="/js/gallery.js?v=115" defer></script>
-${geoOk ? '<script src="/js/glra-maps.js?v=115" defer></script>' : ''}
+<script src="/js/main.js?v=116"></script>
+<script src="/js/a11y.js?v=116" defer></script>
+<script src="/js/gallery.js?v=116" defer></script>
+${geoOk ? '<script src="/js/glra-maps.js?v=116" defer></script>' : ''}
 </body>
 </html>`;
 }
@@ -2146,9 +2349,9 @@ app.get('/property/:id', async (req, res) => {
     // Neighbours to link to. Preference order: same area, then same kind of
     // property, then simply the newest - so the block is never empty and a
     // crawler always has somewhere to go from here.
-    const related = await findRelatedListings(p);
+    const [related, comps] = await Promise.all([findRelatedListings(p), findPriceComparables(p)]);
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(buildPropertyPageHtml(p, related));
+    res.send(buildPropertyPageHtml(p, related, comps));
   } catch (err) {
     return res.redirect(302, '/properties.html');
   }
@@ -2878,13 +3081,23 @@ function normalizeSavedSearchCriteria(raw) {
     minBeds: Math.floor(num(r.minBeds, 20)),
     minBaths: Math.floor(num(r.minBaths, 20)),
     minPrice: num(r.minPrice, 1e12),
-    maxPrice: num(r.maxPrice, 1e12)
+    maxPrice: num(r.maxPrice, 1e12),
+    area: normalizeSavedSearchArea(r.area)
   };
+}
+
+// A circle drawn on the properties page map. Same limits the page applies:
+// the Philippines, 100 m to 60 km. Rounded like the page's own URL (4 dp).
+function normalizeSavedSearchArea(a) {
+  if (!a || typeof a !== 'object') return null;
+  const lat = Number(a.lat), lng = Number(a.lng), r = Number(a.r);
+  if (!(lat >= 4 && lat <= 22 && lng >= 116 && lng <= 127.5 && r >= 100)) return null;
+  return { lat: Number(lat.toFixed(4)), lng: Number(lng.toFixed(4)), r: Math.round(Math.min(r, 60000)) };
 }
 
 function savedSearchHasCriteria(c) {
   return !!(c && (c.category || c.q || c.propertyType || c.minBeds > 0 ||
-    c.minBaths > 0 || c.minPrice > 0 || c.maxPrice > 0));
+    c.minBaths > 0 || c.minPrice > 0 || c.maxPrice > 0 || c.area));
 }
 
 // One listing against one saved search. Pure: no DB, no dates, no side effects.
@@ -2906,6 +3119,13 @@ function savedSearchMatches(p, c) {
   if (!glraPriceFits(p, c.category, minPrice, maxPrice)) return false;
   if (c.category === 'FOR SALE' && !ssIsForSale(p)) return false;
   if (c.category === 'FOR LEASE' && !ssIsForLease(p)) return false;
+  // Inside the drawn circle, measured from the same rounded position the page
+  // uses (glraInArea), so the email and the map agree.
+  if (c.area) {
+    const g = p.geo;
+    if (!g || g.status !== 'ok' || !Number.isFinite(g.lat) || !Number.isFinite(g.lng)) return false;
+    if (metresBetween(c.area.lat, c.area.lng, Number(g.lat.toFixed(3)), Number(g.lng.toFixed(3))) > c.area.r) return false;
+  }
   return true;
 }
 
@@ -2924,8 +3144,10 @@ function describeSavedSearch(raw) {
   if (c.minPrice > 0 && c.maxPrice > 0) s += `, ${peso(c.minPrice)} to ${peso(c.maxPrice)}`;
   else if (c.minPrice > 0) s += `, from ${peso(c.minPrice)}`;
   else if (c.maxPrice > 0) s += `, up to ${peso(c.maxPrice)}`;
+  if (c.area) s += `, inside the ${savedSearchKm(c.area.r)} km circle drawn on the map`;
   return s;
 }
+function savedSearchKm(r) { const km = r / 1000; return km < 10 ? km.toFixed(1) : String(Math.round(km)); }
 
 // The same search, opened on the properties page (initFromUrl reads these).
 function savedSearchBrowseUrl(raw) {
@@ -2938,6 +3160,8 @@ function savedSearchBrowseUrl(raw) {
   if (c.minPrice > 0) p.set('minPrice', String(Math.round(c.minPrice)));
   if (c.maxPrice > 0) p.set('maxPrice', String(Math.round(c.maxPrice)));
   if (c.category) p.set('category', c.category);
+  if (c.area) p.set('area', [c.area.lat.toFixed(4), c.area.lng.toFixed(4), c.area.r].join(','));
+  if (c.area) p.set('view', 'map');
   const qs = p.toString();
   return `${SITE_URL}/properties.html${qs ? '?' + qs : ''}`;
 }
@@ -2960,6 +3184,7 @@ async function loadSavedSearchListings() {
     { $project: {
       title: 1, location: 1, price: 1, monthlyRental: 1, bedrooms: 1, bathrooms: 1,
       propertyType: 1, listingType: 1, sqm: 1, landArea: 1, status: 1, createdAt: 1,
+      'geo.lat': 1, 'geo.lng': 1, 'geo.status': 1,
       mainImage: { $cond: [
         { $eq: [{ $substrCP: [{ $ifNull: ['$mainImage', ''] }, 0, 4] }, 'http'] },
         '$mainImage', ''
@@ -3350,24 +3575,47 @@ const NOT_RUNNING_RAIL = /metro manila subway|\bmmsp\b|north[\s-]*south commuter
 function nearbyCategory(tags) {
   if (tags.construction || tags.proposed || tags.disused || tags.abandoned || tags['disused:railway'] || tags['abandoned:railway']) return '';
   if (tags.railway === 'station') {
-    // Every line running in Metro Manila today (LRT-1, LRT-2, MRT-3) is mapped
-    // as station=light_rail; everything mapped station=subway (the Subway,
+    // LRT-1 and MRT-3 are mapped as station=light_rail. LRT-2 is mapped as
+    // station=subway although it runs (this used to drop every LRT-2 station,
+    // Katipunan included); everything else mapped station=subway (the Subway,
     // MRT-7, the North Triangle Common Station) is still being built.
-    if (tags.station === 'subway' || tags.subway === 'yes') return '';
-    return NOT_RUNNING_RAIL.test([tags.network, tags.operator, tags.line, tags['name:en'], tags.name].filter(Boolean).join(' ')) ? '' : 'rail';
+    const text = [tags.network, tags.operator, tags.line, tags['name:en'], tags.name].filter(Boolean).join(' ');
+    if ((tags.station === 'subway' || tags.subway === 'yes') && !/LRT[\s-]*(Line\s*)?2\b|light rail transit authority|\bLRTA\b/i.test(text)) return '';
+    return NOT_RUNNING_RAIL.test(text) ? '' : 'rail';
   }
   if (tags.shop === 'mall') return 'mall';
   if (tags.amenity === 'hospital') return 'hospital';
   if (/^(school|university|college)$/.test(tags.amenity || '')) return 'school';
   return '';
 }
+// The lifestyle score counts everyday places within 500 m and 1 km (about a
+// 6- and a 12-minute walk). Overpass answers each with a bare count, so the
+// query stays small even in the middle of Makati.
+const LIFE_SETS = [
+  ['grocery', '(nwr.sh["shop"~"^(supermarket|convenience|greengrocer)$"];nwr.am["amenity"="marketplace"];)'],
+  ['dining', 'nwr.am["amenity"~"^(restaurant|cafe|fast_food|food_court)$"]'],
+  ['park', 'nwr.le["leisure"~"^(park|playground|nature_reserve)$"]'],
+  ['health', 'nwr.am["amenity"~"^(pharmacy|clinic|doctors|dentist|hospital)$"]'],
+  ['transit', '(node.bs;nwr.am["amenity"="bus_station"];nwr.rs;)'],
+  ['school', 'nwr.am["amenity"~"^(school|kindergarten|university|college)$"]']
+];
+// One pass over the 1 km around the listing per tag key, then each category
+// is picked out of those sets and counted twice: inside 500 m, then all of
+// the 1 km. The answer is twelve count elements, in this order.
+function lifeQuery(lat, lng) {
+  const P = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  return `nwr["amenity"](around:1000,${P})->.am;nwr["shop"](around:1000,${P})->.sh;nwr["leisure"](around:1000,${P})->.le;` +
+    `node["highway"="bus_stop"](around:1000,${P})->.bs;nwr["railway"="station"](around:1000,${P})->.rs;` +
+    LIFE_SETS.map(([, set]) => `${set}->.s;nwr.s(around:500,${P});out count;.s out count;`).join('');
+}
 async function overpassNearby(lat, lng) {
-  const key = `o4:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const key = `o5:${lat.toFixed(4)},${lng.toFixed(4)}`;
   const cached = geoCacheGet(key);
   if (cached !== undefined) return cached;
   const a = `(around:${NEARBY_RADIUS_M},${lat.toFixed(6)},${lng.toFixed(6)})`;
-  const query = `[out:json][timeout:25];(nwr["railway"="station"]${a};nwr["shop"="mall"]${a};` +
-    `nwr["amenity"="hospital"]${a};nwr["amenity"="school"]${a};nwr["amenity"="university"]${a};nwr["amenity"="college"]${a};);out center tags;`;
+  const lifeQ = lifeQuery(lat, lng);
+  const query = `[out:json][timeout:30];(nwr["railway"="station"]${a};nwr["shop"="mall"]${a};` +
+    `nwr["amenity"="hospital"]${a};nwr["amenity"="school"]${a};nwr["amenity"="university"]${a};nwr["amenity"="college"]${a};);out center tags;` + lifeQ;
   // Overpass shares two query slots per address and frees one only after a
   // cool-down that grows with how long the last query ran, so the gap grows
   // with the work; a busy answer (429/504) gets one patient retry.
@@ -3394,7 +3642,11 @@ async function overpassNearby(lat, lng) {
   const data = await r.json();
   if (data && data.remark && /runtime error|timed out/i.test(data.remark)) throw new Error('Overpass: ' + data.remark.slice(0, 120));
   const best = {};
+  const counts = (data.elements || []).filter(el => el.type === 'count').map(el => Number(el.tags && el.tags.total) || 0);
+  const life = {};
+  if (counts.length === LIFE_SETS.length * 2) LIFE_SETS.forEach(([k], i) => { life[k] = [counts[2 * i], Math.max(counts[2 * i], counts[2 * i + 1])]; });
   (data.elements || []).forEach(el => {
+    if (el.type === 'count') return;
     const tags = el.tags || {};
     const cat = nearbyCategory(tags);
     const name = String(tags['name:en'] || tags.name || '').replace(/\s+/g, ' ').trim().slice(0, 90);
@@ -3411,8 +3663,9 @@ async function overpassNearby(lat, lng) {
   NEARBY_CATS.forEach(([cat]) => {
     Object.values(best).filter(x => x.cat === cat).sort((x, y) => x.dist - y.dist).slice(0, 3).forEach(x => items.push(x));
   });
-  geoCachePut(key, items);
-  return items;
+  const out = { items, life: Object.keys(life).length ? life : null };
+  geoCachePut(key, out);
+  return out;
 }
 
 function geoNeedsLookup(p, q, now) {
@@ -3430,6 +3683,8 @@ function nearbyNeeded(p, geo, now) {
   if (!n || !n.at) return true;
   // Lists saved before places carried a position: fetch again for the map.
   if (Array.isArray(n.items) && n.items.length && !Number.isFinite(n.items[0].lat)) return true;
+  // Saved before the lifestyle counts (and before LRT-2 stations counted).
+  if (!n.life) return true;
   const at = new Date(n.at).getTime();
   if (geo.at && at < new Date(geo.at).getTime()) return true;
   return now - at > NEARBY_MAX_AGE_MS;
@@ -3487,8 +3742,8 @@ async function runGeoPass() {
       const bo = _nearbyBackoff.get(id);
       if (nearbyFails < 3 && nearbyNeeded(p, geo, now) && !(bo && bo.until > now)) {
         try {
-          const items = await overpassNearby(geo.lat, geo.lng);
-          await Property.updateOne({ _id: p._id }, { $set: { nearby: { at: new Date(), items } } });
+          const { items, life } = await overpassNearby(geo.lat, geo.lng);
+          await Property.updateOne({ _id: p._id }, { $set: { nearby: { at: new Date(), items, life: life || undefined } } });
           invalidatePublicListingsCache();
           _nearbyBackoff.delete(id);
           stats.nearby++;
@@ -3553,6 +3808,71 @@ function publicGeo(p) {
   return p;
 }
 
+// ── Travel-time areas for the listing page map (js/glra-maps.js) ──────────
+// The free Valhalla server run by FOSSGIS on OpenStreetMap data. Only a live
+// listing's own public position may be asked about, so this cannot be used
+// as a free routing proxy, and each answer is kept for 30 days: a listing
+// costs Valhalla two questions a month at most (car and on foot).
+const ISO_URL = 'https://valhalla1.openstreetmap.de/isochrone';
+const ISO_TTL_MS = 30 * 24 * 3600 * 1000;
+const _isoMem = new Map();
+let _isoChain = Promise.resolve(), _isoLast = 0;
+let _isoPoints = { at: 0, set: null };
+async function isoAllowedPoints() {
+  if (_isoPoints.set && Date.now() - _isoPoints.at < 10 * 60 * 1000) return _isoPoints.set;
+  const rows = await Property.find({ status: 'available', 'geo.status': 'ok' }).select('geo').lean();
+  const set = new Set(rows.filter(r => r.geo && Number.isFinite(r.geo.lat) && Number.isFinite(r.geo.lng))
+    .map(r => r.geo.lat.toFixed(3) + ',' + r.geo.lng.toFixed(3)));
+  _isoPoints = { at: Date.now(), set };
+  return set;
+}
+function isoAsk(lat, lng, mode) {
+  // One question at a time, at least two seconds apart.
+  const run = _isoChain.then(async () => {
+    const wait = 2000 - (Date.now() - _isoLast);
+    if (wait > 0) await sleepMs(wait);
+    _isoLast = Date.now();
+    const q = { locations: [{ lat, lon: lng }], costing: mode, contours: [{ time: 15 }, { time: 30 }, { time: 45 }], polygons: true, denoise: 0.3, generalize: 60 };
+    const r = await geoFetch(ISO_URL + '?json=' + encodeURIComponent(JSON.stringify(q)), { headers: { 'User-Agent': GEO_UA, 'Accept': 'application/json' } }, 30000);
+    if (!r.ok) throw new Error('Valhalla HTTP ' + r.status);
+    const d = await r.json();
+    return {
+      type: 'FeatureCollection',
+      features: (d.features || []).filter(f => f && f.geometry && /Polygon/.test(f.geometry.type))
+        .map(f => ({ type: 'Feature', properties: { contour: Number(f.properties && f.properties.contour) || 0 }, geometry: f.geometry }))
+    };
+  });
+  _isoChain = run.catch(() => {});
+  return run;
+}
+app.get('/api/isochrone', trackLimiter, async (req, res) => {
+  const lat = Number(req.query.lat), lng = Number(req.query.lng);
+  const mode = req.query.mode === 'pedestrian' ? 'pedestrian' : 'auto';
+  if (!(lat >= 4 && lat <= 22 && lng >= 116 && lng <= 127.5)) return res.status(400).json({ error: 'Bad position' });
+  const pt = lat.toFixed(3) + ',' + lng.toFixed(3);
+  try {
+    const allowed = await isoAllowedPoints();
+    if (!allowed.has(pt)) return res.status(404).json({ error: 'Travel times are only available for live listings.' });
+    const key = 'iso1:' + mode + ':' + pt;
+    let hit = _isoMem.get(key);
+    if (!hit || Date.now() - hit.t > ISO_TTL_MS) {
+      const disk = geoCacheGet(key);
+      if (disk !== undefined) hit = { t: Date.now(), v: disk };
+      else {
+        const v = await isoAsk(Number(lat.toFixed(3)), Number(lng.toFixed(3)), mode);
+        geoCachePut(key, v);
+        hit = { t: Date.now(), v };
+      }
+      if (_isoMem.size > 400) _isoMem.clear();
+      _isoMem.set(key, hit);
+    }
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.json(hit.v);
+  } catch (e) {
+    res.status(502).json({ error: 'The travel-time service did not answer. Please try again later.' });
+  }
+});
+
 // Safety net for listings that change some other way (a lease ending and the
 // listing going back on the market, a restart that lost a pending timer).
 // First run two minutes after boot so the database has time to connect.
@@ -3573,6 +3893,10 @@ app.post('/api/saved-search',
   body('criteria.minBaths').optional({ values: 'falsy' }).isInt({ min: 0, max: 20 }).toInt(),
   body('criteria.minPrice').optional({ values: 'falsy' }).isFloat({ min: 0, max: 1e12 }).toFloat(),
   body('criteria.maxPrice').optional({ values: 'falsy' }).isFloat({ min: 0, max: 1e12 }).toFloat(),
+  body('criteria.area').optional({ values: 'null' }).isObject(),
+  body('criteria.area.lat').optional().isFloat({ min: 4, max: 22 }).toFloat(),
+  body('criteria.area.lng').optional().isFloat({ min: 116, max: 127.5 }).toFloat(),
+  body('criteria.area.r').optional().isFloat({ min: 100, max: 60000 }).toFloat(),
   body('vid').optional().isString().trim().isLength({ max: 64 }),
   handleValidation,
   async (req, res) => {
@@ -3600,7 +3924,8 @@ app.post('/api/saved-search',
         'criteria.minBeds': criteria.minBeds,
         'criteria.minBaths': criteria.minBaths,
         'criteria.minPrice': criteria.minPrice,
-        'criteria.maxPrice': criteria.maxPrice
+        'criteria.maxPrice': criteria.maxPrice,
+        'criteria.area': criteria.area
       });
       if (same && same.confirmed) {
         return res.json({
@@ -4507,6 +4832,7 @@ function stripPrivilegedPropertyFields(body, req) {
   SYSTEM_PROPERTY_FIELDS.forEach(k => delete out[k]);
   if (!(req.user && req.user.role === 'admin')) ADMIN_ONLY_PROPERTY_FIELDS.forEach(k => delete out[k]);
   if (typeof out.propertyType === 'string') out.propertyType = out.propertyType.trim();
+  if (out.facing !== undefined) out.facing = /^(N|NE|E|SE|S|SW|W|NW)$/.test(String(out.facing)) ? String(out.facing) : '';
   return out;
 }
 

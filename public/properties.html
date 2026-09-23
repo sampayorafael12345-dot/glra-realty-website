@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=115">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=115">
+<link rel="stylesheet" href="/css/styles.css?v=116">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=116">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -551,6 +551,35 @@ html body .grid .prop-price{margin-top:auto !important;padding-top:16px}
 html body .grid .prop-psqm{min-height:15px}
 html body .grid .prop-foot{margin-top:14px;padding-top:14px;border-top:1px solid var(--ab-line);flex-wrap:nowrap}
 body:not(.dark-mode) .grid .prop-foot{border-top-color:#d9d4cc}
+/* Price histogram slider (dark search card) */
+.price-hist{margin:22px 0 4px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
+.price-hist[hidden]{display:none}
+.price-hist-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.price-hist-lbl{font:700 10.5px/1 'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:rgba(241,238,233,.7)}
+.price-hist-val{font:700 13px/1.2 'JetBrains Mono',monospace;color:#f1eee9;letter-spacing:.5px}
+.price-hist-bars{display:flex;align-items:flex-end;gap:2px;height:64px;margin:0 11px}
+.price-hist-bars i{flex:1 1 0;background:rgba(241,238,233,.22);min-height:2px;transition:background .12s}
+.price-hist-bars i.is-in{background:#ff3d00}
+.price-hist-range{position:relative;height:30px;margin:0 2px}
+.price-hist-track{position:absolute;left:11px;right:11px;top:13px;height:4px;background:rgba(241,238,233,.2)}
+.price-hist-track span{position:absolute;top:0;bottom:0;background:#ff3d00}
+html body .price-hist-range input[type=range]{position:absolute;left:0;top:0;width:100%;height:30px;margin:0;padding:0 !important;background:transparent !important;border:0 !important;-webkit-appearance:none;appearance:none;pointer-events:none;box-shadow:none !important}
+.price-hist-range input[type=range]::-webkit-slider-runnable-track{background:transparent;height:30px}
+.price-hist-range input[type=range]::-moz-range-track{background:transparent;height:30px}
+.price-hist-range input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;margin-top:4px;background:#f1eee9;border:3px solid #0a0a0a;box-shadow:0 0 0 2px #ff3d00;cursor:grab}
+.price-hist-range input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:0;background:#f1eee9;border:3px solid #0a0a0a;box-shadow:0 0 0 2px #ff3d00;cursor:grab}
+.price-hist-range input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px #ff3d00}
+.price-hist-range input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px #ff3d00}
+.price-hist-note{margin:4px 0 0;font-size:12px;color:rgba(241,238,233,.6)}
+/* Outside the dragged price range: faded until the handle is let go. */
+html body .prop-card.is-out{opacity:.25;filter:grayscale(1);transition:opacity .15s}
+#mapCanvas .glra-pin-wrap.is-out{opacity:.2;filter:grayscale(1)}
+/* Map layers panel */
+.glra-layers{display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--ab-paper);border:2px solid var(--ab-line);box-shadow:3px 3px 0 var(--ab-line)}
+.glra-layers[hidden]{display:none}
+.glra-layers-t{font:700 9.5px/1.2 'JetBrains Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-gray);margin:0 2px 2px}
+html body .glra-layers .glra-mapctl-btn{box-shadow:none !important;min-height:34px}
+@media(max-width:700px){html body .glra-layers .glra-mapctl-btn{width:auto;justify-content:flex-start !important;padding:0 10px !important}html body .glra-layers .glra-mapctl-btn span{display:inline}}
 /* ═══ MAP EXTRAS: distance to work, price colours, draw area, flood ═══ */
 .glra-sr{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important}
 .near-pick{position:relative;display:inline-flex;align-items:center}
@@ -767,6 +796,16 @@ html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spaci
             <input type="text" id="maxPriceInput" aria-label="Maximum price" placeholder="Max" oninput="fmtPrice(this);applyFilters(currentCategory,cachedProperties)">
           </div>
         </div>
+      </div>
+      <div class="price-hist" id="priceHist" hidden>
+        <div class="price-hist-top"><span class="price-hist-lbl">Drag to set a price range</span><span class="price-hist-val" id="priceHistVal" aria-live="polite">Any price</span></div>
+        <div class="price-hist-bars" id="priceHistBars" aria-hidden="true"></div>
+        <div class="price-hist-range">
+          <span class="price-hist-track" aria-hidden="true"><span id="priceHistFill"></span></span>
+          <input type="range" id="priceHistMin" min="0" max="1000" step="1" value="0" aria-label="Lowest price">
+          <input type="range" id="priceHistMax" min="0" max="1000" step="1" value="1000" aria-label="Highest price">
+        </div>
+        <p class="price-hist-note" id="priceHistNote"></p>
       </div>
       <button class="reset-filters-btn" onclick="resetAllFilters()"><i class="fas fa-undo-alt"></i> Reset All Filters</button>
     </div>
@@ -1024,10 +1063,10 @@ html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spaci
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=115"></script>
-<script src="/js/smart-search.js?v=115"></script>
-<script src="/js/glra-maps.js?v=115"></script>
-<script src="/js/gallery.js?v=115" defer></script>
+<script src="/js/main.js?v=116"></script>
+<script src="/js/smart-search.js?v=116"></script>
+<script src="/js/glra-maps.js?v=116"></script>
+<script src="/js/gallery.js?v=116" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
    Display titles, shareable filters in the URL, the live results count,
@@ -1783,8 +1822,15 @@ function glraMapControls(m){
       d.innerHTML =
         '<button type="button" class="glra-mapctl-btn" id="mapDrawBtn" aria-pressed="false" title="Draw a circle to see only the homes inside it"><i class="fas fa-draw-polygon" aria-hidden="true"></i><span>Draw area</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapClearAreaBtn" hidden title="Remove the circle"><i class="fas fa-times" aria-hidden="true"></i><span>Clear area</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapAreaAlertBtn" hidden title="Email me when a new home appears inside this circle"><i class="fas fa-bell" aria-hidden="true"></i><span>Alert me here</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapPsqmBtn" aria-pressed="false" title="Colour pins by price per square metre"><i class="fas fa-palette" aria-hidden="true"></i><span>Price / sqm</span></button>' +
-        '<button type="button" class="glra-mapctl-btn" id="mapFloodBtn" aria-pressed="false" title="Show UP NOAH flood hazard areas"><i class="fas fa-water" aria-hidden="true"></i><span>Flood hazard</span></button>';
+        '<button type="button" class="glra-mapctl-btn" id="mapLayersBtn" aria-expanded="false" aria-controls="mapLayersPanel" title="Trains, Arthaland, flood and fault maps"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Layers</span></button>' +
+        '<div class="glra-layers" id="mapLayersPanel" hidden><div class="glra-layers-t">Show on the map</div>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapArthaBtn" aria-pressed="true"><i class="fas fa-building" aria-hidden="true"></i><span>Arthaland</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapRailBtn" aria-pressed="false"><i class="fas fa-train-subway" aria-hidden="true"></i><span>Trains</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i><span>Flood hazard</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapFaultBtn" aria-pressed="false"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span>Fault lines</span></button>' +
+        '</div>';
       L.DomEvent.disableClickPropagation(d);
       L.DomEvent.disableScrollPropagation(d);
       return d;
@@ -1799,8 +1845,23 @@ function glraMapControls(m){
     glraPsqmLegend();
     glraMapRender(false);
   });
-  if (window.GLRAMaps) GLRAMaps.floodButton(document.getElementById('mapFloodBtn'), function(){ return GLRA_MAP.map; });
-  else document.getElementById('mapFloodBtn').hidden = true;
+  document.getElementById('mapAreaAlertBtn').addEventListener('click', function(){ if (window.openSavedSearchModal) openSavedSearchModal(this); });
+  var lb = document.getElementById('mapLayersBtn'), lp = document.getElementById('mapLayersPanel');
+  lb.addEventListener('click', function(){
+    var open = lp.hidden;
+    lp.hidden = !open;
+    lb.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  if (window.GLRAMaps) {
+    var gm = function(){ return GLRA_MAP.map; };
+    GLRAMaps.floodButton(document.getElementById('mapFloodBtn'), gm);
+    GLRAMaps.layerButton(document.getElementById('mapRailBtn'), gm, GLRAMaps.railToggle, 'The train map could not load. Try again later.');
+    GLRAMaps.layerButton(document.getElementById('mapFaultBtn'), gm, GLRAMaps.faultToggle, 'The fault map could not load. Try again later.');
+    GLRAMaps.layerButton(document.getElementById('mapArthaBtn'), gm, GLRAMaps.arthalandToggle);
+    GLRAMaps.arthalandToggle(m, true);
+  } else {
+    lb.hidden = true;
+  }
 }
 function glraPsqmLegend(){
   var m = GLRA_MAP.map;
@@ -1899,6 +1960,8 @@ function glraSetArea(a, quiet){
   if (chip) { chip.hidden = !GLRA_AREA; var s = chip.querySelector('span'); if (s) s.textContent = glraAreaChipText(); }
   var clr = document.getElementById('mapClearAreaBtn');
   if (clr) clr.hidden = !GLRA_AREA;
+  var alr = document.getElementById('mapAreaAlertBtn');
+  if (alr) alr.hidden = !GLRA_AREA;
   var db = document.getElementById('mapDrawBtn');
   if (db && !GLRA_MAP.drawing) db.querySelector('span').textContent = GLRA_AREA ? 'Redraw' : 'Draw area';
   glraAreaShape();
@@ -1933,6 +1996,107 @@ function glraPlaceMarker(){
   }).addTo(m);
   GLRA_MAP.placeMk.bindTooltip(GLRA_NEAR.key === 'me' ? 'You are here' : GLRA_NEAR.n, { direction: 'top', offset: [0, -14] });
 }
+
+/* ======================= PRICE HISTOGRAM =======================
+   Bars: how many listings sit at each price, on a log scale (a P3M condo and a
+   P300M lot share one axis). Dragging a handle fades the pins and cards that
+   fall outside at once; letting go applies the filter (and refits the map
+   once, not on every step). The typed Min/Max boxes stay the source of truth:
+   the slider writes them and redraws from them. */
+var GLRA_HIST = { lo: 0, hi: 0, n: 30, base: [] };
+function glraHistPrice(p, cat){
+  var sale = Number(p.price) || 0, rent = Number(p.monthlyRental) || Number(p.price) || 0;
+  if (cat === 'FOR LEASE') return rent;
+  if (cat === 'FOR SALE') return sale;
+  return isForSale(p) ? sale : 0;
+}
+function glraHistRound(v){
+  if (!(v > 0)) return 0;
+  var e = Math.pow(10, Math.floor(Math.log(v) / Math.LN10) - 1);
+  return Math.round(v / e) * e;
+}
+function glraHistVal(pos){ return Math.exp(Math.log(GLRA_HIST.lo) + pos / 1000 * (Math.log(GLRA_HIST.hi) - Math.log(GLRA_HIST.lo))); }
+function glraHistPos(v){
+  if (!(v > 0)) return null;
+  return Math.max(0, Math.min(1000, Math.round(1000 * (Math.log(v) - Math.log(GLRA_HIST.lo)) / (Math.log(GLRA_HIST.hi) - Math.log(GLRA_HIST.lo)))));
+}
+function glraHistMoney(v){
+  if (v >= 1e9) return '₱' + (v / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (v >= 1e6) return '₱' + (v / 1e6).toFixed(v >= 1e8 ? 0 : 1).replace(/\.0$/, '') + 'M';
+  if (v >= 1e3) return '₱' + Math.round(v / 1e3) + 'k';
+  return '₱' + Math.round(v);
+}
+function glraHistRange(){
+  var a = Number(document.getElementById('priceHistMin').value), b = Number(document.getElementById('priceHistMax').value);
+  return { mn: a <= 0 ? 0 : glraHistRound(glraHistVal(a)), mx: b >= 1000 ? 0 : glraHistRound(glraHistVal(b)), a: a, b: b };
+}
+function glraHistPaint(r){
+  var cat = currentCategory, lease = cat === 'FOR LEASE';
+  var sfx = lease ? '/mo' : '';
+  var txt = (!r.mn && !r.mx) ? 'Any price' : (r.mn && r.mx ? glraHistMoney(r.mn) + ' to ' + glraHistMoney(r.mx) : (r.mn ? 'From ' + glraHistMoney(r.mn) : 'Up to ' + glraHistMoney(r.mx))) + sfx;
+  var n = GLRA_HIST.base.filter(function(p){ return glraPriceFits(p, cat, r.mn, r.mx); }).length;
+  document.getElementById('priceHistVal').textContent = txt + ' · ' + n + (n === 1 ? ' home' : ' homes');
+  Array.prototype.forEach.call(document.querySelectorAll('#priceHistBars i'), function(bar, i){
+    var mid = (i + 0.5) / GLRA_HIST.n * 1000;
+    bar.classList.toggle('is-in', mid >= r.a && mid <= r.b);
+  });
+  var fill = document.getElementById('priceHistFill');
+  if (fill) { fill.style.left = (r.a / 10) + '%'; fill.style.right = (100 - r.b / 10) + '%'; }
+}
+function glraHistSync(base){
+  var box = document.getElementById('priceHist');
+  if (!box) return;
+  var cat = currentCategory;
+  GLRA_HIST.base = base || [];
+  var vals = GLRA_HIST.base.map(function(p){ return glraHistPrice(p, cat); }).filter(function(v){ return v > 0; });
+  var mn = getRaw('minPriceInput'), mx = getRaw('maxPriceInput');
+  /* The scale keeps room for a typed price outside the listings' range. */
+  var all = vals.concat([mn, mx].filter(function(v){ return v > 0; }));
+  if (vals.length < 2 || Math.max.apply(null, all) <= Math.min.apply(null, all)) { box.hidden = true; return; }
+  box.hidden = false;
+  GLRA_HIST.lo = Math.min.apply(null, all) * 0.97;
+  GLRA_HIST.hi = Math.max.apply(null, all) * 1.03;
+  var counts = []; for (var k = 0; k < GLRA_HIST.n; k++) counts.push(0);
+  vals.forEach(function(v){ counts[Math.min(GLRA_HIST.n - 1, Math.floor(glraHistPos(v) / 1000 * GLRA_HIST.n))]++; });
+  var top = Math.max.apply(null, counts) || 1;
+  document.getElementById('priceHistBars').innerHTML = counts.map(function(c){ return '<i style="height:' + (c ? Math.max(8, Math.round(c / top * 100)) : 2) + '%"></i>'; }).join('');
+  var a = mn > 0 ? glraHistPos(mn) : 0, b = mx > 0 ? glraHistPos(mx) : 1000;
+  document.getElementById('priceHistMin').value = a;
+  document.getElementById('priceHistMax').value = b;
+  document.getElementById('priceHistNote').textContent = cat === 'FOR LEASE' ? 'Monthly rents of the homes that match your other filters.' : (cat === 'FOR SALE' ? 'Asking prices of the homes that match your other filters.' : 'Sale prices. For monthly rents, pick the For Lease tab.');
+  glraHistPaint({ mn: mn, mx: mx, a: a, b: b });
+}
+function glraHistLive(r){
+  var cat = currentCategory;
+  Object.keys(GLRA_MAP.markers || {}).forEach(function(id){
+    var mk = GLRA_MAP.markers[id], el = mk && mk.getElement && mk.getElement(), p = findPropById(id);
+    if (el && p) el.classList.toggle('is-out', !glraPriceFits(p, cat, r.mn, r.mx));
+  });
+  (allProperties || []).forEach(function(p){
+    var c = glraCardEl(p._id);
+    if (c) c.classList.toggle('is-out', !glraPriceFits(p, cat, r.mn, r.mx));
+  });
+}
+function glraHistWire(){
+  var lo = document.getElementById('priceHistMin'), hi = document.getElementById('priceHistMax');
+  if (!lo || !hi) return;
+  function onInput(e){
+    var a = Number(lo.value), b = Number(hi.value);
+    if (a > b - 20) { if (e.target === lo) lo.value = a = Math.max(0, b - 20); else hi.value = b = Math.min(1000, a + 20); }
+    var r = glraHistRange();
+    glraHistPaint(r);
+    glraHistLive(r);
+  }
+  function onChange(){
+    var r = glraHistRange();
+    document.getElementById('minPriceInput').value = r.mn ? r.mn.toLocaleString('en-US') : '';
+    document.getElementById('maxPriceInput').value = r.mx ? r.mx.toLocaleString('en-US') : '';
+    document.querySelectorAll('.is-out').forEach(function(el){ el.classList.remove('is-out'); });
+    applyFilters(currentCategory, cachedProperties);
+  }
+  [lo, hi].forEach(function(el){ el.addEventListener('input', onInput); el.addEventListener('change', onChange); });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', glraHistWire); else glraHistWire();
 
 /* ======================= COMPARE =======================
    Up to three listings side by side. The selection survives a reload in
@@ -2589,7 +2753,10 @@ function initFromUrl(properties){
   const propId=g('property');
   if(propId){setTimeout(()=>{const p=(cachedProperties||[]).find(x=>x._id===propId);if(p)openDetail(p._id);},600);}
 }
-function applyFilters(cat,properties){if(!properties)return;const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,cat,mn,mx))return false;if(!glraInArea(p))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);f=sortProperties(f);renderProperties(f);allProperties=f;if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),sq);glraAfterFilter(f);}
+/* Every filter except the price. The price histogram draws its bars from this
+   list, so they show what the price handles would choose between. */
+function glraFilterBase(cat,properties){const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraInArea(p))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);return {list:f,sq:sq};}
+function applyFilters(cat,properties){if(!properties)return;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');const b=glraFilterBase(cat,properties);let f=b.list.filter(p=>glraPriceFits(p,cat,mn,mx));f=sortProperties(f);renderProperties(f);allProperties=f;if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),b.sq);glraAfterFilter(f);glraHistSync(b.list);}
 function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.removeAttribute('aria-busy');c.innerHTML='';if(!properties.length){c.innerHTML=glraEmptyStateHtml();return;}const frag=document.createDocumentFragment();properties.forEach(p=>frag.appendChild(createCard(p)));c.appendChild(frag);setTimeout(initLazyLoading,80);}
 /* A listing's size, taken from whichever of the two areas it actually has.
    A vacant lot or a farm has no floor area; a condominium unit has no lot. The
@@ -2714,12 +2881,13 @@ loadProperties();
       minBeds: readInt('bedroomsSelect'),
       minBaths: readInt('bathsSelect'),
       minPrice: getRaw('minPriceInput'),
-      maxPrice: getRaw('maxPriceInput')
+      maxPrice: getRaw('maxPriceInput'),
+      area: (typeof GLRA_AREA !== 'undefined' && GLRA_AREA) ? { lat: GLRA_AREA.lat, lng: GLRA_AREA.lng, r: GLRA_AREA.r } : null
     };
   }
 
   function hasCriteria(c) {
-    return !!(c.category || c.q || c.propertyType || c.minBeds || c.minBaths || c.minPrice > 0 || c.maxPrice > 0);
+    return !!(c.category || c.q || c.propertyType || c.minBeds || c.minBaths || c.minPrice > 0 || c.maxPrice > 0 || c.area);
   }
 
   function describe(c) {
@@ -2735,6 +2903,7 @@ loadProperties();
     if (c.minPrice > 0 && c.maxPrice > 0) s += ', ' + peso(c.minPrice) + ' to ' + peso(c.maxPrice);
     else if (c.minPrice > 0) s += ', from ' + peso(c.minPrice);
     else if (c.maxPrice > 0) s += ', up to ' + peso(c.maxPrice);
+    if (c.area) { var km = c.area.r / 1000; s += ', inside the ' + (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km circle drawn on the map'; }
     return s;
   }
 
@@ -2845,9 +3014,9 @@ loadProperties();
   });
 })();
 </script>
-<script src="/js/brutalist-shell.js?v=115" defer></script>
-<script src="/js/description.js?v=115" defer></script>
-<script src="/js/a11y.js?v=115" defer></script>
-<script src="/js/chat.js?v=115" defer></script>
+<script src="/js/brutalist-shell.js?v=116" defer></script>
+<script src="/js/description.js?v=116" defer></script>
+<script src="/js/a11y.js?v=116" defer></script>
+<script src="/js/chat.js?v=116" defer></script>
 </body>
 </html>

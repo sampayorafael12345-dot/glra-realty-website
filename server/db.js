@@ -27,6 +27,9 @@ const propertySchema = new mongoose.Schema({
   propertyType: { type: String, default: 'Condominium' },
   parking: { type: Number, default: 0 },
   mapLocation: { type: String, default: '' },
+  // Which way the unit's main windows face (N, NE, E, SE, S, SW, W, NW, or
+  // blank). Optional; the listing page's sun path explains what it means.
+  facing: { type: String, default: '' },
   pricePerSqm: { type: String, default: '' },
   commission: { type: Number, default: 0 },
   fixedAmount: { type: Number, default: 0 },
@@ -64,7 +67,10 @@ const propertySchema = new mongoose.Schema({
   // Overpass), up to three of each, straight-line metres from geo.
   nearby: {
     at: { type: Date },
-    items: [{ _id: false, cat: String, name: String, dist: Number, lat: Number, lng: Number }]
+    items: [{ _id: false, cat: String, name: String, dist: Number, lat: Number, lng: Number }],
+    // Everyday places counted within 500 m and 1 km, for the lifestyle
+    // score: { grocery: [n500, n1000], dining, park, health, transit, school }.
+    life: { type: mongoose.Schema.Types.Mixed, default: undefined }
   }
 });
 
@@ -148,7 +154,12 @@ const savedSearchSchema = new mongoose.Schema({
     minBeds:      { type: Number, default: 0 },
     minBaths:     { type: Number, default: 0 },
     minPrice:     { type: Number, default: 0 },
-    maxPrice:     { type: Number, default: 0 }
+    maxPrice:     { type: Number, default: 0 },
+    // A circle drawn on the properties page map: centre and radius in metres.
+    area: {
+      type: new mongoose.Schema({ lat: Number, lng: Number, r: Number }, { _id: false }),
+      default: null
+    }
   },
   summary:         { type: String, default: '' },
   token:           { type: String, required: true, unique: true },
