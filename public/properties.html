@@ -1214,8 +1214,10 @@ function glraMapInit(){
   }).setView([14.58, 121.03], 11);
   L.control.zoom({ position: 'topright' }).addTo(m);
   m.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, subdomains: 'abc',
+  // OSM's tile policy requires a Referer; the site-wide no-referrer header
+  // gets tiles swapped for an "Access blocked" image, so send just our origin.
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, referrerPolicy: 'strict-origin-when-cross-origin',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
   }).addTo(m);
   GLRA_MAP.cluster = L.markerClusterGroup({
