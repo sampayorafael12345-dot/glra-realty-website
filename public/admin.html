@@ -79,7 +79,9 @@ input,textarea,select,[contenteditable="true"],[contenteditable=""]{caret-color:
 /* SIDEBAR */
 .sidebar{width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:300;border-right:1px solid rgba(200,169,110,.1);overflow-y:auto;transition:transform .3s ease}
 .sb-head{padding:18px 20px;border-bottom:1px solid rgba(200,169,110,.1);display:flex;align-items:center;gap:12px}
-.sb-head img{height:38px}
+/* The logo PNG is a 384px square with the wordmark in a band across the middle;
+   crop to that band instead of letting flex squash the square (it looked stretched). */
+.sb-head img{width:76px;height:42px;object-fit:cover;object-position:50% 46%;flex:0 0 auto;display:block}
 .sb-brand{font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-weight:600}
 .sb-brand small{display:block;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1.5px;font-family:'DM Sans',sans-serif;margin-top:0}
 .sb-nav{padding:12px 0;flex:1}
@@ -1095,6 +1097,16 @@ body.dark-mode .bm-preview-frame{border-color:var(--ab-line)}
 .na-tile:hover .na-go{opacity:1}
 .na-clear{border:2px dashed var(--ab-line);padding:26px 20px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#10b981;display:flex;align-items:center;justify-content:center;gap:10px}
 .na-clear i{font-size:18px}
+/* Tiles are <button>s, so the theme's global button rule (inline-flex, centred,
+   14px 24px padding) put each number at a different height depending on whether
+   its label wrapped. Pin number to the top and the label to a 2-line slot. */
+html body .na-tile{display:flex !important;flex-direction:column !important;align-items:stretch !important;justify-content:space-between !important;gap:12px !important;min-height:112px;padding:16px 18px 14px 20px !important;text-transform:none !important;letter-spacing:normal !important}
+html body .na-tile .na-lbl{align-items:flex-start;line-height:1.45;min-height:29px;margin-top:0}
+html body .na-tile .na-lbl i{margin-top:2px;width:12px;flex:0 0 12px}
+html body .na-tile:not(.na-hot) .na-num{color:var(--ab-gray)}
+html body .na-tile:hover{background:var(--card-bg) !important;color:inherit !important}
+html body .qa-btn{min-height:56px;line-height:1.35 !important}
+.bar-fill.is-zero{background:var(--ab-line)}
 
 /* Two-up layout */
 .dash-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -3720,7 +3732,7 @@ function barChartHTML(buckets, opts){
     const h=Math.round((b.count/max)*100);
     const d=b.date;
     const tip=`${b.count} · ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
-    return `<div class="bar-col"><div class="bar-tip">${tip}</div><div class="bar-fill" style="height:${h}%"></div></div>`;
+    return `<div class="bar-col"><div class="bar-tip">${tip}</div><div class="bar-fill${b.count?'':' is-zero'}" style="height:${h}%"></div></div>`;
   }).join('');
   const first=buckets[0]?.date, last=buckets[buckets.length-1]?.date;
   const fmt=d=>d?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
@@ -3798,7 +3810,7 @@ function renderQuickActions(){
   if(hasPerm('properties_create')) acts.push({ico:'fa-plus',lbl:'Add property',fn:"openAddProperty()"});
   if(hasPerm('tasks_create')||isAdmin()) acts.push({ico:'fa-clipboard-list',lbl:'New task',fn:"openNewTask()"});
   if(hasPerm('bulkmail_send')) acts.push({ico:'fa-paper-plane',lbl:'Email campaign',fn:"switchTab('bulkmail')"});
-  if(hasPerm('titling_manage')) acts.push({ico:'fa-stamp',lbl:'New titling job',fn:"switchTab('titling')"});
+  if(hasPerm('titling_manage')) acts.push({ico:'fa-stamp',lbl:'New titling job',fn:"switchTab('titling');openTitlingModal()"});
   if(hasPerm('leasing_manage')) acts.push({ico:'fa-key',lbl:'New lease',fn:"switchTab('leasing');openLeaseModal()"});
   if(hasPerm('cases_manage')) acts.push({ico:'fa-scale-balanced',lbl:'New case',fn:"switchTab('cases');openCaseModal()"});
   if(hasPerm('cases_view')) acts.push({ico:'fa-user-shield',lbl:'Conflict check',fn:"switchTab('cases');openConflictCheck()"});
@@ -3836,11 +3848,14 @@ function renderPortfolio(){
   const total=props.length;
   const avail=props.filter(p=>p.status==='available').length;
   const sold=total-avail;
-  const value=props.reduce((s,p)=>s+(Number(p.price)||0),0);
+  // Only available for-sale prices add up to a meaningful "value": a lease
+  // listing's price is a monthly rent, and sold listings are no longer stock.
+  const forSale=props.filter(p=>p.status==='available'&&/SALE/i.test(String(p.listingType||''))&&Number(p.price)>0);
+  const value=forSale.reduce((s,p)=>s+(Number(p.price)||0),0);
   const availPct=total?Math.round((avail/total)*100):0;
   el.innerHTML=`
-    <div class="pf-hero">${dashPeso(value)} <small>total value</small></div>
-    <div class="pf-sub">${total} listing${total===1?'':'s'} · avg ${dashPeso(total?value/total:0)}</div>
+    <div class="pf-hero">${dashPeso(value)} <small>for sale now</small></div>
+    <div class="pf-sub">${forSale.length} for-sale listing${forSale.length===1?'':'s'} · avg ${dashPeso(forSale.length?value/forSale.length:0)} · ${total} listings in all</div>
     <div class="pf-split">
       <div class="pf-seg-avail" style="width:${availPct}%"></div>
       <div class="pf-seg-sold" style="width:${100-availPct}%"></div>
