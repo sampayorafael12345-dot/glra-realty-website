@@ -1985,3 +1985,39 @@ html body :is([role="button"],[tabindex]):not(a):not(button):not(input):not(sele
 html body.gl-keyboard :is([role="button"],[tabindex]):not(a):not(button):not(input):not(select):not(textarea):focus-visible{
   outline:3px solid var(--ab-hot) !important;outline-offset:2px !important;
 }
+
+/* ═══ ONE COLUMN FOR THE WHOLE SITE ═══
+   The home page content sits in a 1440px column; the inner pages' nav ran
+   edge to edge at 5%, the top strip at 24px, and the page-hero heading was
+   centred in its own 1480px box while its eyebrow and lead hugged the left
+   edge (three different left edges in one header). Everything that frames
+   a page now shares one column: 1400px of content (the home page's 1480px
+   box less its 40px padding), with 40px gutters (24px at 980px and below).
+   --glra-pad is a padding that turns a full-width band into that column
+   (the % resolves against the band's own width). */
+:root{--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2))}
+@media(max-width:980px){:root{--glra-gut:24px}}
+@media(max-width:560px){:root{--glra-gut:24px}}
+html body nav.navbar{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body .ab-top-strip{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body .page-hero{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body .page-hero h1{margin-left:0 !important;margin-right:0 !important;max-width:none !important}
+/* Content boxes on the inner pages join the same column. They were 1100px
+   boxes with 5% padding inside, so at 1920px the content began at x=500
+   while the page heading began at x=255, and the page read as pushed off
+   to one side. Card grids and calculators now fill the column; long-form
+   text keeps a readable line length inside it. Small forms and cards (the
+   list-property form, alerts, privacy, 404) stay centred on purpose. */
+html body :is(.calc-container,.calculator-container,.wide-card,.disclaimer-box,.mode-toggle,.blog-grid,.content-container,.nh-grid,.testimonials-grid,.tools-wrap,.values-grid,.coverage-grid,.about-intro,.why-grid,.steps-strip,.guide-content,.region-tabs,.results-section,.ah-wrap,.ex-wrap,.lv-wrap,.lc-wrap,.sx-wrap,.un-wrap){
+  max-width:calc(var(--glra-max) + 2 * var(--glra-gut)) !important;padding-left:var(--glra-gut) !important;padding-right:var(--glra-gut) !important;
+  margin-left:auto !important;margin-right:auto !important;box-sizing:border-box !important;
+}
+html body :is(.why-strip,.search-section){padding-left:0 !important;padding-right:0 !important}
+html body .search-section .search-wrap{margin-left:var(--glra-pad) !important;margin-right:auto !important}
+html body :is(.guide-content,.content-container) :is(p,li,blockquote){max-width:78ch}
+/* The Arthaland project pages size their wrapper with --shell
+   (min(1240px,90vw)): same column as the rest of the site instead. */
+html body{--shell:min(var(--glra-max), 100% - 2 * var(--glra-gut))}
+/* Footer text on the same column (it sat on the 1480px frame, 40px wider). */
+html body footer{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body footer :is(.footer-content,.footer-bottom){max-width:none !important;margin-left:0 !important;margin-right:0 !important}

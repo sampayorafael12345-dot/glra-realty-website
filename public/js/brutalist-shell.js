@@ -176,5 +176,8 @@
     //    menu (main.js builds both). Rebuilding the two above wiped the copies
     //    main.js had already put there, so ask for them again.
     if(typeof window.glraMountThemeToggles === 'function') window.glraMountThemeToggles();
+    // 5) The Tools list lives in main.js (glraBuildToolsMenu), shared with the
+    //    home page, so the menu above is only the fallback without JavaScript.
+    if(typeof window.glraBuildToolsMenu === 'function') window.glraBuildToolsMenu();
   });
 })();

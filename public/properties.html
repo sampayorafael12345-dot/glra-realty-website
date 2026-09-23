@@ -37,8 +37,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=108">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=108">
+<link rel="stylesheet" href="/css/styles.css?v=114">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=114">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -600,6 +600,50 @@ body.dark-mode #mapCanvas .glra-pin-wrap[class*=" pb"] .glra-pin{border-color:#f
 .glra-psqm-legend p{margin:6px 0 0;font-size:11px;opacity:.8}
 @media(max-width:560px){.glra-psqm-legend p{display:none}.glra-psqm-legend{max-width:200px}}
 #mapCanvas .glra-flood-legend{margin-bottom:10px}
+/* ═══ BROWSE PAGE LAYOUT ═══
+   A header with something in it (live counts, three listing photos) instead of
+   a black box, and the search card, tabs and results on the site column
+   (--glra-pad, brutalist-theme.css) so every left edge lines up with the logo. */
+html body .pr-hero{background-color:#0a0a0a !important;background-image:linear-gradient(rgba(241,238,233,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(241,238,233,.045) 1px,transparent 1px) !important;background-size:56px 56px !important;padding-top:56px !important;padding-bottom:112px !important;border-bottom:0 !important;position:relative}
+.pr-hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:56px;align-items:center}
+html body .pr-hero .eyebrow{display:inline-flex !important;align-items:center;gap:10px}
+.pr-dot{width:8px;height:8px;background:#ff3d00;display:inline-block;animation:abpulse 1.5s infinite}
+html body .pr-hero h1{font-size:clamp(44px,5.6vw,92px) !important;line-height:.92 !important;letter-spacing:-3px !important;margin:0 0 22px !important}
+html body .pr-hero h1 em{font-style:normal;color:#ff3d00}
+html body .pr-hero p{font-size:17px !important;max-width:540px !important;margin:0 0 30px !important}
+.pr-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:2px solid rgba(241,238,233,.85);max-width:620px}
+html body .pr-stat{display:flex !important;flex-direction:column !important;align-items:flex-start !important;justify-content:flex-start !important;gap:7px !important;padding:16px 18px !important;margin:0 !important;background:transparent !important;border:0 !important;border-right:1px solid rgba(241,238,233,.3) !important;color:#f1eee9 !important;text-align:left !important;min-height:0 !important;height:auto !important;text-transform:none !important;letter-spacing:0 !important;box-shadow:none !important;transform:none !important;border-radius:0 !important;width:auto !important}
+html body .pr-stat:last-child{border-right:0 !important}
+.pr-stat b{font:900 34px/1 'Inter',sans-serif;letter-spacing:-1.5px;color:#f1eee9}
+.pr-stat span{font:700 10px/1.2 'JetBrains Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;color:rgba(241,238,233,.72)}
+html body button.pr-stat{cursor:pointer !important;transition:background-color .15s !important}
+html body button.pr-stat:hover{background:#df3500 !important}
+html body button.pr-stat:hover span{color:#fff}
+html body button.pr-stat:focus-visible{outline:3px solid #ff3d00 !important;outline-offset:2px !important}
+.pr-hero-art{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr;gap:12px;height:clamp(340px,29vw,450px)}
+.pr-hero-art[hidden]{display:none}
+.pr-tile{position:relative;display:flex;flex-direction:column;overflow:hidden;background:#0a0a0a;border:2px solid rgba(241,238,233,.9);min-height:0}
+.pr-tile:first-child{grid-row:1 / span 2}
+.pr-tile-img{flex:1 1 auto;min-height:0;overflow:hidden;display:block}
+.pr-tile img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.pr-tile:hover img{transform:scale(1.04)}
+.pr-tile:focus-visible{outline:3px solid #ff3d00;outline-offset:3px}
+/* A solid strip under the photo: most listing photos are flyers with their own text printed along the bottom. */
+.pr-tile-cap{flex:0 0 auto;padding:10px 14px 11px;background:#0a0a0a;border-top:2px solid rgba(241,238,233,.9);color:#fff;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.pr-tile:hover .pr-tile-cap{background:#df3500}
+.pr-tile-cap b{font:900 17px/1.1 'Inter',sans-serif;letter-spacing:-.4px;white-space:nowrap;order:2}
+.pr-tile-cap span{font:600 12.5px/1.3 'Inter',sans-serif;opacity:.92;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pr-tile.is-ph{background:linear-gradient(110deg,#1a1a17 30%,#26261f 50%,#1a1a17 70%);background-size:200% 100%;animation:prShimmer 1.4s linear infinite}
+@keyframes prShimmer{to{background-position:-200% 0}}
+@media(max-width:1100px){.pr-hero-grid{grid-template-columns:1fr;gap:36px}.pr-hero-art{height:320px}}
+@media(max-width:640px){.pr-hero-art{display:none}.pr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}html body .pr-stat:nth-child(2){border-right:0 !important}html body .pr-stat:nth-child(-n+2){border-bottom:1px solid rgba(241,238,233,.3) !important}html body .pr-hero{padding-top:40px !important;padding-bottom:88px !important}.pr-stat b{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.pr-dot,.pr-tile.is-ph{animation:none}.pr-tile img{transition:none}}
+html body .search-float{padding:0 var(--glra-pad) !important;margin-top:-64px}
+html body .search-card{max-width:none !important;margin:0 !important}
+html body .reset-filters-btn{margin-left:0 !important;padding-left:0 !important}
+html body .category-tabs{max-width:none !important;padding:0 var(--glra-pad) !important}
+html body .section{max-width:none !important;padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spacing:-1px !important;line-height:1 !important}
 </style>
 </head>
 <body>
@@ -654,10 +698,23 @@ body.dark-mode #mapCanvas .glra-pin-wrap[class*=" pb"] .glra-pin{border-color:#f
   </div>
 </div>
 <main id="main">
-<div class="page-hero">
-  <span class="eyebrow">Browse Listings</span>
-  <h1>All Properties</h1>
-  <p>Premium properties for sale and lease across Metro Manila and Luzon</p>
+<div class="page-hero pr-hero">
+  <div class="pr-hero-grid">
+    <div class="pr-hero-copy">
+      <span class="eyebrow"><span class="pr-dot" aria-hidden="true"></span>Browse listings</span>
+      <h1>Properties for sale <em>&amp;&nbsp;lease.</em></h1>
+      <p>Condos, houses, lots and offices across Metro Manila and Luzon. Search by budget, on the map, or by how far it is from work.</p>
+      <div class="pr-stats">
+        <button type="button" class="pr-stat" data-pr-cat="FOR SALE"><b id="prStatSale">&nbsp;</b><span>For sale</span></button>
+        <button type="button" class="pr-stat" data-pr-cat="FOR LEASE"><b id="prStatLease">&nbsp;</b><span>For lease</span></button>
+        <div class="pr-stat"><b id="prStatCities">&nbsp;</b><span>Cities</span></div>
+        <div class="pr-stat"><b id="prStatNew">&nbsp;</b><span>New in 30 days</span></div>
+      </div>
+    </div>
+    <div class="pr-hero-art" id="prHeroArt" aria-label="Featured listings">
+      <span class="pr-tile is-ph"></span><span class="pr-tile is-ph"></span><span class="pr-tile is-ph"></span>
+    </div>
+  </div>
 </div>
 <!-- Search Bar -->
 <div class="search-float">
@@ -956,10 +1013,10 @@ body.dark-mode #mapCanvas .glra-pin-wrap[class*=" pb"] .glra-pin{border-color:#f
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=108"></script>
-<script src="/js/smart-search.js?v=108"></script>
-<script src="/js/glra-maps.js?v=110"></script>
-<script src="/js/gallery.js?v=110" defer></script>
+<script src="/js/main.js?v=114"></script>
+<script src="/js/smart-search.js?v=114"></script>
+<script src="/js/glra-maps.js?v=114"></script>
+<script src="/js/gallery.js?v=114" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
    Display titles, shareable filters in the URL, the live results count,
@@ -1095,6 +1152,50 @@ function glraAfterFilter(list){
   glraMapUpdate(list);
   if (typeof renderCompareBar === 'function') renderCompareBar();
 }
+
+/* ---- Page header: live counts and three featured photos ---- */
+var GLRA_HERO_CITIES = [['makati','Makati'],['taguig','Taguig'],['bgc','Taguig'],['bonifacio','Taguig'],['pasig','Pasig'],['ortigas','Pasig'],
+  ['mandaluyong','Mandaluyong'],['quezon','Quezon City'],['pasay','Pasay'],['paranaque','Paranaque'],['muntinlupa','Muntinlupa'],['alabang','Muntinlupa'],
+  ['las pinas','Las Pinas'],['san juan','San Juan'],['marikina','Marikina'],['manila','Manila'],['antipolo','Antipolo'],['caloocan','Caloocan'],
+  ['valenzuela','Valenzuela'],['tagaytay','Tagaytay'],['cavite','Cavite'],['laguna','Laguna'],['santa rosa','Laguna'],['nuvali','Laguna'],
+  ['batangas','Batangas'],['bulacan','Bulacan'],['pampanga','Pampanga'],['rizal','Rizal'],['cebu','Cebu']];
+function glraHeroFill(list){
+  if (!Array.isArray(list) || !list.length) return;
+  function set(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; }
+  set('prStatSale', String(list.filter(isForSale).length));
+  set('prStatLease', String(list.filter(isForLease).length));
+  var cities = {};
+  list.forEach(function(p){
+    var t = ' ' + String(p.location || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]+/g, ' ') + ' ';
+    /* "Metro Manila" names the region, not the City of Manila. */
+    t = t.replace(/ metro manila /g, ' ');
+    for (var i = 0; i < GLRA_HERO_CITIES.length; i++) {
+      if (t.indexOf(' ' + GLRA_HERO_CITIES[i][0] + ' ') !== -1) { cities[GLRA_HERO_CITIES[i][1]] = 1; break; }
+    }
+  });
+  set('prStatCities', String(Object.keys(cities).length || '-'));
+  var month = Date.now() - 30 * 864e5;
+  set('prStatNew', String(list.filter(function(p){ return p.createdAt && new Date(p.createdAt).getTime() >= month; }).length));
+  var art = document.getElementById('prHeroArt');
+  if (!art) return;
+  var pics = list.filter(function(p){ return p.mainImage; });
+  pics.sort(function(a, b){ return (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || new Date(b.createdAt || 0) - new Date(a.createdAt || 0); });
+  pics = pics.slice(0, 3);
+  if (pics.length < 3) { art.hidden = true; return; }
+  var size = window.glraImgSize || function(u){ return u; };
+  art.innerHTML = pics.map(function(p, i){
+    return '<a class="pr-tile" href="/property/' + glraEsc(p._id) + '">'
+      + '<span class="pr-tile-img"><img src="' + glraEsc(size(p.mainImage, i === 0 ? 900 : 560)) + '" alt="" loading="' + (i === 0 ? 'eager' : 'lazy') + '" decoding="async"></span>'
+      + '<span class="pr-tile-cap"><b>' + glraEsc(getDisplayPrice(p)) + '</b><span>' + glraEsc(glraTitle(p.title)) + '</span></span></a>';
+  }).join('');
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-pr-cat]');
+  if (!b) return;
+  glraSetCategory(b.getAttribute('data-pr-cat'));
+  var t = document.getElementById('resultsTop');
+  if (t) t.scrollIntoView({ behavior: GLRA_REDUCED() ? 'auto' : 'smooth', block: 'start' });
+});
 
 /* ---- Empty state: say what to loosen, one tap each ---- */
 function glraEmptyStateHtml(){
@@ -2471,6 +2572,7 @@ function initFromUrl(properties){
   /* A shared link can carry a currency; it applies to this visit without overwriting the visitor's own saved choice. */
   const cur=g('currency').toUpperCase();if(cur&&CURRENCY_RATES[cur]){currentCurrency=cur;const cs=document.getElementById('currencySelect');if(cs)cs.value=cur;updateCurrencyNote();}
   glraUrlReady=true;
+  glraHeroFill(properties);
   applyFilters(cat2,properties);
   if(g('view')==='map')glraSetView('map',true);
   const propId=g('property');
@@ -2732,9 +2834,9 @@ loadProperties();
   });
 })();
 </script>
-<script src="/js/brutalist-shell.js?v=108" defer></script>
-<script src="/js/description.js?v=108" defer></script>
-<script src="/js/a11y.js?v=108" defer></script>
-<script src="/js/chat.js?v=108" defer></script>
+<script src="/js/brutalist-shell.js?v=114" defer></script>
+<script src="/js/description.js?v=114" defer></script>
+<script src="/js/a11y.js?v=114" defer></script>
+<script src="/js/chat.js?v=114" defer></script>
 </body>
 </html>

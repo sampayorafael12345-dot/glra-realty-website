@@ -1080,7 +1080,8 @@ function buildAreaPageHtml(area, rows, counts) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
 <style>
-:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500}
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2));}
+@media(max-width:980px){:root{--glra-gut:24px}}@media(max-width:560px){:root{--glra-gut:24px}}
 body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500}
 html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1088,11 +1089,11 @@ html,body{background:var(--paper);color:var(--ink)}
 body{font-family:'Inter',system-ui,sans-serif;line-height:1.5;font-weight:500}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
-.ar-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:2px solid var(--line);background:var(--paper)}
+.ar-nav{display:flex;align-items:center;justify-content:space-between;padding:16px var(--glra-pad);border-bottom:2px solid var(--line);background:var(--paper)}
 .ar-nav img{height:50px;width:auto}
 .ar-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .ar-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
-.ar-wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
+.ar-wrap{max-width:calc(var(--glra-max) + 2 * var(--glra-gut));margin:0 auto;padding:26px var(--glra-gut) 60px}
 .ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px}
 .ar-crumbs a:hover{color:var(--hot-text)}
 h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-transform:uppercase;line-height:1.02;margin-bottom:12px}
@@ -1140,9 +1141,9 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 /* Matches viewport-fit=cover, or the nav sits under the notch in landscape. */
 @supports(padding:max(0px)){
-  .ar-nav{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  .ar-nav{padding-left:max(var(--glra-pad),env(safe-area-inset-left));padding-right:max(var(--glra-pad),env(safe-area-inset-right))}
 }
-@media(max-width:560px){.ar-wrap{padding:20px 16px 46px}.ar-nav{padding:14px 16px}}
+@media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
 </head>
 <body>
@@ -1176,7 +1177,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=108" defer></script>
+<script src="/js/a11y.js?v=114" defer></script>
 </body>
 </html>`;
 }
@@ -1620,7 +1621,8 @@ function buildPropertyPageHtml(p, related) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script type="application/ld+json">${jsonld}</script>
 <style>
-:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--shadow:#0a0a0a}
+:root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--shadow:#0a0a0a;--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2));}
+@media(max-width:980px){:root{--glra-gut:24px}}@media(max-width:560px){:root{--glra-gut:24px}}
 body.dark-mode{--paper:#0e0e0c;--paper2:#1a1a17;--ink:#f1eee9;--gray:#9a9082;--line:#3a3a36;--hot-text:#ff3d00;--hot-btn:#df3500;--shadow:#3a3a36}
 /* Opening a listing from the browse page is a cross-document view transition:
    the card photo carries view-transition-name glra-hero and so does the photo
@@ -1637,11 +1639,12 @@ html,body{background:var(--paper);color:var(--ink)}
 body{font-family:'Inter',system-ui,sans-serif;line-height:1.5;font-weight:500}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
-.pg-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:2px solid var(--line);background:var(--paper)}
+.pg-nav{display:flex;align-items:center;justify-content:space-between;padding:16px var(--glra-pad);border-bottom:2px solid var(--line);background:var(--paper)}
 .pg-nav img{height:50px;width:auto}
 .pg-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .pg-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
-.pg-wrap{max-width:1180px;margin:0 auto;padding:26px 24px 60px}
+/* Same 1400px column as the rest of the site (brutalist-theme.css, ONE COLUMN). */
+.pg-wrap{max-width:calc(var(--glra-max) + 2 * var(--glra-gut));margin:0 auto;padding:26px var(--glra-gut) 60px}
 .pg-badge{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
 .pg-head{margin-bottom:20px}
 /* Title case now (see glraDisplayTitle), so no forced capitals. */
@@ -1750,7 +1753,7 @@ h2.pg-section-label{font-weight:700}
 .pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
-.pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px}
+.pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px;max-width:78ch}
 .pg-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .pg-crumbs a{border-bottom:1px solid transparent;display:inline-flex;align-items:center;min-height:24px}
 .pg-crumbs a:hover{color:var(--hot-text);border-bottom-color:var(--hot)}
@@ -1786,13 +1789,13 @@ h2.pg-section-label{font-weight:700}
   .pg-nav a,.pg-form button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 }
 @supports(padding:max(0px)){
-  .pg-nav{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+  .pg-nav{padding-left:max(var(--glra-pad),env(safe-area-inset-left));padding-right:max(var(--glra-pad),env(safe-area-inset-right))}
 }
 .pg-lbl{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:14px 0 6px}
 .pg-opt{text-transform:none;letter-spacing:0}
 .pg-foot{--hot-text:#ff3d00}
 .pg-foot a{color:var(--hot-text)}
-@media(max-width:600px){.pg-wrap{padding:18px 16px 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
+@media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
 </head>
 <body>
@@ -1916,10 +1919,10 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=108"></script>
-<script src="/js/a11y.js?v=108" defer></script>
-<script src="/js/gallery.js?v=110" defer></script>
-${geoOk ? '<script src="/js/glra-maps.js?v=110" defer></script>' : ''}
+<script src="/js/main.js?v=114"></script>
+<script src="/js/a11y.js?v=114" defer></script>
+<script src="/js/gallery.js?v=114" defer></script>
+${geoOk ? '<script src="/js/glra-maps.js?v=114" defer></script>' : ''}
 </body>
 </html>`;
 }

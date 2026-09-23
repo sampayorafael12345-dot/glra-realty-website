@@ -51,7 +51,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<link rel="stylesheet" href="/css/styles.css?v=108">
+<link rel="stylesheet" href="/css/styles.css?v=114">
 
 <style>
 /* ════════════════════════════════════════════════════════════
@@ -181,15 +181,19 @@ nav.navbar{display:none !important}
 
 /* ── TOP STRIP — always dark with light text in BOTH light and dark modes ── */
 .ab-top{background:#0a0a0a !important;color:#f1eee9 !important;padding:0;border-bottom:0;position:relative;z-index:5}
-.ab-top-inner{max-width:1480px;margin:0 auto;padding:11px 24px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:#f1eee9 !important}
+.ab-top-inner{max-width:none;margin:0;padding:11px var(--glra-pad);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:#f1eee9 !important}
 .ab-top-inner span{display:flex;align-items:center;gap:10px;color:#f1eee9 !important}
 .ab-top-inner .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot) !important;border-radius:0;animation:abblink 1.5s infinite}
 @keyframes abblink{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:640px){.ab-top-inner{font-size:10.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-inner > span:last-child{display:none}}
+@media(max-width:640px){.ab-top-inner{font-size:10.5px;letter-spacing:.5px;padding:8px var(--glra-pad)}.ab-top-inner > span:last-child{display:none}}
 
 /* ── MASSIVE NAV ── */
 .ab-nav{background:var(--ab-paper);border-bottom:2px solid var(--ab-line);position:sticky;top:0;z-index:50}
-.ab-nav-inner{max-width:none;margin:0;padding:8px 5%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+:root{--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2))}
+@media(max-width:980px){:root{--glra-gut:24px}}
+@media(max-width:560px){:root{--glra-gut:24px}}
+/* Same column as every inner page (see brutalist-theme.css, ONE COLUMN). */
+.ab-nav-inner{max-width:none;margin:0;padding:8px var(--glra-pad);display:flex;align-items:center;justify-content:space-between;gap:20px}
 .ab-brand{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
 .ab-brand img{height:64px;width:auto;display:block}
 @media(max-width:560px){.ab-brand img{height:52px}}
@@ -744,7 +748,8 @@ body.dark-mode .resource-btn{border-top-color:var(--ab-line) !important}
 }
 .cta-section .cta-btn:hover{background:#fff !important;color:var(--ab-ink) !important}
 .cta-section{display:flex;flex-direction:column;align-items:flex-start}
-.cta-section > *{max-width:1480px;width:100%;margin-left:auto !important;margin-right:auto !important}
+.cta-section > *{max-width:var(--glra-max);width:100%;margin-left:auto !important;margin-right:auto !important}
+.cta-section h2,.cta-section p{max-width:var(--glra-max) !important}
 
 /* ── CONTACT FORM ── */
 .contact-form-section{background:var(--ab-paper) !important;border-bottom:2px solid var(--ab-line) !important}
@@ -781,6 +786,9 @@ body.dark-mode .resource-btn{border-top-color:var(--ab-line) !important}
 
 /* ── FOOTER ── */
 footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padding:60px 40px 28px !important;position:relative;z-index:2}
+/* Footer text on the site column, like every inner page. */
+html body footer{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
+html body footer :is(.footer-content,.footer-bottom){max-width:none !important;margin-left:0 !important;margin-right:0 !important}
 .footer-content{
   max-width:1480px !important;margin:0 auto !important;
   display:grid !important;grid-template-columns:2fr repeat(3,1fr) !important;gap:36px !important;
@@ -1890,9 +1898,9 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/main.js?v=108"></script>
-<script src="/js/smart-search.js?v=108"></script>
-<script src="/js/gallery.js?v=110" defer></script>
+<script src="/js/main.js?v=114"></script>
+<script src="/js/smart-search.js?v=114"></script>
+<script src="/js/gallery.js?v=114" defer></script>
 <script>
 /* ==== HOME PAGE LISTING LAYER (Sept 2026) ================================
    Display titles, the photo gallery hook, the card-to-pop-up view
@@ -2366,8 +2374,8 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
    only the fallback (fetching both downloaded ~2 MB for nothing). */
 loadProperties();
 </script>
-<script src="/js/chat.js?v=108" defer></script>
-<script src="/js/description.js?v=108" defer></script>
-<script src="/js/a11y.js?v=108" defer></script>
+<script src="/js/chat.js?v=114" defer></script>
+<script src="/js/description.js?v=114" defer></script>
+<script src="/js/a11y.js?v=114" defer></script>
 </body>
 </html>

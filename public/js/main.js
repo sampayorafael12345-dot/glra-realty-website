@@ -520,6 +520,107 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
   ready(window.glraMountThemeToggles);
   window.addEventListener('load', window.glraMountThemeToggles);
 
+  /* ── 1b. TOOLS MENU: one list for every page ───────────────────────────
+     The home page's nav (index.html), the inner pages' nav (brutalist-shell.js)
+     and both phone menus each kept their own copy, so the home page showed 11
+     of the 19 tools. The nav HTML keeps its plain links for crawlers; this
+     swaps them for the grouped four-column menu (groups as on tools.html). */
+  var GLRA_TOOL_GROUPS = [
+    ['For buyers', 'fa-house', [
+      ['/affordability.html', 'Affordability'],
+      ['/amortization.html', 'Home loan calculator'],
+      ['/pagibig-loanable.html', 'Pag-IBIG loanable amount'],
+      ['/pre-selling.html', 'Pre-selling payment schedule'],
+      ['/savings-goal.html', 'Savings planner'],
+      ['/cost-of-ownership.html', 'True cost of ownership']]],
+    ['For sellers & owners', 'fa-tags', [
+      ['/valuation.html', 'What’s my property worth?'],
+      ['/calculator.html', 'Closing fees & net proceeds'],
+      ['/estate-tax.html', 'Estate tax'],
+      ['/principal-residence.html', 'Principal residence exemption'],
+      ['/bir-deadlines.html', 'BIR deadlines']]],
+    ['For investors', 'fa-chart-line', [
+      ['/rental-yield.html', 'Rental yield & ROI'],
+      ['/rent-vs-buy.html', 'Rent vs buy'],
+      ['/rental-income-tax.html', 'Rental income tax'],
+      ['/lease-escalation.html', 'Lease escalation']]],
+    ['Reference', 'fa-book-open', [
+      ['/zonal.html', 'BIR zonal value lookup'],
+      ['/property-tax.html', 'Real property tax (amilyar)'],
+      ['/ercf.html', 'Registration fee (ERCF)'],
+      ['/vat-exemption.html', 'VAT exemption check']]]
+  ];
+  var MEGA_CSS =
+    '.glra-mega-host{position:static !important}' +
+    '.glra-mega-anchor{position:relative !important}' +
+    'html body .glra-mega{display:none !important;position:absolute !important;top:100% !important;right:0 !important;left:auto !important;' +
+    'width:min(980px,calc(100vw - 32px)) !important;min-width:0 !important;max-height:calc(100vh - 140px);overflow:auto;' +
+    'grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:0 !important;padding:0 !important;' +
+    'background:var(--ab-paper,#f1eee9) !important;border:2px solid var(--ab-line,#0a0a0a) !important;box-shadow:6px 6px 0 var(--ab-line,#0a0a0a) !important;z-index:1200 !important;flex-direction:row !important}' +
+    'html body .glra-mega::before{content:"";position:absolute;left:0;right:0;top:-26px;height:26px}' +
+    'html body .glra-mega-host:hover > .glra-mega,html body .glra-mega-host.ab-open > .glra-mega,html body .glra-mega-host:focus-within > .glra-mega{display:grid !important}' +
+    '.glra-mega-col{padding:20px 20px 18px;border-right:1px solid var(--ab-line,#0a0a0a);min-width:0}' +
+    '.glra-mega-col:nth-child(4){border-right:0}' +
+    '.glra-mega-h{display:flex;align-items:center;gap:8px;font:700 10.5px/1.2 "JetBrains Mono",monospace;letter-spacing:1.6px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);margin:0 0 12px;padding-bottom:10px;border-bottom:2px solid var(--ab-line,#0a0a0a)}' +
+    'html body .glra-mega .glra-mega-col a{display:block !important;padding:8px 0 !important;border:0 !important;background:none !important;color:var(--ab-ink,#0a0a0a) !important;' +
+    'font:600 13.5px/1.35 Inter,system-ui,sans-serif !important;letter-spacing:0 !important;text-transform:none !important;white-space:normal !important;height:auto !important}' +
+    'html body .glra-mega .glra-mega-col a:hover,html body .glra-mega .glra-mega-col a:focus-visible{color:var(--ab-hot-text,#c02e00) !important;text-decoration:underline !important;text-underline-offset:3px}' +
+    'html body .glra-mega .glra-mega-col a.is-here{color:var(--ab-hot-text,#c02e00) !important}' +
+    '.glra-mega-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:2px solid var(--ab-line,#0a0a0a);background:var(--ab-paper-2,#e8e4dd)}' +
+    '.glra-mega-foot span{font-size:13px;color:var(--ab-ink,#0a0a0a);font-family:Inter,system-ui,sans-serif}' +
+    'html body .glra-mega .glra-mega-foot a{display:inline-flex !important;align-items:center !important;gap:8px !important;padding:10px 16px !important;border:0 !important;background:#df3500 !important;color:#fff !important;' +
+    'font:700 11px/1 "JetBrains Mono",monospace !important;letter-spacing:1.4px !important;text-transform:uppercase !important;height:auto !important}' +
+    'html body .glra-mega .glra-mega-foot a:hover{background:#0a0a0a !important}' +
+    '@media(max-width:1100px){html body .glra-mega{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.glra-mega-col:nth-child(2){border-right:0}.glra-mega-col:nth-child(-n+2){border-bottom:1px solid var(--ab-line,#0a0a0a)}}' +
+    '.mo-sub{font:700 9.5px/1 "JetBrains Mono",monospace;letter-spacing:1.6px;text-transform:uppercase;color:rgba(241,238,233,.55);padding:14px 4px 4px}';
+  function toolsMenuHtml(here) {
+    function link(t) {
+      return '<a href="' + t[0] + '"' + (t[0] === here ? ' class="is-here" aria-current="page"' : '') + '>' + escapeHtml(t[1]) + '</a>';
+    }
+    return GLRA_TOOL_GROUPS.map(function (g) {
+      return '<div class="glra-mega-col"><p class="glra-mega-h"><i class="fas ' + g[1] + '" aria-hidden="true"></i>' + escapeHtml(g[0]) + '</p>' + g[2].map(link).join('') + '</div>';
+    }).join('') +
+      '<div class="glra-mega-foot"><span>19 free calculators and lookups, built for Philippine property.</span><a href="/tools.html">See all tools <i class="fas fa-arrow-right" aria-hidden="true"></i></a></div>';
+  }
+  window.glraBuildToolsMenu = function () {
+    if (!document.body) return;
+    if (!document.getElementById('glraMegaCss')) {
+      var st = document.createElement('style');
+      st.id = 'glraMegaCss';
+      st.textContent = MEGA_CSS;
+      document.head.appendChild(st);
+    }
+    var here = location.pathname.replace(/\/$/, '') || '/';
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-dropdown, .ab-nav-dropdown'), function (dd) {
+      var trigger = dd.firstElementChild;
+      var menu = dd.querySelector('.nav-dropdown-menu, .ab-nav-dropdown-menu');
+      if (!trigger || !menu || !/^\s*tools/i.test(trigger.textContent || '')) return;
+      if (menu.classList.contains('glra-mega')) return;
+      menu.classList.add('glra-mega');
+      menu.innerHTML = toolsMenuHtml(here);
+      dd.classList.add('glra-mega-host');
+      /* The menu hangs from the whole link row, so it lines up with the
+         right edge of the nav instead of spilling off the screen. */
+      if (dd.parentElement) dd.parentElement.classList.add('glra-mega-anchor');
+    });
+    /* Phone menu: every tool, under the same four headings. */
+    Array.prototype.forEach.call(document.querySelectorAll('.mobile-overlay-links .mo-label'), function (lbl) {
+      if (!/tools/i.test(lbl.textContent || '') || lbl.getAttribute('data-glra-tools')) return;
+      lbl.setAttribute('data-glra-tools', '1');
+      var n = lbl.nextElementSibling;
+      while (n && !n.classList.contains('mo-label')) { var next = n.nextElementSibling; if (n.tagName === 'A') n.remove(); n = next; }
+      var html = '<a href="/tools.html" onclick="closeMobileMenu()">All tools &amp; calculators</a>' +
+        GLRA_TOOL_GROUPS.map(function (g) {
+          return '<div class="mo-sub">' + escapeHtml(g[0]) + '</div>' + g[2].map(function (t) {
+            return '<a href="' + t[0] + '" onclick="closeMobileMenu()"' + (t[0] === here ? ' class="gl-active"' : '') + '>' + escapeHtml(t[1]) + '</a>';
+          }).join('');
+        }).join('');
+      lbl.insertAdjacentHTML('afterend', html);
+    });
+  };
+  ready(window.glraBuildToolsMenu);
+  window.addEventListener('load', window.glraBuildToolsMenu);
+
   /* ── 2. DOCK: bottom bars the floating controls must clear ─────────────
      .pg-bar is the listing page's phone contact bar; it replaces the
      contact button outright. .compare-bar (properties.html) only lifts it. */
@@ -1937,7 +2038,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
     var st = document.createElement('style');
     st.id = 'glraRecentStyle';
     st.textContent =
-      '.glra-recent{max-width:1400px;margin:0 auto 22px;padding:0 5%}' +
+      '.glra-recent{max-width:none;margin:0 0 22px;padding:0 var(--glra-pad,5%)}' +
       '#featured+.glra-recent{margin-top:10px}' +
       '.glra-recent-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}' +
       '.glra-recent-head h2{font-family:"JetBrains Mono",monospace!important;font-size:11px!important;font-weight:700!important;letter-spacing:2px!important;text-transform:uppercase!important;margin:0!important;color:inherit}' +
