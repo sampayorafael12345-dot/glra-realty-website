@@ -1107,6 +1107,41 @@ html body .na-tile:not(.na-hot) .na-num{color:var(--ab-gray)}
 html body .na-tile:hover{background:var(--card-bg) !important;color:inherit !important}
 html body .qa-btn{min-height:56px;line-height:1.35 !important}
 .bar-fill.is-zero{background:var(--ab-line)}
+/* Listing health + views vs inquiries */
+.lh-sum{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ab-gray)}
+.lh-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--ab-line)}
+.lh-row:last-of-type{border-bottom:0}
+.lh-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.lh-chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;line-height:1.3;padding:3px 7px;border:1px solid var(--ab-line);color:var(--ab-gray);white-space:nowrap}
+.lh-chip.warn{border-color:#ff3d00;color:var(--ab-hot-text,#c02e00)}
+.lh-acts{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+html body .lh-btn,html body .lh-more{background:transparent !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;padding:7px 11px !important;font-size:10px !important;letter-spacing:1px !important;justify-content:center !important;min-width:96px}
+html body .lh-btn:hover,html body .lh-more:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .lh-more{width:100%;margin-top:12px}
+.lp-sub{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-gray);margin:4px 0 2px;padding-top:10px}
+.lp-sub:first-child{padding-top:0}
+.lp-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--ab-line)}
+.lp-num{text-align:right;flex-shrink:0;min-width:58px}
+.lp-num b{display:block;font-family:'Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.5px;color:var(--ab-ink);line-height:1}
+.lp-num span{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ab-gray)}
+.lp-row .lh-chip{min-width:92px;text-align:center}
+.lp-none,.lp-note{font-size:12.5px;color:var(--ab-gray);padding:10px 0;line-height:1.5}
+.lp-note{font-size:11px;padding-bottom:0}
+/* Quick reply */
+.rp-meta{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ab-ink);margin-bottom:12px}
+.rp-meta b{display:inline-block;min-width:62px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ab-gray)}
+.rp-quote{margin:0 0 14px;padding:10px 14px;border-left:3px solid #ff3d00;background:var(--ab-paper-2);font-size:13px;line-height:1.55;color:var(--ab-ink);white-space:pre-wrap;max-height:110px;overflow:auto}
+#qrText{width:100%;min-height:170px;font-size:14px;line-height:1.55;resize:vertical}
+html body label.rp-check{display:flex !important;align-items:center;gap:9px;margin:4px 0 14px !important;cursor:pointer}
+html body label.rp-check input{width:17px;height:17px;margin:0;accent-color:#ff3d00}
+.rp-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+html body .rp-btn{justify-content:center !important;padding:13px 12px !important;background:transparent !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important}
+html body .rp-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .rp-btn.rp-wa{background:#1f9d55 !important;border-color:#1f9d55 !important;color:#fff !important}
+html body .rp-btn.rp-vb{background:#665cac !important;border-color:#665cac !important;color:#fff !important}
+html body .rp-btn.rp-wa:hover,html body .rp-btn.rp-vb:hover{filter:brightness(1.1)}
+.rp-hint{font-size:12px;color:var(--ab-gray);margin-top:10px}
+@media(max-width:600px){.lh-row{flex-wrap:wrap}.lh-acts{flex-direction:row;width:100%;padding-left:56px}.lp-row{flex-wrap:wrap}.lp-row .tv-main{flex-basis:100%}}
 
 /* Two-up layout */
 .dash-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -1753,6 +1788,17 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
           <div class="panel">
             <div class="panel-head"><div class="panel-title"><i class="fas fa-fire"></i> Most viewed</div></div>
             <div class="panel-body" id="dashTopViewed"><div class="dash-loading">Loading…</div></div>
+          </div>
+        </div>
+
+        <div class="dash-two">
+          <div class="panel" id="dashHealthPanel">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-stethoscope"></i> Listing health</div><span class="lh-sum" id="dashHealthSum"></span></div>
+            <div class="panel-body" id="dashHealth"><div class="dash-loading">Loading…</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><i class="fas fa-eye"></i> Views vs inquiries</div></div>
+            <div class="panel-body" id="dashPerf"><div class="dash-loading">Loading…</div></div>
           </div>
         </div>
 
@@ -3747,6 +3793,8 @@ function renderDashboard(){
   try{ renderInqChart(); }catch(e){}
   try{ renderPortfolio(); }catch(e){}
   try{ renderTopViewed(); }catch(e){}
+  try{ renderListingHealth(); }catch(e){ console.error(e); }
+  try{ renderListingPerf(); }catch(e){ console.error(e); }
   try{ renderTitlingPipe(); }catch(e){}
   try{ renderLeasingPanel(); }catch(e){}
   try{ renderCasesPanel(); }catch(e){}
@@ -3788,6 +3836,12 @@ function renderNeedsAttention(){
     tiles.push({n:open.filter(c=>c.computed&&c.computed.missedCount>0).length, lbl:'Cases with a missed deadline', one:'Case with a missed deadline', ico:'fa-flag', tab:'cases'});
     tiles.push({n:open.filter(c=>c.computed&&c.computed.prescription&&['critical','lapsed'].includes(c.computed.prescription.status)).length, lbl:'Prescriptive periods closing', one:'Prescriptive period closing', ico:'fa-hourglass-end', tab:'cases'});
   }
+  // Listings with a problem worth fixing (see listingIssues): stale, a price
+  // that looks like the wrong kind, a title city that contradicts the address.
+  if(hasPerm('properties_edit') && Array.isArray(allProps) && allProps.length){
+    const n=allProps.filter(p=>p.status==='available'&&listingIssues(p).some(x=>x.lvl==='err')).length;
+    tiles.push({n, lbl:'Listings with errors', one:'Listing with an error', ico:'fa-stethoscope', fn:"switchTab('dashboard');document.getElementById('dashHealthPanel').scrollIntoView({behavior:'smooth',block:'start'})"});
+  }
   const anyHot=tiles.some(t=>t.n>0);
   if(!anyHot){
     wrap.innerHTML=`<div class="na-clear" style="grid-column:1/-1"><i class="fas fa-circle-check"></i> All caught up — nothing needs your attention</div>`;
@@ -3795,7 +3849,7 @@ function renderNeedsAttention(){
   }
   wrap.innerHTML=tiles.map(t=>{
     const hot=t.n>0?'na-hot':'';
-    return `<button type="button" class="na-tile ${hot}" onclick="switchTab('${t.tab}')">
+    return `<button type="button" class="na-tile ${hot}" onclick="${t.fn||`switchTab('${t.tab}')`}">
       <span class="na-go"><i class="fas fa-arrow-right"></i></span>
       <div class="na-num">${t.n}</div>
       <div class="na-lbl"><i class="fas ${t.ico}"></i> ${t.n===1&&t.one?t.one:t.lbl}</div>
@@ -3817,6 +3871,143 @@ function renderQuickActions(){
   if(hasPerm('hero_upload')) acts.push({ico:'fa-images',lbl:'Hero images',fn:"switchTab('hero')"});
   acts.push({ico:'fa-file-csv',lbl:'Export inquiries',fn:"exportInquiriesCSV()"});
   wrap.innerHTML=acts.map(a=>`<button type="button" class="qa-btn" onclick="${a.fn}"><i class="fas ${a.ico}"></i> ${a.lbl}</button>`).join('');
+}
+
+// ── LISTING HEALTH ────────────────────────────────────────
+// Problems staff can fix from the edit form, found by reading the listings the
+// dashboard already has. warn = wrong on the live site; the rest = weak listing.
+const LH_STALE_DAYS=90;
+// Each group names one city; a place name can sit in several (Ortigas spans three).
+// No developer names: "The Arton by Rockwell" is in Quezon City, not Makati.
+const LH_CITIES={
+  makati:['makati','salcedo village','legaspi village','legazpi village','dasmarinas village','forbes park','urdaneta village','san lorenzo village','bel-air','bel air','greenbelt'],
+  taguig:['taguig','bgc','bonifacio global city','fort bonifacio','mckinley hill','mckinley west','arca south','uptown bonifacio'],
+  pasig:['pasig','kapitolyo','capitol commons','valle verde','ortigas'],
+  mandaluyong:['mandaluyong','shaw boulevard','greenfield district','ortigas'],
+  quezon:['quezon city','qc','eastwood','cubao','new manila','diliman','fairview','ortigas'],
+  pasay:['pasay','mall of asia','moa'],
+  paranaque:['paranaque','bf homes','sucat','aseana'],
+  muntinlupa:['muntinlupa','alabang','filinvest city'],
+  laspinas:['las pinas','bf homes','bf resort'],
+  sanjuan:['san juan','greenhills'],
+  antipolo:['antipolo'],
+  tagaytay:['tagaytay'],
+  santarosa:['santa rosa','sta rosa','nuvali']
+};
+function lhNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function lhCitiesIn(s){
+  const t=' '+lhNorm(s).replace(/[^a-z0-9.]+/g,' ').replace(/\.(\s|$)/g,' ')+' ';
+  const hit=new Set();
+  Object.keys(LH_CITIES).forEach(c=>{ if(LH_CITIES[c].some(k=>t.includes(' '+k.replace(/-/g,' ')+' '))) hit.add(c); });
+  return hit;
+}
+// A rental's asking rent lives in monthlyRental (price is often left at 0).
+function lhPrice(p){
+  const t=String(p.listingType||'').toUpperCase();
+  return t==='FOR LEASE' ? (Number(p.monthlyRental)||Number(p.price)||0) : (Number(p.price)||0);
+}
+function lhLastTouch(p){
+  return Math.max(...[p.createdAt,p.priceUpdatedAt,p.editedAt,p.reviewedAt].map(d=>d?new Date(d).getTime():0).filter(n=>n>0), 0);
+}
+function listingIssues(p){
+  const out=[];
+  // lvl: 'err' = wrong on the live site, 'stale' = needs a yes/no, 'info' = weak listing.
+  const add=(key,txt,lvl)=>out.push({key,txt,lvl:lvl||'info',warn:lvl==='err'||lvl==='stale'});
+  const type=String(p.listingType||'').toUpperCase();
+  const price=lhPrice(p);
+  // Stale: nobody has touched it in 90 days.
+  const touched=lhLastTouch(p);
+  if(p.status==='available' && touched){
+    const days=Math.floor((Date.now()-touched)/864e5);
+    if(days>LH_STALE_DAYS) add('stale',`No update in ${days} days: still available?`,'stale');
+  }
+  // Price of the wrong kind.
+  if(price<=0) add('price','No price','err');
+  else if(type==='FOR LEASE' && price>=1e6) add('price',`Rent of ${dashPeso(price)} a month: is this a sale price?`,'err');
+  else if(type==='FOR SALE' && price<3e5) add('price',`Sale price of ${dashPeso(price)}: is this a monthly rent?`,'err');
+  // Title city contradicts the address.
+  const tc=lhCitiesIn(p.title), lc=lhCitiesIn(p.location);
+  if(tc.size && lc.size && ![...tc].some(c=>lc.has(c))) add('city','Title and address name different cities','err');
+  // Typing slips.
+  const title=String(p.title||'');
+  if((title.match(/\(/g)||[]).length!==(title.match(/\)/g)||[]).length) add('typo','Title has an unclosed bracket');
+  const caps=(title+' '+(p.location||'')).match(/\b[A-Z]{2,}[a-z]{2,}\b/);
+  if(caps) add('typo',`Check the capitals in "${caps[0]}"`);
+  // Map: the address could not be found at all.
+  if(p.geo && p.geo.status==='none') add('map','Address not found on the map');
+  // Weak listing.
+  const photos=new Set([p.mainImage,...(p.gallery||[])].filter(Boolean)).size;
+  if(photos<3) add('photos',photos?`Only ${photos} photo${photos===1?'':'s'}`:'No photos');
+  if(String(p.description||'').replace(/\s+/g,' ').trim().length<80) add('desc','Short description');
+  if(!(Number(p.sqm)>0) && !(Number(p.landArea)>0)) add('area','No floor or lot area');
+  return out;
+}
+function renderListingHealth(){
+  const el=document.getElementById('dashHealth');
+  if(!el) return;
+  const props=Array.isArray(allProps)?allProps:null;
+  if(!props||!props.length){ el.innerHTML='<div class="dash-loading">Loading…</div>'; return; }
+  const live=props.filter(p=>p.status==='available');
+  const rows=live.map(p=>({p,iss:listingIssues(p)})).filter(r=>r.iss.length)
+    .map(r=>({...r,score:r.iss.reduce((s,x)=>s+(x.lvl==='err'?100:x.lvl==='stale'?10:1),0)}))
+    .sort((a,b)=>b.score-a.score);
+  const sum=document.getElementById('dashHealthSum');
+  if(sum) sum.textContent=rows.length?`${rows.length} of ${live.length} live`:'';
+  if(!rows.length){ el.innerHTML=`<div class="empty-st"><i class="fas fa-circle-check"></i><p>All ${live.length} live listings look good</p></div>`; return; }
+  const showAll=el.dataset.all==='1';
+  const canEdit=hasPerm('properties_edit');
+  el.innerHTML=rows.slice(0,showAll?rows.length:6).map(({p,iss})=>`
+    <div class="lh-row">
+      <img class="tv-thumb" src="${esc(p.mainImage||'/img/logo-384.png')}" alt="" loading="lazy">
+      <div class="tv-main">
+        <div class="tv-title" title="${esc(p.title)}">${esc(p.title||'Untitled')}</div>
+        <div class="lh-chips">${iss.map(x=>`<span class="lh-chip${x.warn?' warn':''}">${esc(x.txt)}</span>`).join('')}</div>
+      </div>
+      ${canEdit?`<div class="lh-acts">${iss.some(x=>x.key==='stale')?`<button type="button" class="lh-btn" onclick="markListingReviewed('${p._id}',this)">Still available</button>`:''}<button type="button" class="lh-btn" onclick="openEditProp('${p._id}')">Edit</button></div>`:''}
+    </div>`).join('')+
+    (rows.length>6?`<button type="button" class="lh-more" onclick="const e=document.getElementById('dashHealth');e.dataset.all=e.dataset.all==='1'?'':'1';renderListingHealth()">${showAll?'Show fewer':`Show all ${rows.length}`}</button>`:'');
+}
+async function markListingReviewed(id,btn){
+  if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+  try{
+    const res=await apiFetch(`/api/admin/properties/${id}/reviewed`,{method:'POST'});
+    const d=await res.json().catch(()=>({}));
+    if(!res.ok){ showToast(d.error||'Could not save',true); if(btn){btn.disabled=false;btn.textContent='Still available';} return; }
+    const p=allProps.find(x=>x._id===id); if(p) p.reviewedAt=d.reviewedAt||new Date().toISOString();
+    showToast('Marked as still available');
+    renderDashboard();
+  }catch(e){ showToast('Network error',true); if(btn){btn.disabled=false;btn.textContent='Still available';} }
+}
+
+// ── VIEWS VS INQUIRIES ────────────────────────────────────
+// Lots of views and no inquiries usually means the price or photos need work.
+const LP_MIN_VIEWS=10;
+function renderListingPerf(){
+  const el=document.getElementById('dashPerf');
+  if(!el) return;
+  const props=Array.isArray(allProps)?allProps:null;
+  const inqs=window.lastInquiries;
+  if(!props||!props.length||!inqs){ el.innerHTML='<div class="dash-loading">Loading…</div>'; return; }
+  const count={};
+  inqs.forEach(i=>{ if(i.propertyId) count[String(i.propertyId)]=(count[String(i.propertyId)]||0)+1; });
+  const live=props.filter(p=>p.status==='available').map(p=>({p,v:Number(p.views)||0,q:count[String(p._id)]||0}));
+  if(!live.some(r=>r.v>0)){ el.innerHTML='<div class="empty-st"><i class="fas fa-eye"></i><p>No listing views recorded yet</p></div>'; return; }
+  const cold=live.filter(r=>r.v>=LP_MIN_VIEWS&&r.q===0).sort((a,b)=>b.v-a.v);
+  const warm=live.filter(r=>r.q>0).sort((a,b)=>(b.q/b.v||0)-(a.q/a.v||0));
+  const row=(r,flag)=>`
+    <div class="lp-row">
+      <div class="tv-main"><div class="tv-title" title="${esc(r.p.title)}">${esc(r.p.title||'Untitled')}</div>
+        <div class="tv-meta">${esc(r.p.propertyType||'')} · ${dashPeso(lhPrice(r.p))}${String(r.p.listingType||'').toUpperCase()==='FOR LEASE'?'/mo':''}</div></div>
+      <div class="lp-num"><b>${r.v}</b><span>views</span></div>
+      <div class="lp-num"><b>${r.q}</b><span>inquir${r.q===1?'y':'ies'}</span></div>
+      ${flag?'<span class="lh-chip warn">No inquiries</span>':`<span class="lh-chip">${r.v?Math.round(r.q/r.v*1000)/10:0}% ask</span>`}
+    </div>`;
+  el.innerHTML=
+    `<div class="lp-sub">Viewed ${LP_MIN_VIEWS}+ times, no inquiries (${cold.length})</div>`+
+    (cold.length?cold.slice(0,5).map(r=>row(r,true)).join(''):'<p class="lp-none">None. Every well-viewed listing has had at least one inquiry.</p>')+
+    `<div class="lp-sub">Best at turning views into inquiries</div>`+
+    (warm.length?warm.slice(0,4).map(r=>row(r,false)).join(''):'<p class="lp-none">No listing has an inquiry yet.</p>')+
+    `<p class="lp-note">All-time counts. Inquiries sent from a listing's own page or card are matched to it; general inquiries are not.</p>`;
 }
 
 function renderInqChart(){
@@ -4200,11 +4391,8 @@ async function loadInquiries(){
     document.getElementById('inqTbody').innerHTML=data.length?
       data.map(i=>{
         const handled = !!i.handled;
-        const replySubject = encodeURIComponent(`Re: Your inquiry${i.propertyTitle ? ' about ' + i.propertyTitle : ''} — GLRA Realty`);
-        const replyBody = encodeURIComponent(`Dear ${i.name || 'there'},\n\nThank you for reaching out to GLRA Realty.\n\n`);
-        const replyHref = `mailto:${encodeURIComponent(i.email||'')}?subject=${replySubject}&body=${replyBody}`;
         const handledBadge = handled ? ` <span style="display:inline-block;background:#10b981;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle">✓ Handled</span>` : '';
-        const replyBtn = i.email ? `<a class="act act-view" style="text-decoration:none" href="${replyHref}" title="Reply by email"><i class="fas fa-reply"></i></a>` : '';
+        const replyBtn = (i.email||i.phone) ? `<button class="act act-view" onclick="openInqReply('${i._id}')" title="Quick reply: WhatsApp, Viber or email"><i class="fas fa-reply"></i></button>` : '';
         const handledBtn = handled
           ? `<button class="act" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)" onclick="toggleInqHandled('${i._id}',false)" title="Mark as NOT handled"><i class="fas fa-rotate-left"></i></button>`
           : `<button class="act act-view" onclick="toggleInqHandled('${i._id}',true)" title="Mark as handled"><i class="fas fa-check"></i></button>`;
@@ -4231,6 +4419,168 @@ async function toggleInqHandled(id, makeHandled){
     if(res.ok && d.success){ showToast(makeHandled?'Marked as handled':'Reopened'); loadInquiries(); }
     else showToast(d.error||'Update failed', true);
   }catch(e){ showToast('Error updating inquiry', true); }
+}
+
+// ── QUICK REPLY ───────────────────────────────────────────
+// Copy of glraDisplayTitle from public/js/main.js (TITLE-HELPER block), so a
+// reply quotes "One Eastwood Tower 2" rather than the all-caps stored title.
+// Keep in step with main.js and server.js.
+var glraDisplayTitle = (function () {
+  var RX = {};
+  try {
+    RX.pict = new RegExp('\\p{Extended_Pictographic}', 'gu');
+    RX.letter = new RegExp('\\p{L}', 'gu');
+    RX.upper = new RegExp('\\p{Lu}', 'gu');
+    RX.mc = new RegExp('^MC\\p{L}{2}', 'u');
+  } catch (e) {
+    RX.pict = /[☀-➿]|[\uD83C-\uD83E][\uDC00-\uDFFF]/g;
+    RX.letter = /[A-Za-zÀ-ɏ]/g;
+    RX.upper = /[A-ZÀ-Þ]/g;
+    RX.mc = /^MC[A-Za-zÀ-ɏ]{2}/;
+  }
+  var KEEP = {};
+  ('BGC CBD SM SMDC DMCI RLC MRT LRT NCR QC UP BPI BDO RFO HOA LEED MOA BF ' +
+   'II III IV VI VII VIII IX XI XII').split(' ').forEach(function (k) { KEEP[k] = 1; });
+  var SMALL = {};
+  'a an and at by for in of on or the to along near with de del'.split(' ')
+    .forEach(function (k) { SMALL[k] = 1; });
+  var ABBR = { 'BRGY.': 'Brgy.', 'STA.': 'Sta.', 'STO.': 'Sto.', 'ST.': 'St.',
+               'AVE.': 'Ave.', 'BLVD': 'Blvd', 'BLVD.': 'Blvd.' };
+  var INITIALISM = /^([A-Z]\.){2,}$/;
+
+  function cap(p) { return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase(); }
+  function count(s, rx) { var m = s.match(rx); return m ? m.length : 0; }
+
+  function part(p, first) {
+    if (!p) return p;
+    var U = p.toUpperCase();
+    if (KEEP[U]) return U;
+    if (/^\d+BR$/.test(p)) return p;
+    if (U === 'SQM') return 'sqm';
+    if (RX.mc.test(U)) return 'Mc' + cap(p.slice(2));
+    if (SMALL[p.toLowerCase()] && !first) return p.toLowerCase();
+    return cap(p);
+  }
+
+  function word(w, first) {
+    var lead = (w.match(/^\(+/) || [''])[0];
+    var rest = w.slice(lead.length);
+    var trail = rest.match(/[,.)(]*$/)[0];
+    var core = rest.slice(0, rest.length - trail.length);
+    var dots = trail.match(/^\.*/)[0];
+    var after = trail.slice(dots.length);
+    var dotted = core + dots;
+    var out;
+    if (lead) first = true;
+    if (INITIALISM.test(dotted)) out = dotted;
+    else if (ABBR[dotted.toUpperCase()]) out = ABBR[dotted.toUpperCase()];
+    else if (core.toUpperCase() === 'PAG-IBIG') out = 'Pag-IBIG' + dots;
+    else {
+      out = core.split('-').map(function (p, i) { return part(p, first && i === 0); }).join('-') + dots;
+    }
+    return lead + out + after;
+  }
+
+  return function (raw) {
+    var s = String(raw || '');
+    s = s.replace(RX.pict, '').replace(/️/g, '');
+    s = s.replace(/ [—–-] /g, ' - ');
+    s = s.replace(/\s+/g, ' ').trim();
+    var letters = count(s, RX.letter);
+    if (!letters || count(s, RX.upper) / letters < 0.7) return s;
+    var words = s.split(' ');
+    var out = [];
+    for (var i = 0; i < words.length; i++) {
+      var prev = i > 0 ? words[i - 1] : null;
+      var first = i === 0 || prev === '-' || prev === '(';
+      out.push(word(words[i], first));
+    }
+    s = out.join(' ');
+    return s.replace(/ \(([^()]+)\)$/, ', $1');
+  };
+})();
+
+// Ready-made replies an inquiry can be answered with in one tap. Nothing is
+// sent from the server: WhatsApp, Viber and the mail app open with the text.
+let rpInq=null;
+function rpPhone(raw){
+  let d=String(raw||'').replace(/\D/g,'');
+  if(/^09\d{9}$/.test(d)) d='63'+d.slice(1);
+  else if(/^9\d{9}$/.test(d)) d='63'+d;
+  return d.length>=10?d:'';
+}
+function rpContext(i){
+  const p=i.propertyId?(allProps||[]).find(x=>String(x._id)===String(i.propertyId)):null;
+  const title=glraDisplayTitle((p&&p.title)||i.propertyTitle||'');
+  const lease=p&&String(p.listingType||'').toUpperCase()==='FOR LEASE';
+  // Full figures for a client ("₱25,000"), not the dashboard's short "₱25K".
+  const price=p&&lhPrice(p)>0?'₱'+Math.round(lhPrice(p)).toLocaleString('en-PH')+(lease?' a month':''):'';
+  const live=!!(p&&p.status==='available');
+  const link=p&&live?`https://glrarealty.com/property/${p._id}`:'';
+  const browse='https://glrarealty.com/properties.html'+(p?`?category=${encodeURIComponent(lease?'FOR LEASE':'FOR SALE')}`:'');
+  const first=String(i.name||'').trim().split(/\s+/)[0]||'there';
+  const me=CU&&CU.name&&!/admin/i.test(CU.name)?CU.name+'\n':'';
+  return {p,title,price,live,link,browse,first,sign:`\n\n${me}GLRA Realty\nglrarealty.com`};
+}
+const RP_TEMPLATES=[
+  {id:'view', lbl:'Available: invite to a viewing', txt:c=>`Hi ${c.first}, thank you for your inquiry${c.title?` about ${c.title}`:''}. ${c.title&&c.live?'It is still available. ':''}Would you like to schedule a viewing? Just let me know the day and time that suit you.${c.link?`\n\nFull details and photos: ${c.link}`:''}`},
+  {id:'details', lbl:'Send the details', txt:c=>`Hi ${c.first}, thank you for your interest${c.title?` in ${c.title}`:''}.${c.price?` The price is ${c.price}.`:''}${c.link?` Here are the full details and photos: ${c.link}`:` You can see our current listings here: ${c.browse}`}\n\nHappy to answer any questions or arrange a viewing.`},
+  {id:'needs', lbl:'Ask about budget and needs', txt:c=>`Hi ${c.first}, thank you for reaching out to GLRA Realty. So I can send you the best options, may I ask your budget, your preferred area, and when you plan to move in or buy?`},
+  {id:'gone', lbl:'No longer available', txt:c=>`Hi ${c.first}, thank you for your inquiry${c.title?` about ${c.title}`:''}. I am sorry, it is no longer available. Here are similar listings you may like: ${c.browse}\n\nIf you tell me your budget and preferred area, I will send you options that match.`},
+  {id:'follow', lbl:'Follow up', txt:c=>`Hi ${c.first}, just following up on your inquiry${c.title?` about ${c.title}`:''}. Are you still looking? I would be glad to help or arrange a viewing.`}
+];
+function openInqReply(id){
+  const i=(window.lastInquiries||[]).find(x=>x._id===id);
+  if(!i) return;
+  rpInq=i;
+  const c=rpContext(i);
+  const start=!c.title?'needs':(!c.live&&c.p?'gone':'view');
+  const phone=rpPhone(i.phone);
+  let m=document.getElementById('qrModal');
+  if(!m){ m=document.createElement('div'); m.id='qrModal'; m.className='modal-ov'; document.body.appendChild(m); }
+  m.innerHTML=`
+    <div class="modal-box" style="max-width:560px" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+      <div class="modal-hd"><div class="modal-title" id="qrTitle">Reply to ${esc(i.name||'this inquiry')}</div><button class="modal-close" onclick="closeInqReply()" aria-label="Close"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="rp-meta">${c.title?`<div><b>Listing</b> ${esc(c.title)}${c.p&&!c.live?' <span class="lh-chip warn">No longer available</span>':''}</div>`:''}${i.phone?`<div><b>Phone</b> ${esc(i.phone)}</div>`:''}${i.email?`<div><b>Email</b> ${esc(i.email)}</div>`:''}</div>
+        ${i.message?`<blockquote class="rp-quote">${esc(String(i.message).slice(0,400))}</blockquote>`:''}
+        <div class="fg full"><label for="qrTpl">Reply</label><select id="qrTpl" onchange="rpFill()">${RP_TEMPLATES.map(t=>`<option value="${t.id}"${t.id===start?' selected':''}>${t.lbl}</option>`).join('')}</select></div>
+        <div class="fg full"><label for="qrText">Message (you can edit it)</label><textarea id="qrText" rows="8"></textarea></div>
+        <label class="rp-check"><input type="checkbox" id="qrDone" ${i.handled?'':'checked'}> Mark as handled when I send</label>
+        <div class="rp-btns">
+          ${phone?`<button type="button" class="rp-btn rp-wa" onclick="rpSend('wa')"><i class="fab fa-whatsapp"></i> WhatsApp</button><button type="button" class="rp-btn rp-vb" onclick="rpSend('viber')"><i class="fab fa-viber"></i> Viber</button>`:''}
+          ${i.email?`<button type="button" class="rp-btn" onclick="rpSend('email')"><i class="fas fa-envelope"></i> Email</button>`:''}
+          <button type="button" class="rp-btn" onclick="rpSend('copy')"><i class="far fa-copy"></i> Copy</button>
+        </div>
+        ${!phone&&i.phone?'<p class="rp-hint">The phone number does not look complete, so WhatsApp and Viber are hidden.</p>':''}
+      </div>
+    </div>`;
+  m.classList.add('open');
+  rpFill();
+  setTimeout(()=>{ const t=document.getElementById('qrText'); if(t) t.focus(); },50);
+}
+function rpFill(){
+  if(!rpInq) return;
+  const t=RP_TEMPLATES.find(x=>x.id===document.getElementById('qrTpl').value)||RP_TEMPLATES[0];
+  const c=rpContext(rpInq);
+  document.getElementById('qrText').value=t.txt(c)+c.sign;
+}
+function closeInqReply(){ const m=document.getElementById('qrModal'); if(m) m.classList.remove('open'); rpInq=null; }
+async function rpCopy(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){ const t=document.getElementById('qrText'); if(t){ t.select(); try{ return document.execCommand('copy'); }catch(_){} } return false; }
+}
+async function rpSend(how){
+  const i=rpInq; if(!i) return;
+  const text=document.getElementById('qrText').value.trim();
+  if(!text){ showToast('The message is empty',true); return; }
+  const phone=rpPhone(i.phone);
+  if(how==='wa') window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`,'_blank','noopener');
+  else if(how==='viber'){ const ok=await rpCopy(text); showToast(ok?'Message copied. Paste it in the Viber chat.':'Copy the message, then paste it in Viber.'); location.href=`viber://chat?number=%2B${phone}`; }
+  else if(how==='email'){ const c=rpContext(i); location.href=`mailto:${encodeURIComponent(i.email)}?subject=${encodeURIComponent(`Your inquiry${c.title?' about '+c.title:''} - GLRA Realty`)}&body=${encodeURIComponent(text)}`; }
+  else { const ok=await rpCopy(text); showToast(ok?'Message copied':'Could not copy. Select the text and copy it.',!ok); }
+  if(how!=='copy' && document.getElementById('qrDone').checked && !i.handled){ await toggleInqHandled(i._id,true); }
+  if(how!=='copy') closeInqReply();
 }
 
 // ── CSV EXPORT ────────────────────────────────────────────

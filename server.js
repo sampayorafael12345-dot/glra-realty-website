@@ -4467,7 +4467,7 @@ function schemaProblem(err) {
 const ADMIN_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission'];
 // geo and nearby belong to the location worker. The edit form round-trips the
 // whole listing, so without this every save would write back a stale copy.
-const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt', 'geo', 'nearby'];
+const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt', 'geo', 'nearby', 'editedAt', 'reviewedAt'];
 function stripPrivilegedPropertyFields(body, req) {
   const out = { ...(body && typeof body === 'object' ? body : {}) };
   SYSTEM_PROPERTY_FIELDS.forEach(k => delete out[k]);
@@ -4500,6 +4500,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     const oldProperty = await Property.findById(req.params.id);
     if (!oldProperty) return res.status(404).json({ error: 'Property not found' });
     const updatedData = stripPrivilegedPropertyFields(req.body, req);
+    updatedData.editedAt = new Date();
 
     // A price must be a real non-negative number. A blank box or "10.5M" used
     // to arrive as 0 or 10.5 and was treated as a price DROP: every watcher was
@@ -4571,6 +4572,18 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     console.error('Error updating property:', err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// "Still available": staff confirm an old listing is still on the market
+// without editing it, which clears it from the dashboard's stale list.
+app.post('/api/admin/properties/:id/reviewed', verifyToken, requirePermission('properties_edit'), async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Property not found' });
+    const property = await Property.findByIdAndUpdate(req.params.id, { $set: { reviewedAt: new Date() } }, { new: true, projection: { title: 1, reviewedAt: 1 } });
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+    await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, { reviewedAt: 'confirmed still available' });
+    res.json({ success: true, reviewedAt: property.reviewedAt });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
 app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properties_delete'), async (req, res) => {

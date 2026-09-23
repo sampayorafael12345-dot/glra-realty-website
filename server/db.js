@@ -40,6 +40,11 @@ const propertySchema = new mongoose.Schema({
   priceUpdatedAt: { type: Date, default: null },
   // How many times the public detail view was opened (browsing signal for the admin).
   views: { type: Number, default: 0 },
+  // Freshness for the admin "Listing health" check. editedAt: last save from
+  // the edit form. reviewedAt: staff pressed "Still available". Both are
+  // system fields (never taken from a form body).
+  editedAt: { type: Date, default: null },
+  reviewedAt: { type: Date, default: null },
   // SYSTEM fields, written only by the location worker in server.js (never by
   // a form: stripPrivilegedPropertyFields drops them from every admin write).
   // geo: where OpenStreetMap's Nominatim puts this listing's location text.
