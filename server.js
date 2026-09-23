@@ -313,6 +313,12 @@ app.use(mongoSanitize());
 app.get(['/loan-comparison.html', '/loan-comparison'], (req, res) => {
   res.redirect(301, '/amortization.html#compare');
 });
+// Browsers and Google ask for /favicon.ico on their own; it never existed, so
+// every visit logged a 404. Point it at the real icon.
+app.get('/favicon.ico', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=604800');
+  res.redirect(301, '/img/favicon-64.png');
+});
 
 // ── SITE TRAFFIC COUNTER ────────────────────────────────────
 // Counts real public HTML page views (not assets, not /api, not the /admin
