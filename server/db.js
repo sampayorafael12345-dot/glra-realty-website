@@ -974,6 +974,11 @@ const caseFileSchema = new mongoose.Schema({
   bytes:        { type: Number, default: 0 },
   name:         { type: String, default: '', maxlength: 200 },
   label:        { type: String, default: '', trim: true, maxlength: 200 },
+  // photo / pleading / order / evidence / id / receipt / letter / other
+  category:     { type: String, default: '', trim: true, maxlength: 30 },
+  width:        { type: Number, default: 0 },
+  height:       { type: Number, default: 0 },
+  pages:        { type: Number, default: 0 },
   uploadedByName: { type: String, default: '' },
   uploadedAt:   { type: Date, default: Date.now }
 });

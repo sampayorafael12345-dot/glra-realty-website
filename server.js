@@ -560,6 +560,8 @@ const upload = multer({
 // Task attachments accept the document types brokers + lawyers actually use.
 const ALLOWED_TASK_ATTACHMENT_MIMES = new Set([
   'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  // iPhone camera format; Cloudinary converts it for viewing.
+  'image/heic', 'image/heif',
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

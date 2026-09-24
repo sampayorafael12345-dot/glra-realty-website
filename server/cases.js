@@ -283,6 +283,10 @@ function computeCase(c, today) {
 
   const upcoming = hearings.filter(h => h.date && h.date >= today && !h.reset);
   const nextHearing = upcoming[0] || null;
+  // The latest hearing that has been held but has nothing written down about
+  // it (within 60 days): the court diary asks for it until someone records
+  // what happened and when the case was reset to.
+  const pendingResult = hearings.filter(h => h.past && !h.reset && !h.result && h.daysAway >= -60).slice(-1)[0] || null;
   // An appearance fee is earned by turning up, so only a past, non-reset
   // hearing counts — and only once.
   const attended = hearings.filter(h => h.past && !h.reset);
@@ -354,10 +358,14 @@ function computeCase(c, today) {
   const lastActivity = stamps.sort().slice(-1)[0] || dk(c.createdAt);
   const idleDays = lastActivity ? diffDays(lastActivity, today) : null;
 
+  const files = c.files || [];
   return {
     today, open,
     charges, payments, billed, paid, balance, disbursements,
-    hearings, nextHearing, upcomingCount: upcoming.length,
+    hearings, nextHearing, upcomingCount: upcoming.length, pendingResult,
+    fileCount: files.length,
+    photoCount: files.filter(f => (f.resourceType || 'image') === 'image' && !/^pdf$/i.test(f.format || '')).length,
+    fileBytes: files.reduce((s, f) => s + (Number(f.bytes) || 0), 0),
     attendedCount: attended.length, unbilledAppearances, unbilledAppearanceValue,
     deadlines, openDeadlineCount: openDeadlines.length,
     missedCount: missedDeadlines.length, dueSoonCount: dueSoon.length, nextDeadline,
@@ -569,6 +577,8 @@ function vevent({ uid, dateStr, summary, description, alarmDays }) {
   return out.join('\r\n');
 }
 
+const FILE_CATEGORIES = ['photo', 'pleading', 'order', 'evidence', 'id', 'receipt', 'letter', 'other'];
+
 // ── ROUTES ───────────────────────────────────────────────────
 function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary }) {
   const view = [verifyToken, requirePermission('cases_view')];
@@ -690,6 +700,33 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       res.set('Content-Disposition', `inline; filename="court-diary-${today}.pdf"`);
       res.send(buf);
     } catch (err) { console.error('docket pdf error:', err); res.status(500).json({ error: 'Could not build the diary' }); }
+  });
+
+  // ── Cloudinary storage ──
+  // The account's own usage report (plan, credits, storage, bandwidth), kept
+  // for ten minutes: Cloudinary limits how often the Admin API may be asked.
+  let usageCache = { at: 0, body: null };
+  app.get('/api/admin/cases/storage', ...view, async (req, res) => {
+    try {
+      const agg = await Case.aggregate([{ $unwind: '$files' },
+        { $group: { _id: null, n: { $sum: 1 }, bytes: { $sum: { $ifNull: ['$files.bytes', 0] } } } }]);
+      const cases = { files: agg[0] ? agg[0].n : 0, bytes: agg[0] ? agg[0].bytes : 0 };
+      if (!usageCache.body || Date.now() - usageCache.at > 10 * 60 * 1000) {
+        const u = await cloudinary.api.usage();
+        const part = x => (x && typeof x === 'object') ? { usage: Number(x.usage) || 0, limit: Number(x.limit) || 0, pct: Number(x.used_percent) || 0, credits: Number(x.credits_usage) || 0 } : null;
+        usageCache = { at: Date.now(), body: {
+          plan: u.plan || '', lastUpdated: u.last_updated || '',
+          credits: part(u.credits), storage: part(u.storage), bandwidth: part(u.bandwidth),
+          transformations: part(u.transformations), objects: part(u.objects),
+          maxImageBytes: (u.media_limits && Number(u.media_limits.image_max_size_bytes)) || 0,
+          maxRawBytes: (u.media_limits && Number(u.media_limits.raw_max_size_bytes)) || 0
+        } };
+      }
+      res.json({ ...usageCache.body, cases, checkedAt: new Date(usageCache.at).toISOString() });
+    } catch (err) {
+      console.error('cloudinary usage error:', err.message || err);
+      res.status(502).json({ error: 'Cloudinary did not answer the usage request just now.' });
+    }
   });
 
   // ── settings ──
@@ -1051,13 +1088,27 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       if (!req.file) return res.status(400).json({ error: 'No file provided' });
       const doc = await Case.findById(req.params.id);
       if (!doc) { cleanup(); return res.status(404).json({ error: 'Case not found' }); }
-      const result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/cases', resource_type: 'auto', type: 'authenticated' });
+      let result;
+      try {
+        result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/cases', resource_type: 'auto', type: 'authenticated' });
+      } catch (e) {
+        cleanup();
+        const msg = String((e && (e.message || (e.error && e.error.message))) || '');
+        if (/file size too large|too large/i.test(msg)) {
+          return res.status(413).json({ error: 'That file is larger than the storage plan allows (10 MB a file on the free plan). Save a smaller copy, or split a long PDF, and try again.' });
+        }
+        throw e;
+      }
       cleanup();
+      const cat = String((req.body && req.body.category) || '').toLowerCase();
+      const isPic = (result.resource_type || 'image') === 'image' && !/^pdf$/i.test(result.format || '');
       doc.files.push({
         publicId: result.public_id, resourceType: result.resource_type || 'image',
         format: result.format || '', bytes: result.bytes || 0,
         name: String(req.file.originalname || '').slice(0, 200),
-        label: str(req.body && req.body.label, 200) || 'Document',
+        label: str(req.body && req.body.label, 200) || '',
+        category: FILE_CATEGORIES.includes(cat) ? cat : (isPic ? 'photo' : 'other'),
+        width: Number(result.width) || 0, height: Number(result.height) || 0, pages: Number(result.pages) || 0,
         uploadedByName: byName(req), uploadedAt: new Date()
       });
       touch(doc, `Document uploaded: ${req.file.originalname || ''}`, req);
@@ -1075,6 +1126,44 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
         { resource_type: f.resourceType || 'image', type: 'authenticated', expires_at: Math.floor(Date.now() / 1000) + 300 });
       res.json({ url, name: f.name, expiresInSeconds: 300 });
     } catch (err) { res.status(500).json({ error: 'Could not open the file' }); }
+  });
+  // Thumbnails and the full-screen preview. Photos and PDFs (page one) are
+  // resized by Cloudinary from a signed URL that only the server ever sees;
+  // the browser gets the picture itself, cached privately for an hour.
+  app.get('/api/admin/cases/:id/files/:fid/view', ...view, async (req, res) => {
+    try {
+      const doc = await findCase(req, res); if (!doc) return;
+      const f = doc.files.id(req.params.fid);
+      if (!f) return res.status(404).json({ error: 'File not found' });
+      if ((f.resourceType || 'image') !== 'image') return res.status(415).json({ error: 'No preview for this kind of file' });
+      const w = Math.max(80, Math.min(2000, parseInt(req.query.w, 10) || 360));
+      const small = w <= 480;
+      const t = { width: w, crop: small ? 'fill' : 'limit', quality: 'auto', fetch_format: 'jpg' };
+      if (small) { t.height = Math.round(w * 0.75); t.gravity = 'auto'; }
+      if (/^pdf$/i.test(f.format || '')) t.page = 1;
+      const url = cloudinary.url(f.publicId, { resource_type: 'image', type: 'authenticated', sign_url: true, secure: true, format: 'jpg', transformation: [t] });
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 20000);
+      let r;
+      try { r = await fetch(url, { signal: ac.signal }); } finally { clearTimeout(timer); }
+      if (!r.ok) return res.status(502).json({ error: 'Preview unavailable' });
+      const buf = Buffer.from(await r.arrayBuffer());
+      res.set('Content-Type', 'image/jpeg');
+      res.set('Cache-Control', 'private, max-age=3600');
+      res.send(buf);
+    } catch (err) { res.status(500).json({ error: 'Preview unavailable' }); }
+  });
+  app.put('/api/admin/cases/:id/files/:fid', ...manage, async (req, res) => {
+    try {
+      const doc = await findCase(req, res); if (!doc) return;
+      const f = doc.files.id(req.params.fid);
+      if (!f) return res.status(404).json({ error: 'File not found' });
+      const b = req.body || {};
+      if (b.label !== undefined) f.label = str(b.label, 200);
+      if (b.category !== undefined && FILE_CATEGORIES.includes(String(b.category))) f.category = String(b.category);
+      await doc.save();
+      res.json(withComputed(doc.toObject()));
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
   app.delete('/api/admin/cases/:id/files/:fid', ...manage, async (req, res) => {
     try {

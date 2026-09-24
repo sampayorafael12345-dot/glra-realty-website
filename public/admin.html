@@ -1816,7 +1816,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
 
         <!-- CASES (only if the user can see the law-office matters) -->
         <div class="panel" data-perm="cases_view" id="dashCasesPanel" style="display:none">
-          <div class="panel-head"><div class="panel-title"><i class="fas fa-scale-balanced"></i> Court diary · next 7 days</div><button class="hdr-btn" onclick="switchTab('cases')">Open board</button></div>
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-scale-balanced"></i> Court diary · next 7 days</div><button class="hdr-btn" onclick="switchTab('cases')">Open court dates</button></div>
           <div class="panel-body"><div class="dash-loading">Loading…</div></div>
         </div>
 
@@ -2332,56 +2332,248 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       .cs-dl input[type=checkbox]{width:17px;height:17px;accent-color:#ff3d00;margin-top:2px;flex-shrink:0}
       .cs-dl.done .t{text-decoration:line-through;opacity:.55}
       .cs-mono{font-family:'JetBrains Mono',monospace;font-size:10.5px}
+      /* ── Sept 2026 rebuild: court-date agenda, calendar, files. Nothing on
+         this tab scrolls sideways any more; phones get the same content in one
+         column with buttons big enough for a thumb. ── */
+      .cs-sr{position:absolute !important;width:1px !important;height:1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;margin:-1px !important;padding:0 !important;border:0 !important}
+      .cs-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+      .cs-search{flex:1 1 240px;min-width:0;max-width:420px}
+      .cs-views{display:inline-flex;border:1px solid var(--border-color);background:var(--card-bg)}
+      .cs-view{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 14px;background:none;border:0;border-right:1px solid var(--border-color);font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;font-weight:700;color:inherit;cursor:pointer}
+      .cs-view:last-child{border-right:0}
+      .cs-view:hover{background:var(--gray-light)}
+      .cs-view.on{background:#ff3d00;color:#fff}
+      .cs-view:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+      .cs-acts{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+      .cs-filter-note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 14px;font-size:13px}
+      .cs-filter-note b{font-weight:700}
+      .cs-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+      @media(max-width:760px){
+        .cs-search{max-width:none;flex-basis:100%}
+        .cs-search input{font-size:16px}
+        .cs-views{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}
+        .cs-view{flex-direction:column;justify-content:center;gap:4px;padding:7px 2px;min-height:52px;font-size:9px;letter-spacing:.5px}
+        .cs-view i{font-size:15px}
+        .cs-acts{margin-left:0;width:100%}
+        .cs-acts .hdr-btn{flex:1 1 auto;justify-content:center}
+      }
+      @media(max-width:560px){
+        #csSummary{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+        #csSummary .ls-kpi{padding:8px 8px}
+        #csSummary .ls-kpi .k{font-size:8.5px;letter-spacing:.4px;line-height:1.25}
+        #csSummary .ls-kpi .v{font-size:18px}
+        #csSummary .ls-kpi .s{display:none}
+      }
+      /* agenda */
+      .cs-ag-grp{margin-bottom:22px}
+      .cs-ag-gh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:8px;margin-bottom:10px;border-bottom:2px solid var(--border-color)}
+      .cs-ag-gh h3{margin:0;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;font-weight:800}
+      .cs-ag-gh span{font-size:12px;color:var(--gray)}
+      .cs-ag-gh b{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--gray);font-weight:700}
+      .cs-ag-grp.is-today .cs-ag-gh{border-bottom-color:#ff3d00}
+      .cs-ag-grp.is-today .cs-ag-gh h3{color:#ff3d00}
+      .cs-ag{position:relative;display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:14px;align-items:start;padding:12px 14px 12px 16px;margin-bottom:8px;background:var(--card-bg);border:1px solid var(--border-color);cursor:pointer;transition:box-shadow .15s,border-color .15s}
+      .cs-ag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--heat,transparent)}
+      .cs-ag:hover{border-color:var(--gray);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+      .cs-ag-date{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid var(--border-color);padding:6px 4px;text-align:center;line-height:1;min-height:78px}
+      .cs-ag-date .m{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700}
+      .cs-ag-date .d{font-size:28px;font-weight:800;letter-spacing:-1px;margin:3px 0 2px}
+      .cs-ag-date .w{font-size:10.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px}
+      .cs-ag-date .t{margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#2563eb}
+      .cs-ag-date.is-today{background:#ff3d00;border-color:#ff3d00;color:#fff}
+      .cs-ag-date.is-today .w,.cs-ag-date.is-today .t{color:#fff}
+      .cs-ag-date.is-tmrw{border-color:#2563eb}
+      .cs-ag-date.is-none{color:var(--gray);gap:6px}
+      .cs-ag-date.is-none i{font-size:20px}
+      .cs-ag-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:5px}
+      .cs-ag-chips .ls-chip{margin:0}
+      .cs-ag-title{display:block;background:none;border:0;padding:0;margin:0;text-align:left;font:inherit;font-size:15px;font-weight:700;line-height:1.3;color:inherit;cursor:pointer;overflow-wrap:anywhere}
+      .cs-ag-title:hover{text-decoration:underline}
+      .cs-ag-title:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+      .cs-ag-line{font-size:12.5px;color:var(--gray);margin-top:3px;overflow-wrap:anywhere}
+      .cs-ag-hear{font-size:12.5px;font-weight:600;color:#2563eb;margin-top:6px}
+      .cs-ag-pr{font-size:12px;font-weight:600;color:#b45309;margin-top:5px}
+      .cs-ag-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-content:start;width:300px}
+      .cs-ag-acts .cs-ag-btn{justify-content:center}
+      .cs-ag-btn{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;background:var(--card-bg);border:1px solid var(--border-color);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:inherit;cursor:pointer;white-space:nowrap}
+      .cs-ag-btn:hover{border-color:#ff3d00;color:#ff3d00}
+      .cs-ag-btn.is-hot{background:#ff3d00;border-color:#ff3d00;color:#fff}
+      .cs-ag-btn.is-hot:hover{background:#c02e00;color:#fff}
+      .cs-ag-btn:focus-visible,.cs-ag-stage select:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+      .cs-ag-stage select{width:100%;min-height:36px;padding:0 8px;border:1px solid var(--border-color);background:var(--card-bg);color:inherit;font-size:12px;cursor:pointer}
+      .cs-ag-rest{margin-top:8px;border:1px dashed var(--border-color);padding:10px 12px}
+      .cs-ag-rest summary{cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;padding:4px 0}
+      .cs-ag-rest[open] summary{margin-bottom:10px}
+      .cs-list-cards{display:none}
+      @media(max-width:760px){
+        .cs-ag{grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px 12px 12px 14px}
+        .cs-ag-date{min-height:68px}
+        .cs-ag-date .d{font-size:24px}
+        .cs-ag-acts{grid-column:1/-1;display:flex;flex-direction:row;flex-wrap:wrap;width:auto}
+        .cs-ag-btn{flex:1 1 auto;justify-content:center;min-height:44px}
+        .cs-ag-stage{flex:1 1 100%}
+        .cs-ag-stage select{min-height:44px;font-size:16px}
+        .cs-list-cards{display:block}
+        .cs-list-table{display:none}
+      }
+      /* calendar */
+      .cs-cal-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+      .cs-cal-head h3{margin:0 6px;font-size:20px;font-weight:800;min-width:180px;text-align:center}
+      .cs-cal-nav{min-width:40px;height:40px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-color);background:var(--card-bg);color:inherit;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+      .cs-cal-nav:hover{border-color:#ff3d00;color:#ff3d00}
+      .cs-cal-legend{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--gray)}
+      .cs-cal-legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+      .cs-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--border-color);border-left:1px solid var(--border-color)}
+      .cs-cal-wd{padding:6px 2px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:var(--gray);border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);background:var(--gray-light)}
+      .cs-cal-cell{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-height:106px;padding:5px;margin:0;border:0;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);background:var(--card-bg);color:inherit;text-align:left;cursor:pointer;min-width:0;font:inherit}
+      .cs-cal-cell:hover{background:var(--gray-light)}
+      .cs-cal-cell.is-blank{background:var(--gray-light);cursor:default}
+      .cs-cal-cell .n{font-size:12px;font-weight:700;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+      .cs-cal-cell.is-past .n{color:var(--gray)}
+      .cs-cal-cell.is-today .n{background:#ff3d00;color:#fff;border-radius:50%}
+      .cs-cal-cell.is-sel{box-shadow:inset 0 0 0 2px #2563eb}
+      .cs-cal-cell:focus-visible{outline:3px solid #ff3d00;outline-offset:-3px}
+      .cs-cal-evs{display:flex;flex-direction:column;gap:2px;min-width:0}
+      .cs-cal-evs .ev{display:block;font-size:10.5px;line-height:1.35;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid}
+      .ev-hearing{background:rgba(37,99,235,.12);border-color:#2563eb !important}
+      .ev-deadline{background:rgba(245,158,11,.16);border-color:#d97706 !important}
+      .ev-prescription{background:rgba(220,38,38,.12);border-color:#dc2626 !important}
+      .cs-cal-evs .ev.is-bad{background:rgba(220,38,38,.18);border-color:#dc2626 !important}
+      .cs-cal-evs .ev.is-reset{text-decoration:line-through;opacity:.6}
+      .cs-cal-evs .more{font-size:10px;color:var(--gray);padding-left:4px}
+      .cs-cal-dots{display:none;gap:3px;justify-content:center;flex-wrap:wrap}
+      .cs-cal-dots i{width:7px;height:7px;border-radius:50%;display:block}
+      .cs-cal-day{margin-top:16px}
+      .cs-cal-export{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color)}
+      .cs-row-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+      @media(max-width:760px){
+        .cs-cal-cell{min-height:56px;align-items:center;padding:4px 2px}
+        .cs-cal-evs{display:none}
+        .cs-cal-dots{display:flex}
+        .cs-cal-head h3{font-size:17px;min-width:0;flex:1}
+        .cs-cal-legend{margin-left:0;width:100%}
+      }
+      /* after-the-hearing dialog */
+      .cs-dlg{background:var(--card-bg);width:100%;max-width:560px;margin:0 auto;border:1px solid var(--border-color);animation:modalIn .2s ease}
+      .cs-dlg-h{background:var(--navy);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+      .cs-dlg-h .t{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.15}
+      .cs-dlg-h .s{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:3px;overflow-wrap:anywhere}
+      .cs-dlg-b{padding:18px}
+      .cs-dlg-sec{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);font-weight:700;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border-color)}
+      .cs-dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--border-color)}
+      .cs-hear-grid{grid-template-columns:1fr 1fr !important}
+      @media(max-width:640px){
+        #csHearDlg{padding:0 !important;align-items:stretch !important}
+        .cs-dlg{max-width:none;min-height:100%;border:0;display:flex;flex-direction:column}
+        .cs-dlg-b{flex:1}
+        .cs-dlg .finput{font-size:16px}
+        .cs-dlg-f .hdr-btn{flex:1;justify-content:center;min-height:46px}
+      }
+      /* case window: full screen on a phone, tabs wrap instead of scrolling */
+      @media(max-width:640px){
+        #caseModal{padding:0 !important}
+        #caseModal > .cs-modal-box{width:100% !important;max-width:none !important;max-height:none !important;min-height:100% !important;height:100%;border:0 !important;animation:none !important}
+        #caseModal .ls-tabs{flex-wrap:wrap;overflow:visible}
+        #caseModal .ls-tab{flex:1 1 auto;padding:10px 8px;text-align:center}
+        #caseModal .finput{font-size:16px}
+        #caScroll{padding:16px !important}
+      }
+      /* files & photos */
+      .ca-files-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:13px}
+      .ca-drop{border:2px dashed var(--border-color);padding:18px;text-align:center;margin-bottom:16px;background:var(--gray-light);transition:border-color .15s,background .15s}
+      .ca-drop.is-over{border-color:#ff3d00;background:rgba(255,61,0,.07)}
+      .ca-drop > i{font-size:26px;color:#ff3d00}
+      .ca-drop .t{font-weight:700;margin-top:6px}
+      .ca-drop .s{font-size:12px;color:var(--gray);margin-top:3px}
+      .ca-drop-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+      .ca-drop-row select,.ca-drop-row input{max-width:230px}
+      .ca-cam{display:none !important}
+      @media(pointer:coarse){.ca-cam{display:inline-flex !important}}
+      @media(max-width:640px){.ca-drop-row > *{flex:1 1 100%;max-width:none !important;justify-content:center}.ca-drop-row .hdr-btn{min-height:46px}}
+      .ca-q{text-align:left;margin-top:10px}
+      .ca-q-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:12px;padding:6px 0;border-top:1px solid var(--border-color)}
+      .ca-q-row .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .ca-q-bar{grid-column:1/-1;height:4px;background:var(--border-color)}
+      .ca-q-bar span{display:block;height:100%;background:#ff3d00;transition:width .2s}
+      .ca-q-row.is-err{color:#dc2626}
+      .ca-q-row.is-done .ca-q-bar span{background:#059669}
+      .ca-fchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+      .ca-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+      @media(max-width:480px){.ca-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+      .ca-tile{border:1px solid var(--border-color);background:var(--card-bg);display:flex;flex-direction:column;min-width:0}
+      .ca-tile-pv{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;background:var(--gray-light);border:0;padding:0;margin:0;cursor:pointer;overflow:hidden;color:var(--gray);width:100%}
+      .ca-tile-pv img{width:100%;height:100%;object-fit:cover;display:block}
+      .ca-tile-pv > i{font-size:34px}
+      .ca-tile-pv .ext{position:absolute;bottom:6px;right:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;background:var(--card-bg);color:inherit;padding:1px 5px;text-transform:uppercase}
+      .ca-tile-pv:focus-visible{outline:3px solid #ff3d00;outline-offset:-3px}
+      .ca-tile-b{padding:8px 10px;min-width:0;flex:1}
+      .ca-tile-b .n{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ca-tile-b .m{font-size:11px;color:var(--gray);margin-top:3px;line-height:1.4}
+      .ca-tile-acts{display:flex;gap:6px;padding:0 10px 10px;align-items:center}
+      .ca-tile-acts select{flex:1;min-width:0;min-height:32px;font-size:12px;border:1px solid var(--border-color);background:var(--card-bg);color:inherit}
+      /* photo viewer */
+      #csLightbox{position:fixed;inset:0;z-index:2300;background:rgba(5,8,12,.95);display:none;flex-direction:column}
+      .cs-lb-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;color:#fff}
+      .cs-lb-bar .c{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .cs-lb-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 60px 16px;position:relative}
+      .cs-lb-img img{max-width:100%;max-height:100%;object-fit:contain}
+      .cs-lb-msg{position:absolute;color:rgba(255,255,255,.75);font-size:13px}
+      .cs-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.4);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+      .cs-lb-nav.prev{left:8px}.cs-lb-nav.next{right:8px}
+      .cs-lb-nav:hover{background:#ff3d00;border-color:#ff3d00}
+      @media(max-width:640px){.cs-lb-img{padding:4px 4px 64px}.cs-lb-nav{top:auto;bottom:10px;transform:none}.cs-lb-nav.prev{left:calc(50% - 56px)}.cs-lb-nav.next{right:calc(50% - 56px)}.cs-lb-bar .hdr-btn span{display:none}}
+      /* storage meter */
+      .cs-meter{margin:10px 0 4px}
+      .cs-meter .k{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;margin-bottom:4px}
+      .cs-meter .bar{height:8px;background:var(--gray-light);border:1px solid var(--border-color)}
+      .cs-meter .bar span{display:block;height:100%;background:#059669}
+      .cs-meter .bar span.warn{background:#d97706}.cs-meter .bar span.bad{background:#dc2626}
       </style>
       <div id="tab-cases" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-          <div class="fsearch" style="flex:1;min-width:200px;max-width:380px"><i class="fas fa-search"></i><input type="text" id="csSearch" placeholder="Search client, case title, docket, court…" oninput="renderCases()"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <div style="display:inline-flex;border:1px solid var(--border-color);flex-wrap:wrap">
-              <button class="hdr-btn" id="csViewBoardBtn" onclick="setCasesView('board')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-columns"></i> Board</button>
-              <button class="hdr-btn" id="csViewListBtn" onclick="setCasesView('list')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-list"></i> List</button>
-              <button class="hdr-btn" id="csViewDiaryBtn" onclick="setCasesView('diary')" style="border:none;border-right:1px solid var(--border-color)"><i class="fas fa-gavel"></i> Court diary</button>
-              <button class="hdr-btn" id="csViewSettingsBtn" onclick="setCasesView('settings')" style="border:none"><i class="fas fa-sliders-h"></i> Settings</button>
-            </div>
+        <div class="cs-top">
+          <div class="fsearch cs-search"><i class="fas fa-search"></i><input type="search" id="csSearch" placeholder="Search client, case, docket, court…" oninput="renderCases()" aria-label="Search the cases"></div>
+          <div class="cs-views" role="group" aria-label="How to show the cases">
+            <button type="button" class="cs-view" id="csViewAgendaBtn" onclick="setCasesView('agenda')"><i class="fas fa-gavel" aria-hidden="true"></i><span>Court dates</span></button>
+            <button type="button" class="cs-view" id="csViewCalendarBtn" onclick="setCasesView('calendar')"><i class="far fa-calendar" aria-hidden="true"></i><span>Calendar</span></button>
+            <button type="button" class="cs-view" id="csViewListBtn" onclick="setCasesView('list')"><i class="fas fa-list" aria-hidden="true"></i><span>All cases</span></button>
+            <button type="button" class="cs-view" id="csViewSettingsBtn" onclick="setCasesView('settings')"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Settings</span></button>
+          </div>
+          <div class="cs-acts">
             <button class="hdr-btn" onclick="openConflictCheck()"><i class="fas fa-user-shield"></i> Conflict check</button>
-            <button class="hdr-btn" onclick="exportCasesCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button class="hdr-btn" onclick="exportCasesCSV()"><i class="fas fa-file-csv"></i> CSV</button>
             <button class="hdr-btn primary" id="addCaseBtn" onclick="openCaseModal()" style="display:none"><i class="fas fa-plus"></i> New case</button>
           </div>
         </div>
         <div class="ls-kpis" id="csSummary"></div>
+        <div id="csFilterNote"></div>
 
-        <!-- BOARD -->
-        <div id="csBoardWrap" style="overflow-x:auto;padding-bottom:10px">
-          <div id="csBoard" style="display:flex;gap:12px;align-items:flex-start;min-width:min-content"></div>
-        </div>
+        <!-- COURT DATES: every open matter, in the order its next court date comes up -->
+        <div id="csAgendaWrap"><div id="csAgenda"><div class="empty-st"><p>Loading…</p></div></div></div>
 
-        <!-- LIST -->
+        <!-- ALL CASES: a table on a computer, cards on a phone -->
         <div id="csListWrap" style="display:none">
-          <div id="csChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
-          <div class="panel"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
+          <div id="csChips" class="cs-chips"></div>
+          <div class="panel cs-list-table"><div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="ls-tbl">
             <thead id="csThead"></thead>
             <tbody id="csTbody"><tr><td colspan="8"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody>
           </table></div></div></div>
+          <div id="csListCards" class="cs-list-cards"></div>
         </div>
 
-        <!-- COURT DIARY -->
-        <div id="csDiaryWrap" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-            <div style="display:inline-flex;align-items:center;gap:6px">
-              <span class="ls-note" style="margin-right:4px">Show the next</span>
-              <select id="csDiaryDays" class="finput" style="padding:7px 10px;font-size:13px;width:auto" onchange="loadCaseDiary()" aria-label="How many days of the diary to show">
-                <option value="7">7 days</option><option value="14">14 days</option>
-                <option value="30" selected>30 days</option><option value="60">60 days</option>
-                <option value="90">90 days</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="hdr-btn" onclick="exportDiaryCSV()"><i class="fas fa-file-csv"></i> CSV</button>
-              <button class="hdr-btn primary" onclick="csDownload('/api/admin/cases/docket.pdf?days='+encodeURIComponent(document.getElementById('csDiaryDays').value),'court-diary.pdf')"><i class="fas fa-file-pdf"></i> Download diary</button>
-            </div>
+        <!-- CALENDAR: hearings, deadlines and prescriptive dates by month -->
+        <div id="csCalendarWrap" style="display:none">
+          <div id="csCal"></div>
+          <div class="cs-cal-export">
+            <span class="ls-note">Print or save the next</span>
+            <select id="csDiaryDays" class="finput" style="padding:7px 10px;font-size:13px;width:auto" aria-label="How many days of the court diary to export">
+              <option value="7">7 days</option><option value="14">14 days</option>
+              <option value="30" selected>30 days</option><option value="60">60 days</option>
+              <option value="90">90 days</option>
+            </select>
+            <button class="hdr-btn primary" onclick="csDownload('/api/admin/cases/docket.pdf?days='+encodeURIComponent(document.getElementById('csDiaryDays').value),'court-diary.pdf')"><i class="fas fa-file-pdf"></i> Court diary PDF</button>
+            <button class="hdr-btn" onclick="csDiaryCSV()"><i class="fas fa-file-csv"></i> CSV</button>
           </div>
-          <div id="csDiary"><div class="empty-st"><p>Loading…</p></div></div>
-          <div class="ls-note" style="margin-top:8px">Hearings, deadlines and prescriptive periods from every open matter. Always check a setting against the court's own notice of hearing before you rely on it.</div>
+          <div class="ls-note" style="margin-top:8px">Always check a setting against the court's own notice of hearing before you rely on it.</div>
         </div>
 
         <!-- SETTINGS -->
@@ -2418,6 +2610,10 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
               </div>
             </div>
             <div>
+              <div class="panel">
+                <div class="panel-head"><div class="panel-title"><i class="fas fa-cloud"></i> File storage (Cloudinary)</div></div>
+                <div class="panel-body"><div id="csStorage"><div class="ls-note">Loading…</div></div></div>
+              </div>
               <div class="panel">
                 <div class="panel-head"><div class="panel-title"><i class="fas fa-calendar-alt"></i> Court diary on your phone</div></div>
                 <div class="panel-body">
@@ -2457,9 +2653,54 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
         </div>
       </div>
 
+      <!-- AFTER THE HEARING: record what happened and the next date in one go -->
+      <div class="modal-ov" id="csHearDlg" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2100;overflow:auto;padding:24px 16px">
+        <div class="cs-dlg" role="dialog" aria-modal="true" aria-labelledby="csHearTitle">
+          <div class="cs-dlg-h">
+            <div style="min-width:0"><div class="t" id="csHearTitle">After the hearing</div><div class="s" id="csHearSub"></div></div>
+            <button class="hdr-btn" onclick="closeCsHearDlg()" aria-label="Close"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="cs-dlg-b">
+            <div id="csHearResultBox">
+              <div class="fg"><label class="flbl" for="csHearWhich">Which hearing</label><select id="csHearWhich" class="finput" onchange="csHearPick()"></select></div>
+              <div class="fg" style="margin-top:12px"><label class="flbl" for="csHearResult">What happened</label><textarea id="csHearResult" class="finput" rows="4" maxlength="2000" placeholder="e.g. Pre-trial terminated. Parties to submit judicial affidavits within 10 days."></textarea></div>
+              <label class="ls-sw" style="margin-top:10px"><input type="checkbox" id="csHearReset"> The hearing did not go ahead (reset or cancelled)</label>
+            </div>
+            <div class="cs-dlg-sec" id="csHearNextH">Next hearing</div>
+            <div class="ls-grid cs-hear-grid">
+              <div class="fg"><label class="flbl" for="csHearDate">Date</label><input type="date" id="csHearDate" class="finput"></div>
+              <div class="fg"><label class="flbl" for="csHearTime">Time</label><input type="time" id="csHearTime" class="finput"></div>
+              <div class="fg full"><label class="flbl" for="csHearPurpose">Purpose</label><input type="text" id="csHearPurpose" class="finput" maxlength="300" list="csHearPurposes" placeholder="e.g. Continuation of trial"><datalist id="csHearPurposes"></datalist></div>
+              <div class="fg full"><label class="flbl" for="csHearVenue">Venue</label><input type="text" id="csHearVenue" class="finput" maxlength="300" placeholder="Courtroom, branch or link"></div>
+            </div>
+            <div class="ls-note" id="csHearNextNote" style="margin-top:6px">Leave the date empty if the court has not set one yet.</div>
+            <label class="ls-sw" id="csHearBillRow" style="margin-top:12px"><input type="checkbox" id="csHearBill" checked> <span id="csHearBillLbl">Bill the appearance fee</span></label>
+          </div>
+          <div class="cs-dlg-f">
+            <button class="hdr-btn" onclick="closeCsHearDlg()">Cancel</button>
+            <button class="hdr-btn primary" id="csHearSaveBtn" onclick="csHearSave()"><i class="fas fa-save"></i> Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHOTO VIEWER -->
+      <div id="csLightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+        <div class="cs-lb-bar">
+          <div class="c" id="csLbCap"></div>
+          <button class="hdr-btn" onclick="csLbDownload()"><i class="fas fa-download"></i> <span>Original</span></button>
+          <button class="hdr-btn" onclick="closeCsLightbox()" aria-label="Close the viewer"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cs-lb-img">
+          <button class="cs-lb-nav prev" onclick="csLbStep(-1)" aria-label="Previous photo"><i class="fas fa-chevron-left"></i></button>
+          <img id="csLbImg" alt="">
+          <div class="cs-lb-msg" id="csLbMsg"></div>
+          <button class="cs-lb-nav next" onclick="csLbStep(1)" aria-label="Next photo"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+
       <!-- CASE MODAL -->
       <div class="modal-ov" id="caseModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
-        <div style="background:var(--card-bg);max-width:1040px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:0 auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px);min-height:min(560px,calc(100vh - 48px))">
+        <div class="cs-modal-box" style="background:var(--card-bg);max-width:1040px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:0 auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px);min-height:min(560px,calc(100vh - 48px))">
           <div style="background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0;z-index:5;flex-wrap:wrap">
             <div style="min-width:0">
               <div id="caseModalTitle" style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;line-height:1.15">New case</div>
@@ -2478,7 +2719,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
               <button class="ls-tab active" id="caTabDetails" onclick="caShowTab('details')">Details</button>
               <button class="ls-tab" id="caTabCourt" onclick="caShowTab('court')" disabled>Hearings &amp; deadlines</button>
               <button class="ls-tab" id="caTabLedger" onclick="caShowTab('ledger')" disabled>Fees</button>
-              <button class="ls-tab" id="caTabDocs" onclick="caShowTab('docs')" disabled>Documents</button>
+              <button class="ls-tab" id="caTabDocs" onclick="caShowTab('docs')" disabled>Files &amp; photos</button>
               <button class="ls-tab" id="caTabActivity" onclick="caShowTab('activity')" disabled>Notes &amp; activity</button>
             </div>
           </div>
@@ -2498,7 +2739,8 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
           </div>
         </div>
       </div>
-      <input type="file" id="caFileInput" style="display:none" onchange="caUploadFile(this)">
+      <input type="file" id="caFileInput" style="display:none" multiple accept="image/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" onchange="caQueueFiles(this.files);this.value=''">
+      <input type="file" id="caCamInput" style="display:none" accept="image/*" capture="environment" onchange="caQueueFiles(this.files);this.value=''">
 
       <!-- ACCOUNTS (admin only) -->
       <!-- LEASING (rentals from prospect to move-out: board, rent roll, ledgers, statements) -->
@@ -9643,8 +9885,7 @@ function switchTab(name){
   // Refresh the case files on tab visit
   if(name==='cases' && hasPerm('cases_view')){
     loadCases();
-    if(csView==='diary') loadCaseDiary();
-    if(csView==='settings') renderCasesSettings();
+    if(csView==='settings'){ renderCasesSettings(); csLoadStorage(false); }
   }
   // Refresh leases on tab visit
   if(name==='leasing' && hasPerm('leasing_view')){
@@ -10415,9 +10656,13 @@ async function leAddNote(){
 // on each read, so nothing here recalculates money or dates independently.
 // ══════════════════════════════════════════════════════════════════════════
 let csData = [], csMeta = { today: '', stages: {}, flow: [], ref: {}, settings: {} };
-let csView = localStorage.getItem('glra_cs_view') || 'board';
+// The old kanban board ('board') and list-of-dates diary ('diary') became the
+// court-date agenda and the month calendar; a saved choice carries over.
+let csView = (function(){ const v = localStorage.getItem('glra_cs_view');
+  return ({ board: 'agenda', diary: 'calendar' })[v] || (['agenda','calendar','list','settings'].includes(v) ? v : 'agenda'); })();
 let csFilter = 'all', csCurrent = null, csTab = 'details', csDiaryItems = [];
-const csSort = { key: 'urgency', dir: 'desc' };
+const csSort = { key: 'hearing', dir: 'asc' };
+let csCalMonth = '', csCalDay = '', csShowRest = false;
 const CS_ORDER = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment', 'closed', 'on_hold'];
 const CS_OPEN = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment'];
 
@@ -10471,43 +10716,76 @@ function csUpsert(doc){
 }
 function setCasesView(v){
   csView = v; localStorage.setItem('glra_cs_view', v); renderCases();
-  if(v === 'diary') loadCaseDiary();
-  if(v === 'settings') renderCasesSettings();
+  if(v === 'settings'){ renderCasesSettings(); csLoadStorage(true); }
 }
 function setCsFilter(k){
   csFilter = (csFilter === k) ? 'all' : k;
-  if(csView === 'board' && csFilter !== 'all'){ csView = 'list'; localStorage.setItem('glra_cs_view','list'); }
+  // A filter narrows the agenda or the list; the calendar and settings are not lists.
+  if(csFilter !== 'all' && (csView === 'calendar' || csView === 'settings')){ csView = 'agenda'; localStorage.setItem('glra_cs_view', 'agenda'); }
   renderCases();
 }
 function setCsSort(key){ toggleSort(csSort, key, (key === 'client' || key === 'title' || key === 'court') ? 'asc' : 'desc'); renderCases(); }
 
 // ── render ──
+const CS_FILTERS = {
+  open:    ['Open matters',        c => CS_OPEN.includes(c.stage)],
+  week:    ['Hearings this week',  c => c.computed && c.computed.nextHearing && c.computed.nextHearing.daysAway <= 7],
+  results: ['Results to record',   c => CS_OPEN.includes(c.stage) && c.computed && c.computed.pendingResult],
+  missed:  ['Missed deadlines',    c => c.computed && c.computed.missedCount > 0],
+  soon:    ['Deadlines due soon',  c => c.computed && c.computed.dueSoonCount > 0],
+  presc:   ['Prescription closing',c => c.computed && c.computed.prescription && ['critical','warning','lapsed'].includes(c.computed.prescription.status)],
+  owed:    ['Unpaid fees',         c => c.computed && c.computed.balance > 0.005]
+};
+// "8:30 AM", "08:30", "1:30 p.m.", "13:30" -> minutes after midnight (9999 if unknown).
+function csMins(t){
+  const m = String(t || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([ap])?\.?\s*m?\.?$/i);
+  if(!m) return 9999;
+  let h = +m[1]; const mi = +(m[2] || 0), ap = (m[3] || '').toLowerCase();
+  if(ap === 'p' && h < 12) h += 12;
+  if(ap === 'a' && h === 12) h = 0;
+  return h * 60 + mi;
+}
+function csTimeLabel(t){
+  const n = csMins(t); if(n === 9999) return t || '';
+  const h = Math.floor(n / 60), m = n % 60;
+  return ((h + 11) % 12 + 1) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM');
+}
+function csDateParts(k){
+  const [y, m, d] = String(k).slice(0, 10).split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return { d, mon: dt.toLocaleDateString('en-PH', { month: 'short', timeZone: 'UTC' }), wd: dt.toLocaleDateString('en-PH', { weekday: 'short', timeZone: 'UTC' }) };
+}
+function csByHearing(a, b){
+  const x = a.computed.nextHearing, y = b.computed.nextHearing;
+  return x.date.localeCompare(y.date) || csMins(x.time) - csMins(y.time) || (a.title || '').localeCompare(b.title || '');
+}
+
 function renderCases(){
   const wrap = document.getElementById('tab-cases'); if(!wrap) return;
   const canManage = hasPerm('cases_manage');
-  ['board','list','diary','settings'].forEach(v => {
-    const w = document.getElementById('cs' + v.charAt(0).toUpperCase() + v.slice(1) + 'Wrap'); if(w) w.style.display = csView === v ? '' : 'none';
-    const b = document.getElementById('csView' + v.charAt(0).toUpperCase() + v.slice(1) + 'Btn'); if(b){ b.style.background = csView === v ? '#ff3d00' : ''; b.style.color = csView === v ? '#fff' : ''; }
+  ['agenda','calendar','list','settings'].forEach(v => {
+    const cap = v.charAt(0).toUpperCase() + v.slice(1);
+    const w = document.getElementById('cs' + cap + 'Wrap'); if(w) w.style.display = csView === v ? '' : 'none';
+    const b = document.getElementById('csView' + cap + 'Btn'); if(b){ b.classList.toggle('on', csView === v); b.setAttribute('aria-pressed', csView === v ? 'true' : 'false'); }
   });
   const addBtn = document.getElementById('addCaseBtn'); if(addBtn) addBtn.style.display = canManage ? '' : 'none';
 
-  // headline numbers
+  // headline numbers: each one is also a filter
   const open = csData.filter(c => CS_OPEN.includes(c.stage));
-  const week = open.filter(c => c.computed && c.computed.nextHearing && c.computed.nextHearing.daysAway <= 7);
-  const missed = open.filter(c => c.computed && c.computed.missedCount > 0);
-  const dueSoon = open.filter(c => c.computed && c.computed.dueSoonCount > 0);
-  const presc = open.filter(c => c.computed && c.computed.prescription && ['critical','warning','lapsed'].includes(c.computed.prescription.status));
+  const n = key => csData.filter(CS_FILTERS[key][1]).length;
   const owed = csData.reduce((s, c) => s + ((c.computed && c.computed.balance > 0) ? c.computed.balance : 0), 0);
   const sum = document.getElementById('csSummary');
   if(sum){
-    const card = (key, k, v, s, color) => `<div class="ls-kpi click ${csFilter === key ? 'on' : ''}" onclick="setCsFilter('${key}')"><div class="k">${k}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s}</div></div>`;
+    sum.style.display = csView === 'settings' ? 'none' : '';
+    const card = (key, v, s, color) => `<button type="button" class="ls-kpi click ${csFilter === key ? 'on' : ''}" onclick="setCsFilter('${key}')" aria-pressed="${csFilter === key}" style="text-align:left;font:inherit;color:inherit"><div class="k">${CS_FILTERS[key][0]}</div><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="s">${s}</div></button>`;
+    const week = n('week'), res = n('results'), missed = n('missed'), soon = n('soon'), presc = n('presc');
     sum.innerHTML =
-        card('open', 'Open matters', open.length, `${csData.length} in total`)
-      + card('week', 'Hearings this week', week.length, week.length ? 'next 7 days' : 'nothing set')
-      + card('missed', 'Missed deadlines', missed.length, missed.length ? 'act on these first' : 'none missed', missed.length ? '#dc2626' : 'inherit')
-      + card('soon', 'Deadlines due soon', dueSoon.length, 'within 7 days', dueSoon.length ? '#d97706' : 'inherit')
-      + card('presc', 'Prescription closing', presc.length, presc.length ? 'check the last day to file' : 'none near', presc.length ? '#b45309' : 'inherit')
-      + card('owed', 'Unpaid fees', csPeso(owed), 'across every matter');
+        card('week', week, week ? 'next 7 days' : 'nothing set', week ? '#2563eb' : '')
+      + card('results', res, res ? 'hearings held, nothing written' : 'all recorded', res ? '#b45309' : '')
+      + card('missed', missed, missed ? 'act on these first' : 'none missed', missed ? '#dc2626' : '')
+      + card('soon', soon, 'within 7 days', soon ? '#d97706' : '')
+      + card('presc', presc, presc ? 'check the last day to file' : 'none near', presc ? '#b45309' : '')
+      + card('owed', csPeso(owed), `${open.length} open matter${open.length === 1 ? '' : 's'}`);
   }
 
   const q = (document.getElementById('csSearch')?.value || '').toLowerCase().trim();
@@ -10515,29 +10793,99 @@ function renderCases(){
       c.caseRef, c.natureOfAction, c.leadCounsel, c.judge, c.clientEmail, c.clientPhone,
       ...(c.adverseParties || []).map(p => p.name + ' ' + p.counsel)]
     .some(v => (v || '').toLowerCase().includes(q));
-  const searched = csData.filter(matchQ);
+  let rows = csData.filter(matchQ);
+  let label = '';
+  if(CS_FILTERS[csFilter]){ rows = rows.filter(CS_FILTERS[csFilter][1]); label = CS_FILTERS[csFilter][0]; }
+  else if(CS_ORDER.includes(csFilter)){ rows = rows.filter(c => c.stage === csFilter); label = 'Stage: ' + csStage(csFilter).label; }
+  const note = document.getElementById('csFilterNote');
+  if(note) note.innerHTML = (label && csView !== 'settings' && csView !== 'calendar')
+    ? `<div class="cs-filter-note">Showing only <b>${esc(label)}</b> <span style="color:var(--gray)">(${rows.length})</span><button type="button" class="hdr-btn" onclick="setCsFilter('${csFilter}')"><i class="fas fa-times"></i> Show all</button></div>` : '';
 
-  if(csView === 'board'){ renderCsBoard(searched, canManage); return; }
-  if(csView !== 'list') return;
+  if(csView === 'agenda') renderCsAgenda(rows, canManage);
+  else if(csView === 'list') renderCsList(rows, canManage);
+  else if(csView === 'calendar') renderCsCalendar(csData.filter(matchQ));
+}
 
+// ── court dates: the default view ──
+const CS_GROUPS = [
+  { key: 'today',    label: 'Today',        test: d => d === 0 },
+  { key: 'tomorrow', label: 'Tomorrow',     test: d => d === 1 },
+  { key: 'week',     label: 'This week',    test: d => d >= 2 && d <= 7 },
+  { key: 'month',    label: 'Next 30 days', test: d => d >= 8 && d <= 30 },
+  { key: 'later',    label: 'Later',        test: d => d > 30 }
+];
+function renderCsAgenda(rows, canManage){
+  const el = document.getElementById('csAgenda'); if(!el) return;
+  const open = rows.filter(c => CS_OPEN.includes(c.stage));
+  const rest = rows.filter(c => !CS_OPEN.includes(c.stage));
+  const dated = open.filter(c => c.computed && c.computed.nextHearing).sort(csByHearing);
+  const undated = open.filter(c => !(c.computed && c.computed.nextHearing))
+    .sort((a, b) => ((b.computed ? b.computed.heat : 0) - (a.computed ? a.computed.heat : 0)) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  let html = '';
+  CS_GROUPS.forEach(g => {
+    const items = dated.filter(c => g.test(c.computed.nextHearing.daysAway));
+    if(!items.length) return;
+    const f = items[0].computed.nextHearing.date, l = items[items.length - 1].computed.nextHearing.date;
+    const sub = (g.key === 'today' || g.key === 'tomorrow') ? `${csDay(f)}, ${csDate(f)}` : (f === l ? csDate(f) : `${csDate(f)} to ${csDate(l)}`);
+    html += csGroupHtml(g.label, sub, items, canManage, g.key);
+  });
+  if(undated.length) html += csGroupHtml('No court date set', 'open matters with nothing on the calendar', undated, canManage, 'none');
+  if(rest.length) html += `<details class="cs-ag-rest" ${csShowRest ? 'open' : ''} ontoggle="csShowRest=this.open"><summary>On hold and closed <span style="color:var(--gray)">(${rest.length})</span></summary>${rest.map(c => csAgCard(c, canManage)).join('')}</details>`;
+  if(!html) html = `<div class="empty-st"><i class="fas fa-scale-balanced"></i><p>${csData.length ? 'No matter matches that search or filter.' : 'No cases yet. Press “New case” to open the first file.'}</p></div>`;
+  el.innerHTML = html;
+}
+function csGroupHtml(label, sub, items, canManage, key){
+  return `<section class="cs-ag-grp ${key === 'today' ? 'is-today' : ''}" aria-label="${escA(label)}">
+    <header class="cs-ag-gh"><h3>${esc(label)}</h3><span>${esc(sub)}</span><b>${items.length} ${items.length === 1 ? 'case' : 'cases'}</b></header>
+    ${items.map(c => csAgCard(c, canManage)).join('')}</section>`;
+}
+function csAgCard(c, canManage){
+  const k = c.computed || {}, h = k.nextHearing, pr = CS_OPEN.includes(c.stage) ? k.pendingResult : null;
+  const heat = csHeatColor(c) || (pr ? '#b45309' : '');
+  let date;
+  if(h){
+    const p = csDateParts(h.date);
+    date = `<div class="cs-ag-date ${h.daysAway === 0 ? 'is-today' : h.daysAway === 1 ? 'is-tmrw' : ''}" aria-hidden="true"><span class="m">${esc(p.mon)}</span><span class="d">${p.d}</span><span class="w">${esc(p.wd)}</span>${h.time ? `<span class="t">${esc(csTimeLabel(h.time))}</span>` : ''}</div>`;
+  } else date = `<div class="cs-ag-date is-none" aria-hidden="true"><i class="far fa-calendar-xmark"></i><span class="w">No date</span></div>`;
+  const chips = [];
+  if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">PRESCRIBED</span>');
+  else if(k.prescription && ['critical','warning'].includes(k.prescription.status)) chips.push(`<span class="ls-chip ${k.prescription.status === 'critical' ? 'bad' : 'warn'}">prescribes ${esc(csRel(k.prescription.daysLeft))}</span>`);
+  if(k.missedCount) chips.push(`<span class="ls-chip bad">${k.missedCount} missed</span>`);
+  if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
+  if(c.priority === 'urgent') chips.push('<span class="ls-chip bad">urgent</span>');
+  else if(c.priority === 'high') chips.push('<span class="ls-chip warn">high</span>');
+  if(k.balance > 0.005) chips.push(`<span class="ls-chip dim">${csPeso(k.balance)} unpaid</span>`);
+  if(k.fileCount) chips.push(`<span class="ls-chip dim"><i class="fas fa-paperclip"></i> ${k.fileCount}</span>`);
+  const court = [csCourt(c), c.docketNumber].filter(Boolean).join(' · ');
+  const hear = h ? [h.purpose || 'Hearing', h.venue, h.daysAway > 1 ? csRel(h.daysAway) : ''].filter(Boolean).join(' · ') : '';
+  const needs = !!(pr || (h && h.daysAway === 0));
+  const title = c.title || 'Untitled';
+  return `<article class="cs-ag" style="${heat ? '--heat:' + heat : ''}" onclick="openCaseModal('${c._id}')">
+    ${date}
+    <div class="cs-ag-main">
+      <div class="cs-ag-chips"><span class="ls-pill" style="background:${csStage(c.stage).color}">${esc(csStage(c.stage).label)}</span>${chips.join('')}</div>
+      <button type="button" class="cs-ag-title" onclick="event.stopPropagation();openCaseModal('${c._id}')">${esc(title)}</button>
+      <div class="cs-ag-line">${esc(c.clientName || '')}${c.clientRole ? ' · ' + esc(c.clientRole) : ''}</div>
+      ${court ? `<div class="cs-ag-line cs-mono">${esc(court)}</div>` : ''}
+      ${h ? `<div class="cs-ag-hear"><i class="fas fa-gavel" style="font-size:11px"></i> ${h ? '<span class="cs-sr">Next hearing ' + esc(csDate(h.date)) + (h.time ? ' at ' + esc(csTimeLabel(h.time)) : '') + ': </span>' : ''}${esc(hear)}</div>` : ''}
+      ${pr ? `<div class="cs-ag-pr"><i class="fas fa-pen-to-square"></i> ${esc(pr.purpose || 'Hearing')} on ${esc(csDate(pr.date))}: nothing recorded yet</div>` : ''}
+    </div>
+    <div class="cs-ag-acts" onclick="event.stopPropagation()">
+      ${canManage && needs ? `<button type="button" class="cs-ag-btn is-hot" onclick="csHearOpen('${c._id}','result')"><i class="fas fa-pen-to-square"></i><span>Record result</span></button>` : ''}
+      ${canManage ? `<button type="button" class="cs-ag-btn" onclick="csHearOpen('${c._id}','add')"><i class="fas fa-calendar-plus"></i><span>${h ? 'Add hearing' : 'Set hearing'}</span></button>` : ''}
+      <button type="button" class="cs-ag-btn" onclick="openCaseModal('${c._id}','docs')"><i class="fas fa-camera"></i><span>Files</span></button>
+      ${canManage ? `<label class="cs-ag-stage"><span class="cs-sr">Stage of ${esc(title)}</span><select onchange="csMove('${c._id}',this.value)">${CS_ORDER.map(s => `<option value="${s}"${s === c.stage ? ' selected' : ''}>${esc(csStage(s).label)}</option>`).join('')}</select></label>` : ''}
+    </div>
+  </article>`;
+}
+
+// ── all cases ──
+function renderCsList(rows, canManage){
   const chips = document.getElementById('csChips');
   if(chips){
-    const chip = (key, label, n) => `<button type="button" class="hdr-btn" onclick="setCsFilter('${key}')" style="${csFilter === key ? 'background:#ff3d00;color:#fff;border-color:#ff3d00' : ''}">${esc(label)} <span style="opacity:.7">${n}</span></button>`;
-    chips.innerHTML = chip('all','All',csData.length) + CS_ORDER.map(s => chip(s, csStage(s).label, csData.filter(c => c.stage === s).length)).join('');
+    const chip = (key, label, n) => `<button type="button" class="hdr-btn" onclick="setCsFilter('${key}')" aria-pressed="${csFilter === key}" style="${csFilter === key ? 'background:#ff3d00;color:#fff;border-color:#ff3d00' : ''}">${esc(label)} <span style="opacity:.7">${n}</span></button>`;
+    chips.innerHTML = chip('all', 'All', csData.length) + CS_ORDER.map(s => chip(s, csStage(s).label, csData.filter(c => c.stage === s).length)).join('');
   }
-
-  let rows = searched.slice();
-  const F = {
-    open:  c => CS_OPEN.includes(c.stage),
-    week:  c => c.computed && c.computed.nextHearing && c.computed.nextHearing.daysAway <= 7,
-    missed:c => c.computed && c.computed.missedCount > 0,
-    soon:  c => c.computed && c.computed.dueSoonCount > 0,
-    presc: c => c.computed && c.computed.prescription && ['critical','warning','lapsed'].includes(c.computed.prescription.status),
-    owed:  c => c.computed && c.computed.balance > 0.005
-  };
-  if(F[csFilter]) rows = rows.filter(F[csFilter]);
-  else if(CS_ORDER.includes(csFilter)) rows = rows.filter(c => c.stage === csFilter);
-
   const dir = csSort.dir === 'asc' ? 1 : -1;
   const val = c => ({
     urgency: (c.computed ? c.computed.heat : 0),
@@ -10545,19 +10893,24 @@ function renderCases(){
     title:   (c.title || '').toLowerCase(),
     court:   csCourt(c).toLowerCase(),
     stage:   CS_ORDER.indexOf(c.stage),
-    hearing: (c.computed && c.computed.nextHearing) ? c.computed.nextHearing.date : '9999',
+    hearing: (c.computed && c.computed.nextHearing) ? c.computed.nextHearing.date + String(csMins(c.computed.nextHearing.time)).padStart(4, '0') : '9999',
     balance: (c.computed ? c.computed.balance : 0),
     updated: c.updatedAt || ''
   })[csSort.key];
-  rows.sort((a,b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+  rows = rows.slice().sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
 
-  const th = (key, label) => `<th class="sortable" onclick="setCsSort('${key}')">${esc(label)}${csSort.key === key ? ' <i class="fas fa-caret-' + (csSort.dir === 'asc' ? 'up' : 'down') + '"></i>' : ''}</th>`;
+  const th = (key, label) => `<th class="sortable" onclick="setCsSort('${key}')" aria-sort="${csSort.key === key ? (csSort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${esc(label)}${csSort.key === key ? ' <i class="fas fa-caret-' + (csSort.dir === 'asc' ? 'up' : 'down') + '"></i>' : ''}</th>`;
   const thead = document.getElementById('csThead');
-  if(thead) thead.innerHTML = `<tr>${th('title','Case')}${th('client','Client')}${th('court','Court')}${th('stage','Stage')}${th('hearing','Next hearing')}<th>Deadlines</th>${th('balance','Balance')}<th></th></tr>`;
-
-  const tb = document.getElementById('csTbody'); if(!tb) return;
-  if(!rows.length){ tb.innerHTML = `<tr><td colspan="8"><div class="empty-st"><i class="fas fa-scale-balanced"></i><p>${csData.length ? 'No matter matches that filter.' : 'No cases yet. Press “New case” to open the first file.'}</p></div></td></tr>`; return; }
-  tb.innerHTML = rows.map(c => {
+  if(thead) thead.innerHTML = `<tr>${th('hearing','Next court date')}${th('title','Case')}${th('client','Client')}${th('court','Court')}${th('stage','Stage')}<th>Deadlines</th>${th('balance','Balance')}<th></th></tr>`;
+  const tb = document.getElementById('csTbody');
+  const cards = document.getElementById('csListCards');
+  if(!rows.length){
+    const empty = `<div class="empty-st"><i class="fas fa-scale-balanced"></i><p>${csData.length ? 'No matter matches that filter.' : 'No cases yet. Press “New case” to open the first file.'}</p></div>`;
+    if(tb) tb.innerHTML = `<tr><td colspan="8">${empty}</td></tr>`;
+    if(cards) cards.innerHTML = empty;
+    return;
+  }
+  if(tb) tb.innerHTML = rows.map(c => {
     const k = c.computed || {};
     const heat = csHeatColor(c);
     const chips = [];
@@ -10565,71 +10918,194 @@ function renderCases(){
     if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
     if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">prescribed</span>');
     else if(k.prescription && k.prescription.status === 'critical') chips.push(`<span class="ls-chip bad">prescribes ${csRel(k.prescription.daysLeft)}</span>`);
+    if(k.pendingResult && CS_OPEN.includes(c.stage)) chips.push('<span class="ls-chip warn">result to record</span>');
     if(!chips.length && k.openDeadlineCount) chips.push(`<span class="ls-chip dim">${k.openDeadlineCount} open</span>`);
     if(!chips.length) chips.push('<span class="ls-chip dim">none</span>');
+    const h = k.nextHearing;
     return `<tr style="cursor:pointer" onclick="openCaseModal('${c._id}')">
+      <td class="cs-due">${h ? `<b style="font-size:12px">${esc(csDate(h.date))}</b>${h.time ? ' · ' + esc(csTimeLabel(h.time)) : ''}<div style="color:var(--gray)">${esc(csRel(h.daysAway))}${h.purpose ? ' · ' + esc(h.purpose) : ''}</div>` : '<span style="color:var(--gray)">—</span>'}</td>
       <td><div style="font-weight:600;${heat ? 'border-left:3px solid ' + heat + ';padding-left:7px;margin-left:-7px' : ''}">${esc(c.title || 'Untitled')}</div>
-        <div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-top:2px">${esc(c.caseRef || '')}${c.docketNumber ? ' · ' + esc(c.docketNumber) : ''}</div>
-        ${c.natureOfAction ? `<div style="font-size:11.5px;color:var(--gray);margin-top:2px">${esc(c.natureOfAction)}</div>` : ''}</td>
+        <div style="font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace;margin-top:2px">${esc(c.caseRef || '')}${c.docketNumber ? ' · ' + esc(c.docketNumber) : ''}</div></td>
       <td><div>${esc(c.clientName || '')}</div>${c.clientRole ? `<div style="font-size:11px;color:var(--gray)">${esc(c.clientRole)}</div>` : ''}</td>
       <td style="font-size:12px">${esc(csCourt(c)) || '<span style="color:var(--gray)">—</span>'}</td>
       <td><span class="ls-pill" style="background:${csStage(c.stage).color}">${esc(csStage(c.stage).label)}</span></td>
-      <td class="cs-due">${k.nextHearing ? esc(csDate(k.nextHearing.date)) + `<div style="color:var(--gray)">${esc(csRel(k.nextHearing.daysAway))}</div>` : '<span style="color:var(--gray)">—</span>'}</td>
       <td>${chips.join('')}</td>
       <td class="money">${k.balance > 0.005 ? csPeso(k.balance) : '<span style="color:var(--gray)">—</span>'}</td>
-      <td onclick="event.stopPropagation()"><button class="icon-btn" title="Open the file" onclick="openCaseModal('${c._id}')"><i class="fas fa-folder-open"></i></button></td>
+      <td onclick="event.stopPropagation()"><button class="icon-btn" title="Open the file" aria-label="Open ${escA(c.title || 'case')}" onclick="openCaseModal('${c._id}')"><i class="fas fa-folder-open"></i></button></td>
     </tr>`;
   }).join('');
+  if(cards) cards.innerHTML = rows.map(c => csAgCard(c, canManage)).join('');
 }
 
-// ── board ──
-function renderCsBoard(rows, canManage){
-  const board = document.getElementById('csBoard'); if(!board) return;
-  board.innerHTML = CS_ORDER.map(stage => {
-    const meta = csStage(stage);
-    const items = rows.filter(c => c.stage === stage)
-      .sort((a,b) => (b.computed ? b.computed.heat : 0) - (a.computed ? a.computed.heat : 0)
-        || ((a.computed && a.computed.nextHearing ? a.computed.nextHearing.date : '9999')
-            .localeCompare(b.computed && b.computed.nextHearing ? b.computed.nextHearing.date : '9999')));
-    return `<div class="tl-col" style="width:268px;flex-shrink:0;border:1px solid var(--border-color);background:var(--gray-light);padding:10px"
-        ondragover="csDragOver(event)" ondragleave="csDragLeave(event)" ondrop="csDrop(event,'${stage}')">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:${meta.color}">${esc(meta.label)}</div>
-        <div style="font-size:11px;color:var(--gray)">${items.length}</div>
-      </div>
-      ${meta.hint ? `<div style="font-size:10.5px;color:var(--gray);line-height:1.45;margin-bottom:8px">${esc(meta.hint)}</div>` : ''}
-      <div>${items.map(c => csCard(c, canManage)).join('') || '<div style="font-size:11.5px;color:var(--gray);padding:10px 2px">Nothing here.</div>'}</div>
-    </div>`;
-  }).join('');
+// ── calendar ──
+function csCalItems(rows){
+  const out = [];
+  rows.forEach(c => {
+    if(c.stage === 'closed') return;
+    const k = c.computed || {};
+    (k.hearings || []).forEach(h => { if(h.date) out.push({ date: h.date, kind: 'hearing', time: h.time, title: h.purpose || 'Hearing', c, h, reset: h.reset }); });
+    (k.deadlines || []).forEach(d => { if(d.dueDate && !d.done) out.push({ date: d.dueDate, kind: 'deadline', title: d.title, c, critical: d.critical, bad: d.status === 'missed', rule: d.rule }); });
+    if(k.prescription && CS_OPEN.includes(c.stage)) out.push({ date: k.prescription.date, kind: 'prescription', title: 'Last day to file', c, bad: true });
+  });
+  const order = { prescription: 0, deadline: 1, hearing: 2 };
+  return out.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind] || csMins(a.time) - csMins(b.time));
 }
-function csCard(c, canManage){
-  const k = c.computed || {};
-  const heat = csHeatColor(c);
-  const chips = [];
-  if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">PRESCRIBED</span>');
-  else if(k.prescription && ['critical','warning'].includes(k.prescription.status)) chips.push(`<span class="ls-chip ${k.prescription.status === 'critical' ? 'bad' : 'warn'}">prescribes ${esc(csRel(k.prescription.daysLeft))}</span>`);
-  if(k.missedCount) chips.push(`<span class="ls-chip bad">${k.missedCount} missed</span>`);
-  if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
-  if(k.balance > 0.005) chips.push(`<span class="ls-chip dim">${csPeso(k.balance)} unpaid</span>`);
-  if(c.priority === 'urgent') chips.push('<span class="ls-chip bad">urgent</span>');
-  else if(c.priority === 'high') chips.push('<span class="ls-chip warn">high</span>');
-  return `<div class="ls-card cs-card ${canManage ? '' : 'view'}" ${canManage ? `draggable="true" ondragstart="csDragStart(event,'${c._id}')" ondragend="csDragEnd(event)"` : ''} onclick="openCaseModal('${c._id}')">
-    ${heat ? `<span class="cs-heat" style="background:${heat}"></span>` : ''}
-    <div style="font-size:13px;font-weight:600;line-height:1.3">${esc(c.title || 'Untitled')}</div>
-    <div style="font-size:11px;color:var(--gray);margin-top:3px">${esc(c.clientName || '')}${c.clientRole ? ' · ' + esc(c.clientRole) : ''}</div>
-    ${c.natureOfAction ? `<div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(c.natureOfAction)}</div>` : ''}
-    ${csCourt(c) ? `<div style="font-size:10.5px;color:var(--gray);margin-top:3px;font-family:'JetBrains Mono',monospace">${esc(csCourt(c))}</div>` : ''}
-    ${k.nextHearing ? `<div style="font-size:11.5px;margin-top:6px;color:#2563eb;font-weight:600"><i class="fas fa-gavel" style="font-size:10px"></i> ${esc(csDate(k.nextHearing.date))} · ${esc(csRel(k.nextHearing.daysAway))}</div>` : ''}
-    ${k.nextDeadline && !k.nextDeadline.done ? `<div style="font-size:11px;margin-top:3px;color:${k.nextDeadline.status === 'missed' ? '#dc2626' : 'var(--gray)'}"><i class="fas fa-flag" style="font-size:9px"></i> ${esc(k.nextDeadline.title)} · ${esc(csRel(k.nextDeadline.daysAway))}</div>` : ''}
-    <div>${chips.join('')}</div>
+const CS_KIND_COL = { hearing: '#2563eb', deadline: '#d97706', prescription: '#dc2626' };
+function renderCsCalendar(rows){
+  const el = document.getElementById('csCal'); if(!el) return;
+  const today = csMeta.today || new Date().toISOString().slice(0, 10);
+  if(!csCalMonth) csCalMonth = today.slice(0, 7);
+  if(!csCalDay) csCalDay = today;
+  const [Y, M] = csCalMonth.split('-').map(Number);
+  const startDow = new Date(Date.UTC(Y, M - 1, 1)).getUTCDay();
+  const daysIn = new Date(Date.UTC(Y, M, 0)).getUTCDate();
+  const byDay = {};
+  csCalItems(rows).forEach(i => { (byDay[i.date] = byDay[i.date] || []).push(i); });
+  const monthName = new Date(Date.UTC(Y, M - 1, 1)).toLocaleDateString('en-PH', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  let cells = '';
+  for(let i = 0; i < startDow; i++) cells += '<div class="cs-cal-cell is-blank" aria-hidden="true"></div>';
+  for(let d = 1; d <= daysIn; d++){
+    const key = `${Y}-${String(M).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const list = byDay[key] || [];
+    const kinds = { hearing: 0, deadline: 0, prescription: 0 };
+    list.forEach(i => kinds[i.kind]++);
+    const aria = `${csDate(key)}${list.length ? ': ' + [kinds.hearing && `${kinds.hearing} hearing${kinds.hearing === 1 ? '' : 's'}`, kinds.deadline && `${kinds.deadline} deadline${kinds.deadline === 1 ? '' : 's'}`, kinds.prescription && 'prescription'].filter(Boolean).join(', ') : ', nothing set'}`;
+    cells += `<button type="button" class="cs-cal-cell ${key === today ? 'is-today' : ''} ${key === csCalDay ? 'is-sel' : ''} ${key < today ? 'is-past' : ''}" onclick="csCalPick('${key}')" aria-label="${escA(aria)}" aria-pressed="${key === csCalDay}">
+      <span class="n">${d}</span>
+      <span class="cs-cal-evs">${list.slice(0, 3).map(i => `<span class="ev ev-${i.kind}${i.bad ? ' is-bad' : ''}${i.reset ? ' is-reset' : ''}">${i.kind === 'hearing' && i.time ? esc(csTimeLabel(i.time).replace(':00', '').replace(' ', '').toLowerCase()) + ' ' : ''}${esc(i.c.title || '')}</span>`).join('')}${list.length > 3 ? `<span class="more">+${list.length - 3} more</span>` : ''}</span>
+      <span class="cs-cal-dots">${Object.keys(kinds).filter(k => kinds[k]).map(k => `<i style="background:${list.some(i => i.kind === k && i.bad) ? '#dc2626' : CS_KIND_COL[k]}"></i>`).join('')}</span>
+    </button>`;
+  }
+  const tail = (7 - ((startDow + daysIn) % 7)) % 7;
+  for(let i = 0; i < tail; i++) cells += '<div class="cs-cal-cell is-blank" aria-hidden="true"></div>';
+  const dayItems = byDay[csCalDay] || [];
+  el.innerHTML = `
+    <div class="cs-cal-head">
+      <button type="button" class="cs-cal-nav" onclick="csCalNav(-1)" aria-label="Previous month"><i class="fas fa-chevron-left"></i></button>
+      <h3 aria-live="polite">${esc(monthName)}</h3>
+      <button type="button" class="cs-cal-nav" onclick="csCalNav(1)" aria-label="Next month"><i class="fas fa-chevron-right"></i></button>
+      <button type="button" class="cs-cal-nav" onclick="csCalToday()">Today</button>
+      <div class="cs-cal-legend"><span><i style="background:#2563eb"></i>Hearing</span><span><i style="background:#d97706"></i>Deadline</span><span><i style="background:#dc2626"></i>Missed or last day to file</span></div>
+    </div>
+    <div class="cs-cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(w => `<div class="cs-cal-wd">${w}</div>`).join('')}${cells}</div>
+    <div class="cs-cal-day">
+      <div class="cs-day">
+        <div class="cs-day-h ${csCalDay === today ? 'today' : ''}"><span>${esc(csDay(csCalDay))} · ${esc(csDate(csCalDay))}${csCalDay === today ? ' · TODAY' : ''}</span><span style="opacity:.7">${dayItems.length} item${dayItems.length === 1 ? '' : 's'}</span></div>
+        ${dayItems.length ? dayItems.map(i => csCalRow(i, today)).join('') : '<div class="cs-row" style="cursor:default"><div class="b"><div class="s">Nothing set for this day.</div></div></div>'}
+      </div>
+    </div>`;
+}
+function csCalRow(i, today){
+  const canManage = hasPerm('cases_manage');
+  const icon = i.kind === 'hearing' ? 'fa-gavel' : i.kind === 'prescription' ? 'fa-hourglass-end' : 'fa-flag';
+  const col = i.bad ? '#dc2626' : CS_KIND_COL[i.kind];
+  const c = i.c;
+  const canRecord = canManage && i.kind === 'hearing' && !i.reset && !i.h.result && i.date <= today;
+  return `<div class="cs-row" onclick="openCaseModal('${c._id}','court')">
+    <div class="w">${i.kind === 'hearing' ? esc(i.time ? csTimeLabel(i.time) : '—') : `<i class="fas ${icon}" style="color:${col}"></i>`}</div>
+    <div class="b">
+      <div class="t"><i class="fas ${icon}" style="color:${col};font-size:11px;margin-right:5px"></i>${esc(i.title || '')}${i.critical ? ' <span class="ls-chip bad">critical</span>' : ''}${i.reset ? ' <span class="ls-chip dim">reset</span>' : ''}${i.kind === 'hearing' && i.h.result ? ' <span class="ls-chip ok">recorded</span>' : ''}</div>
+      <div class="s">${esc(c.title || '')}${c.caseRef ? ' · ' + esc(c.caseRef) : ''}<br>${esc(c.clientName || '')}${csCourt(c) ? ' · ' + esc(csCourt(c)) : ''}${i.rule ? '<br><span class="cs-mono">' + esc(i.rule) + '</span>' : ''}</div>
+      ${canRecord ? `<div class="cs-row-acts" onclick="event.stopPropagation()"><button type="button" class="cs-ag-btn is-hot" onclick="csHearOpen('${c._id}','result','${i.h.id}')"><i class="fas fa-pen-to-square"></i> Record result</button></div>` : ''}
+    </div>
   </div>`;
 }
-let csDragId = null;
-function csDragStart(ev, id){ csDragId = id; ev.currentTarget.classList.add('dragging'); try{ ev.dataTransfer.setData('text/plain', id); ev.dataTransfer.effectAllowed = 'move'; }catch(e){} }
-function csDragEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('#csBoard .tl-col').forEach(c => c.classList.remove('dragover')); }
-function csDragOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add('dragover'); try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){} }
-function csDragLeave(ev){ ev.currentTarget.classList.remove('dragover'); }
-function csDrop(ev, stage){ ev.preventDefault(); ev.currentTarget.classList.remove('dragover'); const id = csDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain')); csDragId = null; if(id) csMove(id, stage); }
+function csCalPick(key){ csCalDay = key; renderCases(); }
+function csCalNav(step){
+  const [Y, M] = csCalMonth.split('-').map(Number);
+  const d = new Date(Date.UTC(Y, M - 1 + step, 1));
+  csCalMonth = d.toISOString().slice(0, 7);
+  const today = csMeta.today || '';
+  csCalDay = today.slice(0, 7) === csCalMonth ? today : csCalMonth + '-01';
+  renderCases();
+}
+function csCalToday(){ csCalMonth = (csMeta.today || '').slice(0, 7); csCalDay = csMeta.today || ''; renderCases(); }
+async function csDiaryCSV(){
+  const days = document.getElementById('csDiaryDays')?.value || 30;
+  try{
+    const r = await apiFetch('/api/admin/cases/calendar?days=' + encodeURIComponent(days));
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not load the diary');
+    csDiaryItems = d.items || [];
+    exportDiaryCSV();
+  }catch(e){ showToast(e.message, true); }
+}
+
+// ── after the hearing: result, next date and the appearance fee in one save ──
+let csHear = { id: null, mode: 'result' };
+function csHearOpen(id, mode, hid){
+  const c = csData.find(x => x._id === id); if(!c) return;
+  const k = c.computed || {};
+  const held = (k.hearings || []).filter(h => h.date && h.daysAway !== null && h.daysAway <= 0).slice().reverse();
+  if(mode === 'result' && !held.length) mode = 'add';
+  csHear = { id, mode };
+  const $ = x => document.getElementById(x);
+  $('csHearTitle').textContent = mode === 'add' ? 'Set a hearing' : 'After the hearing';
+  $('csHearSub').textContent = [c.title, c.docketNumber, c.clientName].filter(Boolean).join(' · ');
+  $('csHearResultBox').style.display = mode === 'add' ? 'none' : '';
+  $('csHearNextH').textContent = mode === 'add' ? 'The hearing' : 'Next hearing (if the court set one)';
+  $('csHearNextNote').style.display = mode === 'add' ? 'none' : '';
+  $('csHearWhich').innerHTML = held.map(h => `<option value="${h.id}">${esc(csDate(h.date))}${h.time ? ' · ' + esc(csTimeLabel(h.time)) : ''} · ${esc(h.purpose || 'Hearing')}${h.result ? ' (recorded)' : h.reset ? ' (reset)' : ''}</option>`).join('');
+  const pick = hid || (k.pendingResult && k.pendingResult.id) || (k.nextHearing && k.nextHearing.daysAway === 0 ? k.nextHearing.id : (held[0] && held[0].id)) || '';
+  if(pick) $('csHearWhich').value = pick;
+  $('csHearDate').value = ''; $('csHearTime').value = ''; $('csHearPurpose').value = '';
+  $('csHearPurposes').innerHTML = (csMeta.ref.hearingPurposes || []).map(p => `<option value="${escA(p)}">`).join('');
+  // Same courtroom next time, usually.
+  const last = (k.hearings || []).filter(h => h.venue).slice(-1)[0];
+  $('csHearVenue').value = last ? last.venue : '';
+  const fee = Number(c.appearanceFee) || 0;
+  $('csHearBillRow').style.display = (mode === 'result' && fee > 0) ? '' : 'none';
+  $('csHearBillLbl').textContent = `Bill the appearance fee (${csPeso(fee)}) for hearings already held`;
+  csHearPick();
+  const dlg = $('csHearDlg'); dlg.style.display = 'flex';
+  setTimeout(() => { const f = mode === 'add' ? $('csHearDate') : $('csHearResult'); if(f) f.focus(); }, 40);
+}
+function csHearPick(){
+  const c = csData.find(x => x._id === csHear.id); if(!c) return;
+  const h = ((c.computed || {}).hearings || []).find(x => x.id === document.getElementById('csHearWhich').value);
+  document.getElementById('csHearResult').value = h ? (h.result || '') : '';
+  document.getElementById('csHearReset').checked = !!(h && h.reset);
+}
+function closeCsHearDlg(){ const d = document.getElementById('csHearDlg'); if(d) d.style.display = 'none'; }
+async function csHearSave(){
+  const c = csData.find(x => x._id === csHear.id); if(!c) return;
+  const $ = x => document.getElementById(x);
+  const mode = csHear.mode;
+  const date = $('csHearDate').value;
+  const t = $('csHearTime').value;
+  const time = t ? csTimeLabel(t) : '';
+  const purpose = $('csHearPurpose').value.trim(), venue = $('csHearVenue').value.trim();
+  const btn = $('csHearSaveBtn'); btn.disabled = true;
+  let last = null, did = [];
+  const call = async (path, method, body) => {
+    const r = await apiFetch(`/api/admin/cases/${c._id}${path}`, { method, body: JSON.stringify(body || {}) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not save');
+    last = d; return d;
+  };
+  try{
+    if(mode === 'result'){
+      const hid = $('csHearWhich').value, result = $('csHearResult').value.trim(), reset = $('csHearReset').checked;
+      if(!result && !reset && !date) throw new Error('Write what happened, or set the next hearing date.');
+      if(hid && (result || reset)){ await call(`/hearings/${hid}`, 'PUT', { result, reset }); did.push('result saved'); }
+      if(date){ await call('/hearings', 'POST', { date, time, purpose, venue }); did.push('next hearing set'); }
+      if($('csHearBill').checked && !reset && Number(c.appearanceFee) > 0 && ((last || c).computed || {}).unbilledAppearances > 0){
+        try{ await call('/bill-appearances', 'POST', {}); did.push('fee billed'); }catch(e){ /* nothing billable yet */ }
+      }
+    } else {
+      if(!date) throw new Error('Pick the date of the hearing.');
+      await call('/hearings', 'POST', { date, time, purpose, venue }); did.push('hearing set');
+    }
+    if(last){
+      csUpsert(last);
+      if(csCurrent && csCurrent._id === last._id){ csCurrent = last; if(document.getElementById('caseModal').style.display === 'flex'){ caRenderModal(); caRenderPane(); } }
+    }
+    closeCsHearDlg(); renderCases(); renderDashboard();
+    showToast(did.length ? did.join(', ').replace(/^./, m => m.toUpperCase()) : 'Saved');
+  }catch(e){ showToast(e.message, true); if(last){ csUpsert(last); renderCases(); } }
+  finally{ btn.disabled = false; }
+}
+
 async function csMove(id, stage){
   const c = csData.find(x => x._id === id); if(!c || c.stage === stage) return;
   try{
@@ -10859,8 +11335,11 @@ function caRenderModal(){
   const canManage = hasPerm('cases_manage');
   const isNew = !c;
   document.getElementById('caseModalTitle').textContent = isNew ? 'New case' : (c.title || 'Untitled');
+  const nh = !isNew && c.computed && c.computed.nextHearing;
   document.getElementById('caseModalSub').textContent = isNew ? 'Open a file' :
-    [c.caseRef, c.docketNumber, csStage(c.stage).label].filter(Boolean).join(' · ');
+    [c.caseRef, c.docketNumber, csStage(c.stage).label, nh ? 'Next hearing ' + csDate(nh.date) + (nh.time ? ' ' + csTimeLabel(nh.time) : '') : ''].filter(Boolean).join(' · ');
+  const docTab = document.getElementById('caTabDocs');
+  if(docTab) docTab.innerHTML = 'Files &amp; photos' + (!isNew && (c.files || []).length ? ` <span style="opacity:.7">${c.files.length}</span>` : '');
   ['caTabCourt','caTabLedger','caTabDocs','caTabActivity'].forEach(k => { const b = document.getElementById(k); if(b) b.disabled = isNew; });
   ['casePdfSummaryBtn','casePdfStatementBtn','casePdfFullBtn'].forEach(k => { const b = document.getElementById(k); if(b) b.style.display = isNew ? 'none' : ''; });
   const del = document.getElementById('caDeleteBtn');
@@ -11111,6 +11590,7 @@ function caRenderCourt(){
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);font-weight:700">Hearings</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${canManage && k.unbilledAppearances ? `<button class="hdr-btn" onclick="caBillAppearances()"><i class="fas fa-coins"></i> Bill ${k.unbilledAppearances} appearance${k.unbilledAppearances === 1 ? '' : 's'} (${csPeso(k.unbilledAppearanceValue)})</button>` : ''}
+        ${canManage && (k.hearings || []).some(h => h.daysAway !== null && h.daysAway <= 0) ? `<button class="hdr-btn primary" onclick="csHearOpen(csCurrent._id,'result')"><i class="fas fa-pen-to-square"></i> After a hearing</button>` : ''}
         ${canManage ? `<button class="hdr-btn" onclick="caToggleForm('caHrForm')"><i class="fas fa-plus"></i> Add a hearing</button>` : ''}
       </div>
     </div>
@@ -11422,57 +11902,274 @@ async function caDelPayment(pid){
   }catch(e){ showToast(e.message, true); }
 }
 
-// ── pane: documents ──
+// ── pane: files & photos ──
+// Everything goes to Cloudinary as `authenticated` (private) files. The
+// browser never holds a lasting link: thumbnails and the photo viewer come
+// through /view (the server fetches the resized picture), and "open" asks for
+// a download link that expires after five minutes.
+const CA_CATS = [['photo','Photo'],['pleading','Pleading'],['order','Court order'],['evidence','Evidence'],['id','ID'],['receipt','Receipt'],['letter','Letter'],['other','Other']];
+const CA_MAX = 10 * 1024 * 1024;          // Cloudinary free plan: 10 MB a file
+let caFileFilter = 'all', caQueue = [], caBusy = false;
+const caPics = {};                         // `${fid}@${w}` -> object URL
+function caCatLabel(k){ return (CA_CATS.find(x => x[0] === k) || [k, k ? k.charAt(0).toUpperCase() + k.slice(1) : 'Other'])[1]; }
+function caIsPreviewable(f){ return (f.resourceType || 'image') === 'image'; }
+function caIsPhoto(f){ return caIsPreviewable(f) && !/^pdf$/i.test(f.format || ''); }
+function caExt(f){ return String(f.format || (f.name || '').split('.').pop() || '').toLowerCase().slice(0, 5); }
+function caIcon(f){
+  const x = caExt(f);
+  if(x === 'pdf') return 'fa-file-pdf';
+  if(/^(doc|docx)$/.test(x)) return 'fa-file-word';
+  if(/^(xls|xlsx|csv)$/.test(x)) return 'fa-file-excel';
+  if(x === 'txt') return 'fa-file-lines';
+  return caIsPhoto(f) ? 'fa-file-image' : 'fa-file';
+}
+function caSize(n){ n = Number(n) || 0; return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+function caSorted(){ return (csCurrent.files || []).slice().sort((a, b) => String(b.uploadedAt || '').localeCompare(String(a.uploadedAt || ''))); }
 function caRenderDocs(){
   const c = csCurrent, canManage = hasPerm('cases_manage');
-  const files = c.files || [];
+  const files = caSorted();
+  const total = files.reduce((s, f) => s + (Number(f.bytes) || 0), 0);
+  const cats = {}; files.forEach(f => { const k = f.category || (caIsPhoto(f) ? 'photo' : 'other'); cats[k] = (cats[k] || 0) + 1; });
+  if(caFileFilter !== 'all' && !cats[caFileFilter]) caFileFilter = 'all';
+  const shown = caFileFilter === 'all' ? files : files.filter(f => (f.category || (caIsPhoto(f) ? 'photo' : 'other')) === caFileFilter);
+  const chip = (k, label, n) => `<button type="button" class="hdr-btn" onclick="caFileFilter='${k}';caRenderDocs()" aria-pressed="${caFileFilter === k}" style="${caFileFilter === k ? 'background:#ff3d00;color:#fff;border-color:#ff3d00' : ''}">${esc(label)} <span style="opacity:.7">${n}</span></button>`;
   document.getElementById('caPane-docs').innerHTML = `
-    <div class="ls-note" style="margin-bottom:12px">Pleadings, orders, IDs, proof of payment. Files are stored privately and opened through a link that expires after five minutes — they are never on the public website. These are privileged: only staff with case access can see them.</div>
-    ${canManage ? `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <input type="text" id="caFileLabel" class="finput" placeholder="Label, e.g. Order dated 15 July 2026" maxlength="200" style="max-width:340px">
-      <button class="hdr-btn primary" onclick="document.getElementById('caFileInput').click()"><i class="fas fa-upload"></i> Upload</button>
+    <div class="ca-files-top"><div><b>${files.length}</b> file${files.length === 1 ? '' : 's'} · ${caSize(total)}</div><div class="ls-note" id="caStorageLine"></div></div>
+    ${canManage ? `<div class="ca-drop" id="caDrop" ondragover="event.preventDefault();this.classList.add('is-over')" ondragleave="this.classList.remove('is-over')" ondrop="event.preventDefault();this.classList.remove('is-over');caQueueFiles(event.dataTransfer.files)">
+      <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
+      <div class="t">Drop photos or documents here</div>
+      <div class="s">Photos, PDF, Word and Excel, several at once, up to 10 MB each. Very large photos are shrunk to fit.</div>
+      <div class="ca-drop-row">
+        <label class="cs-sr" for="caFileCat">What these files are</label>
+        <select id="caFileCat" class="finput"><option value="">Kind: work it out</option>${CA_CATS.map(x => `<option value="${x[0]}">${esc(x[1])}</option>`).join('')}</select>
+        <label class="cs-sr" for="caFileLabel">Description</label>
+        <input type="text" id="caFileLabel" class="finput" maxlength="200" placeholder="Description (optional)">
+        <button type="button" class="hdr-btn primary" onclick="document.getElementById('caFileInput').click()"><i class="fas fa-folder-open"></i> Choose files</button>
+        <button type="button" class="hdr-btn ca-cam" onclick="document.getElementById('caCamInput').click()"><i class="fas fa-camera"></i> Take a photo</button>
+      </div>
+      <div class="ca-q" id="caQueue"></div>
     </div>` : ''}
-    ${files.length ? `<div class="tbl-wrap"><table class="ls-tbl"><thead><tr><th>Label</th><th>File</th><th>Uploaded</th><th></th></tr></thead>
-      <tbody>${files.map(f => `<tr>
-        <td>${esc(f.label || 'Document')}</td>
-        <td style="font-size:12px;color:var(--gray)">${esc(f.name || '')} ${f.bytes ? `<span style="white-space:nowrap">· ${(f.bytes/1024).toFixed(0)} KB</span>` : ''}</td>
-        <td style="font-size:12px;color:var(--gray)">${esc(csDate(f.uploadedAt))}${f.uploadedByName ? '<br>' + esc(f.uploadedByName) : ''}</td>
-        <td style="white-space:nowrap">
-          <button class="icon-btn" title="Open" onclick="caOpenFile('${f._id}')"><i class="fas fa-up-right-from-square"></i></button>
-          ${canManage ? `<button class="icon-btn" title="Delete" onclick="caDelFile('${f._id}')"><i class="fas fa-trash"></i></button>` : ''}
-        </td></tr>`).join('')}</tbody></table></div>`
-      : '<div class="empty-st"><i class="fas fa-folder-open"></i><p>No documents yet.</p></div>'}`;
+    ${files.length > 1 ? `<div class="ca-fchips">${chip('all', 'All', files.length)}${CA_CATS.filter(x => cats[x[0]]).map(x => chip(x[0], x[1], cats[x[0]])).join('')}</div>` : ''}
+    ${shown.length ? `<div class="ca-grid">${shown.map(f => {
+      const name = f.label || f.name || 'File';
+      const cat = f.category || (caIsPhoto(f) ? 'photo' : 'other');
+      return `<div class="ca-tile">
+        <button type="button" class="ca-tile-pv" onclick="caOpenFile('${f._id}')" aria-label="${caIsPhoto(f) ? 'View' : 'Open'} ${escA(name)}">
+          ${caIsPreviewable(f) ? `<img data-fid="${f._id}" alt="">` : `<i class="fas ${caIcon(f)}" aria-hidden="true"></i>`}
+          ${caIsPhoto(f) ? '' : `<span class="ext">${esc(caExt(f) || 'file')}</span>`}
+        </button>
+        <div class="ca-tile-b"><div class="n" title="${escA(f.name || '')}">${esc(name)}</div>
+          <div class="m">${esc(caCatLabel(cat))} · ${caSize(f.bytes)}<br>${esc(csDate(f.uploadedAt))}${f.uploadedByName ? ' · ' + esc(f.uploadedByName) : ''}</div></div>
+        ${canManage ? `<div class="ca-tile-acts">
+          <label class="cs-sr" for="caCat_${f._id}">Kind of file</label>
+          <select id="caCat_${f._id}" onchange="caSetCat('${f._id}',this.value)">${CA_CATS.map(x => `<option value="${x[0]}"${x[0] === cat ? ' selected' : ''}>${esc(x[1])}</option>`).join('')}</select>
+          <button class="icon-btn" title="Delete" aria-label="Delete ${escA(name)}" onclick="caDelFile('${f._id}')"><i class="fas fa-trash"></i></button>
+        </div>` : ''}
+      </div>`; }).join('')}</div>`
+      : `<div class="empty-st"><i class="fas fa-folder-open"></i><p>${files.length ? 'Nothing of that kind.' : 'No files yet. Photos of documents, pleadings, orders and receipts all go here.'}</p></div>`}`;
+  caPaintQueue();
+  caLoadPics();
+  csLoadStorage(false);
 }
-async function caUploadFile(input){
-  const file = input.files && input.files[0]; if(!file) return;
-  const label = document.getElementById('caFileLabel')?.value || '';
-  const fd = new FormData(); fd.append('file', file); fd.append('label', label);
-  showLoad('Uploading…');
+// Thumbnails, four at a time, cached for the session.
+function caPicUrl(fid, w){
+  const key = fid + '@' + w;
+  if(caPics[key]) return Promise.resolve(caPics[key]);
+  return apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}/view?w=${w}`).then(r => {
+    if(!r.ok) throw new Error('no preview');
+    return r.blob();
+  }).then(b => (caPics[key] = URL.createObjectURL(b)));
+}
+function caLoadPics(){
+  const imgs = Array.from(document.querySelectorAll('#caPane-docs img[data-fid]')).filter(i => !i.src);
+  let at = 0;
+  const next = () => {
+    const img = imgs[at++]; if(!img) return;
+    caPicUrl(img.getAttribute('data-fid'), 360).then(u => { img.src = u; }).catch(() => {
+      const b = img.parentNode; if(b) { img.remove(); b.insertAdjacentHTML('afterbegin', '<i class="fas fa-file-image" aria-hidden="true"></i>'); }
+    }).then(next);
+  };
+  for(let i = 0; i < 4; i++) next();
+}
+// A photo too large for the plan is redrawn smaller as a JPEG. Anything that
+// already fits is uploaded untouched, so an original stays an original.
+async function caShrink(file){
+  if(file.size <= CA_MAX * 0.95 || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  const url = URL.createObjectURL(file);
   try{
-    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files`, { method:'POST', body: fd });
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const scale = Math.min(1, 4000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.naturalWidth * scale); cv.height = Math.round(img.naturalHeight * scale);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    for(const q of [0.9, 0.82, 0.72, 0.6]){
+      const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', q));
+      if(blob && blob.size <= CA_MAX * 0.95) return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    }
+  }catch(e){}
+  finally{ URL.revokeObjectURL(url); }
+  return file;
+}
+function caQueueFiles(list){
+  const files = Array.from(list || []); if(!files.length || !csCurrent) return;
+  const cat = document.getElementById('caFileCat')?.value || '';
+  const label = document.getElementById('caFileLabel')?.value.trim() || '';
+  files.forEach(file => caQueue.push({ id: Math.random().toString(36).slice(2), caseId: csCurrent._id, file, name: file.name, cat, label, pct: 0, state: 'wait', error: '' }));
+  const lb = document.getElementById('caFileLabel'); if(lb) lb.value = '';
+  caPaintQueue(); caRunQueue();
+}
+function caPaintQueue(){
+  const el = document.getElementById('caQueue'); if(!el) return;
+  const now = Date.now();
+  caQueue = caQueue.filter(q => !(q.state === 'done' && now - q.doneAt > 5000));
+  const mine = caQueue.filter(q => csCurrent && q.caseId === csCurrent._id);
+  el.innerHTML = mine.map(q => `<div class="ca-q-row ${q.state === 'err' ? 'is-err' : q.state === 'done' ? 'is-done' : ''}">
+    <span class="n">${esc(q.name)}</span>
+    <span>${q.state === 'wait' ? 'Waiting' : q.state === 'prep' ? 'Preparing' : q.state === 'up' ? q.pct + '%' : q.state === 'done' ? 'Uploaded' : esc(q.error)}</span>
+    <div class="ca-q-bar"><span style="width:${q.state === 'done' ? 100 : q.state === 'err' ? 0 : q.pct}%"></span></div>
+  </div>`).join('');
+}
+async function caRunQueue(){
+  if(caBusy) return;
+  caBusy = true;
+  try{
+    let q;
+    while((q = caQueue.find(x => x.state === 'wait'))){
+      q.state = 'prep'; caPaintQueue();
+      const file = await caShrink(q.file);
+      if(file.size > CA_MAX){ q.state = 'err'; q.error = 'Larger than 10 MB'; caPaintQueue(); continue; }
+      q.state = 'up'; caPaintQueue();
+      await caSend(q, file);
+      caPaintQueue();
+    }
+  } finally { caBusy = false; }
+  setTimeout(caPaintQueue, 5200);
+}
+function caSend(q, file){
+  return new Promise(done => {
+    const fd = new FormData();
+    fd.append('file', file, file.name); fd.append('label', q.label); fd.append('category', q.cat);
+    const x = new XMLHttpRequest();
+    x.open('POST', `/api/admin/cases/${q.caseId}/files`);
+    const t = getToken(); if(t) x.setRequestHeader('Authorization', 'Bearer ' + t);
+    x.upload.onprogress = e => { if(e.lengthComputable){ q.pct = Math.min(99, Math.round(e.loaded / e.total * 100)); caPaintQueue(); } };
+    x.onload = () => {
+      let d = {}; try{ d = JSON.parse(x.responseText); }catch(e){}
+      if(x.status >= 200 && x.status < 300 && d._id){
+        q.state = 'done'; q.doneAt = Date.now();
+        csUpsert(d);
+        if(csCurrent && csCurrent._id === d._id){ csCurrent = d; if(csTab === 'docs') caRenderDocs(); caRenderModal(); }
+        renderCases();
+      } else {
+        q.state = 'err'; q.error = d.error || ('Upload failed (' + x.status + ')');
+        if(x.status === 401){ setToken(null); if(typeof logout === 'function') logout(); }
+      }
+      done();
+    };
+    x.onerror = () => { q.state = 'err'; q.error = 'Network error. Try again.'; done(); };
+    x.send(fd);
+  });
+}
+async function caSetCat(fid, cat){
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}`, { method: 'PUT', body: JSON.stringify({ category: cat }) });
     const d = await r.json();
-    if(!r.ok) throw new Error(d.error || 'Upload failed');
-    csUpsert(d); csCurrent = d; caRenderPane(); showToast('Uploaded');
-    const lb = document.getElementById('caFileLabel'); if(lb) lb.value = '';
+    if(!r.ok) throw new Error(d.error || 'Could not change it');
+    csUpsert(d); csCurrent = d; caRenderDocs();
   }catch(e){ showToast(e.message, true); }
-  finally{ hideLoad(); input.value = ''; }
 }
 async function caOpenFile(fid){
+  const f = (csCurrent.files || []).find(x => x._id === fid); if(!f) return;
+  if(caIsPhoto(f)) return csLbOpen(fid);
+  // Opened before the request so a phone's pop-up blocker lets it through.
+  const w = window.open('about:blank', '_blank');
   try{
     const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}/link`);
     const d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Could not open it');
-    window.open(d.url, '_blank', 'noopener');
-  }catch(e){ showToast(e.message, true); }
+    if(w){ try{ w.opener = null; }catch(e){} w.location.href = d.url; } else location.href = d.url;
+  }catch(e){ if(w) w.close(); showToast(e.message, true); }
 }
 async function caDelFile(fid){
-  if(!confirm('Delete this document? It is removed from storage as well.')) return;
+  if(!confirm('Delete this file? It is removed from storage as well.')) return;
   try{
     const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${fid}`, { method:'DELETE' });
     const d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Could not delete it');
-    csUpsert(d); csCurrent = d; caRenderPane(); showToast('Deleted');
+    csUpsert(d); csCurrent = d; caRenderPane(); caRenderModal(); renderCases(); showToast('Deleted');
   }catch(e){ showToast(e.message, true); }
+}
+// ── photo viewer ──
+let csLb = { list: [], i: 0 };
+function csLbOpen(fid){
+  csLb.list = caSorted().filter(caIsPhoto);
+  csLb.i = Math.max(0, csLb.list.findIndex(f => f._id === fid));
+  const el = document.getElementById('csLightbox'); el.style.display = 'flex';
+  csLbShow();
+}
+function csLbShow(){
+  const f = csLb.list[csLb.i]; if(!f) return;
+  const img = document.getElementById('csLbImg'), msg = document.getElementById('csLbMsg');
+  img.removeAttribute('src'); msg.textContent = 'Loading…';
+  document.getElementById('csLbCap').textContent = `${csLb.i + 1} of ${csLb.list.length} · ${f.label || f.name || 'Photo'} · ${caSize(f.bytes)}`;
+  img.alt = f.label || f.name || 'Photo';
+  document.querySelectorAll('.cs-lb-nav').forEach(b => { b.style.display = csLb.list.length > 1 ? '' : 'none'; });
+  const want = f._id;
+  caPicUrl(f._id, 1600).then(u => { if(csLb.list[csLb.i] && csLb.list[csLb.i]._id === want){ img.src = u; msg.textContent = ''; } })
+    .catch(() => { msg.textContent = 'This photo could not be shown. Use "Original" to download it.'; });
+}
+function csLbStep(d){ if(!csLb.list.length) return; csLb.i = (csLb.i + d + csLb.list.length) % csLb.list.length; csLbShow(); }
+function closeCsLightbox(){ const el = document.getElementById('csLightbox'); if(el) el.style.display = 'none'; }
+async function csLbDownload(){
+  const f = csLb.list[csLb.i]; if(!f) return;
+  const w = window.open('about:blank', '_blank');
+  try{
+    const r = await apiFetch(`/api/admin/cases/${csCurrent._id}/files/${f._id}/link`);
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Could not open it');
+    if(w){ try{ w.opener = null; }catch(e){} w.location.href = d.url; } else location.href = d.url;
+  }catch(e){ if(w) w.close(); showToast(e.message, true); }
+}
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('csLightbox');
+  if(!lb || lb.style.display !== 'flex') return;
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); csLbStep(-1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); csLbStep(1); }
+});
+// ── Cloudinary storage meter ──
+let csStore = { at: 0, data: null, err: '' };
+async function csLoadStorage(force){
+  if(!hasPerm('cases_view')) return;
+  if(!force && csStore.data && Date.now() - csStore.at < 10 * 60 * 1000){ csPaintStorage(); return; }
+  try{
+    const r = await apiFetch('/api/admin/cases/storage');
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Storage figures unavailable');
+    csStore = { at: Date.now(), data: d, err: '' };
+  }catch(e){ csStore = { at: Date.now(), data: null, err: e.message }; }
+  csPaintStorage();
+}
+function csPaintStorage(){
+  const d = csStore.data;
+  const gb = n => (Number(n) || 0) >= 1073741824 ? ((n / 1073741824).toFixed(2) + ' GB') : ((Number(n) || 0) / 1048576).toFixed(1) + ' MB';
+  const line = document.getElementById('caStorageLine');
+  if(line) line.textContent = d && d.credits ? `Cloudinary this month: ${d.credits.usage.toFixed(2)} of ${d.credits.limit || '?'} credits used (${Math.round(d.credits.pct)}%)` : '';
+  const box = document.getElementById('csStorage'); if(!box) return;
+  if(!d){ box.innerHTML = `<div class="ls-note">${esc(csStore.err || 'Loading…')}</div>`; return; }
+  const meter = (label, used, limit, text) => {
+    const pct = limit > 0 ? Math.min(100, used / limit * 100) : 0;
+    return `<div class="cs-meter"><div class="k"><span>${esc(label)}</span><b>${esc(text)}</b></div>${limit > 0 ? `<div class="bar"><span class="${pct >= 90 ? 'bad' : pct >= 70 ? 'warn' : ''}" style="width:${pct.toFixed(1)}%"></span></div>` : ''}</div>`;
+  };
+  const cr = d.credits || { usage: 0, limit: 0, pct: 0 };
+  box.innerHTML = `
+    <div class="ls-note" style="margin-bottom:6px">Plan: <b>${esc(d.plan || 'unknown')}</b>. Cloudinary counts one credit for each 1 GB stored, each 1 GB of pictures viewed, or each 1,000 resized pictures. The allowance resets every month.</div>
+    ${meter('Credits used this month', cr.usage, cr.limit, `${cr.usage.toFixed(2)} of ${cr.limit || '?'}`)}
+    ${meter('Stored (all files, listings included)', 0, 0, gb(d.storage ? d.storage.usage : 0))}
+    ${meter('Viewed this month (bandwidth)', 0, 0, gb(d.bandwidth ? d.bandwidth.usage : 0))}
+    ${meter('Pictures resized this month', 0, 0, String(d.transformations ? d.transformations.usage : 0))}
+    ${meter('Case files', 0, 0, `${d.cases.files} files, ${gb(d.cases.bytes)}`)}
+    <div class="ls-note" style="margin-top:8px">Largest file allowed: ${d.maxImageBytes ? gb(d.maxImageBytes) : '10 MB'} for photos and PDFs${d.maxRawBytes ? ', ' + gb(d.maxRawBytes) + ' for Word and Excel' : ''}. Figures from Cloudinary${d.lastUpdated ? ', updated ' + esc(d.lastUpdated) : ''}.</div>
+    <div style="margin-top:10px"><button class="hdr-btn" onclick="csLoadStorage(true)"><i class="fas fa-rotate"></i> Check again</button></div>`;
 }
 
 // ── pane: notes & activity ──
@@ -11597,7 +12294,8 @@ function renderLeasingPanel(){
     propModal: 'closePropModal', accModal: 'closeAccModal', apModal: 'closeApModal',
     taskModal: 'closeTaskModal', titlingModal: 'closeTitlingModal', cashModal: 'closeCashModal',
     leaseModal: 'closeLeaseModal', caseModal: 'closeCaseModal', conflictModal: 'closeConflictCheck',
-    impModal: 'impClose', tlImpModal: 'tlImpClose', bulkAssignModal: 'closeBulkAssignModal'
+    impModal: 'impClose', tlImpModal: 'tlImpClose', bulkAssignModal: 'closeBulkAssignModal',
+    csHearDlg: 'closeCsHearDlg', csLightbox: 'closeCsLightbox'
   };
   // Slide-over panels already have Escape handling of their own; they are
   // listed so the manager knows they count as "something is open".
