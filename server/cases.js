@@ -577,6 +577,14 @@ function vevent({ uid, dateStr, summary, description, alarmDays }) {
   return out.join('\r\n');
 }
 
+// Photos are stored at most 2400 px on the long side, as a JPEG compressed by
+// Cloudinary ("quality auto:good"), even when a browser could not shrink them
+// first (an iPhone HEIC, an old phone). PDFs and office files are untouched.
+function shrinkOnUpload(mime) {
+  return /^image\/(jpeg|pjpeg|png|webp|heic|heif)$/i.test(String(mime || ''))
+    ? { transformation: [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }], format: 'jpg' }
+    : {};
+}
 const FILE_CATEGORIES = ['photo', 'pleading', 'order', 'evidence', 'id', 'receipt', 'letter', 'other'];
 
 // ── ROUTES ───────────────────────────────────────────────────
@@ -1090,7 +1098,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       if (!doc) { cleanup(); return res.status(404).json({ error: 'Case not found' }); }
       let result;
       try {
-        result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/cases', resource_type: 'auto', type: 'authenticated' });
+        result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/cases', resource_type: 'auto', type: 'authenticated', ...shrinkOnUpload(req.file.mimetype) });
       } catch (e) {
         cleanup();
         const msg = String((e && (e.message || (e.error && e.error.message))) || '');

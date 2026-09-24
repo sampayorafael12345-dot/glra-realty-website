@@ -52,6 +52,15 @@ const LIVE_STAGES = ['active', 'renewal'];   // rent is being collected
 // UTC midnight (what `new Date('2026-09-15')` gives) and handled here as
 // 'YYYY-MM-DD' keys, so a server in UTC and a browser in Manila agree.
 const pad2 = n => String(n).padStart(2, '0');
+// Photos are stored at most 2400 px on the long side, as a JPEG compressed by
+// Cloudinary ("quality auto:good"), even when a browser could not shrink them
+// first (an iPhone HEIC, an old phone). PDFs and office files are untouched.
+function shrinkOnUpload(mime) {
+  return /^image\/(jpeg|pjpeg|png|webp|heic|heif)$/i.test(String(mime || ''))
+    ? { transformation: [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }], format: 'jpg' }
+    : {};
+}
+
 function dk(d) {
   if (!d) return '';
   if (typeof d === 'string') return /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : dk(new Date(d));
@@ -805,7 +814,7 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       if (!req.file) return res.status(400).json({ error: 'No file provided' });
       const doc = await Lease.findById(req.params.id);
       if (!doc) { cleanup(); return res.status(404).json({ error: 'Lease not found' }); }
-      const result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/leases', resource_type: 'auto', type: 'authenticated' });
+      const result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/leases', resource_type: 'auto', type: 'authenticated', ...shrinkOnUpload(req.file && req.file.mimetype) });
       cleanup();
       const paymentId = String(req.body?.paymentId || '');
       doc.files.push({

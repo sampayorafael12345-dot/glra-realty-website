@@ -883,6 +883,7 @@ async function uploadOwnerDoc(row, file){
   var label = box.dataset.doc;
   var btn = row.querySelector('.doc-attach');
 
+  if (/^image\/(jpeg|png|webp)$/.test(file.type)) file = await glraShrinkImage(file);
   if (file.size > MAX_DOC){
     return docChip(row, 'error', fmtBytes(file.size) + ' — too large. 12 MB maximum.');
   }
@@ -957,13 +958,45 @@ function removeImage(i){
   uploadedImages.splice(i, 1);
   renderImages();
 }
+/* Every photo is redrawn as a JPEG no larger than 2400 px on its longest side
+   before it leaves the device. A 4 to 8 MB phone photo comes out at about
+   0.5 to 1 MB: it uploads faster on mobile data and uses a fraction of the
+   Cloudinary allowance, and 2400 px still keeps a photographed document
+   readable. PDFs, Word, Excel, GIFs and anything the browser cannot draw go
+   through untouched (the server shrinks those photos itself). The result is
+   only used when it is actually smaller. */
+async function glraShrinkImage(file, maxSide, quality){
+  maxSide = maxSide || 2400; quality = quality || 0.82;
+  if(!file || !/^image\/(jpeg|jpg|pjpeg|png|webp|heic|heif)$/i.test(file.type || '')) return file;
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if(!w || !h) return file;
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(w * scale)); cv.height = Math.max(1, Math.round(h * scale));
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);   // see-through PNG corners turn white, not black
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    let blob = null;
+    for(let q = quality; q >= 0.5; q -= 0.1){
+      blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', q));
+      if(blob && blob.size <= 9.5 * 1048576) break;
+    }
+    if(!blob || blob.size >= file.size) return file;
+    return new File([blob], String(file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+  }catch(e){ return file; }
+  finally{ URL.revokeObjectURL(url); }
+}
 async function handleImageUpload(fileList){
   if(!fileList || fileList.length === 0) return;
   const remaining = MAX_IMAGES - uploadedImages.filter(x => x.status !== 'failed').length;
   if(remaining <= 0){ showError('You\'ve reached the 20-photo limit.'); return; }
   const files = Array.from(fileList).slice(0, remaining);
-  for(const file of files){
-    if(!/^image\//.test(file.type)){ showError(`"${file.name}" is not an image.`); continue; }
+  for(const picked of files){
+    if(!/^image\//.test(picked.type)){ showError(`"${picked.name}" is not an image.`); continue; }
+    const file = await glraShrinkImage(picked);
     if(file.size > 20 * 1024 * 1024){ showError(`"${file.name}" is too large (max 20MB).`); continue; }
     const placeholder = { status: 'uploading', name: file.name, progress: 0 };
     uploadedImages.push(placeholder);

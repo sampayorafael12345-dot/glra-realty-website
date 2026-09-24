@@ -2351,7 +2351,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       @media(max-width:760px){
         .cs-search{max-width:none;flex-basis:100%}
         .cs-search input{font-size:16px}
-        .cs-views{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}
+        .cs-views{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%}
         .cs-view{flex-direction:column;justify-content:center;gap:4px;padding:7px 2px;min-height:52px;font-size:9px;letter-spacing:.5px}
         .cs-view i{font-size:15px}
         .cs-acts{margin-left:0;width:100%}
@@ -2415,6 +2415,47 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
         .cs-ag-stage select{min-height:44px;font-size:16px}
         .cs-list-cards{display:block}
         .cs-list-table{display:none}
+      }
+      /* board */
+      .cs-bd-bar{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;margin-bottom:12px;font-size:12.5px;color:var(--gray)}
+      .cs-bd{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start}
+      .cs-bd-col{border:1px solid var(--border-color);background:var(--gray-light);min-width:0;transition:background .12s}
+      .cs-bd-col.is-over{outline:3px dashed #ff3d00;outline-offset:-3px;background:rgba(255,61,0,.07)}
+      .cs-bd-col > summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;border-top:4px solid var(--sc,#94a3b8);user-select:none}
+      .cs-bd-col > summary::-webkit-details-marker{display:none}
+      .cs-bd-col > summary:focus-visible{outline:3px solid #ff3d00;outline-offset:-3px}
+      .cs-bd-col > summary h3{margin:0;flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;font-weight:800}
+      .cs-bd-col > summary .n{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;background:var(--card-bg);border:1px solid var(--border-color);padding:1px 8px}
+      .cs-bd-col > summary .fa-chevron-right{font-size:10px;color:var(--gray);transition:transform .15s}
+      .cs-bd-col[open] > summary .fa-chevron-right{transform:rotate(90deg)}
+      .cs-bd-hint{margin:-4px 12px 8px;font-size:11px;line-height:1.45;color:var(--gray)}
+      .cs-bd-list{list-style:none;margin:0;padding:0 10px 10px;display:flex;flex-direction:column;gap:8px;min-height:20px}
+      .cs-bd-card{position:relative;background:var(--card-bg);border:1px solid var(--border-color);padding:10px 10px 10px 14px;cursor:grab}
+      .cs-bd-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--heat,transparent)}
+      .cs-bd-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.14)}
+      .cs-bd-card.dragging{opacity:.4}
+      .cs-bd-open{display:block;width:100%;text-align:left;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}
+      .cs-bd-open .t{display:block;font-size:13.5px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+      .cs-bd-open .c{display:block;font-size:11.5px;color:var(--gray);margin-top:2px}
+      .cs-bd-open:hover .t{text-decoration:underline}
+      .cs-bd-open:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+      .cs-bd-hear{font-size:11.5px;font-weight:600;color:#2563eb;margin-top:6px}
+      .cs-bd-hear.is-today{color:#ff3d00}
+      .cs-bd-hear.is-none{color:var(--gray);font-weight:400}
+      .cs-bd-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+      .cs-bd-chips .ls-chip{margin:0}
+      .cs-bd-move{display:flex;gap:6px;margin-top:9px}
+      .cs-bd-mv{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;min-width:0;padding:0 6px;border:1px solid var(--border-color);background:var(--card-bg);color:inherit;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;font-weight:700;cursor:pointer}
+      .cs-bd-mv span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .cs-bd-mv:hover{border-color:#ff3d00;color:#ff3d00}
+      .cs-bd-mv:focus-visible,.cs-bd-sel:focus-visible{outline:3px solid #ff3d00;outline-offset:2px}
+      .cs-bd-sel{flex:1;min-width:0;min-height:32px;border:1px solid var(--border-color);background:var(--card-bg);color:inherit;font-size:12px}
+      .cs-bd-empty{font-size:12px;color:var(--gray);padding:4px 2px;margin:0}
+      @media(max-width:760px){
+        .cs-bd{grid-template-columns:1fr}
+        .cs-bd-card{cursor:default}
+        .cs-bd-mv,.cs-bd-sel{min-height:44px;font-size:10px}
+        .cs-bd-sel{font-size:16px}
       }
       /* calendar */
       .cs-cal-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
@@ -2534,6 +2575,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
           <div class="fsearch cs-search"><i class="fas fa-search"></i><input type="search" id="csSearch" placeholder="Search client, case, docket, court…" oninput="renderCases()" aria-label="Search the cases"></div>
           <div class="cs-views" role="group" aria-label="How to show the cases">
             <button type="button" class="cs-view" id="csViewAgendaBtn" onclick="setCasesView('agenda')"><i class="fas fa-gavel" aria-hidden="true"></i><span>Court dates</span></button>
+            <button type="button" class="cs-view" id="csViewBoardBtn" onclick="setCasesView('board')"><i class="fas fa-columns" aria-hidden="true"></i><span>Board</span></button>
             <button type="button" class="cs-view" id="csViewCalendarBtn" onclick="setCasesView('calendar')"><i class="far fa-calendar" aria-hidden="true"></i><span>Calendar</span></button>
             <button type="button" class="cs-view" id="csViewListBtn" onclick="setCasesView('list')"><i class="fas fa-list" aria-hidden="true"></i><span>All cases</span></button>
             <button type="button" class="cs-view" id="csViewSettingsBtn" onclick="setCasesView('settings')"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Settings</span></button>
@@ -2549,6 +2591,18 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
 
         <!-- COURT DATES: every open matter, in the order its next court date comes up -->
         <div id="csAgendaWrap"><div id="csAgenda"><div class="empty-st"><p>Loading…</p></div></div></div>
+
+        <!-- BOARD: the stages as columns. They wrap onto new rows instead of
+             scrolling sideways, and every card has arrow buttons, so a phone or a
+             keyboard can move a case without dragging it. -->
+        <div id="csBoardWrap" style="display:none">
+          <div class="cs-bd-bar">
+            <label class="ls-sw" style="margin:0"><input type="checkbox" id="csBdShowAll" onchange="csBdAll=this.checked;localStorage.setItem('glra_cs_bd_all',this.checked?'1':'');renderCases()"> Show closed and on hold</label>
+            <span>Drag a card to another stage, or use the arrows on the card. Tap a stage name to fold it away.</span>
+          </div>
+          <div id="csBoard" class="cs-bd"></div>
+          <div id="csBoardLive" class="cs-sr" aria-live="polite"></div>
+        </div>
 
         <!-- ALL CASES: a table on a computer, cards on a phone -->
         <div id="csListWrap" style="display:none">
@@ -4578,12 +4632,43 @@ async function deleteProp(id,title){
 }
 
 // ── IMAGE UPLOAD ──────────────────────────────────────────
+/* Every photo is redrawn as a JPEG no larger than 2400 px on its longest side
+   before it leaves the device. A 4 to 8 MB phone photo comes out at about
+   0.5 to 1 MB: it uploads faster on mobile data and uses a fraction of the
+   Cloudinary allowance, and 2400 px still keeps a photographed document
+   readable. PDFs, Word, Excel, GIFs and anything the browser cannot draw go
+   through untouched (the server shrinks those photos itself). The result is
+   only used when it is actually smaller. */
+async function glraShrinkImage(file, maxSide, quality){
+  maxSide = maxSide || 2400; quality = quality || 0.82;
+  if(!file || !/^image\/(jpeg|jpg|pjpeg|png|webp|heic|heif)$/i.test(file.type || '')) return file;
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if(!w || !h) return file;
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(w * scale)); cv.height = Math.max(1, Math.round(h * scale));
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);   // see-through PNG corners turn white, not black
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    let blob = null;
+    for(let q = quality; q >= 0.5; q -= 0.1){
+      blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', q));
+      if(blob && blob.size <= 9.5 * 1048576) break;
+    }
+    if(!blob || blob.size >= file.size) return file;
+    return new File([blob], String(file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+  }catch(e){ return file; }
+  finally{ URL.revokeObjectURL(url); }
+}
 async function uploadMain(inp){
   const file=inp.files[0];if(!file)return;
   const prog=document.getElementById('mainProg');const fill=document.getElementById('mainProgFill');
   prog.style.display='block';fill.style.width='20%';
   try{
-    const fd=new FormData();fd.append('image',file);fill.style.width='60%';
+    const fd=new FormData();fd.append('image',await glraShrinkImage(file));fill.style.width='60%';
     const res=await apiFetch('/api/admin/upload-property-image',{method:'POST',body:fd});
     fill.style.width='100%';const d=await res.json();
     if(d.url){
@@ -4599,7 +4684,7 @@ async function uploadGallery(inp){
   const files=[...inp.files];if(!files.length)return;showLoad(`Uploading ${files.length} image${files.length>1?'s':''}...`);
   try{
     for(const file of files){
-      const fd=new FormData();fd.append('image',file);
+      const fd=new FormData();fd.append('image',await glraShrinkImage(file));
       const res=await apiFetch('/api/admin/upload-property-image',{method:'POST',body:fd});
       const d=await res.json();if(d.url)galleryUrls.push(d.url);
     }
@@ -4614,7 +4699,7 @@ async function uploadHeroImgs(files){
   if(!files.length)return;showLoad(`Uploading ${files.length} hero image${files.length>1?'s':''}...`);
   try{
     for(const file of files){
-      const fd=new FormData();fd.append('image',file);
+      const fd=new FormData();fd.append('image',await glraShrinkImage(file, 2560, 0.86));
       await apiFetch('/api/admin/hero-images/upload',{method:'POST',body:fd});
     }
     await loadHeroImages();showToast('Hero images uploaded!');
@@ -6919,10 +7004,10 @@ async function deleteComment(updateId){
 // Attachments
 async function uploadAttachment(input){
   if(!activeTaskId || !input.files || !input.files[0]) return;
-  const file = input.files[0];
+  const file = await glraShrinkImage(input.files[0]);
   if(file.size > 20 * 1024 * 1024){ showToast('File too large (max 20MB)', true); input.value=''; return; }
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('file', file, file.name);
   showLoad('Uploading...');
   try{
     const token = getToken();
@@ -9658,9 +9743,9 @@ function renderCashProof(){
 async function uploadCashProof(input){
   const id=document.getElementById('cashId').value;
   if(!id || !input.files || !input.files[0]) return;
-  const file=input.files[0];
+  const file=await glraShrinkImage(input.files[0]);
   if(file.size>20*1024*1024){ showToast('File too large (max 20MB)', true); input.value=''; return; }
-  const fd=new FormData(); fd.append('file', file);
+  const fd=new FormData(); fd.append('file', file, file.name);
   showToast('Uploading proof…');
   try{
     const token=getToken();
@@ -10564,9 +10649,10 @@ function leRenderDocs(){
 }
 function leUploadFor(paymentId){ leUploadCtx = { paymentId: paymentId || '', label: paymentId ? 'Proof of payment' : (document.getElementById('ld_label')?.value || 'Document') }; document.getElementById('leFileInput').click(); }
 async function leUploadChosen(inp){
-  const file = inp.files && inp.files[0]; inp.value = ''; if(!file || !lsCurrent) return;
+  const picked = inp.files && inp.files[0]; inp.value = ''; if(!picked || !lsCurrent) return;
+  const file = await glraShrinkImage(picked);
   if(file.size > 20 * 1024 * 1024){ showToast('That file is over 20 MB', true); return; }
-  const fd = new FormData(); fd.append('file', file); fd.append('label', leUploadCtx?.label || 'Document'); if(leUploadCtx?.paymentId) fd.append('paymentId', leUploadCtx.paymentId);
+  const fd = new FormData(); fd.append('file', file, file.name); fd.append('label', leUploadCtx?.label || 'Document'); if(leUploadCtx?.paymentId) fd.append('paymentId', leUploadCtx.paymentId);
   showLoad('Uploading…');
   try{ const r = await apiFetch(`/api/admin/leases/${lsCurrent._id}/files`, { method: 'POST', body: fd }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Upload failed', true); return; } lsCurrent = d; lsUpsert(d); if(lsTab === 'docs') leRenderDocs(); else leRenderLedger(); showToast('Uploaded'); }
   catch(e){ showToast('Upload failed', true); }
@@ -10658,8 +10744,13 @@ async function leAddNote(){
 let csData = [], csMeta = { today: '', stages: {}, flow: [], ref: {}, settings: {} };
 // The old kanban board ('board') and list-of-dates diary ('diary') became the
 // court-date agenda and the month calendar; a saved choice carries over.
+// Court dates is the default; the board is there for whoever prefers it, and
+// whichever view was used last is remembered on this device.
 let csView = (function(){ const v = localStorage.getItem('glra_cs_view');
-  return ({ board: 'agenda', diary: 'calendar' })[v] || (['agenda','calendar','list','settings'].includes(v) ? v : 'agenda'); })();
+  return ({ diary: 'calendar' })[v] || (['agenda','board','calendar','list','settings'].includes(v) ? v : 'agenda'); })();
+let csBdAll = localStorage.getItem('glra_cs_bd_all') === '1';
+const csBdFolded = new Set();              // stages folded away on this visit
+let csBdFocus = null;                      // { id, dir } to put focus back after a move
 let csFilter = 'all', csCurrent = null, csTab = 'details', csDiaryItems = [];
 const csSort = { key: 'hearing', dir: 'asc' };
 let csCalMonth = '', csCalDay = '', csShowRest = false;
@@ -10763,7 +10854,7 @@ function csByHearing(a, b){
 function renderCases(){
   const wrap = document.getElementById('tab-cases'); if(!wrap) return;
   const canManage = hasPerm('cases_manage');
-  ['agenda','calendar','list','settings'].forEach(v => {
+  ['agenda','board','calendar','list','settings'].forEach(v => {
     const cap = v.charAt(0).toUpperCase() + v.slice(1);
     const w = document.getElementById('cs' + cap + 'Wrap'); if(w) w.style.display = csView === v ? '' : 'none';
     const b = document.getElementById('csView' + cap + 'Btn'); if(b){ b.classList.toggle('on', csView === v); b.setAttribute('aria-pressed', csView === v ? 'true' : 'false'); }
@@ -10802,6 +10893,7 @@ function renderCases(){
     ? `<div class="cs-filter-note">Showing only <b>${esc(label)}</b> <span style="color:var(--gray)">(${rows.length})</span><button type="button" class="hdr-btn" onclick="setCsFilter('${csFilter}')"><i class="fas fa-times"></i> Show all</button></div>` : '';
 
   if(csView === 'agenda') renderCsAgenda(rows, canManage);
+  else if(csView === 'board') renderCsBoard(rows, canManage);
   else if(csView === 'list') renderCsList(rows, canManage);
   else if(csView === 'calendar') renderCsCalendar(csData.filter(matchQ));
 }
@@ -10877,6 +10969,92 @@ function csAgCard(c, canManage){
       ${canManage ? `<label class="cs-ag-stage"><span class="cs-sr">Stage of ${esc(title)}</span><select onchange="csMove('${c._id}',this.value)">${CS_ORDER.map(s => `<option value="${s}"${s === c.stage ? ' selected' : ''}>${esc(csStage(s).label)}</option>`).join('')}</select></label>` : ''}
     </div>
   </article>`;
+}
+
+// ── board: optional, and usable without dragging ──
+// The flow a case normally follows; "on hold" sits outside it.
+const CS_BD_FLOW = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment', 'closed'];
+function renderCsBoard(rows, canManage){
+  const el = document.getElementById('csBoard'); if(!el) return;
+  const box = document.getElementById('csBdShowAll'); if(box) box.checked = csBdAll;
+  const stages = csBdAll ? CS_ORDER : CS_OPEN;
+  const byCourtDate = (a, b) => {
+    const x = a.computed && a.computed.nextHearing, y = b.computed && b.computed.nextHearing;
+    if(x && y) return csByHearing(a, b);
+    if(x || y) return x ? -1 : 1;
+    return ((b.computed ? b.computed.heat : 0) - (a.computed ? a.computed.heat : 0)) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+  };
+  el.innerHTML = stages.map(stage => {
+    const meta = csStage(stage);
+    const items = rows.filter(c => c.stage === stage).sort(byCourtDate);
+    // On a phone an empty stage starts folded, so the ones with cases come first.
+    const open = !csBdFolded.has(stage) && (items.length > 0 || window.innerWidth > 760);
+    return `<details class="cs-bd-col" data-stage="${stage}" style="--sc:${meta.color}" ${open ? 'open' : ''}
+        ontoggle="if(this.open)csBdFolded.delete('${stage}');else csBdFolded.add('${stage}')"
+        ${canManage ? `ondragover="csBdOver(event)" ondragleave="csBdLeave(event)" ondrop="csBdDrop(event,'${stage}')"` : ''}>
+      <summary title="${escA(meta.hint || '')}"><i class="fas fa-chevron-right" aria-hidden="true"></i><h3 style="color:${meta.color}">${esc(meta.label)}</h3><span class="n" aria-label="${items.length} case${items.length === 1 ? '' : 's'}">${items.length}</span></summary>
+      ${meta.hint ? `<p class="cs-bd-hint">${esc(meta.hint)}</p>` : ''}
+      <ul class="cs-bd-list" aria-label="${escA(meta.label)}">${items.map(c => csBdCard(c, canManage)).join('') || '<li class="cs-bd-empty">Nothing here.</li>'}</ul>
+    </details>`;
+  }).join('') || '<div class="empty-st"><p>No cases yet.</p></div>';
+  // After a move, the keyboard carries on from the same card in its new place.
+  if(csBdFocus){
+    const f = csBdFocus; csBdFocus = null;
+    const card = el.querySelector(`.cs-bd-card[data-id="${f.id}"]`);
+    const target = card && (card.querySelector(`.cs-bd-mv[data-dir="${f.dir}"]`) || card.querySelector('.cs-bd-mv') || card.querySelector('.cs-bd-open'));
+    if(target) target.focus();
+  }
+}
+function csBdCard(c, canManage){
+  const k = c.computed || {}, h = k.nextHearing;
+  const heat = csHeatColor(c) || (k.pendingResult && CS_OPEN.includes(c.stage) ? '#b45309' : '');
+  const chips = [];
+  if(k.prescription && k.prescription.status === 'lapsed') chips.push('<span class="ls-chip bad">PRESCRIBED</span>');
+  else if(k.prescription && ['critical','warning'].includes(k.prescription.status)) chips.push(`<span class="ls-chip ${k.prescription.status === 'critical' ? 'bad' : 'warn'}">prescribes ${esc(csRel(k.prescription.daysLeft))}</span>`);
+  if(k.missedCount) chips.push(`<span class="ls-chip bad">${k.missedCount} missed</span>`);
+  if(k.dueSoonCount) chips.push(`<span class="ls-chip warn">${k.dueSoonCount} due soon</span>`);
+  if(k.pendingResult && CS_OPEN.includes(c.stage)) chips.push('<span class="ls-chip warn">result to record</span>');
+  if(c.priority === 'urgent') chips.push('<span class="ls-chip bad">urgent</span>');
+  else if(c.priority === 'high') chips.push('<span class="ls-chip warn">high</span>');
+  if(k.balance > 0.005) chips.push(`<span class="ls-chip dim">${csPeso(k.balance)} unpaid</span>`);
+  if(k.fileCount) chips.push(`<span class="ls-chip dim"><i class="fas fa-paperclip"></i> ${k.fileCount}</span>`);
+  const i = CS_BD_FLOW.indexOf(c.stage);
+  const prev = i > 0 ? CS_BD_FLOW[i - 1] : '', next = i >= 0 && i < CS_BD_FLOW.length - 1 ? CS_BD_FLOW[i + 1] : '';
+  const title = c.title || 'Untitled';
+  let move = '';
+  if(canManage){
+    if(i >= 0) move = `<div class="cs-bd-move">
+      ${prev ? `<button type="button" class="cs-bd-mv" data-dir="prev" onclick="csBdMove('${c._id}','${prev}','prev')" aria-label="Move ${escA(title)} back to ${escA(csStage(prev).label)}"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>${esc(csStage(prev).label)}</span></button>` : ''}
+      ${next ? `<button type="button" class="cs-bd-mv" data-dir="next" onclick="csBdMove('${c._id}','${next}','next')" aria-label="Move ${escA(title)} on to ${escA(csStage(next).label)}"><span>${esc(csStage(next).label)}</span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>` : ''}
+    </div>`;
+    else move = `<div class="cs-bd-move"><label class="cs-sr" for="csBdSel_${c._id}">Move ${esc(title)} to</label><select class="cs-bd-sel" id="csBdSel_${c._id}" onchange="csBdMove('${c._id}',this.value,'sel')">${CS_ORDER.map(st => `<option value="${st}"${st === c.stage ? ' selected' : ''}>${st === c.stage ? 'On hold: move to…' : esc(csStage(st).label)}</option>`).join('')}</select></div>`;
+  }
+  return `<li class="cs-bd-card" data-id="${c._id}" style="${heat ? '--heat:' + heat : ''}"
+      ${canManage ? `draggable="true" ondragstart="csBdStart(event,'${c._id}')" ondragend="csBdEnd(event)"` : ''}>
+    <button type="button" class="cs-bd-open" onclick="openCaseModal('${c._id}')"><span class="t">${esc(title)}</span><span class="c">${esc(c.clientName || '')}${c.clientRole ? ' · ' + esc(c.clientRole) : ''}</span></button>
+    ${h ? `<div class="cs-bd-hear ${h.daysAway === 0 ? 'is-today' : ''}"><i class="fas fa-gavel" style="font-size:10px" aria-hidden="true"></i> ${esc(csDate(h.date))}${h.time ? ' · ' + esc(csTimeLabel(h.time)) : ''} · ${esc(csRel(h.daysAway))}</div>`
+         : `<div class="cs-bd-hear is-none">No court date set</div>`}
+    ${chips.length ? `<div class="cs-bd-chips">${chips.join('')}</div>` : ''}
+    ${move}
+  </li>`;
+}
+async function csBdMove(id, stage, dir){
+  const c = csData.find(x => x._id === id); if(!c || c.stage === stage) return;
+  csBdFocus = { id, dir };
+  await csMove(id, stage);
+  const live = document.getElementById('csBoardLive');
+  if(live) live.textContent = `${c.title || 'Case'} moved to ${csStage(stage).label}.`;
+}
+let csBdDragId = null;
+function csBdStart(ev, id){ csBdDragId = id; ev.currentTarget.classList.add('dragging'); try{ ev.dataTransfer.setData('text/plain', id); ev.dataTransfer.effectAllowed = 'move'; }catch(e){} }
+function csBdEnd(ev){ ev.currentTarget.classList.remove('dragging'); document.querySelectorAll('.cs-bd-col.is-over').forEach(x => x.classList.remove('is-over')); }
+function csBdOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add('is-over'); try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){} }
+function csBdLeave(ev){ if(!ev.currentTarget.contains(ev.relatedTarget)) ev.currentTarget.classList.remove('is-over'); }
+function csBdDrop(ev, stage){
+  ev.preventDefault(); ev.currentTarget.classList.remove('is-over');
+  const id = csBdDragId || (ev.dataTransfer && ev.dataTransfer.getData('text/plain'));
+  csBdDragId = null;
+  if(id) csBdMove(id, stage, 'drop');
 }
 
 // ── all cases ──
@@ -11938,7 +12116,7 @@ function caRenderDocs(){
     ${canManage ? `<div class="ca-drop" id="caDrop" ondragover="event.preventDefault();this.classList.add('is-over')" ondragleave="this.classList.remove('is-over')" ondrop="event.preventDefault();this.classList.remove('is-over');caQueueFiles(event.dataTransfer.files)">
       <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
       <div class="t">Drop photos or documents here</div>
-      <div class="s">Photos, PDF, Word and Excel, several at once, up to 10 MB each. Very large photos are shrunk to fit.</div>
+      <div class="s">Photos, PDF, Word and Excel, several at once, up to 10 MB each. Photos are made smaller automatically before they upload.</div>
       <div class="ca-drop-row">
         <label class="cs-sr" for="caFileCat">What these files are</label>
         <select id="caFileCat" class="finput"><option value="">Kind: work it out</option>${CA_CATS.map(x => `<option value="${x[0]}">${esc(x[1])}</option>`).join('')}</select>
@@ -11991,25 +12169,6 @@ function caLoadPics(){
   };
   for(let i = 0; i < 4; i++) next();
 }
-// A photo too large for the plan is redrawn smaller as a JPEG. Anything that
-// already fits is uploaded untouched, so an original stays an original.
-async function caShrink(file){
-  if(file.size <= CA_MAX * 0.95 || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
-  const url = URL.createObjectURL(file);
-  try{
-    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
-    const scale = Math.min(1, 4000 / Math.max(img.naturalWidth, img.naturalHeight));
-    const cv = document.createElement('canvas');
-    cv.width = Math.round(img.naturalWidth * scale); cv.height = Math.round(img.naturalHeight * scale);
-    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    for(const q of [0.9, 0.82, 0.72, 0.6]){
-      const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', q));
-      if(blob && blob.size <= CA_MAX * 0.95) return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
-    }
-  }catch(e){}
-  finally{ URL.revokeObjectURL(url); }
-  return file;
-}
 function caQueueFiles(list){
   const files = Array.from(list || []); if(!files.length || !csCurrent) return;
   const cat = document.getElementById('caFileCat')?.value || '';
@@ -12036,7 +12195,7 @@ async function caRunQueue(){
     let q;
     while((q = caQueue.find(x => x.state === 'wait'))){
       q.state = 'prep'; caPaintQueue();
-      const file = await caShrink(q.file);
+      const file = await glraShrinkImage(q.file);
       if(file.size > CA_MAX){ q.state = 'err'; q.error = 'Larger than 10 MB'; caPaintQueue(); continue; }
       q.state = 'up'; caPaintQueue();
       await caSend(q, file);

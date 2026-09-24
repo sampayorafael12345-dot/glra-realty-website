@@ -569,6 +569,14 @@ const ALLOWED_TASK_ATTACHMENT_MIMES = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain', 'text/csv'
 ]);
+// Photos are stored at most 2400 px on the long side, as a JPEG compressed by
+// Cloudinary ("quality auto:good"), even when a browser could not shrink them
+// first (an iPhone HEIC, an old phone). PDFs and office files are untouched.
+function shrinkOnUpload(mime) {
+  return /^image\/(jpeg|pjpeg|png|webp|heic|heif)$/i.test(String(mime || ''))
+    ? { transformation: [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }], format: 'jpg' }
+    : {};
+}
 const uploadAttachment = multer({
   storage: storage,
   limits: { fileSize: 20 * 1024 * 1024 },
@@ -5346,7 +5354,7 @@ app.post('/api/admin/titling-cash/:id/proof', verifyToken, requirePermission('ti
       if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
       return res.status(404).json({ error: 'Not found' });
     }
-    const result = await cloudinary.uploader.upload(req.file.path, { folder: 'glra_realty/titling', resource_type: 'auto' });
+    const result = await cloudinary.uploader.upload(req.file.path, { folder: 'glra_realty/titling', resource_type: 'auto', ...shrinkOnUpload(req.file.mimetype) });
     if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
     entry.proof.push({
       url: result.secure_url, publicId: result.public_id, filename: req.file.originalname || '',
@@ -6070,7 +6078,8 @@ app.post('/api/admin/tasks/:id/attachments', verifyToken, requirePermission('tas
     }
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'glra_realty/tasks',
-      resource_type: 'auto'
+      resource_type: 'auto',
+      ...shrinkOnUpload(req.file.mimetype)
     });
     if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
     task.attachments.push({
@@ -6204,6 +6213,7 @@ app.post('/api/property-submissions/upload-document',
       const result = await cloudinary.uploader.upload(tmp, {
         folder: 'glra_realty/submission_docs',
         resource_type: 'auto',
+        ...shrinkOnUpload(req.file && req.file.mimetype),
         type: 'authenticated'
       });
       if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {}
