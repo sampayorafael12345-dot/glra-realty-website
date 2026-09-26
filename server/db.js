@@ -21,6 +21,14 @@ const propertySchema = new mongoose.Schema({
   description: { type: String, default: '' },
   mainImage: { type: String, default: '' },
   gallery: { type: [String], default: [] },
+  // The photo the website leads with. Empty means automatic: the first
+  // gallery photo, because mainImage is usually the Facebook flyer.
+  coverImage: { type: String, default: '', maxlength: 2000 },
+  // A floor plan image, shown in its own section on the listing page.
+  floorPlan: { type: String, default: '', maxlength: 2000 },
+  // A short plain description written for the website. When set, the listing
+  // page leads with it and folds the (Facebook-style) description underneath.
+  webSummary: { type: String, default: '', maxlength: 1200 },
   featured: { type: Boolean, default: false },
   status: { type: String, default: 'available' },
   listingType: { type: String, default: 'FOR SALE' },

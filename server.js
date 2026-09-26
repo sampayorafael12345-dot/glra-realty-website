@@ -404,6 +404,68 @@ app.use((req, res, next) => {
 // at its April dates and contained no /property/ listing URLs at all.
 app.get('/sitemap.xml', (req, res, next) => buildSitemap(req, res, next));
 
+// THE HOME PAGE, SERVED WITH ITS LISTINGS ALREADY IN IT. The static file
+// used to open on a stock photo, ask /api/properties for the listings, and
+// only then swap in a real photo: the largest thing on the page appeared after
+// 8.4 s on Lighthouse's phone test. Now the first featured listing's cover is
+// in the markup (and preloaded), the listing count is printed, and the list
+// itself rides along in the page, so the browser draws the real page at once.
+// Any failure falls through to the plain static file, which still works.
+const _pageTpl = {};
+function pageTemplate(name) {
+  const file = path.join(__dirname, 'public', name);
+  const st = fs.statSync(file);
+  const c = _pageTpl[name];
+  if (!c || c.mtime !== st.mtimeMs) _pageTpl[name] = { mtime: st.mtimeMs, html: fs.readFileSync(file, 'utf8') };
+  return _pageTpl[name].html;
+}
+function heroPhotoUrl(u, w) {
+  if (typeof u !== 'string' || u.indexOf('res.cloudinary.com') === -1) return u;
+  u = u.replace('/upload/f_auto,q_auto/', '/upload/');
+  if (/\/upload\/[a-z]{1,2}_/.test(u)) return u;
+  return u.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${w}/`);
+}
+// The Properties page gets the same treatment: the list rides along.
+app.get('/properties.html', async (req, res, next) => {
+  try {
+    const body = await publicListBody();
+    const html = pageTemplate('properties.html').replace('<!--GLRA_LIST-->',
+      '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>');
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(html);
+  } catch (e) {
+    next();
+  }
+});
+app.get(['/', '/index.html'], async (req, res, next) => {
+  try {
+    const body = await publicListBody();
+    const list = (_publicListCache.list || JSON.parse(body)).filter(p => p.status === 'available');
+    let html = pageTemplate('index.html');
+    // Same pick as populateHeroFromListings() in index.html, so the photo the
+    // server sends is the one the slider keeps.
+    const withImg = list.filter(p => p.mainImage);
+    const hero = (withImg.filter(p => p.featured)[0] || withImg[0]);
+    const heroUrl = hero ? heroPhotoUrl(hero.mainImage, 1400) : '';
+    if (heroUrl) {
+      html = html.replace(/<div class="swiper-slide" data-glra-first-slide[^>]*><\/div>/,
+        `<div class="swiper-slide" data-glra-first-slide style="background-image:url('${esc(heroUrl)}')"></div>`);
+      html = html.replace('</title>', `</title>\n<link rel="preload" as="image" href="${esc(heroUrl)}" fetchpriority="high">`);
+    }
+    const n = String(list.length);
+    html = html.replace('<span id="topCount">24</span> <span id="topCountWord">listings</span>',
+      `<span id="topCount">${n}</span> <span id="topCountWord">${list.length === 1 ? 'listing' : 'listings'}</span>`);
+    html = html.replace('<span id="statProperties">0</span>', `<span id="statProperties">${n}</span>`);
+    // JSON inside a <script>: "<" is escaped so no listing text can close it.
+    const inline = '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>';
+    html = html.replace('<!--GLRA_LIST-->', inline);
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(html);
+  } catch (e) {
+    next();
+  }
+});
+
 app.use(express.static('public', {
   // HTML is the one thing that must never be held: admin edits and new
   // listings have to show up on the next load without a hard refresh.
@@ -594,6 +656,7 @@ const MONGODB_URI = MONGODB_CONNECTION;
 
 // Schemas + compiled models live in ./server/db.js — see that file for all data shapes.
 const db = require('./server/db');
+const { applyWebsiteCover } = require('./server/cover');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
@@ -682,7 +745,7 @@ const PUBLIC_PROPERTY_FIELDS = [
   'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
   'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
   'mapLocation', 'previousPrice', 'priceUpdatedAt',
-  'views', 'createdAt', 'facing',
+  'views', 'createdAt', 'facing', 'coverImage', 'floorPlan', 'webSummary',
   // Reduced by publicGeo() to a rounded {lat, lng}; the lookup text, status
   // and timestamps never leave the server.
   'geo'
@@ -703,22 +766,23 @@ const PUBLIC_PROPERTY_FIELDS = [
 // never has to wait out a timer to see her own edit.
 const PUBLIC_LIST_TTL_MS = 60 * 1000;
 let _publicListCache = { at: 0, body: null };
-function invalidatePublicListingsCache() { _publicListCache = { at: 0, body: null }; }
+function invalidatePublicListingsCache() { _publicListCache = { at: 0, body: null, list: null }; }
+async function publicListBody() {
+  if (_publicListCache.body && Date.now() - _publicListCache.at < PUBLIC_LIST_TTL_MS) return _publicListCache.body;
+  const properties = await Property.find({ status: 'available' })
+    .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
+  properties.forEach(optimizePropertyImages);
+  _publicListCache = { at: Date.now(), body: JSON.stringify(properties), list: properties };
+  return _publicListCache.body;
+}
 
 app.get('/api/properties', async (req, res) => {
   try {
-    if (_publicListCache.body && Date.now() - _publicListCache.at < PUBLIC_LIST_TTL_MS) {
-      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-      return res.type('application/json').send(_publicListCache.body);
-    }
-    const properties = await Property.find({ status: 'available' })
-      .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
-    properties.forEach(optimizePropertyImages);
-    _publicListCache = { at: Date.now(), body: JSON.stringify(properties) };
+    const body = await publicListBody();
     // A minute of freshness for the browser too: repeat views and back-
     // navigation never reach Render at all.
     res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    res.type('application/json').send(_publicListCache.body);
+    res.type('application/json').send(body);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -818,10 +882,17 @@ function cloudinaryThumb(u, w, h) {
 function optimizePropertyImages(p) {
   if (!p) return p;
   publicGeo(p);
+  // Inline photos are swapped for their /api/property-image/<id>/<index> URL
+  // first: that index is the photo's place in the stored gallery, so it has to
+  // be taken before applyWebsiteCover reorders anything.
+  externalizeInlineImages(p);
+  applyWebsiteCover(p);
   if (p.mainImage) p.mainImage = optimizeCloudinary(p.mainImage);
   if (Array.isArray(p.gallery)) p.gallery = p.gallery.map(optimizeCloudinary);
-  return externalizeInlineImages(p);
+  if (p.floorPlan) p.floorPlan = optimizeCloudinary(p.floorPlan);
+  return p;
 }
+
 
 // Some listings have their photo stored in the database as a base64 "data:"
 // URI instead of a hosted URL. Those blobs were being inlined into every JSON
@@ -1022,11 +1093,12 @@ function buildAreaPageHtml(area, rows, counts) {
   const card = p => {
     const isLease = /LEASE/i.test(String(p.listingType || '')) && !/SALE/i.test(String(p.listingType || ''));
     const amount = isLease ? (p.monthlyRental || p.price) : (p.price || p.monthlyRental);
-    const img = p.mainImage ? absUrl(optimizeCloudinary(p.mainImage)) : '/img/social-card.png';
+    const img = p.mainImage ? absUrl(cloudinaryThumb(p.mainImage, 640, 400)) : '';
     const specs = [p.bedrooms ? p.bedrooms + ' BR' : '', p.bathrooms ? p.bathrooms + ' BA' : '',
                    p.sqm ? p.sqm + ' sqm' : ''].filter(Boolean).join(' \u00b7 ');
     return `<a class="ar-card" href="/property/${String(p._id)}">
-      <img src="${esc(img)}" alt="${esc(p.title || 'Property')}" loading="lazy" width="320" height="200">
+      ${img ? `<img src="${esc(img)}" alt="${esc(p.title || 'Property')}" loading="lazy" width="320" height="200">`
+        : `<span class="ar-noph" aria-hidden="true">${esc(String(p.propertyType || 'Property').trim())}<small>Photos on request</small></span>`}
       <span class="ar-badge">${esc(String(p.listingType || 'FOR SALE').toUpperCase())}</span>
       <span class="ar-t">${esc(p.title || 'Property')}</span>
       <span class="ar-l">${esc(p.location || '')}</span>
@@ -1091,7 +1163,9 @@ function buildAreaPageHtml(area, rows, counts) {
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}</style>
 <script type="application/ld+json">${jsonld}</script>
 <style>
 :root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#5f5b55;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2));}
@@ -1119,6 +1193,8 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 .ar-card{display:block;border:2px solid var(--line);background:var(--paper2);padding-bottom:14px;position:relative}
 .ar-card:hover{border-color:var(--hot)}
 .ar-card img{width:100%;height:190px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:12px}
+.ar-noph{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:190px;padding:16px;margin-bottom:12px;border-bottom:2px solid var(--line);background:var(--paper);font-weight:800;font-size:17px;line-height:1.2}
+.ar-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray)}
 .ar-badge{position:absolute;top:10px;left:10px;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.4px;font-weight:700;padding:5px 9px}
 .ar-t{display:block;padding:0 14px;font-size:15px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:5px}
 .ar-l{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:7px}
@@ -1528,6 +1604,7 @@ function buildPropertyPageHtml(p, related, comps) {
   // gallery and the <img> tags below all point at something fetchable rather
   // than embedding megabytes of base64 in the HTML.
   externalizeInlineImages(p);
+  applyWebsiteCover(p);
   // What people read is the display title (title case, no emoji); the stored
   // title still goes with the enquiry so it matches the listing in the admin.
   const rawTitle = p.title || 'Property';
@@ -1567,7 +1644,7 @@ function buildPropertyPageHtml(p, related, comps) {
   const canonical = `${SITE_URL}/property/${id}`;
   // Cleaned first: Google was being handed the emoji and hashtags as the
   // search snippet for every listing.
-  const descBase = glraCleanDescription(p.description).replace(/\s+/g, ' ').trim();
+  const descBase = (String(p.webSummary || '').trim() || glraCleanDescription(p.description)).replace(/\s+/g, ' ').trim();
   const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
   // Descriptions are written as Facebook posts and imported as typed, so they
   // arrive with emoji on every line, the broker's own contact block, a markdown
@@ -1576,6 +1653,14 @@ function buildPropertyPageHtml(p, related, comps) {
   // back — which is what kept happening.
   const descDisplay = glraCleanDescription(p.description);
   const gallery = (p.gallery || []).filter(Boolean);
+  // Written for the website by Catherine in the admin; leads the page when set.
+  const webSummary = String(p.webSummary || '').trim();
+  const floorPlanUrl = /^https:\/\/res\.cloudinary\.com\//.test(p.floorPlan || '') ? p.floorPlan : '';
+  const floorPlanHtml = floorPlanUrl ? `<section class="pg-plan" aria-labelledby="pgPlanH">
+    <h2 class="pg-section-label" id="pgPlanH">Floor plan</h2>
+    <a href="${esc(absUrl(cldWidth(floorPlanUrl, 2000)))}" target="_blank" rel="noopener"><img src="${esc(absUrl(cldWidth(floorPlanUrl, 1200)))}" alt="Floor plan of ${esc(title)}" loading="lazy" decoding="async"></a>
+    <p>Tap the plan to open it full size. Plans come from the developer; the unit as built may differ slightly.</p>
+  </section>` : '';
 
   // Which area page, if any, this listing belongs under. Needed by both the
   // structured data and the visible breadcrumb below.
@@ -1700,10 +1785,11 @@ function buildPropertyPageHtml(p, related, comps) {
       const rLease = String(r.listingType || '').toUpperCase() === 'FOR LEASE';
       const rPrice = rLease ? (r.monthlyRental || r.price || 0) : (r.price || 0);
       const rTxt = rPrice ? ('₱' + Number(rPrice).toLocaleString('en-PH') + (rLease ? '/mo' : '')) : 'Price on request';
-      const rImg = r.mainImage && !isStockPhoto(r.mainImage) ? absUrl(cloudinaryThumb(r.mainImage, 400, 280)) : '/img/social-card.png';
+      const rImg = r.mainImage && !isStockPhoto(r.mainImage) ? absUrl(cloudinaryThumb(r.mainImage, 400, 280)) : '';
       const rTitle = glraDisplayTitle(r.title) || 'Property';
       return `<a class="pg-rel" href="/property/${String(r._id)}">
-        <img src="${esc(rImg)}" alt="${esc(rTitle)}" loading="lazy" width="200" height="140">
+        ${rImg ? `<img src="${esc(rImg)}" alt="${esc(rTitle)}" loading="lazy" width="200" height="140">`
+          : `<span class="pg-rel-noph" aria-hidden="true">${esc(String(r.propertyType || 'Property').trim())}<small>Photos on request</small></span>`}
         <span class="pg-rel-t">${esc(rTitle)}</span>
         <span class="pg-rel-l">${esc(r.location || '')}</span>
         <span class="pg-rel-p">${esc(rTxt)}</span>
@@ -1867,6 +1953,7 @@ function buildPropertyPageHtml(p, related, comps) {
         : '<div class="pg-card-row"><span class="pg-card-lbl">Price</span><span class="pg-card-price">On request</span></div>'}
       ${reducedHtml}
       ${factsHtml}
+      <div class="pg-agent"><img src="/img/catherine-144.jpg" width="48" height="48" alt="" loading="lazy" decoding="async"><div><b>Catherine SB Sampayo</b><span>PRC-licensed broker &middot; Makati</span></div></div>
       <div class="pg-card-actions">
         <a class="pg-btn pg-btn-wa" href="${esc(waHref)}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i>WhatsApp Catherine</a>
         <div class="pg-btn-pair">
@@ -1909,7 +1996,9 @@ function buildPropertyPageHtml(p, related, comps) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preload" as="image" href="${esc(heroImg)}"${heroSrcset ? ` imagesrcset="${esc(heroSrcset)}" imagesizes="${heroSizes}"` : ''} fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}</style>
 <script type="application/ld+json">${jsonld}</script>
 <style>
 :root{--paper:#f1eee9;--paper2:#e8e4dd;--ink:#0a0a0a;--gray:#656565;--line:#0a0a0a;--hot:#ff3d00;--hot-text:#c02e00;--hot-btn:#df3500;--shadow:#0a0a0a;--glra-max:1400px;--glra-gut:40px;--glra-pad:max(var(--glra-gut),calc((100% - var(--glra-max)) / 2));}
@@ -1999,6 +2088,17 @@ a.pg-hero:hover .pg-hero-count,a.pg-hero:focus-visible .pg-hero-count{background
 .pg-btn-ink{background:var(--ink);color:var(--paper)}
 .pg-btn-ghost{background:transparent;box-shadow:none;border-color:var(--line)}
 .pg-btn-ghost:hover,.pg-btn-ghost:active{transform:none;box-shadow:none;border-color:var(--hot);color:var(--hot-text)}
+.pg-agent{display:flex;align-items:center;gap:12px;padding:12px 0 14px;margin-bottom:4px;border-top:1px solid var(--line)}
+.pg-agent img{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none}
+.pg-agent b{display:block;font-size:14px;line-height:1.3}
+.pg-agent span{display:block;font-size:12.5px;color:var(--gray);line-height:1.4}
+.pg-summary{font-size:17px;line-height:1.7;margin:0 0 20px;max-width:68ch}
+.pg-more{margin-bottom:36px}
+.pg-more summary{cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 0;color:var(--ink)}
+.pg-more .pg-desc{margin:10px 0 0}
+.pg-plan{margin-bottom:36px}
+.pg-plan img{display:block;width:100%;max-width:760px;height:auto;background:#fff;border:1px solid var(--line)}
+.pg-plan p{font-size:13px;color:var(--gray);margin:8px 0 0}
 .pg-card-note{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);text-align:center}
 #inquire{scroll-margin-top:20px}
 .pg-near{margin-bottom:36px}
@@ -2117,6 +2217,8 @@ h2.pg-section-label{font-weight:700}
 .pg-rel{display:block;border:2px solid var(--line);background:var(--paper2);padding:0 0 12px}
 .pg-rel:hover{border-color:var(--hot)}
 .pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px;background:var(--paper2)}
+.pg-rel-noph{display:flex;flex-direction:column;justify-content:flex-end;gap:3px;height:140px;padding:12px;margin-bottom:10px;border-bottom:2px solid var(--line);background:var(--paper);font-weight:800;font-size:14px;line-height:1.2}
+.pg-rel-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gray)}
 .pg-rel-t{display:block;padding:0 12px;font-size:14px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:4px}
 .pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
 .pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot-text);letter-spacing:-.3px}
@@ -2181,7 +2283,10 @@ h2.pg-section-label{font-weight:700}
   ${specsHtml}
   ${szHtml}
   <a class="pg-brochure" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download the brochure (PDF)</a>
-  ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
+  ${floorPlanHtml}
+  ${webSummary
+    ? `<div class="pg-section-label">About this home</div><p class="pg-summary">${esc(webSummary)}</p>${descDisplay ? `<details class="pg-more"><summary>Full details</summary><div class="pg-desc">${esc(descDisplay)}</div></details>` : ''}`
+    : (descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : '')}
   ${cmpHtml}
   ${nearbyHtml}
   ${hzHtml}
@@ -2281,7 +2386,7 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=118"></script>
+<script src="/js/main.js?v=120"></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
 ${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
@@ -2296,6 +2401,7 @@ ${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
 // in any phone or desktop browser produces the PDF; no PDF engine needed.
 function buildBrochureHtml(p) {
   externalizeInlineImages(p);
+  applyWebsiteCover(p);
   const id = String(p._id);
   const title = glraDisplayTitle(p.title || 'Property') || 'Property';
   const loc = String(p.location || '').trim();
@@ -2535,7 +2641,7 @@ ${area ? `<a class="b o" href="/properties/${area[0]}">More in ${esc(area[1])}</
 // Up to six other available listings worth linking to from a listing page.
 // Cheap: one indexed query, a small projection, and the result is only used to
 // print six anchors.
-const RELATED_FIELDS = '_id title location price monthlyRental listingType mainImage propertyType';
+const RELATED_FIELDS = '_id title location price monthlyRental listingType mainImage gallery coverImage propertyType';
 async function findRelatedListings(p) {
   // Scored, not just "same area first": a P7M condo should suggest other
   // condos in its price range, not a P400M lot that happens to share a city.
@@ -2622,11 +2728,11 @@ async function buildSitemap(req, res) {
       ['/lucima.html', 'monthly', '0.8']
     ];
     const props = await Property.find({ status: 'available' },
-      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1, gallery: 1, location: 1 })
+      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1, gallery: 1, coverImage: 1, location: 1 })
       .sort({ createdAt: -1 }).limit(5000).lean();
     // A base64 photo is not a fetchable image URL — without this it would be
     // pasted into <image:loc> and balloon the sitemap to megabytes.
-    props.forEach(externalizeInlineImages);
+    props.forEach(pr => applyWebsiteCover(externalizeInlineImages(pr)));
 
     // Area pages, but only the ones that currently clear the minimum. An area
     // that drops to two listings stops being a page and stops being in here,
@@ -3397,9 +3503,16 @@ async function loadSavedSearchListings() {
       mainImage: { $cond: [
         { $eq: [{ $substrCP: [{ $ifNull: ['$mainImage', ''] }, 0, 4] }, 'http'] },
         '$mainImage', ''
-      ] }
+      ] },
+      // First hosted gallery photo only: enough for applyWebsiteCover to lead
+      // with a clean photo instead of the flyer.
+      gallery: { $slice: [{ $filter: {
+        input: { $ifNull: ['$gallery', []] },
+        cond: { $eq: [{ $substrCP: ['$$this', 0, 4] }, 'http'] }
+      } }, 1] },
+      coverImage: 1
     } }
-  ]);
+  ]).then(rows => rows.map(applyWebsiteCover));
 }
 
 function ssPeso(n) { return '₱' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
@@ -5196,6 +5309,11 @@ function stripPrivilegedPropertyFields(body, req) {
   if (!(req.user && req.user.role === 'admin')) ADMIN_ONLY_PROPERTY_FIELDS.forEach(k => delete out[k]);
   if (typeof out.propertyType === 'string') out.propertyType = out.propertyType.trim();
   if (out.facing !== undefined) out.facing = /^(N|NE|E|SE|S|SW|W|NW)$/.test(String(out.facing)) ? String(out.facing) : '';
+  // Photo links only: these end up in <img src> and og:image on public pages.
+  ['coverImage', 'floorPlan'].forEach(k => {
+    if (out[k] !== undefined) out[k] = /^https:\/\/res\.cloudinary\.com\//.test(String(out[k])) ? String(out[k]).slice(0, 2000) : '';
+  });
+  if (out.webSummary !== undefined) out.webSummary = String(out.webSummary || '').trim().slice(0, 1200);
   return out;
 }
 
@@ -6094,7 +6212,11 @@ app.post('/api/admin/upload-property-image', verifyToken, requirePermission('pro
 
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'glra_realty/properties',
-      transformation: [{ width: 1200, height: 800, crop: 'limit' }, { quality: 'auto' }]
+      // 2400 px on the long side: a listing's lead photo is shown up to about
+      // 1,400 px wide, twice that on a sharp laptop screen. The old 1200x800
+      // cap made every cover soft on desktop. The admin already shrinks each
+      // photo to 2400 px on the device before it uploads.
+      transformation: [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }]
     });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);

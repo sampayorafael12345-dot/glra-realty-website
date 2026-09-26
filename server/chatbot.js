@@ -14,6 +14,7 @@
 const rateLimit = require('express-rate-limit');
 const { body } = require('express-validator');
 const { Property } = require('./db');
+const { applyWebsiteCover } = require('./cover');
 
 // ── LLM PROVIDER HELPERS ─────────────────────────────────────
 // Each takes the same { apiKey, systemPrompt, history, message } and returns
@@ -241,8 +242,9 @@ async function getAllAvailableListingsCached() {
     const items = await Property.find({ status: 'available' })
       .sort({ featured: -1, createdAt: -1 })
       .limit(CHAT_LISTING_LIMIT)
-      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm landArea propertyType featured mainImage')
+      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm landArea propertyType featured mainImage gallery coverImage')
       .lean();
+    items.forEach(applyWebsiteCover);
     _chatListingCache = { at: now, items };
     return items;
   } catch (e) {

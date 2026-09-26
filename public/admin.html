@@ -250,6 +250,9 @@ body.dark-mode .fbtn.secondary{background:#1e293b}
 .img-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .img-thumb{position:relative;width:80px;height:62px}
 .img-thumb img{width:100%;height:100%;object-fit:cover;border:1px solid var(--border-color)}
+.img-thumb .cov{position:absolute;left:3px;bottom:3px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.img-thumb.is-cover img{outline:2px solid #df3500;outline-offset:1px}
+.img-thumb.is-cover .cov{background:#df3500}
 .img-thumb .rm{position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:#ef4444;color:#fff;border-radius:50%;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
 .uprog{margin-top:8px;display:none}
 .uprog-bar{height:3px;background:var(--border-color);border-radius:3px;overflow:hidden}
@@ -3475,6 +3478,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
           <div class="fg full"><label>Featured Listing</label><div class="sw-row"><label class="sw"><input type="checkbox" id="pFeatured"><div class="sw-sl"></div></label><span class="sw-lbl">Show in Featured section on homepage</span></div></div>
           <div class="fsec">Description</div>
           <div class="fg full"><label for="pDesc">Property Description</label><textarea id="pDesc" rows="5" placeholder="Describe the property, amenities, nearby landmarks..."></textarea></div>
+          <div class="fg full"><label for="pSummary">Website summary (optional)</label><textarea id="pSummary" rows="3" maxlength="1200" placeholder="Two or three plain sentences for the website. Example: A corner unit on the 34th floor with a golf course view, two bedrooms and a maid's room. Vacant and ready to move in."></textarea><div style="font-size:12px;color:var(--text-muted);margin-top:4px">When filled in, the listing page shows this first and folds the description above under "Full details". Leave it empty and the page stays as it is.</div></div>
           <div class="fsec">Images</div>
           <div class="fg full">
             <label for="mainImgInp">Main Image</label>
@@ -3487,7 +3491,14 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
             <label for="gallInp">Gallery Photos</label>
             <div class="upload-zone" onclick="document.getElementById('gallInp').click()"><i class="fas fa-images"></i><p>Click to add more photos</p><input type="file" id="gallInp" accept="image/*" multiple onchange="uploadGallery(this)"></div>
             <div id="gallPreview" class="img-row" style="margin-top:10px"></div>
+            <div id="coverNote" style="font-size:12px;color:var(--text-muted);margin-top:6px"></div>
             <input type="hidden" id="pGallery">
+          </div>
+          <div class="fg full">
+            <label for="planInp">Floor Plan (optional)</label>
+            <div class="upload-zone" onclick="document.getElementById('planInp').click()"><i class="fas fa-vector-square"></i><p>Click to upload the floor plan</p><input type="file" id="planInp" accept="image/*" onchange="uploadPlan(this)"></div>
+            <div id="planPreview" class="img-row" style="margin-top:10px"></div>
+            <input type="hidden" id="pPlan">
           </div>
         </div>
         <div class="form-actions">
@@ -3796,6 +3807,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(
 let CU = null; // current user {name,role,email,permissions}
 let allProps = [];
 let galleryUrls = [];
+let coverUrl = '';
 let editPropId = null;
 
 // ── PERMISSION DEFINITIONS ────────────────────────────────
@@ -4743,10 +4755,11 @@ function renderProps(props){
 // ── PROPERTY FORM ─────────────────────────────────────────
 function openAddProperty(){
   if(!hasPerm('properties_create')){showToast('You don\'t have permission to add properties',true);return}
-  editPropId=null;galleryUrls=[];
+  editPropId=null;galleryUrls=[];coverUrl='';
   document.getElementById('propForm').reset();
   document.getElementById('pMainImg').value='';document.getElementById('pGallery').value='';
   document.getElementById('mainPreview').innerHTML='';document.getElementById('gallPreview').innerHTML='';
+  document.getElementById('pPlan').value='';renderPlan();document.getElementById('coverNote').textContent='';
   document.getElementById('propModalTitle').textContent='Add New Property';
   document.getElementById('propModal').classList.add('open');
 }
@@ -4754,7 +4767,7 @@ function openAddProperty(){
 function openEditProp(id){
   if(!hasPerm('properties_edit')){showToast('You don\'t have permission to edit properties',true);return}
   const p=allProps.find(x=>x._id===id);if(!p)return;
-  editPropId=id;galleryUrls=[...(p.gallery||[])];
+  editPropId=id;galleryUrls=[...(p.gallery||[])];coverUrl=p.coverImage&&galleryUrls.includes(p.coverImage)?p.coverImage:'';
   document.getElementById('editId').value=id;
   document.getElementById('pTitle').value=p.title||'';
   setTypeSelect(document.getElementById('pType2'), p.propertyType);
@@ -4769,15 +4782,33 @@ function openEditProp(id){
   document.getElementById('pPark').value=p.parking||0;
   document.getElementById('pFloor').value=p.floor||'';document.getElementById('pStat').value=p.status||'available';
   document.getElementById('pFeatured').checked=!!p.featured;document.getElementById('pDesc').value=p.description||'';
+  document.getElementById('pSummary').value=p.webSummary||'';document.getElementById('pPlan').value=p.floorPlan||'';renderPlan();
   document.getElementById('pMainImg').value=p.mainImage||'';document.getElementById('pGallery').value=JSON.stringify(galleryUrls);
   document.getElementById('mainPreview').innerHTML=p.mainImage?`<img src="${p.mainImage}" style="height:72px;object-fit:cover;border:1px solid var(--border-color);margin-top:8px">`:''
-  document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,i)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${i})">&times;</button></div>`).join('');
+  renderGall();
   document.getElementById('propModalTitle').textContent='Edit Property';
   document.getElementById('propModal').classList.add('open');
 }
 
 function closePropModal(){document.getElementById('propModal').classList.remove('open')}
-function rmGall(i){galleryUrls.splice(i,1);document.getElementById('pGallery').value=JSON.stringify(galleryUrls);document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,j)=>`<div class="img-thumb"><img src="${esc(u)}"><button class="rm" onclick="rmGall(${j})">&times;</button></div>`).join('')}
+function rmGall(i){if(galleryUrls[i]===coverUrl)coverUrl='';galleryUrls.splice(i,1);document.getElementById('pGallery').value=JSON.stringify(galleryUrls);renderGall()}
+/* The website leads with a clean photo, not the Facebook flyer: by default the
+   first gallery photo, or whichever one is starred here. The main image stays
+   what it is (the admin list and Facebook still use it). */
+function renderGall(){
+  const auto=!coverUrl&&galleryUrls.length&&document.getElementById('pMainImg').value?galleryUrls[0]:'';
+  document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,i)=>{const on=u===coverUrl||u===auto;return `<div class="img-thumb${on?' is-cover':''}"><img src="${esc(u)}" alt=""><button type="button" class="rm" onclick="rmGall(${i})" aria-label="Remove photo">&times;</button><button type="button" class="cov" onclick="setCover(${i})" aria-pressed="${on}" aria-label="Use as the website cover" title="${on?(u===auto?'Website cover (automatic: first gallery photo)':'Website cover'):'Use as the website cover'}">&#9733;</button></div>`}).join('');
+  const n=document.getElementById('coverNote');
+  if(n)n.textContent=!galleryUrls.length?'':coverUrl?'The starred photo is the website cover.':'The first gallery photo is the website cover. Tap the star on another photo to change it.';
+}
+function setCover(i){const u=galleryUrls[i];coverUrl=(coverUrl===u)?'':u;renderGall()}
+function renderPlan(){const u=document.getElementById('pPlan').value;document.getElementById('planPreview').innerHTML=u?`<div class="img-thumb" style="width:120px;height:90px"><img src="${esc(u)}" alt="Floor plan" style="object-fit:contain;background:#fff"><button type="button" class="rm" onclick="document.getElementById('pPlan').value='';renderPlan()" aria-label="Remove floor plan">&times;</button></div>`:''}
+async function uploadPlan(inp){
+  const file=inp.files[0];if(!file)return;showLoad('Uploading floor plan...');
+  try{const fd=new FormData();fd.append('image',await glraShrinkImage(file));const res=await apiFetch('/api/admin/upload-property-image',{method:'POST',body:fd});const d=await res.json();
+    if(d.url){document.getElementById('pPlan').value=d.url;renderPlan();showToast('Floor plan uploaded')}else showToast('Upload failed',true)}
+  catch{showToast('Upload error',true)}finally{hideLoad();inp.value=''}
+}
 
 document.getElementById('propForm').addEventListener('submit',async function(e){
   e.preventDefault();
@@ -4805,6 +4836,7 @@ document.getElementById('propForm').addEventListener('submit',async function(e){
       floor:document.getElementById('pFloor').value,status:document.getElementById('pStat').value,
       featured:document.getElementById('pFeatured').checked,description:document.getElementById('pDesc').value,
       mainImage:document.getElementById('pMainImg').value,gallery:galleryUrls,
+      coverImage:coverUrl,floorPlan:document.getElementById('pPlan').value,webSummary:document.getElementById('pSummary').value,
     };
     const url=editPropId?`/api/admin/properties/${editPropId}`:'/api/admin/properties';
     const method=editPropId?'PUT':'POST';
@@ -4884,7 +4916,7 @@ async function uploadGallery(inp){
       const d=await res.json();if(d.url)galleryUrls.push(d.url);
     }
     document.getElementById('pGallery').value=JSON.stringify(galleryUrls);
-    document.getElementById('gallPreview').innerHTML=galleryUrls.map((u,i)=>`<div class="img-thumb"><img src="${u}"><button class="rm" onclick="rmGall(${i})">&times;</button></div>`).join('');
+    renderGall();
     showToast(`${files.length} image${files.length>1?'s':''} uploaded`);
   }catch{showToast('Upload error',true)}finally{hideLoad()}
 }

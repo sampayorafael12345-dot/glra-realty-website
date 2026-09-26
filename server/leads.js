@@ -24,6 +24,7 @@ const { Lead, ListingView, CalcUsage, Property, Inquiry, PropertySubmission, Sav
   Subscriber, Setting, Account, AgentLead, AgentNotification, LEAD_STAGES, LEAD_TYPES } = require('./db');
 const { verifyToken, requirePermission, logAudit } = require('./auth');
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
+const { applyWebsiteCover } = require('./cover');
 
 const SITE_URL = 'https://glrarealty.com';
 const BROKER_INBOX = 'glrarealty@gmail.com';
@@ -378,7 +379,7 @@ function matchListings(lead, listings, limit) {
 let _liveCache = { at: 0, rows: null };
 async function liveListings() {
   if (_liveCache.rows && Date.now() - _liveCache.at < 5 * 60e3) return _liveCache.rows;
-  const rows = await Property.find({ status: 'available' }).select('title location listingType price monthlyRental propertyType bedrooms mainImage createdAt').lean();
+  const rows = (await Property.find({ status: 'available' }).select('title location listingType price monthlyRental propertyType bedrooms mainImage gallery coverImage createdAt').lean()).map(applyWebsiteCover);
   _liveCache = { at: Date.now(), rows };
   return rows;
 }
@@ -677,7 +678,7 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       if (!asked && !(lead.consent && lead.consent.marketing)) return res.status(400).json({ error: 'This person has not asked us about a property and has not agreed to receive listings. Record their consent first.' });
       const ids = (Array.isArray(b.propertyIds) ? b.propertyIds : []).map(String).filter(x => /^[a-f0-9]{24}$/i.test(x)).slice(0, 8);
       if (!ids.length) return res.status(400).json({ error: 'Pick at least one listing.' });
-      const props = await Property.find({ _id: { $in: ids }, status: 'available' }).select('title location listingType price monthlyRental mainImage').lean();
+      const props = (await Property.find({ _id: { $in: ids }, status: 'available' }).select('title location listingType price monthlyRental mainImage gallery coverImage').lean()).map(applyWebsiteCover);
       if (!props.length) return res.status(400).json({ error: 'Those listings are no longer live.' });
       const w = who(req);
       const html = listingsEmail(lead.toObject(), props, cleanText(b.note, 1500), esc, cleanText(b.senderName, 80) || 'Catherine');

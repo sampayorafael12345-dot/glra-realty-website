@@ -360,6 +360,9 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     'html.glra-sheet-open,html.glra-sheet-open body{overflow:hidden !important}',
 
     /* ── Back to top: after two screens, stacked above the contact button ── */
+    'html body #backToTop.back-to-top,html body #backToTop.back-to-top.glra-btt-on{display:none !important}',
+    'html.glra-at-foot #glraContact:not(.is-open){opacity:0 !important;visibility:hidden !important;pointer-events:none !important}',
+    '#glraContact{transition:opacity .25s ease,visibility .25s ease}',
     'html body #backToTop.back-to-top{position:fixed !important;left:auto !important;top:auto !important;right:18px !important;',
     '  bottom:calc(var(--glra-dock,0px) + 18px + 52px + 12px) !important;width:44px !important;height:44px !important;min-width:44px !important;min-height:44px !important;',
     '  display:flex !important;align-items:center !important;justify-content:center !important;padding:0 !important;',
@@ -848,7 +851,20 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
      contact button so the two can never overlap. The page's own `.show`
      toggles are left alone; the CSS above keys on .glra-btt-on only. */
   function setupBackToTop() {
+    // Sept 2026: one floating button, not two. The arrow sat on top of the
+    // contact button and, over the footer, on top of the Privacy link. Phones
+    // already jump to the top with a tap on the status bar, and the footer is
+    // where the contact details are printed anyway, so there the contact
+    // button steps aside.
     var b = document.getElementById('backToTop');
+    if (b) b.setAttribute('hidden', '');
+    var foot = document.querySelector('footer, .pg-foot');
+    if (foot && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        document.documentElement.classList.toggle('glra-at-foot', es[0].isIntersecting);
+      }).observe(foot);
+    }
+    return;
     if (!b) return;
     // Reads two cached numbers and flips one class: cheap enough to run on
     // every scroll event without a frame throttle.
