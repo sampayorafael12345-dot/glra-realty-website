@@ -50,12 +50,23 @@
      the names — the missing glyphs would fall back silently. -->
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"></noscript>
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
 <style>
 /* Room for each icon while the icon font is still on its way, so text does not jump when it lands. */
 i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}
-.swiper-wrapper{display:flex;height:100%;box-sizing:content-box}.swiper-slide{flex-shrink:0;width:100%;height:100%;position:relative}
+/* The hero slider is a plain cross-fade (Sept 2026): Swiper cost about two
+   seconds of phone CPU, mostly layout, to fade between five photos. */
+.ab-hero-photo .swiper-wrapper{position:relative}
+.ab-hero-photo .swiper-slide{position:absolute !important;inset:0;opacity:0;transition:opacity 1.1s ease}
+.ab-hero-photo .swiper-slide.is-on{opacity:1}
+.hs-dots{position:absolute;left:18px;bottom:124px;z-index:3;display:flex;gap:0}
+.hs-dot{all:unset;box-sizing:border-box;width:24px;height:24px;display:inline-flex;align-items:center;cursor:pointer}
+.hs-dot::before{content:'';display:block;width:10px;height:10px;background:rgba(255,255,255,.4);transition:width .3s ease,background-color .3s ease}
+.hs-dot[aria-current="true"]::before{width:30px;background:var(--ab-hot,#ff3d00)}
+.hs-dot[aria-current="true"]{width:40px}
+.hs-dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:560px){.hs-dots{bottom:104px}}
+@media (prefers-reduced-motion:reduce){.ab-hero-photo .swiper-slide{transition:none}}
 </style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
 
@@ -1568,9 +1579,9 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
       <span class="photo-tag" id="heroPhotoTag">Featured · BGC</span>
       <div class="hero-slider swiper" id="heroSlider">
         <div class="swiper-wrapper" id="heroSliderWrapper">
-          <div class="swiper-slide" data-glra-first-slide></div>
+          <div class="swiper-slide is-on" data-glra-first-slide></div>
         </div>
-        <div class="swiper-pagination"></div>
+        <div class="hs-dots" role="group" aria-label="Featured photos"></div>
       </div>
       <div class="photo-card" id="heroPhotoCard">
         <div class="pc-title" id="heroPcTitle">Featured listing<small>Loading the latest</small></div>
@@ -1955,7 +1966,6 @@ html body .contact-form .cf-consent input{width:20px;height:20px;min-height:0;fl
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <!--GLRA_LIST-->
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="/js/main.js?v=120"></script>
 <script src="/js/glra-maps.js?v=117" defer></script>
 <script src="/js/smart-search.js?v=116"></script>
@@ -2129,7 +2139,29 @@ function escapeHtml(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').rep
 function showToast(msg,err){const t=document.createElement('div');t.className='toast';t.textContent=msg;if(err)t.style.borderLeftColor='#ef4444';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
 window.addEventListener('load',()=>{initLazyLoading();const l=document.getElementById('loader');if(l){l.classList.add('hidden');setTimeout(()=>l.style.display='none',500)}});
 async function loadHeroImages(){try{const r=await fetch('/api/hero-images');const imgs=await r.json();const wrapper=document.getElementById('heroSliderWrapper');if(wrapper&&imgs&&imgs.length>0){wrapper.innerHTML='';imgs.forEach(img=>{const s=document.createElement('div');s.className='swiper-slide';s.style.backgroundImage=`url('${img.url}')`;wrapper.appendChild(s)});if(window.heroSwiper)window.heroSwiper.update();else initSwiper()}else initSwiper()}catch{initSwiper()}}
-function initSwiper(){if(window.heroSwiper)return;const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.heroSwiper=new Swiper('.hero-slider',{loop:true,autoplay:reduceMotion?false:{delay:6000,disableOnInteraction:false},pagination:{el:'.swiper-pagination',clickable:true},effect:'fade',fadeEffect:{crossFade:true},on:{slideChange:function(){if(window.glraHeroFill)glraHeroFill();if(window.heroPool)setHeroCaption(window.heroPool[this.realIndex])}}})}
+/* Hero cross-fade: the same small interface the page used from Swiper
+   (realIndex, update, destroy), without the library. */
+function initSwiper(){
+  if(window.heroSwiper)return;
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wrap=document.getElementById('heroSliderWrapper'),dots=document.querySelector('#heroSlider .hs-dots');
+  if(!wrap)return;
+  let timer=null;
+  const hs={realIndex:0,slides:[],
+    go(i,user){const n=hs.slides.length;if(!n)return;i=((i%n)+n)%n;hs.realIndex=i;
+      hs.slides.forEach((el,k)=>el.classList.toggle('is-on',k===i));
+      if(dots)[...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===i?'true':'false'));
+      if(i>0&&window.glraHeroFill)glraHeroFill();
+      if(window.heroPool)setHeroCaption(window.heroPool[i]);
+      if(user)hs.play();},
+    play(){clearInterval(timer);if(reduce||hs.slides.length<2)return;timer=setInterval(()=>{if(!document.hidden)hs.go(hs.realIndex+1)},6000)},
+    update(){hs.slides=[...wrap.querySelectorAll('.swiper-slide')];
+      if(dots){dots.innerHTML=hs.slides.length>1?hs.slides.map((_,k)=>`<button type="button" class="hs-dot" aria-label="Photo ${k+1} of ${hs.slides.length}"></button>`).join(''):'';
+        [...dots.children].forEach((d,k)=>d.addEventListener('click',()=>hs.go(k,true)));}
+      hs.go(0);hs.play();},
+    destroy(){clearInterval(timer);window.heroSwiper=null}};
+  window.heroSwiper=hs;hs.update();
+}
 function applyLiveFilters(){if(!cachedProperties)return;const s=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRawPriceValue('minPriceInput');const mx=getRawPriceValue('maxPriceInput');const sq=(s&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...cachedProperties].filter(p=>{if(s){if(sq){if(!glraSmartMatch(p,sq,cachedProperties))return false}else if(!p.title.toLowerCase().includes(s)&&!p.location.toLowerCase().includes(s))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,'',mn,mx))return false;return true});renderProperties(f.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(f.filter(p=>isForSale(p)).slice(0,6),'sale-list');renderProperties(f.filter(p=>isForLease(p)).slice(0,6),'lease-list');if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),sq);document.getElementById('statProperties').innerText=f.length;allProperties=f}
 
 /* Look a listing up from the already-loaded cache. The modals used to take
@@ -2248,12 +2280,14 @@ function populateHeroFromListings(properties){
   pool.forEach((p,i)=>{
     const s=document.createElement('div');
     s.className='swiper-slide';
-    if(i===0)s.style.backgroundImage=bg(p.mainImage);else s.dataset.bg=bg(p.mainImage);
+    // The first photo is shown at once (no fade in): it is the same photo the
+    // server already put on screen, so the swap is invisible.
+    if(i===0){s.style.backgroundImage=bg(p.mainImage);s.classList.add('is-on')}else s.dataset.bg=bg(p.mainImage);
     wrapper.appendChild(s);
   });
   window.heroPool=pool;
   setHeroCaption(pool[0]);
-  if(window.heroSwiper){window.heroSwiper.destroy(true,true);window.heroSwiper=null;}
+  if(window.heroSwiper)window.heroSwiper.destroy();
   initSwiper();
   const fillRest=window.glraHeroFill=()=>document.querySelectorAll('#heroSliderWrapper .swiper-slide[data-bg]').forEach(s=>{s.style.backgroundImage=s.dataset.bg;s.removeAttribute('data-bg')});
   if(document.readyState==='complete')setTimeout(fillRest,1200);else window.addEventListener('load',()=>setTimeout(fillRest,1200),{once:true});

@@ -448,8 +448,8 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     const hero = (withImg.filter(p => p.featured)[0] || withImg[0]);
     const heroUrl = hero ? heroPhotoUrl(hero.mainImage, 1400) : '';
     if (heroUrl) {
-      html = html.replace(/<div class="swiper-slide" data-glra-first-slide[^>]*><\/div>/,
-        `<div class="swiper-slide" data-glra-first-slide style="background-image:url('${esc(heroUrl)}')"></div>`);
+      html = html.replace(/<div class="swiper-slide is-on" data-glra-first-slide[^>]*><\/div>/,
+        `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${esc(heroUrl)}')"></div>`);
       html = html.replace('</title>', `</title>\n<link rel="preload" as="image" href="${esc(heroUrl)}" fetchpriority="high">`);
     }
     const n = String(list.length);
