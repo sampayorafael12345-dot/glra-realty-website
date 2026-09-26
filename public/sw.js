@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v118';
+const CACHE_VERSION = 'glra-cache-v119';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',

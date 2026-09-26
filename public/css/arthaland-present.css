@@ -45,6 +45,24 @@
   -webkit-appearance: none;
   appearance: none;
 }
+/* brutalist-theme.css paints every <button> as a solid 48x28 block with
+   !important, which turned these hairlines into a column of cream bricks.
+   Only an !important on a class selector outranks it. */
+html body .pres-dot,
+html body .pres-dot:hover,
+html body .pres-dot:active,
+html body .pres-dot:focus-visible {
+  background: transparent !important;
+  padding: 0 !important;
+  width: 22px !important;
+  height: 10px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: block !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
 /* The visible mark is a short rule, not a circle — it reads as a scale.
    The box is drawn once at its largest (26x2) and every state scales it
    down with a transform. Transitioning width/height instead would force
