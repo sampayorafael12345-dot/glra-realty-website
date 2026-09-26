@@ -71,7 +71,10 @@ const propertySchema = new mongoose.Schema({
     // Everyday places counted within 500 m and 1 km, for the lifestyle
     // score: { grocery: [n500, n1000], dining, park, health, transit, school }.
     life: { type: mongoose.Schema.Types.Mixed, default: undefined }
-  }
+  },
+  // Natural hazards at geo (server/hazard.js): UP NOAH flood, storm surge,
+  // landslide and debris-flow levels (0 none, 1 low, 2 medium, 3 high).
+  hazard: { type: mongoose.Schema.Types.Mixed, default: undefined }
 });
 
 // Every public page load runs find({status:'available'}).sort({createdAt:-1}) —

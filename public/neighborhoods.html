@@ -60,6 +60,42 @@
 .coming-soon{opacity:.6}
 .coming-soon .nh-card-image{filter:grayscale(60%)}
 .coming-soon .read-more{color:var(--gray)}
+/* Area explorer map */
+.nx{max-width:1100px;margin:40px auto 10px;padding:0 5%}
+.nx-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px}
+.nx-head h2{font-size:26px;font-weight:900;letter-spacing:-.5px;line-height:1.1;margin:0}
+.nx-head p{margin:4px 0 0;font-size:14px;color:var(--ab-gray,#6a6a6a);max-width:60ch}
+.nx-tools{display:flex;flex-wrap:wrap;gap:6px}
+html body .nx-btn{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 11px !important;background:var(--ab-paper,#f1eee9) !important;color:var(--ab-ink,#0a0a0a) !important;border:2px solid var(--ab-line,#0a0a0a) !important;border-radius:0 !important;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;box-shadow:none;transform:none}
+html body .nx-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .nx-btn[aria-pressed="true"]{background:#1f5fbf !important;border-color:#1f5fbf !important;color:#fff !important}
+html body .nx-btn[disabled]{opacity:.7;cursor:progress}
+.nx-body{display:grid;grid-template-columns:1fr 320px;border:2px solid var(--ab-line,#0a0a0a);background:var(--ab-paper,#f1eee9);min-height:460px}
+@media(max-width:860px){.nx-body{grid-template-columns:1fr}}
+.nx-map{min-height:460px;position:relative;z-index:0;background:#e8e4dd}
+@media(max-width:860px){.nx-map{min-height:360px}}
+.nx-map .leaflet-tile-pane{filter:grayscale(.85) contrast(1.04) brightness(1.03)}
+body.dark-mode .nx-map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
+.nx-side{border-left:2px solid var(--ab-line,#0a0a0a);padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px}
+@media(max-width:860px){.nx-side{border-left:0;border-top:2px solid var(--ab-line,#0a0a0a)}}
+.nx-side h3{font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.15;margin:0}
+.nx-side .nx-kicker{font:700 10px/1.3 'JetBrains Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00)}
+.nx-side p{font-size:13.5px;line-height:1.55;margin:0}
+.nx-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nx-stat{border:2px solid var(--ab-line,#0a0a0a);padding:9px 10px}
+.nx-stat b{display:block;font-size:18px;font-weight:900;letter-spacing:-.3px}
+.nx-stat span{display:block;font:700 9.5px/1.3 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:var(--ab-gray,#6a6a6a);margin-top:3px}
+.nx-links{display:flex;flex-direction:column;gap:6px;margin-top:auto}
+html body .nx-links a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;padding:0 12px;border:2px solid var(--ab-line,#0a0a0a);background:var(--ab-ink,#0a0a0a);color:var(--ab-paper,#f1eee9);font:700 11px/1.2 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+html body .nx-links a.nx-ghost{background:transparent;color:var(--ab-ink,#0a0a0a)}
+html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.nx-note{font-size:11.5px !important;color:var(--ab-gray,#6a6a6a)}
+.nx-area{cursor:pointer}
+.nx-lbl-wrap{background:none;border:0}
+.nx-lbl{position:absolute;transform:translate(-50%,-50%);padding:4px 7px;background:#0a0a0a;color:#f1eee9;font:700 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;border:2px solid #0a0a0a;cursor:pointer}
+.nx-lbl.is-on{background:#ff3d00;border-color:#ff3d00;color:#fff}
+.nx-lbl-wrap:focus-visible .nx-lbl{outline:3px solid #ff3d00;outline-offset:2px}
+.nx-fail{padding:24px;text-align:center}
 </style>
 </head>
 <body>
@@ -112,6 +148,27 @@
   <h1>Metro Manila Neighborhood Guides</h1>
   <p>Honest, in-depth guides to Metro Manila's premier neighborhoods. Prices, lifestyle, schools, transit, and what makes each area unique.</p>
 </div>
+
+<section class="nx" aria-labelledby="nxH">
+  <div class="nx-head">
+    <div>
+      <h2 id="nxH">Explore the areas on a map</h2>
+      <p>Tap an area to see what homes on this site ask there, the trains that serve it, and the flood map around it.</p>
+    </div>
+    <div class="nx-tools">
+      <button type="button" class="nx-btn" id="nxRailBtn" aria-pressed="false"><i class="fas fa-subway" aria-hidden="true"></i> Trains</button>
+      <button type="button" class="nx-btn" id="nxFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i> Flood &amp; hazards</button>
+    </div>
+  </div>
+  <div class="nx-body">
+    <div class="nx-map" id="nxMap" role="region" aria-label="Map of Metro Manila areas"></div>
+    <div class="nx-side" id="nxSide" aria-live="polite">
+      <span class="nx-kicker">Pick an area</span>
+      <h3>Sixteen areas across Metro Manila and the south</h3>
+      <p>Each circle is an area people ask us about. Tap one, or its label, for asking prices from the listings on this site today.</p>
+    </div>
+  </div>
+</section>
 
 <section class="nh-grid">
 
@@ -224,6 +281,120 @@
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
+<script src="/js/glra-maps.js?v=117" defer></script>
+<script>
+/* Area explorer. Circles are drawn from the list below; the numbers come
+   from the live listings (/api/properties, positions rounded to ~100 m), so
+   they are asking prices on this site, not market-wide figures. */
+(function(){
+  'use strict';
+  var AREAS = [
+    { n: 'Makati CBD', lat: 14.5547, lng: 121.0244, r: 1600, guide: '/living-in-makati.html', t: 'Ayala Avenue, Legazpi and Salcedo villages: the country\'s main business district.' },
+    { n: 'Rockwell & Poblacion', lat: 14.5646, lng: 121.0355, r: 900, guide: '/living-in-makati.html', t: 'Towers by the Power Plant Mall, and Makati\'s restaurant and nightlife quarter.' },
+    { n: 'BGC', lat: 14.5507, lng: 121.0509, r: 1500, guide: '/living-in-bgc.html', t: 'Bonifacio Global City: a planned, walkable grid of offices, shops and condos.' },
+    { n: 'Ortigas Center', lat: 14.5866, lng: 121.0614, r: 1300, t: 'The Pasig, Mandaluyong and Quezon City business district around the malls.' },
+    { n: 'Kapitolyo', lat: 14.5708, lng: 121.0588, r: 800, t: 'A low-rise Pasig neighbourhood known for its food streets.' },
+    { n: 'Shaw & Mandaluyong', lat: 14.5810, lng: 121.0530, r: 1000, t: 'Mid-rise and high-rise living between Ortigas and Makati, on the MRT-3.' },
+    { n: 'Greenhills', lat: 14.6010, lng: 121.0490, r: 1200, t: 'San Juan\'s shopping district and the villages around it.' },
+    { n: 'Eastwood', lat: 14.6093, lng: 121.0799, r: 900, t: 'A self-contained Quezon City township of offices and condos.' },
+    { n: 'Cubao', lat: 14.6190, lng: 121.0530, r: 1200, t: 'Araneta City, and the crossing of the MRT-3 and LRT-2.' },
+    { n: 'Katipunan', lat: 14.6380, lng: 121.0760, r: 1400, t: 'Loyola Heights: Ateneo, Miriam and UP, on the LRT-2.' },
+    { n: 'Vertis North', lat: 14.6526, lng: 121.0373, r: 1200, t: 'Quezon City\'s newer business district by Trinoma and North Avenue.' },
+    { n: 'Manila Bay & MOA', lat: 14.5352, lng: 120.9822, r: 1500, t: 'The reclaimed Bay Area around SM Mall of Asia, in Pasay.' },
+    { n: 'Ermita & Malate', lat: 14.5750, lng: 120.9860, r: 1500, t: 'Old Manila by the bay, near the embassies, universities and hospitals.' },
+    { n: 'Marikina', lat: 14.6400, lng: 121.1030, r: 2500, t: 'A river valley city of houses and lots, east of Quezon City.' },
+    { n: 'BF Homes', lat: 14.4520, lng: 121.0230, r: 2000, t: 'One of the largest subdivisions in the country, in Paranaque and Las Pinas.' },
+    { n: 'Alabang', lat: 14.4190, lng: 121.0390, r: 2000, guide: '/living-in-alabang.html', t: 'Filinvest City and the Ayala Alabang villages, in Muntinlupa.' }
+  ];
+  var list = null, rail = null, map = null, layers = [], sel = -1;
+  function esc(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function km(a, b, c, d){ var R = Math.PI / 180, x = Math.sin((c - a) * R / 2), y = Math.sin((d - b) * R / 2); return 2 * 6371 * Math.asin(Math.sqrt(x * x + Math.cos(a * R) * Math.cos(c * R) * y * y)); }
+  function med(a){ if (!a.length) return 0; a = a.slice().sort(function(x, y){ return x - y; }); var m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+  function peso(n){ n = Number(n) || 0; if (n >= 1e6) return '₱' + (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M'; if (n >= 1e3) return '₱' + Math.round(n / 1e3) + 'K'; return '₱' + Math.round(n); }
+  function lease(p){ var t = String(p.listingType || '').toUpperCase(); return t === 'FOR LEASE' || t === 'SALE AND LEASE'; }
+  function sale(p){ var t = String(p.listingType || '').toUpperCase(); return t === 'FOR SALE' || t === 'SALE AND LEASE'; }
+  function statsFor(a){
+    var inside = (list || []).filter(function(p){ return p.geo && !p.geo.approx && km(a.lat, a.lng, p.geo.lat, p.geo.lng) * 1000 <= a.r; });
+    var psqm = inside.filter(function(p){ return sale(p) && Number(p.price) > 0 && Number(p.sqm) > 0; }).map(function(p){ return Number(p.price) / Number(p.sqm); });
+    var rents = inside.filter(function(p){ return lease(p) && (Number(p.monthlyRental) || (!sale(p) && Number(p.price))) > 0; }).map(function(p){ return Number(p.monthlyRental) || Number(p.price); });
+    var stn = (rail || []).filter(function(f){ return f.properties.t === 'stn' && f.properties.s === 'run' && km(a.lat, a.lng, f.geometry.coordinates[1], f.geometry.coordinates[0]) * 1000 <= a.r; });
+    var soon = (rail || []).filter(function(f){ return f.properties.t === 'stn' && f.properties.s !== 'run' && km(a.lat, a.lng, f.geometry.coordinates[1], f.geometry.coordinates[0]) * 1000 <= a.r; });
+    return { n: inside.length, sale: inside.filter(sale).length, lease: inside.filter(lease).length, psqm: psqm.length >= 3 ? med(psqm) : 0, psqmN: psqm.length, rent: rents.length >= 3 ? med(rents) : 0, rentN: rents.length, stn: stn, soon: soon };
+  }
+  function side(i){
+    var box = document.getElementById('nxSide'), a = AREAS[i];
+    if (!box || !a) return;
+    var st = statsFor(a);
+    var names = st.stn.map(function(f){ return f.properties.n; }).filter(function(v, k, arr){ return v && arr.indexOf(v) === k; });
+    var soon = st.soon.map(function(f){ return f.properties.n; }).filter(function(v, k, arr){ return v && arr.indexOf(v) === k; });
+    var href = '/properties.html?area=' + a.lat.toFixed(4) + ',' + a.lng.toFixed(4) + ',' + a.r + '&view=map';
+    box.innerHTML = '<span class="nx-kicker">Area ' + (i + 1) + ' of ' + AREAS.length + '</span>'
+      + '<h3>' + esc(a.n) + '</h3><p>' + esc(a.t) + '</p>'
+      + '<div class="nx-stats">'
+      + '<div class="nx-stat"><b>' + (list ? st.n : '...') + '</b><span>Homes listed here</span></div>'
+      + '<div class="nx-stat"><b>' + (st.psqm ? peso(st.psqm) : '-') + '</b><span>' + (st.psqm ? 'Median asking / sqm' : 'Too few sales to say') + '</span></div>'
+      + '<div class="nx-stat"><b>' + (st.rent ? peso(st.rent) : '-') + '</b><span>' + (st.rent ? 'Median rent / month' : 'Too few rentals to say') + '</span></div>'
+      + '<div class="nx-stat"><b>' + names.length + '</b><span>Train stations</span></div>'
+      + '</div>'
+      + (names.length ? '<p><b>Trains:</b> ' + esc(names.slice(0, 6).join(', ')) + (names.length > 6 ? ' and more' : '') + '.</p>' : '<p><b>Trains:</b> no running station inside this circle.</p>')
+      + (soon.length ? '<p><b>Being built:</b> ' + esc(soon.slice(0, 4).join(', ')) + ' station' + (soon.length > 1 ? 's' : '') + '.</p>' : '')
+      + '<p class="nx-note">Medians need at least three listings. Asking prices on this site only, not sold prices.</p>'
+      + '<div class="nx-links">'
+      + '<a href="' + href + '">See ' + (st.n ? st.n + ' ' : '') + 'home' + (st.n === 1 ? '' : 's') + ' here <i class="fas fa-arrow-right" aria-hidden="true"></i></a>'
+      + (a.guide ? '<a class="nx-ghost" href="' + a.guide + '">Read the area guide <i class="fas fa-book-open" aria-hidden="true"></i></a>' : '')
+      + '</div>';
+  }
+  function select(i, fly){
+    sel = i;
+    layers.forEach(function(l, k){
+      l.c.setStyle(k === i ? { color: '#ff3d00', weight: 3, fillColor: '#ff3d00', fillOpacity: 0.16 } : { color: '#1f5fbf', weight: 2, fillColor: '#1f5fbf', fillOpacity: 0.08 });
+      var el = l.m.getElement && l.m.getElement();
+      if (el) { var s2 = el.querySelector('.nx-lbl'); if (s2) s2.classList.toggle('is-on', k === i); el.setAttribute('aria-pressed', k === i ? 'true' : 'false'); }
+    });
+    side(i);
+    if (fly && map) map.flyToBounds(layers[i].c.getBounds().pad(0.4), { duration: 0.8, animate: !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) });
+  }
+  function init(el){
+    GLRAMaps.loadLeaflet().then(function(){
+      map = L.map(el, { scrollWheelZoom: false, minZoom: 9 }).setView([14.56, 121.03], 11);
+      map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+      GLRAMaps.osm(map);
+      GLRAMaps.fullscreenControl(map, el, 'topright');
+      GLRAMaps.logoControl(map);
+      map.once('focus click', function(){ map.scrollWheelZoom.enable(); });
+      AREAS.forEach(function(a, i){
+        var c = L.circle([a.lat, a.lng], { radius: a.r, className: 'nx-area', color: '#1f5fbf', weight: 2, fillColor: '#1f5fbf', fillOpacity: 0.08 }).addTo(map);
+        c.on('click', function(){ select(i, false); });
+        var m = L.marker([a.lat, a.lng], { keyboard: true, title: a.n, icon: L.divIcon({ className: 'nx-lbl-wrap', html: '<span class="nx-lbl">' + esc(a.n) + '</span>', iconSize: [0, 0] }) }).addTo(map);
+        m.on('click', function(){ select(i, true); });
+        m.on('add', function(){ var e = m.getElement(); if (e) { e.setAttribute('role', 'button'); e.setAttribute('aria-label', a.n); } });
+        var e0 = m.getElement(); if (e0) { e0.setAttribute('role', 'button'); e0.setAttribute('aria-label', a.n); }
+        layers.push({ c: c, m: m });
+      });
+      map.fitBounds(L.latLngBounds(AREAS.map(function(a){ return [a.lat, a.lng]; })).pad(0.08), { animate: false });
+      function gm(){ return map; }
+      GLRAMaps.layerButton(document.getElementById('nxRailBtn'), gm, GLRAMaps.railToggle, 'The train map could not load. Try again later.');
+      GLRAMaps.floodButton(document.getElementById('nxFloodBtn'), gm);
+    }).catch(function(){ el.innerHTML = '<p class="nx-fail">The map could not load. Check your connection and reload the page.</p>'; });
+    fetch('/api/properties', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(d){
+      list = Array.isArray(d) ? d : (d && d.properties) || [];
+      if (sel >= 0) side(sel);
+    }).catch(function(){ list = []; });
+    fetch('/data/rail.geojson?v=1', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(d){
+      rail = d.features || [];
+      if (sel >= 0) side(sel);
+    }).catch(function(){ rail = []; });
+  }
+  function boot(){
+    var el = document.getElementById('nxMap');
+    if (!el || !window.GLRAMaps) return;
+    if (!('IntersectionObserver' in window)) { init(el); return; }
+    var io = new IntersectionObserver(function(en){ if (en.some(function(e){ return e.isIntersecting; })) { io.disconnect(); init(el); } }, { rootMargin: '300px 0px' });
+    io.observe(el);
+  }
+  if (document.readyState === 'complete') boot(); else window.addEventListener('load', boot);
+})();
+</script>
 <script src="/js/main.js?v=116"></script>
 <script src="/js/brutalist-shell.js?v=116" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>

@@ -574,6 +574,26 @@ html body .price-hist-range input[type=range]{position:absolute;left:0;top:0;wid
 /* Outside the dragged price range: faded until the handle is let go. */
 html body .prop-card.is-out{opacity:.25;filter:grayscale(1);transition:opacity .15s}
 #mapCanvas .glra-pin-wrap.is-out{opacity:.2;filter:grayscale(1)}
+/* Commute finder panel */
+.glra-commute{width:290px;max-width:calc(100vw - 90px);white-space:normal}
+.glra-cm-search{display:flex;gap:4px}
+html body .glra-cm-search input{flex:1;min-width:0;min-height:36px;padding:0 9px !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;font:500 16px/1.2 'Inter',sans-serif !important}
+html body .glra-cm-search .glra-mapctl-btn{width:40px;justify-content:center !important;padding:0 !important;box-shadow:none !important}
+.glra-cm-results{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.glra-cm-results:empty{display:none}
+html body .glra-cm-results button,html body .glra-cm-picks button,html body .glra-cm-seg button,html body .glra-cm-clear{min-height:32px;padding:5px 8px !important;margin:0 !important;border:2px solid var(--ab-line) !important;border-radius:0 !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;font:700 10px/1.2 'JetBrains Mono',monospace !important;letter-spacing:.6px !important;text-transform:uppercase;text-align:left;cursor:pointer;box-shadow:none !important}
+html body .glra-cm-results button{text-transform:none;font-family:'Inter',sans-serif !important;font-size:12.5px !important;letter-spacing:0 !important}
+.glra-cm-results small{display:block;font-weight:400;font-size:11px;opacity:.75;margin-top:2px}
+.glra-cm-picks{display:flex;flex-wrap:wrap;gap:4px}
+.glra-cm-seg{display:flex;gap:0}
+html body .glra-cm-seg button{flex:1 1 0;text-align:center}
+html body .glra-cm-seg button+button{border-left:0 !important}
+html body .glra-cm-seg button[aria-pressed="true"],html body .glra-cm-picks button:hover,html body .glra-cm-results button:hover{background:#1f5fbf !important;border-color:#1f5fbf !important;color:#fff !important}
+.glra-cm-status,.glra-cm-now{margin:0;font:700 11px/1.35 'JetBrains Mono',monospace;color:#1f5fbf}
+body.dark-mode .glra-cm-status,body.dark-mode .glra-cm-now{color:#7fb0ff}
+.glra-cm-status[hidden]{display:none}
+.glra-cm-note{margin:0;font-size:11px;line-height:1.4;color:var(--ab-gray)}
+@media(max-width:700px){.glra-commute{position:fixed;left:8px;right:8px;top:auto;bottom:8px;width:auto;max-width:none;max-height:70vh;overflow:auto;z-index:1000}}
 /* Map layers panel */
 .glra-layers{display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--ab-paper);border:2px solid var(--ab-line);box-shadow:3px 3px 0 var(--ab-line)}
 .glra-layers[hidden]{display:none}
@@ -868,6 +888,7 @@ html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spaci
         <span class="glra-sr" id="nearStatus" role="status" aria-live="polite"></span>
       </div>
       <button type="button" class="area-chip" id="areaChip" hidden onclick="glraSetArea(null)"><span></span> <i class="fas fa-times" aria-hidden="true"></i><b class="glra-sr"> Remove</b></button>
+      <button type="button" class="area-chip" id="commuteChip" hidden onclick="glraSetCommute(null)"><span></span> <i class="fas fa-times" aria-hidden="true"></i><b class="glra-sr"> Remove</b></button>
       <button type="button" class="ss-cta" id="ssOpenBtn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me new matches</button>
       <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
         <option value="newest">Sort: Newest First</option>
@@ -1065,7 +1086,7 @@ html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spaci
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <script src="/js/main.js?v=116"></script>
 <script src="/js/smart-search.js?v=116"></script>
-<script src="/js/glra-maps.js?v=116"></script>
+<script src="/js/glra-maps.js?v=117"></script>
 <script src="/js/gallery.js?v=116" defer></script>
 <script>
 /* ==== BROWSE PAGE LAYER (Sept 2026) ====================================
@@ -1137,7 +1158,7 @@ function glraPinPrice(p){
    page does not manage (utm_*, property=...) are left alone. Incoming links
    keep working: category=FOR%20SALE from the footers, search=BGC from the
    living-in pages and listing breadcrumbs, q= as an alias. */
-var GLRA_URL_KEYS = ['category','search','q','propertyType','bedrooms','baths','minPrice','maxPrice','sort','currency','view','near','area'];
+var GLRA_URL_KEYS = ['category','search','q','propertyType','bedrooms','baths','minPrice','maxPrice','sort','currency','view','near','area','commute'];
 var glraView = 'list';
 var glraUrlReady = false;   // never write the URL before the incoming one has been read
 function glraSyncUrl(){
@@ -1158,6 +1179,7 @@ function glraSyncUrl(){
     /* "My location" never goes into a link: the address bar is shareable. */
     if (GLRA_NEAR && GLRA_NEAR.key !== 'me') u.searchParams.set('near', GLRA_NEAR.key);
     if (GLRA_AREA) u.searchParams.set('area', [GLRA_AREA.lat.toFixed(4), GLRA_AREA.lng.toFixed(4), GLRA_AREA.r].join(','));
+    if (GLRA_COMMUTE) u.searchParams.set('commute', [GLRA_COMMUTE.lat.toFixed(4), GLRA_COMMUTE.lng.toFixed(4), GLRA_COMMUTE.mode === 'pedestrian' ? 'walk' : 'car', GLRA_COMMUTE.min, GLRA_COMMUTE.n.slice(0, 60)].join(','));
     if (currentCurrency && currentCurrency !== 'PHP') u.searchParams.set('currency', currentCurrency);
     if (glraView === 'map') u.searchParams.set('view', 'map');
     var next = u.pathname + u.search + u.hash;
@@ -1258,6 +1280,7 @@ function glraEmptyStateHtml(){
   if (has('bathsSelect')) chips.push(['baths', 'Any bathrooms']);
   if (currentCategory && currentCategory !== 'all') chips.push(['cat', 'All categories']);
   if (GLRA_AREA) chips.push(['area', 'Remove the drawn area']);
+  if (GLRA_COMMUTE) chips.push(['commute', 'Any commute']);
   var chipHtml = chips.map(function(c){
     return '<button type="button" class="glra-chip" data-relax="' + c[0] + '">' + c[1] + ' <i class="fas fa-times" aria-hidden="true"></i></button>';
   }).join('');
@@ -1279,6 +1302,7 @@ function glraRelax(what){
   else if (what === 'beds') clear('bedroomsSelect');
   else if (what === 'baths') clear('bathsSelect');
   else if (what === 'area') { glraSetArea(null, true); }
+  else if (what === 'commute') { glraSetCommute(null, true); }
   if (what === 'cat') { glraSetCategory('all'); return; }
   applyFilters(currentCategory, cachedProperties);
 }
@@ -1487,6 +1511,7 @@ function glraMapInit(){
   glraMapControls(m);
   glraDrawWire();
   glraAreaShape();
+  glraCommuteShape();
   glraPsqmLegend();
 }
 /* Leaflet recreates a marker's element whenever clustering takes it off and
@@ -1823,12 +1848,14 @@ function glraMapControls(m){
         '<button type="button" class="glra-mapctl-btn" id="mapDrawBtn" aria-pressed="false" title="Draw a circle to see only the homes inside it"><i class="fas fa-draw-polygon" aria-hidden="true"></i><span>Draw area</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapClearAreaBtn" hidden title="Remove the circle"><i class="fas fa-times" aria-hidden="true"></i><span>Clear area</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapAreaAlertBtn" hidden title="Email me when a new home appears inside this circle"><i class="fas fa-bell" aria-hidden="true"></i><span>Alert me here</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapCommuteBtn" aria-expanded="false" aria-controls="mapCommutePanel" title="Only homes within a drive or walk of your work or school"><i class="fas fa-car-side" aria-hidden="true"></i><span>Commute</span></button>' +
+        '<div class="glra-layers glra-commute" id="mapCommutePanel" hidden></div>' +
         '<button type="button" class="glra-mapctl-btn" id="mapPsqmBtn" aria-pressed="false" title="Colour pins by price per square metre"><i class="fas fa-palette" aria-hidden="true"></i><span>Price / sqm</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapLayersBtn" aria-expanded="false" aria-controls="mapLayersPanel" title="Trains, Arthaland, flood and fault maps"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Layers</span></button>' +
         '<div class="glra-layers" id="mapLayersPanel" hidden><div class="glra-layers-t">Show on the map</div>' +
         '<button type="button" class="glra-mapctl-btn" id="mapArthaBtn" aria-pressed="true"><i class="fas fa-building" aria-hidden="true"></i><span>Arthaland</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapRailBtn" aria-pressed="false"><i class="fas fa-train-subway" aria-hidden="true"></i><span>Trains</span></button>' +
-        '<button type="button" class="glra-mapctl-btn" id="mapFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i><span>Flood hazard</span></button>' +
+        '<button type="button" class="glra-mapctl-btn" id="mapFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i><span>Flood &amp; hazards</span></button>' +
         '<button type="button" class="glra-mapctl-btn" id="mapFaultBtn" aria-pressed="false"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span>Fault lines</span></button>' +
         '</div>';
       L.DomEvent.disableClickPropagation(d);
@@ -1846,6 +1873,7 @@ function glraMapControls(m){
     glraMapRender(false);
   });
   document.getElementById('mapAreaAlertBtn').addEventListener('click', function(){ if (window.openSavedSearchModal) openSavedSearchModal(this); });
+  glraCommuteWire();
   var lb = document.getElementById('mapLayersBtn'), lp = document.getElementById('mapLayersPanel');
   lb.addEventListener('click', function(){
     var open = lp.hidden;
@@ -1995,6 +2023,146 @@ function glraPlaceMarker(){
     title: GLRA_NEAR.key === 'me' ? 'You are here' : GLRA_NEAR.n, keyboard: false, zIndexOffset: 1200, interactive: true
   }).addTo(m);
   GLRA_MAP.placeMk.bindTooltip(GLRA_NEAR.key === 'me' ? 'You are here' : GLRA_NEAR.n, { direction: 'top', offset: [0, -14] });
+}
+
+/* ======================= COMMUTE FINDER =======================
+   Real travel time, not straight-line distance: the area reachable from a
+   workplace or school in 15, 30 or 45 minutes by car or on foot, from the
+   same free routing service the listing pages use (/api/isochrone, OSM data,
+   no live traffic). Only homes inside it stay in the results. */
+var GLRA_COMMUTE = null;   // { n, lat, lng, mode, min, poly }
+var GLRA_COMMUTE_UI = { mode: 'auto', min: 30, seq: 0 };
+function glraPip(lat, lng, geom){
+  if (!geom) return false;
+  var polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+  for (var i = 0; i < polys.length; i++) {
+    var inside = false;
+    for (var r = 0; r < polys[i].length; r++) {
+      var ring = polys[i][r];
+      for (var a = 0, b = ring.length - 1; a < ring.length; b = a++) {
+        var xa = ring[a][0], ya = ring[a][1], xb = ring[b][0], yb = ring[b][1];
+        if ((ya > lat) !== (yb > lat) && lng < (xb - xa) * (lat - ya) / (yb - ya) + xa) inside = !inside;
+      }
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+function glraInCommute(p){
+  if (!GLRA_COMMUTE) return true;
+  if (!GLRA_COMMUTE.poly) return true;   /* still loading: keep everything */
+  var g = glraGeo(p);
+  return !!g && glraPip(g[0], g[1], GLRA_COMMUTE.poly);
+}
+function glraCommuteLabel(c){
+  return 'Within ' + c.min + ' min ' + (c.mode === 'pedestrian' ? 'walk' : 'drive') + ' of ' + c.n;
+}
+function glraSetCommute(c, quiet){
+  var my = ++GLRA_COMMUTE_UI.seq;
+  GLRA_COMMUTE = c ? { n: String(c.n || 'your place').slice(0, 60), lat: Number(c.lat), lng: Number(c.lng), mode: c.mode === 'pedestrian' ? 'pedestrian' : 'auto', min: [15, 30, 45].indexOf(Number(c.min)) >= 0 ? Number(c.min) : 30, poly: null } : null;
+  var chip = document.getElementById('commuteChip');
+  function paintChip(txt){ if (chip) { chip.hidden = !GLRA_COMMUTE; var sp = chip.querySelector('span'); if (sp) sp.textContent = txt || ''; } }
+  paintChip(GLRA_COMMUTE ? glraCommuteLabel(GLRA_COMMUTE) + ' (loading)' : '');
+  glraCommuteShape();
+  glraCommutePanel();
+  if (!GLRA_COMMUTE) { if (!quiet) glraRefilter(); return; }
+  var c2 = GLRA_COMMUTE;
+  glraCommuteStatus('Working out the travel times...');
+  fetch('/api/isochrone?from=place&lat=' + c2.lat.toFixed(3) + '&lng=' + c2.lng.toFixed(3) + '&mode=' + c2.mode, { credentials: 'same-origin' })
+    .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d && d.error || 'HTTP ' + r.status); return d; }); })
+    .then(function(gj){
+      if (my !== GLRA_COMMUTE_UI.seq || GLRA_COMMUTE !== c2) return;
+      var f = (gj.features || []).filter(function(x){ return x.properties && x.properties.contour === c2.min; })[0];
+      if (!f) throw new Error('No travel-time area came back.');
+      c2.poly = f.geometry;
+      paintChip(glraCommuteLabel(c2));
+      glraCommuteStatus('');
+      glraCommuteShape(true);
+      glraRefilter();
+    })
+    .catch(function(e){
+      if (my !== GLRA_COMMUTE_UI.seq) return;
+      GLRA_COMMUTE = null;
+      paintChip('');
+      glraCommuteShape();
+      glraCommuteStatus(e && e.message && /Too many/.test(e.message) ? e.message : 'The travel times could not load just now. Try again in a minute.');
+      glraRefilter();
+    });
+  if (!quiet) glraRefilter();
+}
+function glraCommuteStatus(t){
+  var el = document.getElementById('commuteStatus');
+  if (el) { el.textContent = t || ''; el.hidden = !t; }
+}
+function glraCommuteShape(fit){
+  var m = GLRA_MAP.map;
+  if (!m) return;
+  if (GLRA_MAP.commuteLayer) { GLRA_MAP.commuteLayer.remove(); GLRA_MAP.commuteLayer = null; }
+  if (!GLRA_COMMUTE) return;
+  var g = L.featureGroup();
+  if (GLRA_COMMUTE.poly) g.addLayer(L.geoJSON({ type: 'Feature', geometry: GLRA_COMMUTE.poly }, { interactive: false, style: { color: '#1f5fbf', weight: 2.5, opacity: 0.9, fillColor: '#1f5fbf', fillOpacity: 0.12 } }));
+  g.addLayer(L.marker([GLRA_COMMUTE.lat, GLRA_COMMUTE.lng], {
+    icon: L.divIcon({ className: 'glra-place-wrap', html: '<span class="glra-place"><i class="fas fa-briefcase" aria-hidden="true"></i></span>', iconSize: [32, 32], iconAnchor: [16, 16] }),
+    title: GLRA_COMMUTE.n, keyboard: false, zIndexOffset: 1200
+  }).bindTooltip(glraEsc(GLRA_COMMUTE.n), { direction: 'top', offset: [0, -14] }));
+  GLRA_MAP.commuteLayer = g.addTo(m);
+  if (fit && GLRA_COMMUTE.poly && glraView === 'map') m.fitBounds(g.getBounds(), { padding: [30, 30], maxZoom: 15, animate: !GLRA_REDUCED() });
+}
+function glraCommutePanel(){
+  var box = document.getElementById('mapCommutePanel');
+  if (!box) return;
+  var ui = GLRA_COMMUTE_UI;
+  if (GLRA_COMMUTE) { ui.mode = GLRA_COMMUTE.mode; ui.min = GLRA_COMMUTE.min; }
+  box.innerHTML = '<div class="glra-layers-t">Homes within a commute of</div>'
+    + '<form class="glra-cm-search" role="search"><label class="glra-sr" for="cmQ">Workplace, school or address</label>'
+    + '<input id="cmQ" type="search" placeholder="Office, school or address" autocomplete="off" maxlength="100"><button type="submit" class="glra-mapctl-btn" aria-label="Search"><i class="fas fa-search" aria-hidden="true"></i></button></form>'
+    + '<div class="glra-cm-results" id="cmResults"></div>'
+    + '<div class="glra-cm-picks">' + Object.keys(GLRA_PLACES).map(function(k){ return '<button type="button" data-cm-place="' + k + '">' + glraEsc(GLRA_PLACES[k].n) + '</button>'; }).join('') + '</div>'
+    + '<div class="glra-cm-seg" role="group" aria-label="Travel by">' + [['auto', 'Car'], ['pedestrian', 'Walk']].map(function(x){ return '<button type="button" data-cm-mode="' + x[0] + '" aria-pressed="' + (ui.mode === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>'
+    + '<div class="glra-cm-seg" role="group" aria-label="Travel time">' + [15, 30, 45].map(function(n){ return '<button type="button" data-cm-min="' + n + '" aria-pressed="' + (ui.min === n) + '">' + n + ' min</button>'; }).join('') + '</div>'
+    + '<p class="glra-cm-status" id="commuteStatus" role="status" aria-live="polite" hidden></p>'
+    + (GLRA_COMMUTE ? '<p class="glra-cm-now">' + glraEsc(glraCommuteLabel(GLRA_COMMUTE)) + '</p><button type="button" class="glra-cm-clear" data-cm-clear="1">Show every commute</button>' : '')
+    + '<p class="glra-cm-note">Drive times assume light traffic; at rush hour the same trip can take far longer. Routing: Valhalla on OpenStreetMap data.</p>';
+}
+function glraCommuteWire(){
+  var btn = document.getElementById('mapCommuteBtn'), box = document.getElementById('mapCommutePanel');
+  if (!btn || !box) return;
+  glraCommutePanel();
+  btn.addEventListener('click', function(){
+    var open = box.hidden;
+    box.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) { var q = document.getElementById('cmQ'); if (q) q.focus(); }
+  });
+  function pick(pl){
+    glraSetCommute({ n: pl.n, lat: pl.lat, lng: pl.lng, mode: GLRA_COMMUTE_UI.mode, min: GLRA_COMMUTE_UI.min });
+  }
+  box.addEventListener('click', function(e){
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (t.hasAttribute('data-cm-place')) { var pl = GLRA_PLACES[t.getAttribute('data-cm-place')]; if (pl) pick(pl); }
+    else if (t.hasAttribute('data-cm-hit')) { var hit = (GLRA_COMMUTE_UI.hits || [])[Number(t.getAttribute('data-cm-hit'))]; if (hit) pick({ n: hit.name || hit.label, lat: hit.lat, lng: hit.lng }); }
+    else if (t.hasAttribute('data-cm-mode')) { GLRA_COMMUTE_UI.mode = t.getAttribute('data-cm-mode'); if (GLRA_COMMUTE) pick(GLRA_COMMUTE); else glraCommutePanel(); }
+    else if (t.hasAttribute('data-cm-min')) { GLRA_COMMUTE_UI.min = Number(t.getAttribute('data-cm-min')); if (GLRA_COMMUTE) pick(GLRA_COMMUTE); else glraCommutePanel(); }
+    else if (t.hasAttribute('data-cm-clear')) glraSetCommute(null);
+  });
+  box.addEventListener('submit', function(e){
+    e.preventDefault();
+    var q = document.getElementById('cmQ'), out = document.getElementById('cmResults');
+    var text = q ? q.value.trim() : '';
+    if (text.length < 3) { if (out) out.textContent = 'Type at least three letters.'; return; }
+    if (out) out.textContent = 'Searching...';
+    fetch('/api/place-search?q=' + encodeURIComponent(text), { credentials: 'same-origin' })
+      .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d && d.error || 'HTTP ' + r.status); return d; }); })
+      .then(function(d){
+        GLRA_COMMUTE_UI.hits = d.results || [];
+        if (!out) return;
+        out.innerHTML = GLRA_COMMUTE_UI.hits.length
+          ? GLRA_COMMUTE_UI.hits.map(function(h, i){ return '<button type="button" data-cm-hit="' + i + '"><b>' + glraEsc(h.name || h.label.split(',')[0]) + '</b><small>' + glraEsc(h.label) + '</small></button>'; }).join('')
+          : 'Nothing found. Try the building or street name and the city.';
+      })
+      .catch(function(err){ if (out) out.textContent = err && /Too many/.test(err.message) ? err.message : 'The search did not answer. Try again in a minute.'; });
+  });
 }
 
 /* ======================= PRICE HISTOGRAM =======================
@@ -2317,7 +2485,7 @@ function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters
    button reads "Show 23 homes"). It used to reload the page with the same
    filters in the URL; the URL now keeps itself up to date instead. */
 function performSearch(){applyFilters(currentCategory,cachedProperties);const sg=document.getElementById('searchSuggestions');if(sg)sg.style.display='none';const t=document.getElementById('resultsTop');if(t)t.scrollIntoView({behavior:GLRA_REDUCED()?'auto':'smooth',block:'start'});}
-function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput','propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});glraSetArea(null,true);glraSetCategory('all');}
+function resetAllFilters(){['locationInput','minPriceInput','maxPriceInput','propertyTypeSelect','bedroomsSelect','bathsSelect'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});glraSetArea(null,true);glraSetCommute(null,true);glraSetCategory('all');}
 /* ---- PRICE ALERTS ---- */
 
 /* Look a listing up from the already-loaded cache. The modals used to take
@@ -2743,6 +2911,7 @@ function initFromUrl(properties){
   if(mx>0)document.getElementById('maxPriceInput').value=mx.toLocaleString('en-US');
   const nr=g('near');if(nr&&GLRA_PLACES[nr])glraSetNear(nr,true);
   const ar=g('area').split(',').map(Number);if(ar.length===3&&ar.every(isFinite)&&ar[2]>0&&Math.abs(ar[0])<=90&&Math.abs(ar[1])<=180)glraSetArea({lat:ar[0],lng:ar[1],r:Math.min(ar[2],60000)},true);
+  const cm=g('commute').split(',');if(cm.length>=4){const la=Number(cm[0]),ln=Number(cm[1]),mi=Number(cm[3]);if(isFinite(la)&&isFinite(ln)&&[15,30,45].includes(mi))glraSetCommute({lat:la,lng:ln,mode:cm[2]==='walk'?'pedestrian':'auto',min:mi,n:cm.slice(4).join(',')||'your place'},true);}
   const so=g('sort');if(['newest','price-asc','price-desc','sqm-desc'].includes(so)||(so==='near'&&GLRA_NEAR)){currentSort=so;document.getElementById('sortSelect').value=so;}
   /* A shared link can carry a currency; it applies to this visit without overwriting the visitor's own saved choice. */
   const cur=g('currency').toUpperCase();if(cur&&CURRENCY_RATES[cur]){currentCurrency=cur;const cs=document.getElementById('currencySelect');if(cs)cs.value=cur;updateCurrencyNote();}
@@ -2755,7 +2924,7 @@ function initFromUrl(properties){
 }
 /* Every filter except the price. The price histogram draws its bars from this
    list, so they show what the price handles would choose between. */
-function glraFilterBase(cat,properties){const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraInArea(p))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);return {list:f,sq:sq};}
+function glraFilterBase(cat,properties){const loc=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const sq=(loc&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...properties].filter(p=>{if(loc){if(sq){if(!glraSmartMatch(p,sq,properties))return false}else if(!p.title.toLowerCase().includes(loc)&&!p.location.toLowerCase().includes(loc))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraInArea(p))return false;if(!glraInCommute(p))return false;return true;});if(cat==='FOR SALE')f=f.filter(p=>isForSale(p));else if(cat==='FOR LEASE')f=f.filter(p=>isForLease(p));else if(cat==='featured')f=f.filter(p=>p.featured);return {list:f,sq:sq};}
 function applyFilters(cat,properties){if(!properties)return;const mn=getRaw('minPriceInput');const mx=getRaw('maxPriceInput');const b=glraFilterBase(cat,properties);let f=b.list.filter(p=>glraPriceFits(p,cat,mn,mx));f=sortProperties(f);renderProperties(f);allProperties=f;if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),b.sq);glraAfterFilter(f);glraHistSync(b.list);}
 function renderProperties(properties){const c=document.getElementById('property-list');if(!c)return;c.removeAttribute('aria-busy');c.innerHTML='';if(!properties.length){c.innerHTML=glraEmptyStateHtml();return;}const frag=document.createDocumentFragment();properties.forEach(p=>frag.appendChild(createCard(p)));c.appendChild(frag);setTimeout(initLazyLoading,80);}
 /* A listing's size, taken from whichever of the two areas it actually has.

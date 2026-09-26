@@ -1337,6 +1337,120 @@ function lifeHtml(nearby, esc) {
       </div>`;
 }
 
+// ── Natural hazards (listing page) ─────────────────────────────────────────
+// Levels from server/hazard.js, put into words. UP NOAH's flood depths: low
+// is up to 0.5 m, medium 0.5 to 1.5 m, high over 1.5 m. Storm surge levels
+// are PAGASA's advisories by storm tide height.
+const HZ_WORD = ['None mapped', 'Low', 'Medium', 'High'];
+const SURGE_TIDE = ['', '2 to 3 m', '3 to 4 m', '4 to 5 m', 'over 5 m'];
+function hazardHtml(p, lat, lng, esc) {
+  const h = p.hazard && p.hazard.v ? p.hazard : null;
+  const street = Number(p.geo && p.geo.rank) >= 26;
+  const condo = /condo|apartment|studio|office/i.test(String(p.propertyType || ''));
+  const report = `https://ulap-reports.georisk.gov.ph/api/reports/hazard-assessments/${lng}/${lat}`;
+  const links = `
+      <div class="pg-hz-links">
+        <a class="pg-map-btn" href="${esc(report)}" target="_blank" rel="noopener"><i class="far fa-file-pdf" aria-hidden="true"></i> Official hazard report (PHIVOLCS)</a>
+        <a class="pg-map-btn" href="https://hazardhunter.georisk.gov.ph/" target="_blank" rel="noopener"><i class="fas fa-magnifying-glass-location" aria-hidden="true"></i> Check the exact address</a>
+      </div>`;
+  if (!h) {
+    return `
+    <section class="pg-hz" aria-labelledby="pgHzH">
+      <h2 class="pg-section-label" id="pgHzH">Natural hazards</h2>
+      <p class="pg-hz-lead">The flood, storm surge and landslide check for this listing is still running. The government's own report for this spot is ready now.</p>
+      ${links}
+    </section>`;
+  }
+  const chip = (lv, txt) => `<span class="pg-hz-chip pg-hz-${lv}">${esc(txt)}</span>`;
+  const rows = [];
+  // Flood: the deepest level mapped in any of the three rain scenarios (the
+  // maps are modelled separately and do not always nest), and how often.
+  const fMax = Math.max(h.f5 || 0, h.f25 || 0, h.f100 || 0);
+  let floodNote;
+  if (!fMax) floodNote = 'Outside the flood areas mapped for even a once-in-100-years rain.';
+  else if (h.f5) floodNote = 'Floods even in the heavy rain that comes about once every 5 years.';
+  else if (h.f25) floodNote = 'Dry in a 5-year rain; floods in a once-in-25-years rain.';
+  else floodNote = 'Dry in 5- and 25-year rains; floods only in a once-in-100-years rain.';
+  const depth = ['', 'up to 0.5 m', '0.5 to 1.5 m', 'over 1.5 m'][fMax] || '';
+  rows.push(['fa-water', 'Flooding', chip(fMax, fMax ? HZ_WORD[fMax] + ', ' + depth : 'None mapped'), floodNote]);
+  // Storm surge: the lower the advisory level that reaches it, the higher the risk.
+  const ssLv = h.ss ? Math.max(1, 4 - h.ss) : 0;
+  rows.push(['fa-house-flood-water', 'Storm surge', chip(ssLv, h.ss ? 'Level ' + h.ss + ' surge' : 'None mapped'),
+    h.ss ? `Reached when PAGASA warns of a Level ${h.ss} storm surge (a storm tide of ${SURGE_TIDE[h.ss]})${h.ss === 1 ? ', the lowest warning level' : ''}.` : 'Not reached by any of the four storm surge warning levels.']);
+  rows.push(['fa-hill-rockslide', 'Landslide', chip(h.ls, HZ_WORD[h.ls] || 'None mapped'),
+    h.ls ? `In an area mapped with ${HZ_WORD[h.ls].toLowerCase()} landslide susceptibility.` : 'Not in a mapped landslide area.']);
+  if (h.df) rows.push(['fa-mountain', 'Debris flow', chip(h.df, HZ_WORD[h.df]), 'In a mapped path of mud and debris flows from nearby slopes.']);
+  const clear = !fMax && !h.ss && !h.ls && !h.df;
+  const worst = Math.max(fMax, ssLv, h.ls || 0, h.df || 0);
+  const lead = clear ? 'No flood, storm surge or landslide hazard is mapped at this spot.'
+    : worst >= 3 ? 'This spot is in a high-hazard area on at least one of the government hazard maps. Read the details before you decide.'
+    : 'This spot is on at least one of the government hazard maps. Read the details before you decide.';
+  return `
+    <section class="pg-hz" aria-labelledby="pgHzH">
+      <h2 class="pg-section-label" id="pgHzH">Natural hazards</h2>
+      <p class="pg-hz-lead">${esc(lead)}</p>
+      <ul class="pg-hz-list">${rows.map(([ic, lbl, c, note]) => `
+        <li><i class="fas ${ic}" aria-hidden="true"></i><span><b>${esc(lbl)}</b><small>${esc(note)}</small></span>${c}</li>`).join('')}
+      </ul>
+      ${links}
+      <p class="pg-near-note">${street ? 'Checked at the map pin, which is placed from the street address.' : 'Checked at the map pin, which marks the neighbourhood, not the exact building: use the buttons above for the exact address.'}${condo && fMax ? ' Upper floors stay dry; the street, lobby and parking are what flood.' : ''} Flood, storm surge and landslide maps: <a href="https://noah.up.edu.ph" target="_blank" rel="noopener">UP NOAH</a> (ODbL), via BetterGov.ph. Maps are a guide, not a guarantee.</p>
+    </section>`;
+}
+
+// ── How big is it? (listing page) ──────────────────────────────────────────
+// The floor area (or the lot) drawn to scale next to something everyone has
+// stood beside: a parking slot (2.5 x 5 m) for units, a basketball court
+// (28 x 15 m) for houses and lots.
+function sizeHtml(p, esc) {
+  const typeTxt = String(p.propertyType || '').trim();
+  const noLot = /^(condominium|apartment|office|commercial space|studio)/i.test(typeTxt);
+  const floor = Number(p.sqm) || 0, lot = noLot ? 0 : (Number(p.landArea) || 0);
+  const isLot = /lot/i.test(typeTxt) && !/house/i.test(typeTxt);
+  const area = isLot && lot ? lot : (floor || (noLot ? Number(p.landArea) || 0 : lot));
+  if (!(area >= 8 && area <= 2000000)) return '';
+  const what = isLot || (!floor && lot) ? 'lot' : 'floor area';
+  const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: n < 10 ? 1 : 0 });
+  const big = area > 250;
+  const ref = big ? { w: 28, h: 15, a: 420, name: 'basketball court', plural: 'basketball courts' } : { w: 2.5, h: 5, a: 12.5, name: 'parking slot', plural: 'parking slots' };
+  const n = area / ref.a;
+  const side = Math.sqrt(area);
+  // Everything in metres, scaled to fit a 300 x 170 box.
+  const refsShown = big ? 1 : Math.min(8, Math.max(1, Math.round(n)));
+  const refRowW = big ? ref.w : refsShown * ref.w + (refsShown - 1) * 0.5;
+  const worldW = side + 3 + refRowW, worldH = Math.max(side, ref.h);
+  const k = Math.min(300 / worldW, 170 / worldH);
+  const sq = side * k, gap = 3 * k;
+  const y0 = 10 + (worldH * k - sq);
+  let refs = '';
+  for (let i = 0; i < refsShown; i++) {
+    const x = 10 + sq + gap + i * (ref.w + 0.5) * k, w = ref.w * k, hh = ref.h * k, y = 10 + worldH * k - hh;
+    refs += big
+      ? `<rect class="pg-sz-ref" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}"/><line class="pg-sz-refl" x1="${(x + w / 2).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + w / 2).toFixed(1)}" y2="${(y + hh).toFixed(1)}"/><circle class="pg-sz-refl" cx="${(x + w / 2).toFixed(1)}" cy="${(y + hh / 2).toFixed(1)}" r="${(1.8 * k).toFixed(1)}"/>`
+      : `<rect class="pg-sz-ref" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}"/>`;
+  }
+  const W = Math.ceil(20 + worldW * k), H = Math.ceil(20 + worldH * k);
+  const say = n >= 1.5 ? `about ${fmt(n)} ${ref.plural}` : n >= 0.75 ? `about one ${ref.name}` : `about ${Math.round(n * 100)}% of a ${ref.name}`;
+  const room = `${side.toFixed(1)} m by ${side.toFixed(1)} m`;
+  return `
+  <section class="pg-sz" aria-labelledby="pgSzH">
+    <h2 class="pg-section-label" id="pgSzH">How big is it?</h2>
+    <div class="pg-sz-body">
+      <svg class="pg-sz-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${fmt(area)} square metres drawn to scale beside ${big ? 'a basketball court' : 'parking slots'}`)}">
+        <rect class="pg-sz-unit" x="10" y="${y0.toFixed(1)}" width="${sq.toFixed(1)}" height="${sq.toFixed(1)}"/>
+        ${refs}
+      </svg>
+      <div class="pg-sz-txt">
+        <p><b>${esc(fmt(area))} sqm</b> of ${esc(what)} is ${esc(say)}, or a square ${esc(room)}.</p>
+        <ul>
+          <li><i class="pg-sz-key pg-sz-key-u" aria-hidden="true"></i>This ${what === 'lot' ? 'lot' : 'home'}, drawn as a square</li>
+          <li><i class="pg-sz-key pg-sz-key-r" aria-hidden="true"></i>${big ? 'A basketball court, 28 x 15 m' : 'Parking slots, 2.5 x 5 m each'}</li>
+        </ul>
+        <p class="pg-near-note">Drawn to scale. The real shape and layout will differ; ask for the floor plan.</p>
+      </div>
+    </div>
+  </section>`;
+}
+
 // ── How the asking price compares (listing page) ──────────────────────────
 // Price per square metre against the other live listings of the same kind,
 // in the same city, on the same side (sale or lease). Floor area, or lot area
@@ -1710,8 +1824,9 @@ function buildPropertyPageHtml(p, related, comps) {
         <button type="button" class="pg-map-btn" id="pgRailBtn" aria-pressed="false"><i class="fas fa-train-subway" aria-hidden="true"></i> Trains</button>
         <button type="button" class="pg-map-btn" id="pgSunBtn" aria-pressed="false"><i class="fas fa-sun" aria-hidden="true"></i> Sun path</button>
         <button type="button" class="pg-map-btn" id="pg3dBtn"><i class="fas fa-cube" aria-hidden="true"></i> 3D view</button>
-        <button type="button" class="pg-map-btn" id="pgFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i> Flood hazard</button>
+        <button type="button" class="pg-map-btn" id="pgFloodBtn" aria-pressed="false"><i class="fas fa-water" aria-hidden="true"></i> Flood &amp; hazards</button>
         <button type="button" class="pg-map-btn" id="pgFaultBtn" aria-pressed="false"><i class="fas fa-house-crack" aria-hidden="true"></i> Fault lines</button>
+        <button type="button" class="pg-map-btn" id="pgQuakeBtn" aria-pressed="false"><i class="fas fa-wave-square" aria-hidden="true"></i> Earthquakes</button>
         <a class="pg-map-btn" href="https://www.google.com/maps/@?api=1&amp;map_action=pano&amp;viewpoint=${nbLat},${nbLng}" target="_blank" rel="noopener"><i class="fas fa-street-view" aria-hidden="true"></i> Street View</a>
       </div>
       <div class="pg-near-map" id="pgNearMap" role="region" aria-label="Map of the neighbourhood" data-lat="${nbLat}" data-lng="${nbLng}" data-facing="${esc(facing)}" data-title="${esc(glraDisplayTitle ? glraDisplayTitle(p.title) : (p.title || ''))}" data-points="${esc(JSON.stringify(nbPoints))}"></div>` : '';
@@ -1732,6 +1847,8 @@ function buildPropertyPageHtml(p, related, comps) {
       ${lifeHtml(p.nearby, esc)}
     </section>` : '';
   const cmpHtml = priceStripHtml(comps, esc);
+  const hzHtml = geoOk ? hazardHtml(p, nbLat, nbLng, esc) : '';
+  const szHtml = sizeHtml(p, esc);
 
   const mapsQ = String(p.mapLocation || loc || '').replace(/\s+/g, ' ').trim();
   const locHtml = loc
@@ -1930,6 +2047,32 @@ body.dark-mode .pg-life-list li{border-top-color:var(--line)}
 .pg-life-bar{display:block;width:56px;height:6px;background:var(--paper2)}
 body.dark-mode .pg-life-bar{background:var(--line)}
 .pg-life-bar span{display:block;height:100%;background:#ff3d00}
+.pg-hz{margin-bottom:36px}
+.pg-hz-lead{font-size:16px;font-weight:700;line-height:1.4;margin-bottom:10px;max-width:70ch}
+.pg-hz-list{list-style:none;margin:0 0 12px;border:2px solid var(--line);background:var(--paper);padding:4px 16px}
+.pg-hz-list li{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--paper2)}
+body.dark-mode .pg-hz-list li{border-top-color:var(--line)}
+.pg-hz-list li:first-child{border-top:0}
+.pg-hz-list i{color:var(--hot-text);text-align:center}
+.pg-hz-list span b{display:block;font-size:14px}
+.pg-hz-list small{display:block;font-size:12.5px;color:var(--gray);line-height:1.4}
+.pg-hz-chip{display:inline-block;padding:6px 9px;font:700 10.5px/1.2 'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:#fff;white-space:nowrap;text-align:center}
+.pg-hz-0{background:#0f7a55}.pg-hz-1{background:#8a5a00}.pg-hz-2{background:#b8420b}.pg-hz-3{background:#b0122c}
+@media(max-width:560px){.pg-hz-list li{grid-template-columns:18px 1fr}.pg-hz-list .pg-hz-chip{grid-column:2;justify-self:start;white-space:normal}}
+.pg-hz-links{display:flex;flex-wrap:wrap;gap:6px}
+.pg-sz{margin:4px 0 26px}
+.pg-sz-body{display:grid;grid-template-columns:minmax(200px,340px) 1fr;gap:12px 24px;align-items:center;border:2px solid var(--line);background:var(--paper);padding:16px 18px}
+@media(max-width:700px){.pg-sz-body{grid-template-columns:1fr}}
+.pg-sz-svg{width:100%;height:auto;max-height:220px;display:block}
+.pg-sz-unit{fill:rgba(255,61,0,.22);stroke:#ff3d00;stroke-width:2.5}
+.pg-sz-ref{fill:rgba(31,95,191,.12);stroke:#1f5fbf;stroke-width:1.5}
+.pg-sz-refl{fill:none;stroke:#1f5fbf;stroke-width:1.2}
+.pg-sz-txt p{font-size:15px;line-height:1.5}
+.pg-sz-txt ul{list-style:none;margin:8px 0 0}
+.pg-sz-txt li{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}
+.pg-sz-key{display:inline-block;width:14px;height:14px;flex:0 0 14px}
+.pg-sz-key-u{background:rgba(255,61,0,.22);border:2px solid #ff3d00}
+.pg-sz-key-r{background:rgba(31,95,191,.12);border:2px solid #1f5fbf}
 .pg-cmp{margin-bottom:36px}
 .pg-cmp-lead{font-size:15px;line-height:1.5;margin-bottom:26px;max-width:78ch}
 .pg-cmp-strip{position:relative;height:46px;margin:0 6px}
@@ -2034,10 +2177,12 @@ h2.pg-section-label{font-weight:700}
   </div>
   <div class="pg-section-label">Details</div>
   ${specsHtml}
+  ${szHtml}
   <a class="pg-brochure" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download the brochure (PDF)</a>
   ${descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : ''}
   ${cmpHtml}
   ${nearbyHtml}
+  ${hzHtml}
   <div class="pg-form" id="inquire">
     <h2>Inquire about this property</h2>
     <form id="pgForm" onsubmit="return pgSubmit(event)">
@@ -2135,7 +2280,7 @@ async function pgSubmit(e){
 <script src="/js/main.js?v=116"></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
-${geoOk ? '<script src="/js/glra-maps.js?v=116" defer></script>' : ''}
+${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
 </body>
 </html>`;
 }
@@ -2329,7 +2474,7 @@ td:last-child{font-weight:700;text-align:right}
 app.get('/property/:id/brochure', async (req, res) => {
   try {
     const p = /^[a-f0-9]{24}$/i.test(req.params.id)
-      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby').lean()
+      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby hazard').lean()
       : null;
     if (!p || p.status !== 'available') return res.redirect(302, '/property/' + encodeURIComponent(req.params.id));
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -2346,7 +2491,7 @@ app.get('/property/:id', async (req, res) => {
     // contact details in `notes` have no business being loaded into a page
     // renderer, even one that does not print them.
     const p = /^[a-f0-9]{24}$/i.test(req.params.id)
-      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby').lean()
+      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby hazard').lean()
       : null;
     // A 302 to the listings page looked to Google like a disguised "not
     // found" it had to keep re-checking. Gone (410) for a listing that existed
@@ -2664,6 +2809,7 @@ app.get('/api/health', async (req, res) => {
 // and re-exports invalidateChatListingsCache so other handlers can call it
 // after property writes.
 const { registerChatbot, invalidateChatListingsCache } = require('./server/chatbot');
+const { hazardAt, HAZARD_VERSION } = require('./server/hazard');
 registerChatbot(app, { handleValidation });
 
 // ============ AGENT WORKSPACE ============
@@ -3702,6 +3848,17 @@ function nearbyNeeded(p, geo, now) {
 
 let geoRunning = false, geoRerun = false, geoTimer = null;
 const _nearbyBackoff = new Map(); // listing id -> { until, n } after an Overpass failure
+const _hazardBackoff = new Map(); // the same, for the hazard lookups
+
+// Flood, storm surge and landslide levels (server/hazard.js) are looked up
+// once per position, and again only when the position moves or the lookup
+// itself changes (HAZARD_VERSION).
+function hazardNeeded(p, geo) {
+  if (!geo || geo.status !== 'ok' || !(geo.rank >= NEARBY_MIN_RANK)) return false;
+  const h = p.hazard;
+  if (!h || h.v !== HAZARD_VERSION || !h.at) return true;
+  return !!(geo.at && new Date(h.at).getTime() < new Date(geo.at).getTime());
+}
 
 async function runGeoPass() {
   if (GEO_DISABLED) return null;
@@ -3710,10 +3867,10 @@ async function runGeoPass() {
   if (!geoLockAcquire()) { scheduleGeoPass(10 * 60 * 1000); return null; }
   geoRunning = true;
   const started = Date.now();
-  const stats = { listings: 0, looked: 0, ok: 0, none: 0, error: 0, nearby: 0, nearbyFailed: 0 };
-  let geoFails = 0, nearbyFails = 0;
+  const stats = { listings: 0, looked: 0, ok: 0, none: 0, error: 0, nearby: 0, nearbyFailed: 0, hazard: 0, hazardFailed: 0 };
+  let geoFails = 0, nearbyFails = 0, hazardFails = 0;
   try {
-    const rows = await Property.find({ status: 'available' }).select('_id mapLocation location geo nearby').lean();
+    const rows = await Property.find({ status: 'available' }).select('_id mapLocation location geo nearby hazard').lean();
     stats.listings = rows.length;
     // Two rounds: every position first (about a second each), so the map is
     // complete within minutes; then the slower nearby lists.
@@ -3738,10 +3895,11 @@ async function runGeoPass() {
           if (e.status === 403 || e.status === 429) geoFails = 3;
         }
         stats[next.status]++;
-        await Property.updateOne({ _id: p._id }, { $set: { geo: next }, $unset: { nearby: 1 } });
+        await Property.updateOne({ _id: p._id }, { $set: { geo: next }, $unset: { nearby: 1, hazard: 1 } });
         invalidatePublicListingsCache();
         geo = next;
         p.nearby = null;
+        p.hazard = null;
         geoLockTouch();
       }
       placed.push([p, geo]);
@@ -3769,14 +3927,36 @@ async function runGeoPass() {
         geoLockTouch();
       }
     }
-    if (geoFails >= 3 || nearbyFails >= 3) scheduleGeoPass(30 * 60 * 1000);
+    // Third round: natural hazards. Each listing is ten small reads from the
+    // hazard maps, a few seconds in all.
+    for (const [p, geo] of placed) {
+      if (hazardFails >= 3 || !hazardNeeded(p, geo)) continue;
+      const id = String(p._id), now = Date.now();
+      const bo = _hazardBackoff.get(id);
+      if (bo && bo.until > now) continue;
+      try {
+        const hz = await hazardAt(geo.lat, geo.lng);
+        await Property.updateOne({ _id: p._id }, { $set: { hazard: hz } });
+        _hazardBackoff.delete(id);
+        stats.hazard++;
+        hazardFails = 0;
+      } catch (e) {
+        hazardFails++;
+        stats.hazardFailed++;
+        const n = (bo ? bo.n : 0) + 1;
+        _hazardBackoff.set(id, { n, until: Date.now() + Math.min(GEO_DAILY_MS, 15 * 60 * 1000 * Math.pow(2, n - 1)) });
+        console.warn('Hazard lookup failed:', e.message);
+      }
+      geoLockTouch();
+    }
+    if (geoFails >= 3 || nearbyFails >= 3 || hazardFails >= 3) scheduleGeoPass(30 * 60 * 1000);
   } catch (e) {
     console.error('Geo pass error:', e.message);
   } finally {
     geoRunning = false;
     geoLockRelease();
-    if (stats.looked || stats.nearby || stats.nearbyFailed) {
-      console.log(`Geo pass: ${stats.listings} listings, ${stats.looked} looked up (${stats.ok} ok, ${stats.none} not found, ${stats.error} failed), ${stats.nearby} nearby lists (${stats.nearbyFailed} failed), ${Date.now() - started}ms`);
+    if (stats.looked || stats.nearby || stats.nearbyFailed || stats.hazard || stats.hazardFailed) {
+      console.log(`Geo pass: ${stats.listings} listings, ${stats.looked} looked up (${stats.ok} ok, ${stats.none} not found, ${stats.error} failed), ${stats.nearby} nearby lists (${stats.nearbyFailed} failed), ${stats.hazard} hazard checks (${stats.hazardFailed} failed), ${Date.now() - started}ms`);
     }
     if (geoRerun) { geoRerun = false; scheduleGeoPass(30 * 1000); }
   }
@@ -3815,6 +3995,7 @@ function publicGeo(p) {
     delete p.geo;
   }
   delete p.nearby;
+  delete p.hazard;
   return p;
 }
 
@@ -3855,14 +4036,40 @@ function isoAsk(lat, lng, mode) {
   _isoChain = run.catch(() => {});
   return run;
 }
-app.get('/api/isochrone', trackLimiter, async (req, res) => {
+// The commute finder on the browse page asks from a workplace or school the
+// visitor picks, not from a listing. Those points are rounded the same way
+// and cached the same way, but each visitor gets a small hourly budget so
+// the free routing server is never used as a general-purpose service.
+const commuteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many travel-time searches. Please try again in an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+function isoCommuteGate(req, res, next) {
+  if (req.query.from !== 'place') return next();
+  // Answers already cached cost the routing server nothing: only fresh
+  // questions count against the hourly budget.
+  const lat = Number(req.query.lat), lng = Number(req.query.lng);
+  const mode = req.query.mode === 'pedestrian' ? 'pedestrian' : 'auto';
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    const key = 'iso1:' + mode + ':' + lat.toFixed(3) + ',' + lng.toFixed(3);
+    const hit = _isoMem.get(key);
+    if (hit && Date.now() - hit.t <= ISO_TTL_MS) return next();
+  }
+  return commuteLimiter(req, res, next);
+}
+app.get('/api/isochrone', trackLimiter, isoCommuteGate, async (req, res) => {
   const lat = Number(req.query.lat), lng = Number(req.query.lng);
   const mode = req.query.mode === 'pedestrian' ? 'pedestrian' : 'auto';
   if (!(lat >= 4 && lat <= 22 && lng >= 116 && lng <= 127.5)) return res.status(400).json({ error: 'Bad position' });
   const pt = lat.toFixed(3) + ',' + lng.toFixed(3);
   try {
-    const allowed = await isoAllowedPoints();
-    if (!allowed.has(pt)) return res.status(404).json({ error: 'Travel times are only available for live listings.' });
+    if (req.query.from !== 'place') {
+      const allowed = await isoAllowedPoints();
+      if (!allowed.has(pt)) return res.status(404).json({ error: 'Travel times are only available for live listings.' });
+    }
     const key = 'iso1:' + mode + ':' + pt;
     let hit = _isoMem.get(key);
     if (!hit || Date.now() - hit.t > ISO_TTL_MS) {
@@ -3880,6 +4087,96 @@ app.get('/api/isochrone', trackLimiter, async (req, res) => {
     res.json(hit.v);
   } catch (e) {
     res.status(502).json({ error: 'The travel-time service did not answer. Please try again later.' });
+  }
+});
+
+// ── Place search for the commute finder (properties.html) ─────────────────
+// Nominatim, Philippines only, at most five answers, cached for 30 days and
+// sharing the location worker's one-question-a-second pace.
+const geocodeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 40,
+  message: { error: 'Too many place searches. Please try again in an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const _placeMem = new Map();
+app.get('/api/place-search', trackLimiter, async (req, res) => {
+  const q = String(req.query.q || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+  if (q.length < 3) return res.status(400).json({ error: 'Type at least three letters.' });
+  const key = 'ps1:' + q.toLowerCase();
+  try {
+    let hit = _placeMem.get(key);
+    if (!hit) {
+      const disk = geoCacheGet(key);
+      if (disk !== undefined) hit = disk;
+    }
+    if (!hit) {
+      // Only questions that reach Nominatim count against the budget.
+      const allowed = await new Promise(resolve => {
+        Promise.resolve(geocodeLimiter(req, res, () => resolve(true))).then(() => resolve(!res.headersSent), () => resolve(false));
+      });
+      if (!allowed || res.headersSent) return;
+      await geoThrottle('n', NOMINATIM_GAP_MS);
+      let r;
+      try {
+        r = await geoFetch(`${NOMINATIM_URL}?format=jsonv2&limit=5&countrycodes=ph&viewbox=120.85,14.85,121.25,14.30&q=${encodeURIComponent(q)}`,
+          { headers: { 'User-Agent': GEO_UA, 'Accept': 'application/json', 'Accept-Language': 'en' } }, 20000);
+      } finally { _geoLast.n = Date.now(); }
+      if (!r.ok) throw new Error('Nominatim HTTP ' + r.status);
+      const arr = await r.json();
+      hit = (Array.isArray(arr) ? arr : []).map(a => ({
+        name: String(a.name || '').slice(0, 80),
+        label: String(a.display_name || '').split(',').slice(0, 4).join(',').slice(0, 140),
+        lat: Number(Number(a.lat).toFixed(4)), lng: Number(Number(a.lon).toFixed(4))
+      })).filter(x => x.lat > 4 && x.lat < 22 && x.lng > 116 && x.lng < 127.5);
+      geoCachePut(key, hit);
+    }
+    if (_placeMem.size > 500) _placeMem.clear();
+    _placeMem.set(key, hit);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.json({ results: hit });
+  } catch (e) {
+    if (!res.headersSent) res.status(502).json({ error: 'The place search did not answer. Please try again later.' });
+  }
+});
+
+// ── Earthquake history for the listing page map ──────────────────────────
+// The US Geological Survey's catalogue: every magnitude 4.5 and stronger
+// within 100 km since 1976. Asked only for a live listing's public position,
+// kept for a week (a new strong quake nearby shows up within days).
+const QUAKE_TTL_MS = 7 * 864e5;
+const _quakeMem = new Map();
+let _quakeChain = Promise.resolve();
+app.get('/api/quakes', trackLimiter, async (req, res) => {
+  const lat = Number(req.query.lat), lng = Number(req.query.lng);
+  if (!(lat >= 4 && lat <= 22 && lng >= 116 && lng <= 127.5)) return res.status(400).json({ error: 'Bad position' });
+  const pt = lat.toFixed(3) + ',' + lng.toFixed(3);
+  try {
+    const allowed = await isoAllowedPoints();
+    if (!allowed.has(pt)) return res.status(404).json({ error: 'Only available for live listings.' });
+    let hit = _quakeMem.get(pt);
+    if (!hit || Date.now() - hit.t > QUAKE_TTL_MS) {
+      const run = _quakeChain.then(async () => {
+        const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=magnitude&limit=600'
+          + `&latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&maxradiuskm=100&minmagnitude=4.5&starttime=1976-01-01`;
+        const r = await geoFetch(url, { headers: { 'User-Agent': GEO_UA, 'Accept': 'application/json' } }, 30000);
+        if (!r.ok) throw new Error('USGS HTTP ' + r.status);
+        const d = await r.json();
+        return (d.features || []).map(f => {
+          const c = f.geometry && f.geometry.coordinates || [], pr = f.properties || {};
+          return [Number(Number(c[1]).toFixed(3)), Number(Number(c[0]).toFixed(3)), Number(pr.mag), Math.round(Number(c[2]) || 0), Number(pr.time) || 0];
+        }).filter(q => Number.isFinite(q[0]) && Number.isFinite(q[1]) && Number.isFinite(q[2]));
+      });
+      _quakeChain = run.catch(() => {});
+      hit = { t: Date.now(), v: await run };
+      if (_quakeMem.size > 300) _quakeMem.clear();
+      _quakeMem.set(pt, hit);
+    }
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.json({ quakes: hit.v });
+  } catch (e) {
+    res.status(502).json({ error: 'The earthquake catalogue did not answer. Please try again later.' });
   }
 });
 
@@ -4836,7 +5133,7 @@ function schemaProblem(err) {
 const ADMIN_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission'];
 // geo and nearby belong to the location worker. The edit form round-trips the
 // whole listing, so without this every save would write back a stale copy.
-const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt', 'geo', 'nearby', 'editedAt', 'reviewedAt'];
+const SYSTEM_PROPERTY_FIELDS = ['_id', '__v', 'views', 'createdAt', 'previousPrice', 'priceUpdatedAt', 'geo', 'nearby', 'hazard', 'editedAt', 'reviewedAt'];
 function stripPrivilegedPropertyFields(body, req) {
   const out = { ...(body && typeof body === 'object' ? body : {}) };
   SYSTEM_PROPERTY_FIELDS.forEach(k => delete out[k]);
@@ -5719,7 +6016,7 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
       const existing = await Property.findOne({ title: prop.title, location: prop.location });
       if (!existing) {
         const clean = { ...(prop && typeof prop === 'object' ? prop : {}) };
-        delete clean.geo; delete clean.nearby; // written only by the location worker
+        delete clean.geo; delete clean.nearby; delete clean.hazard; // written only by the location worker
         await new Property(clean).save();
         added++;
       }

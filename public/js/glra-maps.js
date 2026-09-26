@@ -3,8 +3,9 @@
    - loadLeaflet(): Leaflet from cdnjs with SRI, once.
    - osm(map): OpenStreetMap tiles (the tile policy needs a Referer, so the
      site-wide no-referrer header is overridden for the tiles only).
-   - floodToggle(map, on): UP NOAH 100-year flood hazard layer. PMTiles on
-     Hugging Face (ODbL), read by range requests through protomaps-leaflet.
+   - floodToggle(map, on): UP NOAH hazard layers (flood, storm surge,
+     landslide), switched in the legend. PMTiles on Hugging Face (ODbL), read
+     by range requests through protomaps-leaflet.
    - neighbourhood(el): the listing page map of what's nearby.
    Everything loads only when a map is actually shown. */
 (function () {
@@ -14,8 +15,12 @@
     leafletJs: ['script', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 'sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=='],
     protomaps: ['script', 'https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js', 'sha512-KVJuc8RAjKfNZudBzi9HIKiMpHwkyWAXdL7J4nm5aUQWRYDTews2du44+b59Ig2twCXUWmZn1dsD19kiMG5UcA==']
   };
-  var FLOOD_URL = 'https://huggingface.co/datasets/bettergovph/project-noah-hazard-maps/resolve/main/PMTiles/layers/flood_100yr.pmtiles';
+  var NOAH_URL = 'https://huggingface.co/datasets/bettergovph/project-noah-hazard-maps/resolve/main/PMTiles/layers/';
   var FLOOD_COLOURS = { 1: '#8ec5ff', 2: '#2f7de1', 3: '#0b2f8a' };
+  var SLIDE_COLOURS = { 1: '#f2c94c', 2: '#e07b2a', 3: '#8f2d0a' };
+  /* Storm surge: the lowest warning level that reaches a place is drawn
+     darkest, because it floods first. */
+  var SURGE_COLOURS = { 1: '#3b0764', 2: '#7e22ce', 3: '#b67cf0', 4: '#e2c8fb' };
   var loading = {};
 
   function loadAsset(a) {
@@ -53,7 +58,7 @@
     '.glra-flood-legend li i{display:inline-block;width:14px;height:14px;border:1px solid rgba(0,0,0,.35);flex:0 0 14px}' +
     '.glra-flood-legend p{margin:0;font-size:11px;line-height:1.4;opacity:.8}' +
     '.glra-flood-legend a{color:inherit;text-decoration:underline}' +
-    '@media(max-width:560px){.glra-flood-legend{max-width:190px;padding:7px 9px}.glra-flood-legend p{display:none}}' +
+    '@media(max-width:560px){.glra-flood-legend{max-width:190px;padding:7px 9px}.glra-flood-legend p,.glra-flood-legend .glra-rail-plan{display:none}.glra-flood-legend p.glra-sun-read{display:block}}' +
     '.glra-nb-home-wrap,.glra-nb-poi-wrap{background:none;border:0}' +
     '.glra-nb-home{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#ff3d00;color:#fff;border:2px solid #0a0a0a;box-shadow:2px 2px 0 #0a0a0a;font-size:14px}' +
     '.glra-nb-poi{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#0a0a0a;color:#fff;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:11px}' +
@@ -81,6 +86,9 @@
     '.glra-lg-row span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;white-space:nowrap}' +
     '.glra-lg-line{display:inline-block;width:22px;height:0;border-top:4px solid currentColor}' +
     '.glra-lg-line.is-dash{border-top-style:dashed;border-top-width:3px}' +
+    '.glra-lg-line.is-part{border-top-width:3px;border-image:repeating-linear-gradient(90deg,currentColor 0 12px,transparent 12px 16px) 1}' +
+    '.glra-rail-plan{list-style:none;margin:4px 0 6px;padding:0}.glra-rail-plan li{font-size:11px;line-height:1.35;margin:2px 0;padding-left:9px;position:relative}.glra-rail-plan li::before{content:"";position:absolute;left:0;top:6px;width:4px;height:4px;background:currentColor}' +
+    '.glra-lg-sub b{font-weight:700}' +
     '.glra-lg-sw{display:inline-block;width:14px;height:14px;border:1px solid rgba(0,0,0,.35)}' +
     '.glra-lg-sub{font:700 9.5px/1.3 "JetBrains Mono",monospace;letter-spacing:1px;text-transform:uppercase;opacity:.75;margin:2px 0 4px}' +
     '.glra-flood-legend .glra-lg-seg{display:flex;gap:0;margin:0 0 8px;border:2px solid #0a0a0a}' +
@@ -118,10 +126,20 @@
     'html body .glra-3d-bar button{min-height:38px !important;padding:0 12px !important;margin:0 !important;background:#f1eee9 !important;color:#0a0a0a !important;border:0 !important;border-radius:0 !important;font:700 10.5px/1 "JetBrains Mono",monospace !important;letter-spacing:1.2px !important;display:inline-flex !important;align-items:center !important;gap:7px !important;box-shadow:none !important;transform:none !important}' +
     'html body .glra-3d-bar button:hover{background:#ff3d00 !important;color:#fff !important}' +
     'html body .glra-3d-bar button[aria-pressed="true"]{background:#1f5fbf !important;color:#fff !important}' +
-    '.glra-3d-map{flex:1;min-height:0;position:relative}' +
+    '.glra-3d-map{flex:1;min-height:0;position:relative;background:linear-gradient(180deg,#9fc1de 0%,#d9e6ef 45%,#eef2f4 100%)}' +
     '.glra-3d-note{position:absolute;left:10px;bottom:28px;z-index:2;max-width:300px;background:rgba(241,238,233,.94);color:#0a0a0a;padding:7px 9px;font:11px/1.4 Inter,system-ui,sans-serif;border:2px solid #0a0a0a}' +
     '.glra-3d-pin{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#ff3d00;color:#fff;border:2px solid #0a0a0a;box-shadow:2px 2px 0 #0a0a0a;font-size:14px}' +
     '.glra-3d-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#f1eee9;font:14px/1.5 Inter,system-ui,sans-serif;text-align:center;padding:24px}' +
+    '.glra-3d-view{position:absolute;left:10px;top:10px;z-index:2;width:250px;background:rgba(241,238,233,.95);color:#0a0a0a;border:2px solid #0a0a0a;box-shadow:3px 3px 0 #0a0a0a;padding:9px 11px;font:12px/1.4 Inter,system-ui,sans-serif}' +
+    '.glra-3d-view[hidden]{display:none}' +
+    '.glra-3d-view-t{font:700 10px/1.3 "JetBrains Mono",monospace;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}' +
+    '.glra-3d-view label{display:block;font-weight:600}.glra-3d-view input{width:100%;accent-color:#ff3d00;margin:2px 0 6px}' +
+    '.glra-3d-dirs{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:6px}' +
+    'html body .glra-3d-view button{min-height:30px !important;padding:0 8px !important;margin:0 !important;border:2px solid #0a0a0a !important;border-radius:0 !important;background:#f1eee9 !important;color:#0a0a0a !important;font:700 10.5px/1 "JetBrains Mono",monospace !important;letter-spacing:.8px !important;box-shadow:none !important;transform:none !important;cursor:pointer !important}' +
+    'html body .glra-3d-view button[aria-pressed="true"],html body .glra-3d-view .glra-3d-look{background:#0a0a0a !important;color:#f1eee9 !important}' +
+    'html body .glra-3d-view button:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}' +
+    '.glra-3d-view p{margin:6px 0 0;font-size:11px;opacity:.8}' +
+    '@media(max-width:560px){.glra-3d-view{top:auto;bottom:34px;left:8px;right:8px;width:auto}.glra-3d-view p{display:none}.glra-3d-note{display:none}}' +
     '@media(max-width:560px){.glra-3d-bar{padding:8px 10px;gap:6px}html body .glra-3d-bar button b{display:none}.glra-3d-note{right:10px;max-width:none}}' +
     /* Home page map: listing dots. */
     '.glra-dot-wrap{background:none;border:0}' +
@@ -145,65 +163,103 @@
     });
   }
 
-  /* ── Flood hazard ─────────────────────────────────────────── */
-  var LEGEND_HTML =
-    '<div class="glra-flood-legend-t">Flood hazard, 100-year rain</div>' +
-    '<ul>' +
-    '<li><i style="background:' + FLOOD_COLOURS[1] + '"></i>Low: up to 0.5 m</li>' +
-    '<li><i style="background:' + FLOOD_COLOURS[2] + '"></i>Medium: 0.5 to 1.5 m</li>' +
-    '<li><i style="background:' + FLOOD_COLOURS[3] + '"></i>High: over 1.5 m</li>' +
-    '</ul>' +
-    '<p>No colour: outside the mapped flood areas. The map shows the street, not the unit; upper floors stay dry but access can flood. Source: <a href="https://noah.up.edu.ph" target="_blank" rel="noopener">UP NOAH</a>.</p>';
+  /* ── Hazard maps (UP NOAH) ─────────────────────────────────────
+     One button, three maps: the legend switches between them. */
+  var HAZ_NOTE = 'Source: <a href="https://noah.up.edu.ph" target="_blank" rel="noopener">UP NOAH</a> (ODbL), via BetterGov.ph.';
+  var HAZ = {
+    flood: {
+      label: 'Flood',
+      layers: [['flood_100yr', function (v) { return FLOOD_COLOURS[v]; }]],
+      html: '<div class="glra-flood-legend-t">Flood hazard, 100-year rain</div>' +
+        '<ul>' +
+        '<li><i style="background:' + FLOOD_COLOURS[1] + '"></i>Low: up to 0.5 m</li>' +
+        '<li><i style="background:' + FLOOD_COLOURS[2] + '"></i>Medium: 0.5 to 1.5 m</li>' +
+        '<li><i style="background:' + FLOOD_COLOURS[3] + '"></i>High: over 1.5 m</li>' +
+        '</ul>' +
+        '<p>No colour: outside the mapped flood areas. The map shows the street, not the unit; upper floors stay dry but access can flood. ' + HAZ_NOTE + '</p>'
+    },
+    surge: {
+      label: 'Storm surge',
+      layers: [4, 3, 2, 1].map(function (n) { return ['storm_surge_ssa' + n, function () { return SURGE_COLOURS[n]; }]; }),
+      html: '<div class="glra-flood-legend-t">Storm surge</div>' +
+        '<ul>' +
+        '<li><i style="background:' + SURGE_COLOURS[1] + '"></i>Floods at warning level 1 (2 to 3 m tide)</li>' +
+        '<li><i style="background:' + SURGE_COLOURS[2] + '"></i>From level 2 (3 to 4 m)</li>' +
+        '<li><i style="background:' + SURGE_COLOURS[3] + '"></i>From level 3 (4 to 5 m)</li>' +
+        '<li><i style="background:' + SURGE_COLOURS[4] + '"></i>Only at level 4 (over 5 m)</li>' +
+        '</ul>' +
+        '<p>Where seawater reaches when PAGASA issues each storm surge warning. The darker, the sooner it floods. ' + HAZ_NOTE + '</p>'
+    },
+    slide: {
+      label: 'Landslide',
+      layers: [['landslide', function (v) { return SLIDE_COLOURS[v]; }], ['debris_flow', function (v) { return SLIDE_COLOURS[Math.max(2, v || 2)]; }]],
+      html: '<div class="glra-flood-legend-t">Landslide susceptibility</div>' +
+        '<ul>' +
+        '<li><i style="background:' + SLIDE_COLOURS[1] + '"></i>Low</li>' +
+        '<li><i style="background:' + SLIDE_COLOURS[2] + '"></i>Medium, or a debris-flow path</li>' +
+        '<li><i style="background:' + SLIDE_COLOURS[3] + '"></i>High</li>' +
+        '</ul>' +
+        '<p>Mostly hills and river valleys; flat city districts are rarely on it. ' + HAZ_NOTE + '</p>'
+    }
+  };
+  var HAZ_KINDS = ['flood', 'surge', 'slide'];
 
-  function floodLayer(map) {
-    if (map._glraFlood) return map._glraFlood;
+  function hazardLayers(map, kind) {
+    map._glraHazL = map._glraHazL || {};
+    if (map._glraHazL[kind]) return map._glraHazL[kind];
     if (!map.getPane('glraFlood')) {
-      var pane = map.createPane('glraFlood');
-      pane.style.zIndex = 250; /* above the base tiles (200), below pins (600) */
-      pane.style.pointerEvents = 'none';
+      var pn = map.createPane('glraFlood');
+      pn.style.zIndex = 250; /* above the base tiles (200), below pins (600) */
+      pn.style.pointerEvents = 'none';
     }
-    map._glraFlood = protomapsL.leafletLayer({
-      url: FLOOD_URL,
-      pane: 'glraFlood',
-      maxDataZoom: 14,
-      paintRules: [{
-        dataLayer: 'flood_100yr',
-        symbolizer: new protomapsL.PolygonSymbolizer({
-          fill: function (z, f) { return FLOOD_COLOURS[f.props.Var] || 'rgba(0,0,0,0)'; },
-          opacity: 0.55
-        })
-      }],
-      labelRules: [],
-      attribution: 'Flood hazard &copy; <a href="https://noah.up.edu.ph" target="_blank" rel="noopener">UP NOAH</a> (ODbL)'
-    });
-    return map._glraFlood;
-  }
-  function floodLegend(map, show) {
-    if (!map._glraFloodLegend) {
-      var Legend = L.Control.extend({
-        options: { position: 'bottomleft' },
-        onAdd: function () {
-          var d = L.DomUtil.create('div', 'glra-flood-legend');
-          d.innerHTML = LEGEND_HTML;
-          L.DomEvent.disableClickPropagation(d);
-          L.DomEvent.disableScrollPropagation(d);
-          return d;
-        }
+    map._glraHazL[kind] = L.layerGroup(HAZ[kind].layers.map(function (ly, i) {
+      return protomapsL.leafletLayer({
+        url: NOAH_URL + ly[0] + '.pmtiles',
+        pane: 'glraFlood',
+        maxDataZoom: 14,
+        paintRules: [{
+          dataLayer: ly[0],
+          symbolizer: new protomapsL.PolygonSymbolizer({
+            fill: function (z, f) { var v = Number(f.props.Var != null ? f.props.Var : f.props.HAZ) || 0; return v > 0 ? ly[1](v) || 'rgba(0,0,0,0)' : 'rgba(0,0,0,0)'; },
+            opacity: kind === 'surge' ? 0.6 : 0.55
+          })
+        }],
+        labelRules: [],
+        attribution: i ? '' : 'Hazard maps &copy; <a href="https://noah.up.edu.ph" target="_blank" rel="noopener">UP NOAH</a> (ODbL)'
       });
-      map._glraFloodLegend = new Legend();
-    }
-    if (show) map._glraFloodLegend.addTo(map); else map._glraFloodLegend.remove();
+    }));
+    return map._glraHazL[kind];
+  }
+  function hazardLegendHtml(kind) {
+    return '<div class="glra-lg-seg" role="group" aria-label="Which hazard map">' +
+      HAZ_KINDS.map(function (k) { return '<button type="button" data-hz="' + k + '" aria-pressed="' + (k === kind) + '">' + HAZ[k].label + '</button>'; }).join('') +
+      '</div>' + HAZ[kind].html;
+  }
+  function hazardShow(map, kind) {
+    HAZ_KINDS.forEach(function (k) { if (map._glraHazL && map._glraHazL[k] && k !== kind) map.removeLayer(map._glraHazL[k]); });
+    hazardLayers(map, kind).addTo(map);
+    map._glraHazKind = kind;
+    var ctl = legend(map, 'haz', '', true), box = ctl.getContainer && ctl.getContainer();
+    if (!box) return;
+    box.innerHTML = hazardLegendHtml(kind);
+    Array.prototype.forEach.call(box.querySelectorAll('[data-hz]'), function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-hz');
+        if (k !== map._glraHazKind) hazardShow(map, k);
+        var nb = box.querySelector('[data-hz="' + k + '"]');
+        if (nb) nb.focus();
+      });
+    });
   }
   /* Resolves true when the layer is on, false when switched off. */
   function floodToggle(map, on) {
     if (!on) {
-      if (map._glraFlood) map.removeLayer(map._glraFlood);
-      floodLegend(map, false);
+      HAZ_KINDS.forEach(function (k) { if (map._glraHazL && map._glraHazL[k]) map.removeLayer(map._glraHazL[k]); });
+      legend(map, 'haz', '', false);
       return Promise.resolve(false);
     }
     return loadAsset(ASSETS.protomaps).then(function () {
-      floodLayer(map).addTo(map);
-      floodLegend(map, true);
+      hazardShow(map, map._glraHazKind || 'flood');
       return true;
     });
   }
@@ -230,7 +286,7 @@
     });
   }
   function floodButton(btn, getMap) {
-    layerButton(btn, getMap, floodToggle, 'The flood map could not load. Try again later.');
+    layerButton(btn, getMap, floodToggle, 'The hazard maps could not load. Try again later.');
   }
 
   /* A bottom-left legend box, one per key per map. */
@@ -278,13 +334,34 @@
     lrt1: ['LRT-1', '#1c9a45'], lrt2: ['LRT-2', '#7a3fb8'], mrt3: ['MRT-3', '#d99a00'],
     mrt7: ['MRT-7', '#d62d20'], subway: ['Metro Manila Subway', '#1f4fd1'], nscr: ['North-South Commuter Railway', '#0e8a7a']
   };
-  var RAIL_LEGEND =
-    '<div class="glra-flood-legend-t">Trains</div>' +
-    '<div class="glra-lg-sub">Running</div><div class="glra-lg-row">' +
-    ['lrt1', 'lrt2', 'mrt3'].map(function (k) { return '<span><i class="glra-lg-line" style="color:' + RAIL_LINES[k][1] + '"></i>' + RAIL_LINES[k][0] + '</span>'; }).join('') + '</div>' +
-    '<div class="glra-lg-sub">Being built</div><div class="glra-lg-row">' +
-    [['subway', 'Subway'], ['nscr', 'NSCR'], ['mrt7', 'MRT-7']].map(function (k) { return '<span><i class="glra-lg-line is-dash" style="color:' + RAIL_LINES[k[0]][1] + '"></i>' + k[1] + '</span>'; }).join('') + '</div>' +
-    '<p>Dashed lines and hollow stations are not open yet; their routes and stations can still change. Source: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>.</p>';
+  /* Government targets for the lines still being built, as announced by the
+     Department of Transportation up to September 2026. They have slipped
+     before, and the legend says so. [first trains, whole line]. */
+  var RAIL_PLAN = {
+    mrt7: [2027, 2027, 'MRT-7: first trains targeted for 2027'],
+    nscr: [2027, 2032, 'NSCR: Valenzuela to Malolos targeted for late 2027, Clark by late 2028, the whole line about 2032'],
+    subway: [2028, 2031, 'Subway: first stations targeted for 2028, the whole line 2031'],
+    lrt1: [2028, 2030, 'North Triangle Common Station: targeted for 2028']
+  };
+  var RAIL_NOW = 2026, RAIL_LAST = 2032;
+  function railState(f, year) {
+    if (f.properties.s === 'run') return 'run';
+    var plan = RAIL_PLAN[f.properties.line];
+    if (!plan || year < plan[0]) return 'build';
+    return year >= plan[1] ? 'open' : 'part';
+  }
+  function railLegendHtml(year) {
+    return '<div class="glra-flood-legend-t">Trains' + (year > RAIL_NOW ? ', as planned for ' + year : '') + '</div>' +
+      '<div class="glra-lg-row">' + ['lrt1', 'lrt2', 'mrt3'].map(function (k) { return '<span><i class="glra-lg-line" style="color:' + RAIL_LINES[k][1] + '"></i>' + RAIL_LINES[k][0] + '</span>'; }).join('') +
+      [['subway', 'Subway'], ['nscr', 'NSCR'], ['mrt7', 'MRT-7']].map(function (k) {
+        var st = railState({ properties: { s: 'build', line: k[0] } }, year);
+        return '<span><i class="glra-lg-line' + (st === 'build' ? ' is-dash' : st === 'part' ? ' is-part' : '') + '" style="color:' + RAIL_LINES[k[0]][1] + '"></i>' + k[1] + '</span>';
+      }).join('') + '</div>' +
+      '<label class="glra-lg-sub" for="glraRailYr">See the plan for: <b class="glra-rail-yr">' + (year === RAIL_NOW ? 'today' : year) + '</b></label>' +
+      '<input type="range" id="glraRailYr" min="' + RAIL_NOW + '" max="' + RAIL_LAST + '" step="1" value="' + year + '">' +
+      '<ul class="glra-rail-plan">' + ['mrt7', 'nscr', 'subway', 'lrt1'].map(function (k) { return '<li>' + esc(RAIL_PLAN[k][2]) + '</li>'; }).join('') + '</ul>' +
+      '<p>Solid: carrying passengers' + (year > RAIL_NOW ? ' (or planned to by then)' : '') + '. Dashed: being built. Long dashes: partly open. Opening dates are government targets and have slipped before. Source: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, DOTr.</p>';
+  }
   function railLayer(map) {
     if (map._glraRail) return Promise.resolve(map._glraRail);
     var pn = pane(map, 'glraRail', 380);
@@ -292,31 +369,42 @@
       function isLine(f) { return f.properties.t === 'line'; }
       function col(f) { return (RAIL_LINES[f.properties.line] || ['', '#555'])[1]; }
       function nm(f) { return (RAIL_LINES[f.properties.line] || ['Train line'])[0]; }
+      function year() { return map._glraRailYear || RAIL_NOW; }
+      function lineStyle(f) {
+        var st = railState(f, year()), solid = st === 'run' || st === 'open';
+        return { color: col(f), weight: solid ? 5 : 4, opacity: solid ? 1 : 0.9, dashArray: solid ? null : st === 'part' ? '18 6' : '9 7', lineCap: solid ? 'round' : 'butt' };
+      }
+      function stationStyle(f) {
+        var st = railState(f, year()), solid = st === 'run' || st === 'open';
+        return { radius: solid ? 5 : 4.5, color: col(f), weight: 3, fillColor: solid ? '#ffffff' : col(f), fillOpacity: solid ? 1 : 0.18 };
+      }
+      function note(f) {
+        if (f.properties.s === 'run') return '';
+        var plan = RAIL_PLAN[f.properties.line];
+        return plan ? ', ' + esc(plan[2].replace(/^[^:]+: /, '')) : ', being built';
+      }
       var casing = L.geoJSON(gj, {
         pane: pn, interactive: false,
         filter: function (f) { return isLine(f) && f.properties.s === 'run'; },
         style: function () { return { color: '#ffffff', weight: 8, opacity: 0.85, lineCap: 'round' }; }
       });
       var lines = L.geoJSON(gj, {
-        pane: pn, filter: isLine,
-        style: function (f) {
-          var run = f.properties.s === 'run';
-          return { color: col(f), weight: run ? 5 : 4, opacity: run ? 1 : 0.9, dashArray: run ? null : '9 7', lineCap: run ? 'round' : 'butt' };
-        },
-        onEachFeature: function (f, l) { l.bindTooltip(esc(nm(f)) + (f.properties.s === 'run' ? '' : ', being built'), { sticky: true }); }
+        pane: pn, filter: isLine, style: lineStyle,
+        onEachFeature: function (f, l) { l.bindTooltip(esc(nm(f)) + note(f), { sticky: true }); }
       });
       var stations = L.geoJSON(gj, {
         pane: pn,
         filter: function (f) { return f.properties.t === 'stn'; },
-        pointToLayer: function (f, ll) {
-          var run = f.properties.s === 'run';
-          return L.circleMarker(ll, { pane: pn, radius: run ? 5 : 4.5, color: col(f), weight: 3, fillColor: run ? '#ffffff' : col(f), fillOpacity: run ? 1 : 0.18 });
-        },
+        pointToLayer: function (f, ll) { return L.circleMarker(ll, L.extend({ pane: pn }, stationStyle(f))); },
         onEachFeature: function (f, l) {
-          l.bindTooltip('<b>' + esc(f.properties.n) + '</b><br>' + esc(nm(f)) + (f.properties.s === 'run' ? ' station' : ', not open yet'), { direction: 'top', offset: [0, -4] });
+          l.bindTooltip('<b>' + esc(f.properties.n) + '</b><br>' + esc(nm(f)) + (f.properties.s === 'run' ? ' station' : note(f)), { direction: 'top', offset: [0, -4] });
         }
       });
       map._glraRail = L.layerGroup([casing, lines, stations]);
+      map._glraRailRestyle = function () {
+        lines.setStyle(lineStyle);
+        stations.eachLayer(function (l) { l.setStyle(stationStyle(l.feature)); });
+      };
       /* Station dots only once zoomed in to district level: from further
          out they pile up into a solid bead along each line. */
       function dots() {
@@ -329,15 +417,32 @@
       return map._glraRail;
     });
   }
+  function railLegend(map) {
+    var ctl = legend(map, 'rail', '', true), box = ctl.getContainer && ctl.getContainer();
+    if (!box) return;
+    box.innerHTML = railLegendHtml(map._glraRailYear || RAIL_NOW);
+    var r = box.querySelector('input');
+    if (r) r.addEventListener('input', function () {
+      map._glraRailYear = Number(r.value) || RAIL_NOW;
+      if (map._glraRailRestyle) map._glraRailRestyle();
+      var y = map._glraRailYear;
+      box.querySelector('.glra-flood-legend-t').textContent = 'Trains' + (y > RAIL_NOW ? ', as planned for ' + y : '');
+      box.querySelector('.glra-rail-yr').textContent = y === RAIL_NOW ? 'today' : String(y);
+      var row = box.querySelector('.glra-lg-row');
+      var tmp = document.createElement('div');
+      tmp.innerHTML = railLegendHtml(y);
+      row.innerHTML = tmp.querySelector('.glra-lg-row').innerHTML;
+    });
+  }
   function railToggle(map, on) {
     if (!on) {
       if (map._glraRail) map.removeLayer(map._glraRail);
-      legend(map, 'rail', RAIL_LEGEND, false);
+      legend(map, 'rail', '', false);
       return Promise.resolve(false);
     }
     return railLayer(map).then(function (layer) {
       layer.addTo(map);
-      legend(map, 'rail', RAIL_LEGEND, true);
+      railLegend(map);
       return true;
     });
   }
@@ -644,6 +749,55 @@
       }
     };
   }
+  /* ── Earthquake history ───────────────────────────────────────
+     /api/quakes: the US Geological Survey's catalogue, magnitude 4.5 and up
+     within 100 km since 1976, asked once a week per listing by the server. */
+  var QUAKE_COLS = [[7, '#5b0a2e'], [6, '#b0122c'], [5, '#e0671b'], [0, '#f2b01e']];
+  function quakeCol(m) { for (var i = 0; i < QUAKE_COLS.length; i++) if (m >= QUAKE_COLS[i][0]) return QUAKE_COLS[i][1]; return '#f2b01e'; }
+  var MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function quakeDate(t) { var d = new Date(t + PH_MS); return d.getUTCDate() + ' ' + MONTHS3[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+  function kmBetween(la1, ln1, la2, ln2) {
+    var a = Math.sin((la2 - la1) * RAD / 2), b = Math.sin((ln2 - ln1) * RAD / 2);
+    return 2 * 6371 * Math.asin(Math.sqrt(a * a + Math.cos(la1 * RAD) * Math.cos(la2 * RAD) * b * b));
+  }
+  function quakeTool(map, lat, lng) {
+    var g = L.featureGroup(), ctl = null;
+    return {
+      on: function () {
+        pane(map, 'glraQuake', 390);
+        ctl = legend(map, 'quake', '<div class="glra-flood-legend-t">Earthquakes since 1976</div><p>Loading the catalogue...</p>', true);
+        return getJson('/api/quakes?lat=' + lat + '&lng=' + lng).then(function (d) {
+          var qs = (d && d.quakes || []).slice().sort(function (a, b) { return a[2] - b[2]; });
+          g.clearLayers();
+          g.addLayer(L.circle([lat, lng], { radius: 100000, pane: 'glraQuake', color: '#0a0a0a', weight: 1.5, opacity: 0.55, dashArray: '6 6', fill: false, interactive: false }));
+          qs.forEach(function (q) {
+            var km = kmBetween(lat, lng, q[0], q[1]);
+            g.addLayer(L.circleMarker([q[0], q[1]], { pane: 'glraQuake', radius: 3 + (q[2] - 4.5) * 4.2, color: '#0a0a0a', weight: 1, opacity: 0.6, fillColor: quakeCol(q[2]), fillOpacity: 0.75 })
+              .bindTooltip('<b>Magnitude ' + q[2].toFixed(1) + '</b><br>' + quakeDate(q[4]) + '<br>' + Math.round(km) + ' km away, ' + q[3] + ' km deep', { direction: 'top' }));
+          });
+          g.addTo(map);
+          map.fitBounds(L.latLng(lat, lng).toBounds(210000), { animate: !reduced() });
+          var big = qs[qs.length - 1], n6 = qs.filter(function (q) { return q[2] >= 6; }).length;
+          var box = ctl.getContainer();
+          box.innerHTML = '<div class="glra-flood-legend-t">Earthquakes since 1976</div>' +
+            '<p class="glra-sun-read">' + (qs.length ? qs.length + ' of magnitude 4.5 or more within 100 km' + (n6 ? ', ' + n6 + ' of them 6 or more' : '') + '.' : 'None of magnitude 4.5 or more recorded within 100 km.') + '</p>' +
+            (big ? '<p>Strongest: magnitude ' + big[2].toFixed(1) + ', ' + quakeDate(big[4]) + ', ' + Math.round(kmBetween(lat, lng, big[0], big[1])) + ' km away.</p>' : '') +
+            '<div class="glra-lg-row">' + [[4.5, '4.5+'], [5, '5+'], [6, '6+'], [7, '7+']].map(function (c) { return '<span><i class="glra-lg-sw" style="background:' + quakeCol(c[0]) + ';border-radius:50%"></i>' + c[1] + '</span>'; }).join('') + '</div>' +
+            '<p>Most are far out at sea or deep underground and were felt only lightly here. How hard a spot shakes depends on distance, depth and the ground: the official PHIVOLCS report covers shaking and liquefaction. Source: <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener">USGS</a>.</p>';
+        }).catch(function (e) {
+          var box = ctl && ctl.getContainer();
+          if (box) box.innerHTML = '<div class="glra-flood-legend-t">Earthquakes since 1976</div><p>The earthquake catalogue could not load. Try again in a minute.</p>';
+          throw e;
+        });
+      },
+      off: function () {
+        g.remove();
+        legend(map, 'quake', '', false);
+        ctl = null;
+      }
+    };
+  }
+
   /* Wraps an {on, off} tool as a layerButton toggle. */
   function toolToggle(tool) {
     return function (map, on) {
@@ -660,7 +814,8 @@
     css: ['link', 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css', 'sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V'],
     js: ['script', 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js', 'sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj']
   };
-  function open3d(lat, lng, title, returnFocus) {
+  var DIRS8 = [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]];
+  function open3d(lat, lng, title, returnFocus, facing) {
     var box = document.createElement('div');
     box.className = 'glra-3d';
     box.setAttribute('role', 'dialog');
@@ -669,7 +824,12 @@
     box.innerHTML = '<div class="glra-3d-bar"><span>3D view' + (title ? ': ' + esc(title) : '') + '</span>' +
       '<button type="button" class="glra-3d-spin" aria-pressed="false"><i class="fas fa-rotate" aria-hidden="true"></i><b>Rotate</b></button>' +
       '<button type="button" class="glra-3d-close"><i class="fas fa-times" aria-hidden="true"></i><b>Close</b></button></div>' +
-      '<div class="glra-3d-map"><div class="glra-3d-msg">Loading the 3D map...</div></div>';
+      '<div class="glra-3d-map"><div class="glra-3d-msg">Loading the 3D map...</div></div>' +
+      '<div class="glra-3d-view" hidden><div class="glra-3d-view-t">View from a floor</div>' +
+      '<label for="glra3dFloor">Floor <b class="glra-3d-fl">10</b></label><input type="range" id="glra3dFloor" min="1" max="60" step="1" value="10">' +
+      '<div class="glra-3d-dirs" role="group" aria-label="Looking towards">' + DIRS8.map(function (d) { return '<button type="button" data-dir="' + d[1] + '" aria-pressed="' + (d[0] === (facing || 'N')) + '">' + d[0] + '</button>'; }).join('') + '</div>' +
+      '<button type="button" class="glra-3d-look"><i class="fas fa-eye" aria-hidden="true"></i> Look</button> <button type="button" class="glra-3d-back">Back to overview</button>' +
+      '<p>Eye level about 3.2 m a floor, from the approximate spot of the pin. Buildings without a recorded height show flat, so the real view can be more blocked than this.</p></div>';
     document.body.appendChild(box);
     document.documentElement.classList.add('glra-full-open');
     var map3 = null, spinning = false, raf = 0;
@@ -682,6 +842,37 @@
       if (returnFocus && returnFocus.focus) returnFocus.focus();
     }
     function onKey(e) { if (e.key === 'Escape') close(); }
+    /* Put the camera at eye level on the chosen floor, looking out in one
+       direction at a spot on the ground far enough away that the view is
+       nearly level (about 78 degrees from straight down). */
+    function wireView() {
+      var v = box.querySelector('.glra-3d-view');
+      if (!v || !map3.calculateCameraOptionsFromTo) return;
+      v.hidden = false;
+      var fl = v.querySelector('input'), flTxt = v.querySelector('.glra-3d-fl');
+      var dir = (DIRS8.filter(function (d) { return d[0] === facing; })[0] || DIRS8[0])[1];
+      fl.addEventListener('input', function () { flTxt.textContent = fl.value; });
+      Array.prototype.forEach.call(v.querySelectorAll('[data-dir]'), function (b) {
+        b.addEventListener('click', function () {
+          dir = Number(b.getAttribute('data-dir'));
+          Array.prototype.forEach.call(v.querySelectorAll('[data-dir]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+          look();
+        });
+      });
+      function look() {
+        spinning = false; spinBtn.setAttribute('aria-pressed', 'false'); cancelAnimationFrame(raf);
+        var h = (Number(fl.value) - 1) * 3.2 + 1.6;
+        var d = Math.max(40, h * Math.tan(78 * RAD));
+        var to = [lat + d * Math.cos(dir * RAD) / 111320, lng + d * Math.sin(dir * RAD) / (111320 * Math.cos(lat * RAD))];
+        var cam = map3.calculateCameraOptionsFromTo(new maplibregl.LngLat(lng, lat), h, new maplibregl.LngLat(to[1], to[0]), 0);
+        map3.easeTo(Object.assign(cam, { duration: reduced() ? 0 : 1400 }));
+      }
+      v.querySelector('.glra-3d-look').addEventListener('click', look);
+      fl.addEventListener('change', look);
+      v.querySelector('.glra-3d-back').addEventListener('click', function () {
+        map3.easeTo({ center: [lng, lat], zoom: 16.4, pitch: 62, bearing: -25, duration: reduced() ? 0 : 1200 });
+      });
+    }
     document.addEventListener('keydown', onKey);
     var closeBtn = box.querySelector('.glra-3d-close'), spinBtn = box.querySelector('.glra-3d-spin');
     closeBtn.addEventListener('click', close);
@@ -701,11 +892,13 @@
       if (!document.body.contains(box)) return;
       var host = box.querySelector('.glra-3d-map');
       host.innerHTML = '<p class="glra-3d-note">Buildings are drawn from OpenStreetMap; some have no height on record and show flat. The orange pin marks the approximate area, not the exact building.</p>';
+      box.querySelector('.glra-3d-map').appendChild(box.querySelector('.glra-3d-view'));
       map3 = new maplibregl.Map({
         container: host, style: 'https://tiles.openfreemap.org/styles/liberty',
-        center: [lng, lat], zoom: 16.4, pitch: 62, bearing: -25, maxPitch: 75,
+        center: [lng, lat], zoom: 16.4, pitch: 62, bearing: -25, maxPitch: 85,
         attributionControl: { compact: true }
       });
+      wireView();
       map3.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
       var pin = document.createElement('div');
       pin.className = 'glra-3d-pin';
@@ -834,10 +1027,11 @@
       layerButton(document.getElementById('pgFaultBtn'), getMap, faultToggle, 'The fault map could not load. Try again later.');
       layerButton(document.getElementById('pgTravelBtn'), getMap, toolToggle(travelTime(map, lat, lng)), 'The travel times could not load. Try again later.');
       layerButton(document.getElementById('pgSunBtn'), getMap, toolToggle(sunPath(map, lat, lng, el.getAttribute('data-facing') || '')));
+      layerButton(document.getElementById('pgQuakeBtn'), getMap, toolToggle(quakeTool(map, lat, lng)), 'The earthquake catalogue could not load. Try again later.');
       var b3 = document.getElementById('pg3dBtn');
       if (b3) {
         if (!has3d()) b3.hidden = true;
-        else b3.addEventListener('click', function () { open3d(lat, lng, el.getAttribute('data-title') || '', b3); });
+        else b3.addEventListener('click', function () { open3d(lat, lng, el.getAttribute('data-title') || '', b3, el.getAttribute('data-facing') || ''); });
       }
       el.classList.add('is-ready');
     }).catch(function () {
