@@ -1476,9 +1476,74 @@ window.glraOpenPrintGate = function (label, collectFn) {
           }
         }
       } catch (_) { /* never block the real request */ }
+      // Where this visitor first came from, on the two forms that create a
+      // lead, so the Leads tab can say which channel is bringing clients.
+      try {
+        var u2 = (typeof input === 'string') ? input : (input && input.url) || '';
+        var post2 = init && init.method && String(init.method).toUpperCase() === 'POST';
+        if (post2 && typeof init.body === 'string' && /\/api\/(inquiries|property-submissions)(\?|$)/.test(u2)) {
+          var s2 = readSrc();
+          if (s2) {
+            var p2 = JSON.parse(init.body);
+            if (p2 && typeof p2 === 'object' && !p2.src) {
+              p2.src = { src: s2.src || '', med: s2.med || '', cmp: s2.cmp || '', ref: s2.ref || '', land: s2.land || '' };
+              init = Object.assign({}, init, { body: JSON.stringify(p2) });
+            }
+          }
+        }
+      } catch (_) { /* never block the real request */ }
       return nativeFetch.call(this, input, init);
     };
   }
+
+  // ── First touch: how this browser first reached the site ────────────────
+  // Only the channel (utm tags, or the referring site's name) and the landing
+  // page; kept 90 days on this device and sent only with a form the visitor
+  // chooses to submit. Nothing is stored when tracking is switched off.
+  function readSrc() {
+    try {
+      var j = JSON.parse(window.localStorage.getItem('glra_src') || 'null');
+      if (j && Date.now() - j.at < 90 * 864e5) return j;
+    } catch (_) {}
+    return null;
+  }
+  (function captureSrc() {
+    if (optedOut()) return;
+    try {
+      var here = new URL(window.location.href), qp = here.searchParams;
+      var ref = '';
+      try { ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (_) {}
+      if (ref && ref === window.location.hostname.replace(/^www\./, '')) ref = '';
+      var src = qp.get('utm_source') || (qp.get('fbclid') ? 'facebook' : qp.get('gclid') ? 'google' : '');
+      if (!src && !ref) return;
+      if (readSrc()) return;
+      window.localStorage.setItem('glra_src', JSON.stringify({
+        src: String(src).slice(0, 60),
+        med: String(qp.get('utm_medium') || (qp.get('gclid') ? 'cpc' : qp.get('fbclid') ? 'social' : ref ? 'referral' : '')).slice(0, 60),
+        cmp: String(qp.get('utm_campaign') || '').slice(0, 80),
+        ref: ref.slice(0, 80),
+        land: here.pathname.slice(0, 160),
+        at: Date.now()
+      }));
+    } catch (_) {}
+  })();
+
+  // ── Listing pages opened ─────────────────────────────────────────────────
+  // Anonymous (a random browser id), counted after a few seconds on the page,
+  // and only tied to a person if this browser later sends a form with an email.
+  (function listingView() {
+    var m = window.location.pathname.match(/^\/property\/([a-f0-9]{24})\/?$/i);
+    if (!m) return;
+    setTimeout(function () {
+      var v = vid();
+      if (!v) return;
+      var body = JSON.stringify({ vid: v, pid: m[1] });
+      try {
+        if (navigator.sendBeacon) navigator.sendBeacon('/api/track/view', new Blob([body], { type: 'application/json' }));
+        else fetch('/api/track/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true });
+      } catch (_) {}
+    }, 4000);
+  })();
 
   // ── Log one engagement per calculator visit ──────────────────────────────
   var file = (window.location.pathname.split('/').pop() || '').toLowerCase().split('?')[0];

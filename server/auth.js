@@ -122,7 +122,11 @@ function requirePermission(key) {
         return res.status(403).json({ error: 'Account is awaiting admin approval' });
       }
       if (account.role === 'admin') return next();
-      const granted = account.permissions && account.permissions[key] === true;
+      // A key the account has never had set (a permission added after the
+      // account was made) follows the role's default, which is also what
+      // /api/admin/me reports to the dashboard, so the two never disagree.
+      const own = account.permissions ? account.permissions[key] : undefined;
+      const granted = own === undefined ? defaultPermissionsForRole(account.role || 'employee')[key] === true : own === true;
       if (!granted) {
         return res.status(403).json({ error: `You don't have permission to perform this action (${key}).` });
       }

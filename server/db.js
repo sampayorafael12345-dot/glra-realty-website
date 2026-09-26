@@ -581,7 +581,10 @@ const PERMISSION_KEYS = [
   'cases_view',          // see the Cases tab (a law-firm matter is privileged)
   'cases_manage',        // open / edit cases, log hearings, record fees
   'leasing_view',        // see the Leasing tab (leases, rent roll, statements)
-  'leasing_manage'       // add / edit leases, record payments, send tenant emails
+  'leasing_manage',      // add / edit leases, record payments, send tenant emails
+  'leads_view',          // see the Leads tab (every lead's contact details)
+  'leads_manage',        // update, assign, log contact, email listings, import
+  'leads_delete'         // delete or merge leads
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
@@ -635,7 +638,12 @@ function defaultPermissionsForRole(role) {
     cases_view: false,
     cases_manage: false,
     leasing_view: false,
-    leasing_manage: false
+    leasing_manage: false,
+    // Staff already answer website enquiries, so they see and work leads;
+    // deleting or merging a person's record is the admin's call.
+    leads_view: true,
+    leads_manage: true,
+    leads_delete: false
   };
 }
 
@@ -1272,6 +1280,102 @@ const counterSchema = new mongoose.Schema({
   seq: { type: Number, default: 0 }
 });
 
+
+// ── LEADS (admin "Leads" tab, server/leads.js) ─────────────────
+// One document per PERSON, not per form: every enquiry, valuation request,
+// owner submission, saved search, price alert, wishlist save and newsletter
+// sign-up from the same email (or the same mobile number) lands on the same
+// lead, with each touch recorded in `sources`. Staff work happens in
+// `activities`; nothing is ever copied back into the original records, so
+// the Inquiries tab and the rest keep working exactly as before.
+const LEAD_STAGES = ['new', 'contacted', 'qualified', 'viewing', 'negotiating', 'won', 'lost', 'nurture'];
+const LEAD_TYPES = ['buyer', 'renter', 'seller', 'landlord', 'investor', 'broker', 'other'];
+const leadSourceSchema = new mongoose.Schema({
+  kind:          { type: String, default: 'inquiry' },   // inquiry | viewing | valuation | submission | saved_search | price_alert | wishlist | newsletter | manual | import
+  refId:         { type: String, default: '' },          // the original record's _id
+  label:         { type: String, default: '', maxlength: 300 },
+  message:       { type: String, default: '', maxlength: 2000 },
+  propertyId:    { type: String, default: '' },
+  propertyTitle: { type: String, default: '', maxlength: 300 },
+  attrib:        { type: mongoose.Schema.Types.Mixed, default: undefined },   // { src, med, cmp, ref, land }
+  at:            { type: Date, default: Date.now }
+}, { _id: false });
+const leadActivitySchema = new mongoose.Schema({
+  type:    { type: String, default: 'note' },   // note | call | whatsapp | viber | sms | email | meeting | viewing | stage | assign | system | listings_sent
+  outcome: { type: String, default: '', maxlength: 60 },
+  text:    { type: String, default: '', maxlength: 3000 },
+  by:      { type: String, default: '' },
+  byName:  { type: String, default: '' },
+  at:      { type: Date, default: Date.now }
+});
+const leadSchema = new mongoose.Schema({
+  name:     { type: String, default: '', trim: true, maxlength: 200 },
+  emails:   { type: [String], default: [] },   // lower-case
+  phones:   { type: [String], default: [] },   // digits, PH mobiles as 639XXXXXXXXX
+  type:     { type: String, enum: LEAD_TYPES, default: 'buyer' },
+  stage:    { type: String, enum: LEAD_STAGES, default: 'new' },
+  stageHistory: { type: [{ _id: false, stage: String, at: Date, by: String }], default: () => [] },
+  lostReason: { type: String, default: '', maxlength: 300 },
+  ownerId:   { type: String, default: '' },
+  ownerName: { type: String, default: '' },
+  intent: {
+    deal:      { type: String, default: '' },    // buy | rent | sell | lease_out
+    budgetMin: { type: Number, default: 0 },
+    budgetMax: { type: Number, default: 0 },
+    areas:     { type: [String], default: [] },
+    types:     { type: [String], default: [] },
+    beds:      { type: Number, default: 0 },
+    timeline:  { type: String, default: '' },    // now | 3m | 6m | 12m | browsing
+    financing: { type: String, default: '' },    // cash | bank | pagibig | inhouse
+    notes:     { type: String, default: '', maxlength: 2000 }
+  },
+  tags:     { type: [String], default: [] },
+  // Marketing consent under RA 10173 / NPC Circular 2023-04: only ever true
+  // from a clear action (a ticked box, a confirmed alert, a newsletter
+  // sign-up, or staff recording a consent they obtained). Replying to what a
+  // person asked about does not need it; sending them other listings does.
+  consent: {
+    marketing: { type: Boolean, default: false },
+    at:        { type: Date, default: null },
+    how:       { type: String, default: '', maxlength: 200 }
+  },
+  sources:    { type: [leadSourceSchema], default: () => [] },
+  activities: { type: [leadActivitySchema], default: () => [] },
+  firstTouch: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  vids:       { type: [String], default: [] },
+  score:      { type: Number, default: 0 },
+  scoreParts: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  firstInboundAt: { type: Date, default: null },
+  lastInboundAt:  { type: Date, default: null },
+  // Latest touch that expects an answer (an enquiry, a viewing or valuation
+  // request, a property submission). A newsletter sign-up does not.
+  lastAskAt:      { type: Date, default: null },
+  firstResponseAt: { type: Date, default: null },   // first staff contact after the first inbound
+  lastContactAt:  { type: Date, default: null },
+  nextFollowUp:   { type: Date, default: null },
+  followUpNote:   { type: String, default: '', maxlength: 300 },
+  nudgedAt:       { type: Date, default: null },     // "still waiting for a reply" alert sent
+  archived:       { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+leadSchema.index({ emails: 1 });
+leadSchema.index({ phones: 1 });
+leadSchema.index({ vids: 1 });
+leadSchema.index({ stage: 1, lastInboundAt: -1 });
+leadSchema.index({ nextFollowUp: 1 });
+
+// Listing pages a browser opened (only browsers that have not switched
+// tracking off). Anonymous until the same browser gives an email, exactly
+// like calculator use; kept 180 days.
+const listingViewSchema = new mongoose.Schema({
+  vid:        { type: String, required: true },
+  propertyId: { type: String, required: true },
+  at:         { type: Date, default: Date.now }
+});
+listingViewSchema.index({ vid: 1, at: -1 });
+listingViewSchema.index({ at: 1 }, { expireAfterSeconds: 180 * 86400 });
+
 // ============================================================================
 // COMPILED MODELS
 // ============================================================================
@@ -1302,6 +1406,8 @@ const Lease             = mongoose.model('Lease',             leaseSchema);
 const Setting           = mongoose.model('Setting',           settingSchema);
 const Counter           = mongoose.model('Counter',           counterSchema);
 const Case              = mongoose.model('Case',              caseSchema);
+const Lead              = mongoose.model('Lead',              leadSchema);
+const ListingView       = mongoose.model('ListingView',       listingViewSchema);
 
 module.exports = {
   // models
@@ -1332,6 +1438,10 @@ module.exports = {
   Setting,
   Counter,
   Case,
+  Lead,
+  ListingView,
+  LEAD_STAGES,
+  LEAD_TYPES,
   AGENT_LEAD_STAGES,
   LEASE_STAGES,
   CASE_STAGES,

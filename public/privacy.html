@@ -191,6 +191,8 @@ body.dark-mode .pv-fine,body.dark-mode .pv-meta{color:#9a9082}
     <p>The first time you use a calculator, your browser generates a random string of characters and saves it on your own device (in something called localStorage). It looks like <code style="font-family:'JetBrains Mono',monospace;font-size:13px">a3f9c1e08b7d…</code>.</p>
     <p>It is not built from your IP address, your device details, or anything about you — it is simply a random number. On its own it names nobody. Its only job is to let us tell "one person used four different calculators" apart from "four different people used one calculator each."</p>
     <p>It stays on your device, not ours, and clearing your browser data deletes it.</p>
+    <p>The same random ID is sent when you spend a few seconds on a listing's own page, so we can tell which homes are being looked at. Like calculator use, that list names nobody until the same browser sends us a form with an email address; from then on it helps Catherine suggest homes close to the ones you opened. We keep listing views for 180 days.</p>
+    <p>We also note, once, how your browser first reached this site: the name of the site or campaign that sent you (for example "facebook" or "google") and the page you landed on. It stays on your device for 90 days and only reaches us with a form you choose to send, so we can tell which of our ads and listings actually bring people in.</p>
     <p>The "Recently viewed" strip on the home and browse pages works the same way: the list of listings you opened is kept on your device only, is never sent to us, and the "Clear" button next to it erases it.</p>
     <p>The commute finder on the browse page works through our server. The place you search for (an office or a school, say) goes from our server, not from your browser, to OpenStreetMap's free place search (Nominatim) and to the free route planner run by FOSSGIS (Valhalla), so those services see our server, not you. We keep their answers for up to 30 days so the same search is not asked twice, and they are not linked to you, your email or your random ID. The place you pick also goes into the page's web address, so a search can be shared as a link.</p>
   </section>
@@ -207,8 +209,11 @@ body.dark-mode .pv-fine,body.dark-mode .pv-meta{color:#9a9082}
       <li>Saving a search to get emailed new matches</li>
       <li>Downloading a PDF that asks for your email first</li>
       <li>Sending a property valuation enquiry</li>
+      <li>Sending an enquiry or a viewing request about a listing</li>
+      <li>Listing your own property with us</li>
     </ul>
     <p>So if you used the affordability calculator in March and subscribed to the newsletter in July, Catherine can see that March activity from July onwards. If you never give us your email, that link is never made and the history stays anonymous.</p>
+    <p>Everything you send through these forms is kept together in one client record for Catherine and her staff, so whoever answers you can see what you already asked. We only email you listings you did not ask about if you ticked "email me similar listings" (or signed up for alerts or the newsletter), and replying "stop" ends them.</p>
   </section>
 
   <section class="pv-block" id="why">
@@ -384,7 +389,7 @@ body.dark-mode .pv-fine,body.dark-mode .pv-meta{color:#9a9082}
 })();
 </script>
 
-<script src="/js/main.js?v=116"></script>
+<script src="/js/main.js?v=118"></script>
 <script src="/js/brutalist-shell.js?v=116" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/chat.js?v=116" defer></script>

@@ -597,7 +597,7 @@ const db = require('./server/db');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
   AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
-  TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage,
+  TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage, ListingView,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
 
@@ -2124,6 +2124,8 @@ h2.pg-section-label{font-weight:700}
 .pg-form h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:16px}
 .pg-form input,.pg-form textarea{width:100%;padding:14px 16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:12px}
 .pg-form textarea{min-height:110px;resize:vertical}
+.pg-consent{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;font-size:13.5px;line-height:1.45;cursor:pointer}
+.pg-form .pg-consent input{width:20px;height:20px;min-height:0;padding:0;margin:0;flex:0 0 20px;accent-color:#ff3d00}
 .pg-form button{background:var(--ink);color:var(--paper);border:0;padding:16px 28px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer}
 .pg-form button:hover{background:var(--hot-btn);color:#fff}
 /* a11y.js inserts this link on every page; the rule it needs lives in
@@ -2190,8 +2192,9 @@ h2.pg-section-label{font-weight:700}
       <label class="pg-lbl" for="pgEmail">Email address</label><input type="email" id="pgEmail" name="email" autocomplete="email" placeholder="Email address" required>
       <label class="pg-lbl" for="pgPhone">Phone number <span class="pg-opt">(optional)</span></label><input type="tel" id="pgPhone" name="phone" autocomplete="tel" placeholder="Phone number">
       <label class="pg-lbl" for="pgMsg">Your message</label><textarea id="pgMsg" name="message" placeholder="Your message">I'm interested in ${esc(title)}${loc ? ' (' + esc(loc) + ')' : ''}. Please send me more details.</textarea>
+      <label class="pg-consent" for="pgMkt"><input type="checkbox" id="pgMkt" name="marketing"><span>Also email me similar listings. I can stop them any time.</span></label>
       <button type="submit">Send inquiry →</button>
-      <p class="pg-privacy">Catherine will use these details only to answer you about this property. <a href="/privacy.html">How we handle your data</a>.</p>
+      <p class="pg-privacy">Catherine will use these details to answer you about this property, and to send similar listings only if you ticked the box. <a href="/privacy.html">How we handle your data</a>.</p>
     </form>
     <div id="pgResult" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px"></div>
   </div>
@@ -2263,7 +2266,8 @@ async function pgSubmit(e){
     phone: document.getElementById('pgPhone').value.trim(),
     message: document.getElementById('pgMsg').value.trim() || ('Inquiry about ' + ${JSON.stringify(title).replace(/</g, '\\u003c')}),
     propertyId: ${JSON.stringify(id)},
-    propertyTitle: ${JSON.stringify(rawTitle).replace(/</g, '\\u003c')}
+    propertyTitle: ${JSON.stringify(rawTitle).replace(/</g, '\\u003c')},
+    marketing: !!(document.getElementById('pgMkt') && document.getElementById('pgMkt').checked)
   };
   if(!payload.name || !payload.email){ result.style.color='#ff3d00'; result.textContent='Please enter your name and email.'; return false; }
   btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Sending...';
@@ -2277,7 +2281,7 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=116"></script>
+<script src="/js/main.js?v=118"></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
 ${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
@@ -2728,6 +2732,8 @@ app.post('/api/inquiries',
   body('propertyId').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 100 }),
   body('propertyTitle').optional({ nullable: true, checkFalsy: true }).isString().trim().isLength({ max: 300 }),
   body('vid').optional().isString().trim().isLength({ max: 64 }),
+  body('marketing').optional().isBoolean(),
+  body('src').optional().isObject(),
   handleValidation,
   async (req, res) => {
     try {
@@ -2742,6 +2748,14 @@ app.post('/api/inquiries',
       const inquiry = new Inquiry({ name, email, phone, message, propertyId, propertyTitle });
       await inquiry.save();
       console.log('📧 New inquiry from:', name);
+      const inqKind = classifyInquiry(message, propertyTitle);
+      await ingestLead({
+        kind: inqKind, refId: inquiry._id, name, email, phone, message, propertyId, propertyTitle, vid,
+        type: inqKind === 'valuation' ? 'seller' : (listing && String(listing.listingType || '').toUpperCase() === 'FOR LEASE' ? 'renter' : undefined),
+        hints: inqKind === 'valuation' ? { deal: 'sell' } : hintsFromListing(listing),
+        attrib: req.body.src,
+        consent: req.body.marketing === true ? 'Ticked "send me similar listings" on the enquiry form' : ''
+      });
 
       // The valuation tool posts here, so this is a real identity signal.
       await stitchCalcIdentity(vid, email);
@@ -2824,6 +2838,13 @@ startAgentTick({ sendEmail, esc });
 // Rent roll, tenant ledgers, statements/receipts as PDF, reminder emails and
 // the broker's calendar feed all live in ./server/leasing.js — routes under
 // /api/admin/leases* (leasing_view / leasing_manage) plus the public ICS feed.
+// ============ LEADS ============
+// One record per person across every form on the site, scored and worked in
+// the admin "Leads" tab. ingestLead() is called by each form handler below.
+const { registerLeadRoutes, startLeadsTick, ingestLead, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria } = require('./server/leads');
+registerLeadRoutes(app, { sendEmail, esc, handleValidation });
+startLeadsTick({ sendEmail, esc });
+
 const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
 registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
 startLeasingTick({ sendEmail, esc });
@@ -2850,6 +2871,11 @@ app.post('/api/subscribe',
   async (req, res) => {
     try {
       const { email, name, source, vid } = req.body;
+      {
+        const quietSrc = ['calculator_pdf', 'calculator_print', 'guide_print'].includes(source);
+        ingestLead({ kind: 'newsletter', email, name, vid, label: quietSrc ? 'Downloaded a calculator report' : 'Newsletter sign-up',
+          consent: quietSrc ? '' : 'Signed up for the newsletter' }).catch(() => {});
+      }
 
       let existing = await Subscriber.findOne({ email });
       let isNew = false;
@@ -2945,6 +2971,7 @@ async function stitchCalcIdentity(vid, email) {
   try {
     await CalcUsage.updateMany({ vid, email: null }, { $set: { email } });
     await Subscriber.updateOne({ email }, { $addToSet: { vids: vid } });
+    await stitchLeadVid(vid, email);
   } catch (err) {
     console.error('Calc identity stitch failed:', err.message);
   }
@@ -2985,6 +3012,28 @@ app.post('/api/track/calculator',
   }
 );
 
+// One listing page opened by one browser. Sent by js/main.js only when the
+// visitor has not switched tracking off on the privacy page. Anonymous: it
+// names a random browser id, and only counts towards a lead once that same
+// browser gives an email in a form.
+app.post('/api/track/view',
+  trackLimiter,
+  body('vid').isString().trim().matches(/^[a-z0-9]{8,64}$/i),
+  body('pid').isString().trim().matches(/^[a-f0-9]{24}$/i),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const { vid, pid } = req.body;
+      // One row per browser per listing per hour is plenty.
+      const recent = await ListingView.exists({ vid, propertyId: pid, at: { $gt: new Date(Date.now() - 3600e3) } });
+      if (!recent) await ListingView.create({ vid, propertyId: pid });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
+
 // ============ WISHLIST ROUTES ============
 
 app.post('/api/wishlist',
@@ -3009,6 +3058,8 @@ app.post('/api/wishlist',
 
       const wishlistItem = new Wishlist({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage });
       await wishlistItem.save();
+      ingestLead({ kind: 'wishlist', refId: wishlistItem._id, email, propertyId, propertyTitle, vid,
+        hints: /^[a-f0-9]{24}$/i.test(String(propertyId)) ? hintsFromListing(await Property.findById(propertyId).lean().catch(() => null)) : null }).catch(() => {});
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
@@ -3111,6 +3162,8 @@ app.post('/api/price-alert',
 
       const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice });
       await alert.save();
+      ingestLead({ kind: 'price_alert', refId: alert._id, email, propertyId, propertyTitle, vid,
+        hints: /^[a-f0-9]{24}$/i.test(String(propertyId)) ? hintsFromListing(await Property.findById(propertyId).lean().catch(() => null)) : null }).catch(() => {});
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
@@ -4333,6 +4386,8 @@ app.post('/api/saved-search/:token/confirm', publicWriteLimiter, async (req, res
         // A duplicate-key race means the subscriber already exists: fine.
         if (e.code !== 11000) console.error('Saved search subscriber upsert failed:', e.message);
       }
+      await ingestLead({ kind: 'saved_search', refId: search._id, email, vid: search.vid, label: 'Saved a search: ' + (search.summary || ''),
+        hints: hintsFromCriteria(search.criteria), consent: 'Confirmed a Property Finder email alert' });
       // Tie this browser's calculator history to the address only now that the
       // owner of the address has proved it is theirs.
       await stitchCalcIdentity(search.vid, email);
@@ -4645,6 +4700,7 @@ app.get('/api/admin/me', verifyToken, async (req, res) => {
       ? defaultPermissionsForRole('admin')
       : { ...defaultPermissionsForRole('employee'), ...(account.permissions || {}) };
     res.json({
+      id: String(account._id),
       email: account.email,
       name: account.name,
       role: account.role,
@@ -6704,6 +6760,10 @@ app.post('/api/property-submissions',
         await sendEmail('glrarealty@gmail.com', `New Listing Submission: ${safeTitle}`, adminHtml);
       } catch (e) { console.error('Admin notification email error:', e.message); }
 
+      ingestLead({ kind: 'submission', refId: sub._id, name: b.submitterName, email: b.submitterEmail, phone: b.submitterPhone,
+        message: b.submitterMessage, propertyTitle: b.title, type: /LEASE/i.test(b.listingType || '') ? 'landlord' : 'seller',
+        hints: { deal: /LEASE/i.test(b.listingType || '') ? 'lease_out' : 'sell', areas: [String(b.location || '').split(',').slice(-2).join(',').trim().slice(0, 40)].filter(Boolean) },
+        attrib: b.src }).catch(() => {});
       res.json({ success: true, id: sub._id });
     } catch (err) {
       console.error('Submission create error:', err);

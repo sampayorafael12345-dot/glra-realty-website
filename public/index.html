@@ -1864,6 +1864,10 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
 </section>
 
 <!-- CONTACT FORM -->
+<style>
+html body .contact-form .cf-consent{display:flex;align-items:flex-start;gap:10px;margin:2px 0 18px;font:500 14px/1.45 'Inter',sans-serif;text-transform:none;letter-spacing:0;color:inherit;cursor:pointer}
+html body .contact-form .cf-consent input{width:20px;height:20px;min-height:0;flex:0 0 20px;margin:0;padding:0;accent-color:#ff3d00}
+</style>
 <section class="contact-form-section" id="contact-form">
   <div class="section-header">
     <div></div>
@@ -1893,6 +1897,7 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
       <textarea id="cfMessage" name="message" class="form-input" placeholder="Location, budget, property type..." rows="4"></textarea>
       <span class="field-error">Tell us a little about what you need</span>
     </div>
+    <label class="cf-consent" for="cfMarketing"><input type="checkbox" id="cfMarketing" name="marketing"><span>Also email me listings that match what I'm looking for. I can stop them any time.</span></label>
     <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> &nbsp;Send Message →</button>
     <div class="send-fallback" id="sendFallback">
       <strong>Message didn't go through</strong>
@@ -1944,7 +1949,7 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/main.js?v=116"></script>
+<script src="/js/main.js?v=118"></script>
 <script src="/js/glra-maps.js?v=117" defer></script>
 <script src="/js/smart-search.js?v=116"></script>
 <script src="/js/gallery.js?v=116" defer></script>
@@ -2335,6 +2340,7 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   // because express-validator's .optional() only skips undefined, not null. Sending null
   // breaks .isString() validation and causes a silent 400 (no Render error log).
   const payload={name,email,phone,message};
+  const mkt=document.getElementById('cfMarketing');if(mkt&&mkt.checked)payload.marketing=true;
   if(currentProperty?._id)payload.propertyId=currentProperty._id;
   if(currentProperty?.title)payload.propertyTitle=currentProperty.title;
   // On any failure: reveal the on-brand fallback panel (Messenger / prefilled email)
