@@ -264,8 +264,52 @@ const taskSchema = new mongoose.Schema({
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
     uploadedByName: { type: String, default: '' },
     uploadedAt: { type: Date, default: Date.now }
-  }]
+  }],
+  // ── Staff desk (admin "Staff" tab) ──
+  // What sort of job this is (lead, facebook, listing_fix, ...). Empty on
+  // tasks made from the plain Tasks tab.
+  kind: { type: String, default: '', trim: true, maxlength: 30, index: true },
+  checklist: [{
+    text: { type: String, required: true, maxlength: 300 },
+    done: { type: Boolean, default: false },
+    doneAt: { type: Date, default: null }
+  }],
+  // The listing a listing-fix / upload / post task is about.
+  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: null, index: true },
+  // "<propertyId>:<problem>" for tasks raised from the listing problem scan,
+  // so the same problem is never handed out twice while still open.
+  issueKey: { type: String, default: '', maxlength: 120, index: true },
+  link: { type: String, default: '', maxlength: 500 },
+  // Proof of work: the Facebook post URL, the listing link, a note.
+  proofUrl: { type: String, default: '', maxlength: 500 },
+  proofNote: { type: String, default: '', maxlength: 1000 },
+  recurrence: { type: String, enum: ['', 'daily', 'weekdays', 'weekly', 'monthly'], default: '' },
+  startedAt: { type: Date, default: null },
+  // Staff finish -> 'submitted'; the boss checks it -> 'approved' or sends it back ('returned').
+  review: { type: String, enum: ['', 'submitted', 'approved', 'returned'], default: '' },
+  reviewNote: { type: String, default: '', maxlength: 1000 },
+  reviewedAt: { type: Date, default: null },
+  points: { type: Number, default: 1, min: 0, max: 20 }
 }, { timestamps: true });
+
+// ── STAFF DAY (one per person per Manila date) ──────────────
+// Time in / time out, the status they are showing right now, and the
+// end-of-day report the boss reads.
+const staffDaySchema = new mongoose.Schema({
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  day: { type: String, required: true },            // 'YYYY-MM-DD', Manila
+  checkIn: { type: Date, default: null },
+  checkOut: { type: Date, default: null },
+  state: { type: String, default: '', maxlength: 30 }, // working / break / field / meeting / off
+  stateNote: { type: String, default: '', maxlength: 200 },
+  stateAt: { type: Date, default: null },
+  plan: { type: String, default: '', maxlength: 2000 },     // what I will do today
+  report: { type: String, default: '', maxlength: 4000 },   // what I did
+  blockers: { type: String, default: '', maxlength: 2000 },
+  mood: { type: Number, default: 0, min: 0, max: 5 },
+  bossNote: { type: String, default: '', maxlength: 2000 }
+}, { timestamps: true });
+staffDaySchema.index({ account: 1, day: 1 }, { unique: true });
 
 // ── PROPERTY SUBMISSIONS (public listing form) ─────────────
 // Owners fill out a public form to list their property. Each submission stays
@@ -1398,6 +1442,7 @@ const AlertLog          = mongoose.model('AlertLog',          alertLogSchema);
 const AuditLog          = mongoose.model('AuditLog',          auditLogSchema);
 const Account           = mongoose.model('Account',           accountSchema);
 const Task              = mongoose.model('Task',              taskSchema);
+const StaffDay          = mongoose.model('StaffDay',          staffDaySchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
@@ -1430,6 +1475,7 @@ module.exports = {
   AuditLog,
   Account,
   Task,
+  StaffDay,
   PropertySubmission,
   ScheduledEmail,
   TitlingCase,

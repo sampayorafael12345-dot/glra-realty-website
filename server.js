@@ -2968,6 +2968,11 @@ const { registerCaseRoutes, startCasesTick } = require('./server/cases');
 registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
 startCasesTick({ sendEmail, esc });
 
+// The Staff tab: scorecards, time in/out, task kinds with checklists and
+// proof, a review step, repeating tasks. Built on the Task collection.
+const { registerStaffRoutes } = require('./server/staff');
+registerStaffRoutes(app);
+
 
 
 // ============ SUBSCRIPTION ROUTES ============

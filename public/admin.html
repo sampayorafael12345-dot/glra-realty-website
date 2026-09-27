@@ -1714,6 +1714,7 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
+      <a class="nav-item" id="navStaff" data-perm="tasks_view" onclick="switchTab('staff')" style="display:none"><i class="fas fa-user-check"></i> <span id="navStaffLbl">Staff</span> <span class="nav-badge" id="staffBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="bulkmail_send" style="margin-top:6px;display:none">Outreach</div>
       <a class="nav-item" data-perm="bulkmail_send" onclick="switchTab('bulkmail')" style="display:none"><i class="fas fa-paper-plane"></i> Email Campaigns</a>
       <div class="sb-section" data-perm="titling_view" style="margin-top:6px;display:none">Titling</div>
@@ -3299,6 +3300,152 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       </div>
 
       <!-- TASKS (Monday-style internal task board) -->
+      <div id="tab-staff" style="display:none">
+      <style>
+      .sf-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+      .sf-seg{display:flex;flex-wrap:wrap;gap:0}
+      .sf-seg .hdr-btn{margin-left:-1px}
+      .sf-seg .hdr-btn.on{background:var(--ab-ink) !important;color:var(--ab-paper) !important;border-color:var(--ab-ink) !important}
+      .sf-seg .hdr-btn .sf-n{background:#de3500;color:#fff;font:700 10px/1 'JetBrains Mono',monospace;padding:3px 5px;margin-left:2px}
+      .sf-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+      @media(max-width:1100px){.sf-grid{grid-template-columns:1fr}}
+      .sf-card{border:1px solid var(--border-color);background:var(--card-bg);margin-bottom:18px}
+      .sf-card>.sf-ch{padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+      .sf-card>.sf-cb{padding:14px 16px}
+      .sf-h{font:700 10.5px/1.2 'JetBrains Mono',monospace;letter-spacing:1.3px;text-transform:uppercase;color:var(--txt-muted);margin:0}
+      .sf-who{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+      .sf-av{width:52px;height:52px;background:var(--ab-ink);color:var(--ab-paper);display:flex;align-items:center;justify-content:center;font:900 20px/1 Inter,sans-serif;position:relative;flex-shrink:0}
+      .sf-dot{position:absolute;right:-4px;bottom:-4px;width:14px;height:14px;border:2px solid var(--card-bg);background:#9a9a9a}
+      .sf-dot.online{background:#10b981}.sf-dot.idle{background:#f59e0b}
+      .sf-name{font:900 22px/1.1 Inter,sans-serif;margin:0}
+      .sf-sub{font-size:12.5px;color:var(--txt-muted);margin-top:4px}
+      .sf-state{display:inline-flex;align-items:center;gap:6px;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;padding:6px 9px;border:1px solid var(--border-color)}
+      .sf-state.working{background:rgba(16,185,129,.12);color:var(--txt-ok);border-color:currentColor}
+      .sf-state.break,.sf-state.lunch{background:rgba(245,158,11,.12);color:var(--txt-warn);border-color:currentColor}
+      .sf-state.field,.sf-state.meeting{background:rgba(45,99,187,.1);color:var(--txt-info);border-color:currentColor}
+      .sf-state.off,.sf-state.none{color:var(--txt-muted)}
+      .sf-hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+      @media(max-width:640px){.sf-hero{grid-template-columns:1fr}}
+      .sf-ring{width:128px;height:128px;position:relative}
+      .sf-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+      .sf-ring .v{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+      .sf-ring .v b{font:900 30px/1 Inter,sans-serif}
+      .sf-ring .v small{font:600 9.5px/1.2 'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:var(--txt-muted);margin-top:4px}
+      .sf-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--border-color)}
+      @media(max-width:640px){.sf-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      .sf-kpi{padding:10px 12px;border-right:1px solid var(--border-color);border-bottom:1px solid var(--border-color);min-width:0}
+      .sf-kpi b{display:block;font:900 22px/1.1 Inter,sans-serif}
+      .sf-kpi span{display:block;font:600 9.5px/1.3 'JetBrains Mono',monospace;letter-spacing:.7px;text-transform:uppercase;color:var(--txt-muted);margin-top:3px}
+      .sf-kpi.hot b{color:var(--txt-bad)}
+      .sf-kpi.ok b{color:var(--txt-ok)}
+      .sf-bars{display:flex;align-items:flex-end;gap:3px;height:54px;margin-top:12px}
+      .sf-bars i{flex:1;background:var(--ab-ink);min-height:2px;position:relative;opacity:.85}
+      .sf-bars i.z{background:var(--border-color);opacity:.35}
+      .sf-bars i.t{background:#de3500;opacity:1}
+      .sf-barl{display:flex;justify-content:space-between;font:600 9.5px/1 'JetBrains Mono',monospace;color:var(--txt-muted);margin-top:4px}
+      .sf-grp{margin-bottom:18px}
+      .sf-grp>.sf-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+      .sf-grp.bad>.sf-h{color:var(--txt-bad)}
+      .sf-t{border:1px solid var(--border-color);background:var(--card-bg);margin-bottom:8px}
+      .sf-t.overdue{border-left:4px solid #de3500}
+      .sf-t.returned{border-left:4px solid #f59e0b}
+      .sf-t.stuck{border-left:4px solid #bf2121}
+      .sf-t.done{opacity:.8}
+      .sf-t>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px}
+      .sf-t>summary::-webkit-details-marker{display:none}
+      .sf-ki{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--ab-paper-2);border:1px solid var(--border-color);font-size:14px}
+      .sf-tt{font-weight:700;font-size:14px;line-height:1.3;word-break:break-word}
+      .sf-tm{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:11.5px;color:var(--txt-muted);margin-top:3px;font-family:'JetBrains Mono',monospace}
+      .sf-tm .bad{color:var(--txt-bad);font-weight:700}
+      .sf-tm .warn{color:var(--txt-warn);font-weight:700}
+      .sf-tm .ok{color:var(--txt-ok);font-weight:700}
+      .sf-pill{font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.6px;text-transform:uppercase;padding:4px 6px;border:1px solid var(--border-color);white-space:nowrap}
+      .sf-pill.todo{color:var(--txt-muted)}.sf-pill.in_progress{color:var(--txt-info);border-color:currentColor}
+      .sf-pill.stuck{color:var(--txt-bad);border-color:currentColor}.sf-pill.done{color:var(--txt-ok);border-color:currentColor}
+      .sf-pill.submitted{color:var(--txt-warn);border-color:currentColor}.sf-pill.returned{color:#fff;background:#b45309;border-color:#b45309}
+      .sf-tb{padding:4px 12px 14px 56px;border-top:1px dashed var(--border-color)}
+      @media(max-width:560px){.sf-tb{padding-left:12px}}
+      .sf-desc{font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin:10px 0}
+      .sf-cl{list-style:none;margin:8px 0;padding:0}
+      .sf-cl li{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13.5px;line-height:1.45}
+      .sf-cl input{width:18px;height:18px;accent-color:#ff3d00;flex-shrink:0;margin-top:1px;cursor:pointer}
+      .sf-cl li.d span{text-decoration:line-through;color:var(--txt-muted)}
+      .sf-prog{height:4px;background:var(--ab-paper-2);outline:1px solid rgba(128,128,128,.35);margin-top:6px;position:relative;max-width:180px}
+      .sf-prog i{position:absolute;left:0;top:0;bottom:0;background:#10b981}
+      .sf-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+      .sf-note{font-size:12.5px;padding:8px 10px;background:rgba(245,158,11,.1);border-left:3px solid #f59e0b;margin:8px 0;white-space:pre-wrap}
+      .sf-note.ok{background:rgba(16,185,129,.08);border-color:#10b981}
+      .sf-upd{font-size:12.5px;line-height:1.5;padding:6px 0;border-bottom:1px solid var(--ab-paper-2)}
+      .sf-upd small{color:var(--txt-muted);font-family:'JetBrains Mono',monospace;font-size:10.5px}
+      .sf-kinds{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+      html body .sf-kind{display:flex !important;gap:10px;align-items:flex-start;text-align:left;padding:11px 12px !important;border:1px solid var(--border-color) !important;background:var(--card-bg) !important;color:var(--text-color) !important;cursor:pointer;border-radius:0 !important;font:inherit !important;min-height:64px}
+      html body .sf-kind:hover{border-color:#ff3d00 !important;box-shadow:3px 3px 0 #ff3d00}
+      .sf-kind i{font-size:16px;width:18px;margin-top:2px;color:var(--txt-hot)}
+      .sf-kind b{display:block;font-size:13px;line-height:1.25}
+      .sf-kind small{display:block;font-size:11px;color:var(--txt-muted);line-height:1.35;margin-top:2px}
+      .sf-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--ab-paper-2)}
+      .sf-row input[type=checkbox]{width:17px;height:17px;accent-color:#ff3d00}
+      .sf-row b{font-size:13.5px;display:block;line-height:1.35;word-break:break-word}
+      .sf-row small{font-size:11.5px;color:var(--txt-muted);display:block;margin-top:2px}
+      .sf-row .given{font:700 10px/1 'JetBrains Mono',monospace;color:var(--txt-ok);text-transform:uppercase;letter-spacing:.6px}
+      .sf-chip{display:inline-block;font-size:11px;padding:3px 6px;border:1px solid var(--border-color);margin:3px 4px 0 0}
+      .sf-chip.err{color:var(--txt-bad);border-color:currentColor}
+      .sf-chip.stale{color:var(--txt-warn);border-color:currentColor}
+      .sf-bulk{position:sticky;bottom:0;z-index:5;background:var(--ab-ink);color:var(--ab-paper);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+      .sf-bulk .finput{padding:7px 9px;font-size:13px;background:var(--ab-paper);color:var(--ab-ink)}
+      .sf-bulk .hdr-btn{color:var(--ab-paper);border-color:var(--ab-paper)}
+      .sf-day{border:1px solid var(--border-color);padding:12px 14px;margin-bottom:10px}
+      .sf-day .dh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font:700 12px/1.3 'JetBrains Mono',monospace}
+      .sf-day p{margin:6px 0 0;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+      .sf-day p b{font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:var(--txt-muted);display:block;margin-bottom:2px}
+      .sf-states{display:flex;flex-wrap:wrap;gap:6px}
+      .sf-states .hdr-btn.on{background:#de3500 !important;color:#fff !important;border-color:#de3500 !important}
+      .sf-mood{display:flex;gap:4px}
+      .sf-mood .hdr-btn{padding:6px 10px}
+      .sf-mood .hdr-btn.on{background:var(--ab-ink) !important;color:var(--ab-paper) !important}
+      .sf-big{font-size:15px !important;padding:12px 18px !important}
+      .sf-empty{padding:26px 14px;text-align:center;color:var(--txt-muted);font-size:13.5px}
+      .sf-legend{font-size:12.5px;color:var(--txt-muted);line-height:1.55;margin:0 0 12px}
+      </style>
+        <div class="sf-top">
+          <div class="sf-seg" id="sfSeg"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="hdr-btn primary sf-mgr" onclick="sfOpenNew()"><i class="fas fa-plus"></i> New task</button>
+          </div>
+        </div>
+        <div id="sfBody"><div class="sf-empty">Loading…</div></div>
+      </div>
+
+      <!-- Staff tab: new task -->
+      <div class="modal-ov" id="sfTaskModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2001;overflow:auto;padding:24px 16px" role="dialog" aria-modal="true" aria-labelledby="sfTaskH">
+        <div style="background:var(--card-bg);max-width:640px;width:98%;border:1px solid var(--border-color);margin:0 auto">
+          <div style="background:var(--navy);padding:14px 20px;display:flex;justify-content:space-between;align-items:center"><div id="sfTaskH" style="font-size:20px;color:#fff;font-weight:800">New task</div><button class="hdr-btn" onclick="sfTaskClose()" style="color:#fff;border-color:rgba(255,255,255,.35)" aria-label="Close"><i class="fas fa-times"></i></button></div>
+          <div style="padding:18px 20px" class="ld-g">
+            <label class="ld-f"><span>Kind of task</span><select class="finput" id="sfTKind" onchange="sfKindPicked(true)"></select></label>
+            <label class="ld-f"><span>Give it to</span><select class="finput" id="sfTWho"></select></label>
+            <label class="ld-f full"><span>Task</span><input class="finput" id="sfTTitle" maxlength="200" autocomplete="off"></label>
+            <label class="ld-f full"><span>Details / instructions</span><textarea class="finput" id="sfTDesc" rows="3"></textarea></label>
+            <label class="ld-f full"><span>Steps (one per line; they tick each one off)</span><textarea class="finput" id="sfTSteps" rows="5"></textarea></label>
+            <label class="ld-f"><span>Due</span><input class="finput" id="sfTDue" type="datetime-local"></label>
+            <label class="ld-f"><span>Priority</span><select class="finput" id="sfTPri"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Urgent</option></select></label>
+            <label class="ld-f"><span>Repeat</span><select class="finput" id="sfTRec"><option value="">Just once</option><option value="daily">Every day</option><option value="weekdays">Every weekday (Mon-Fri)</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></label>
+            <label class="ld-f"><span>Points (how big a job)</span><select class="finput" id="sfTPts"><option value="1">1 · quick</option><option value="2">2 · normal</option><option value="3">3 · big</option><option value="5">5 · very big</option></select></label>
+            <label class="ld-f full"><span>Listing (optional)</span><input class="finput" id="sfTProp" list="sfPropList" placeholder="Start typing a listing title" autocomplete="off"><datalist id="sfPropList"></datalist></label>
+            <label class="ld-f full"><span>Link (optional: a Facebook page, a Drive folder, a portal)</span><input class="finput" id="sfTLink" type="url" placeholder="https://"></label>
+          </div>
+          <div style="padding:14px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:8px"><button class="hdr-btn" onclick="sfTaskClose()">Cancel</button><button class="hdr-btn primary" id="sfTSave" onclick="sfSaveNew()"><i class="fas fa-paper-plane"></i> Give task</button></div>
+        </div>
+      </div>
+
+      <!-- Staff tab: small question box (done / stuck / send back) -->
+      <div class="modal-ov" id="sfDlg" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2002;overflow:auto;padding:24px 16px" role="dialog" aria-modal="true" aria-labelledby="sfDlgH">
+        <div style="background:var(--card-bg);max-width:520px;width:98%;border:1px solid var(--border-color);margin:0 auto">
+          <div style="background:var(--navy);padding:14px 20px;display:flex;justify-content:space-between;align-items:center"><div id="sfDlgH" style="font-size:19px;color:#fff;font-weight:800"></div><button class="hdr-btn" onclick="sfDlgClose()" style="color:#fff;border-color:rgba(255,255,255,.35)" aria-label="Close"><i class="fas fa-times"></i></button></div>
+          <div style="padding:18px 20px" id="sfDlgBody"></div>
+          <div style="padding:14px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:8px"><button class="hdr-btn" onclick="sfDlgClose()">Cancel</button><button class="hdr-btn primary" id="sfDlgOk"></button></div>
+        </div>
+      </div>
+
       <div id="tab-tasks" style="display:none">
         <!-- Saved views chip bar -->
         <div class="tasks-views-bar" id="tViewsBar">
@@ -4209,6 +4356,7 @@ function loadAll(){
   loadStats();loadAllProps();loadInquiries();loadSubscribers();loadCalcStats();loadAlerts();loadHeroImages();
   if(isAdmin()){loadAccounts();}
   if(hasPerm('tasks_view')) loadTasksData();
+  if(hasPerm('tasks_view')){ const l=document.getElementById('navStaffLbl'); if(l) l.textContent=hasPerm('tasks_create')?'Staff':'My Desk'; sfLoad(); }
   if(hasPerm('submissions_view')) loadSubmissionStats();
   if(hasPerm('titling_view')) loadTitling();
   if(hasPerm('cases_view')) loadCases();
@@ -6052,6 +6200,8 @@ async function restoreSession(){
 
 // If the user can't see the dashboard, drop them on the first tab they CAN see.
 function landOnAllowedTab(){
+  // Staff (employees who do not hand out tasks) start on their own desk.
+  if(CU && CU.role==='employee' && hasPerm('tasks_view') && !hasPerm('tasks_create')){ switchTab('staff'); return; }
   if(hasPerm('dashboard_view')) return; // dashboard is the default landing tab
   const order = ['properties','tasks','submissions','titling','notarial','inquiries'];
   const first = order.find(t => {
@@ -10117,7 +10267,7 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing',leads:'Leads'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing',leads:'Leads',staff:hasPerm('tasks_create')?'Staff':'My Desk'};
   const subs={
     dashboard:'Everything that needs you today, in one place',
     properties:'Your listings — add, edit and publish what the website shows',
@@ -10134,7 +10284,8 @@ function switchTab(name){
     cases:'Matters the firm is handling — hearings, deadlines, documents and fees',
     agents:'Your field agents — scorecards, pipelines, and lead journals',
     leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders',
-    leads:'Every person who reached out, in one place: answer fast, follow up, close'};
+    leads:'Every person who reached out, in one place: answer fast, follow up, close',
+    staff:hasPerm('tasks_create')?'What your staff is doing, how far along they are, and what to give them next':'Your day, your tasks, and how you are doing'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   const subEl = document.getElementById('pageSub');
   // The dashboard keeps its personalised greeting; every other tab gets its
@@ -10179,6 +10330,7 @@ function switchTab(name){
     loadTasksData();
   }
   if(name==='leads' && hasPerm('leads_view')){ ldSetView(LD.view); loadLeads(); }
+  if(name==='staff' && hasPerm('tasks_view')){ sfRender(); sfLoad(); }
   // Refresh agents on tab visit — the Agents tab is admin-only
   if(name==='agents' && isAdmin()){
     loadAgentsTab();
@@ -12684,7 +12836,8 @@ function renderLeasingPanel(){
     leaseModal: 'closeLeaseModal', caseModal: 'closeCaseModal', conflictModal: 'closeConflictCheck',
     impModal: 'impClose', tlImpModal: 'tlImpClose', bulkAssignModal: 'closeBulkAssignModal',
     csHearDlg: 'closeCsHearDlg', csLightbox: 'closeCsLightbox',
-    leadModal: 'closeLeadModal', leadAddModal: 'closeLeadAdd', leadImpModal: 'closeLeadImport'
+    leadModal: 'closeLeadModal', leadAddModal: 'closeLeadAdd', leadImpModal: 'closeLeadImport',
+    sfTaskModal: 'sfTaskClose', sfDlg: 'sfDlgClose'
   };
   // Slide-over panels already have Escape handling of their own; they are
   // listed so the manager knows they count as "something is open".
@@ -13582,6 +13735,646 @@ window.addEventListener('load', function(){ if(location.hash === '#leads') { var
 setInterval(function(){ if(LD.loaded && CU && hasPerm('leads_view')) loadLeads(); }, 120000);
 </script>
 
+<script>
+// ════════════════════════════════════════════════════════════
+// STAFF TAB — the boss hands out work and watches progress; the staff member
+// sees "My desk": time in/out, what they are doing, their tasks, their score.
+// Server: server/staff.js (tasks are ordinary Task documents).
+// ════════════════════════════════════════════════════════════
+const SF_KINDS = {
+  lead:          { label:'Reply to a new lead', icon:'fas fa-bullseye', pts:2, pri:'high', dueH:2, hint:'Someone asked about a property',
+    steps:['Call or message them within the hour','Ask budget, area, timing and how they will pay','Log the call or message on their card in the Leads tab','Set the next follow-up date'] },
+  followup:      { label:'Follow up a lead', icon:'fas fa-phone', pts:1, pri:'medium', dueH:24, hint:'Keep a warm lead warm',
+    steps:['Read their history in the Leads tab first','Call, Viber or text them','Send 2-3 matching listings if they are still looking','Log it and set the next follow-up'] },
+  email:         { label:'Answer email / inbox', icon:'fas fa-envelope', pts:1, pri:'medium', dueH:4, hint:'Enquiries, owners, clients',
+    steps:['Read the whole thread','Reply politely with the GLRA sign-off','Attach the brochure or listing link if they asked','Mark the enquiry handled'] },
+  facebook:      { label:'Post on Facebook', icon:'fab fa-facebook-f', pts:2, pri:'medium', dueH:24, proof:true, hint:'Page post + property groups',
+    steps:['Pick 6-10 of the best photos (best room first)','Write the caption: price, location, size, bedrooms, 3 highlights, contact number','Add the glrarealty.com listing link','Post on the GLRA Facebook page','Share it to at least 3 property groups','Paste the post link when you mark it done'] },
+  social:        { label:'Instagram / TikTok', icon:'fab fa-instagram', pts:2, pri:'low', dueH:48, proof:true, hint:'Reel, carousel or short video',
+    steps:['Make a Reel or carousel from the listing photos or video','Caption, hashtags and the location tag','Post it','Paste the link when you mark it done'] },
+  portal:        { label:'Post on a property portal', icon:'fas fa-globe-asia', pts:2, pri:'low', dueH:48, proof:true, hint:'Lamudi, Marketplace, etc.',
+    steps:['Sign in to the portal','Copy the details exactly as on glrarealty.com (same price!)','Upload the photos','Paste the live link when you mark it done'] },
+  upload:        { label:'Upload a new listing', icon:'fas fa-cloud-upload-alt', pts:3, pri:'medium', dueH:48, proof:true, hint:'Put a property on the website',
+    steps:['Get the complete details and photos from the owner or submission','Upload at least 8 clear photos, best one first','Title: type, building or village, city','Price, floor area, lot area, bedrooms, bathrooms, parking','Description of at least three short paragraphs','Check the pin on the map','Open the live page on a phone and check it','Paste the listing link when you mark it done'] },
+  photos:        { label:'Improve photos', icon:'fas fa-camera', pts:2, pri:'low', dueH:72, hint:'Dark, blurry or too few photos',
+    steps:['Replace dark or blurry photos','Put the best photo first','Make sure there are at least 8 photos','Check the live page'] },
+  listing_fix:   { label:'Fix a listing error', icon:'fas fa-wrench', pts:1, pri:'medium', dueH:24, hint:'Something wrong on a live listing',
+    steps:['Open the listing editor','Fix the problem','Save and check the live page'] },
+  inconsistency: { label:'Fix an inconsistency', icon:'fas fa-not-equal', pts:2, pri:'medium', dueH:48, hint:'Website, flyer and post disagree',
+    steps:['Compare the website, the flyer, the Facebook post and what the owner said','Ask Ma\'am which figure is correct','Correct it everywhere it is wrong','Write down what you changed'] },
+  stale:         { label:'Check if still available', icon:'fas fa-question-circle', pts:1, pri:'medium', dueH:48, hint:'Listing not updated in months',
+    steps:['Call or message the owner','Confirm the price and that it is still available','Update the listing, or mark it sold / leased','If nothing changed, press "Still available" on the dashboard'] },
+  owner_call:    { label:'Call an owner', icon:'fas fa-user-tie', pts:1, pri:'medium', dueH:24, hint:'Price, documents, keys, viewing',
+    steps:['Call the owner','Ask the questions in the details','Write their answers in the notes'] },
+  viewing:       { label:'Arrange a viewing', icon:'fas fa-calendar-check', pts:2, pri:'high', dueH:24, hint:'Client, owner and time agreed',
+    steps:['Agree a date and time with the client','Confirm with the owner or building admin','Send the client the address and a reminder the day before','Log the viewing in the Leads tab'] },
+  docs:          { label:'Prepare documents', icon:'fas fa-file-signature', pts:2, pri:'medium', dueH:48, hint:'Print, scan, file, courier',
+    steps:['List the documents needed','Prepare, print or scan them','Have them checked','File a copy'] },
+  errand:        { label:'Errand / field work', icon:'fas fa-route', pts:2, pri:'medium', dueH:24, hint:'Out of the office',
+    steps:['Set your status to "Out on field work"','Do the errand','Take a photo of the receipt or proof','Set your status back to "Working"'] },
+  research:      { label:'Research / comparables', icon:'fas fa-search-dollar', pts:2, pri:'low', dueH:72, hint:'Prices, competitors, areas',
+    steps:['Find at least 5 similar listings nearby','Note each price and price per sqm','Write a short summary with the link to your list'] },
+  content:       { label:'Write content', icon:'fas fa-pen-nib', pts:2, pri:'low', dueH:72, hint:'Captions, blog, descriptions',
+    steps:['Write the draft','Check spelling, prices and names','Send it to Ma\'am for checking'] },
+  admin:         { label:'Office / admin work', icon:'fas fa-folder-open', pts:1, pri:'low', dueH:48, hint:'Filing, encoding, clean-up', steps:[] },
+  other:         { label:'Something else', icon:'fas fa-thumbtack', pts:1, pri:'medium', dueH:24, hint:'Anything not listed', steps:[] }
+};
+// Routines: one click sets up tasks that come back by themselves.
+const SF_ROUTINES = [
+  { label:'Daily: answer every new lead by 10 am', kind:'lead', rec:'weekdays', hour:10, title:'Answer every new lead and enquiry',
+    steps:['Open the Leads tab and the Inquiries tab','Reply to everyone waiting','Log every reply','Set follow-up dates'] },
+  { label:'Daily: one listing on Facebook', kind:'facebook', rec:'weekdays', hour:15, title:'Post one listing on Facebook' },
+  { label:'Daily: follow-ups due today', kind:'followup', rec:'weekdays', hour:16, title:'Do every follow-up due today',
+    steps:['Leads tab: sort by "Next follow-up"','Contact each one due today','Log each contact and set the next date'] },
+  { label:'Weekly: check 10 oldest listings', kind:'stale', rec:'weekly', hour:12, title:'Check that the 10 oldest listings are still available' },
+  { label:'Weekly: fix listing problems', kind:'listing_fix', rec:'weekly', hour:17, title:'Fix the listing problems on the dashboard',
+    steps:['Dashboard: open "Listing health"','Fix every red problem','Fix at least 5 of the others'] },
+  { label:'Monthly: portal refresh', kind:'portal', rec:'monthly', hour:12, title:'Refresh GLRA listings on the property portals',
+    steps:['Remove sold or leased listings from every portal','Correct any price that changed','Post new listings from this month'] }
+];
+// What to tell the staff member about each problem the scan finds.
+const SF_FIX_TIPS = {
+  price:'Check the price with Ma\'am or the owner. Sale prices go in "Price"; rentals go in "Monthly rental".',
+  city:'The title names one city and the address another. Check which is right and fix the other.',
+  typo:'Fix the spelling or brackets in the title or address.',
+  map:'The address could not be found on the map. Make the address more exact (building, street, barangay, city).',
+  photos:'Add more photos (at least 8), best one first.',
+  desc:'Write a longer description: the unit, the building, the neighbourhood, who it suits.',
+  area:'Add the floor area and/or the lot area in square metres.',
+  stale:'Call the owner: is it still available, still at this price? Update the listing or mark it sold/leased.',
+  dup:'Two listings have the same title. Check whether they are the same property. If so, tell Ma\'am which one to remove; if not, make the titles different.',
+  ppsqm:'The price per square metre is far from similar listings in the same city. Check the price and the floor area; one of them is probably mistyped.',
+  tiny:'The floor area looks mistyped. Check the size with the owner.'
+};
+
+const SF = { view:'', data:null, me:null, sel:'', sugg:null, suggSel:new Set(), probSel:new Set(), loading:false };
+const sfMgr = () => hasPerm('tasks_create');
+const sfKind = k => SF_KINDS[k] || SF_KINDS.other;
+const sfDay = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
+const sfTime = d => d ? new Date(d).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'}) : '';
+const sfInit = n => String(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const SF_STATES = { working:['Working','fa-laptop'], break:['On a short break','fa-coffee'], lunch:['At lunch','fa-utensils'], field:['Out on field work','fa-car'], meeting:['In a meeting','fa-users'], off:['Timed out','fa-moon'] };
+
+function sfDue(t){
+  if(!t.dueDate) return { txt:'No due date', cls:'' };
+  const d = new Date(t.dueDate), today = sfDay(Date.now()), dd = sfDay(d);
+  const tm = d.getHours()||d.getMinutes() ? ' ' + sfTime(d) : '';
+  if(t.status === 'done') return { txt:'Due ' + fmtDateShort(d), cls:'' };
+  if(dd < today){ const n = Math.round((new Date(today) - new Date(dd))/864e5); return { txt:`${n} day${n===1?'':'s'} late`, cls:'bad' }; }
+  if(dd === today) return { txt:(d < new Date() ? 'Late today' : 'Due today') + tm, cls: d < new Date() ? 'bad' : 'warn' };
+  if(dd === sfDay(Date.now()+864e5)) return { txt:'Tomorrow' + tm, cls:'' };
+  return { txt:d.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'}) + tm, cls:'' };
+}
+function sfGroups(tasks){
+  const today = sfDay(Date.now()), weekAgo = Date.now() - 7*864e5;
+  const g = { returned:[], stuck:[], overdue:[], today:[], upcoming:[], nodate:[], waiting:[], done:[] };
+  tasks.forEach(t => {
+    if(t.status === 'done'){
+      if(t.review === 'submitted') g.waiting.push(t);
+      else if(t.completedAt && new Date(t.completedAt).getTime() > weekAgo) g.done.push(t);
+      return;
+    }
+    if(t.review === 'returned') return g.returned.push(t);
+    if(t.status === 'stuck') return g.stuck.push(t);
+    if(!t.dueDate) return g.nodate.push(t);
+    const dd = sfDay(t.dueDate);
+    if(dd < today) g.overdue.push(t); else if(dd === today) g.today.push(t); else g.upcoming.push(t);
+  });
+  const pr = { critical:0, high:1, medium:2, low:3 };
+  const byDue = (a,b) => (new Date(a.dueDate||8.64e15) - new Date(b.dueDate||8.64e15)) || (pr[a.priority]-pr[b.priority]);
+  Object.values(g).forEach(a => a.sort(byDue));
+  g.done.sort((a,b) => new Date(b.completedAt) - new Date(a.completedAt));
+  return g;
+}
+const SF_GROUP_META = [
+  ['returned','Sent back to fix','bad'], ['stuck','Stuck','bad'], ['overdue','Late','bad'], ['today','Today',''],
+  ['upcoming','Coming up',''], ['nodate','No due date',''], ['waiting','Done, waiting for Ma\'am to check',''], ['done','Finished this week','']
+];
+
+// ── LOAD ─────────────────────────────────────────────────────
+async function sfLoad(toast){
+  if(!hasPerm('tasks_view') || SF.loading) return;
+  SF.loading = true;
+  try{
+    if(sfMgr()){
+      const r = await apiFetch('/api/admin/staff/overview'); const d = await r.json();
+      if(!r.ok) throw new Error(d.error || 'Could not load');
+      SF.data = d;
+      if(!SF.sel || !d.staff.some(s => s._id === SF.sel)) SF.sel = d.staff[0] ? d.staff[0]._id : '';
+      if(!SF.view) SF.view = 'team';
+    } else {
+      const r = await apiFetch('/api/admin/staff/me'); const d = await r.json();
+      if(!r.ok) throw new Error(d.error || 'Could not load');
+      SF.me = d; SF.view = SF.view && SF.view !== 'team' ? SF.view : 'desk';
+    }
+    sfBadge(); sfRender();
+    if(toast) showToast('Updated');
+  }catch(e){
+    const b = document.getElementById('sfBody'); if(b) b.innerHTML = `<div class="sf-empty">Could not load: ${esc(e.message)}</div>`;
+  }finally{ SF.loading = false; }
+}
+function sfBadge(){
+  const el = document.getElementById('staffBadge'); if(!el) return;
+  let n = 0;
+  if(sfMgr() && SF.data) n = SF.data.reviewQueue.length;
+  else if(SF.me) n = SF.me.stats.overdue + SF.me.stats.dueToday + SF.me.stats.returned;
+  el.textContent = n; el.style.display = n ? '' : 'none';
+}
+function sfSetView(v){ SF.view = v; sfRender(); if(v === 'hand' && !SF.sugg) sfLoadSugg(); }
+
+function sfRender(){
+  const seg = document.getElementById('sfSeg'), body = document.getElementById('sfBody');
+  if(!seg || !body) return;
+  document.querySelectorAll('#tab-staff .sf-mgr').forEach(b => b.style.display = sfMgr() ? '' : 'none');
+  let views;
+  if(sfMgr()){
+    const rq = SF.data ? SF.data.reviewQueue.length : 0;
+    views = [['team','fa-user-check','Team'],['hand','fa-hand-holding','Hand out work'],['probs','fa-stethoscope','Listing problems'],['review','fa-clipboard-check','To check',rq],['reports','fa-book','Daily reports']];
+  } else {
+    views = [['desk','fa-briefcase','My desk'],['history','fa-book','My days']];
+  }
+  seg.innerHTML = views.map(([k,ic,l,n]) => `<button class="hdr-btn${SF.view===k?' on':''}" onclick="sfSetView('${k}')"><i class="fas ${ic}"></i> ${l}${n?`<span class="sf-n">${n}</span>`:''}</button>`).join('');
+  if(sfMgr() && SF.data && !SF.data.staff.length && SF.view !== 'hand'){
+    body.innerHTML = `<div class="sf-card"><div class="sf-cb sf-empty"><i class="fas fa-user-plus" style="font-size:26px;display:block;margin-bottom:10px"></i>There are no staff accounts yet.<br>A staff member signs up on the admin sign-in page, then you approve them in <a href="#" onclick="switchTab('accounts');return false">Accounts</a> as an <b>employee</b>.</div></div>`;
+    return;
+  }
+  const fn = { team:sfRenderTeam, hand:sfRenderHand, probs:sfRenderProbs, review:sfRenderReview, reports:sfRenderReports, desk:sfRenderDesk, history:sfRenderHistory }[SF.view];
+  body.innerHTML = fn ? fn() : '';
+}
+
+// ── SHARED PIECES ────────────────────────────────────────────
+function sfPickStaff(){
+  if(!SF.data || SF.data.staff.length < 2) return '';
+  return `<div class="sf-states" style="margin-bottom:14px">${SF.data.staff.map(s => `<button class="hdr-btn${s._id===SF.sel?' on':''}" onclick="SF.sel='${s._id}';sfRender()">${esc(s.name)}</button>`).join('')}</div>`;
+}
+function sfRing(pct, big, small){
+  const r = 52, c = 2*Math.PI*r, off = c*(1-Math.max(0,Math.min(100,pct))/100);
+  const col = pct >= 100 ? '#10b981' : pct >= 50 ? '#de3500' : '#de3500';
+  return `<div class="sf-ring"><svg viewBox="0 0 128 128" aria-hidden="true"><circle cx="64" cy="64" r="${r}" fill="none" stroke="var(--border-color)" stroke-opacity=".25" stroke-width="12"/><circle cx="64" cy="64" r="${r}" fill="none" stroke="${col}" stroke-width="12" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg><div class="v"><b>${big}</b><small>${small}</small></div></div>`;
+}
+function sfBars(daily){
+  const max = Math.max(1, ...daily.map(d => d.done));
+  return `<div class="sf-bars" role="img" aria-label="Tasks finished each day, last 14 days">${daily.map((d,i) => `<i class="${d.done?'':'z'}${i===daily.length-1?' t':''}" style="height:${Math.max(4, Math.round(100*d.done/max))}%" title="${esc(new Date(d.day).toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'}))}: ${d.done} done"></i>`).join('')}</div><div class="sf-barl"><span>14 days ago</span><span>today</span></div>`;
+}
+function sfKpis(st){
+  const k = (v,l,c) => `<div class="sf-kpi ${c||''}"><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="sf-kpis">${k(st.open,'Open tasks')}${k(st.overdue,'Late',st.overdue?'hot':'')}${k(st.dueToday,'Due today')}${k(st.stuck,'Stuck',st.stuck?'hot':'')}
+    ${k(st.doneWeek,'Done · 7 days','ok')}${k(st.pointsWeek,'Points · 7 days')}${k(st.onTimeRate==null?'—':st.onTimeRate+'%','On time · 30 days')}${k(st.streak+(st.streak===1?' day':' days'),'Streak')}</div>`;
+}
+function sfStateChip(day){
+  const st = day && day.state ? day.state : 'none';
+  if(st === 'none') return `<span class="sf-state none"><i class="fas fa-minus-circle"></i> Not timed in today</span>`;
+  const m = SF_STATES[st] || [st,'fa-circle'];
+  return `<span class="sf-state ${st}"><i class="fas ${m[1]}"></i> ${esc(m[0])}${day.stateAt?' · since '+sfTime(day.stateAt):''}</span>${day.stateNote?` <span class="sf-sub" style="display:inline">${esc(day.stateNote)}</span>`:''}`;
+}
+function sfTaskCard(t, opts){
+  const k = sfKind(t.kind), due = sfDue(t);
+  const cl = t.checklist || [], nDone = cl.filter(c => c.done).length;
+  const late = t.status !== 'done' && due.cls === 'bad';
+  const cls = ['sf-t', t.status, late?'overdue':'', t.review==='returned'&&t.status!=='done'?'returned':''].join(' ');
+  const pill = t.status==='done' ? (t.review==='submitted' ? '<span class="sf-pill submitted">To check</span>' : '<span class="sf-pill done">Done</span>')
+    : t.review==='returned' ? '<span class="sf-pill returned">Sent back</span>'
+    : `<span class="sf-pill ${t.status}">${({todo:'To do',in_progress:'Doing',stuck:'Stuck'})[t.status]||t.status}</span>`;
+  const mine = !opts.manager || (opts.manager && opts.self);
+  const prop = t.propertyId && Array.isArray(allProps) ? allProps.find(p => p._id === t.propertyId) : null;
+  let acts = [];
+  if(t.status !== 'done'){
+    if(t.status === 'todo' || t.status === 'stuck') acts.push(`<button class="hdr-btn" onclick="sfAct('${t._id}','start')"><i class="fas fa-play"></i> Start</button>`);
+    acts.push(`<button class="hdr-btn primary" onclick="sfDone('${t._id}')"><i class="fas fa-check"></i> Done</button>`);
+    if(t.status !== 'stuck') acts.push(`<button class="hdr-btn" onclick="sfStuck('${t._id}')"><i class="fas fa-hand-paper"></i> I'm stuck</button>`);
+  } else if(opts.manager && t.review === 'submitted'){
+    acts.push(`<button class="hdr-btn primary" onclick="sfApprove('${t._id}')"><i class="fas fa-thumbs-up"></i> Approve</button><button class="hdr-btn" onclick="sfReturn('${t._id}')"><i class="fas fa-undo"></i> Send back</button>`);
+  }
+  if(prop && hasPerm('properties_edit')) acts.push(`<button class="hdr-btn" onclick="openEditProp('${prop._id}')"><i class="fas fa-edit"></i> Open listing editor</button>`);
+  if(t.propertyId) acts.push(`<a class="hdr-btn" href="/property/${esc(t.propertyId)}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Live page</a>`);
+  if(t.link) acts.push(`<a class="hdr-btn" href="${esc(safeUrl(t.link.startsWith('/')?location.origin+t.link:t.link))}" target="_blank" rel="noopener"><i class="fas fa-link"></i> Open link</a>`);
+  acts.push(`<button class="hdr-btn" onclick="sfComment('${t._id}')"><i class="fas fa-comment"></i> Note</button>`);
+  if(opts.manager) acts.push(`<button class="hdr-btn" onclick="openTaskPanel('${t._id}')"><i class="fas fa-sliders-h"></i> Edit</button>`);
+  const upd = (t.updates||[]).slice(-4).reverse();
+  return `<details class="${cls}"${opts.open?' open':''}>
+    <summary><span class="sf-ki"><i class="${k.icon}"></i></span>
+      <span style="min-width:0"><span class="sf-tt">${esc(t.title)}</span>
+        <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.priority==='critical'||t.priority==='high'?`<span class="bad">${t.priority==='critical'?'Urgent':'High'}</span>`:''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
+        ${cl.length?`<span class="sf-prog" style="display:block"><i style="width:${Math.round(100*nDone/cl.length)}%"></i></span>`:''}
+      </span>${pill}</summary>
+    <div class="sf-tb">
+      ${t.review==='returned'&&t.reviewNote?`<div class="sf-note"><b>Ma'am says:</b> ${esc(t.reviewNote)}</div>`:''}
+      ${t.review==='approved'&&t.reviewNote?`<div class="sf-note ok"><b>Checked:</b> ${esc(t.reviewNote)}</div>`:''}
+      ${t.description?`<div class="sf-desc">${esc(t.description)}</div>`:''}
+      ${cl.length?`<ul class="sf-cl">${cl.map((c,i) => `<li class="${c.done?'d':''}"><input type="checkbox" ${c.done?'checked':''} ${t.status==='done'||!mine?'disabled':''} onchange="sfAct('${t._id}','check',{idx:${i},done:this.checked})" aria-label="Step ${i+1}"><span>${esc(c.text)}</span></li>`).join('')}</ul>`:''}
+      ${t.proofUrl||t.proofNote?`<div class="sf-note ok"><b>Proof:</b> ${t.proofUrl?`<a href="${esc(safeUrl(t.proofUrl))}" target="_blank" rel="noopener">${esc(t.proofUrl)}</a> `:''}${esc(t.proofNote||'')}</div>`:''}
+      <div class="sf-acts">${acts.join('')}</div>
+      ${upd.length?`<div style="margin-top:10px">${upd.map(u => `<div class="sf-upd"><small>${esc(u.authorName||'')} · ${fmtDate(u.createdAt)}</small><br>${esc(u.text)}</div>`).join('')}</div>`:''}
+    </div></details>`;
+}
+function sfTaskList(tasks, opts){
+  const g = sfGroups(tasks);
+  const out = SF_GROUP_META.filter(([k]) => g[k].length).map(([k,l,c]) => `<div class="sf-grp ${c}"><div class="sf-h"><span>${l}</span><span>${g[k].length}</span></div>${g[k].map(t => sfTaskCard(t, {...opts, open: opts.openFirst && (k==='returned'||k==='overdue') && g[k].length<=2})).join('')}</div>`);
+  return out.length ? out.join('') : `<div class="sf-empty"><i class="fas fa-mug-hot" style="font-size:22px;display:block;margin-bottom:8px"></i>No tasks yet.</div>`;
+}
+function sfFind(id){
+  const all = sfMgr() && SF.data ? [...SF.data.staff.flatMap(s => s.tasks), ...SF.data.reviewQueue] : (SF.me ? SF.me.tasks : []);
+  return all.find(t => t._id === id);
+}
+
+// ── BOSS: TEAM ───────────────────────────────────────────────
+function sfRenderTeam(){
+  const s = SF.data.staff.find(x => x._id === SF.sel); if(!s) return '';
+  const st = s.stats, d = s.today;
+  const hrs = d && d.checkIn ? ((new Date(d.checkOut || Date.now()) - new Date(d.checkIn)) / 3600e3) : 0;
+  const left = `
+    <div class="sf-card"><div class="sf-cb">
+      <div class="sf-hero">
+        ${sfRing(st.todayPct, st.doneToday, `done today<br>${st.pointsToday} pts`)}
+        <div style="min-width:0">
+          <div class="sf-who"><div class="sf-av">${esc(sfInit(s.name))}<span class="sf-dot ${s.presence}" title="${s.presence}"></span></div>
+            <div style="min-width:0"><p class="sf-name">${esc(s.name)}</p>
+              <div class="sf-sub">${s.presence==='online'?'Online now':s.lastSeen?'Last seen '+fmtDate(s.lastSeen):'Has not signed in yet'}</div></div></div>
+          <div style="margin-top:12px">${sfStateChip(d)}</div>
+          <div class="sf-sub" style="margin-top:8px">${d&&d.checkIn?`Timed in <b>${sfTime(d.checkIn)}</b>${d.checkOut?` · out <b>${sfTime(d.checkOut)}</b>`:''} · ${hrs.toFixed(1)} h`:'No time-in today'}</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">${sfKpis(st)}</div>
+      ${sfBars(st.daily)}
+    </div></div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">${esc(s.name)}'s tasks</p><button class="hdr-btn primary" onclick="sfOpenNew('','${s._id}')"><i class="fas fa-plus"></i> Give a task</button></div>
+      <div class="sf-cb">${sfTaskList(s.tasks, {manager:true})}</div></div>`;
+  const kinds = Object.entries(st.byKind).sort((a,b) => b[1]-a[1]);
+  const right = `
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Today</p><span class="sf-sub" style="margin:0">${new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'})}</span></div><div class="sf-cb">
+      ${d&&(d.plan||d.report||d.blockers)?`<div class="sf-day" style="border:0;padding:0;margin:0">
+        ${d.plan?`<p><b>Plan for today</b>${esc(d.plan)}</p>`:''}${d.report?`<p><b>What was done</b>${esc(d.report)}</p>`:''}${d.blockers?`<p style="color:var(--txt-bad)"><b>Problems / needs help</b>${esc(d.blockers)}</p>`:''}${d.mood?`<p><b>Feeling</b>${'★'.repeat(d.mood)}${'☆'.repeat(5-d.mood)}</p>`:''}</div>`:`<div class="sf-sub">No plan or report written yet today.</div>`}
+    </div></div>
+    ${SF.data.reviewQueue.length?`<div class="sf-card"><div class="sf-ch"><p class="sf-h">Waiting for you to check</p><button class="hdr-btn" onclick="sfSetView('review')">Open (${SF.data.reviewQueue.length})</button></div></div>`:''}
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Last 30 days</p></div><div class="sf-cb">
+      <div class="sf-sub" style="margin:0 0 8px">${st.doneMonth} tasks finished · ${st.pointsMonth} points${st.avgHours!=null?` · usually takes ${st.avgHours < 24 ? st.avgHours+' h' : Math.round(st.avgHours/24*10)/10+' days'}`:''}</div>
+      ${kinds.length?kinds.map(([k,n]) => `<div class="sf-row" style="grid-template-columns:22px 1fr auto"><i class="${sfKind(k).icon}" style="color:var(--txt-hot)"></i><span style="font-size:13px">${esc(sfKind(k).label)}</span><b>${n}</b></div>`).join(''):'<div class="sf-sub">Nothing finished yet.</div>'}
+    </div></div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Recent days</p><button class="hdr-btn" onclick="sfSetView('reports')">All reports</button></div><div class="sf-cb">
+      ${s.recentDays.slice(0,5).map(x => `<div class="sf-row" style="grid-template-columns:1fr auto"><span style="font-size:13px">${new Date(x.day+'T12:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})}</span><span class="sf-sub" style="margin:0">${x.checkIn?sfTime(x.checkIn):'—'} – ${x.checkOut?sfTime(x.checkOut):'—'}${x.report?' · report':''}</span></div>`).join('') || '<div class="sf-sub">No days logged yet.</div>'}
+    </div></div>`;
+  return sfPickStaff() + `<div class="sf-grid"><div>${left}</div><div>${right}</div></div>`;
+}
+
+// ── BOSS: HAND OUT WORK ──────────────────────────────────────
+async function sfLoadSugg(){
+  try{ const r = await apiFetch('/api/admin/staff/suggestions'); SF.sugg = r.ok ? await r.json() : []; }catch(e){ SF.sugg = []; }
+  SF.suggSel = new Set(); if(SF.view === 'hand') sfRender();
+}
+function sfStaffOpts(sel){ return (SF.data ? SF.data.staff : []).map(s => `<option value="${s._id}"${s._id===sel?' selected':''}>${esc(s.name)}</option>`).join(''); }
+function sfDueOpts(){ return `<option value="today">Due today 5 pm</option><option value="tomorrow" selected>Due tomorrow 5 pm</option><option value="3">Due in 3 days</option><option value="week">Due in a week</option><option value="">No due date</option>`; }
+function sfDueFrom(v){
+  if(!v) return null;
+  const d = new Date(); d.setHours(17,0,0,0);
+  if(v === 'tomorrow') d.setDate(d.getDate()+1); else if(v === '3') d.setDate(d.getDate()+3); else if(v === 'week') d.setDate(d.getDate()+7);
+  return d.toISOString();
+}
+function sfRenderHand(){
+  const kinds = Object.entries(SF_KINDS).map(([k,v]) => `<button type="button" class="sf-kind" onclick="sfOpenNew('${k}')"><i class="${v.icon}"></i><span><b>${esc(v.label)}</b><small>${esc(v.hint)}</small></span></button>`).join('');
+  const routines = SF_ROUTINES.map((r,i) => `<button type="button" class="sf-kind" onclick="sfRoutine(${i})"><i class="fas fa-redo"></i><span><b>${esc(r.label)}</b><small>Comes back by itself</small></span></button>`).join('');
+  let sugg = '<div class="sf-empty">Looking for work that needs doing…</div>';
+  if(SF.sugg){
+    if(!SF.sugg.length) sugg = '<div class="sf-empty"><i class="fas fa-circle-check" style="font-size:22px;display:block;margin-bottom:8px;color:var(--txt-ok)"></i>Nothing waiting: every lead is answered, every enquiry handled, and every listing has been posted this month.</div>';
+    else {
+      const groups = {}; SF.sugg.forEach((s,i) => (groups[s.group] = groups[s.group] || []).push([s,i]));
+      sugg = Object.entries(groups).map(([g,rows]) => `<div class="sf-grp"><div class="sf-h"><span>${esc(g)}</span><button class="hdr-btn" style="padding:4px 8px" onclick="sfSuggAll(${jsArg(g)})">Select all ${rows.length}</button></div>${rows.map(([s,i]) => `
+        <label class="sf-row" style="cursor:pointer"><input type="checkbox" ${SF.suggSel.has(i)?'checked':''} onchange="this.checked?SF.suggSel.add(${i}):SF.suggSel.delete(${i});sfBulkCount()"><span><b><i class="${sfKind(s.kind).icon}" style="color:var(--txt-hot);width:16px"></i> ${esc(s.title)}</b><small>${esc(s.description||'')}</small></span><small>${s.since?fmtDateShort(s.since):''}</small></label>`).join('')}</div>`).join('') +
+        `<div class="sf-bulk"><b id="sfBulkN">${SF.suggSel.size} selected</b><select class="finput" id="sfSuggWho" aria-label="Give to">${sfStaffOpts(SF.sel)}</select><select class="finput" id="sfSuggDue" aria-label="Due">${sfDueOpts()}</select><button class="hdr-btn" onclick="sfGiveSugg()"><i class="fas fa-paper-plane"></i> Give selected</button></div>`;
+    }
+  }
+  return `<div class="sf-grid"><div>
+      <div class="sf-card"><div class="sf-ch"><p class="sf-h">Work the system found</p><button class="hdr-btn" onclick="SF.sugg=null;sfRender();sfLoadSugg()"><i class="fas fa-sync-alt"></i> Look again</button></div><div class="sf-cb">
+        <p class="sf-legend">Leads nobody has answered, follow-ups due, website enquiries, owner submissions, and listings not posted on Facebook this month. Tick what to hand out; each comes with its own steps. Items already given out are not shown.</p>${sugg}</div></div>
+    </div><div>
+      <div class="sf-card"><div class="sf-ch"><p class="sf-h">Give a task</p></div><div class="sf-cb"><div class="sf-kinds" style="grid-template-columns:1fr 1fr">${kinds}</div></div></div>
+      <div class="sf-card"><div class="sf-ch"><p class="sf-h">Routines</p></div><div class="sf-cb"><p class="sf-legend">Set up once. When the task is marked done, the next one appears by itself.</p><div class="sf-kinds" style="grid-template-columns:1fr">${routines}</div></div></div>
+    </div></div>`;
+}
+function sfBulkCount(){ const el = document.getElementById('sfBulkN'); if(el) el.textContent = SF.suggSel.size + ' selected'; }
+function sfSuggAll(g){ SF.sugg.forEach((s,i) => { if(s.group === g) SF.suggSel.add(i); }); sfRender(); }
+async function sfGiveSugg(){
+  if(!SF.suggSel.size) return showToast('Tick at least one', true);
+  const who = document.getElementById('sfSuggWho').value, due = sfDueFrom(document.getElementById('sfSuggDue').value);
+  const tasks = [...SF.suggSel].map(i => SF.sugg[i]).map(s => {
+    const k = sfKind(s.kind);
+    return { title:s.title, description:s.description, kind:s.kind, priority:s.priority||k.pri, assignedTo:[who], dueDate:s.dueDate||due,
+      checklist:k.steps, propertyId:s.propertyId, issueKey:s.issueKey, link:s.link, points:k.pts };
+  });
+  await sfCreate(tasks);
+  SF.sugg = null; sfLoadSugg();
+}
+async function sfCreate(tasks){
+  try{
+    const r = await apiFetch('/api/admin/staff/tasks', { method:'POST', body:JSON.stringify({ tasks }) });
+    const d = await r.json(); if(!r.ok) throw new Error(d.error);
+    showToast(`${d.created.length} task${d.created.length===1?'':'s'} given` + (d.skipped.length ? ` · ${d.skipped.length} already given out` : ''));
+    await sfLoad(); if(typeof loadTasksData === 'function' && hasPerm('tasks_view')) loadTasksData();
+    return d;
+  }catch(e){ showToast('Could not save: ' + (e.message||''), true); }
+}
+function sfRoutine(i){
+  const r = SF_ROUTINES[i], k = sfKind(r.kind);
+  sfOpenNew(r.kind);
+  document.getElementById('sfTTitle').value = r.title;
+  document.getElementById('sfTSteps').value = (r.steps || k.steps).join('\n');
+  document.getElementById('sfTRec').value = r.rec;
+  const d = new Date(); d.setHours(r.hour,0,0,0); if(d < new Date()) d.setDate(d.getDate()+1);
+  document.getElementById('sfTDue').value = sfLocalInput(d);
+}
+
+// ── BOSS: LISTING PROBLEMS ───────────────────────────────────
+// Everything listingIssues() finds on the dashboard, plus checks across
+// listings: duplicate titles and prices per sqm far from their neighbours.
+function sfProblems(){
+  const props = (Array.isArray(allProps) ? allProps : []).filter(p => p.status === 'available');
+  const rows = [];
+  const titles = {};
+  props.forEach(p => { const t = lhNorm(p.title).replace(/[^a-z0-9]+/g,' ').trim(); if(t) (titles[t] = titles[t] || []).push(p); });
+  const groups = {};
+  props.forEach(p => {
+    const area = Number(p.sqm) || 0, price = lhPrice(p);
+    const city = [...lhCitiesIn(p.location)][0];
+    if(!area || !price || !city) return;
+    const key = city + '|' + (String(p.listingType||'').toUpperCase() === 'FOR LEASE' ? 'L' : 'S') + '|' + (/lot|land/i.test(p.propertyType||'') ? 'lot' : /house/i.test(p.propertyType||'') ? 'house' : 'unit');
+    (groups[key] = groups[key] || []).push({ p, v: price/area });
+  });
+  const odd = {};
+  Object.values(groups).forEach(g => {
+    if(g.length < 4) return;
+    const vs = g.map(x => x.v).sort((a,b) => a-b), med = vs[Math.floor(vs.length/2)];
+    g.forEach(x => { const r = x.v/med; if(r > 3 || r < 1/3) odd[x.p._id] = `Price per sqm is ${r > 1 ? Math.round(r*10)/10+'x' : '1/'+Math.round(10/r)/10} of similar listings: check price and area`; });
+  });
+  props.forEach(p => {
+    const iss = listingIssues(p).slice();
+    const t = lhNorm(p.title).replace(/[^a-z0-9]+/g,' ').trim();
+    if(t && titles[t].length > 1) iss.push({ key:'dup', txt:`Same title as ${titles[t].length-1} other listing${titles[t].length>2?'s':''}`, lvl:'info' });
+    if(odd[p._id]) iss.push({ key:'ppsqm', txt:odd[p._id], lvl:'err' });
+    const sqm = Number(p.sqm) || 0;
+    if(sqm && sqm < 15) iss.push({ key:'tiny', txt:`Floor area of ${sqm} sqm looks mistyped`, lvl:'err' });
+    iss.forEach(x => rows.push({ p, iss:x, key:`${p._id}:${x.key}` }));
+  });
+  const w = { err:0, stale:1, info:2 };
+  rows.sort((a,b) => (w[a.iss.lvl]-w[b.iss.lvl]) || String(a.p.title).localeCompare(String(b.p.title)));
+  return rows;
+}
+function sfGivenKeys(){
+  const s = new Set();
+  if(SF.data){ SF.data.staff.forEach(x => x.tasks.forEach(t => { if(t.issueKey && (t.status !== 'done' || t.review === 'submitted')) s.add(t.issueKey); })); }
+  return s;
+}
+function sfRenderProbs(){
+  if(!Array.isArray(allProps) || !allProps.length) { setTimeout(() => { if(SF.view === 'probs') sfRender(); }, 1500); return '<div class="sf-empty">Loading listings…</div>'; }
+  const rows = sfProblems(); SF._probs = rows;
+  const given = sfGivenKeys();
+  const nErr = rows.filter(r => r.iss.lvl === 'err').length;
+  const body = rows.length ? rows.map((r,i) => {
+    const g = given.has(r.key);
+    return `<label class="sf-row" style="cursor:${g?'default':'pointer'}"><input type="checkbox" ${g?'disabled':''} ${SF.probSel.has(i)?'checked':''} onchange="this.checked?SF.probSel.add(${i}):SF.probSel.delete(${i});sfProbCount()"><span><b>${esc(r.p.title||'Untitled')}</b><span class="sf-chip ${r.iss.lvl}">${esc(r.iss.txt)}</span></span>${g?'<span class="given">Given out</span>':`<button type="button" class="hdr-btn" style="padding:4px 8px" onclick="event.preventDefault();openEditProp('${r.p._id}')">Edit</button>`}</label>`;
+  }).join('') : '<div class="sf-empty"><i class="fas fa-circle-check" style="font-size:22px;display:block;margin-bottom:8px;color:var(--txt-ok)"></i>No problems found on any live listing.</div>';
+  return `<div class="sf-card"><div class="sf-ch"><p class="sf-h">${rows.length} problem${rows.length===1?'':'s'} on live listings · ${nErr} wrong on the website</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="hdr-btn" onclick="sfProbPick('err')">Select the red ones</button><button class="hdr-btn" onclick="sfProbPick('all')">Select all</button><button class="hdr-btn" onclick="SF.probSel.clear();sfRender()">Clear</button></div></div>
+    <div class="sf-cb"><p class="sf-legend"><span class="sf-chip err">Red</span> is wrong on the website now. <span class="sf-chip stale">Amber</span> needs a yes/no from the owner. The rest make a listing weaker. Each task comes with instructions for that problem; when your staff marks it done, the listing is checked again.</p>${body}
+      ${rows.length?`<div class="sf-bulk"><b id="sfProbN">${SF.probSel.size} selected</b><select class="finput" id="sfProbWho" aria-label="Give to">${sfStaffOpts(SF.sel)}</select><select class="finput" id="sfProbDue" aria-label="Due">${sfDueOpts()}</select><button class="hdr-btn" onclick="sfGiveProbs()"><i class="fas fa-paper-plane"></i> Give selected</button></div>`:''}
+    </div></div>`;
+}
+function sfProbCount(){ const el = document.getElementById('sfProbN'); if(el) el.textContent = SF.probSel.size + ' selected'; }
+function sfProbPick(which){
+  const given = sfGivenKeys();
+  (SF._probs||[]).forEach((r,i) => { if(!given.has(r.key) && (which === 'all' || r.iss.lvl === 'err')) SF.probSel.add(i); });
+  sfRender();
+}
+async function sfGiveProbs(){
+  if(!SF.probSel.size) return showToast('Tick at least one', true);
+  if(!SF.data.staff.length) return showToast('There is no staff account to give it to', true);
+  const who = document.getElementById('sfProbWho').value, due = sfDueFrom(document.getElementById('sfProbDue').value);
+  const tasks = [...SF.probSel].map(i => SF._probs[i]).filter(Boolean).map(r => {
+    const kind = r.iss.key === 'stale' ? 'stale' : r.iss.key === 'photos' ? 'photos' : ['price','city','ppsqm','dup'].includes(r.iss.key) ? 'inconsistency' : 'listing_fix';
+    const k = sfKind(kind);
+    return { title:`${r.iss.txt}: ${r.p.title}`.slice(0,200), kind, priority: r.iss.lvl === 'err' ? 'high' : r.iss.lvl === 'stale' ? 'medium' : 'low',
+      description:`Listing: ${r.p.title}\nAddress: ${r.p.location||'—'}\nProblem: ${r.iss.txt}\n\nWhat to do: ${SF_FIX_TIPS[r.iss.key]||'Fix it in the listing editor.'}`,
+      checklist:k.steps, propertyId:r.p._id, issueKey:r.key, assignedTo:[who], dueDate:due, points:k.pts };
+  });
+  SF.probSel.clear();
+  await sfCreate(tasks);
+}
+
+// ── BOSS: TO CHECK ───────────────────────────────────────────
+function sfRenderReview(){
+  const q = SF.data.reviewQueue;
+  return `<div class="sf-card"><div class="sf-ch"><p class="sf-h">Finished tasks waiting for your check</p>${q.length>1?`<button class="hdr-btn" onclick="sfApproveAll()"><i class="fas fa-check-double"></i> Approve all ${q.length}</button>`:''}</div><div class="sf-cb">
+    <p class="sf-legend">Look at the proof, then approve it or send it back with a note. Sent-back tasks go to the top of their list.</p>
+    ${q.length ? q.map(t => sfTaskCard(t, {manager:true, showWho:true, open:true})).join('') : '<div class="sf-empty"><i class="fas fa-circle-check" style="font-size:22px;display:block;margin-bottom:8px;color:var(--txt-ok)"></i>Nothing to check.</div>'}
+  </div></div>`;
+}
+async function sfApproveAll(){
+  const q = SF.data.reviewQueue.slice();
+  if(!confirm(`Approve all ${q.length} finished tasks?`)) return;
+  for(const t of q){ await apiFetch(`/api/admin/staff/tasks/${t._id}/act`, { method:'POST', body:JSON.stringify({ action:'approve' }) }).catch(() => {}); }
+  showToast('Approved'); sfLoad();
+}
+
+// ── REPORTS (boss: anyone's; staff: their own) ───────────────
+function sfDayCard(x, canNote){
+  const hrs = x.checkIn && x.checkOut ? ((new Date(x.checkOut) - new Date(x.checkIn))/3600e3).toFixed(1)+' h' : x.checkIn ? 'no time-out' : '';
+  return `<div class="sf-day"><div class="dh"><span>${new Date(x.day+'T12:00:00').toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'})}</span><span>${x.checkIn?sfTime(x.checkIn):'—'} – ${x.checkOut?sfTime(x.checkOut):'—'}${hrs?' · '+hrs:''}${x.mood?' · '+'★'.repeat(x.mood):''}</span></div>
+    ${x.plan?`<p><b>Plan</b>${esc(x.plan)}</p>`:''}${x.report?`<p><b>What was done</b>${esc(x.report)}</p>`:'<p style="color:var(--txt-muted)">No report written.</p>'}${x.blockers?`<p style="color:var(--txt-bad)"><b>Problems / needs help</b>${esc(x.blockers)}</p>`:''}
+    ${canNote?`<div style="display:flex;gap:6px;margin-top:8px"><input class="finput" style="flex:1;padding:7px 9px;font-size:13px" id="sfBN-${x._id}" value="${esc(x.bossNote||'')}" placeholder="Your note to them (they see it on their desk)" aria-label="Note"><button class="hdr-btn" onclick="sfBossNote('${x._id}')">Save</button></div>`:(x.bossNote?`<div class="sf-note ok"><b>Ma'am's note:</b> ${esc(x.bossNote)}</div>`:'')}
+  </div>`;
+}
+function sfRenderReports(){
+  const s = SF.data.staff.find(x => x._id === SF.sel); if(!s) return '';
+  return sfPickStaff() + `<div class="sf-card"><div class="sf-ch"><p class="sf-h">${esc(s.name)} · last 14 days</p></div><div class="sf-cb">${s.recentDays.length ? s.recentDays.map(x => sfDayCard(x, true)).join('') : '<div class="sf-empty">No days logged yet. They appear once they time in on their desk.</div>'}</div></div>`;
+}
+async function sfBossNote(id){
+  const v = document.getElementById('sfBN-'+id).value;
+  const r = await apiFetch(`/api/admin/staff/days/${id}/note`, { method:'PUT', body:JSON.stringify({ note:v }) });
+  showToast(r.ok ? 'Note saved' : 'Could not save', !r.ok);
+}
+function sfRenderHistory(){
+  const days = SF.me.recentDays;
+  return `<div class="sf-card"><div class="sf-ch"><p class="sf-h">My last 14 days</p></div><div class="sf-cb">${days.length ? days.map(x => sfDayCard(x, false)).join('') : '<div class="sf-empty">Nothing yet. Press "Time in" on My desk to start your first day.</div>'}</div></div>`;
+}
+
+// ── STAFF: MY DESK ───────────────────────────────────────────
+function sfRenderDesk(){
+  const m = SF.me, st = m.stats, d = m.day || {};
+  const inNow = d.checkIn && !d.checkOut;
+  const first = String((CU && CU.name) || m.me.name || '').split(' ')[0];
+  const h = new Date().getHours(), hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const g = sfGroups(m.tasks);
+  const todo = g.returned.length + g.overdue.length + g.today.length;
+  const left = `
+    <div class="sf-card"><div class="sf-cb">
+      <div class="sf-hero">${sfRing(st.todayPct, st.doneToday, `done today<br>${st.pointsToday} pts`)}
+        <div style="min-width:0"><p class="sf-name">${hello}${first?', '+esc(first):''}</p>
+          <div class="sf-sub">${todo ? `You have <b>${todo}</b> task${todo===1?'':'s'} for today${g.overdue.length?`, <b style="color:var(--txt-bad)">${g.overdue.length} late</b>`:''}${g.returned.length?`, <b style="color:var(--txt-warn)">${g.returned.length} sent back to fix</b>`:''}.` : 'Nothing due today. Pick something from "Coming up".'}${st.streak>1?` · <b>${st.streak}-day streak</b>`:''}</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            ${!d.checkIn || d.checkOut ? `<button class="hdr-btn primary sf-big" onclick="sfDayAct({action:'in'})"><i class="fas fa-sign-in-alt"></i> Time in</button>` : `<button class="hdr-btn sf-big" onclick="sfTimeOut()"><i class="fas fa-sign-out-alt"></i> Time out</button>`}
+            ${d.checkIn?`<span class="sf-sub" style="margin:0">In at <b>${sfTime(d.checkIn)}</b>${d.checkOut?` · out at <b>${sfTime(d.checkOut)}</b>`:''}</span>`:''}
+          </div>
+        </div></div>
+      ${inNow?`<div style="margin-top:16px"><p class="sf-h" style="margin-bottom:8px">What are you doing now?</p><div class="sf-states">${['working','break','lunch','field','meeting'].map(s => `<button class="hdr-btn${d.state===s?' on':''}" onclick="sfSetState('${s}')"><i class="fas ${SF_STATES[s][1]}"></i> ${SF_STATES[s][0]}</button>`).join('')}</div></div>`:''}
+      <div style="margin-top:16px">${sfKpis(st)}</div>${sfBars(st.daily)}
+    </div></div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">My tasks</p></div><div class="sf-cb">${sfTaskList(m.tasks, {manager:false, openFirst:true})}</div></div>`;
+  const bossNotes = m.recentDays.filter(x => x.bossNote).slice(0,3);
+  const right = `
+    ${bossNotes.length?`<div class="sf-card"><div class="sf-ch"><p class="sf-h">Notes from Ma'am</p></div><div class="sf-cb">${bossNotes.map(x => `<div class="sf-note ok"><small>${new Date(x.day+'T12:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</small><br>${esc(x.bossNote)}</div>`).join('')}</div></div>`:''}
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">My day</p></div><div class="sf-cb ld-g" style="grid-template-columns:1fr">
+      <label class="ld-f"><span>Plan for today</span><textarea class="finput" id="sfPlan" rows="3" placeholder="What you will do today">${esc(d.plan||'')}</textarea></label>
+      <label class="ld-f"><span>What I did today</span><textarea class="finput" id="sfReport" rows="4" placeholder="Filled in for you from your finished tasks when you press Time out; add anything else">${esc(d.report||'')}</textarea></label>
+      <label class="ld-f"><span>Problems / I need help with</span><textarea class="finput" id="sfBlock" rows="2">${esc(d.blockers||'')}</textarea></label>
+      <div><p class="sf-h" style="margin-bottom:6px">How was today?</p><div class="sf-mood">${[1,2,3,4,5].map(n => `<button class="hdr-btn${d.mood===n?' on':''}" onclick="SF.mood=${n};this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')" aria-label="${n} of 5">${'★'.repeat(n)}</button>`).join('')}</div></div>
+      <button class="hdr-btn primary" onclick="sfSaveDay()"><i class="fas fa-save"></i> Save my day</button>
+    </div></div>`;
+  return `<div class="sf-grid"><div>${left}</div><div>${right}</div></div>`;
+}
+async function sfDayAct(body){
+  try{
+    const r = await apiFetch('/api/admin/staff/day', { method:'POST', body:JSON.stringify(body) });
+    const d = await r.json(); if(!r.ok) throw new Error(d.error);
+    if(body.action === 'in') showToast('Timed in. Have a good day!');
+    await sfLoad();
+  }catch(e){ showToast('Could not save: ' + (e.message||''), true); }
+}
+function sfSetState(s){
+  if(s === 'field' || s === 'meeting'){
+    sfDlg(s === 'field' ? 'Out on field work' : 'In a meeting', `<label class="ld-f"><span>Where / with whom? (optional)</span><input class="finput" id="sfDlgIn" maxlength="200"></label>`, 'Set', () => sfDayAct({ state:s, stateNote:document.getElementById('sfDlgIn').value }));
+  } else sfDayAct({ state:s, stateNote:'' });
+}
+function sfDayBody(){
+  return { plan:document.getElementById('sfPlan').value, report:document.getElementById('sfReport').value, blockers:document.getElementById('sfBlock').value, ...(SF.mood ? { mood:SF.mood } : {}) };
+}
+async function sfSaveDay(){ await sfDayAct(sfDayBody()); showToast('Saved'); }
+function sfTimeOut(){
+  // Start the report from what was finished today, so it is never empty.
+  const today = sfDay(Date.now());
+  const done = SF.me.tasks.filter(t => t.status === 'done' && t.completedAt && sfDay(t.completedAt) === today);
+  const cur = document.getElementById('sfReport').value.trim();
+  const auto = done.map(t => '- ' + t.title).join('\n');
+  sfDlg('Time out', `<p class="sf-legend">Check your report before you go. Ma'am reads this.</p>
+    <label class="ld-f"><span>What I did today</span><textarea class="finput" id="sfDlgRep" rows="7">${esc(cur || auto)}</textarea></label>
+    <label class="ld-f" style="margin-top:10px"><span>Problems / I need help with</span><textarea class="finput" id="sfDlgBlk" rows="2">${esc(document.getElementById('sfBlock').value)}</textarea></label>`,
+    'Time out', async () => { await sfDayAct({ ...sfDayBody(), report:document.getElementById('sfDlgRep').value, blockers:document.getElementById('sfDlgBlk').value, action:'out' }); showToast('Timed out. Thank you!'); });
+}
+
+// ── TASK ACTIONS ─────────────────────────────────────────────
+async function sfAct(id, action, extra){
+  try{
+    const r = await apiFetch(`/api/admin/staff/tasks/${id}/act`, { method:'POST', body:JSON.stringify({ action, ...(extra||{}) }) });
+    const d = await r.json(); if(!r.ok) throw new Error(d.error);
+    // A ticked step should not collapse the card: patch it in place.
+    const t = sfFind(id);
+    if(action === 'check' && t && d.task){ t.checklist = d.task.checklist; t.status = d.task.status; return; }
+    if(d.spawned) showToast('Done. The next one is already on the list for ' + fmtDateShort(d.spawned.dueDate));
+    await sfLoad();
+  }catch(e){ showToast('Could not save: ' + (e.message||''), true); }
+}
+function sfDone(id){
+  const t = sfFind(id); if(!t) return;
+  const k = sfKind(t.kind);
+  const open = (t.checklist||[]).filter(c => !c.done).length;
+  let warn = '';
+  if(open) warn += `<div class="sf-note">${open} step${open===1?' is':'s are'} not ticked yet.</div>`;
+  // Listing problems: run the same check again before it goes to Ma'am.
+  if(t.issueKey && t.propertyId && Array.isArray(allProps)){
+    const p = allProps.find(x => x._id === t.propertyId), key = t.issueKey.split(':')[1];
+    if(p && ['price','city','typo','map','photos','desc','area','stale','tiny'].includes(key)){
+      const still = listingIssues(p).some(x => x.key === key) || (key === 'tiny' && Number(p.sqm) > 0 && Number(p.sqm) < 15);
+      if(still) warn += `<div class="sf-note" style="border-color:#bf2121;background:rgba(191,33,33,.08)"><b>The listing still shows this problem.</b> If you just saved it, press Refresh at the top first.</div>`;
+      else warn += `<div class="sf-note ok">Checked: the listing no longer shows this problem.</div>`;
+    }
+  }
+  sfDlg('Mark as done', `${warn}
+    <label class="ld-f"><span>${k.proof ? 'Link to prove it (required)' : 'Link (optional)'}</span><input class="finput" id="sfDlgUrl" type="url" placeholder="https://" value="${esc(t.proofUrl||'')}"></label>
+    <label class="ld-f" style="margin-top:10px"><span>Note for Ma'am (optional)</span><textarea class="finput" id="sfDlgNote" rows="3" placeholder="What you did, anything she should know"></textarea></label>`,
+    'Mark done', async () => {
+      const url = document.getElementById('sfDlgUrl').value.trim();
+      if(k.proof && !/^https?:\/\//i.test(url)) { showToast('Paste the link to the post or page first', true); return false; }
+      await sfAct(id, 'submit', { proofUrl:url, proofNote:document.getElementById('sfDlgNote').value });
+    });
+}
+function sfStuck(id){
+  sfDlg("I'm stuck", `<label class="ld-f"><span>What is stopping you?</span><textarea class="finput" id="sfDlgIn" rows="3" placeholder="e.g. the owner is not answering; I need the new price"></textarea></label>`, 'Tell Ma\'am', async () => {
+    const v = document.getElementById('sfDlgIn').value.trim(); if(!v){ showToast('Say what is stopping you', true); return false; }
+    await sfAct(id, 'stuck', { reason:v });
+  });
+}
+function sfComment(id){
+  sfDlg('Add a note', `<label class="ld-f"><span>Note</span><textarea class="finput" id="sfDlgIn" rows="3"></textarea></label>`, 'Save note', async () => {
+    const v = document.getElementById('sfDlgIn').value.trim(); if(!v) return false;
+    await sfAct(id, 'comment', { text:v });
+  });
+}
+function sfApprove(id){ sfDlg('Approve', `<label class="ld-f"><span>Note (optional, e.g. "good job")</span><input class="finput" id="sfDlgIn" maxlength="300"></label>`, 'Approve', () => sfAct(id, 'approve', { note:document.getElementById('sfDlgIn').value })); }
+function sfReturn(id){
+  sfDlg('Send back', `<label class="ld-f"><span>What needs fixing?</span><textarea class="finput" id="sfDlgIn" rows="3"></textarea></label>`, 'Send back', async () => {
+    const v = document.getElementById('sfDlgIn').value.trim(); if(!v){ showToast('Say what needs fixing', true); return false; }
+    await sfAct(id, 'return', { note:v });
+  });
+}
+
+// ── SMALL DIALOG ─────────────────────────────────────────────
+function sfDlg(title, html, okLabel, onOk){
+  document.getElementById('sfDlgH').textContent = title;
+  document.getElementById('sfDlgBody').innerHTML = html;
+  const ok = document.getElementById('sfDlgOk');
+  ok.textContent = okLabel; ok.disabled = false;
+  ok.onclick = async () => { ok.disabled = true; try{ const r = await onOk(); if(r !== false) sfDlgClose(); } finally { ok.disabled = false; } };
+  document.getElementById('sfDlg').style.display = 'flex';
+}
+function sfDlgClose(){ document.getElementById('sfDlg').style.display = 'none'; }
+
+// ── NEW TASK DIALOG ──────────────────────────────────────────
+function sfLocalInput(d){ const z = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; }
+function sfOpenNew(kind, who){
+  if(!sfMgr()) return;
+  if(!SF.data || !SF.data.staff.length){ showToast('There is no staff account to give a task to yet', true); return; }
+  const ks = document.getElementById('sfTKind');
+  ks.innerHTML = Object.entries(SF_KINDS).map(([k,v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+  ks.value = kind || 'other';
+  document.getElementById('sfTWho').innerHTML = sfStaffOpts(who || SF.sel);
+  document.getElementById('sfPropList').innerHTML = (Array.isArray(allProps)?allProps:[]).filter(p => p.status === 'available').map(p => `<option value="${esc(p.title)}"></option>`).join('');
+  ['sfTTitle','sfTDesc','sfTProp','sfTLink'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sfTRec').value = '';
+  sfKindPicked(false);
+  document.getElementById('sfTaskModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('sfTTitle').focus(), 30);
+}
+function sfKindPicked(keepTitle){
+  const k = sfKind(document.getElementById('sfTKind').value);
+  document.getElementById('sfTSteps').value = k.steps.join('\n');
+  document.getElementById('sfTPri').value = k.pri;
+  document.getElementById('sfTPts').value = String(k.pts >= 5 ? 5 : k.pts);
+  const d = new Date(Date.now() + k.dueH*3600e3);
+  if(k.dueH >= 24){ d.setHours(17,0,0,0); } else { d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0); }
+  document.getElementById('sfTDue').value = sfLocalInput(d);
+  const t = document.getElementById('sfTTitle');
+  if(!keepTitle || !t.value.trim()) t.placeholder = k.label + '…';
+}
+function sfTaskClose(){ document.getElementById('sfTaskModal').style.display = 'none'; }
+async function sfSaveNew(){
+  const title = document.getElementById('sfTTitle').value.trim();
+  if(!title){ showToast('Write what the task is', true); document.getElementById('sfTTitle').focus(); return; }
+  const kind = document.getElementById('sfTKind').value;
+  const pName = document.getElementById('sfTProp').value.trim();
+  const prop = pName ? (allProps||[]).find(p => p.title === pName) : null;
+  const due = document.getElementById('sfTDue').value;
+  const btn = document.getElementById('sfTSave'); btn.disabled = true;
+  const d = await sfCreate([{
+    title, kind, description:document.getElementById('sfTDesc').value.trim(),
+    checklist:document.getElementById('sfTSteps').value.split('\n').map(s => s.trim()).filter(Boolean),
+    assignedTo:[document.getElementById('sfTWho').value], dueDate: due ? new Date(due).toISOString() : null,
+    priority:document.getElementById('sfTPri').value, recurrence:document.getElementById('sfTRec').value,
+    points:+document.getElementById('sfTPts').value, propertyId: prop ? prop._id : null,
+    link:document.getElementById('sfTLink').value.trim() || (prop ? '/property/' + prop._id : '')
+  }]);
+  btn.disabled = false;
+  if(d) sfTaskClose();
+}
+// Keep "who's doing what" fresh while the tab is open.
+setInterval(() => { const p = document.getElementById('tab-staff'); if(p && p.style.display !== 'none' && !document.hidden && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
+</script>
 <script src="/js/a11y.js?v=116" defer></script>
 </body>
 </html>
