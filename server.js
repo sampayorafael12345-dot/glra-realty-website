@@ -320,6 +320,11 @@ app.use(mongoSanitize());
 app.get(['/loan-comparison.html', '/loan-comparison'], (req, res) => {
   res.redirect(301, '/amortization.html#compare');
 });
+// Short addresses printed on the Arthaland ad end cards (glrarealty.com/liv
+// and so on). Without these they fell through to the 404 page.
+app.get(['/arthaland', '/sondris', '/eluria', '/liv', '/una', '/lucima'], (req, res) => {
+  res.redirect(301, req.path + '.html');
+});
 // Browsers and Google ask for /favicon.ico on their own; it never existed, so
 // every visit logged a 404. Point it at the real icon.
 app.get('/favicon.ico', (req, res) => {
