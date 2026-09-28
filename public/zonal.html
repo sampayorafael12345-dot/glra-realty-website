@@ -110,13 +110,23 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 @media(max-width:768px){
   .search-box{flex-direction:column}
   .search-box button{width:100%;justify-content:center}
+  /* The panel had a left margin and none on the right, so the search box ran
+     off the right edge; stacked, the input also lost its right border. The
+     city chips and region tabs wrapped raggedly with off-centre labels. */
+  html body .search-section{padding-left:var(--glra-pad,24px) !important;padding-right:var(--glra-pad,24px) !important}
+  html body .search-section .search-wrap{margin-left:auto !important;margin-right:auto !important;width:auto !important}
+  html body .search-box input{border-right:1px solid rgba(255,61,0,.3) !important}
+  .chip-row{display:grid !important;grid-template-columns:1fr 1fr;gap:8px}
+  .chip-row .chip{display:flex !important;align-items:center;justify-content:center;text-align:center;margin:0 !important;min-height:42px;padding:8px 6px !important;line-height:1.2}
+  .region-tabs{display:grid !important;grid-template-columns:1fr 1fr}
+  .region-tabs .region-tab{text-align:center;justify-content:center;margin:0 !important}
   .rc-stats{grid-template-columns:1fr}
   .rc-stat{border-right:none;border-bottom:1px solid var(--border-color)}
   .rc-stat:last-child{border-bottom:none}
   .region-tabs{padding:0 5%}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -251,7 +261,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script>
 // Short alias for the shared escapeHtml helper
 const esc = escapeHtml;

@@ -2138,3 +2138,67 @@ window.glraOpenPrintGate = function (label, collectFn) {
   }
 })();
 /* RECENTLY-VIEWED-END */
+
+/* TABLE-SCROLL-START
+   On a phone a four-column table was squeezed until words broke mid-word
+   ("Docum/entary", "BIR 170/6"): the site-wide overflow-wrap:anywhere lets a
+   table shrink every column below its longest word. Cells now keep whole
+   words (tactile.css), and each table sits in a box that scrolls sideways
+   when it is wider than the screen. A table that already lives inside its
+   own scrolling box (the amortization schedule) is left alone, so its sticky
+   header keeps working. Tables drawn later (compare grid) are caught too. */
+(function glraTableScroll(){
+  if (typeof document === 'undefined') return;
+  function scrolls(el){
+    for (var n = el.parentElement, i = 0; n && n !== document.body && i < 4; n = n.parentElement, i++) {
+      var cs = getComputedStyle(n);
+      if (/(auto|scroll)/.test(cs.overflowX + cs.overflowY)) return true;
+    }
+    return false;
+  }
+  function wrap(root){
+    var ts = (root || document).querySelectorAll('main table, section table, .calc-card table, article table');
+    for (var i = 0; i < ts.length; i++) {
+      var t = ts[i];
+      if (t.getAttribute('data-glra-scroll') || t.closest('.glra-tbl-scroll') || t.getAttribute('role') === 'presentation' || scrolls(t)) continue;
+      t.setAttribute('data-glra-scroll', '1');
+      var box = document.createElement('div');
+      box.className = 'glra-tbl-scroll';
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+  function go(){ wrap(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  window.addEventListener('load', go);
+})();
+/* TABLE-SCROLL-END */
+
+/* FAB-TUCK-START
+   On a phone the contact button sits over the right edge of every screen and
+   covered the last figure of result tables. It now slides off to the side
+   while the visitor scrolls down and comes back the moment they scroll up,
+   stop near the bottom, or open it. Phones and narrow windows only. */
+(function glraFabTuck(){
+  if (typeof window === 'undefined' || !window.matchMedia) return;
+  var mq = window.matchMedia('(max-width:768px)');
+  var lastY = window.scrollY || 0, ticking = false;
+  function el(){ return document.getElementById('glraContact'); }
+  function update(){
+    ticking = false;
+    var c = el(); if (!c) return;
+    var y = window.scrollY || 0, dy = y - lastY;
+    var nearEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 140;
+    if (!mq.matches || c.classList.contains('is-open') || y < 200 || nearEnd) c.classList.remove('is-tucked');
+    else if (dy > 6) c.classList.add('is-tucked');
+    else if (dy < -6) c.classList.remove('is-tucked');
+    lastY = y;
+  }
+  window.addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  var st = document.createElement('style');
+  st.textContent = '#glraContact{transition:transform .28s cubic-bezier(.2,.7,.2,1),opacity .25s ease,visibility .25s ease}' +
+    '@media(max-width:768px){#glraContact.is-tucked{transform:translate3d(calc(100% + 30px),0,0);pointer-events:none}}' +
+    '@media(prefers-reduced-motion:reduce){#glraContact{transition:none}}';
+  (document.head || document.documentElement).appendChild(st);
+})();
+/* FAB-TUCK-END */

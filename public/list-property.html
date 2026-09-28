@@ -104,6 +104,7 @@
 .image-thumb .img-cover{position:absolute;top:6px;left:6px;background:var(--gold);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;font-weight:600}
 .image-thumb button{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;border-radius:50%;transition:var(--transition)}
 .image-thumb button:hover{background:#ef4444}
+@media(pointer:coarse){.image-thumb button{width:34px;height:34px;font-size:14px}}
 
 .lf-actions{padding:32px 36px;background:var(--gray-light);border-top:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .lf-submit{background:var(--gold);color:#fff;border:none;padding:15px 38px;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;transition:var(--transition);display:inline-flex;align-items:center;gap:10px}
@@ -294,7 +295,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 /* Subtle counter for description */
 .lf-counter{font-size:11px;color:var(--gray);margin-top:4px;text-align:right}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -515,7 +516,7 @@ body.dark-mode .lf-error{color:#fca5a5}
         <input type="file" id="imgInput" accept="image/*" multiple aria-label="Choose photos of the property" onchange="handleImageUpload(this.files)">
       </div>
       <div class="image-grid" id="imageGrid"></div>
-      <small class="lf-hint" style="display:block;margin-top:10px">First photo becomes the main listing image. Hover any photo to remove it.</small>
+      <small class="lf-hint" style="display:block;margin-top:10px">First photo becomes the main listing image. Tap the × on a photo to remove it.</small>
     </div>
 
     <!-- Section 8: Owner info -->
@@ -767,7 +768,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script>
 // ── State ──
 const uploadedImages = []; // [{url, name, size, status:'uploaded'|'uploading'|'failed', tempId}]

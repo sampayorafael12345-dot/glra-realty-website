@@ -94,3 +94,125 @@ html body .mobile-overlay .close-menu{
 }
 html body .mobile-overlay .close-menu:active{background:var(--ab-hot,#df3500) !important;border-color:var(--ab-hot,#df3500) !important;transform:scale(.94)}
 html body .mobile-overlay .close-menu:focus-visible{outline:2px solid #ff3d00;outline-offset:3px}
+
+/* ── Page headlines: the -3px tracking ate the word spaces on a phone
+   ("PROPERTIESFOR SALE"). Give the gap back. */
+html body .page-hero h1{word-spacing:.1em}
+@media(max-width:640px){html body .page-hero h1{letter-spacing:-1.5px !important}}
+
+/* ── Icons sit in the middle of their slot ──────────────────────────────────
+   Every page reserves a 1em-wide slot per icon (min-width:1em, against layout
+   shift) but left the glyph at the slot's left edge. A narrow glyph like the
+   menu's X then sat 4-5px left of centre in its square button. */
+html body :is(i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands){text-align:center}
+
+/* ── Phone footer: two columns, not one very long list ─────────────────────
+   One column made the footer longer than a whole screen of links on every
+   page. The brand block spans the top; link columns pair up; an odd last
+   column (Company + Contact) takes the full width. Social icons line up with
+   the text above them instead of floating in the middle. */
+@media(max-width:640px){
+  html body footer .footer-content{grid-template-columns:1fr 1fr !important;column-gap:20px !important;row-gap:30px !important}
+  html body footer .footer-content>.footer-col{min-width:0}
+  html body footer .footer-content>.footer-col:first-child,
+  html body footer .footer-content>.footer-col:last-child:nth-child(even){grid-column:1/-1}
+  html body footer .footer-social{justify-content:flex-start !important}
+  html body footer .footer-col ul li a{display:flex;align-items:center;min-height:40px;overflow-wrap:anywhere}
+}
+
+/* ── Credentials strip on a phone: a proper grid ───────────────────────────
+   Five items in two columns left the fifth alone with the dividers only
+   between some of the cells. Every cell now has its lines, and an odd last
+   item spans the full width. */
+@media(max-width:600px){
+  html body .trust-grid .trust-item{border-right:1px solid var(--ab-line) !important;border-bottom:1px solid var(--ab-line) !important}
+  html body .trust-grid .trust-item:nth-child(2n){border-right:0 !important}
+  html body .trust-grid .trust-item:last-child:nth-child(odd){grid-column:1/-1;border-right:0 !important}
+  html body .trust-grid .trust-item:last-child,
+  html body .trust-grid .trust-item:nth-last-child(2):nth-child(odd){border-bottom:0 !important}
+}
+
+/* ── Leftover from the old gold theme: a 100px line centred under every page
+   headline, under text that is left-aligned. Read as a stray mark. */
+html body .page-hero::after{display:none !important}
+
+/* ── Arthaland pages: their own button colour, not the site's orange ────────
+   These pages always run in dark mode, and the theme's
+   `body.dark-mode a.cta{background:#df3500 !important}` outranked each page's
+   own `[data-x] .cta` rule, so every main button turned orange with
+   near-black text. Each page's accent is restored here. */
+html[data-arth] body a.cta:not(.ghost){background:var(--bone) !important;border-color:var(--bone) !important;color:#0a0a0b !important}
+html[data-sondris] body a.cta:not(.ghost){background:var(--brass) !important;border-color:var(--brass) !important;color:#15100a !important}
+html[data-eluria] body a.cta:not(.ghost){background:var(--sage) !important;border-color:var(--sage) !important;color:#121611 !important}
+html[data-liv] body a.cta:not(.ghost){background:var(--teal) !important;border-color:var(--teal) !important;color:#0d1416 !important}
+html[data-una] body a.cta:not(.ghost){background:var(--clay) !important;border-color:var(--clay) !important;color:#1a0f0a !important}
+html[data-lucima] body a.cta:not(.ghost){background:var(--champ) !important;border-color:var(--champ) !important;color:#14120c !important}
+@media(hover:hover){html:is([data-arth],[data-sondris],[data-eluria],[data-liv],[data-una],[data-lucima]) body a.cta:not(.ghost):hover{background:#fff !important;border-color:#fff !important;color:#0a0a0b !important}}
+
+/* Arthaland pages on a phone: the closing buttons were three different
+   widths; the certification tags wrapped 3 + 1; each building's fact row
+   wrapped its third fact onto a line of its own behind a stray divider. */
+@media(max-width:640px){
+  html:is([data-arth],[data-sondris],[data-eluria],[data-liv],[data-una],[data-lucima]) .close-btns{display:grid !important;grid-template-columns:1fr;gap:12px}
+  html:is([data-arth],[data-sondris],[data-eluria],[data-liv],[data-una],[data-lucima]) .close-btns .cta{justify-content:center;width:100%;box-sizing:border-box;padding-left:16px !important;padding-right:16px !important}
+  html:is([data-arth],[data-sondris],[data-eluria],[data-liv],[data-una],[data-lucima]) .cert-list{display:grid !important;grid-template-columns:repeat(4,1fr);gap:8px}
+  html:is([data-arth],[data-sondris],[data-eluria],[data-liv],[data-una],[data-lucima]) .cert-list li{text-align:center;padding:11px 4px !important}
+  html[data-arth] .pl-facts{display:grid !important;grid-template-columns:1fr 1fr}
+  html[data-arth] .pl-facts span{padding:11px 12px 11px 0 !important;border-left:0 !important}
+  html[data-arth] .pl-facts span:nth-child(2n){padding-left:14px !important;border-left:1px solid var(--line) !important}
+  html[data-arth] .pl-facts span:nth-child(n+3){border-top:1px solid var(--line)}
+}
+
+/* ── Tables on a phone (see TABLE-SCROLL in main.js) ──────────────────────
+   break-word, unlike anywhere, does not shrink a column below its longest
+   word, so words stay whole; the wrapper scrolls sideways instead. */
+html body :is(td,th){overflow-wrap:break-word}
+.glra-tbl-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.glra-tbl-scroll>table{margin-top:0}
+
+/* ── Shortcut chip rows on a phone: even grids, no orphan on a line alone ──
+   Commission (6 chips) wrapped 5 + 1; the loan calculator's rate and term
+   chips wrapped into ragged pairs. */
+@media(max-width:640px){
+  html body #commissionButtons{display:grid !important;grid-template-columns:repeat(6,1fr);gap:6px}
+  html body #commissionButtons .comm-btn{padding:10px 0 !important;text-align:center;min-width:0;display:flex;align-items:center;justify-content:center}
+  html body .presets{display:grid !important;grid-template-columns:repeat(3,1fr);gap:6px}
+  html body .presets button{min-height:38px;padding:6px 4px !important;text-align:center;line-height:1.2;display:flex;align-items:center;justify-content:center}
+}
+
+/* Stacked newsletter form on a phone: the full-width Subscribe button kept
+   its label at the left edge. */
+html body .newsletter-form button{justify-content:center;text-align:center}
+
+/* ── Home page on a phone ─────────────────────────────────────────────────── */
+/* Section intros: at 880px the header drops to one column, but the paragraph
+   and eyebrow kept `grid-column:2/-1`, which made an implicit second column
+   and squeezed the text into a 150px sliver down the right-hand side. */
+@media(max-width:880px){
+  html body :is(.section,.resources-section,.testimonials,.contact-form-section,.faq-section,.how-it-works,.arth-feat) .section-header>*{grid-column:1/-1 !important;justify-self:start !important;text-align:left !important}
+  html body :is(.section,.resources-section,.testimonials,.contact-form-section,.faq-section,.how-it-works,.arth-feat) .section-header>div:empty{display:none}
+}
+/* FAQ: an empty <span> in each question took the third grid cell and pushed
+   the "+" onto a line of its own under the question (desktop too). */
+html body .faq-item summary>span:empty{display:none}
+/* Broker buttons wrapped 2 + 1; now an even grid, an odd last one full width. */
+@media(max-width:640px){
+  html body .broker-contact-buttons{display:grid !important;grid-template-columns:1fr 1fr;gap:10px}
+  html body .broker-contact-buttons>*{justify-content:center;text-align:center;margin:0 !important}
+  html body .broker-contact-buttons>*:last-child:nth-child(odd){grid-column:1/-1}
+  /* Popular searches: one row that scrolls sideways instead of 3 + 2. */
+  /* contain:inline-size keeps the row's own width out of the hero column's
+     sizing; without it the column grew to fit every chip and the whole hero
+     ran off the right edge. */
+  html body .hx-chips{contain:inline-size;min-width:0;max-width:100%;flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+  html body .hx-chips::-webkit-scrollbar{display:none}
+  html body .hx-chips>*{flex:none}
+  /* Map key and toggles wrapped 3 + 1: a two-column grid, CTA full width. */
+  html body .home-map-tools{display:grid !important;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+  html body .home-map-tools .home-map-sp{display:none}
+  html body .home-map-tools .home-map-btn{justify-content:center;margin:0 !important;width:100%;box-sizing:border-box}
+  html body .home-map-tools .home-map-btn.is-cta{grid-column:1/-1}
+}
+/* Arthaland tiles: "31 STOREYS" vanished against a bright sky. */
+html body .arth-card::after{background:linear-gradient(180deg,rgba(5,5,6,.72) 0%,rgba(5,5,6,.25) 30%,rgba(5,5,6,0) 50%,rgba(5,5,6,.86) 100%) !important}
+html body .arth-top{color:rgba(236,235,231,.85) !important;text-shadow:0 1px 8px rgba(0,0,0,.55)}

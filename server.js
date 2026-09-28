@@ -904,9 +904,25 @@ function cloudinaryThumb(u, w, h) {
   if (/\/upload\/[a-z]{1,2}_/.test(u)) return u;
   return u.replace('/upload/', `/upload/f_auto,q_auto,c_fill,g_auto,w_${w || 184},h_${h || 140}/`);
 }
+// Addresses are typed by hand and some come out as "Havila, 1870,, Antipolo,
+// 1870": empty parts from a double comma, and the same part twice. Shown to
+// the public as "Havila, Antipolo, 1870" (a repeated part keeps its LAST
+// place, so a ZIP stays at the end). The stored text is not changed.
+function tidyLocation(s) {
+  if (typeof s !== 'string' || s.indexOf(',') < 0) return s;
+  const parts = s.split(',').map(x => x.trim()).filter(Boolean);
+  const seen = new Set(), out = [];
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const k = parts[i].toLowerCase();
+    if (!seen.has(k)) { seen.add(k); out.unshift(parts[i]); }
+  }
+  return out.join(', ');
+}
+
 function optimizePropertyImages(p) {
   if (!p) return p;
   publicGeo(p);
+  p.location = tidyLocation(p.location);
   // Inline photos are swapped for their /api/property-image/<id>/<index> URL
   // first: that index is the photo's place in the stored gallery, so it has to
   // be taken before applyWebsiteCover reorders anything.
@@ -1093,7 +1109,10 @@ function buildAreaPageHtml(area, rows, counts) {
   const lease = rows.filter(p => /LEASE/i.test(String(p.listingType || '')));
   const salePrices = sale.map(p => p.price).filter(n => n > 0).sort((a, b) => a - b);
   const leasePrices = lease.map(p => p.monthlyRental || p.price).filter(n => n > 0).sort((a, b) => a - b);
-  const kinds = [...new Set(rows.map(p => String(p.propertyType || '').trim()).filter(Boolean))];
+  // "Condominium" and "Condominium - Studio" are one kind here; the sentence
+  // read "Mostly condominium, condominium - studio."
+  const kinds = [...new Map(rows.map(p => String(p.propertyType || '').split(/\s+[-–]\s+/)[0].trim())
+    .filter(Boolean).map(k => [k.toLowerCase(), k])).values()];
 
   // The opening sentence is written from the real numbers rather than being a
   // template with a place name dropped into it.
@@ -1109,7 +1128,7 @@ function buildAreaPageHtml(area, rows, counts) {
       : `${lease.length} for lease`);
   }
   const summary = `GLRA Realty currently has ${bits.join(' and ')} in ${name}.`
-    + (kinds.length ? ` Mostly ${kinds.slice(0, 3).join(', ').toLowerCase()}.` : '');
+    + (kinds.length ? ` Mostly ${(k3 => k3.length > 1 ? k3.slice(0, -1).join(', ') + ' and ' + k3[k3.length - 1] : k3[0])(kinds.slice(0, 3)).toLowerCase()}.` : '');
 
   const metaDesc = `${sale.length + lease.length} properties for sale and lease in ${name}, Philippines`
     + (salePrices.length ? `, from ${peso(salePrices[0])}` : '')
@@ -1207,7 +1226,7 @@ a{color:inherit;text-decoration:none}
 .ar-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .ar-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
 .ar-wrap{max-width:calc(var(--glra-max) + 2 * var(--glra-gut));margin:0 auto;padding:26px var(--glra-gut) 60px}
-.ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px}
+.ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ar-crumbs a:hover{color:var(--hot-text)}
 h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-transform:uppercase;line-height:1.02;margin-bottom:12px}
 .ar-sum{font-size:17px;color:var(--gray);max-width:70ch;margin-bottom:8px}
@@ -1260,7 +1279,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <nav class="ar-nav">
@@ -1631,6 +1650,7 @@ function buildPropertyPageHtml(p, related, comps) {
   // than embedding megabytes of base64 in the HTML.
   externalizeInlineImages(p);
   applyWebsiteCover(p);
+  p.location = tidyLocation(p.location);
   // What people read is the display title (title case, no emoji); the stored
   // title still goes with the enquiry so it matches the listing in the admin.
   const rawTitle = p.title || 'Property';
@@ -2286,6 +2306,20 @@ h2.pg-section-label{font-weight:700}
   .pg-form input,.pg-form textarea,.pg-form select,.pg-form button{font-size:16px}
   .pg-nav a,.pg-form button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 }
+/* Phone: the fact tags wrapped 3 + 1 and the map tools into ragged rows; both
+   are now even two-column grids (an odd last one spans). The inquiry button
+   matches the other forms at full width, and a section label no longer sits
+   flush against the box above it. */
+@media(max-width:640px){
+  .pg-facts{display:grid;grid-template-columns:1fr 1fr}
+  .pg-facts li{justify-content:center}
+  .pg-facts li:last-child:nth-child(odd){grid-column:1/-1}
+  .pg-map-tools{display:grid;grid-template-columns:1fr 1fr}
+  .pg-map-tools>*{justify-content:center;margin:0;width:100%;box-sizing:border-box}
+  .pg-map-tools>*:last-child:nth-child(odd){grid-column:1/-1}
+  .pg-form button{width:100%}
+}
+.pg-section-label:not(:first-child){margin-top:28px}
 @supports(padding:max(0px)){
   .pg-nav{padding-left:max(var(--glra-pad),env(safe-area-inset-left));padding-right:max(var(--glra-pad),env(safe-area-inset-right))}
 }
@@ -2295,7 +2329,7 @@ h2.pg-section-label{font-weight:700}
 .pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <nav class="pg-nav">
@@ -2431,7 +2465,7 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
 ${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}

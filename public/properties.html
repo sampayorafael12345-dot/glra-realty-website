@@ -618,8 +618,16 @@ body.dark-mode .glra-mapcard-near{color:#7fb0ff}
 html body .glra-mapctl-btn{display:flex !important;align-items:center !important;gap:8px !important;min-height:38px;padding:0 12px !important;background:var(--ab-paper) !important;color:var(--ab-ink) !important;border:2px solid var(--ab-line) !important;box-shadow:3px 3px 0 var(--ab-line) !important;font:700 10.5px/1 'JetBrains Mono',monospace !important;letter-spacing:1px !important;text-transform:uppercase !important;white-space:nowrap}
 html body .glra-mapctl-btn[hidden]{display:none !important}
 html body .glra-mapctl-btn i{width:14px;text-align:center;color:#ff3d00}
-html body .glra-mapctl-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
-html body .glra-mapctl-btn:hover i{color:#fff}
+/* Hover only where there is a mouse: on a phone a tap left the button stuck orange. */
+@media(hover:hover){html body .glra-mapctl-btn:hover{background:#ff3d00 !important;border-color:#ff3d00 !important;color:#fff !important}
+html body .glra-mapctl-btn:hover i{color:#fff}}
+html body .glra-mapctl-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ab-line) !important}
+/* The Layers and Commute panels open as a layer under the buttons. Inline, they
+   widened the button column and every button slid left into the map. */
+.glra-mapctl{position:relative;align-items:flex-end}
+@media(min-width:701px){.glra-mapctl{align-items:stretch;min-width:150px}}
+.glra-mapctl>.glra-layers:not(.glra-commute){position:absolute;right:0;top:calc(100% + 8px);z-index:5;min-width:190px}
+@media(min-width:701px){.glra-mapctl>.glra-commute{position:absolute;right:0;top:calc(100% + 8px);z-index:5}}
 html body .glra-mapctl-btn[aria-pressed="true"]{background:#1f5fbf !important;border-color:#1f5fbf !important;color:#fff !important}
 html body .glra-mapctl-btn[aria-pressed="true"] i{color:#fff}
 @media(max-width:700px){html body .glra-mapctl-btn span{display:none}html body .glra-mapctl-btn{width:40px;justify-content:center !important;padding:0 !important}}
@@ -743,8 +751,36 @@ html body .search-card #currencySelect:hover{border-color:#ff3d00 !important}
 html body .search-card #currencySelect:focus{border-color:#ff3d00 !important;box-shadow:0 0 0 3px rgba(255,61,0,.35) !important;outline:none !important}
 @media(max-width:768px){html body .search-card{box-shadow:6px 6px 0 #df3500 !important;padding:18px !important}html body .search-card .search-btn-main,html body .search-card .filter-toggle-btn{width:100% !important;justify-content:center !important}}
 @media(prefers-reduced-motion:reduce){html body .search-card .search-btn-main,html body .search-card .search-btn-main::after{transition:none !important}}
+/* ═══ Results toolbar + currency picker, even on a phone (Sept 29) ═══
+   The toolbar wrapped into five rows of five different widths and three type
+   styles. Now: the two dropdowns share one look (same font, same orange arrow,
+   an icon each), and on a phone the controls sit on a two-column grid with
+   matching heights and edges. */
+html body .near-pick select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#ff3d00 50%),linear-gradient(135deg,#ff3d00 50%,transparent 50%) !important;background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50% !important;background-size:6px 6px,6px 6px !important;background-repeat:no-repeat !important}
+html body .sort-pick select.sort-select{min-height:40px;padding:10px 34px 10px 36px !important;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase}
+@media(max-width:640px){
+  html body .section-top{flex-direction:column;align-items:stretch !important;gap:14px}
+  html body .results-meta{display:grid !important;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  html body .results-meta > *{min-width:0;margin:0 !important}
+  html body .results-count{width:100%;min-height:48px;justify-content:center;padding:0 8px}
+  html body .view-toggle{display:flex;width:100%;box-sizing:border-box}
+  html body .view-toggle .vt-btn{flex:1 1 0;justify-content:center !important;min-height:44px !important;padding:0 8px !important}
+  html body .near-pick{grid-column:1/-1;display:flex;width:100%}
+  html body .near-pick select,html body .sort-pick select.sort-select{width:100%;min-height:48px;font:600 16px/1.2 'Inter',sans-serif !important;letter-spacing:0 !important;text-transform:none !important;padding:0 40px 0 42px !important}
+  html body .near-pick>i{left:16px;font-size:15px}
+  html body .ss-cta{grid-column:1/-1;order:5;min-height:48px;width:100%}
+  html body .area-chip{grid-column:1/-1;order:6;justify-content:center}
+}
+/* Currency picker: one frame, icon inside it (it was an orange box holding
+   an icon on its own line and a second orange box). */
+html body .search-card .currency-switcher{position:relative;display:flex;align-items:center;padding:0 !important;border:0 !important;background:none !important;flex:1 1 260px;max-width:420px}
+html body .search-card .currency-switcher>i{position:absolute;left:16px;top:50%;transform:translateY(-50%);z-index:1;pointer-events:none;color:#ff3d00}
+html body .search-card #currencySelect{width:100%;padding-left:46px !important}
+/* The area chips scroll sideways on a phone; fade the right edge so a cut-off
+   chip reads as "there is more", not as a mistake. */
+@media(max-width:768px){html body .popular-chips{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -930,12 +966,15 @@ html body .search-card #currencySelect:focus{border-color:#ff3d00 !important;box
       <button type="button" class="area-chip" id="areaChip" hidden onclick="glraSetArea(null)"><span></span> <i class="fas fa-times" aria-hidden="true"></i><b class="glra-sr"> Remove</b></button>
       <button type="button" class="area-chip" id="commuteChip" hidden onclick="glraSetCommute(null)"><span></span> <i class="fas fa-times" aria-hidden="true"></i><b class="glra-sr"> Remove</b></button>
       <button type="button" class="ss-cta" id="ssOpenBtn" onclick="openSavedSearchModal(this)"><i class="fas fa-bell" aria-hidden="true"></i> Email me new matches</button>
-      <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
-        <option value="newest">Sort: Newest First</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-        <option value="sqm-desc">Largest Floor Area</option>
-      </select>
+      <div class="near-pick sort-pick">
+        <i class="fas fa-arrow-down-wide-short" aria-hidden="true"></i>
+        <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)" aria-label="Sort properties">
+          <option value="newest">Sort: Newest First</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="sqm-desc">Largest Floor Area</option>
+        </select>
+      </div>
     </div>
   </div>
   <div class="results-layout" id="resultsLayout">
@@ -1125,7 +1164,7 @@ html body .search-card #currencySelect:focus{border-color:#ff3d00 !important;box
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <!--GLRA_LIST-->
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script src="/js/smart-search.js?v=116"></script>
 <script src="/js/glra-maps.js?v=117"></script>
 <script src="/js/gallery.js?v=116" defer></script>

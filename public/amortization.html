@@ -96,7 +96,7 @@ body.dark-mode .schedule-table tr.year-row td{background:#0e0e0c}
 .disclaimer i{color:var(--ab-hot-text,#c02e00);flex-shrink:0;margin-top:2px}
 
 /* In-page jump links (hero) + anchor targets clear the fixed navbar */
-.page-jump{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-top:14px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.page-jump{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px 18px;margin-top:14px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
 .page-jump a{color:var(--ab-hot-text,#c02e00);text-decoration:underline;text-underline-offset:3px}
 #amortCalc,#compare,#factors{scroll-margin-top:96px}
 
@@ -140,6 +140,18 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 
 @media(max-width:820px){.loan-cols{grid-template-columns:1fr}.cmp-inputs{grid-template-columns:1fr}}
 
+/* On a phone the two-up form squeezed the rate and term chips into a
+   ragged 2-wide stack and the schedule broke numbers mid-digit ("P24,16/8").
+   One column of inputs; the table keeps each figure on one line and scrolls
+   sideways inside its own box. */
+@media(max-width:560px){
+  .input-row{grid-template-columns:1fr !important}
+  .schedule-wrapper{overflow:auto;-webkit-overflow-scrolling:touch}
+  .schedule-table{font-size:12.5px}
+  .schedule-table th,.schedule-table td{white-space:nowrap;padding:10px 12px}
+  .schedule-table th:first-child,.schedule-table td:first-child{position:sticky;left:0;z-index:1;background:var(--card-bg,#f1eee9)}
+  .schedule-table thead th:first-child{z-index:3;background:var(--navy)}
+}
 @media(max-width:768px){
   .input-row{grid-template-columns:1fr 1fr}
   .result-summary{grid-template-columns:1fr 1fr}
@@ -151,7 +163,7 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
   .result-summary{grid-template-columns:1fr;padding:18px}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -481,7 +493,7 @@ body.dark-mode .loan-panel{background:#0e0e0c;border-color:#3a3a36}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;

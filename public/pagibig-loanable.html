@@ -116,7 +116,7 @@ body.dark-mode .ref-table th{background:#0e0e0c}
 @media(max-width:900px){.calc-container{grid-template-columns:1fr}}
 @media(max-width:768px){.est-headline .value{font-size:30px}.input-pair{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=123">
+<link rel="stylesheet" href="/css/tactile.css?v=124">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -428,7 +428,7 @@ body.dark-mode .ref-table th{background:#0e0e0c}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=120"></script>
+<script src="/js/main.js?v=124"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -521,7 +521,7 @@ function recalc(){
   if(age > 65){
     box.className = 'alarm late'; ico.className = 'fas fa-circle-xmark';
     t = 'Over the age limit';
-    d = 'Pag-IBIG will not take an application from anyone older than 65. A younger co-borrower &mdash; a spouse or a child already earning &mdash; is the usual way round this, and the loan is then measured against their age and income.';
+    d = 'Pag-IBIG will not take an application from anyone older than 65. A younger co-borrower — a spouse or a child already earning — is the usual way round this, and the loan is then measured against their age and income.';
   } else if(years < want){
     box.className = 'alarm soon'; ico.className = 'fas fa-triangle-exclamation';
     t = 'Your term is shortened to ' + years + ' years';
@@ -544,7 +544,7 @@ function recalc(){
     setT('revNote', 'Your income carries ' + fmtPeso(capPay) + ', which is more than this property can be lent against. Looking at a more expensive unit would not run into the income rule.');
   } else {
     setT('revIncome', fmtPeso(needIncome) + ' a month');
-    setT('revNote', 'That is the gross monthly income &mdash; yours plus a co-borrower\'s &mdash; needed to carry ' + fmtPeso(need) + ' a month at ' + capPct + '% of gross. You are ' + fmtPeso(Math.max(0, needIncome - income)) + ' short of it.');
+    setT('revNote', 'That is the gross monthly income — yours plus a co-borrower\'s — needed to carry ' + fmtPeso(need) + ' a month at ' + capPct + '% of gross. You are ' + fmtPeso(Math.max(0, needIncome - income)) + ' short of it.');
   }
 }
 
