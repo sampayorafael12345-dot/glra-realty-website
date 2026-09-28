@@ -65,3 +65,32 @@ html body .faq-item[open] summary::after{color:var(--ab-hot-text,#c02e00) !impor
   html body .faq-item[open] .faq-answer{animation:none}
   html body :is(a.tool-card,.tool-card[onclick],a.area-card,a.resource-card,a.blog-card,a.nh-card,a.arth-card,.section .prop-card):hover{transform:none !important}
 }
+
+/* ── Phone menu: the X gets its own solid top bar ────────────────────────────
+   The X floated over the menu with a see-through fill, so the menu's first
+   divider cut across it and every divider slid through it as the menu scrolled.
+   A sticky ink bar now runs across the top of the menu (it slides in with the
+   menu, unlike a fixed one), carries the divider line itself, and sits under
+   the X; links scroll away beneath it. The X is solid and lines up with the
+   24px menu column. */
+html body .mobile-overlay::before{
+  content:"";display:block;flex:0 0 auto;align-self:stretch;
+  position:sticky;top:-60px;z-index:3; /* sticky counts from inside the 60px padding */
+  height:74px;margin:-60px -24px 0;
+  background:#0a0a0a;border-bottom:1px solid rgba(241,238,233,.2);
+}
+html body .mobile-overlay .mobile-overlay-links{border-top:0 !important;margin-top:0 !important}
+html body .mobile-overlay .close-menu{
+  position:fixed !important;top:14px !important;right:24px !important;left:auto !important;
+  width:46px !important;height:46px !important;z-index:5500 !important;
+  background:#0a0a0a !important;border:1px solid rgba(241,238,233,.45) !important;
+  border-radius:0 !important;color:#f1eee9 !important;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity .2s ease,visibility .2s ease,background-color .15s,border-color .15s,transform .1s !important;
+}
+/* A tap on a phone leaves :hover stuck on, which left the X half-orange. */
+@media (hover:none){
+  html body .mobile-overlay .close-menu:hover{background:#0a0a0a !important;border-color:rgba(241,238,233,.45) !important}
+}
+html body .mobile-overlay .close-menu:active{background:var(--ab-hot,#df3500) !important;border-color:var(--ab-hot,#df3500) !important;transform:scale(.94)}
+html body .mobile-overlay .close-menu:focus-visible{outline:2px solid #ff3d00;outline-offset:3px}

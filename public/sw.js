@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v121';
+const CACHE_VERSION = 'glra-cache-v122';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -64,7 +64,13 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  if (url.origin === self.location.origin && isPassThrough(url)) return;
+  // Other sites (Cloudinary photos, map tiles, CDN libraries) are never cached
+  // here (see res.type below), and a fetch() made from inside the worker is
+  // held to the page's connect-src, which does not list them. Routing them
+  // through the worker broke every photo and map on phones once the CSP was
+  // enforced. Let the browser load them directly under img-src/script-src.
+  if (url.origin !== self.location.origin) return;
+  if (isPassThrough(url)) return;
 
   // NETWORK-FIRST for HTML — always try fresh, fall back to cache when offline
   if (isHTMLRequest(req)) {

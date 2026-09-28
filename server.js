@@ -1260,7 +1260,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=121">
+<link rel="stylesheet" href="/css/tactile.css?v=123">
 </head>
 <body>
 <nav class="ar-nav">
@@ -2295,7 +2295,7 @@ h2.pg-section-label{font-weight:700}
 .pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=121">
+<link rel="stylesheet" href="/css/tactile.css?v=123">
 </head>
 <body>
 <nav class="pg-nav">
