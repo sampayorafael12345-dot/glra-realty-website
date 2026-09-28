@@ -131,6 +131,12 @@ const subscriberSchema = new mongoose.Schema({
   // Set by the unsubscribe link in campaign emails. An inactive subscriber is
   // skipped by every campaign, even when the address is pasted in by hand.
   unsubscribedAt: { type: Date, default: null },
+  // Double opt-in: a new sign-up is only on the mailing list once they click
+  // the link in the confirmation email. Everyone who was already subscribed
+  // before this existed counts as confirmed (the default).
+  confirmed: { type: Boolean, default: true },
+  confirmedAt: { type: Date, default: null },
+  confirmSentAt: { type: Date, default: null },
   // Anonymous browser ids (see calcUsageSchema) that have been tied to this
   // person by them entering this email on that browser. One human can have
   // several — phone, laptop, work machine — so it's a set, not a single value.
@@ -642,7 +648,9 @@ const PERMISSION_KEYS = [
   'leasing_manage',      // add / edit leases, record payments, send tenant emails
   'leads_view',          // see the Leads tab (every lead's contact details)
   'leads_manage',        // update, assign, log contact, email listings, import
-  'leads_delete'         // delete or merge leads
+  'leads_delete',        // delete or merge leads
+  'customers_view',      // see Subscribers, Price Alerts, saved searches, wishlists, calculator use
+  'inquiries_view'       // see and mark website enquiries
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
@@ -701,7 +709,11 @@ function defaultPermissionsForRole(role) {
     // deleting or merging a person's record is the admin's call.
     leads_view: true,
     leads_manage: true,
-    leads_delete: false
+    leads_delete: false,
+    // On by default (staff already had them); the admin can now switch them
+    // off per person in Accounts, and the server honours it.
+    customers_view: true,
+    inquiries_view: true
   };
 }
 

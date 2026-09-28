@@ -200,9 +200,13 @@ app.use(helmet.contentSecurityPolicy({
   }
 }));
 
+// ENFORCED since 29 Sept 2026: every host in the codebase was inventoried and
+// every public page, the admin and the agent workspace crawled with it on,
+// with zero violations. A new outside host (a new map, font or widget) must
+// be added here or the browser will refuse it.
 app.use(helmet.contentSecurityPolicy({
   useDefaults: false,
-  reportOnly: true,
+  reportOnly: false,
   directives: {
     'default-src': ["'self'"],
     // cdn.jsdelivr.net = Swiper (home page hero slider).
@@ -462,6 +466,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     html = html.replace('<span id="topCount">24</span> <span id="topCountWord">listings</span>',
       `<span id="topCount">${n}</span> <span id="topCountWord">${list.length === 1 ? 'listing' : 'listings'}</span>`);
     html = html.replace('<span id="statProperties">0</span>', `<span id="statProperties">${n}</span>`);
+    html = html.replace('<b id="heroCount">all</b>', `<b id="heroCount">${n}</b>`);
     // JSON inside a <script>: "<" is escaped so no listing text can close it.
     const inline = '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>';
     html = html.replace('<!--GLRA_LIST-->', inline);
@@ -1255,6 +1260,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
+<link rel="stylesheet" href="/css/tactile.css?v=121">
 </head>
 <body>
 <nav class="ar-nav">
@@ -1672,6 +1678,10 @@ function buildPropertyPageHtml(p, related, comps) {
   // render time rather than in the database, so the next import cannot bring it
   // back — which is what kept happening.
   const descDisplay = glraCleanDescription(p.description);
+  // Lines that are only hashtags (#OneUptownBGC #GLRARealty ...) came over from
+  // the Facebook post; they stay, but as a quiet tag row instead of a shout.
+  const descHtml = descDisplay.split('\n').map(l => /^\s*(#[\p{L}\p{N}_]+[\s,]*)+$/u.test(l) ? `<span class="pg-tags">${esc(l.trim())}</span>` : esc(l)).join('\n');
+  const descLong = descDisplay.length > 900;
   const gallery = (p.gallery || []).filter(Boolean);
   // Written for the website by Catherine in the admin; leads the page when set.
   const webSummary = String(p.webSummary || '').trim();
@@ -2229,6 +2239,15 @@ h2.pg-section-label{font-weight:700}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
 .pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px;max-width:78ch}
+.pg-desc-box{position:relative;background:var(--paper2);border:2px solid var(--line);border-left:6px solid var(--hot-btn);padding:24px 28px 8px;margin-bottom:36px}
+.pg-desc-box .pg-desc{margin-bottom:16px}
+.pg-desc-box.is-clamped{max-height:520px;overflow:hidden}
+.pg-desc-box.is-clamped::after{content:'';position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(rgba(0,0,0,0),var(--paper2) 85%);pointer-events:none}
+.pg-desc-more{display:inline-flex;align-items:center;gap:8px;margin:-18px 0 36px;padding:14px 20px;background:var(--ink);color:var(--paper);border:2px solid var(--ink);font:800 13px/1 'Inter',sans-serif;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;box-shadow:4px 4px 0 var(--hot-btn);position:relative;z-index:1;transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s}
+.pg-desc-more:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--hot-btn)}
+.pg-desc-more:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--hot-btn)}
+.pg-tags{display:block;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--gray);letter-spacing:.2px;word-break:break-word}
+@media(max-width:560px){.pg-desc-box{padding:18px 18px 6px;border-left-width:4px}}
 .pg-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .pg-crumbs a{border-bottom:1px solid transparent;display:inline-flex;align-items:center;min-height:24px}
 .pg-crumbs a:hover{color:var(--hot-text);border-bottom-color:var(--hot)}
@@ -2276,6 +2295,7 @@ h2.pg-section-label{font-weight:700}
 .pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
+<link rel="stylesheet" href="/css/tactile.css?v=121">
 </head>
 <body>
 <nav class="pg-nav">
@@ -2305,8 +2325,8 @@ h2.pg-section-label{font-weight:700}
   <a class="pg-brochure" href="/property/${esc(id)}/brochure"><i class="far fa-file-pdf" aria-hidden="true"></i>Download the brochure (PDF)</a>
   ${floorPlanHtml}
   ${webSummary
-    ? `<div class="pg-section-label">About this home</div><p class="pg-summary">${esc(webSummary)}</p>${descDisplay ? `<details class="pg-more"><summary>Full details</summary><div class="pg-desc">${esc(descDisplay)}</div></details>` : ''}`
-    : (descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc">${esc(descDisplay)}</div>` : '')}
+    ? `<div class="pg-section-label">About this home</div><p class="pg-summary">${esc(webSummary)}</p>${descDisplay ? `<details class="pg-more"><summary>Full details</summary><div class="pg-desc">${descHtml}</div></details>` : ''}`
+    : (descDisplay ? `<div class="pg-section-label">Description</div><div class="pg-desc-box${descLong ? ' is-clamped' : ''}" id="pgDescBox"><div class="pg-desc">${descHtml}</div></div>${descLong ? '<button type="button" class="pg-desc-more" aria-controls="pgDescBox" aria-expanded="false">Read the full description <span aria-hidden="true">↓</span></button>' : ''}` : '')}
   ${cmpHtml}
   ${nearbyHtml}
   ${hzHtml}
@@ -2348,6 +2368,11 @@ h2.pg-section-label{font-weight:700}
 </div>
 <script type="application/json" id="pgPhotos">${photosJson}</script>
 <script>
+(function(){
+  // "Read the full description": opens the faded box in place.
+  var more = document.querySelector('.pg-desc-more'), box = document.getElementById('pgDescBox');
+  if (more && box) more.addEventListener('click', function(){ box.classList.remove('is-clamped'); more.setAttribute('aria-expanded', 'true'); more.remove(); });
+})();
 (function(){
   var photos = [];
   try { photos = JSON.parse(document.getElementById('pgPhotos').textContent) || []; } catch (e) {}
@@ -3002,67 +3027,38 @@ app.post('/api/subscribe',
   async (req, res) => {
     try {
       const { email, name, source, vid } = req.body;
-      {
-        const quietSrc = ['calculator_pdf', 'calculator_print', 'guide_print'].includes(source);
-        ingestLead({ kind: 'newsletter', email, name, vid, label: quietSrc ? 'Downloaded a calculator report' : 'Newsletter sign-up',
-          consent: quietSrc ? '' : 'Signed up for the newsletter' }).catch(() => {});
-      }
+      // Calculator PDFs and print-outs ask for an email to send the document,
+      // not to join a mailing list: those are recorded quietly and never mailed.
+      const quietSrc = ['calculator_pdf', 'calculator_print', 'guide_print'].includes(source);
+      ingestLead({ kind: 'newsletter', email, name, vid, label: quietSrc ? 'Downloaded a calculator report' : 'Newsletter sign-up (not yet confirmed)', consent: '' }).catch(() => {});
 
-      let existing = await Subscriber.findOne({ email });
-      let isNew = false;
-
-      if (existing) {
-        if (name) existing.name = name;
-        if (source) existing.source = source;
-        existing.isActive = true;
+      // DOUBLE OPT-IN. Typing an address used to put it straight on the mailing
+      // list, so anyone could sign anyone up. Now a new or lapsed address gets
+      // a confirmation link and joins only when that link is used.
+      const existing = await Subscriber.findOne({ email });
+      if (existing && existing.confirmed !== false && existing.isActive !== false) {
+        if (name && !existing.name) existing.name = name;
         await existing.save();
       } else {
-        await Subscriber.create({
-          email,
-          name: name || '',
-          source: source || 'footer',
-          preferences: { priceDrops: true }
-        });
-        isNew = true;
-
-        // Skip the "Welcome" newsletter email for people who only asked for a
-        // PDF/printout from a calculator or the guide — they get their document,
-        // not a welcome message. ('calculator_pdf' is what the live PDF gate in
-        // js/main.js sends; the other two are legacy print sources.)
-        const quietSources = ['calculator_pdf', 'calculator_print', 'guide_print'];
-        if (!quietSources.includes(source)) {
-          const welcomeHtml = getEmailHeader() + `
-            <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Welcome to GLRA Realty</h2>
-            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Dear ${esc(greetName(name)) || 'Valued Subscriber'},</p>
-            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Thank you for subscribing to our newsletter. You will now receive updates on new property listings, price drops, and real estate market insights.</p>
-            <div style="background-color: #e8e4dd; padding: 15px 20px; margin: 25px 0; border-radius:0;">
-              <p style="margin: 0 0 5px 0; font-weight: 600; color: #0a0a0a;">What to expect:</p>
-              <p style="margin: 0; color: #0a0a0a; font-size: 13px;">New property listings • Price drop alerts • Real estate guides • Market updates</p>
-            </div>
-            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">We're honored to be part of your real estate journey.</p>
-            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
-          ` + getEmailFooter();
-          await sendEmail(email, 'Welcome to GLRA Realty', welcomeHtml);
+        const doc = existing || new Subscriber({ email, name: name || '', source: source || 'footer', preferences: { priceDrops: true }, confirmed: false });
+        if (!existing) doc.isActive = true;
+        if (name && !doc.name) doc.name = name;
+        doc.confirmed = false;
+        const recently = doc.confirmSentAt && Date.now() - new Date(doc.confirmSentAt).getTime() < 15 * 60 * 1000;
+        if (!quietSrc && !recently) {
+          doc.confirmSentAt = new Date();
+          await doc.save();
+          await sendEmail(email, 'Please confirm your GLRA Realty subscription', confirmEmailHtml(email, name));
+        } else {
+          await doc.save();
         }
-      }
-
-      if (isNew) {
-        const adminSubHtml = getEmailHeader() + `
-          <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Subscriber</h2>
-          <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Email</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(email)}</td></tr>
-            <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(name) || 'Not provided'}</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: 600;">Source</td><td style="padding: 8px 0;">${esc(source) || 'footer'}</td></tr>
-          </table>
-        ` + getEmailFooter();
-        await sendEmail('glrarealty@gmail.com', 'New Subscriber - GLRA Realty', adminSubHtml);
       }
 
       // Tie this browser's calculator history to the email they just gave us.
       await stitchCalcIdentity(vid, email);
 
-      // Generic response — does NOT reveal whether the email already existed (prevents enumeration)
-      res.json({ success: true, message: 'Subscription confirmed.' });
+      // Same answer whether or not the address was already known (no enumeration).
+      res.json({ success: true, needsConfirm: !quietSrc, message: quietSrc ? 'Done.' : 'Check your inbox: tap the link in our email to confirm.' });
     } catch (err) {
       console.error('Subscribe error:', err);
       res.status(500).json({ error: 'Server error' });
@@ -3220,7 +3216,7 @@ app.post('/api/wishlist',
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
-        await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true } });
+        await Subscriber.create({ email, source: 'wishlist', preferences: { priceDrops: true }, confirmed: false });
       }
       // Must run AFTER the Subscriber exists, otherwise the browser id has no
       // row to attach to and future pings from this browser stay anonymous.
@@ -3327,7 +3323,7 @@ app.post('/api/price-alert',
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
-        await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true } });
+        await Subscriber.create({ email, source: 'price_alert', preferences: { priceDrops: true }, confirmed: false });
       }
       await stitchCalcIdentity(vid, email);
 
@@ -4549,7 +4545,7 @@ app.post('/api/saved-search/:token/confirm', publicWriteLimiter, async (req, res
       try {
         await Subscriber.updateOne(
           { email },
-          { $setOnInsert: { email, source: 'saved_search', preferences: { priceDrops: true } } },
+          { $setOnInsert: { email, source: 'saved_search', preferences: { priceDrops: true } }, $set: { confirmed: true, confirmedAt: new Date() } },
           { upsert: true }
         );
       } catch (e) {
@@ -5219,7 +5215,7 @@ app.get('/api/admin/presence', verifyToken, requirePermission('dashboard_analyti
 //   calcLast  — when they last touched any calculator
 // Rows stay empty for people who signed up before tracking existed, or who
 // have never opened a calculator on a browser we've tied to their email.
-app.get('/api/admin/subscribers', verifyToken, async (req, res) => {
+app.get('/api/admin/subscribers', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const subscribers = await Subscriber.find().sort({ subscribedAt: -1 }).lean();
 
@@ -5257,7 +5253,7 @@ app.get('/api/admin/subscribers', verifyToken, async (req, res) => {
 
 // Site-wide calculator usage — includes anonymous visitors, so this is useful
 // from day one even before anyone has been matched to an email.
-app.get('/api/admin/calculator-stats', verifyToken, async (req, res) => {
+app.get('/api/admin/calculator-stats', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const since = new Date();
     since.setDate(since.getDate() - 30);
@@ -5286,7 +5282,7 @@ app.get('/api/admin/calculator-stats', verifyToken, async (req, res) => {
   }
 });
 
-app.get('/api/admin/price-alerts', verifyToken, async (req, res) => {
+app.get('/api/admin/price-alerts', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const alerts = await PriceAlert.find().sort({ createdAt: -1 });
     res.json(alerts);
@@ -5295,21 +5291,21 @@ app.get('/api/admin/price-alerts', verifyToken, async (req, res) => {
 
 // Property Finder saved searches, newest first. Without the token: that is
 // the visitor's own key and staff never need it.
-app.get('/api/admin/saved-searches', verifyToken, async (req, res) => {
+app.get('/api/admin/saved-searches', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const searches = await SavedSearch.find().select('-token').sort({ createdAt: -1 }).lean();
     res.json(searches);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.get('/api/admin/wishlist', verifyToken, async (req, res) => {
+app.get('/api/admin/wishlist', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const wishlist = await Wishlist.find().sort({ addedAt: -1 });
     res.json(wishlist);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.get('/api/admin/alert-logs', verifyToken, async (req, res) => {
+app.get('/api/admin/alert-logs', verifyToken, requirePermission('customers_view'), async (req, res) => {
   try {
     const logs = await AlertLog.find().sort({ sentAt: -1 }).limit(50);
     res.json(logs);
@@ -5331,7 +5327,7 @@ app.get('/api/admin/all-properties', verifyToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.get('/api/admin/inquiries', verifyToken, async (req, res) => {
+app.get('/api/admin/inquiries', verifyToken, requirePermission('inquiries_view'), async (req, res) => {
   try {
     const inquiries = await Inquiry.find().sort({ createdAt: -1 });
     res.json(inquiries);
@@ -5340,7 +5336,7 @@ app.get('/api/admin/inquiries', verifyToken, async (req, res) => {
 
 // Mark an inquiry handled / not-handled. Any logged-in staff member can do this
 // (it's a workflow flag, not a destructive action). Body: { handled: true|false }.
-app.patch('/api/admin/inquiries/:id', verifyToken, async (req, res) => {
+app.patch('/api/admin/inquiries/:id', verifyToken, requirePermission('inquiries_view'), async (req, res) => {
   try {
     const handled = !!(req.body && req.body.handled);
     const update = handled
@@ -5949,7 +5945,7 @@ app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscri
 // admin UI can let the user pick recipients without exposing the full models.
 app.get('/api/admin/contact-list', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
   try {
-    const subscribersRaw = await Subscriber.find({ isActive: { $ne: false } })
+    const subscribersRaw = await Subscriber.find({ isActive: { $ne: false }, confirmed: { $ne: false } })
       .select('email name source subscribedAt')
       .sort({ subscribedAt: -1 })
       .lean();
@@ -5964,7 +5960,7 @@ app.get('/api/admin/contact-list', verifyToken, requirePermission('bulkmail_send
     }
 
     // Someone who unsubscribed is not offered again through an old enquiry.
-    const unsubscribed = new Set((await Subscriber.find({ isActive: false }).select('email').lean())
+    const unsubscribed = new Set((await Subscriber.find({ $or: [{ isActive: false }, { confirmed: false }] }).select('email').lean())
       .map(s => String(s.email || '').toLowerCase().trim()));
     unsubscribed.forEach(e => seenSubs.add(e));
 
@@ -6059,12 +6055,76 @@ app.post('/unsubscribe', publicWriteLimiter, async (req, res) => {
   res.send(unsubPage('Unsubscribed', `<h1>You are unsubscribed</h1><p><strong>${esc(e)}</strong> will not get GLRA listing emails or newsletters again.</p><p><a href="/">Back to glrarealty.com</a></p>`));
 });
 
+// ── CONFIRM A NEWSLETTER SIGN-UP (double opt-in) ─────────────
+// Same shape as the unsubscribe link: signed with the server secret, opened
+// to a page with a button (so a mail scanner opening the link confirms
+// nothing), and only the button press puts the address on the list.
+function confirmToken(email) {
+  return crypto.createHmac('sha256', JWT_SECRET).update('confirm:' + String(email).toLowerCase().trim()).digest('hex').slice(0, 32);
+}
+function confirmUrl(email) {
+  const e = String(email).toLowerCase().trim();
+  return `${SITE_URL}/confirm-subscription?e=${encodeURIComponent(e)}&t=${confirmToken(e)}`;
+}
+function confirmCheck(q) {
+  const e = String((q && q.e) || '').toLowerCase().trim().slice(0, 254);
+  const t = String((q && q.t) || '');
+  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && t.length === 32 &&
+    crypto.timingSafeEqual(Buffer.from(t.padEnd(32, '0').slice(0, 32)), Buffer.from(confirmToken(e)));
+  return good ? e : null;
+}
+function confirmEmailHtml(email, name) {
+  return getEmailHeader() + `
+    <h2 style="color:#0a0a0a;font-family:Inter,Helvetica,Arial,sans-serif;font-size:22px;margin:0 0 8px 0;">One click to confirm</h2>
+    <p style="color:#0a0a0a;line-height:1.6;font-size:14px;">Dear ${esc(greetName(name)) || 'Valued Client'},</p>
+    <p style="color:#0a0a0a;line-height:1.6;font-size:14px;">Someone (we hope you) asked for GLRA Realty's listing updates to be sent to this address. Please confirm it was you:</p>
+    <p style="margin:24px 0"><a href="${confirmUrl(email)}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Yes, send me listing updates</a></p>
+    <p style="color:#666;line-height:1.6;font-size:13px;">If this wasn't you, ignore this email: you will not hear from us again.</p>
+  ` + getEmailFooter();
+}
+app.get('/confirm-subscription', (req, res) => {
+  const e = confirmCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!e) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the button in the confirmation email, or sign up again on glrarealty.com.</p>'));
+  res.send(unsubPage('Confirm', `<h1>Get GLRA listing updates?</h1><p>New listings, price drops and market notes will be sent to <strong>${esc(e)}</strong>. You can stop them any time with the link at the bottom of every email.</p>
+    <form method="post" action="/confirm-subscription?e=${encodeURIComponent(e)}&t=${confirmToken(e)}"><button type="submit">Yes, confirm</button></form>`));
+});
+app.post('/confirm-subscription', publicWriteLimiter, async (req, res) => {
+  const e = confirmCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!e) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the button in the confirmation email.</p>'));
+  try {
+    const before = await Subscriber.findOne({ email: e }).lean();
+    if (!before) return res.status(404).send(unsubPage('Not found', '<h1>We could not find this sign-up</h1><p>Please sign up again on glrarealty.com.</p>'));
+    const already = before.confirmed !== false && before.isActive !== false;
+    await Subscriber.updateOne({ email: e }, { $set: { confirmed: true, confirmedAt: new Date(), isActive: true, unsubscribedAt: null } });
+    if (!already) {
+      ingestLead({ kind: 'newsletter', email: e, name: before.name || '', label: 'Confirmed the newsletter by email link', consent: 'Confirmed the newsletter sign-up by clicking the email link' }).catch(() => {});
+      const welcomeHtml = getEmailHeader() + `
+        <h2 style="color:#0a0a0a;font-family:Inter,Helvetica,Arial,sans-serif;font-size:22px;margin:0 0 8px 0;">Welcome to GLRA Realty</h2>
+        <p style="color:#0a0a0a;line-height:1.6;font-size:14px;">Dear ${esc(greetName(before.name)) || 'Valued Subscriber'},</p>
+        <p style="color:#0a0a0a;line-height:1.6;font-size:14px;">You're confirmed. You will receive new property listings, price drops, and real estate market insights.</p>
+        <p style="color:#0a0a0a;line-height:1.6;font-size:14px;margin-top:25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
+      ` + getEmailFooter();
+      sendEmail(e, 'Welcome to GLRA Realty', welcomeHtml).catch(() => {});
+      sendEmail('glrarealty@gmail.com', 'New Subscriber - GLRA Realty', getEmailHeader() + `
+        <h2 style="color:#ff3d00;font-family:Inter,Helvetica,Arial,sans-serif;font-size:20px;margin:0 0 15px 0;">New Subscriber (confirmed)</h2>
+        <p style="font-size:14px;line-height:1.6">${esc(e)}${before.name ? ' · ' + esc(before.name) : ''} · from ${esc(before.source || 'footer')}</p>` + getEmailFooter()).catch(() => {});
+    }
+    res.send(unsubPage('Confirmed', `<h1>You're confirmed</h1><p>Listing updates will be sent to <strong>${esc(e)}</strong>.</p><p><a href="/properties.html">Browse the listings</a></p>`));
+  } catch (err) {
+    console.error('Confirm subscription failed:', err.message);
+    res.status(500).send(unsubPage('Something went wrong', '<h1>Something went wrong</h1><p>Please try the link again in a minute.</p>'));
+  }
+});
+
 async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5 }) {
   let sent = 0, failed = 0, skipped = 0;
   const errors = [];
   let cursor = 0;
   // Whoever unsubscribed is never mailed again, however the list was made.
-  const off = new Set((await Subscriber.find({ email: { $in: clean }, isActive: false }).select('email').lean()).map(s => String(s.email).toLowerCase()));
+  // ...and nor is anyone who signed up but never clicked the confirmation link.
+  const off = new Set((await Subscriber.find({ email: { $in: clean }, $or: [{ isActive: false }, { confirmed: false }] }).select('email').lean()).map(s => String(s.email).toLowerCase()));
   clean = clean.filter(e => { if (off.has(e)) { skipped++; return false; } return true; });
   async function worker() {
     while (cursor < clean.length) {

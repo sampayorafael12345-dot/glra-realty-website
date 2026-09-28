@@ -1464,6 +1464,95 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
      expandable FAQ under the search result. The text is generated from the
      visible markup, because Google penalises schema that does not match. -->
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How long does it take to buy a property in the Philippines?", "acceptedAnswer": {"@type": "Answer", "text": "From offer to closing typically takes 30-90 days, depending on whether you're paying cash or financing. Bank financing adds 30-45 days for loan approval and appraisal. Pre-selling units can take longer, since turnover dates vary by developer."}}, {"@type": "Question", "name": "Can foreigners buy property in the Philippines?", "acceptedAnswer": {"@type": "Answer", "text": "Foreigners cannot own land outright, but they CAN own condominium units (up to 40% of a building's total floor area). Foreigners can also lease private land, generally for up to 25 years renewable once for another 25, and foreign investors with an approved investment project may lease for up to 99 years under RA 12252 (2025). Filipino spouses can hold land titles."}}, {"@type": "Question", "name": "What documents do I need as a buyer?", "acceptedAnswer": {"@type": "Answer", "text": "Government ID (passport or driver's license), TIN, proof of income (last 3 months payslips or ITR), and proof of billing. For foreigners, add visa + Bureau of Immigration certification."}}, {"@type": "Question", "name": "What fees should I expect beyond the purchase price?", "acceptedAnswer": {"@type": "Answer", "text": "Standard buyer-side fees: documentary stamp tax (1.5%), transfer tax (0.5-0.75%), registration fee (~0.25%), notarial fees, and broker's commission (usually paid by the seller). Total closing costs typically run 4-6% of the purchase price. Try our closing fees calculator."}}, {"@type": "Question", "name": "How do I schedule a property viewing?", "acceptedAnswer": {"@type": "Answer", "text": "The fastest way is through Messenger (link below) or by calling 0917 177 4572. Most viewings can be arranged within 24-48 hours. Virtual tours and recorded walk-throughs are also available for clients abroad."}}, {"@type": "Question", "name": "Do you charge buyers a fee?", "acceptedAnswer": {"@type": "Answer", "text": "No. Brokerage commission is paid by the seller, so our service comes at no cost to you as a buyer. We work for you, with no hidden fees and full transparency on every transaction."}}]}</script>
+<style id="hx">
+/* ══ HERO, livelier (Sept 2026) ══════════════════════════════════════════
+   Same bones and colours; what changed: the hero fits one screen, has a way
+   in (a button, a count, popular searches), the headline rises line by line,
+   the numbers count up, the photo breathes and can be driven by hand, and
+   the listing card under it is a link. All motion stops for reduced motion. */
+:root{--hx-grid:rgba(10,10,10,.055);--hx-ease:cubic-bezier(.2,.8,.2,1)}
+body.dark-mode{--hx-grid:rgba(241,238,233,.05)}
+.ab-hero-inner{min-height:min(900px,calc(100dvh - 118px))}
+.ab-hero-text{min-height:0;padding:clamp(24px,3.2vh,44px) 40px clamp(24px,3.2vh,40px);gap:0;
+  background-image:linear-gradient(var(--hx-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hx-grid) 1px,transparent 1px);
+  background-size:56px 56px;background-position:-1px -1px;
+  -webkit-mask-image:none}
+.ab-hero-text::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 0% 0%,transparent 40%,var(--ab-paper) 92%)}
+.ab-hero-text > *{position:relative}
+.ab-hero-photo{min-height:0}
+@media(max-width:980px){.ab-hero-inner{min-height:0}.ab-hero-photo{min-height:420px}.ab-hero-text{padding:30px 22px}}
+/* Headline: one line at a time, sized to the screen height as well as width */
+.ab-hero-text h1.hx-title{font-size:clamp(44px,min(7.6vw,9.3vh),140px);margin:6px 0 4px}
+.ab-hero-text .ab-hero-meta{margin-bottom:12px}
+.hx-line{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
+.hx-line > span{display:inline-block;animation:hxRise .95s var(--hx-ease) both}
+.hx-line:nth-child(2) > span{animation-delay:.08s}
+.hx-line:nth-child(3) > span{animation-delay:.16s}
+.hx-line:nth-child(4) > span{animation-delay:.24s}
+@keyframes hxRise{from{transform:translateY(105%)}to{transform:none}}
+.ab-hero-text h1 .underline{text-decoration:none;position:relative}
+.ab-hero-text h1 .underline::after{content:'';position:absolute;left:0;right:.12em;bottom:.02em;height:.055em;background:currentColor;transform-origin:left;transform:scaleX(0);animation:hxDraw .7s .95s var(--hx-ease) forwards}
+@keyframes hxDraw{to{transform:scaleX(1)}}
+.ab-hero-text h1 .accent{position:relative}
+.ab-hero-text .deck{margin-top:14px;padding-top:14px;font-size:16px;max-width:52ch;text-wrap:pretty;animation:hxFade .8s .45s both}
+@keyframes hxFade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* The way in */
+.hx-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px;margin-top:18px;animation:hxFade .8s .6s both}
+.hx-btn{display:inline-flex;align-items:center;gap:12px;background:var(--ab-hot-btn,#df3500);color:#fff !important;text-decoration:none;font-weight:900;font-size:15px;letter-spacing:.4px;text-transform:uppercase;padding:17px 22px;border:2px solid var(--ab-ink);box-shadow:5px 5px 0 var(--ab-ink);transition:transform .18s var(--hx-ease),box-shadow .18s var(--hx-ease)}
+.hx-btn b{font-variant-numeric:tabular-nums}
+.hx-btn .hx-arr{display:inline-block;transition:transform .25s var(--hx-ease)}
+.hx-btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ab-ink)}
+.hx-btn:hover .hx-arr{transform:translateX(5px)}
+.hx-btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ab-ink)}
+.hx-btn:focus-visible{outline:3px solid var(--ab-ink);outline-offset:4px}
+.hx-link{color:var(--ab-ink) !important;font-weight:700;font-size:15px;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/100% 2px no-repeat;padding-bottom:3px;transition:background-size .3s var(--hx-ease),color .2s}
+.hx-link:hover{color:var(--ab-hot-text,#c02e00) !important;background-size:30% 2px}
+.hx-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;animation:hxFade .8s .72s both}
+.hx-chips-l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--ab-gray);font-weight:600;margin-right:4px}
+.hx-chips a{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.6px;color:var(--ab-ink) !important;text-decoration:none;border:1px solid var(--ab-line);padding:8px 11px;background:var(--ab-paper);transition:background-color .18s,color .18s,transform .18s var(--hx-ease)}
+.hx-chips a:hover,.hx-chips a:focus-visible{background:var(--ab-ink);color:var(--ab-paper) !important;transform:translateY(-2px)}
+.ab-hero-stats{margin-top:18px;animation:hxFade .8s .82s both}
+.ab-hero-stats > div{padding:12px 14px}
+.ab-hero-stats .v{font-size:28px}
+.ab-hero-stats .v{font-variant-numeric:tabular-nums}
+/* The photo: slow push-in, a counter, arrows, a progress bar, a curtain on arrival */
+.ab-hero-photo .swiper-slide{background-position:center 38%}
+/* The photos are Facebook flyers with a small mark along the bottom edge: a deeper shade there hides it and seats the card. */
+.ab-hero-photo .swiper-slide::before{background:linear-gradient(180deg,rgba(10,10,10,.28) 0%,transparent 22%,transparent 58%,rgba(10,10,10,.55) 84%,rgba(10,10,10,.92) 100%) !important}
+.ab-hero-photo .swiper-slide.is-on{animation:hxPush 7.5s ease-out both}
+@keyframes hxPush{from{transform:scale(1.1)}to{transform:scale(1.015)}}
+.ab-hero-photo::after{content:'';position:absolute;inset:0;background:var(--ab-ink,#0a0a0a);z-index:6;transform-origin:right;animation:hxCurtain 1s .15s cubic-bezier(.7,0,.2,1) both;pointer-events:none}
+@keyframes hxCurtain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.hx-ui{position:absolute;right:18px;top:18px;z-index:4;display:flex;align-items:stretch;gap:0}
+.hx-count{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;color:#fff;background:rgba(10,10,10,.72);padding:0 14px;display:flex;align-items:center;font-variant-numeric:tabular-nums}
+.hx-count b{color:#fff;font-weight:700}
+.hx-nav{all:unset;box-sizing:border-box;width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;background:rgba(10,10,10,.72);color:#fff;font-size:18px;cursor:pointer;border-left:1px solid rgba(255,255,255,.18);transition:background-color .18s}
+.hx-nav:hover{background:var(--ab-hot-btn,#df3500)}
+.hx-nav:active{transform:translateY(1px)}
+.hx-nav:focus-visible{outline:2px solid #fff;outline-offset:-4px}
+.hs-dot[aria-current="true"]::before{background:rgba(255,255,255,.4) linear-gradient(var(--ab-hot,#ff3d00),var(--ab-hot,#ff3d00)) no-repeat 0 0/0% 100%;animation:hxFill 6s linear forwards}
+@keyframes hxFill{to{background-size:100% 100%}}
+.ab-hero-photo .photo-card{text-decoration:none;color:inherit;transition:background-color .2s}
+html body .ab-hero-photo a.photo-card:hover{background:var(--ab-ink) !important}
+html body .ab-hero-photo a.photo-card:hover .pc-title,html body .ab-hero-photo a.photo-card:hover .pc-title small{color:var(--ab-paper) !important}
+.photo-card .pc-go{display:inline-block;margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;font-weight:700;color:var(--ab-hot-text,#c02e00);transition:transform .25s var(--hx-ease)}
+.ab-hero-photo a.photo-card:hover .pc-go{transform:translateX(5px)}
+.ab-hero-photo a.photo-card:focus-visible{outline:3px solid var(--ab-hot,#ff3d00);outline-offset:-3px}
+/* The contact form was a full-width grey sheet; it is now a framed panel on the
+   same orange offset shadow as the search bar, so both "do something here"
+   places on the page look alike. */
+html body .contact-form{max-width:min(var(--glra-max,1400px),calc(100% - 80px)) !important;margin:8px auto 64px !important;padding:32px 32px 30px !important;background:var(--ab-paper) !important;border:2px solid var(--ab-line) !important;box-shadow:10px 10px 0 var(--ab-hot-btn,#df3500) !important}
+html body .contact-form .submit-btn{align-self:flex-start;padding:18px 30px !important;font-size:13px !important;box-shadow:4px 4px 0 var(--ab-hot-btn,#df3500) !important}
+@media(max-width:760px){html body .contact-form{max-width:calc(100% - 40px) !important;padding:22px 20px !important;box-shadow:6px 6px 0 var(--ab-hot-btn,#df3500) !important}html body .contact-form .submit-btn{align-self:stretch}}
+@media(max-width:560px){.hx-btn{width:100%;justify-content:space-between}.hx-ui{top:12px;right:12px}.hx-nav{width:42px;height:42px}}
+@media (prefers-reduced-motion:reduce){
+  .hx-line > span,.ab-hero-text .deck,.hx-cta,.hx-chips,.ab-hero-stats,.ab-hero-photo .swiper-slide.is-on{animation:none}
+  .ab-hero-text h1 .underline::after{animation:none;transform:none}
+  .ab-hero-photo::after{display:none}
+  .hs-dot[aria-current="true"]::before{animation:none;background-size:100% 100%}
+}
+</style>
+<link rel="stylesheet" href="/css/tactile.css?v=121">
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -1567,12 +1656,24 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
   <div class="ab-hero-inner">
     <div class="ab-hero-text">
       <div class="ab-hero-meta"><span>// PRC LICENSED BROKER</span><span>METRO MANILA · LUZON</span></div>
-      <h1>Real<br>Estate.<br><span class="accent">Real</span><br><span class="underline">honest.</span></h1>
+      <h1 class="hx-title" aria-label="Real estate. Real honest."><span class="hx-line" aria-hidden="true"><span>Real</span></span><span class="hx-line" aria-hidden="true"><span>Estate.</span></span><span class="hx-line" aria-hidden="true"><span class="accent">Real</span></span><span class="hx-line" aria-hidden="true"><span class="underline">honest.</span></span></h1>
       <p class="deck">No script. No call center. No hand-offs. One licensed broker in Manila who actually visits the building, checks the documents, and answers the phone on a Sunday.</p>
+      <div class="hx-cta">
+        <a class="hx-btn" href="/properties.html"><span>Browse <b id="heroCount">all</b> listings</span> <span class="hx-arr" aria-hidden="true">→</span></a>
+        <a class="hx-link" href="/valuation.html">What is my property worth?</a>
+      </div>
+      <nav class="hx-chips" aria-label="Popular searches">
+        <span class="hx-chips-l">Popular</span>
+        <a href="/properties.html?search=bgc">BGC</a>
+        <a href="/properties.html?search=makati">Makati</a>
+        <a href="/properties.html?category=FOR%20LEASE">For lease</a>
+        <a href="/properties.html?propertyType=House%20and%20Lot">Houses</a>
+        <a href="/properties.html?maxPrice=10000000">Under ₱10M</a>
+      </nav>
       <div class="ab-hero-stats">
-        <div><div class="v">10+</div><div class="l">Years</div></div>
-        <div><div class="v">100+</div><div class="l">Closings</div></div>
-        <div><div class="v">5.0</div><div class="l">Rating</div></div>
+        <div><div class="v" data-count="10" data-suffix="+">10+</div><div class="l">Years</div></div>
+        <div><div class="v" data-count="100" data-suffix="+">100+</div><div class="l">Closings</div></div>
+        <div><div class="v" data-count="5" data-dec="1">5.0</div><div class="l">Rating</div></div>
       </div>
     </div>
     <div class="ab-hero-photo">
@@ -1583,10 +1684,15 @@ html.glra-vt::view-transition-old(root),html.glra-vt::view-transition-new(root){
         </div>
         <div class="hs-dots" role="group" aria-label="Featured photos"></div>
       </div>
-      <div class="photo-card" id="heroPhotoCard">
+      <div class="hx-ui" id="hxUi" hidden>
+        <span class="hx-count" aria-live="polite"><b id="hxIdx">01</b>&nbsp;/&nbsp;<span id="hxTot">05</span></span>
+        <button type="button" class="hx-nav" id="hxPrev" aria-label="Previous listing">←</button>
+        <button type="button" class="hx-nav" id="hxNext" aria-label="Next listing">→</button>
+      </div>
+      <a class="photo-card" id="heroPhotoCard" href="/properties.html">
         <div class="pc-title" id="heroPcTitle">Featured listing<small>Loading the latest</small></div>
         <div class="pc-price" id="heroPcPrice">&nbsp;<small>Metro Manila</small></div>
-      </div>
+      </a>
     </div>
   </div>
 </header>
@@ -2151,6 +2257,7 @@ function initSwiper(){
     go(i,user){const n=hs.slides.length;if(!n)return;i=((i%n)+n)%n;hs.realIndex=i;
       hs.slides.forEach((el,k)=>el.classList.toggle('is-on',k===i));
       if(dots)[...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===i?'true':'false'));
+      const ix=document.getElementById('hxIdx');if(ix)ix.textContent=String(i+1).padStart(2,'0');
       if(i>0&&window.glraHeroFill)glraHeroFill();
       if(window.heroPool)setHeroCaption(window.heroPool[i]);
       if(user)hs.play();},
@@ -2158,10 +2265,32 @@ function initSwiper(){
     update(){hs.slides=[...wrap.querySelectorAll('.swiper-slide')];
       if(dots){dots.innerHTML=hs.slides.length>1?hs.slides.map((_,k)=>`<button type="button" class="hs-dot" aria-label="Photo ${k+1} of ${hs.slides.length}"></button>`).join(''):'';
         [...dots.children].forEach((d,k)=>d.addEventListener('click',()=>hs.go(k,true)));}
+      const ui=document.getElementById('hxUi'),tot=document.getElementById('hxTot');
+      if(ui){ui.hidden=hs.slides.length<2;if(tot)tot.textContent=String(hs.slides.length).padStart(2,'0');}
       hs.go(0);hs.play();},
     destroy(){clearInterval(timer);window.heroSwiper=null}};
   window.heroSwiper=hs;hs.update();
+  // Arrow buttons, and the arrow keys once one of them has focus.
+  const pv=document.getElementById('hxPrev'),nx=document.getElementById('hxNext');
+  if(pv&&!pv.dataset.wired){pv.dataset.wired='1';
+    pv.addEventListener('click',()=>window.heroSwiper&&window.heroSwiper.go(window.heroSwiper.realIndex-1,true));
+    nx.addEventListener('click',()=>window.heroSwiper&&window.heroSwiper.go(window.heroSwiper.realIndex+1,true));
+    [pv,nx].forEach(b=>b.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){e.preventDefault();pv.click();pv.focus()}else if(e.key==='ArrowRight'){e.preventDefault();nx.click();nx.focus()}}));}
+  // Swipe on phones.
+  const ph=document.querySelector('.ab-hero-photo');
+  if(ph&&!ph.dataset.swipe){ph.dataset.swipe='1';let x0=null;
+    ph.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+    ph.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>45&&window.heroSwiper)window.heroSwiper.go(window.heroSwiper.realIndex+(dx<0?1:-1),true)},{passive:true});}
 }
+// The three numbers under the headline count up once, as the page opens.
+(function(){
+  const els=document.querySelectorAll('.ab-hero-stats .v[data-count]');
+  if(!els.length||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;
+  const run=()=>els.forEach((el,i)=>{const to=+el.dataset.count,dec=+(el.dataset.dec||0),suf=el.dataset.suffix||'',t0=performance.now()+900+i*120,d=1100;
+    const f=now=>{const p=Math.min(1,Math.max(0,(now-t0)/d)),e=1-Math.pow(1-p,3);el.textContent=(to*e).toFixed(dec)+suf;if(p<1)requestAnimationFrame(f)};
+    el.textContent=(0).toFixed(dec)+suf;requestAnimationFrame(f)});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+})();
 function applyLiveFilters(){if(!cachedProperties)return;const s=document.getElementById('locationInput').value.toLowerCase().trim();const pt=document.getElementById('propertyTypeSelect').value;const br=document.getElementById('bedroomsSelect').value;const ba=document.getElementById('bathsSelect').value;const mn=getRawPriceValue('minPriceInput');const mx=getRawPriceValue('maxPriceInput');const sq=(s&&window.glraSmartParse)?glraSmartParse(document.getElementById('locationInput').value):null;let f=[...cachedProperties].filter(p=>{if(s){if(sq){if(!glraSmartMatch(p,sq,cachedProperties))return false}else if(!p.title.toLowerCase().includes(s)&&!p.location.toLowerCase().includes(s))return false}if(pt&&glraBaseType(p.propertyType)!==glraBaseType(pt))return false;if(br&&p.bedrooms<parseInt(br))return false;if(ba&&p.bathrooms<parseInt(ba))return false;if(!glraPriceFits(p,'',mn,mx))return false;return true});renderProperties(f.filter(p=>p.featured).slice(0,6),'featured-list');renderProperties(f.filter(p=>isForSale(p)).slice(0,6),'sale-list');renderProperties(f.filter(p=>isForLease(p)).slice(0,6),'lease-list');if(window.glraSmartChips)glraSmartChips(document.getElementById('locationInput'),sq);document.getElementById('statProperties').innerText=f.length;allProperties=f}
 
 /* Look a listing up from the already-loaded cache. The modals used to take
@@ -2264,10 +2393,14 @@ function setHeroCaption(p){
   if(pc&&p){
     const isLease=isForLease(p);
     const price=isLease?'₱'+Number(p.monthlyRental||p.price||0).toLocaleString()+'/mo':'₱'+(((p.price||0)/1000000).toFixed(1))+'M';
-    pc.innerHTML=price+`<small>${escapeHtml(p.location||'')}</small>`;
+    pc.innerHTML=price+`<small>${escapeHtml(p.location||'')}<span class="pc-go" aria-hidden="true">VIEW →</span></small>`;
   }
+  // The card under the photo opens that listing.
+  const card=document.getElementById('heroPhotoCard');
+  if(card&&p&&/^[a-f0-9]{24}$/i.test(String(p._id||''))){card.href='/property/'+p._id;card.setAttribute('aria-label','View '+glraTitle(p.title));}
 }
 function populateHeroFromListings(properties){
+  const hc=document.getElementById('heroCount');if(hc&&properties&&properties.length)hc.textContent=properties.length;
   const wrapper=document.getElementById('heroSliderWrapper');
   if(!wrapper)return;
   const featured=properties.filter(p=>p.featured&&p.mainImage).slice(0,5);

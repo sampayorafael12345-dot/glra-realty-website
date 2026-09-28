@@ -706,7 +706,45 @@ html body .map-pane{isolation:isolate}
 html body .category-tabs{max-width:none !important;padding:0 var(--glra-pad) !important}
 html body .section{max-width:none !important;padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
 html body #sectionTitle{font-size:clamp(24px,2.4vw,34px) !important;letter-spacing:-1px !important;line-height:1 !important}
+/* ══ SEARCH PANEL, with some life in it (Sept 2026) ══════════════════════
+   It was flat: a pale strip, two "buttons" that were plain text on black, and
+   in dark mode the whole panel sank into the page. Now the panel sits on an
+   orange offset shadow, the box is tall and readable, the search button is a
+   real button that presses in, and every field answers hover and focus. */
+html body .search-card{background:#0a0a0a !important;border:2px solid #0a0a0a !important;border-top:4px solid #ff3d00 !important;box-shadow:10px 10px 0 #df3500 !important;padding:26px 28px 24px !important;position:relative}
+html body.dark-mode .search-card{background:#141412 !important;border-color:rgba(241,238,233,.22) !important;border-top-color:#ff3d00 !important;box-shadow:10px 10px 0 #df3500,0 30px 60px rgba(0,0,0,.45) !important}
+html body .search-card .search-row{gap:12px !important;margin-bottom:18px !important;align-items:stretch !important}
+html body .search-field-wrapper input{height:60px !important;padding:0 18px 0 54px !important;font:500 17px/1 'Inter',sans-serif !important;letter-spacing:0 !important;text-transform:none !important;color:#0a0a0a !important;background:#f1eee9 !important;border:2px solid #f1eee9 !important;border-radius:0 !important;transition:border-color .18s,box-shadow .18s !important}
+html body .search-field-wrapper input::placeholder{color:#76706a !important;text-transform:none !important;letter-spacing:0 !important;font-weight:500 !important;font-size:17px !important;opacity:1 !important}
+html body .search-field-wrapper input:hover{border-color:#ff3d00 !important}
+html body .search-field-wrapper input:focus{border-color:#ff3d00 !important;box-shadow:0 0 0 4px rgba(255,61,0,.35) !important;outline:none !important}
+html body .search-field-wrapper .search-icon{left:20px !important;font-size:18px !important;color:#df3500 !important;top:50% !important;transform:translateY(-50%) !important;z-index:2}
+html body .search-card .search-btn-main{height:60px !important;padding:0 26px !important;background:#df3500 !important;color:#fff !important;border:2px solid #df3500 !important;font:900 14px/1 'Inter',sans-serif !important;letter-spacing:.6px !important;text-transform:uppercase !important;box-shadow:4px 4px 0 #f1eee9 !important;gap:10px !important;white-space:nowrap;transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .15s !important}
+html body .search-card .search-btn-main::after{content:'\2192';font-weight:900;display:inline-block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+@media(hover:hover){html body .search-card .search-btn-main:hover{transform:translate(-2px,-2px) !important;box-shadow:6px 6px 0 #f1eee9 !important;background:#ff3d00 !important}html body .search-card .search-btn-main:hover::after{transform:translateX(4px)}}
+html body .search-card .search-btn-main:active{transform:translate(3px,3px) !important;box-shadow:1px 1px 0 #f1eee9 !important}
+html body .search-card .search-btn-main:focus-visible{outline:3px solid #f1eee9 !important;outline-offset:3px}
+html body .search-card .filter-toggle-btn{height:60px !important;padding:0 20px !important;background:transparent !important;color:#f1eee9 !important;border:2px solid rgba(241,238,233,.55) !important;font:800 13px/1 'Inter',sans-serif !important;letter-spacing:.6px !important;text-transform:uppercase !important;transition:background-color .18s,color .18s,border-color .18s !important}
+html body .search-card .filter-toggle-btn:hover,html body .search-card .filter-toggle-btn.active{background:#f1eee9 !important;color:#0a0a0a !important;border-color:#f1eee9 !important}
+html body .search-card .filter-group label{color:rgba(241,238,233,.72) !important}
+html body .search-card .filter-group select,html body .search-card .filter-group input,html body .search-card .price-range-group input{height:50px !important;background:#1d1d1a !important;color:#f1eee9 !important;border:1px solid rgba(241,238,233,.28) !important;border-radius:0 !important;font:600 15px/1 'Inter',sans-serif !important;text-transform:none !important;letter-spacing:0 !important;transition:border-color .18s,box-shadow .18s,background-color .18s !important}
+html body .search-card .filter-group select{-webkit-appearance:none;appearance:none;padding:0 42px 0 16px !important;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,#ff3d00 50%),linear-gradient(135deg,#ff3d00 50%,transparent 50%) !important;background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50% !important;background-size:6px 6px,6px 6px !important;background-repeat:no-repeat !important}
+html body .search-card .filter-group select option{background:#1d1d1a;color:#f1eee9}
+html body .search-card .price-range-group input{padding:0 14px !important}
+html body .search-card .price-range-group input::placeholder{color:rgba(241,238,233,.5) !important;text-transform:none !important;letter-spacing:0 !important;font-size:15px !important;font-weight:600 !important}
+@media(min-width:769px){html body .search-card .filter-toggle-btn{display:none !important}}
+@media(hover:hover){html body .search-card .filter-group select:hover,html body .search-card .price-range-group input:hover{border-color:#ff3d00 !important;background-color:#24241f !important}}
+html body .search-card .filter-group select:focus,html body .search-card .price-range-group input:focus{border-color:#ff3d00 !important;box-shadow:0 0 0 3px rgba(255,61,0,.35) !important;outline:none !important}
+html body .search-card .pop-chip{font:600 12px/1 'Inter',sans-serif !important;padding:10px 13px !important;border:1px solid rgba(241,238,233,.22) !important;background:rgba(241,238,233,.06) !important;color:#f1eee9 !important;transition:background-color .18s,color .18s,transform .18s cubic-bezier(.2,.8,.2,1),border-color .18s !important}
+@media(hover:hover){html body .search-card .pop-chip:hover{background:#f1eee9 !important;color:#0a0a0a !important;border-color:#f1eee9 !important;transform:translateY(-2px)}}
+html body .search-card .pop-chip:focus-visible{outline:2px solid #ff3d00;outline-offset:2px}
+html body .search-card #currencySelect{height:50px !important;background:#1d1d1a !important;color:#f1eee9 !important;border:1px solid rgba(241,238,233,.28) !important;border-radius:0 !important;font:600 15px/1 'Inter',sans-serif !important;-webkit-appearance:none;appearance:none;padding:0 42px 0 16px !important;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,#ff3d00 50%),linear-gradient(135deg,#ff3d00 50%,transparent 50%) !important;background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50% !important;background-size:6px 6px,6px 6px !important;background-repeat:no-repeat !important}
+html body .search-card #currencySelect:hover{border-color:#ff3d00 !important}
+html body .search-card #currencySelect:focus{border-color:#ff3d00 !important;box-shadow:0 0 0 3px rgba(255,61,0,.35) !important;outline:none !important}
+@media(max-width:768px){html body .search-card{box-shadow:6px 6px 0 #df3500 !important;padding:18px !important}html body .search-card .search-btn-main,html body .search-card .filter-toggle-btn{width:100% !important;justify-content:center !important}}
+@media(prefers-reduced-motion:reduce){html body .search-card .search-btn-main,html body .search-card .search-btn-main::after{transition:none !important}}
 </style>
+<link rel="stylesheet" href="/css/tactile.css?v=121">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -3202,5 +3240,26 @@ loadProperties();
 <script src="/js/description.js?v=116" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/chat.js?v=121" defer></script>
+<script>
+/* The search box types out a real example now and then, so it reads as
+   "ask me anything" rather than an empty strip. Only while it is empty and
+   not in use, and never for visitors who asked for less motion. */
+(function(){
+  var el = document.getElementById('locationInput');
+  if(!el || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  var ex = ['Try: 2BR condo in BGC under 15M', 'Try: house and lot in Alabang', 'Try: office for lease in Makati', 'Try: studio near Ateneo', 'Try: lot in Tagaytay'];
+  var i = 0, timer = null;
+  function idle(){ return !el.value && document.activeElement !== el && !document.hidden; }
+  function type(text, k){
+    if(!idle()){ timer = setTimeout(next, 3500); return; }
+    el.setAttribute('placeholder', text.slice(0, k));
+    if(k < text.length) timer = setTimeout(function(){ type(text, k + 1); }, 34);
+    else timer = setTimeout(next, 3200);
+  }
+  function next(){ i = (i + 1) % ex.length; type(ex[i], 5); }
+  el.addEventListener('focus', function(){ clearTimeout(timer); el.setAttribute('placeholder', ex[i]); timer = setTimeout(next, 6000); });
+  timer = setTimeout(next, 3500);
+})();
+</script>
 </body>
 </html>

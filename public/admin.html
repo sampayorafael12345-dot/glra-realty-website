@@ -189,6 +189,7 @@ tr:hover td{background:rgba(200,169,110,.03)}
 .b-lease{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.25)}
 .b-avail{background:rgba(16,185,129,.1);color:#10b981}
 .b-sold{background:rgba(239,68,68,.1);color:#ef4444}
+.b-pending{background:rgba(245,158,11,.14);color:var(--txt-warn,#8c5a06)}
 .b-admin{background:rgba(200,169,110,.12);color:var(--ab-hot-text,#c02e00);border:1px solid rgba(200,169,110,.3)}
 .b-emp{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.25)}
 .b-feat{background:rgba(245,158,11,.1);color:#f59e0b}
@@ -1708,9 +1709,9 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       <a class="nav-item" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
       <div class="sb-section" style="margin-top:6px">CRM</div>
       <a class="nav-item" data-perm="leads_view" onclick="switchTab('leads')" style="display:none"><i class="fas fa-bullseye"></i> Leads <span class="nav-badge" id="leadsBadge" style="display:none">0</span></a>
-      <a class="nav-item" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inqBadge" style="display:none">0</span></a>
-      <a class="nav-item" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
-      <a class="nav-item" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
+      <a class="nav-item" data-perm="inquiries_view" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inqBadge" style="display:none">0</span></a>
+      <a class="nav-item" data-perm="customers_view" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
+      <a class="nav-item" data-perm="customers_view" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
@@ -3989,7 +3990,9 @@ const PERM_DEFS = [
   { key: 'leasing_manage',          name: 'Manage Leasing',          desc: 'Can add/edit leases, record payments, upload documents, email tenants' },
   { key: 'leads_view',              name: 'View Leads',              desc: 'Can see the Leads tab: every lead, their contact details and history' },
   { key: 'leads_manage',            name: 'Work Leads',              desc: 'Can log calls and messages, change stages, assign, email listings, add and import leads' },
-  { key: 'leads_delete',            name: 'Delete / Merge Leads',    desc: 'Can delete a lead or merge duplicates' }
+  { key: 'leads_delete',            name: 'Delete / Merge Leads',    desc: 'Can delete a lead or merge duplicates' },
+  { key: 'customers_view',          name: 'View Customer Lists',     desc: 'Can see Subscribers, Price Alerts, saved searches, wishlists and calculator use (names and emails)' },
+  { key: 'inquiries_view',          name: 'View Inquiries',          desc: 'Can see and mark website enquiries (names, emails, phone numbers, messages)' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -4002,7 +4005,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   submissions_view: true, submissions_import: false, submissions_delete: false,
   bulkmail_send: false,
   leasing_view: false, leasing_manage: false,
-  leads_view: true, leads_manage: true, leads_delete: false
+  leads_view: true, leads_manage: true, leads_delete: false,
+  customers_view: true, inquiries_view: true
 };
 
 // Check if the currently logged-in user has a permission.
@@ -4353,7 +4357,10 @@ function logout(){
 
 // ── DATA ──────────────────────────────────────────────────
 function loadAll(){
-  loadStats();loadAllProps();loadInquiries();loadSubscribers();loadCalcStats();loadAlerts();loadHeroImages();
+  loadStats();loadAllProps();loadHeroImages();
+  // Only the lists this person may see; a switched-off list is not fetched at all.
+  if(hasPerm('inquiries_view')) loadInquiries();
+  if(hasPerm('customers_view')){ loadSubscribers(); loadCalcStats(); loadAlerts(); }
   if(isAdmin()){loadAccounts();}
   if(hasPerm('tasks_view')) loadTasksData();
   if(hasPerm('tasks_view')){ const l=document.getElementById('navStaffLbl'); if(l) l.textContent=hasPerm('tasks_create')?'Staff':'My Desk'; sfLoad(); }
@@ -5322,7 +5329,7 @@ function exportSubscribersCSV(){
   if(!data.length){ showToast('No subscribers to export', true); return; }
   const rows = [['Email','Name','Source','Status','Joined','Calculator Uses','Calculators Used','Last Calculator Use']];
   data.forEach(s => rows.push([
-    s.email||'', s.name||'', s.source||'', (s.isActive!==false)?'Active':'Inactive',
+    s.email||'', s.name||'', s.source||'', s.isActive===false?'Unsubscribed':s.confirmed===false?'Not confirmed':'Active',
     (s.subscribedAt||s.createdAt) ? new Date(s.subscribedAt||s.createdAt).toLocaleString() : '',
     s.calcTotal||0,
     (s.calcUsage||[]).map(c => `${c.label} (${c.count})`).join('; '),
@@ -5419,7 +5426,7 @@ function renderSubscribers(){
   const sessions = all.reduce((n,s)=>n+(s.calcTotal||0),0);
   const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('ss-total', all.length);
-  set('ss-active', all.filter(s=>s.isActive!==false).length);
+  set('ss-active', all.filter(s=>s.isActive!==false&&s.confirmed!==false).length);
   set('ss-calcusers', withCalc);
   set('ss-sessions', sessions);
   const cnt = document.getElementById('subCount');
@@ -5469,7 +5476,7 @@ function renderSubscribers(){
       <td>${chips}</td>
       <td style="font-size:11px;color:var(--gray);white-space:nowrap">${s.calcLast?esc(subAgo(s.calcLast)):'—'}</td>
       <td style="font-size:11px;color:var(--gray);white-space:nowrap">${fmtDateShort(s.subscribedAt||s.createdAt)}</td>
-      <td><span class="badge ${s.isActive!==false?'b-avail':'b-sold'}">${s.isActive!==false?'Active':'Inactive'}</span></td>
+      <td><span class="badge ${s.isActive===false?'b-sold':s.confirmed===false?'b-pending':'b-avail'}" title="${s.confirmed===false?'Signed up but has not clicked the confirmation link yet, so campaigns skip them':''}">${s.isActive===false?'Unsubscribed':s.confirmed===false?'Not confirmed':'Active'}</span></td>
       <td><div class="act-btns">${canDel
         ? `<button class="act act-del" onclick="delSub('${s._id}')" title="Remove subscriber"><i class="fas fa-trash"></i></button>`
         : '<span style="font-size:11px;color:var(--gray)">View only</span>'}</div></td>
@@ -8484,7 +8491,7 @@ async function bmSend(){
       showToast(`Sent: ${d.sent} succeeded, ${d.failed} failed`);
       const result = document.getElementById('bmResult');
       result.style.display = '';
-      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (they unsubscribed)` : '');
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (unsubscribed or never confirmed)` : '');
     } else {
       showToast(d.error || 'Send failed', true);
     }

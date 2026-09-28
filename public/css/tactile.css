@@ -1,0 +1,67 @@
+/* ════════════════════════════════════════════════════════════════════════
+   TACTILE — the "not flat" layer shared by every public page (Sept 2026).
+   Loaded last, after each page's own styles. The brutalist look stays (hard
+   edges, ink, orange); what it adds is response: things you can click lift
+   onto an offset shadow, buttons press in, fields light up when you point at
+   them or type in them, hint text is readable, and the FAQ answers the mouse.
+   Everything that moves stops for visitors who ask for reduced motion.
+   ════════════════════════════════════════════════════════════════════════ */
+:root{--t-hot:var(--ab-hot,#ff3d00);--t-btn:var(--ab-hot-btn,#df3500);--t-ink:var(--ab-ink,#0a0a0a);--t-ease:cubic-bezier(.2,.8,.2,1)}
+
+/* ── 1. Hint text you can read ────────────────────────────────────────── */
+/* The theme set every placeholder to 11 px spaced capitals ("JUAN DELA CRUZ"),
+   which read as a label, not an example. */
+html body input::placeholder,html body textarea::placeholder{text-transform:none !important;letter-spacing:0 !important;font-family:'Inter',system-ui,sans-serif !important;font-size:14px !important;font-weight:500 !important;opacity:1 !important}
+
+/* ── 2. Fields answer the mouse and the keyboard ──────────────────────── */
+html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea){transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease}
+@media(hover:hover){
+  html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea):not(:focus):not(:disabled):not([readonly]):hover{border-color:var(--t-hot) !important}
+}
+html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea):focus{border-color:var(--t-hot) !important;box-shadow:0 0 0 3px rgba(255,61,0,.28) !important;outline:none !important}
+html body :is(input[type=checkbox],input[type=radio]){accent-color:var(--t-btn)}
+
+/* ── 3. Buttons that press ────────────────────────────────────────────── */
+html body :is(button,[role=button],.btn,[class*="-btn"],[class*="btn-"]):not(:disabled):not(.floating-btn):not(.mobile-menu-btn):not([class*="leaflet"]):not([class*="maplibre"]):active{transform:translate(2px,2px) !important}
+/* The solid call-to-action buttons lift onto an ink shadow when pointed at. */
+@media(hover:hover){
+  html body :is(.submit-btn,.cta-btn,.btn-gold,.glra-btn:not(.glra-btn-ghost),.modal-inquire-btn,.calculate-btn,.view-all-btn,.broker-btn-primary,.print-btn,.comm-btn):not(:disabled){transition:transform .16s var(--t-ease),box-shadow .16s var(--t-ease),background-color .18s,color .18s !important}
+  html body :is(.submit-btn,.cta-btn,.btn-gold,.glra-btn:not(.glra-btn-ghost),.modal-inquire-btn,.calculate-btn,.view-all-btn,.broker-btn-primary,.print-btn,.comm-btn):not(:disabled):hover{transform:translate(-2px,-2px) !important;box-shadow:4px 4px 0 var(--t-ink) !important}
+  html body :is(.submit-btn,.cta-btn,.btn-gold,.glra-btn:not(.glra-btn-ghost),.modal-inquire-btn,.calculate-btn,.view-all-btn,.broker-btn-primary,.print-btn,.comm-btn):not(:disabled):active{transform:translate(2px,2px) !important;box-shadow:0 0 0 var(--t-ink) !important}
+}
+html body :is(button,a,[role=button],summary):focus-visible{outline:3px solid var(--t-hot) !important;outline-offset:3px !important}
+
+/* ── 4. Cards you can open lift onto an orange shadow ─────────────────── */
+/* The theme deliberately stopped every card moving on hover; the result was
+   a page that never answered the mouse. Only cards that go somewhere lift. */
+@media(hover:hover){
+  html body :is(a.tool-card,.tool-card[onclick],a.area-card,.area-card[onclick],a.resource-card,.resource-card[onclick],a.blog-card,.blog-card[onclick],a.nh-card,.nh-card[onclick],a.arth-card,.arth-card[onclick],.qs-card[onclick],a.qs-card){transition:transform .22s var(--t-ease),box-shadow .22s var(--t-ease),background-color .2s !important}
+  html body :is(a.tool-card,.tool-card[onclick],a.area-card,.area-card[onclick],a.resource-card,.resource-card[onclick],a.blog-card,.blog-card[onclick],a.nh-card,.nh-card[onclick],a.arth-card,.arth-card[onclick],.qs-card[onclick],a.qs-card):hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--t-btn) !important;position:relative;z-index:2}
+  html body .section .prop-card{transition:transform .22s var(--t-ease),box-shadow .22s var(--t-ease),background-color .2s !important}
+  html body .section .prop-card:hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--t-btn) !important;position:relative;z-index:3}
+  html body .section .prop-card:hover .prop-card-image img{transform:scale(1.045) !important;transition:transform .6s var(--t-ease) !important}
+  html body .prop-card .prop-card-image{overflow:hidden}
+}
+/* Cards that are only text still get a quiet edge on hover, not a jump. */
+@media(hover:hover){
+  html body :is(.testimonial-card,.value-card,.step-card,.section-card){transition:box-shadow .22s var(--t-ease) !important}
+  html body :is(.testimonial-card,.value-card,.step-card,.section-card):hover{box-shadow:inset 4px 0 0 var(--t-btn) !important}
+}
+
+/* ── 5. The FAQ answers the mouse ─────────────────────────────────────── */
+html body .faq-item summary{transition:background-color .18s,padding-left .22s var(--t-ease),color .18s !important}
+@media(hover:hover){html body .faq-item summary:hover{background:rgba(255,61,0,.06) !important;padding-left:12px !important}}
+html body .faq-item[open]{box-shadow:inset 4px 0 0 var(--t-btn) !important}
+html body .faq-item[open] summary{padding-left:14px !important;color:var(--ab-hot-text,#c02e00) !important}
+html body .faq-item[open] .faq-answer{padding-left:72px !important;animation:tFaq .3s var(--t-ease) both}
+@media(max-width:560px){html body .faq-item[open] .faq-answer{padding-left:14px !important}}
+html body .faq-item summary::after{transition:transform .25s var(--t-ease),color .2s !important}
+html body .faq-item[open] summary::after{color:var(--ab-hot-text,#c02e00) !important}
+@keyframes tFaq{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* ── 6. Reduced motion ────────────────────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  html body *{transition-duration:.01ms !important}
+  html body .faq-item[open] .faq-answer{animation:none}
+  html body :is(a.tool-card,.tool-card[onclick],a.area-card,a.resource-card,a.blog-card,a.nh-card,a.arth-card,.section .prop-card):hover{transform:none !important}
+}

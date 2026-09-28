@@ -70,6 +70,7 @@
   .newsletter h2{font-size:26px}
 }
 </style>
+<link rel="stylesheet" href="/css/tactile.css?v=121">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2014</span></div>
@@ -255,7 +256,7 @@ async function subscribeNewsletter(){
   try{
     const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'blog_newsletter'})});
     const d=await r.json();
-    if(d.success){document.getElementById('newsletterEmail').value='';showToast('Subscribed! You will receive GLRA updates.')}
+    if(d.success){document.getElementById('newsletterEmail').value='';showToast(d.message||'Check your inbox: tap the link in our email to confirm.')}
     else showToast('Something went wrong. Please try again.',true)
   }catch{showToast('Network error. Please try again.',true)}
   finally{btn.textContent=orig;btn.disabled=false}
