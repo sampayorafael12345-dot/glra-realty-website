@@ -3076,7 +3076,11 @@ app.post('/api/unsubscribe',
   handleValidation,
   async (req, res) => {
     try {
-      await Subscriber.findOneAndUpdate({ email: req.body.email }, { isActive: false });
+      // Needs the signed token from an email's unsubscribe link (see /unsubscribe):
+      // without it anyone could quietly unsubscribe any address.
+      const e = unsubCheck({ e: req.body.email, t: req.body.t });
+      if (!e) return res.status(400).json({ error: 'Use the unsubscribe link at the bottom of any GLRA email.' });
+      await Subscriber.findOneAndUpdate({ email: e }, { isActive: false, unsubscribedAt: new Date() });
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'Server error' });
