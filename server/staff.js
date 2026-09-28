@@ -259,11 +259,12 @@ function registerStaffRoutes(app) {
           kind: KINDS.includes(t.kind) ? t.kind : 'other',
           priority: ['low', 'medium', 'high', 'critical'].includes(t.priority) ? t.priority : 'medium',
           assignedTo,
-          dueDate: t.dueDate ? new Date(t.dueDate) : null,
+          dueDate: t.dueDate && !isNaN(new Date(t.dueDate)) ? new Date(t.dueDate) : null,
           checklist: (Array.isArray(t.checklist) ? t.checklist : []).map(x => clean(typeof x === 'string' ? x : x && x.text, 300)).filter(Boolean).slice(0, 30).map(text => ({ text })),
           propertyId: mongoose.isValidObjectId(t.propertyId) ? t.propertyId : null,
           issueKey,
-          link: clean(t.link, 500),
+          // A web address or a page on this site; never javascript: or data:.
+          link: /^(https?:\/\/|\/(?!\/))/i.test(clean(t.link, 500)) ? clean(t.link, 500) : '',
           reference: clean(t.reference, 200),
           recurrence: RECUR.includes(t.recurrence) ? t.recurrence : '',
           points: Math.max(0, Math.min(20, parseInt(t.points, 10) || 1)),
@@ -349,7 +350,7 @@ function registerStaffRoutes(app) {
           break;
         case 'snooze': {
           if (!mgr) return res.status(403).json({ error: 'Only the boss can move a due date' });
-          task.dueDate = b.dueDate ? new Date(b.dueDate) : null;
+          task.dueDate = b.dueDate && !isNaN(new Date(b.dueDate)) ? new Date(b.dueDate) : null;
           break;
         }
         default:

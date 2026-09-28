@@ -721,6 +721,17 @@ app.use('/api/admin', async (req, res, next) => {
   next();
 });
 
+// Every id in an /api/admin or /api/agent address is a database id. A
+// malformed one used to reach the query, fail to convert, and come back as a
+// "Server error" (about 40 routes); it is simply something that does not exist.
+['id', 'pid', 'fid', 'sid', 'cid', 'proofId', 'updateId', 'attId', 'inquiryId'].forEach(name => {
+  app.param(name, (req, res, next, value) => {
+    if (!/^\/api\/(admin|agent)\//.test(req.path)) return next();
+    if (!/^[a-f0-9]{24}$/i.test(String(value))) return res.status(404).json({ error: 'Not found' });
+    next();
+  });
+});
+
 // ============ EMAIL TEMPLATES ============
 // Email header/footer (used by every transactional message) live in
 // server/email-templates.js. Edit there once → every email rebrands at the
@@ -6457,7 +6468,7 @@ app.post('/api/admin/tasks', verifyToken, requirePermission('tasks_create'), asy
       status: ['todo','in_progress','stuck','done'].includes(status) ? status : 'todo',
       priority: ['low','medium','high','critical'].includes(priority) ? priority : 'medium',
       assignedTo: Array.isArray(assignedTo) ? assignedTo.filter(id => mongoose.isValidObjectId(id)) : [],
-      dueDate: dueDate ? new Date(dueDate) : null,
+      dueDate: dueDate && !isNaN(new Date(dueDate)) ? new Date(dueDate) : null,
       reference: reference ? String(reference).trim() : '',
       createdBy: req.user.sub
     });
@@ -6507,7 +6518,7 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
         : [];
     }
     if (update.dueDate !== undefined) {
-      update.dueDate = update.dueDate ? new Date(update.dueDate) : null;
+      update.dueDate = update.dueDate && !isNaN(new Date(update.dueDate)) ? new Date(update.dueDate) : null;
     }
     if (update.title) update.title = String(update.title).trim().slice(0, 200);
     if (update.description !== undefined) update.description = String(update.description).slice(0, 5000);

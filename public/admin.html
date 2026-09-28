@@ -14243,7 +14243,11 @@ function sfSetState(s){
   } else sfDayAct({ state:s, stateNote:'' });
 }
 function sfDayBody(){
-  return { plan:document.getElementById('sfPlan').value, report:document.getElementById('sfReport').value, blockers:document.getElementById('sfBlock').value, ...(SF.mood ? { mood:SF.mood } : {}) };
+  // Only the boxes that are on screen: a field that is not there is left as it was.
+  const b = {};
+  [['plan','sfPlan'],['report','sfReport'],['blockers','sfBlock']].forEach(([k,id]) => { const el = document.getElementById(id); if(el) b[k] = el.value; });
+  if(SF.mood) b.mood = SF.mood;
+  return b;
 }
 async function sfSaveDay(){ await sfDayAct(sfDayBody()); showToast('Saved'); }
 function sfTimeOut(){
