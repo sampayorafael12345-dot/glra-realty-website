@@ -497,8 +497,9 @@ function recalc(){
   const notify = parseDate(document.getElementById('notifyDate').value);
   const prior = document.getElementById('prior').value === 'yes';
   const priorDate = parseDate(document.getElementById('priorDate').value);
-  const rate  = num('cgtRate');
-  const win   = Math.max(1, Math.round(num('window')));
+  // Held to the boxes' own limits: a pasted 1e21 printed "NaN undefined NaN" as the deadline.
+  const rate  = Math.min(20, Math.max(0, num('cgtRate')));
+  const win   = Math.min(60, Math.max(1, Math.round(num('window'))));
 
   document.getElementById('priorBox').style.display = prior ? '' : 'none';
 
@@ -603,6 +604,6 @@ document.addEventListener('DOMContentLoaded', recalc);
 </script>
 <script src="/js/brutalist-shell.js?v=116" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=116" defer></script>
+<script src="/js/chat.js?v=121" defer></script>
 </body>
 </html>

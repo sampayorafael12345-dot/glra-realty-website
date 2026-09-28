@@ -96,7 +96,7 @@ function initBrevo() {
 // shared inbox. Everything else leaves it off and keeps the default below.
 // attachments is optional too: [{ name, content }] where content is a Buffer
 // or a base64 string. The leasing module uses it for PDF statements/receipts.
-async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null, attachments = null) {
+async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null, attachments = null, headers = null) {
   if (!brevoApiInstance) {
     const initialized = initBrevo();
     if (!initialized) {
@@ -116,6 +116,7 @@ async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', rep
       : { email: 'glrarealty@gmail.com', name: 'GLRA Realty' };
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
+    if (headers && typeof headers === 'object') sendSmtpEmail.headers = headers;
     if (Array.isArray(attachments) && attachments.length) {
       sendSmtpEmail.attachment = attachments
         .filter(a => a && a.name && a.content)
@@ -4630,16 +4631,34 @@ app.post('/api/saved-search/:token/unsubscribe', publicWriteLimiter, async (req,
 
 // ============ ADMIN LOGIN ============
 
+// The per-address limit above does nothing against guesses spread over many
+// addresses, so each ACCOUNT also gets 8 wrong passwords per 15 minutes,
+// whoever is typing. Successful sign-ins are not counted.
+const accountLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  skipSuccessfulRequests: true,
+  keyGenerator: req => 'login:' + String((req.body && req.body.email) || '').toLowerCase(),
+  message: { error: 'Too many wrong passwords for this account. Try again in 15 minutes, or use "Forgot password".' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+// Checked against when the email has no account, so a wrong email takes as
+// long as a wrong password and the timing does not reveal who has an account.
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password-' + crypto.randomBytes(8).toString('hex'), 12);
+
 app.post('/api/admin/login',
   loginLimiter,
   body('email').isEmail().normalizeEmail(),
   body('password').isString().isLength({ min: 1, max: 200 }),
   handleValidation,
+  accountLoginLimiter,
   async (req, res) => {
     const { email, password } = req.body;
     try {
       const account = await Account.findOne({ email, isActive: true });
       if (!account) {
+        await bcrypt.compare(String(password), DUMMY_HASH);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
       const ok = await account.comparePassword(password);
@@ -5414,7 +5433,12 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
 
       // Everyone watching at a price above the new one: a watcher alerted at an
       // earlier drop is alerted again at the next one, instead of never.
-      const alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: updatedData.price } });
+      let alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: updatedData.price } });
+      // Anyone who used the unsubscribe link gets no listing emails at all.
+      if (alerts.length) {
+        const off = new Set((await Subscriber.find({ email: { $in: alerts.map(a => a.email) }, isActive: false }).select('email').lean()).map(s => String(s.email).toLowerCase()));
+        alerts = alerts.filter(a => !off.has(String(a.email).toLowerCase()));
+      }
       if (alerts.length > 0) dropAlerts = async () => {
         for (const alert of alerts) {
           const priceDropHtml = getEmailHeader() + `
@@ -5935,6 +5959,11 @@ app.get('/api/admin/contact-list', verifyToken, requirePermission('bulkmail_send
       subscribers.push({ email: s.email, name: s.name || '', source: s.source || '', subscribedAt: s.subscribedAt });
     }
 
+    // Someone who unsubscribed is not offered again through an old enquiry.
+    const unsubscribed = new Set((await Subscriber.find({ isActive: false }).select('email').lean())
+      .map(s => String(s.email || '').toLowerCase().trim()));
+    unsubscribed.forEach(e => seenSubs.add(e));
+
     const inquiriesRaw = await Inquiry.find({ email: { $ne: '' } })
       .select('email name propertyTitle createdAt')
       .sort({ createdAt: -1 })
@@ -5974,16 +6003,74 @@ function cleanBulkRecipients(recipients) {
 }
 
 // Concurrency-limited Brevo dispatch. Returns { sent, failed, errors }.
+// ── UNSUBSCRIBE ───────────────────────────────────────────
+// Every campaign email carries a personal unsubscribe link. The link is signed
+// with the server secret, so nobody can unsubscribe a stranger by typing
+// their address; opening it shows a button (link scanners in mail systems
+// "click" every link, so a bare GET never unsubscribes anyone), and the
+// standard List-Unsubscribe header gives Gmail/Outlook their own one-click
+// button, which POSTs to the same address.
+function unsubToken(email) {
+  return crypto.createHmac('sha256', JWT_SECRET).update('unsub:' + String(email).toLowerCase().trim()).digest('hex').slice(0, 32);
+}
+function unsubUrl(email) {
+  const e = String(email).toLowerCase().trim();
+  return `${SITE_URL}/unsubscribe?e=${encodeURIComponent(e)}&t=${unsubToken(e)}`;
+}
+function withUnsubFooter(html, email) {
+  const foot = `<p style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#8a8a8a;text-align:center;margin:28px 0 8px">You are receiving this because you subscribed to or contacted GLRA Realty.<br><a href="${unsubUrl(email)}" style="color:#8a8a8a;text-decoration:underline">Unsubscribe</a> and you will not get these emails again.</p>`;
+  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, foot + '</body>') : html + foot;
+}
+function unsubPage(title, body) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | GLRA Realty</title>
+<style>body{margin:0;background:#f1eee9;color:#0a0a0a;font-family:Inter,Helvetica,Arial,sans-serif}main{max-width:520px;margin:12vh auto;padding:32px 24px;border:2px solid #0a0a0a;background:#fff}h1{font-size:26px;margin:0 0 12px}p{font-size:15px;line-height:1.6}button{background:#ff3d00;color:#fff;border:0;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer}a{color:#0a0a0a}</style></head>
+<body><main>${body}</main></body></html>`;
+}
+function unsubCheck(q) {
+  const e = String((q && q.e) || '').toLowerCase().trim().slice(0, 254);
+  const t = String((q && q.t) || '');
+  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && t.length === 32 &&
+    crypto.timingSafeEqual(Buffer.from(t.padEnd(32, '0').slice(0, 32)), Buffer.from(unsubToken(e)));
+  return good ? e : null;
+}
+app.get('/unsubscribe', (req, res) => {
+  const e = unsubCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!e) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the unsubscribe link from the email itself, or reply to any GLRA email and we will remove you by hand.</p>'));
+  res.send(unsubPage('Unsubscribe', `<h1>Stop GLRA emails?</h1><p>No more listing updates or newsletters will be sent to <strong>${esc(e)}</strong>.</p>
+    <form method="post" action="/unsubscribe?e=${encodeURIComponent(e)}&t=${unsubToken(e)}"><button type="submit">Unsubscribe</button></form>
+    <p style="font-size:13px;color:#666;margin-top:20px">Changed your mind? Just close this page.</p>`));
+});
+app.post('/unsubscribe', publicWriteLimiter, async (req, res) => {
+  const e = unsubCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!e) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the unsubscribe link from the email itself.</p>'));
+  try {
+    await Subscriber.updateOne({ email: e },
+      { $set: { isActive: false, unsubscribedAt: new Date() }, $setOnInsert: { email: e, source: 'unsubscribed' } },
+      { upsert: true });
+  } catch (err) {
+    if (err.code !== 11000) { console.error('Unsubscribe failed:', err.message); return res.status(500).send(unsubPage('Something went wrong', '<h1>Something went wrong</h1><p>Please try again, or reply to any GLRA email and we will remove you by hand.</p>')); }
+  }
+  res.send(unsubPage('Unsubscribed', `<h1>You are unsubscribed</h1><p><strong>${esc(e)}</strong> will not get GLRA listing emails or newsletters again.</p><p><a href="/">Back to glrarealty.com</a></p>`));
+});
+
 async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5 }) {
-  let sent = 0, failed = 0;
+  let sent = 0, failed = 0, skipped = 0;
   const errors = [];
   let cursor = 0;
+  // Whoever unsubscribed is never mailed again, however the list was made.
+  const off = new Set((await Subscriber.find({ email: { $in: clean }, isActive: false }).select('email').lean()).map(s => String(s.email).toLowerCase()));
+  clean = clean.filter(e => { if (off.has(e)) { skipped++; return false; } return true; });
   async function worker() {
     while (cursor < clean.length) {
       const idx = cursor++;
       const to = clean[idx];
       try {
-        const r = await sendEmail(to, subject, html, fromName);
+        const r = await sendEmail(to, subject, withUnsubFooter(html, to), fromName, null, null, {
+          'List-Unsubscribe': `<${unsubUrl(to)}>, <mailto:glrarealty@gmail.com?subject=Unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+        });
         if (r && r.success) sent++;
         else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); }
       } catch (e) {
@@ -5994,7 +6081,7 @@ async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency =
   }
   const workers = Array.from({ length: Math.min(concurrency, clean.length) }, () => worker());
   await Promise.all(workers);
-  return { sent, failed, errors };
+  return { sent, failed, errors, skipped };
 }
 
 // Send a single email body to many recipients. Validates + dedupes server-side
@@ -6021,7 +6108,7 @@ app.post('/api/admin/bulk-email',
       const safeFrom = String(fromName || 'GLRA Realty').slice(0, 80);
       const safeSubject = subject.slice(0, 200);
 
-      const { sent, failed, errors } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html });
+      const { sent, failed, errors, skipped } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html });
 
       await logAudit(req, 'BULK_EMAIL', 'BulkEmail', '', safeSubject, {
         recipients: clean.length,
@@ -6030,7 +6117,7 @@ app.post('/api/admin/bulk-email',
         isTest: !!isTest
       });
 
-      res.json({ success: true, total: clean.length, sent, failed, errors: errors.slice(0, 10) });
+      res.json({ success: true, total: clean.length, sent, failed, skipped, errors: errors.slice(0, 10) });
     } catch (err) {
       console.error('bulk-email error:', err);
       res.status(500).json({ error: 'Bulk email failed' });

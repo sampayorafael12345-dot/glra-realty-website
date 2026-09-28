@@ -7808,7 +7808,10 @@ function exportTasksCSV(){
     t.updatedAt ? new Date(t.updatedAt).toLocaleString('en-PH') : ''
   ]);
   const csvEsc = v => {
-    const s = String(v == null ? '' : v);
+    let s = String(v == null ? '' : v);
+    // A task title can come from a visitor's name ("Reply to =HYPERLINK(...)"):
+    // Excel would run it as a formula, so it is made plain text.
+    if(/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
     return s;
   };
@@ -8481,7 +8484,7 @@ async function bmSend(){
       showToast(`Sent: ${d.sent} succeeded, ${d.failed} failed`);
       const result = document.getElementById('bmResult');
       result.style.display = '';
-      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total`;
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (they unsubscribed)` : '');
     } else {
       showToast(d.error || 'Send failed', true);
     }
@@ -11745,7 +11748,8 @@ function exportCasesCSV(){
   csvDownload(rows, 'cases.csv');
 }
 function csvDownload(rows, name){
-  const csv = rows.map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  // Same guard as downloadCSV: a cell starting = + - @ would run as an Excel formula.
+  const csv = rows.map(r => r.map(v => { let s = String(v == null ? '' : v); if(/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g,'""')}"`; }).join(',')).join('\r\n');
   const blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8' });
   const u = URL.createObjectURL(blob); const a = document.createElement('a');
   a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();

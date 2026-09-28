@@ -434,7 +434,7 @@ function detailHTML(rows){
 }
 
 function recalc(){
-  const years = Math.max(1, num('years'));
+  const years = Math.min(40, Math.max(1, num('years')));   // the box's own limit; a huge number froze the page
   if(mode==='buy'){ recalcBuy(years); } else { recalcSell(years); }
 }
 
@@ -555,6 +555,6 @@ document.addEventListener('DOMContentLoaded', ()=>setMode('buy'));
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — not financial advice.</div>
 <script src="/js/brutalist-shell.js?v=116" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=116" defer></script>
+<script src="/js/chat.js?v=121" defer></script>
 </body>
 </html>

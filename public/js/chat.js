@@ -314,16 +314,21 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
     var clearBtn= panel.querySelector('#glraChatClear');
     var turns   = loadTurns(); // [{role, text, properties?, search?}]
 
+    // Quotes too: the result also goes inside src="", alt="" and href="", and
+    // the old textContent/innerHTML trick left " and ' as they were, so a
+    // listing title or a link in a reply containing a quote could add its own
+    // attributes (onerror=...) to the page.
     function escapeHtml(s) {
-      var div = document.createElement('div');
-      div.textContent = s == null ? '' : String(s);
-      return div.innerHTML;
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function formatBot(text) {
       var html = escapeHtml(text);
       html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g, function (_, label, url) {
+      // "/page" only, never "//other-site.com" (which browsers treat as another website).
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[^\s)]*)\)/g, function (_, label, url) {
         return '<a href="' + url + '" target="_self">' + label + '</a>';
       });
       html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');

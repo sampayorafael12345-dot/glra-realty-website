@@ -128,6 +128,9 @@ const subscriberSchema = new mongoose.Schema({
   },
   subscribedAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true },
+  // Set by the unsubscribe link in campaign emails. An inactive subscriber is
+  // skipped by every campaign, even when the address is pasted in by hand.
+  unsubscribedAt: { type: Date, default: null },
   // Anonymous browser ids (see calcUsageSchema) that have been tied to this
   // person by them entering this email on that browser. One human can have
   // several — phone, laptop, work machine — so it's a set, not a single value.
