@@ -691,7 +691,7 @@ mongoose.connection.on('disconnected', () => {
 // one-time admin seeder all live in ./server/auth.js.
 const {
   signToken, verifyToken, requireAdmin, requirePermission,
-  logAudit, seedDefaultAdmin
+  logAudit, seedDefaultAdmin, invalidateAccountState, loadAccountState
 } = require('./server/auth');
 
 // ── FIELD AGENTS ARE NOT OFFICE STAFF ──────────────────────
@@ -707,11 +707,14 @@ const {
 // cover the four unauthenticated ones (login, signup, forgot/reset password)
 // which agents do use — those carry no token, so `req.user` is unset and this
 // middleware passes them straight through.
-app.use('/api/admin', (req, res, next) => {
+app.use('/api/admin', async (req, res, next) => {
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Bearer ')) return next();
-  let role;
-  try { role = jwt.verify(auth.slice(7), JWT_SECRET).role; } catch (e) { return next(); }
+  let role, sub;
+  try { ({ role, sub } = jwt.verify(auth.slice(7), JWT_SECRET)); } catch (e) { return next(); }
+  // The token's role is from sign-in time; an employee turned into an agent
+  // since then must be stopped too, so the live role is checked as well.
+  try { const live = await loadAccountState(sub); if (live && live.role) role = live.role === 'agent' ? 'agent' : role; } catch (e) {}
   if (role === 'agent') {
     return res.status(403).json({ error: 'This is the office dashboard. Please use your Agent Workspace at /agent.html.' });
   }
@@ -4787,7 +4790,9 @@ app.post('/api/admin/reset-password',
       account.password = req.body.password; // hashed by the pre-save hook
       account.resetTokenHash = null;
       account.resetTokenExpires = null;
+      account.tokenVersion = (account.tokenVersion || 0) + 1;   // sign out every device that had the old password
       await account.save();
+      invalidateAccountState(account._id);
 
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'PASSWORD_RESET', 'Account', account._id, account.email, null);
@@ -4908,7 +4913,7 @@ app.put('/api/admin/accounts/:id',
 
       const update = {};
       if (email) update.email = email;
-      if (password) update.password = password; // hashed by pre-update hook
+      if (password) { update.password = password; update.$inc = { tokenVersion: 1 }; } // hashed by pre-update hook; old sign-ins end
       if (name) update.name = name;
       if (role) update.role = role;
       if (isActive !== undefined) update.isActive = isActive;
@@ -4918,6 +4923,7 @@ app.put('/api/admin/accounts/:id',
       }
 
       const account = await Account.findByIdAndUpdate(req.params.id, update, { new: true, select: '-password' });
+      invalidateAccountState(req.params.id);   // a deactivation or password change applies to the very next request
       await logAudit(req, 'UPDATE', 'Account', req.params.id, account.email, {
         before,
         after: { ...update, password: password ? '[REDACTED]' : undefined }
@@ -6481,6 +6487,9 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     if (update.reference) update.reference = String(update.reference).trim().slice(0, 200);
     // Auto-manage completedAt
     if (update.status === 'done' && existing.status !== 'done') update.completedAt = new Date();
+    // A Staff-tab task finished from this board still goes to the boss to be
+    // checked, exactly as if it had been marked done on the staff desk.
+    if (!hasEdit && existing.kind && update.status === 'done' && existing.status !== 'done') update.review = 'submitted';
     else if (update.status && update.status !== 'done' && existing.status === 'done') update.completedAt = null;
 
     const task = await Task.findByIdAndUpdate(req.params.id, update, { new: true });

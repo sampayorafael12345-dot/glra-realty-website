@@ -320,7 +320,7 @@ function registerStaffRoutes(app) {
           task.review = (mgr && req.user.role === 'admin') ? 'approved' : 'submitted';
           if (task.review === 'approved') task.reviewedAt = now;
           note('Marked done' + (task.proofNote ? ': ' + task.proofNote : '') + (task.proofUrl ? ` (${task.proofUrl})` : ''));
-          if (task.recurrence) {
+          if (task.recurrence && !task.spawnedNext) {
             spawned = await Task.create({
               title: task.title, description: task.description, category: task.category, kind: task.kind,
               priority: task.priority, assignedTo: task.assignedTo, createdBy: task.createdBy,
@@ -328,6 +328,7 @@ function registerStaffRoutes(app) {
               propertyId: task.propertyId, link: task.link, reference: task.reference,
               recurrence: task.recurrence, points: task.points
             });
+            task.spawnedNext = spawned._id;
           }
           break;
         }

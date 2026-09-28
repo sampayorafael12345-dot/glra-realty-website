@@ -17,7 +17,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 // ── TOKEN HELPERS ──────────────────────────────────────────
 function signToken(account) {
   return jwt.sign(
-    { sub: account._id.toString(), email: account.email, role: account.role, name: account.name },
+    { sub: account._id.toString(), email: account.email, role: account.role, name: account.name, tv: account.tokenVersion || 0 },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
@@ -51,9 +51,10 @@ const ACCOUNT_TTL_MS = 30 * 1000;
 async function loadAccountState(userId) {
   const hit = _accountState.get(userId);
   if (hit && Date.now() - hit.at < ACCOUNT_TTL_MS) return hit.state;
-  const acc = await Account.findById(userId).select('isActive status role').lean();
+  const acc = await Account.findById(userId).select('isActive status role tokenVersion').lean();
   const state = acc
-    ? { exists: true, isActive: acc.isActive !== false, status: acc.status, role: acc.role }
+    ? { exists: true, isActive: acc.isActive !== false, status: acc.status, role: acc.role,
+        tv: acc.tokenVersion || 0 }
     : { exists: false };
   _accountState.set(userId, { at: Date.now(), state });
   return state;
@@ -81,6 +82,9 @@ async function verifyToken(req, res, next) {
     const state = await loadAccountState(payload.sub);
     if (!state.exists) return res.status(401).json({ error: 'Account no longer exists' });
     if (!state.isActive) return res.status(403).json({ error: 'Account is inactive' });
+    if ((payload.tv || 0) !== state.tv) {
+      return res.status(401).json({ error: 'Your password was changed, so please sign in again.' });
+    }
     if (state.status === 'pending') {
       return res.status(403).json({ error: 'Account is awaiting admin approval' });
     }
@@ -191,6 +195,7 @@ module.exports = {
   signToken,
   verifyToken,
   invalidateAccountState,
+  loadAccountState,
   requireAdmin,
   requirePermission,
   logAudit,

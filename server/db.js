@@ -285,6 +285,9 @@ const taskSchema = new mongoose.Schema({
   proofNote: { type: String, default: '', maxlength: 1000 },
   recurrence: { type: String, enum: ['', 'daily', 'weekdays', 'weekly', 'monthly'], default: '' },
   startedAt: { type: Date, default: null },
+  // The next copy of a repeating task, once made (so a task sent back and
+  // finished again does not make a second one).
+  spawnedNext: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null },
   // Staff finish -> 'submitted'; the boss checks it -> 'approved' or sends it back ('returned').
   review: { type: String, enum: ['', 'submitted', 'approved', 'returned'], default: '' },
   reviewNote: { type: String, default: '', maxlength: 1000 },
@@ -718,6 +721,10 @@ const accountSchema = new mongoose.Schema({
   // Updated (throttled) on every authenticated admin API call so the dashboard
   // can show who's currently online / recently active.
   lastSeen: { type: Date, default: null },
+  // Stamped into every sign-in token. Raised whenever the password changes, so
+  // every token issued before is refused: "reset your password" really does
+  // throw out whoever stole the old one (a token is otherwise good for 8 hours).
+  tokenVersion: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   // Approval workflow: self-service signups start as 'pending' and cannot log in
   // until an admin approves them (choosing their permissions at that moment).
