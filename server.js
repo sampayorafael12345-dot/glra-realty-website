@@ -2876,7 +2876,7 @@ app.post('/api/inquiries',
 
       // Confirmation email to user
       const userEmailHtml = getEmailHeader() + `
-        <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Dear ${esc(name)},</h2>
+        <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Dear ${esc(greetName(name)) || 'Valued Client'},</h2>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Thank you for reaching out to GLRA Realty. We have received your inquiry and our team will respond within 24 hours.</p>
 
         ${listing ? `<div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
@@ -3021,7 +3021,7 @@ app.post('/api/subscribe',
         if (!quietSources.includes(source)) {
           const welcomeHtml = getEmailHeader() + `
             <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Welcome to GLRA Realty</h2>
-            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Dear ${esc(name) || 'Valued Subscriber'},</p>
+            <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Dear ${esc(greetName(name)) || 'Valued Subscriber'},</p>
             <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Thank you for subscribing to our newsletter. You will now receive updates on new property listings, price drops, and real estate market insights.</p>
             <div style="background-color: #e8e4dd; padding: 15px 20px; margin: 25px 0; border-radius:0;">
               <p style="margin: 0 0 5px 0; font-weight: 600; color: #0a0a0a;">What to expect:</p>
@@ -3155,6 +3155,25 @@ app.post('/api/track/view',
 
 // ============ WISHLIST ROUTES ============
 
+// The listing named in a visitor email is always looked up, never taken from
+// the form: whatever a public form sends goes into an email to whatever
+// address was typed in, so a typed-in "title" or "price" let anyone use GLRA's
+// mail account to put their own words in front of a stranger.
+async function listingForVisitorEmail(propertyId) {
+  if (!/^[a-f0-9]{24}$/i.test(String(propertyId || ''))) return null;
+  const p = await Property.findById(propertyId).select('title location price monthlyRental listingType mainImage').lean().catch(() => null);
+  if (!p) return null;
+  const lease = String(p.listingType || '').toUpperCase() === 'FOR LEASE';
+  return { title: p.title || '', location: p.location || '', price: lease ? (Number(p.monthlyRental) || Number(p.price) || 0) : (Number(p.price) || 0),
+    image: /^https:\/\//.test(p.mainImage || '') ? p.mainImage : '', raw: p };
+}
+// "Dear <name>" in a visitor email only when it looks like a name; otherwise a
+// 200-character "name" was another way to mail a stranger any text.
+function greetName(name) {
+  const n = String(name || '').trim();
+  return /^[\p{L}][\p{L} .'\-]{0,59}$/u.test(n) ? n : '';
+}
+
 app.post('/api/wishlist',
   publicWriteLimiter,
   body('email').isEmail().normalizeEmail(),
@@ -3167,7 +3186,10 @@ app.post('/api/wishlist',
   handleValidation,
   async (req, res) => {
     try {
-      const { email, propertyId, propertyTitle = '', propertyPrice = 0, propertyLocation = '', propertyImage = '', vid } = req.body;
+      const { email, propertyId, vid } = req.body;
+      const listing = await listingForVisitorEmail(propertyId);
+      if (!listing) return res.status(400).json({ error: 'That listing could not be found. Please refresh the page and try again.' });
+      const { title: propertyTitle, price: propertyPrice, location: propertyLocation, image: propertyImage } = listing;
 
       const existing = await Wishlist.findOne({ email, propertyId });
       if (existing) {
@@ -3178,7 +3200,7 @@ app.post('/api/wishlist',
       const wishlistItem = new Wishlist({ email, propertyId, propertyTitle, propertyPrice, propertyLocation, propertyImage });
       await wishlistItem.save();
       ingestLead({ kind: 'wishlist', refId: wishlistItem._id, email, propertyId, propertyTitle, vid,
-        hints: /^[a-f0-9]{24}$/i.test(String(propertyId)) ? hintsFromListing(await Property.findById(propertyId).lean().catch(() => null)) : null }).catch(() => {});
+        hints: hintsFromListing(listing.raw) }).catch(() => {});
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
@@ -3271,7 +3293,10 @@ app.post('/api/price-alert',
   handleValidation,
   async (req, res) => {
     try {
-      const { email, propertyId, propertyTitle = '', propertyPrice = 0, vid } = req.body;
+      const { email, propertyId, vid } = req.body;
+      const listing = await listingForVisitorEmail(propertyId);
+      if (!listing) return res.status(400).json({ error: 'That listing could not be found. Please refresh the page and try again.' });
+      const { title: propertyTitle, price: propertyPrice } = listing;
 
       const existing = await PriceAlert.findOne({ email, propertyId });
       if (existing) {
@@ -3282,7 +3307,7 @@ app.post('/api/price-alert',
       const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice });
       await alert.save();
       ingestLead({ kind: 'price_alert', refId: alert._id, email, propertyId, propertyTitle, vid,
-        hints: /^[a-f0-9]{24}$/i.test(String(propertyId)) ? hintsFromListing(await Property.findById(propertyId).lean().catch(() => null)) : null }).catch(() => {});
+        hints: hintsFromListing(listing.raw) }).catch(() => {});
 
       const existingSubscriber = await Subscriber.findOne({ email });
       if (!existingSubscriber) {
@@ -3404,8 +3429,11 @@ function normalizeSavedSearchCriteria(raw) {
   return {
     category: (cat === 'FOR SALE' || cat === 'FOR LEASE') ? cat : '',
     // Lower-cased and trimmed exactly as the page does before comparing.
-    q: String(r.q || '').toLowerCase().trim().slice(0, 80),
-    propertyType: String(r.propertyType || '').trim().slice(0, 60),
+    // Both are quoted in the confirmation email that goes to whatever address
+    // was typed in, so no links or web addresses: letters, digits, spaces and
+    // simple punctuation only.
+    q: String(r.q || '').toLowerCase().replace(/[^\p{L}\p{N} ,.'\-]/gu, ' ').replace(/\.(?=\S)/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60),
+    propertyType: String(r.propertyType || '').replace(/[^\p{L}\p{N} ,'\-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 60),
     minBeds: Math.floor(num(r.minBeds, 20)),
     minBaths: Math.floor(num(r.minBaths, 20)),
     minPrice: num(r.minPrice, 1e12),

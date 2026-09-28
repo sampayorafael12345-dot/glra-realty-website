@@ -70,9 +70,24 @@ async function resolveGeminiModel(apiKey) {
   return choice;
 }
 
+// The earlier turns come from the visitor's browser, so they are whatever the
+// visitor says they are. Unchecked, 20 turns of 4,000 characters went to the
+// paid AI on every message (about 80,000 characters, 20 times a minute from
+// one address). A real conversation fits easily in the newest 10 turns of
+// 1,500 characters and 8,000 in all.
+function trimHistory(history) {
+  const turns = (Array.isArray(history) ? history : [])
+    .filter(t => t && typeof t === 'object' && (t.role === 'user' || t.role === 'assistant') && typeof t.text === 'string' && t.text.trim())
+    .slice(-10)
+    .map(t => ({ role: t.role, text: t.text.slice(0, 1500) }));
+  let total = 0; const kept = [];
+  for (let i = turns.length - 1; i >= 0; i--) { total += turns[i].text.length; if (total > 8000) break; kept.unshift(turns[i]); }
+  return kept;
+}
+
 async function callGemini({ apiKey, systemPrompt, history, message }) {
   const contents = [];
-  for (const turn of history || []) {
+  for (const turn of trimHistory(history)) {
     if (!turn || !turn.role || !turn.text) continue;
     contents.push({
       role: turn.role === 'assistant' ? 'model' : 'user',
@@ -133,7 +148,7 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
 async function callGroq({ apiKey, systemPrompt, history, message }) {
   const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
   const messages = [{ role: 'system', content: systemPrompt }];
-  for (const turn of history || []) {
+  for (const turn of trimHistory(history)) {
     if (!turn || !turn.role || !turn.text) continue;
     messages.push({
       role: turn.role === 'assistant' ? 'assistant' : 'user',
