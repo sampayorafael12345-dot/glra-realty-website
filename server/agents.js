@@ -25,6 +25,16 @@ const {
   AGENT_LEAD_STAGES
 } = require('./db');
 const { verifyToken, requireAdmin, logAudit } = require('./auth');
+const rateLimit = require('express-rate-limit');
+// An agent's client emails go out under GLRA's name to any address the agent
+// types into a lead, so they are capped per agent (not per network address,
+// since agents share office Wi-Fi): 60 a day is far above a working day.
+const agentEmailLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, max: 60,
+  keyGenerator: req => 'agent-email:' + (req.user && req.user.sub),
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'You have sent the daily maximum of 60 client emails. Please try again tomorrow.' }
+});
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 
 const SITE_URL = 'https://glrarealty.com';
@@ -686,7 +696,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   // answer lands in that agent's own inbox. The agent also gets a copy, and the
   // lead keeps a subject-and-time trail.
   app.post('/api/agent/leads/:id/email',
-    verifyToken, requireAgentRole,
+    verifyToken, requireAgentRole, agentEmailLimiter,
     body('subject').isString().trim().isLength({ min: 2, max: 200 }).withMessage('Give the email a subject'),
     body('message').isString().trim().isLength({ min: 2, max: 4000 }).withMessage('Write a message first'),
     handleValidation,
@@ -701,7 +711,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
           return res.status(400).json({ error: 'This lead has no valid email address. Add one first.' });
         }
-        const subject = String(req.body.subject).trim();
+        const subject = String(req.body.subject).replace(/[\r\n]+/g, ' ').trim();
         const agentName = (me?.name || '').trim() || 'Your GLRA agent';
         // Blank lines become paragraphs, single newlines become breaks, so what
         // the agent typed is what the client reads.
