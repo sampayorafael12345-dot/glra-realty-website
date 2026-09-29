@@ -3348,9 +3348,24 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       .sf-grp>.sf-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
       .sf-grp.bad>.sf-h{color:var(--txt-bad)}
       .sf-t{border:1px solid var(--border-color);background:var(--card-bg);margin-bottom:8px}
-      .sf-t.overdue{border-left:4px solid #de3500}
-      .sf-t.returned{border-left:4px solid #f59e0b}
-      .sf-t.stuck{border-left:4px solid #bf2121}
+      /* Colour = how important: red urgent, orange high, blue normal, grey low.
+         Late / sent back / stuck show as a tint and a label instead. */
+      .sf-t{border-left:6px solid #9ca3af}
+      .sf-t.p-critical{border-left-color:#dc2626}
+      .sf-t.p-high{border-left-color:#f97316}
+      .sf-t.p-medium{border-left-color:#3b82f6}
+      .sf-t.p-low{border-left-color:#9ca3af}
+      .sf-t.overdue,.sf-t.stuck{background:rgba(220,38,38,.07)}
+      .sf-t.returned{background:rgba(245,158,11,.1)}
+      .sf-t.done{border-left-color:#10b981}
+      .sf-pri{font:800 10px/1 'JetBrains Mono',monospace;letter-spacing:.6px;text-transform:uppercase;padding:3px 6px;color:#fff}
+      .sf-pri.critical{background:#dc2626}.sf-pri.high{background:#f97316}.sf-pri.medium{background:#3b82f6}.sf-pri.low{background:#6b7280}
+      .sf-late{font:800 10px/1 'JetBrains Mono',monospace;letter-spacing:.6px;text-transform:uppercase;padding:3px 6px;background:#dc2626;color:#fff}
+      .sf-plegend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 14px}
+      .sf-plegend span{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 4px;border:1px solid var(--border-color)}
+      .sf-plegend i{width:12px;height:12px;display:inline-block}
+      @media(max-width:520px){.sf-plegend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:640px){.sf-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sf-acts>*{justify-content:center;margin:0 !important}.sf-acts>*:last-child:nth-child(odd){grid-column:1/-1}}
       .sf-t.done{opacity:.8}
       .sf-t>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px}
       .sf-t>summary::-webkit-details-marker{display:none}
@@ -13939,6 +13954,8 @@ function sfGroups(tasks){
   const pr = { critical:0, high:1, medium:2, low:3 };
   const byDue = (a,b) => (new Date(a.dueDate||8.64e15) - new Date(b.dueDate||8.64e15)) || (pr[a.priority]-pr[b.priority]);
   Object.values(g).forEach(a => a.sort(byDue));
+  const byPri = (a,b) => (pr[a.priority||'medium']-pr[b.priority||'medium']) || (new Date(a.dueDate||8.64e15) - new Date(b.dueDate||8.64e15));
+  ['returned','stuck','overdue','today'].forEach(k => g[k].sort(byPri));
   g.done.sort((a,b) => new Date(b.completedAt) - new Date(a.completedAt));
   return g;
 }
@@ -14032,7 +14049,7 @@ function sfTaskCard(t, opts){
   const k = sfKind(t.kind), due = sfDue(t);
   const cl = t.checklist || [], nDone = cl.filter(c => c.done).length;
   const late = t.status !== 'done' && due.cls === 'bad';
-  const cls = ['sf-t', t.status, late?'overdue':'', t.review==='returned'&&t.status!=='done'?'returned':''].join(' ');
+  const cls = ['sf-t', t.status, 'p-' + (t.priority || 'medium'), late?'overdue':'', t.review==='returned'&&t.status!=='done'?'returned':''].join(' ');
   const pill = t.status==='done' ? (t.review==='submitted' ? '<span class="sf-pill submitted">To check</span>' : '<span class="sf-pill done">Done</span>')
     : t.review==='returned' ? '<span class="sf-pill returned">Sent back</span>'
     : `<span class="sf-pill ${t.status}">${({todo:'To do',in_progress:'Doing',stuck:'Stuck'})[t.status]||t.status}</span>`;
@@ -14055,7 +14072,7 @@ function sfTaskCard(t, opts){
   return `<details class="${cls}"${opts.open?' open':''}>
     <summary><span class="sf-ki"><i class="${k.icon}"></i></span>
       <span style="min-width:0"><span class="sf-tt">${esc(t.title)}</span>
-        <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.priority==='critical'||t.priority==='high'?`<span class="bad">${t.priority==='critical'?'Urgent':'High'}</span>`:''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${t.botCheck&&t.botCheck.verdict==='problem'?'<span class="bad"><i class="fas fa-robot"></i> check failed</span>':t.botCheck&&t.botCheck.verdict==='ok'?'<span class="ok"><i class="fas fa-robot"></i> checked</span>':''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
+        <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.status!=='done'?`<span class="sf-pri ${esc(t.priority||'medium')}">${({critical:'Urgent',high:'High',medium:'Normal',low:'Low'})[t.priority]||'Normal'}</span>`:''}${late?'<span class="sf-late">Late</span>':''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${t.botCheck&&t.botCheck.verdict==='problem'?'<span class="bad"><i class="fas fa-robot"></i> check failed</span>':t.botCheck&&t.botCheck.verdict==='ok'?'<span class="ok"><i class="fas fa-robot"></i> checked</span>':''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
         ${cl.length?`<span class="sf-prog" style="display:block"><i style="width:${Math.round(100*nDone/cl.length)}%"></i></span>`:''}
       </span>${pill}</summary>
     <div class="sf-tb">
@@ -14072,7 +14089,8 @@ function sfTaskCard(t, opts){
 function sfTaskList(tasks, opts){
   const g = sfGroups(tasks);
   const out = SF_GROUP_META.filter(([k]) => g[k].length).map(([k,l,c]) => `<div class="sf-grp ${c}"><div class="sf-h"><span>${l}</span><span>${g[k].length}</span></div>${g[k].map(t => sfTaskCard(t, {...opts, open: opts.openFirst && (k==='returned'||k==='overdue') && g[k].length<=2})).join('')}</div>`);
-  return out.length ? out.join('') : `<div class="sf-empty"><i class="fas fa-mug-hot" style="font-size:22px;display:block;margin-bottom:8px"></i>No tasks yet.</div>`;
+  const legend = `<div class="sf-plegend" aria-label="Colour key"><span><i style="background:#dc2626"></i>Urgent</span><span><i style="background:#f97316"></i>High</span><span><i style="background:#3b82f6"></i>Normal</span><span><i style="background:#9ca3af"></i>Low</span></div>`;
+  return out.length ? legend + out.join('') : `<div class="sf-empty"><i class="fas fa-mug-hot" style="font-size:22px;display:block;margin-bottom:8px"></i>No tasks yet.</div>`;
 }
 function sfFind(id){
   const all = sfMgr() && SF.data ? [...SF.data.staff.flatMap(s => s.tasks), ...SF.data.reviewQueue] : (SF.me ? SF.me.tasks : []);
