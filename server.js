@@ -155,14 +155,19 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  // The default (no-referrer) makes browsers send "Origin: null" on this
+  // site's own form posts, which the CORS check below refuses, and it also
+  // blanks the referrer behind the dashboard's traffic-sources chart.
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
-// Nothing on this site uses the camera, microphone, geolocation or payment
-// APIs, so switch them off for the page and anything it embeds. Costs nothing
+// Nothing on this site uses the camera, microphone or payment APIs, and only
+// our own pages may ask for the visitor's location (the Properties page's
+// "My location" distance option); all are off for anything embedded. Costs nothing
 // and stops an injected script from even asking the visitor for permission.
 app.use((req, res, next) => {
   res.set('Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
+    'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=()');
   next();
 });
 
@@ -298,6 +303,14 @@ app.use(compression());
 // Body limits — sane defaults; multer handles large file uploads separately
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
+// An "email" sent as an array/object passes isEmail() on its first element but
+// changes the rate-limit key on every request. No route wants a non-string.
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object' && req.body.email !== undefined && typeof req.body.email !== 'string') {
+    return res.status(400).json({ error: 'Invalid email' });
+  }
+  next();
+});
 
 // Body-parser failures are the client's fault, not a server fault. Answer them
 // honestly (413 too large / 400 malformed) so a browser or a script gets a
@@ -1279,7 +1292,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=124">
+<link rel="stylesheet" href="/css/tactile.css?v=125">
 </head>
 <body>
 <nav class="ar-nav">
@@ -2329,7 +2342,7 @@ h2.pg-section-label{font-weight:700}
 .pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=124">
+<link rel="stylesheet" href="/css/tactile.css?v=125">
 </head>
 <body>
 <nav class="pg-nav">
@@ -3039,8 +3052,14 @@ startLeasingTick({ sendEmail, esc });
 // Notarial tab in September 2026; the notarial records themselves are still in
 // the database and still served by the /api/admin/notarial* routes below.
 const { registerCaseRoutes, startCasesTick } = require('./server/cases');
-registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
-startCasesTick({ sendEmail, esc });
+// sendEmail answers {success}; the cases module wants true/false, and passes the
+// reply-to as a plain address (the law office's inbox), not an object.
+const caseMail = async (to, subject, html, fromName, replyTo, attachments) => {
+  const r = await sendEmail(to, subject, html, fromName, typeof replyTo === 'string' ? { email: replyTo, name: fromName } : replyTo, attachments);
+  return !!(r && r.success);
+};
+registerCaseRoutes(app, { sendEmail: caseMail, esc, uploadAttachment, cloudinary });
+startCasesTick({ sendEmail: caseMail, esc });
 
 // The Staff tab: scorecards, time in/out, task kinds with checklists and
 // proof, a review step, repeating tasks. Built on the Task collection.
@@ -5029,6 +5048,7 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
   try {
     const account = await Account.findByIdAndDelete(req.params.id);
     if (!account) return res.status(404).json({ error: 'Account not found' });
+    invalidateAccountState(req.params.id);   // a deleted account stops working on the very next request
     await logAudit(req, 'DELETE', 'Account', req.params.id, account.email, null);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
@@ -5352,6 +5372,13 @@ app.get('/api/admin/alert-logs', verifyToken, requirePermission('customers_view'
 // owner's name, mobile number and email address.
 const OWNER_ONLY_PROPERTY_FIELDS = ['commission', 'fixedAmount', 'totalCommission', 'notes'];
 
+// Same rule for the copy of a listing sent back after a create or edit.
+function propertyForStaff(property, user) {
+  const out = property && typeof property.toObject === 'function' ? property.toObject() : property;
+  if (out && user && user.role !== 'admin') OWNER_ONLY_PROPERTY_FIELDS.forEach(f => { delete out[f]; });
+  return out;
+}
+
 app.get('/api/admin/all-properties', verifyToken, async (req, res) => {
   try {
     const q = Property.find().sort({ createdAt: -1 });
@@ -5435,7 +5462,7 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
     invalidateAreaCache();
     scheduleSavedSearchSweep();
     scheduleGeoPass();
-    res.json(property);
+    res.json(propertyForStaff(property, req.user));
   } catch (err) {
     const why = schemaProblem(err);
     if (why) return res.status(400).json({ error: why });
@@ -5519,7 +5546,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     invalidateAreaCache();
     scheduleSavedSearchSweep();
     scheduleGeoPass();
-    res.json(property);
+    res.json(propertyForStaff(property, req.user));
   } catch (err) {
     const why = schemaProblem(err);
     if (why) return res.status(400).json({ error: why });

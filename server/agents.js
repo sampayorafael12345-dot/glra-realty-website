@@ -876,10 +876,12 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       const profile = await AgentProfile.findOne({ calToken: token }).lean();
       if (!profile) return res.status(404).send('Not found');
       const [account, leads, events] = await Promise.all([
-        Account.findById(profile.account).select('name').lean(),
+        Account.findById(profile.account).select('name isActive').lean(),
         AgentLead.find({ account: profile.account }).select('name birthday nextFollowUp closingDate stage').lean(),
         AgentEvent.find({ account: profile.account, date: { $gte: new Date(Date.now() - 30 * 86400e3) } }).lean()
       ]);
+      // A deactivated or deleted agent's phone feed stops at once.
+      if (!account || account.isActive === false) return res.status(404).send('Not found');
       const evs = [];
       const today = dayKeyOf(manilaNow());
       leads.forEach(l => {
