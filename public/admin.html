@@ -3365,6 +3365,19 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
       .sf-plegend span{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 4px;border:1px solid var(--border-color)}
       .sf-plegend i{width:12px;height:12px;display:inline-block}
       @media(max-width:520px){.sf-plegend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      /* "Do this now" */
+      .sf-now{border:2px solid var(--ab-ink);border-left:10px solid #3b82f6;background:var(--card-bg);padding:14px 16px;margin:0 5px 18px 0;box-shadow:5px 5px 0 var(--ab-ink);min-width:0}
+      .sf-nowacts .hdr-btn{white-space:normal;text-align:center;min-width:0}
+      .sf-now.p-critical{border-left-color:#dc2626}.sf-now.p-high{border-left-color:#f97316}.sf-now.p-low{border-left-color:#9ca3af}
+      .sf-now .sf-h{color:#de3500;margin-bottom:6px}
+      .sf-now .tt{font:900 19px/1.25 Inter,sans-serif;margin:0 0 6px;word-break:break-word}
+      .sf-nowacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:12px}
+      .sf-nowacts>*{justify-content:center;margin:0 !important}
+      .sf-nowacts>*:last-child:nth-child(odd){grid-column:1/-1}
+      .sf-sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px}
+      .sf-sum div{border:1px solid var(--border-color);padding:8px 10px;font-size:12.5px}
+      .sf-sum b{display:block;font:900 18px/1.1 Inter,sans-serif}
+      .sf-sum .ok b{color:var(--txt-ok)}.sf-sum .no b{color:var(--txt-bad)}
       @media(max-width:640px){.sf-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sf-acts>*{justify-content:center;margin:0 !important}.sf-acts>*:last-child:nth-child(odd){grid-column:1/-1}}
       .sf-t.done{opacity:.8}
       .sf-t>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px}
@@ -14066,10 +14079,11 @@ function sfTaskCard(t, opts){
   if(prop && hasPerm('properties_edit')) acts.push(`<button class="hdr-btn" onclick="openEditProp('${prop._id}')"><i class="fas fa-edit"></i> Open listing editor</button>`);
   if(t.propertyId) acts.push(`<a class="hdr-btn" href="/property/${esc(t.propertyId)}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Live page</a>`);
   if(t.link) acts.push(`<a class="hdr-btn" href="${esc(safeUrl(t.link.startsWith('/')?location.origin+t.link:t.link))}" target="_blank" rel="noopener"><i class="fas fa-link"></i> Open link</a>`);
+  if(t.status !== 'done') acts.push(...sfExtraActs(t));
   acts.push(`<button class="hdr-btn" onclick="sfComment('${t._id}')"><i class="fas fa-comment"></i> Note</button>`);
   if(opts.manager) acts.push(`<button class="hdr-btn" onclick="openTaskPanel('${t._id}')"><i class="fas fa-sliders-h"></i> Edit</button>`);
   const upd = (t.updates||[]).slice(-4).reverse();
-  return `<details class="${cls}"${opts.open?' open':''}>
+  return `<details class="${cls}" data-tid="${t._id}"${opts.open?' open':''}>
     <summary><span class="sf-ki"><i class="${k.icon}"></i></span>
       <span style="min-width:0"><span class="sf-tt">${esc(t.title)}</span>
         <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.status!=='done'?`<span class="sf-pri ${esc(t.priority||'medium')}">${({critical:'Urgent',high:'High',medium:'Normal',low:'Low'})[t.priority]||'Normal'}</span>`:''}${late?'<span class="sf-late">Late</span>':''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${t.botCheck&&t.botCheck.verdict==='problem'?'<span class="bad"><i class="fas fa-robot"></i> check failed</span>':t.botCheck&&t.botCheck.verdict==='ok'?'<span class="ok"><i class="fas fa-robot"></i> checked</span>':''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
@@ -14331,7 +14345,8 @@ function sfRenderDesk(){
   // Oldest first, so they read in the order they were written; three at a time.
   const unread = (m.messages||[]).filter(x => !x.ackAt).sort((a,b) => String(a._id).localeCompare(String(b._id)));
   const inbox = unread.length ? `<div class="sf-inbox"><div class="sf-ch"><p class="sf-h"><i class="fas fa-comment-dots"></i> ${unread.length} message${unread.length===1?'':'s'} for you · press "Got it" on each</p></div><div class="sf-cb">${unread.slice(0,3).map(x => sfMsgCard(x,{staff:true})).join('')}${unread.length > 3 ? `<button class="hdr-btn primary" style="width:100%;justify-content:center" onclick="sfSetView('msgs')">See all ${unread.length} messages</button>` : ''}</div></div>` : '';
-  const left = inbox + `
+  const nextT = sfNextTask(m.tasks);
+  const left = inbox + sfNowCard(nextT) + `
     <div class="sf-card"><div class="sf-cb">
       <div class="sf-hero">${sfRing(st.todayPct, st.doneToday, `done today<br>${st.pointsToday} pts`)}
         <div style="min-width:0"><p class="sf-name">${hello}${first?', '+esc(first):''}</p>
@@ -14346,6 +14361,7 @@ function sfRenderDesk(){
       <p class="sf-h" style="margin:16px 0 8px">Today against your targets</p>
       ${sfProgress(m.progress)}
       <div style="margin-top:16px">${sfKpis(st)}</div>${sfBars(st.daily)}
+      ${('Notification' in window) && Notification.permission === 'default' ? `<button class="hdr-btn" style="width:100%;justify-content:center;margin-top:12px" onclick="sfAskNotify()"><i class="fas fa-bell"></i> Turn on reminders</button>` : ''}
       <p class="sf-privacy"><i class="fas fa-info-circle"></i> Ma'am and Rafael can see your time in and out, your status, your active time in this dashboard (minutes it is open and being used), and everything you record here.</p>
     </div></div>
     <div class="sf-card"><div class="sf-ch"><p class="sf-h">My tasks</p></div><div class="sf-cb">${sfTaskList(m.tasks, {manager:false, openFirst:true})}</div></div>`;
@@ -14388,7 +14404,7 @@ function sfTimeOut(){
   const done = SF.me.tasks.filter(t => t.status === 'done' && t.completedAt && sfDay(t.completedAt) === today);
   const cur = document.getElementById('sfReport').value.trim();
   const auto = done.map(t => '- ' + t.title).join('\n');
-  sfDlg('Time out', `<p class="sf-legend">Check your report before you go. Ma'am reads this.</p>
+  sfDlg('Time out', `${sfDaySummary()}<p class="sf-legend">Check your report before you go. Ma'am reads this.</p>
     <label class="ld-f"><span>What I did today</span><textarea class="finput" id="sfDlgRep" rows="7">${esc(cur || auto)}</textarea></label>
     <label class="ld-f" style="margin-top:10px"><span>Problems / I need help with</span><textarea class="finput" id="sfDlgBlk" rows="2">${esc(document.getElementById('sfBlock').value)}</textarea></label>`,
     'Time out', async () => { await sfDayAct({ ...sfDayBody(), report:document.getElementById('sfDlgRep').value, blockers:document.getElementById('sfDlgBlk').value, action:'out' }); showToast('Timed out. Thank you!'); });
@@ -14844,6 +14860,117 @@ async function sfPbExcel(file){
   }, 60000);
 })();
 
+// ── DO THIS NOW: the one task to do next ─────────────────────
+function sfNextTask(tasks){
+  const g = sfGroups(tasks || []);
+  return [...g.returned, ...g.overdue, ...g.today, ...g.stuck, ...g.upcoming, ...g.nodate][0] || null;
+}
+function sfNowCard(t){
+  if(!t) return '';
+  const due = sfDue(t), k = sfKind(t.kind), p = t.priority || 'medium';
+  const main = t.status === 'todo' || t.status === 'stuck'
+    ? `<button class="hdr-btn primary sf-big" onclick="sfAct('${t._id}','start')"><i class="fas fa-play"></i> Start</button>`
+    : `<button class="hdr-btn primary sf-big" onclick="sfDone('${t._id}')"><i class="fas fa-check"></i> Done</button>`;
+  return `<div class="sf-now p-${esc(p)}"><p class="sf-h"><i class="fas fa-bolt"></i> Do this now</p>
+    <p class="tt">${esc(t.title)}</p>
+    <div class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span><span class="sf-pri ${esc(p)}">${({critical:'Urgent',high:'High',medium:'Normal',low:'Low'})[p]||'Normal'}</span><span>${esc(k.label)}</span>${t.review==='returned'?'<span class="warn">Sent back to fix</span>':''}</div>
+    <div class="sf-nowacts">${main}${sfExtraActs(t).join('')}<button class="hdr-btn" onclick="sfOpenCard('${t._id}')"><i class="fas fa-list-check"></i> Steps and details</button></div></div>`;
+}
+function sfOpenCard(id){
+  const d = document.querySelector(`#sfBody details[data-tid="${id}"]`); if(!d) return;
+  d.open = true; d.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+// Buttons that save time on a task: the Facebook caption, the lead's window.
+function sfExtraActs(t){
+  const out = [];
+  if(['facebook','social','portal'].includes(t.kind) && t.propertyId) out.push(`<button class="hdr-btn" onclick="sfCopyCaption('${t._id}')"><i class="fas fa-copy"></i> Copy caption</button>`);
+  const lead = /^lead:([a-f0-9]{24})/.exec(t.issueKey || '');
+  if(lead && hasPerm('leads_view')) out.push(`<button class="hdr-btn" onclick="sfOpenLead('${lead[1]}')"><i class="fas fa-comment-dots"></i> Reply now</button>`);
+  if(/^inq:/.test(t.issueKey || '') && hasPerm('inquiries_view')) out.push(`<button class="hdr-btn" onclick="switchTab('inquiries')"><i class="fas fa-envelope-open-text"></i> Open enquiries</button>`);
+  return out;
+}
+function sfOpenLead(id){
+  switchTab('leads');
+  // The lead window has the ready-made Viber / WhatsApp / text replies; using one logs the contact.
+  setTimeout(() => { try{ openLead(id); }catch(e){} }, 400);
+}
+// A ready-to-post Facebook caption from the listing's own details.
+function sfCaption(p){
+  // Most listings already carry the Facebook caption as their description: reuse it and add the website link.
+  const desc = String(p.description || '').replace(/\r/g, '').trim();
+  if(/📌|📍|🔹|💰/.test(desc) && desc.length > 120) return desc + (desc.includes('glrarealty.com/property/') ? '' : `\n\n🔗 Photos and full details: https://glrarealty.com/property/${p._id}`);
+  const lease = /lease|rent/i.test(p.listingType || '') && !/sale/i.test(p.listingType || '');
+  const n = v => Number(v || 0).toLocaleString('en-PH');
+  const price = lease ? (p.monthlyRental ? `₱${n(p.monthlyRental)} per month` : '') : (p.price ? `₱${n(p.price)}` : '');
+  const city = (String(p.location || '').split(',').map(x => x.trim()).filter(Boolean).find(x => /city|makati|taguig|bgc|pasig|manila|quezon|mandaluyong|pasay|para[nñ]aque|alabang|muntinlupa|san juan|cavite|laguna|rizal|bulacan|batangas|pampanga/i.test(x)) || '').replace(/\s+/g, '');
+  const facts = [];
+  if(p.sqm) facts.push(`🏠 ${n(p.sqm)} sqm floor area`);
+  if(p.landArea) facts.push(`🌳 ${n(p.landArea)} sqm lot`);
+  if(p.bedrooms) facts.push(`🛏️ ${p.bedrooms} bedroom${p.bedrooms > 1 ? 's' : ''}`);
+  if(p.bathrooms) facts.push(`🛁 ${p.bathrooms} bathroom${p.bathrooms > 1 ? 's' : ''}`);
+  if(p.parking) facts.push(`🚗 ${p.parking} parking`);
+  const about = String(p.webSummary || p.description || '').replace(/\r/g, '').split('\n').map(x => x.trim()).filter(x => x && !/^(price|contact|call|viber|for inquir)/i.test(x)).slice(0, 4).join('\n').slice(0, 420);
+  return [
+    `📌 ${lease ? 'FOR LEASE' : 'FOR SALE'}: ${p.title}`,
+    p.location ? `📍 ${p.location}` : '',
+    price ? `💰 ${price}` : '',
+    facts.join('\n'),
+    about ? '\n' + about : '',
+    `\n🔗 Photos and full details: https://glrarealty.com/property/${p._id}`,
+    '📞 Call or Viber: 0917 177 4572',
+    `\n#GLRARealty #RealEstatePH #${lease ? 'ForLease' : 'ForSale'}${city ? ' #' + city : ''}`
+  ].filter(Boolean).join('\n');
+}
+async function sfCopyCaption(id){
+  const t = sfFind(id); const p = t && (allProps || []).find(x => x._id === t.propertyId);
+  if(!p) return showToast('Listing not found', true);
+  const txt = sfCaption(p);
+  try{ await navigator.clipboard.writeText(txt); showToast('Caption copied: paste it into Facebook, then check it'); }
+  catch(e){ sfDlg('Caption', `<textarea class="finput" rows="12" onfocus="this.select()">${esc(txt)}</textarea>`, 'Close', () => {}); }
+}
+// The day's score, shown when he presses Time out.
+function sfDaySummary(){
+  const m = SF.me; if(!m || !m.progress) return '';
+  const d = m.progress.today, t = m.progress.targets, g = sfGroups(m.tasks);
+  const box = (v, goal, label, f) => `<div class="${goal ? (v >= goal ? 'ok' : 'no') : ''}"><b>${f ? f(v) : String(v)}${goal ? ' / ' + (f ? f(goal) : String(goal)) : ''}</b>${label}</div>`;
+  const open = g.today.length + g.overdue.length + g.returned.length;
+  return `<p class="sf-h" style="margin-bottom:8px">Your day</p><div class="sf-sum">${box(d.posts, t.posts, 'posts with proof')}${box(d.contacts, t.contacts, 'leads contacted')}${box(d.tasks, t.tasks, 'tasks finished')}${box(d.activeMin, t.activeMin, 'active time', sfMins)}</div>
+    ${open ? `<div class="sf-note"><b>${open} task${open === 1 ? '' : 's'} for today still open.</b> Write in "Problems" why, so Ma'am knows.</div>` : '<div class="sf-note ok">Everything for today is done. Good work.</div>'}`;
+}
+
+// ── REMINDERS: 15 minutes before a task is due, new messages, new urgent tasks ──
+function sfAskNotify(){
+  if(!('Notification' in window)) return showToast('This browser cannot show reminders', true);
+  Notification.requestPermission().then(p => { showToast(p === 'granted' ? 'Reminders are on' : 'Reminders are off'); if(SF.view === 'desk') sfRender(); });
+}
+function sfNotify(key, title, body){
+  let seen = {}; try{ seen = JSON.parse(localStorage.getItem('glraSfSeen') || '{}'); }catch(e){}
+  if(seen[key]) return;
+  seen[key] = Date.now();
+  const cut = Date.now() - 3 * 864e5; Object.keys(seen).forEach(k => { if(seen[k] < cut) delete seen[k]; });
+  try{ localStorage.setItem('glraSfSeen', JSON.stringify(seen)); }catch(e){}
+  showToast(title + (body ? ': ' + body : ''));
+  try{ if('Notification' in window && Notification.permission === 'granted'){ const n = new Notification(title, { body, icon:'/img/favicon.ico.png', tag:key }); n.onclick = () => { window.focus(); switchTab('staff'); n.close(); }; } }catch(e){}
+}
+setInterval(async () => {
+  if(typeof CU === 'undefined' || !CU || !hasPerm('tasks_view') || hasPerm('tasks_create')) return;
+  let me = SF.me;
+  const p = document.getElementById('tab-staff');
+  // Off the Staff tab the desk is not refreshed, so look for news here (without redrawing anything).
+  if(!p || p.style.display === 'none' || document.hidden){
+    try{ const r = await apiFetch('/api/admin/staff/me'); if(r.ok) me = await r.json(); }catch(e){ return; }
+  }
+  if(!me) return;
+  const now = Date.now();
+  (me.tasks || []).forEach(t => {
+    if(t.status === 'done' || !t.dueDate) return;
+    const left = (new Date(t.dueDate) - now) / 60000;
+    if(left > 0 && left <= 15) sfNotify('due:' + t._id, 'Due in ' + Math.ceil(left) + ' min', t.title);
+    if(['critical','high'].includes(t.priority) && now - new Date(t.createdAt) < 30 * 60000) sfNotify('new:' + t._id, 'New ' + (t.priority === 'critical' ? 'urgent' : 'important') + ' task', t.title);
+  });
+  (me.messages || []).forEach(m => { if(!m.ackAt && now - new Date(m.createdAt) < 2 * 3600e3) sfNotify('msg:' + m._id, 'Message from ' + (m.fromName || "Ma'am"), String(m.text).slice(0, 120)); });
+}, 60000);
+
 // ── CLOUD SUPERVISOR (admin only): the key, report recipients, reports ──
 async function sfLoadBot(){
   try{ const r = await apiFetch('/api/admin/staff-bot'); const d = await r.json(); if(!r.ok) throw new Error(d.error); SF.bot = d; }
@@ -14894,7 +15021,7 @@ async function sfBotMails(){
   showToast(`Saved ${d.reportEmails.length} address${d.reportEmails.length===1?'':'es'}`); SF.bot = null; sfRender();
 }
 // Keep "who's doing what" fresh while the tab is open.
-setInterval(() => { const p = document.getElementById('tab-staff'); if(p && p.style.display !== 'none' && !document.hidden && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
+setInterval(() => { const p = document.getElementById('tab-staff'), a = document.activeElement; const typing = a && p && p.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName); if(p && p.style.display !== 'none' && !document.hidden && !typing && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
 </script>
 <script src="/js/a11y.js?v=116" defer></script>
 </body>

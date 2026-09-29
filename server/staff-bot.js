@@ -39,6 +39,19 @@ function prevWorkday(day) {
   return staff.manilaDay(d);
 }
 
+// Plain report text -> email HTML. "# " heading, "- " bullet, **bold**; all escaped.
+function reportHtml(text, esc) {
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:680px">
+<p style="font-size:12px;color:#777;margin:0 0 12px">GLRA Realty · Cloud supervisor</p>
+${String(text).split('\n').map(l => {
+  const e = esc(l).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  if (/^#\s/.test(l)) return `<h3 style="margin:18px 0 6px;font-size:16px">${e.replace(/^#\s/, '')}</h3>`;
+  if (/^-\s/.test(l)) return `<div style="margin:2px 0 2px 14px">&bull; ${e.replace(/^-\s/, '')}</div>`;
+  return l.trim() ? `<p style="margin:6px 0">${e}</p>` : '';
+}).join('\n')}
+<p style="margin-top:22px"><a href="https://glrarealty.com/admin.html" style="color:#de3500">Open the Staff tab</a></p></div>`;
+}
+
 function registerStaffBot(app, { sendEmail, esc }) {
   const botLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false,
     keyGenerator: () => 'staff-bot', message: { error: 'Too many requests' } });
@@ -233,15 +246,7 @@ function registerStaffBot(app, { sendEmail, esc }) {
         const p = (await staff.staffList()).find(a => String(a._id) === String(b.alsoEmailStaffId));
         if (p && isEmail(p.email)) to.push(p.email);
       }
-      const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#111;max-width:680px">
-<p style="font-size:12px;color:#777;margin:0 0 12px">GLRA Realty · Cloud supervisor</p>
-${text.split('\n').map(l => {
-  const e = esc(l).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  if (/^#\s/.test(l)) return `<h3 style="margin:18px 0 6px;font-size:16px">${e.replace(/^#\s/, '')}</h3>`;
-  if (/^-\s/.test(l)) return `<div style="margin:2px 0 2px 14px">&bull; ${e.replace(/^-\s/, '')}</div>`;
-  return l.trim() ? `<p style="margin:6px 0">${e}</p>` : '';
-}).join('\n')}
-<p style="margin-top:22px"><a href="https://glrarealty.com/admin.html" style="color:#de3500">Open the Staff tab</a></p></div>`;
+      const html = reportHtml(text, esc);
       const sent = [];
       for (const addr of [...new Set(to)]) {
         const r = await sendEmail(addr, subject, html, 'GLRA Cloud supervisor');
@@ -254,4 +259,65 @@ ${text.split('\n').map(l => {
   });
 }
 
-module.exports = { registerStaffBot, prevWorkday };
+// ── FRIDAY WEEKLY SCORE ─────────────────────────────────────
+// Every Friday after 5:30 pm Manila: the week in numbers for each staff member,
+// emailed to the report list and kept with the supervisor's reports. Worked
+// out from the records, so it arrives even if the cloud agent did not run.
+async function weeklyScoreText(mondayDay) {
+  const { StaffReport: SR } = require('./db');
+  const from = staff.dayStart(mondayDay), now = new Date();
+  const days = [0, 1, 2, 3, 4].map(i => staff.manilaDay(new Date(from.getTime() + i * 864e5 + 12 * 3600e3)));
+  const cfg = await staff.getConfig();
+  const people = await staff.staffList();
+  const grades = (await SR.find({ kind: 'morning', createdAt: { $gte: from } }).select('subject day').lean())
+    .map(r => ({ day: r.day, g: (/grade\s+([A-F][+-]?)/i.exec(r.subject) || [])[1] })).filter(x => x.g);
+  const hm = d => { const m = new Date(new Date(d).getTime() + 8 * 3600e3); return `${m.getUTCHours()}:${String(m.getUTCMinutes()).padStart(2, '0')}`; };
+  const lines = [];
+  for (const a of people) {
+    const sds = await StaffDay.find({ account: a._id, day: { $in: days } }).lean();
+    const inDays = sds.filter(d => d.checkIn);
+    const late = inDays.filter(d => { const m = new Date(new Date(d.checkIn).getTime() + 8 * 3600e3); return m.getUTCHours() * 60 + m.getUTCMinutes() > 9 * 60 + 15; });
+    const hours = inDays.reduce((t, d) => t + ((d.checkOut ? new Date(d.checkOut) : new Date(Math.min(Date.now(), staff.dayStart(d.day).getTime() + 17 * 3600e3))) - new Date(d.checkIn)) / 3600e3, 0);
+    const active = sds.reduce((t, d) => t + (d.activeMin || 0), 0);
+    const c = await staff.countsFor(a, from, now);
+    const tg = { ...{ posts: 5, contacts: 10, tasks: 5, activeMin: 300 }, ...((cfg.targets || {})[String(a._id)] || {}) };
+    const n = Math.max(1, inDays.length);
+    const lateOpen = await Task.countDocuments({ assignedTo: a._id, status: { $ne: 'done' }, dueDate: { $lt: now } });
+    const unacked = await StaffMessage.countDocuments({ to: a._id, ackAt: null });
+    const noReport = inDays.filter(d => !String(d.report || '').trim()).length;
+    const pct = (v, t) => t ? Math.round(100 * v / t) + '%' : '-';
+    lines.push(`# ${a.name || a.email}`,
+      `- Days worked: **${inDays.length} of 5**${late.length ? ` (late ${late.length}x: ${late.map(d => d.day.slice(5) + ' at ' + hm(d.checkIn)).join(', ')})` : ''}`,
+      `- Hours timed in: **${hours.toFixed(1)} h**; active in the dashboard **${(active / 60).toFixed(1)} h**`,
+      `- Posts with proof: **${c.posts}** (target ${tg.posts * n}, ${pct(c.posts, tg.posts * n)})`,
+      `- Leads contacted: **${c.contacts}** (target ${tg.contacts * n}, ${pct(c.contacts, tg.contacts * n)})`,
+      `- Tasks finished: **${c.tasks}** (target ${tg.tasks * n}, ${pct(c.tasks, tg.tasks * n)})`,
+      `- Tasks now late: **${lateOpen}**; messages not answered: **${unacked}**; days with no end-of-day report: **${noReport}**`,
+      grades.length ? `- Daily grades from the morning checks: **${grades.sort((x, y) => x.day < y.day ? -1 : 1).map(x => x.day.slice(5) + ' ' + x.g).join(', ')}**` : '- No graded mornings this week yet.',
+      '');
+  }
+  return { text: `Week of ${days[0]} to ${days[4]}.\n\n` + lines.join('\n'), subject: `Weekly score: ${days[0]} to ${days[4]}` };
+}
+function startWeeklyScore({ sendEmail, esc }) {
+  const tick = async () => {
+    try {
+      const m = new Date(Date.now() + 8 * 3600e3);
+      if (m.getUTCDay() !== 5 || m.getUTCHours() * 60 + m.getUTCMinutes() < 17 * 60 + 30) return;
+      const today = staff.manilaDay();
+      const monday = staff.manilaDay(new Date(staff.dayStart(today).getTime() - 4 * 864e5 + 12 * 3600e3));
+      const key = 'staff_weekly_' + monday;
+      if (await Setting.exists({ key })) return;
+      await Setting.create({ key, value: { at: new Date() } });   // claim first, so two instances do not both send
+      const { text, subject } = await weeklyScoreText(monday);
+      const s = await botSettings();
+      const sent = [];
+      for (const addr of s.reportEmails || []) { const r = await sendEmail(addr, subject, reportHtml(text, esc), 'GLRA Cloud supervisor'); if (r && r.success) sent.push(addr); }
+      await StaffReport.create({ kind: 'weekly', day: today, subject, text, emailedTo: sent });
+      console.log('Weekly staff score sent to', sent.length);
+    } catch (e) { console.error('weekly score:', e.message); }
+  };
+  setTimeout(tick, 90e3);
+  setInterval(tick, 10 * 60e3);
+}
+
+module.exports = { registerStaffBot, prevWorkday, startWeeklyScore, weeklyScoreText };
