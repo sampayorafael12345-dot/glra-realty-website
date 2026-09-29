@@ -121,7 +121,7 @@ function presence(lastSeen) {
   return m < 3 ? 'online' : m < 15 ? 'idle' : 'offline';
 }
 
-const TASK_FIELDS = 'title description kind status priority dueDate assignedTo createdBy completedAt startedAt checklist propertyId issueKey link proofUrl proofNote recurrence review reviewNote reviewedAt points category reference updates createdAt updatedAt';
+const TASK_FIELDS = 'title description kind status priority dueDate assignedTo createdBy completedAt startedAt checklist propertyId issueKey link proofUrl proofNote recurrence review reviewNote reviewedAt botCheck points category reference updates createdAt updatedAt';
 
 async function tasksFor(accountId, sinceDays) {
   const since = new Date(Date.now() - (sinceDays || 60) * 864e5);
@@ -201,16 +201,167 @@ async function progressFor(acc, cfg, todayDoc) {
   return { today: d, week: w, targets: targetsFor(cfg, acc._id), lastActionAt: last };
 }
 
+// Everyone the boss can hand work to: active employees (not agents, who
+// have their own workspace, and not pending sign-ups).
+async function staffList() {
+  return Account.find({ role: 'employee', isActive: { $ne: false }, status: { $ne: 'pending' } })
+    .select('name email role lastSeen lastLogin').sort({ name: 1 }).lean();
+}
+
+// Hand out tasks (the Staff tab and the cloud supervisor). A task with an
+// issueKey that is still open is not given out twice.
+async function createStaffTasks(list, createdBy) {
+  const created = [], skipped = [];
+  for (const t of list) {
+    const title = clean(t.title, 200);
+    if (!title) { skipped.push({ title: '', why: 'No title' }); continue; }
+    const issueKey = clean(t.issueKey, 120);
+    if (issueKey) {
+      const dup = await Task.findOne({ issueKey, $or: [{ status: { $ne: 'done' } }, { review: 'submitted' }] }).select('_id').lean();
+      if (dup) { skipped.push({ title, why: 'Already given out' }); continue; }
+    }
+    const assignedTo = (Array.isArray(t.assignedTo) ? t.assignedTo : [t.assignedTo]).filter(id => mongoose.isValidObjectId(id));
+    const task = await Task.create({
+      title,
+      description: clean(t.description, 5000),
+      category: clean(t.category || 'Staff', 60),
+      kind: KINDS.includes(t.kind) ? t.kind : 'other',
+      priority: ['low', 'medium', 'high', 'critical'].includes(t.priority) ? t.priority : 'medium',
+      assignedTo,
+      dueDate: t.dueDate && !isNaN(new Date(t.dueDate)) ? new Date(t.dueDate) : null,
+      checklist: (Array.isArray(t.checklist) ? t.checklist : []).map(x => clean(typeof x === 'string' ? x : x && x.text, 300)).filter(Boolean).slice(0, 30).map(text => ({ text })),
+      propertyId: mongoose.isValidObjectId(t.propertyId) ? t.propertyId : null,
+      issueKey,
+      // A web address or a page on this site; never javascript: or data:.
+      link: /^(https?:\/\/|\/(?!\/))/i.test(clean(t.link, 500)) ? clean(t.link, 500) : '',
+      reference: clean(t.reference, 200),
+      recurrence: RECUR.includes(t.recurrence) ? t.recurrence : '',
+      points: Math.max(0, Math.min(20, parseInt(t.points, 10) || 1)),
+      createdBy
+    });
+    created.push(task);
+  }
+  return { created, skipped };
+}
+
+// Everything one person did on one Manila day, in order, with the gaps.
+async function buildActivity(accId, dayIn) {
+  const acc = await Account.findById(accId).select('name email').lean();
+  if (!acc) return null;
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(String(dayIn || '')) ? String(dayIn) : manilaDay();
+  const from = dayStart(day), to = new Date(from.getTime() + 864e5);
+  const email = String(acc.email || '').toLowerCase();
+  const [sd, audits, posts, leads, cfg] = await Promise.all([
+    StaffDay.findOne({ account: accId, day }).lean(),
+    AuditLog.find({ actor: email, timestamp: { $gte: from, $lt: to } }).select('action target targetTitle timestamp').sort({ timestamp: 1 }).limit(600).lean(),
+    StaffPosting.find({ by: accId, postedAt: { $gte: from, $lt: to } }).populate('property', 'title').lean(),
+    Lead.find({ 'activities.by': email, 'activities.at': { $gte: from, $lt: to } }).select('name emails activities').limit(300).lean(),
+    getConfig()
+  ]);
+  const ev = [];
+  const STATE_TXT = { working: 'Back to work', break: 'Short break', lunch: 'Lunch', field: 'Out on field work', meeting: 'In a meeting', off: 'Timed out' };
+  if (sd && sd.checkIn) ev.push({ at: sd.checkIn, kind: 'in', text: 'Timed in' });
+  ((sd && sd.stateLog) || []).forEach(x => { if (x.state !== 'off' && !(x.state === 'working' && sd.checkIn && Math.abs(new Date(x.at) - new Date(sd.checkIn)) < 5000)) ev.push({ at: x.at, kind: 'state', state: x.state, text: (STATE_TXT[x.state] || x.state) + (x.note ? ': ' + x.note : '') }); });
+  if (sd && sd.checkOut) ev.push({ at: sd.checkOut, kind: 'out', text: 'Timed out' });
+  const VERB = { CREATE: 'Added', UPDATE: 'Edited', DELETE: 'Deleted', UPLOAD: 'Uploaded', IMPORT: 'Imported', LOGIN: 'Signed in', LOGOUT: 'Signed out',
+    INQUIRY_HANDLED: 'Answered an enquiry', INQUIRY_REOPENED: 'Reopened an enquiry', TASK_SUBMIT: 'Finished task', TASK_STUCK: 'Stuck on task',
+    TASK_APPROVE: 'Approved task', TASK_RETURN: 'Sent back task', MERGE_LEAD: 'Merged leads', EMAIL: 'Emailed', STAFF_ACK: 'Answered a message',
+    TIME_IN: '', TIME_OUT: '', POSTED: '' };
+  audits.forEach(a => {
+    const v = VERB[a.action];
+    if (v === '') return;   // shown from their own records above/below
+    const tgt = a.target && !/^(Session|Task|Inquiry|StaffMessage)$/.test(a.target) ? a.target.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' ' : '';
+    ev.push({ at: a.timestamp, kind: a.action.startsWith('TASK_') ? 'task' : /^LOG(IN|OUT)$/.test(a.action) ? 'session' : 'edit',
+      text: `${v || a.action.toLowerCase().replace(/_/g, ' ')} ${tgt}${a.targetTitle ? '· ' + a.targetTitle : ''}`.replace(/\s+/g, ' ').trim() });
+  });
+  const chName = k => (cfg.channels.find(c => c.key === k) || {}).label || k;
+  posts.forEach(p => { if (p.source !== 'excel') ev.push({ at: p.postedAt, kind: 'post', text: `Posted on ${chName(p.channel)} · ${(p.property && p.property.title) || 'a listing'}`, url: p.url }); });
+  const LEAD_VERB = { call: 'Called', whatsapp: 'WhatsApp to', viber: 'Viber to', sms: 'Texted', email: 'Emailed', meeting: 'Met', viewing: 'Viewing with', listings_sent: 'Sent listings to', note: 'Note on', stage: 'Moved', assign: 'Assigned' };
+  leads.forEach(l => (l.activities || []).forEach(x => {
+    if (x.by !== email || !x.at || x.at < from || x.at >= to || x.type === 'system') return;
+    const who = l.name || (l.emails && l.emails[0]) || 'a lead';
+    ev.push({ at: x.at, kind: CONTACT_TYPES.includes(x.type) ? 'contact' : 'lead',
+      text: `${LEAD_VERB[x.type] || x.type} ${who}${x.outcome ? ' (' + x.outcome + ')' : ''}${x.type === 'note' && x.text ? ': ' + x.text.slice(0, 120) : ''}` });
+  }));
+  ev.sort((a, b) => new Date(a.at) - new Date(b.at));
+  // Gaps: an hour or more while timed in with nothing recorded, not counting
+  // time under a break / lunch / field work / meeting status.
+  const gaps = [];
+  if (sd && sd.checkIn) {
+    const start = +new Date(sd.checkIn);
+    const end = sd.checkOut ? +new Date(sd.checkOut) : Math.min(Date.now(), +to);
+    const log = (sd.stateLog || []).map(x => ({ s: x.state, a: +new Date(x.at) })).sort((a, b) => a.a - b.a);
+    const away = log.map((x, i) => ({ s: x.s, a: x.a, b: log[i + 1] ? log[i + 1].a : end })).filter(x => ['break', 'lunch', 'field', 'meeting'].includes(x.s));
+    const marks = ev.filter(e => e.kind !== 'state' && e.kind !== 'session').map(e => +new Date(e.at)).filter(t => t > start && t <= end).sort((a, b) => a - b);
+    marks.push(end);
+    let prev = start;
+    marks.forEach(t => {
+      let gap = t - prev;
+      away.forEach(w => { gap -= Math.max(0, Math.min(t, w.b) - Math.max(prev, w.a)); });
+      if (gap >= 60 * 60e3) gaps.push({ from: new Date(prev), to: new Date(t), min: Math.round(gap / 60e3) });
+      prev = Math.max(prev, t);
+    });
+  }
+  const counts = await countsFor(acc, from, to);
+  counts.activeMin = (sd && sd.activeMin) || 0;
+  return { day, account: { _id: acc._id, name: acc.name || acc.email }, staffDay: sd, events: ev, gaps, counts,
+    activeByHour: (sd && sd.activeByHour) || {}, targets: targetsFor(cfg, accId) };
+}
+
+// Work the system already knows needs doing.
+async function buildSuggestions() {
+  const out = [];
+  const endToday = new Date(dayStart(manilaDay()).getTime() + 864e5);
+  const openKeys = new Set((await Task.find({ issueKey: { $ne: '' }, $or: [{ status: { $ne: 'done' } }, { review: 'submitted' }] }).select('issueKey').lean()).map(t => t.issueKey));
+  const push = s => { if (!openKeys.has(s.issueKey)) out.push(s); };
+
+  const leadName = l => l.name || (l.emails && l.emails[0]) || (l.phones && l.phones[0]) || 'a lead';
+  const waiting = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, firstInboundAt: { $ne: null }, firstResponseAt: null })
+    .select('name emails phones type firstInboundAt').sort({ firstInboundAt: 1 }).limit(40).lean();
+  waiting.forEach(l => push({
+    group: 'Leads waiting for a first reply', kind: 'lead', priority: 'high', issueKey: `lead:${l._id}:reply`,
+    title: `Reply to ${leadName(l)} (${l.type})`, link: `/admin.html#leads`,
+    description: `Came in ${new Date(l.firstInboundAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} and nobody has answered yet. Open the Leads tab, find this person, call or message, and log it.`,
+    since: l.firstInboundAt
+  }));
+
+  const fu = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, nextFollowUp: { $ne: null, $lt: endToday } })
+    .select('name emails phones nextFollowUp followUpNote').sort({ nextFollowUp: 1 }).limit(40).lean();
+  fu.forEach(l => push({
+    group: 'Follow-ups due', kind: 'followup', priority: 'medium', issueKey: `lead:${l._id}:fu:${manilaDay(l.nextFollowUp)}`,
+    title: `Follow up ${leadName(l)}`, link: `/admin.html#leads`, dueDate: l.nextFollowUp,
+    description: l.followUpNote ? `Note: ${l.followUpNote}` : 'Follow-up date reached.', since: l.nextFollowUp
+  }));
+
+  const inq = await Inquiry.find({ handled: { $ne: true } }).select('name email propertyTitle createdAt').sort({ createdAt: 1 }).limit(40).lean();
+  inq.forEach(q => push({
+    group: 'Website enquiries not answered', kind: 'email', priority: 'high', issueKey: `inq:${q._id}`,
+    title: `Answer ${q.name || q.email || 'an enquiry'}${q.propertyTitle ? ' about ' + q.propertyTitle : ''}`,
+    description: 'Reply by email or phone, then mark it handled in the Inquiries tab.', since: q.createdAt
+  }));
+
+  const subs = await PropertySubmission.find({ status: 'pending' }).select('title submitterName createdAt').sort({ createdAt: 1 }).limit(30).lean();
+  subs.forEach(s => push({
+    group: 'Owner submissions to check and upload', kind: 'upload', priority: 'medium', issueKey: `sub:${s._id}`,
+    title: `Check and upload "${s.title}"`, description: `Sent by ${s.submitterName || 'an owner'}. Review it in the Submissions tab.`, since: s.createdAt
+  }));
+
+  // Listings nobody has posted on Facebook in the last 30 days.
+  const posted = new Set((await Task.find({ kind: 'facebook', propertyId: { $ne: null }, $or: [{ completedAt: { $gte: new Date(Date.now() - 30 * 864e5) } }, { status: { $ne: 'done' } }] })
+    .select('propertyId').lean()).map(t => String(t.propertyId)));
+  const avail = await Property.find({ status: 'available' }).select('title location listingType createdAt views').sort({ createdAt: -1 }).limit(200).lean();
+  avail.filter(p => !posted.has(String(p._id))).slice(0, 12).forEach(p => push({
+    group: 'Listings not posted on Facebook in 30 days', kind: 'facebook', priority: 'low', issueKey: `fb:${p._id}:${manilaDay().slice(0, 7)}`,
+    title: `Post on Facebook: ${p.title}`, propertyId: p._id, link: `https://glrarealty.com/property/${p._id}`,
+    description: `${p.listingType || ''} · ${p.location || ''}`, since: p.createdAt
+  }));
+
+  return out;
+}
+
 function registerStaffRoutes(app) {
   const view = [verifyToken, requirePermission('tasks_view')];
   const manage = [verifyToken, requirePermission('tasks_create')];
-
-  // Everyone the boss can hand work to: active employees (not agents, who
-  // have their own workspace, and not pending sign-ups).
-  async function staffList() {
-    return Account.find({ role: 'employee', isActive: { $ne: false }, status: { $ne: 'pending' } })
-      .select('name email role lastSeen lastLogin').sort({ name: 1 }).lean();
-  }
 
   // ── The boss's view ──
   app.get('/api/admin/staff/overview', ...manage, async (req, res) => {
@@ -320,36 +471,7 @@ function registerStaffRoutes(app) {
     try {
       const list = Array.isArray(req.body.tasks) ? req.body.tasks.slice(0, 200) : [];
       if (!list.length) return res.status(400).json({ error: 'No tasks' });
-      const created = [], skipped = [];
-      for (const t of list) {
-        const title = clean(t.title, 200);
-        if (!title) { skipped.push({ title: '', why: 'No title' }); continue; }
-        const issueKey = clean(t.issueKey, 120);
-        if (issueKey) {
-          const dup = await Task.findOne({ issueKey, $or: [{ status: { $ne: 'done' } }, { review: 'submitted' }] }).select('_id').lean();
-          if (dup) { skipped.push({ title, why: 'Already given out' }); continue; }
-        }
-        const assignedTo = (Array.isArray(t.assignedTo) ? t.assignedTo : [t.assignedTo]).filter(id => mongoose.isValidObjectId(id));
-        const task = await Task.create({
-          title,
-          description: clean(t.description, 5000),
-          category: clean(t.category || 'Staff', 60),
-          kind: KINDS.includes(t.kind) ? t.kind : 'other',
-          priority: ['low', 'medium', 'high', 'critical'].includes(t.priority) ? t.priority : 'medium',
-          assignedTo,
-          dueDate: t.dueDate && !isNaN(new Date(t.dueDate)) ? new Date(t.dueDate) : null,
-          checklist: (Array.isArray(t.checklist) ? t.checklist : []).map(x => clean(typeof x === 'string' ? x : x && x.text, 300)).filter(Boolean).slice(0, 30).map(text => ({ text })),
-          propertyId: mongoose.isValidObjectId(t.propertyId) ? t.propertyId : null,
-          issueKey,
-          // A web address or a page on this site; never javascript: or data:.
-          link: /^(https?:\/\/|\/(?!\/))/i.test(clean(t.link, 500)) ? clean(t.link, 500) : '',
-          reference: clean(t.reference, 200),
-          recurrence: RECUR.includes(t.recurrence) ? t.recurrence : '',
-          points: Math.max(0, Math.min(20, parseInt(t.points, 10) || 1)),
-          createdBy: req.user.sub
-        });
-        created.push(task);
-      }
+      const { created, skipped } = await createStaffTasks(list, req.user.sub);
       if (created.length) await logAudit(req, 'CREATE', 'Task', created[0]._id, created.length === 1 ? created[0].title : `${created.length} staff tasks`, null);
       res.json({ created, skipped });
     } catch (err) { console.error('staff tasks', err); res.status(500).json({ error: 'Server error' }); }
@@ -561,66 +683,9 @@ function registerStaffRoutes(app) {
         if (!mongoose.isValidObjectId(req.query.account)) return res.status(400).json({ error: 'Bad account' });
         accId = req.query.account;
       }
-      const acc = await Account.findById(accId).select('name email').lean();
-      if (!acc) return res.status(404).json({ error: 'Not found' });
-      const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) ? String(req.query.day) : manilaDay();
-      const from = dayStart(day), to = new Date(from.getTime() + 864e5);
-      const email = String(acc.email || '').toLowerCase();
-      const [sd, audits, posts, leads, cfg] = await Promise.all([
-        StaffDay.findOne({ account: accId, day }).lean(),
-        AuditLog.find({ actor: email, timestamp: { $gte: from, $lt: to } }).select('action target targetTitle timestamp').sort({ timestamp: 1 }).limit(600).lean(),
-        StaffPosting.find({ by: accId, postedAt: { $gte: from, $lt: to } }).populate('property', 'title').lean(),
-        Lead.find({ 'activities.by': email, 'activities.at': { $gte: from, $lt: to } }).select('name emails activities').limit(300).lean(),
-        getConfig()
-      ]);
-      const ev = [];
-      const STATE_TXT = { working: 'Back to work', break: 'Short break', lunch: 'Lunch', field: 'Out on field work', meeting: 'In a meeting', off: 'Timed out' };
-      if (sd && sd.checkIn) ev.push({ at: sd.checkIn, kind: 'in', text: 'Timed in' });
-      ((sd && sd.stateLog) || []).forEach(x => { if (x.state !== 'off' && !(x.state === 'working' && sd.checkIn && Math.abs(new Date(x.at) - new Date(sd.checkIn)) < 5000)) ev.push({ at: x.at, kind: 'state', state: x.state, text: (STATE_TXT[x.state] || x.state) + (x.note ? ': ' + x.note : '') }); });
-      if (sd && sd.checkOut) ev.push({ at: sd.checkOut, kind: 'out', text: 'Timed out' });
-      const VERB = { CREATE: 'Added', UPDATE: 'Edited', DELETE: 'Deleted', UPLOAD: 'Uploaded', IMPORT: 'Imported', LOGIN: 'Signed in', LOGOUT: 'Signed out',
-        INQUIRY_HANDLED: 'Answered an enquiry', INQUIRY_REOPENED: 'Reopened an enquiry', TASK_SUBMIT: 'Finished task', TASK_STUCK: 'Stuck on task',
-        TASK_APPROVE: 'Approved task', TASK_RETURN: 'Sent back task', MERGE_LEAD: 'Merged leads', EMAIL: 'Emailed', STAFF_ACK: 'Answered a message',
-        TIME_IN: '', TIME_OUT: '', POSTED: '' };
-      audits.forEach(a => {
-        const v = VERB[a.action];
-        if (v === '') return;   // shown from their own records above/below
-        const tgt = a.target && !/^(Session|Task|Inquiry|StaffMessage)$/.test(a.target) ? a.target.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' ' : '';
-        ev.push({ at: a.timestamp, kind: a.action.startsWith('TASK_') ? 'task' : /^LOG(IN|OUT)$/.test(a.action) ? 'session' : 'edit',
-          text: `${v || a.action.toLowerCase().replace(/_/g, ' ')} ${tgt}${a.targetTitle ? '· ' + a.targetTitle : ''}`.replace(/\s+/g, ' ').trim() });
-      });
-      const chName = k => (cfg.channels.find(c => c.key === k) || {}).label || k;
-      posts.forEach(p => { if (p.source !== 'excel') ev.push({ at: p.postedAt, kind: 'post', text: `Posted on ${chName(p.channel)} · ${(p.property && p.property.title) || 'a listing'}`, url: p.url }); });
-      const LEAD_VERB = { call: 'Called', whatsapp: 'WhatsApp to', viber: 'Viber to', sms: 'Texted', email: 'Emailed', meeting: 'Met', viewing: 'Viewing with', listings_sent: 'Sent listings to', note: 'Note on', stage: 'Moved', assign: 'Assigned' };
-      leads.forEach(l => (l.activities || []).forEach(x => {
-        if (x.by !== email || !x.at || x.at < from || x.at >= to || x.type === 'system') return;
-        const who = l.name || (l.emails && l.emails[0]) || 'a lead';
-        ev.push({ at: x.at, kind: CONTACT_TYPES.includes(x.type) ? 'contact' : 'lead',
-          text: `${LEAD_VERB[x.type] || x.type} ${who}${x.outcome ? ' (' + x.outcome + ')' : ''}${x.type === 'note' && x.text ? ': ' + x.text.slice(0, 120) : ''}` });
-      }));
-      ev.sort((a, b) => new Date(a.at) - new Date(b.at));
-      // Gaps: an hour or more while timed in with nothing recorded, not counting
-      // time under a break / lunch / field work / meeting status.
-      const gaps = [];
-      if (sd && sd.checkIn) {
-        const start = +new Date(sd.checkIn);
-        const end = sd.checkOut ? +new Date(sd.checkOut) : Math.min(Date.now(), +to);
-        const log = (sd.stateLog || []).map(x => ({ s: x.state, a: +new Date(x.at) })).sort((a, b) => a.a - b.a);
-        const away = log.map((x, i) => ({ s: x.s, a: x.a, b: log[i + 1] ? log[i + 1].a : end })).filter(x => ['break', 'lunch', 'field', 'meeting'].includes(x.s));
-        const marks = ev.filter(e => e.kind !== 'state' && e.kind !== 'session').map(e => +new Date(e.at)).filter(t => t > start && t <= end).sort((a, b) => a - b);
-        marks.push(end);
-        let prev = start;
-        marks.forEach(t => {
-          let gap = t - prev;
-          away.forEach(w => { gap -= Math.max(0, Math.min(t, w.b) - Math.max(prev, w.a)); });
-          if (gap >= 60 * 60e3) gaps.push({ from: new Date(prev), to: new Date(t), min: Math.round(gap / 60e3) });
-          prev = Math.max(prev, t);
-        });
-      }
-      const counts = await countsFor(acc, from, to);
-      counts.activeMin = (sd && sd.activeMin) || 0;
-      res.json({ day, account: { _id: acc._id, name: acc.name || acc.email }, staffDay: sd, events: ev, gaps, counts,
-        activeByHour: (sd && sd.activeByHour) || {}, targets: targetsFor(cfg, accId) });
+      const out = await buildActivity(accId, req.query.day);
+      if (!out) return res.status(404).json({ error: 'Not found' });
+      res.json(out);
     } catch (err) { console.error('staff activity', err); res.status(500).json({ error: 'Server error' }); }
   });
 
@@ -680,55 +745,10 @@ function registerStaffRoutes(app) {
   // ── Suggestions: work the system already knows needs doing ──
   app.get('/api/admin/staff/suggestions', ...manage, async (req, res) => {
     try {
-      const out = [];
-      const endToday = new Date(dayStart(manilaDay()).getTime() + 864e5);
-      const openKeys = new Set((await Task.find({ issueKey: { $ne: '' }, $or: [{ status: { $ne: 'done' } }, { review: 'submitted' }] }).select('issueKey').lean()).map(t => t.issueKey));
-      const push = s => { if (!openKeys.has(s.issueKey)) out.push(s); };
-
-      const leadName = l => l.name || (l.emails && l.emails[0]) || (l.phones && l.phones[0]) || 'a lead';
-      const waiting = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, firstInboundAt: { $ne: null }, firstResponseAt: null })
-        .select('name emails phones type firstInboundAt').sort({ firstInboundAt: 1 }).limit(40).lean();
-      waiting.forEach(l => push({
-        group: 'Leads waiting for a first reply', kind: 'lead', priority: 'high', issueKey: `lead:${l._id}:reply`,
-        title: `Reply to ${leadName(l)} (${l.type})`, link: `/admin.html#leads`,
-        description: `Came in ${new Date(l.firstInboundAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} and nobody has answered yet. Open the Leads tab, find this person, call or message, and log it.`,
-        since: l.firstInboundAt
-      }));
-
-      const fu = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, nextFollowUp: { $ne: null, $lt: endToday } })
-        .select('name emails phones nextFollowUp followUpNote').sort({ nextFollowUp: 1 }).limit(40).lean();
-      fu.forEach(l => push({
-        group: 'Follow-ups due', kind: 'followup', priority: 'medium', issueKey: `lead:${l._id}:fu:${manilaDay(l.nextFollowUp)}`,
-        title: `Follow up ${leadName(l)}`, link: `/admin.html#leads`, dueDate: l.nextFollowUp,
-        description: l.followUpNote ? `Note: ${l.followUpNote}` : 'Follow-up date reached.', since: l.nextFollowUp
-      }));
-
-      const inq = await Inquiry.find({ handled: { $ne: true } }).select('name email propertyTitle createdAt').sort({ createdAt: 1 }).limit(40).lean();
-      inq.forEach(q => push({
-        group: 'Website enquiries not answered', kind: 'email', priority: 'high', issueKey: `inq:${q._id}`,
-        title: `Answer ${q.name || q.email || 'an enquiry'}${q.propertyTitle ? ' about ' + q.propertyTitle : ''}`,
-        description: 'Reply by email or phone, then mark it handled in the Inquiries tab.', since: q.createdAt
-      }));
-
-      const subs = await PropertySubmission.find({ status: 'pending' }).select('title submitterName createdAt').sort({ createdAt: 1 }).limit(30).lean();
-      subs.forEach(s => push({
-        group: 'Owner submissions to check and upload', kind: 'upload', priority: 'medium', issueKey: `sub:${s._id}`,
-        title: `Check and upload "${s.title}"`, description: `Sent by ${s.submitterName || 'an owner'}. Review it in the Submissions tab.`, since: s.createdAt
-      }));
-
-      // Listings nobody has posted on Facebook in the last 30 days.
-      const posted = new Set((await Task.find({ kind: 'facebook', propertyId: { $ne: null }, $or: [{ completedAt: { $gte: new Date(Date.now() - 30 * 864e5) } }, { status: { $ne: 'done' } }] })
-        .select('propertyId').lean()).map(t => String(t.propertyId)));
-      const avail = await Property.find({ status: 'available' }).select('title location listingType createdAt views').sort({ createdAt: -1 }).limit(200).lean();
-      avail.filter(p => !posted.has(String(p._id))).slice(0, 12).forEach(p => push({
-        group: 'Listings not posted on Facebook in 30 days', kind: 'facebook', priority: 'low', issueKey: `fb:${p._id}:${manilaDay().slice(0, 7)}`,
-        title: `Post on Facebook: ${p.title}`, propertyId: p._id, link: `https://glrarealty.com/property/${p._id}`,
-        description: `${p.listingType || ''} · ${p.location || ''}`, since: p.createdAt
-      }));
-
-      res.json(out);
+      res.json(await buildSuggestions());
     } catch (err) { console.error('staff suggestions', err); res.status(500).json({ error: 'Server error' }); }
   });
 }
 
-module.exports = { registerStaffRoutes, manilaDay, scorecard, nextDue, KINDS };
+module.exports = { registerStaffRoutes, manilaDay, dayStart, scorecard, nextDue, KINDS, TASK_FIELDS, getConfig, countsFor, progressFor,
+  staffList, createStaffTasks, buildActivity, buildSuggestions, tasksFor };

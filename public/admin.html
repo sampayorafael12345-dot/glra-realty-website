@@ -13988,17 +13988,18 @@ function sfRender(){
     const rq = SF.data ? SF.data.reviewQueue.length : 0;
     const un = SF.data ? SF.data.staff.reduce((a,x) => a + (x.unacked||0), 0) : 0;
     views = [['team','fa-user-check','Team'],['log','fa-stream','Work log'],['posts','fa-share-square','Posting board'],['msgs','fa-comment-dots','Messages',un],['hand','fa-hand-holding','Hand out work'],['probs','fa-stethoscope','Listing problems'],['review','fa-clipboard-check','To check',rq],['reports','fa-book','Daily reports']];
+    if(CU && CU.role === 'admin') views.push(['bot','fa-robot','Cloud supervisor']);
   } else {
     const un = SF.me ? (SF.me.messages||[]).filter(m => !m.ackAt).length : 0;
     views = [['desk','fa-briefcase','My desk'],['posts','fa-share-square','Posting board'],['msgs','fa-comment-dots','Messages',un],['log','fa-stream','My work log'],['history','fa-book','My days']];
   }
   seg.classList.toggle('odd', views.length % 2 === 1);
   seg.innerHTML = views.map(([k,ic,l,n]) => `<button class="hdr-btn${SF.view===k?' on':''}" onclick="sfSetView('${k}')"><i class="fas ${ic}"></i> ${l}${n?`<span class="sf-n">${n}</span>`:''}</button>`).join('');
-  if(sfMgr() && SF.data && !SF.data.staff.length && SF.view !== 'hand'){
+  if(sfMgr() && SF.data && !SF.data.staff.length && SF.view !== 'hand' && SF.view !== 'bot'){
     body.innerHTML = `<div class="sf-card"><div class="sf-cb sf-empty"><i class="fas fa-user-plus" style="font-size:26px;display:block;margin-bottom:10px"></i>There are no staff accounts yet.<br>A staff member signs up on the admin sign-in page, then you approve them in <a href="#" onclick="switchTab('accounts');return false">Accounts</a> as an <b>employee</b>.</div></div>`;
     return;
   }
-  const fn = { team:sfRenderTeam, log:sfRenderLog, posts:sfRenderPosts, msgs:sfRenderMsgs, hand:sfRenderHand, probs:sfRenderProbs, review:sfRenderReview, reports:sfRenderReports, desk:sfRenderDesk, history:sfRenderHistory }[SF.view];
+  const fn = { team:sfRenderTeam, log:sfRenderLog, posts:sfRenderPosts, msgs:sfRenderMsgs, hand:sfRenderHand, probs:sfRenderProbs, bot:sfRenderBot, review:sfRenderReview, reports:sfRenderReports, desk:sfRenderDesk, history:sfRenderHistory }[SF.view];
   body.innerHTML = fn ? fn() : '';
 }
 
@@ -14054,12 +14055,13 @@ function sfTaskCard(t, opts){
   return `<details class="${cls}"${opts.open?' open':''}>
     <summary><span class="sf-ki"><i class="${k.icon}"></i></span>
       <span style="min-width:0"><span class="sf-tt">${esc(t.title)}</span>
-        <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.priority==='critical'||t.priority==='high'?`<span class="bad">${t.priority==='critical'?'Urgent':'High'}</span>`:''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
+        <span class="sf-tm"><span class="${due.cls}"><i class="far fa-clock"></i> ${esc(due.txt)}</span>${t.recurrence?`<span><i class="fas fa-redo"></i> ${esc({daily:'Daily',weekdays:'Weekdays',weekly:'Weekly',monthly:'Monthly'}[t.recurrence])}</span>`:''}${t.priority==='critical'||t.priority==='high'?`<span class="bad">${t.priority==='critical'?'Urgent':'High'}</span>`:''}<span>${k.label}</span>${cl.length?`<span>${nDone}/${cl.length} steps</span>`:''}${t.botCheck&&t.botCheck.verdict==='problem'?'<span class="bad"><i class="fas fa-robot"></i> check failed</span>':t.botCheck&&t.botCheck.verdict==='ok'?'<span class="ok"><i class="fas fa-robot"></i> checked</span>':''}${opts.showWho&&t.assignedTo?`<span>${esc((t.assignedTo||[]).map(a=>a.name||a.email).join(', '))}</span>`:''}</span>
         ${cl.length?`<span class="sf-prog" style="display:block"><i style="width:${Math.round(100*nDone/cl.length)}%"></i></span>`:''}
       </span>${pill}</summary>
     <div class="sf-tb">
       ${t.review==='returned'&&t.reviewNote?`<div class="sf-note"><b>Ma'am says:</b> ${esc(t.reviewNote)}</div>`:''}
       ${t.review==='approved'&&t.reviewNote?`<div class="sf-note ok"><b>Checked:</b> ${esc(t.reviewNote)}</div>`:''}
+      ${t.botCheck&&t.botCheck.verdict?`<div class="sf-note${t.botCheck.verdict==='ok'?' ok':''}"${t.botCheck.verdict==='problem'?' style="border-color:#bf2121;background:rgba(191,33,33,.08)"':''}><b>Supervisor check (${fmtDate(t.botCheck.at)}):</b> ${t.botCheck.verdict==='ok'?'OK':'Problem'}${t.botCheck.note?' · '+esc(t.botCheck.note):''}</div>`:''}
       ${t.description?`<div class="sf-desc">${esc(t.description)}</div>`:''}
       ${cl.length?`<ul class="sf-cl">${cl.map((c,i) => `<li class="${c.done?'d':''}"><input type="checkbox" ${c.done?'checked':''} ${t.status==='done'||!mine?'disabled':''} onchange="sfAct('${t._id}','check',{idx:${i},done:this.checked})" aria-label="Step ${i+1}"><span>${esc(c.text)}</span></li>`).join('')}</ul>`:''}
       ${t.proofUrl||t.proofNote?`<div class="sf-note ok"><b>Proof:</b> ${t.proofUrl?`<a href="${esc(safeUrl(t.proofUrl))}" target="_blank" rel="noopener">${esc(t.proofUrl)}</a> `:''}${esc(t.proofNote||'')}</div>`:''}
@@ -14824,6 +14826,55 @@ async function sfPbExcel(file){
   }, 60000);
 })();
 
+// ── CLOUD SUPERVISOR (admin only): the key, report recipients, reports ──
+async function sfLoadBot(){
+  try{ const r = await apiFetch('/api/admin/staff-bot'); const d = await r.json(); if(!r.ok) throw new Error(d.error); SF.bot = d; }
+  catch(e){ SF.bot = { err:e.message || 'Could not load' }; }
+  if(SF.view === 'bot') sfRender();
+}
+function sfRenderBot(){
+  if(!SF.bot){ sfLoadBot(); return '<div class="sf-empty">Loading…</div>'; }
+  if(SF.bot.err) return `<div class="sf-empty">Could not load: ${esc(SF.bot.err)}</div>`;
+  const b = SF.bot;
+  const status = b.hasKey ? `<div class="sf-watch"><div class="${b.lastUsedAt ? 'ok' : 'warn'}"><i class="fas ${b.lastUsedAt ? 'fa-check-circle' : 'fa-info-circle'}"></i> Key made ${fmtDate(b.keyMadeAt)} (ends in …${esc(b.keyHint)}) · ${b.lastUsedAt ? 'last used by the agent ' + fmtDate(b.lastUsedAt) : 'not used by the agent yet'}</div></div>` : '<div class="sf-watch"><div class="bad"><i class="fas fa-exclamation-triangle"></i> No key yet: the cloud agent cannot sign in.</div></div>';
+  return `<div class="sf-grid"><div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Reports from the cloud supervisor · ${b.reports.length}</p><button class="hdr-btn" onclick="SF.bot=null;sfRender()"><i class="fas fa-sync-alt"></i> Refresh</button></div><div class="sf-cb">
+      ${b.reports.length ? b.reports.map((r,i) => `<details class="sf-t"${i===0?' open':''}><summary style="grid-template-columns:34px minmax(0,1fr)"><span class="sf-ki"><i class="fas ${r.kind==='plan'?'fa-list-ol':'fa-clipboard-check'}"></i></span><span style="min-width:0"><span class="sf-tt">${esc(r.subject)}</span><span class="sf-tm"><span>${fmtDate(r.createdAt)}</span><span>${esc(r.kind)}</span><span>${r.emailedTo.length ? 'emailed to ' + esc(r.emailedTo.join(', ')) : 'not emailed'}</span></span></span></summary><div class="sf-tb" style="padding-left:12px"><div class="sf-desc">${esc(r.text)}</div></div></details>`).join('') : '<div class="sf-empty">No reports yet. The first arrives after the agent\'s first 8 am run.</div>'}
+    </div></div>
+  </div><div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Agent sign-in key</p></div><div class="sf-cb">
+      <p class="sf-legend">The cloud agent uses this key to read the staff desk, hand out tasks, send desk messages and file reports. It cannot see or change anything else.</p>
+      ${status}
+      <div class="sf-heroacts" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button class="hdr-btn primary" onclick="sfBotKey()"><i class="fas fa-key"></i> ${b.hasKey ? 'Make a new key' : 'Make the key'}</button><button class="hdr-btn" onclick="sfBotRevoke()"${b.hasKey ? '' : ' disabled'}><i class="fas fa-ban"></i> Turn the key off</button></div>
+    </div></div>
+    <div class="sf-card"><div class="sf-ch"><p class="sf-h">Who gets the reports</p></div><div class="sf-cb ld-g" style="grid-template-columns:1fr">
+      <label class="ld-f"><span>Email addresses, one per line (up to 10)</span><textarea class="finput" id="sfBotMails" rows="4" placeholder="you@example.com">${esc((b.reportEmails||[]).join('\n'))}</textarea></label>
+      <button class="hdr-btn primary" onclick="sfBotMails()"><i class="fas fa-save"></i> Save</button>
+    </div></div>
+  </div></div>`;
+}
+function sfBotKey(){
+  sfDlg('Make the agent key', `<p class="sf-legend">${SF.bot.hasKey ? 'The old key stops working at once, so the cloud environment must get the new one. ' : ''}The key is shown <b>once</b>. Copy it straight into the cloud environment (variable name <b>GLRA_BOT_KEY</b>). Do not send it by chat or email.</p>`, 'Make it', async () => {
+    const r = await apiFetch('/api/admin/staff-bot/key', { method:'POST', body:'{}' });
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok || !d.key){ showToast('Could not make the key', true); return false; }
+    setTimeout(() => sfDlg('Your agent key', `<p class="sf-legend">Copy it now; it will not be shown again.</p><input class="finput" id="sfBotKeyOut" readonly value="${esc(d.key)}" style="font-family:'JetBrains Mono',monospace;font-size:13px" onfocus="this.select()"><p class="sf-legend" style="margin-top:10px">In the cloud environment add: <b>GLRA_BOT_KEY=</b> followed by this key.</p>`, 'Copy and close', async () => {
+      try{ await navigator.clipboard.writeText(d.key); showToast('Copied'); }catch(e){ document.getElementById('sfBotKeyOut').select(); document.execCommand('copy'); showToast('Copied'); }
+      SF.bot = null; sfRender();
+    }), 50);
+  });
+}
+async function sfBotRevoke(){
+  if(!confirm('Turn the key off? The cloud agent stops working until you make a new key.')) return;
+  const r = await apiFetch('/api/admin/staff-bot/key', { method:'DELETE' });
+  showToast(r.ok ? 'Key turned off' : 'Could not turn it off', !r.ok); SF.bot = null; sfRender();
+}
+async function sfBotMails(){
+  const r = await apiFetch('/api/admin/staff-bot/settings', { method:'PUT', body:JSON.stringify({ reportEmails:document.getElementById('sfBotMails').value }) });
+  const d = await r.json().catch(() => ({}));
+  if(!r.ok) return showToast('Could not save', true);
+  showToast(`Saved ${d.reportEmails.length} address${d.reportEmails.length===1?'':'es'}`); SF.bot = null; sfRender();
+}
 // Keep "who's doing what" fresh while the tab is open.
 setInterval(() => { const p = document.getElementById('tab-staff'); if(p && p.style.display !== 'none' && !document.hidden && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
 </script>

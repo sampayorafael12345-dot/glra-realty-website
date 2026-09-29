@@ -301,7 +301,13 @@ const taskSchema = new mongoose.Schema({
   review: { type: String, enum: ['', 'submitted', 'approved', 'returned'], default: '' },
   reviewNote: { type: String, default: '', maxlength: 1000 },
   reviewedAt: { type: Date, default: null },
-  points: { type: Number, default: 1, min: 0, max: 20 }
+  points: { type: Number, default: 1, min: 0, max: 20 },
+  // The cloud supervisor's check of a finished task: verdict 'ok' | 'problem'.
+  botCheck: {
+    verdict: { type: String, default: '' },
+    note:    { type: String, default: '', maxlength: 1000 },
+    at:      { type: Date, default: null }
+  }
 }, { timestamps: true });
 
 // ── STAFF DAY (one per person per Manila date) ──────────────
@@ -348,6 +354,15 @@ const staffPostingSchema = new mongoose.Schema({
 staffPostingSchema.index({ property: 1, channel: 1, postedAt: -1 });
 
 // ── STAFF MESSAGES (the boss -> a staff member, with "Got it") ──
+// ── STAFF REPORTS (written by the cloud supervisor, emailed to the bosses) ──
+const staffReportSchema = new mongoose.Schema({
+  kind:      { type: String, default: 'morning', maxlength: 20 },   // morning | plan | evening | other
+  day:       { type: String, default: '', maxlength: 10 },         // the Manila day it is about
+  subject:   { type: String, default: '', maxlength: 200 },
+  text:      { type: String, default: '', maxlength: 20000 },
+  emailedTo: { type: [String], default: [] }
+}, { timestamps: true });
+
 const staffMessageSchema = new mongoose.Schema({
   to:         { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
   from:       { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null },
@@ -1504,6 +1519,7 @@ const Task              = mongoose.model('Task',              taskSchema);
 const StaffDay          = mongoose.model('StaffDay',          staffDaySchema);
 const StaffPosting      = mongoose.model('StaffPosting',      staffPostingSchema);
 const StaffMessage      = mongoose.model('StaffMessage',      staffMessageSchema);
+const StaffReport       = mongoose.model('StaffReport',       staffReportSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
@@ -1539,6 +1555,7 @@ module.exports = {
   StaffDay,
   StaffPosting,
   StaffMessage,
+  StaffReport,
   PropertySubmission,
   ScheduledEmail,
   TitlingCase,
