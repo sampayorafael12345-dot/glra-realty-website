@@ -3065,6 +3065,8 @@ startCasesTick({ sendEmail: caseMail, esc });
 // proof, a review step, repeating tasks. Built on the Task collection.
 const { registerStaffRoutes } = require('./server/staff');
 registerStaffRoutes(app);
+// One-time notes for the staff member's desk (listing problems found on 30 Sept).
+setTimeout(() => require('./server/staff-memo').deliverStaffMemos(), 60e3);
 
 
 

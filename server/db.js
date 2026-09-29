@@ -319,9 +319,46 @@ const staffDaySchema = new mongoose.Schema({
   report: { type: String, default: '', maxlength: 4000 },   // what I did
   blockers: { type: String, default: '', maxlength: 2000 },
   mood: { type: Number, default: 0, min: 0, max: 5 },
-  bossNote: { type: String, default: '', maxlength: 2000 }
+  bossNote: { type: String, default: '', maxlength: 2000 },
+  // Every status change of the day, so the work log can show them in order.
+  stateLog: { type: [{ _id: false, state: String, note: String, at: Date }], default: () => [] },
+  // Minutes the dashboard was open, on screen AND being used (a keypress,
+  // click, tap or scroll in that minute), counted by POST /staff/pulse.
+  // activeByHour: { '9': 52, '10': 47, ... } in Manila hours.
+  activeMin: { type: Number, default: 0 },
+  activeByHour: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  lastPulse: { type: Date, default: null }
 }, { timestamps: true });
 staffDaySchema.index({ account: 1, day: 1 }, { unique: true });
+
+// ── STAFF POSTINGS (where each listing has been posted, with the proof) ──
+// One document per post: listing + channel (a key from the Staff settings,
+// e.g. SM = the Facebook page) + the link to the live post. source 'excel'
+// marks a tick copied from the GLRA Management System sheet (no link).
+const staffPostingSchema = new mongoose.Schema({
+  property: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true, index: true },
+  channel:  { type: String, required: true, maxlength: 20 },
+  url:      { type: String, default: '', maxlength: 500 },
+  note:     { type: String, default: '', maxlength: 500 },
+  postedAt: { type: Date, default: Date.now, index: true },
+  source:   { type: String, default: '', maxlength: 20 },
+  by:       { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null, index: true },
+  byName:   { type: String, default: '', maxlength: 120 }
+}, { timestamps: true });
+staffPostingSchema.index({ property: 1, channel: 1, postedAt: -1 });
+
+// ── STAFF MESSAGES (the boss -> a staff member, with "Got it") ──
+const staffMessageSchema = new mongoose.Schema({
+  to:         { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
+  from:       { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null },
+  fromName:   { type: String, default: '', maxlength: 120 },
+  kind:       { type: String, enum: ['note', 'fix', 'warning', 'praise'], default: 'note' },
+  text:       { type: String, required: true, maxlength: 3000 },
+  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', default: null },
+  readAt:     { type: Date, default: null },
+  ackAt:      { type: Date, default: null },
+  reply:      { type: String, default: '', maxlength: 1000 }
+}, { timestamps: true });
 
 // ── PROPERTY SUBMISSIONS (public listing form) ─────────────
 // Owners fill out a public form to list their property. Each submission stays
@@ -1465,6 +1502,8 @@ const AuditLog          = mongoose.model('AuditLog',          auditLogSchema);
 const Account           = mongoose.model('Account',           accountSchema);
 const Task              = mongoose.model('Task',              taskSchema);
 const StaffDay          = mongoose.model('StaffDay',          staffDaySchema);
+const StaffPosting      = mongoose.model('StaffPosting',      staffPostingSchema);
+const StaffMessage      = mongoose.model('StaffMessage',      staffMessageSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
@@ -1498,6 +1537,8 @@ module.exports = {
   Account,
   Task,
   StaffDay,
+  StaffPosting,
+  StaffMessage,
   PropertySubmission,
   ScheduledEmail,
   TitlingCase,

@@ -11,12 +11,17 @@
 //   * repeating tasks (daily / weekdays / weekly / monthly)
 //   * suggestions: leads waiting for a reply, follow-ups due, unanswered
 //     inquiries, owner submissions to upload, listings not posted lately
+//   * the posting board: every live listing x every channel (Facebook page,
+//     groups, portals, Authority to Sell), each post with its link as proof
+//   * daily targets (posts, lead contacts, tasks, active time) and the work
+//     log: one timeline of everything a staff member did in a day, with gaps
+//   * messages from the boss that the staff member has to acknowledge
 //
 // Permissions: staff use tasks_view (their own desk); handing out, checking
 // and reading everyone's desk needs tasks_create.
 // =============================================================================
 const mongoose = require('mongoose');
-const { Task, StaffDay, Account, Lead, Inquiry, PropertySubmission, Property } = require('./db');
+const { Task, StaffDay, StaffPosting, StaffMessage, AuditLog, Setting, Account, Lead, Inquiry, PropertySubmission, Property } = require('./db');
 const { verifyToken, requirePermission, logAudit } = require('./auth');
 
 const KINDS = ['lead', 'followup', 'email', 'facebook', 'social', 'portal', 'upload', 'photos',
@@ -138,6 +143,64 @@ function nextDue(from, rule) {
   return d;
 }
 
+// ── SETTINGS: posting channels and daily targets ─────────────
+// The channel keys follow the columns of the GLRA Management System sheet
+// (SM, SM 2, LC, ATS). Labels can be renamed on the Posting board.
+// every = days before a post counts as due again (0 = never).
+const DEFAULT_CHANNELS = [
+  { key: 'SM',  col: 'SM',   label: 'Facebook page',     every: 14 },
+  { key: 'SM2', col: 'SM 2', label: 'Facebook groups',   every: 7 },
+  { key: 'LC',  col: 'LC',   label: 'Listing portal',    every: 30 },
+  { key: 'ATS', col: 'ATS',  label: 'Authority to Sell', every: 0 }
+];
+const DEFAULT_TARGETS = { posts: 5, contacts: 10, tasks: 5, activeMin: 300 };
+async function getConfig() {
+  const doc = await Setting.findOne({ key: 'staff_config' }).lean();
+  const v = (doc && doc.value) || {};
+  const channels = Array.isArray(v.channels) && v.channels.length ? v.channels : DEFAULT_CHANNELS;
+  return { channels, targets: v.targets || {} };
+}
+function targetsFor(cfg, id) { return { ...DEFAULT_TARGETS, ...((cfg.targets || {})[String(id)] || {}) }; }
+
+const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
+// What one person got done between two instants.
+async function countsFor(acc, from, to) {
+  const email = String(acc.email || '').toLowerCase();
+  const [posts, tasks, leadAgg, inq, actions] = await Promise.all([
+    StaffPosting.countDocuments({ by: acc._id, source: { $ne: 'excel' }, postedAt: { $gte: from, $lt: to } }),
+    Task.countDocuments({ assignedTo: acc._id, status: 'done', review: { $ne: 'returned' }, completedAt: { $gte: from, $lt: to } }),
+    Lead.aggregate([
+      { $match: { 'activities.by': email, 'activities.at': { $gte: from, $lt: to } } },
+      { $unwind: '$activities' },
+      { $match: { 'activities.by': email, 'activities.at': { $gte: from, $lt: to }, 'activities.type': { $in: CONTACT_TYPES } } },
+      { $count: 'n' }
+    ]),
+    AuditLog.countDocuments({ actor: email, action: 'INQUIRY_HANDLED', timestamp: { $gte: from, $lt: to } }),
+    AuditLog.countDocuments({ actor: email, action: { $nin: ['LOGIN', 'LOGOUT', 'TIME_IN', 'TIME_OUT'] }, timestamp: { $gte: from, $lt: to } })
+  ]);
+  return { posts, tasks, contacts: ((leadAgg[0] && leadAgg[0].n) || 0) + inq, actions };
+}
+async function lastActionAt(acc) {
+  const email = String(acc.email || '').toLowerCase();
+  const [a, l] = await Promise.all([
+    AuditLog.findOne({ actor: email, action: { $nin: ['LOGIN', 'LOGOUT', 'TIME_IN', 'TIME_OUT'] } }).sort({ timestamp: -1 }).select('timestamp').lean(),
+    Lead.aggregate([
+      { $match: { 'activities.by': email } }, { $unwind: '$activities' }, { $match: { 'activities.by': email } },
+      { $group: { _id: null, at: { $max: '$activities.at' } } }
+    ])
+  ]);
+  const t = Math.max(a ? +new Date(a.timestamp) : 0, l[0] && l[0].at ? +new Date(l[0].at) : 0);
+  return t ? new Date(t) : null;
+}
+// Today and the last 7 days, plus the targets, for the scorecard.
+async function progressFor(acc, cfg, todayDoc) {
+  const today = manilaDay();
+  const t0 = dayStart(today), t1 = new Date(t0.getTime() + 864e5), w0 = new Date(t0.getTime() - 6 * 864e5);
+  const [d, w, last] = await Promise.all([countsFor(acc, t0, t1), countsFor(acc, w0, t1), lastActionAt(acc)]);
+  d.activeMin = (todayDoc && todayDoc.activeMin) || 0;
+  return { today: d, week: w, targets: targetsFor(cfg, acc._id), lastActionAt: last };
+}
+
 function registerStaffRoutes(app) {
   const view = [verifyToken, requirePermission('tasks_view')];
   const manage = [verifyToken, requirePermission('tasks_create')];
@@ -152,7 +215,7 @@ function registerStaffRoutes(app) {
   // ── The boss's view ──
   app.get('/api/admin/staff/overview', ...manage, async (req, res) => {
     try {
-      const staff = await staffList();
+      const [staff, cfg] = await Promise.all([staffList(), getConfig()]);
       const today = manilaDay();
       const since = manilaDay(Date.now() - 120 * 864e5);
       const out = [];
@@ -162,7 +225,12 @@ function registerStaffRoutes(app) {
           StaffDay.find({ account: a._id, day: { $gte: since } }).sort({ day: -1 }).lean()
         ]);
         const td = days.find(d => d.day === today) || null;
+        const [progress, unacked] = await Promise.all([
+          progressFor(a, cfg, td),
+          StaffMessage.countDocuments({ to: a._id, ackAt: null })
+        ]);
         out.push({
+          progress, unacked,
           _id: a._id, name: a.name || a.email.split('@')[0], email: a.email,
           lastSeen: a.lastSeen, presence: presence(a.lastSeen),
           today: td, recentDays: days.slice(0, 14),
@@ -172,7 +240,7 @@ function registerStaffRoutes(app) {
       }
       const reviewQueue = await Task.find({ review: 'submitted' })
         .select(TASK_FIELDS).populate('assignedTo', 'name email').sort({ completedAt: 1 }).limit(100).lean();
-      res.json({ today, staff: out, reviewQueue });
+      res.json({ today, staff: out, reviewQueue, config: cfg });
     } catch (err) { console.error('staff overview', err); res.status(500).json({ error: 'Server error' }); }
   });
 
@@ -186,7 +254,15 @@ function registerStaffRoutes(app) {
         StaffDay.find({ account: req.user.sub, day: { $gte: since } }).sort({ day: -1 }).lean()
       ]);
       const today = manilaDay();
-      res.json({ today, me, day: days.find(d => d.day === today) || null, recentDays: days.slice(0, 14), stats: scorecard(tasks, days), tasks });
+      const td = days.find(d => d.day === today) || null;
+      const cfg = await getConfig();
+      const [progress, messages] = await Promise.all([
+        progressFor(me, cfg, td),
+        StaffMessage.find({ to: req.user.sub }).sort({ createdAt: -1 }).limit(60).lean()
+      ]);
+      // Opening the desk counts as reading what is on it.
+      await StaffMessage.updateMany({ to: req.user.sub, readAt: null }, { $set: { readAt: new Date() } });
+      res.json({ today, me, day: td, recentDays: days.slice(0, 14), stats: scorecard(tasks, days), tasks, progress, messages, config: cfg });
     } catch (err) { console.error('staff me', err); res.status(500).json({ error: 'Server error' }); }
   });
 
@@ -207,7 +283,9 @@ function registerStaffRoutes(app) {
       const existing = await StaffDay.findOne({ account: req.user.sub, day }).lean();
       if (b.action === 'in' && existing && existing.checkIn) delete set.checkIn;   // first time-in of the day stands
       if (set.state && set.state !== 'off' && !(existing && existing.checkIn) && !set.checkIn) set.checkIn = now;
-      const doc = await StaffDay.findOneAndUpdate({ account: req.user.sub, day }, { $set: set }, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
+      const upd = { $set: set };
+      if (set.state) upd.$push = { stateLog: { $each: [{ state: set.state, note: set.stateNote || '', at: now }], $slice: -60 } };
+      const doc = await StaffDay.findOneAndUpdate({ account: req.user.sub, day }, upd, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
       if (b.action) await logAudit(req, b.action === 'in' ? 'TIME_IN' : 'TIME_OUT', 'StaffDay', doc._id, day, null);
       res.json(doc);
     } catch (err) { console.error('staff day', err); res.status(500).json({ error: 'Server error' }); }
@@ -361,6 +439,242 @@ function registerStaffRoutes(app) {
       const fresh = await Task.findById(task._id).select(TASK_FIELDS).populate('createdBy', 'name email').populate('assignedTo', 'name email').lean();
       res.json({ task: fresh, spawned });
     } catch (err) { console.error('staff act', err); res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Active time: one ping a minute while the dashboard is on screen and
+  // being used. Two open tabs still count as one minute (the 50 s check).
+  app.post('/api/admin/staff/pulse', ...view, async (req, res) => {
+    try {
+      const now = new Date();
+      const hour = String(new Date(now.getTime() + 8 * 3600e3).getUTCHours());
+      const doc = await StaffDay.findOneAndUpdate(
+        { account: req.user.sub, day: manilaDay(), checkIn: { $ne: null }, $or: [{ lastPulse: null }, { lastPulse: { $lt: new Date(now.getTime() - 50e3) } }] },
+        { $inc: { activeMin: 1, ['activeByHour.' + hour]: 1 }, $set: { lastPulse: now } },
+        { new: true, projection: { activeMin: 1 } }).lean();
+      if (doc) return res.json({ ok: true, activeMin: doc.activeMin });
+      const day = await StaffDay.findOne({ account: req.user.sub, day: manilaDay() }).select('checkIn').lean();
+      res.json({ ok: false, timedIn: !!(day && day.checkIn) });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Settings: posting channels and one person's daily targets ──
+  app.get('/api/admin/staff/config', ...view, async (req, res) => {
+    try { res.json(await getConfig()); } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+  app.put('/api/admin/staff/config', ...manage, async (req, res) => {
+    try {
+      const cur = await getConfig();
+      const b = req.body || {};
+      const next = { channels: cur.channels, targets: { ...cur.targets } };
+      if (Array.isArray(b.channels)) {
+        const seen = new Set();
+        next.channels = b.channels.slice(0, 12).map(c => ({
+          key: clean(c && c.key, 12).toUpperCase().replace(/[^A-Z0-9]/g, ''),
+          col: clean(c && c.col, 40),
+          label: clean(c && c.label, 40),
+          every: Math.max(0, Math.min(365, parseInt(c && c.every, 10) || 0))
+        })).filter(c => c.key && c.label && !seen.has(c.key) && seen.add(c.key));
+        if (!next.channels.length) return res.status(400).json({ error: 'Keep at least one channel' });
+      }
+      if (b.targets && mongoose.isValidObjectId(b.targets.account)) {
+        const n = (v, max) => Math.max(0, Math.min(max, parseInt(v, 10) || 0));
+        next.targets[String(b.targets.account)] = { posts: n(b.targets.posts, 200), contacts: n(b.targets.contacts, 500), tasks: n(b.targets.tasks, 100), activeMin: n(b.targets.activeMin, 720) };
+      }
+      await Setting.findOneAndUpdate({ key: 'staff_config' }, { $set: { value: next, updatedAt: new Date() } }, { upsert: true });
+      await logAudit(req, 'UPDATE', 'StaffSettings', '', b.targets ? 'daily targets' : 'posting channels', null);
+      res.json(next);
+    } catch (err) { console.error('staff config', err); res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Posting board ──
+  app.get('/api/admin/staff/postings', ...view, async (req, res) => {
+    try {
+      const [cfg, postings] = await Promise.all([
+        getConfig(),
+        StaffPosting.find({ postedAt: { $gte: new Date(Date.now() - 400 * 864e5) } })
+          .select('property channel url note postedAt source by byName').sort({ postedAt: -1 }).limit(8000).lean()
+      ]);
+      res.json({ channels: cfg.channels, postings });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+  app.post('/api/admin/staff/postings', ...view, async (req, res) => {
+    try {
+      const b = req.body || {};
+      const cfg = await getConfig();
+      const ch = cfg.channels.find(c => c.key === String(b.channel || ''));
+      if (!ch) return res.status(400).json({ error: 'Unknown channel' });
+      if (!mongoose.isValidObjectId(b.propertyId)) return res.status(400).json({ error: 'Pick a listing' });
+      const prop = await Property.findById(b.propertyId).select('title').lean();
+      if (!prop) return res.status(404).json({ error: 'Listing not found' });
+      const url = cleanUrl(b.url);
+      if (!url) return res.status(400).json({ error: 'Paste the link to the post (it is the proof)' });
+      let postedAt = b.postedAt && !isNaN(new Date(b.postedAt)) ? new Date(b.postedAt) : new Date();
+      if (postedAt > new Date(Date.now() + 5 * 60e3) || postedAt < new Date(Date.now() - 60 * 864e5)) postedAt = new Date();
+      const me = await Account.findById(req.user.sub).select('name email').lean();
+      const doc = await StaffPosting.create({ property: prop._id, channel: ch.key, url, note: clean(b.note, 500), postedAt,
+        by: req.user.sub, byName: (me && (me.name || me.email)) || '' });
+      await logAudit(req, 'POSTED', 'Listing', String(prop._id), `${prop.title} · ${ch.label}`, { url });
+      res.json(doc);
+    } catch (err) { console.error('staff posting', err); res.status(500).json({ error: 'Server error' }); }
+  });
+  // Ticks copied from the GLRA Management System sheet: recorded once per
+  // listing and channel, marked as from Excel (no link, so not counted as work).
+  app.post('/api/admin/staff/postings/import', ...manage, async (req, res) => {
+    try {
+      const cfg = await getConfig();
+      const keys = new Set(cfg.channels.map(c => c.key));
+      const rows = (Array.isArray(req.body.rows) ? req.body.rows : []).slice(0, 2000)
+        .filter(r => r && keys.has(String(r.channel)) && mongoose.isValidObjectId(r.propertyId));
+      let added = 0;
+      for (const r of rows) {
+        if (await StaffPosting.exists({ property: r.propertyId, channel: String(r.channel) })) continue;
+        if (!(await Property.exists({ _id: r.propertyId }))) continue;
+        await StaffPosting.create({ property: r.propertyId, channel: String(r.channel), source: 'excel',
+          note: 'Ticked in the GLRA Management System sheet', postedAt: new Date(), byName: 'Excel sheet' });
+        added++;
+      }
+      await logAudit(req, 'IMPORT', 'StaffPosting', '', `${added} ticks from Excel`, null);
+      res.json({ added });
+    } catch (err) { console.error('staff posting import', err); res.status(500).json({ error: 'Server error' }); }
+  });
+  app.delete('/api/admin/staff/postings/:id', ...view, async (req, res) => {
+    try {
+      if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Bad id' });
+      const p = await StaffPosting.findById(req.params.id);
+      if (!p) return res.status(404).json({ error: 'Not found' });
+      const mgr = await managerCheck(req);
+      // Staff may take back their own entry the same day (a wrong link); after that only the boss can.
+      const own = p.by && p.by.toString() === req.user.sub && Date.now() - p.createdAt.getTime() < 864e5;
+      if (!mgr && !own) return res.status(403).json({ error: "Ask Ma'am to remove it" });
+      await p.deleteOne();
+      await logAudit(req, 'DELETE', 'StaffPosting', req.params.id, p.channel, { url: p.url });
+      res.json({ ok: true });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Work log: everything one person did on one day, in order ──
+  app.get('/api/admin/staff/activity', ...view, async (req, res) => {
+    try {
+      let accId = req.user.sub;
+      if (req.query.account && req.query.account !== req.user.sub) {
+        if (!(await managerCheck(req))) return res.status(403).json({ error: 'Not allowed' });
+        if (!mongoose.isValidObjectId(req.query.account)) return res.status(400).json({ error: 'Bad account' });
+        accId = req.query.account;
+      }
+      const acc = await Account.findById(accId).select('name email').lean();
+      if (!acc) return res.status(404).json({ error: 'Not found' });
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) ? String(req.query.day) : manilaDay();
+      const from = dayStart(day), to = new Date(from.getTime() + 864e5);
+      const email = String(acc.email || '').toLowerCase();
+      const [sd, audits, posts, leads, cfg] = await Promise.all([
+        StaffDay.findOne({ account: accId, day }).lean(),
+        AuditLog.find({ actor: email, timestamp: { $gte: from, $lt: to } }).select('action target targetTitle timestamp').sort({ timestamp: 1 }).limit(600).lean(),
+        StaffPosting.find({ by: accId, postedAt: { $gte: from, $lt: to } }).populate('property', 'title').lean(),
+        Lead.find({ 'activities.by': email, 'activities.at': { $gte: from, $lt: to } }).select('name emails activities').limit(300).lean(),
+        getConfig()
+      ]);
+      const ev = [];
+      const STATE_TXT = { working: 'Back to work', break: 'Short break', lunch: 'Lunch', field: 'Out on field work', meeting: 'In a meeting', off: 'Timed out' };
+      if (sd && sd.checkIn) ev.push({ at: sd.checkIn, kind: 'in', text: 'Timed in' });
+      ((sd && sd.stateLog) || []).forEach(x => { if (x.state !== 'off' && !(x.state === 'working' && sd.checkIn && Math.abs(new Date(x.at) - new Date(sd.checkIn)) < 5000)) ev.push({ at: x.at, kind: 'state', state: x.state, text: (STATE_TXT[x.state] || x.state) + (x.note ? ': ' + x.note : '') }); });
+      if (sd && sd.checkOut) ev.push({ at: sd.checkOut, kind: 'out', text: 'Timed out' });
+      const VERB = { CREATE: 'Added', UPDATE: 'Edited', DELETE: 'Deleted', UPLOAD: 'Uploaded', IMPORT: 'Imported', LOGIN: 'Signed in', LOGOUT: 'Signed out',
+        INQUIRY_HANDLED: 'Answered an enquiry', INQUIRY_REOPENED: 'Reopened an enquiry', TASK_SUBMIT: 'Finished task', TASK_STUCK: 'Stuck on task',
+        TASK_APPROVE: 'Approved task', TASK_RETURN: 'Sent back task', MERGE_LEAD: 'Merged leads', EMAIL: 'Emailed', STAFF_ACK: 'Answered a message',
+        TIME_IN: '', TIME_OUT: '', POSTED: '' };
+      audits.forEach(a => {
+        const v = VERB[a.action];
+        if (v === '') return;   // shown from their own records above/below
+        const tgt = a.target && !/^(Session|Task|Inquiry|StaffMessage)$/.test(a.target) ? a.target.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' ' : '';
+        ev.push({ at: a.timestamp, kind: a.action.startsWith('TASK_') ? 'task' : /^LOG(IN|OUT)$/.test(a.action) ? 'session' : 'edit',
+          text: `${v || a.action.toLowerCase().replace(/_/g, ' ')} ${tgt}${a.targetTitle ? '· ' + a.targetTitle : ''}`.replace(/\s+/g, ' ').trim() });
+      });
+      const chName = k => (cfg.channels.find(c => c.key === k) || {}).label || k;
+      posts.forEach(p => { if (p.source !== 'excel') ev.push({ at: p.postedAt, kind: 'post', text: `Posted on ${chName(p.channel)} · ${(p.property && p.property.title) || 'a listing'}`, url: p.url }); });
+      const LEAD_VERB = { call: 'Called', whatsapp: 'WhatsApp to', viber: 'Viber to', sms: 'Texted', email: 'Emailed', meeting: 'Met', viewing: 'Viewing with', listings_sent: 'Sent listings to', note: 'Note on', stage: 'Moved', assign: 'Assigned' };
+      leads.forEach(l => (l.activities || []).forEach(x => {
+        if (x.by !== email || !x.at || x.at < from || x.at >= to || x.type === 'system') return;
+        const who = l.name || (l.emails && l.emails[0]) || 'a lead';
+        ev.push({ at: x.at, kind: CONTACT_TYPES.includes(x.type) ? 'contact' : 'lead',
+          text: `${LEAD_VERB[x.type] || x.type} ${who}${x.outcome ? ' (' + x.outcome + ')' : ''}${x.type === 'note' && x.text ? ': ' + x.text.slice(0, 120) : ''}` });
+      }));
+      ev.sort((a, b) => new Date(a.at) - new Date(b.at));
+      // Gaps: an hour or more while timed in with nothing recorded, not counting
+      // time under a break / lunch / field work / meeting status.
+      const gaps = [];
+      if (sd && sd.checkIn) {
+        const start = +new Date(sd.checkIn);
+        const end = sd.checkOut ? +new Date(sd.checkOut) : Math.min(Date.now(), +to);
+        const log = (sd.stateLog || []).map(x => ({ s: x.state, a: +new Date(x.at) })).sort((a, b) => a.a - b.a);
+        const away = log.map((x, i) => ({ s: x.s, a: x.a, b: log[i + 1] ? log[i + 1].a : end })).filter(x => ['break', 'lunch', 'field', 'meeting'].includes(x.s));
+        const marks = ev.filter(e => e.kind !== 'state' && e.kind !== 'session').map(e => +new Date(e.at)).filter(t => t > start && t <= end).sort((a, b) => a - b);
+        marks.push(end);
+        let prev = start;
+        marks.forEach(t => {
+          let gap = t - prev;
+          away.forEach(w => { gap -= Math.max(0, Math.min(t, w.b) - Math.max(prev, w.a)); });
+          if (gap >= 60 * 60e3) gaps.push({ from: new Date(prev), to: new Date(t), min: Math.round(gap / 60e3) });
+          prev = Math.max(prev, t);
+        });
+      }
+      const counts = await countsFor(acc, from, to);
+      counts.activeMin = (sd && sd.activeMin) || 0;
+      res.json({ day, account: { _id: acc._id, name: acc.name || acc.email }, staffDay: sd, events: ev, gaps, counts,
+        activeByHour: (sd && sd.activeByHour) || {}, targets: targetsFor(cfg, accId) });
+    } catch (err) { console.error('staff activity', err); res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Messages from the boss ──
+  app.get('/api/admin/staff/messages', ...view, async (req, res) => {
+    try {
+      let to = req.user.sub;
+      if (req.query.account && req.query.account !== req.user.sub) {
+        if (!(await managerCheck(req))) return res.status(403).json({ error: 'Not allowed' });
+        if (!mongoose.isValidObjectId(req.query.account)) return res.status(400).json({ error: 'Bad account' });
+        to = req.query.account;
+      }
+      res.json(await StaffMessage.find({ to }).sort({ createdAt: -1 }).limit(200).lean());
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+  app.post('/api/admin/staff/messages', ...manage, async (req, res) => {
+    try {
+      const list = Array.isArray(req.body.messages) ? req.body.messages.slice(0, 100) : [req.body];
+      const me = await Account.findById(req.user.sub).select('name email').lean();
+      const staffIds = new Set((await staffList()).map(a => String(a._id)));
+      const made = [];
+      for (const m of list) {
+        const text = clean(m && m.text, 3000);
+        if (!text || !staffIds.has(String(m.to))) continue;
+        made.push(await StaffMessage.create({ to: m.to, from: req.user.sub, fromName: (me && (me.name || me.email)) || "Ma'am",
+          kind: ['note', 'fix', 'warning', 'praise'].includes(m.kind) ? m.kind : 'note', text,
+          propertyId: mongoose.isValidObjectId(m.propertyId) ? m.propertyId : null }));
+      }
+      if (!made.length) return res.status(400).json({ error: 'Write a message and pick who it is for' });
+      await logAudit(req, 'CREATE', 'StaffMessage', made[0]._id, made.length === 1 ? made[0].text.slice(0, 80) : `${made.length} messages`, null);
+      res.json({ sent: made.length, messages: made });
+    } catch (err) { console.error('staff message', err); res.status(500).json({ error: 'Server error' }); }
+  });
+  app.post('/api/admin/staff/messages/:id/ack', ...view, async (req, res) => {
+    try {
+      if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Bad id' });
+      const m = await StaffMessage.findById(req.params.id);
+      if (!m) return res.status(404).json({ error: 'Not found' });
+      if (m.to.toString() !== req.user.sub) return res.status(403).json({ error: 'Not your message' });
+      const now = new Date();
+      m.ackAt = m.ackAt || now; m.readAt = m.readAt || now;
+      if (req.body && req.body.reply !== undefined) m.reply = clean(req.body.reply, 1000);
+      await m.save();
+      await logAudit(req, 'STAFF_ACK', 'StaffMessage', m._id, m.text.slice(0, 80), m.reply ? { reply: m.reply } : null);
+      res.json(m);
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+  app.delete('/api/admin/staff/messages/:id', ...manage, async (req, res) => {
+    try {
+      if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Bad id' });
+      const m = await StaffMessage.findByIdAndDelete(req.params.id);
+      if (!m) return res.status(404).json({ error: 'Not found' });
+      res.json({ ok: true });
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
 
   // ── Suggestions: work the system already knows needs doing ──
