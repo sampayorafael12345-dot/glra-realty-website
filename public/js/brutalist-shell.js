@@ -56,7 +56,7 @@
       var top = document.createElement('div');
       top.className = 'ab-top-strip';
       top.innerHTML = '<span><span class="live"></span>' + (liveMsg || 'LIVE · By appointment only')
-        + '</span><span>MAKATI · SINCE 2014</span>';
+        + '</span><span>MAKATI · SINCE 2018</span>';
       document.body.insertBefore(top, document.body.firstChild);
     }
 
