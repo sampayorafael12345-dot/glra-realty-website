@@ -706,7 +706,7 @@ LIVE INVENTORY SNAPSHOT: no listings are currently published. Direct the user to
           console.error('Chat listing context error:', e?.message);
         }
 
-        const systemPrompt = `You are the AI assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, est. 2014).
+        const systemPrompt = `You are the AI assistant for GLRA Realty (glrarealty.com), a boutique real-estate brokerage in Manila, Philippines, run by Catherine SB Sampayo (PRC-licensed broker, 10+ years experience, est. 2018).
 
 ROLE:
 - Answer questions about Philippine real estate: buying, selling, leasing, taxes, financing, neighborhoods, documentation.
