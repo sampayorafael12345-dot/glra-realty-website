@@ -261,7 +261,7 @@ function requireAgentRole(req, res, next) {
 
 // ── ICS (phone calendar feed) helpers ────────────────────────
 function icsEscape(s) {
-  return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n').slice(0, 180);
+  return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n|\u2028|\u2029/g, '\\n').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 180);
 }
 function icsDate(d) { return utcDateKey(d).replace(/-/g, ''); }
 // Manila wall-clock 'YYYY-MM-DD' + 'HH:MM' → UTC timestamp string for DTSTART.

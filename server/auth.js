@@ -9,6 +9,7 @@
 // by the time anything here runs.
 // =============================================================================
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const { Account, AuditLog, defaultPermissionsForRole } = require('./db');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -78,6 +79,11 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
+  // A token whose account id is not even an id is refused outright (it used
+  // to throw inside the lookup and be let through as a "database error").
+  if (!payload || !mongoose.isValidObjectId(String(payload.sub || ''))) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
   try {
     const state = await loadAccountState(payload.sub);
     if (!state.exists) return res.status(401).json({ error: 'Account no longer exists' });
@@ -91,10 +97,15 @@ async function verifyToken(req, res, next) {
     // Trust the stored role over the token claim, so a demotion applies at once.
     payload.role = state.role || payload.role;
   } catch (e) {
-    // A transient DB error must not lock the owner out of her own dashboard.
-    // The signature is still cryptographically valid, so fall through to the
-    // pre-existing behaviour and log it rather than failing the request.
-    console.error('Account state check failed (allowing token):', e.message);
+    // A database that is down or unreachable must not lock the owner out of
+    // her own dashboard, so a signed token is still accepted then. Any other
+    // failure is refused rather than waved through.
+    const dbDown = mongoose.connection.readyState !== 1 || /Mongo(Network|ServerSelection)Error|ECONN|ETIMEDOUT/.test(String(e && (e.name + ' ' + e.message)));
+    if (!dbDown) {
+      console.error('Account state check failed (refusing token):', e.message);
+      return res.status(401).json({ error: 'Please sign in again.' });
+    }
+    console.error('Account state check failed, database unreachable (allowing token):', e.message);
   }
 
   req.user = payload;
@@ -176,6 +187,12 @@ async function seedDefaultAdmin() {
       const seedPassword = process.env.ADMIN_PASSWORD;
       if (!seedEmail || !seedPassword) {
         console.warn('⚠️ No admin exists and ADMIN_EMAIL/ADMIN_PASSWORD not set. Skipping seed.');
+        return;
+      }
+      // The example value from .env.example (or a short one) would be a
+      // password anyone reading the public repository knows.
+      if (/change-me|replace-with|password/i.test(seedPassword) || seedPassword.length < 12) {
+        console.error('❌ ADMIN_PASSWORD is the example value or shorter than 12 characters. Not creating the admin account.');
         return;
       }
       await Account.create({

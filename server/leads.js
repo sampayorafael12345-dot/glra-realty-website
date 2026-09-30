@@ -135,7 +135,7 @@ const KIND_POINTS = { viewing: 26, valuation: 22, submission: 22, inquiry: 16, s
 function classifyInquiry(message, propertyTitle) {
   const m = String(message || '');
   if (/^\s*valuation request/i.test(String(propertyTitle || '')) || /valuation request/i.test(m.slice(0, 60))) return 'valuation';
-  if (/^\s*\[?\s*(viewing request|schedule a viewing)/i.test(m) || /preferred (date|time)/i.test(m)) return 'viewing';
+  if (/^\s*\[?\s*(viewing request|schedule a viewing)/i.test(m) || /\bbook a viewing\b/i.test(m) || /preferred (date|time)/i.test(m)) return 'viewing';
   return 'inquiry';
 }
 
@@ -236,7 +236,7 @@ async function ingestLead(o) {
       // A new question after the last reply is waiting again, so the
       // "still waiting for a reply" alert may fire for it (it only picks
       // leads whose nudgedAt is empty).
-      if (!o.backfill && (!lead.lastContactAt || at > lead.lastContactAt)) lead.nudgedAt = null;
+      if (!o.backfill && (!lead.lastContactAt || at > lead.lastContactAt)) { lead.nudgedAt = null; lead.nudgeFails = 0; }
     }
     // An old enquiry marked handled was answered outside the dashboard; one
     // imported from more than 30 days ago most likely was too.
@@ -787,7 +787,7 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       const next = {
         notifyEmail: (req.user && req.user.role === 'admin' && normEmail(b.notifyEmail)) || cur.notifyEmail,
         slaMinutes: Math.max(5, Math.min(1440, Number(b.slaMinutes) || cur.slaMinutes)),
-        digestHour: Math.max(5, Math.min(12, Number(b.digestHour) || cur.digestHour)),
+        digestHour: Math.max(5, Math.min(11, Number(b.digestHour) || cur.digestHour)),   // the digest runs before noon
         quietStart: cur.quietStart, quietEnd: cur.quietEnd,
         templates: Object.fromEntries(Object.keys(DEFAULT_LEAD_SETTINGS.templates).map(k => [k, cleanText(t[k] != null ? t[k] : cur.templates[k], 700) || DEFAULT_LEAD_SETTINGS.templates[k]]))
       };
@@ -824,8 +824,13 @@ function startLeadsTick({ sendEmail, esc }) {
             <p style="font-size:13px;color:#555">Leads answered in the first few minutes are many times more likely to become clients. Log the reply in the Leads tab and this reminder stops.</p>
             <p><a href="${SITE_URL}/admin.html#leads" style="display:inline-block;background:#0a0a0a;color:#fff;padding:11px 20px;text-decoration:none;font-weight:600">Open the lead</a></p>
           ` + getEmailFooter()).catch(() => null);
-          l.nudgedAt = new Date();
-          if (!(r && r.success)) l.activities.push({ type: 'system', text: 'Reply reminder could not be emailed', at: new Date(), byName: 'Lead reminders' });
+          // Marked as reminded only when the email went; a failed one is tried
+          // again on the next run (at most 3 times, then it is noted and left).
+          if (r && r.success) l.nudgedAt = new Date();
+          else {
+            l.nudgeFails = (l.nudgeFails || 0) + 1;
+            if (l.nudgeFails >= 3) { l.nudgedAt = new Date(); l.activities.push({ type: 'system', text: 'Reply reminder could not be emailed', at: new Date(), byName: 'Lead reminders' }); }
+          }
           await l.save();
         }
       }

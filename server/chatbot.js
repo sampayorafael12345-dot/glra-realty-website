@@ -47,7 +47,7 @@ async function resolveGeminiModel(apiKey) {
   if (geminiModelCache.name && Date.now() < geminiModelCache.until) return geminiModelCache.name;
   let choice = configured;
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${apiKey}`);
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': apiKey } });
     if (r.ok) {
       const data = await r.json();
       const names = (data.models || [])
@@ -97,7 +97,7 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
   contents.push({ role: 'user', parts: [{ text: message }] });
 
   const model = await resolveGeminiModel(apiKey);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;   // the key goes in a header, not the address (addresses end up in logs)
   const body = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
     contents,
@@ -114,14 +114,14 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
   }
 
   let r = await fetch(url, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify(body),
   });
   // Auto-retry once without thinkingConfig if 2.5 rejected it
   if (!r.ok && body.generationConfig.thinkingConfig) {
     delete body.generationConfig.thinkingConfig;
     r = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(body),
     });
   }

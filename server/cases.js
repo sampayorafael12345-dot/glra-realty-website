@@ -567,7 +567,9 @@ function buildEmail(kind, c, comp, settings, extra = {}) {
 }
 
 // ── ICS ──────────────────────────────────────────────────────
-const icsEsc = t => String(t || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+// Line breaks of every kind become \n and other control characters go: a bare
+// carriage return in a typed name used to start a new line in the feed.
+const icsEsc = t => String(t || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\r\n|\r|\n|\u2028|\u2029/g, '\\n').replace(/[\u0000-\u001f\u007f]/g, '');
 function vevent({ uid, dateStr, summary, description, alarmDays }) {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const end = addDays(dateStr, 1);
@@ -764,20 +766,23 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
     try {
       const cur = await getSettings();
       const b = req.body || {};
+      const intOr = (v, keep, min, max) => { const n = parseInt(v, 10); return Math.min(max, Math.max(min, Number.isFinite(n) ? n : (Number(keep) || min))); };
       const next = { ...cur,
-        hearingReminderDays: Math.min(30, Math.max(0, parseInt(b.hearingReminderDays, 10) || 0)),
-        deadlineAlertDays: Math.min(60, Math.max(0, parseInt(b.deadlineAlertDays, 10) || 0)),
-        prescriptionAlertDays: Math.min(730, Math.max(0, parseInt(b.prescriptionAlertDays, 10) || 0)),
-        idleAlertDays: Math.min(365, Math.max(0, parseInt(b.idleAlertDays, 10) || 0)),
-        digestEnabled: !!b.digestEnabled,
-        digestHour: Math.min(23, Math.max(0, parseInt(b.digestHour, 10) || 0)),
+        // A setting left out of the request, or a box left blank, keeps its
+        // value: a blank box used to switch the deadline alerts off silently.
+        hearingReminderDays: intOr(b.hearingReminderDays, cur.hearingReminderDays, 0, 30),
+        deadlineAlertDays: intOr(b.deadlineAlertDays, cur.deadlineAlertDays, 1, 60),
+        prescriptionAlertDays: intOr(b.prescriptionAlertDays, cur.prescriptionAlertDays, 7, 730),
+        idleAlertDays: intOr(b.idleAlertDays, cur.idleAlertDays, 0, 365),
+        digestEnabled: b.digestEnabled === undefined ? !!cur.digestEnabled : !!b.digestEnabled,
+        digestHour: intOr(b.digestHour, cur.digestHour, 0, 23),
         notifyEmail: (req.user && req.user.role === 'admin')
           ? (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str(b.notifyEmail, 160)) ? str(b.notifyEmail, 160).toLowerCase() : (cur.notifyEmail || FIRM_INBOX))
           : (cur.notifyEmail || FIRM_INBOX),
-        firmName: str(b.firmName, 200),
-        firmAddress: str(b.firmAddress, 400),
-        firmContact: str(b.firmContact, 300),
-        clientEmailsEnabled: !!b.clientEmailsEnabled
+        firmName: b.firmName === undefined ? (cur.firmName || '') : str(b.firmName, 200),
+        firmAddress: b.firmAddress === undefined ? (cur.firmAddress || '') : str(b.firmAddress, 400),
+        firmContact: b.firmContact === undefined ? (cur.firmContact || '') : str(b.firmContact, 300),
+        clientEmailsEnabled: b.clientEmailsEnabled === undefined ? !!cur.clientEmailsEnabled : !!b.clientEmailsEnabled
       };
       await saveSettings(next);
       await logAudit(req, 'UPDATE', 'CaseSettings', 'cases', 'Case settings updated', null);

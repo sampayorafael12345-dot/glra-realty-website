@@ -155,10 +155,10 @@
 
 <!-- ============================================
      PROPERTY ALERTS PAGE
-     ?confirm=TOKEN  confirms a new alert with a POST from this script. A
-                     mail scanner that pre-fetches the link only downloads
-                     the HTML and never runs the script, so it cannot
-                     confirm on the person's behalf.
+     ?confirm=TOKEN  shows a "Yes, send me these alerts" button; the alert is
+                     confirmed only when a person presses it. Some mail
+                     scanners run a page's script, so confirming on page
+                     load could confirm on the person's behalf.
      ?t=TOKEN        shows the alert and offers "Stop these alerts"
 
      Runs BEFORE main.js on purpose. The token is the visitor's private key
@@ -297,14 +297,28 @@
           return;
         }
         remember(confirmToken);
-        show('<p class="al-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Confirming your alert...</p>');
-        var r = await fetch('/api/saved-search/' + confirmToken + '/confirm', { method: 'POST' });
-        var d = await r.json().catch(function () { return {}; });
-        if (!r.ok || !d.success) {
-          showProblem('We could not confirm this alert', d.error || 'Please try the link again in a minute.');
-          return;
-        }
-        await loadAlert(confirmToken, true);
+        show(
+          '<span class="al-kicker">// Property Finder</span>' +
+          '<h2>Confirm your property alert</h2>' +
+          '<p>Press the button to start getting an email when a new listing matches your search. You can stop the alerts at any time.</p>' +
+          '<div class="al-actions"><button type="button" id="alConfirm"><i class="fas fa-bell" aria-hidden="true"></i> Yes, send me these alerts</button></div>'
+        );
+        document.getElementById('alConfirm').addEventListener('click', async function () {
+          var btn = this;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Confirming...';
+          try {
+            var r = await fetch('/api/saved-search/' + confirmToken + '/confirm', { method: 'POST' });
+            var d = await r.json().catch(function () { return {}; });
+            if (!r.ok || !d.success) {
+              showProblem('We could not confirm this alert', d.error || 'Please try the link again in a minute.');
+              return;
+            }
+            await loadAlert(confirmToken, true);
+          } catch (e) {
+            showProblem('Something went wrong', 'Please check your connection and press the button again.');
+          }
+        });
         return;
       }
       if (manageToken) {

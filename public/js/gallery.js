@@ -82,7 +82,8 @@
     '.glg-root .glg-nav,.glg-root .glg-nav:hover,.glg-root .glg-nav:active{transform:translateY(-50%) !important;width:48px !important;height:64px !important}',
     '.glg-root .glg-thumb{padding:0 !important;margin:0 !important;background:#1a1a17 !important;border:2px solid transparent !important;box-shadow:none !important;transform:none !important;display:block !important;width:80px !important;height:60px !important}',
     '.glg-root .glg-thumb[aria-current="true"]{border-color:#ff3d00 !important}',
-    '@media (max-width:600px){.glg-root .glg-nav,.glg-root .glg-nav:hover,.glg-root .glg-nav:active{width:40px !important;height:52px !important}.glg-root .glg-thumb{width:64px !important;height:48px !important}}',
+    '.glg-root.glg-single .glg-nav{display:none !important}',   // one photo: no arrows that do nothing
+    '@media (max-width:600px){.glg-root .glg-zoombtn{display:none !important}.glg-root .glg-nav,.glg-root .glg-nav:hover,.glg-root .glg-nav:active{width:40px !important;height:52px !important}.glg-root .glg-thumb{width:64px !important;height:48px !important}}',
     '@media (prefers-reduced-motion:reduce){.glg-root .glg-btn{transition:none !important}}',
     '@media (hover:none){.glg-root .glg-btn:hover{background:#0a0a0a !important;border-color:rgba(241,238,233,.35) !important;color:#f1eee9 !important}}',
     '@media (prefers-reduced-motion:reduce){.glg-root,.glg-track.glg-anim,.glg-slide img,.glg-slide img.glg-zanim,.glg-btn,.glg-thumb{transition:none}}'

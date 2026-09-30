@@ -152,16 +152,26 @@ async function spawnNextTask(task) {
   return spawned;
 }
 
+// Worked out on Manila dates: a "weekdays" task never lands on a Saturday or
+// Sunday in Manila (the UTC day used to be checked, then the time moved), and
+// a monthly task due on the 31st moves to the last day of a shorter month
+// instead of drifting into the next one.
 function nextDue(from, rule) {
-  const base = new Date(Math.max(from ? new Date(from).getTime() : 0, Date.now()));
-  const d = new Date(base);
-  if (rule === 'daily') d.setUTCDate(d.getUTCDate() + 1);
-  else if (rule === 'weekdays') { do { d.setUTCDate(d.getUTCDate() + 1); } while ([0, 6].includes(new Date(d.getTime() + 8 * 3600e3).getUTCDay())); }
-  else if (rule === 'weekly') d.setUTCDate(d.getUTCDate() + 7);
-  else if (rule === 'monthly') d.setUTCMonth(d.getUTCMonth() + 1);
+  const OFF = 8 * 3600e3;
+  const m = new Date(Math.max(from ? new Date(from).getTime() : 0, Date.now()) + OFF);   // Manila wall clock in the UTC fields
+  const keep = from ? new Date(new Date(from).getTime() + OFF) : null;
+  if (rule === 'daily') m.setUTCDate(m.getUTCDate() + 1);
+  else if (rule === 'weekdays') { do { m.setUTCDate(m.getUTCDate() + 1); } while ([0, 6].includes(m.getUTCDay())); }
+  else if (rule === 'weekly') m.setUTCDate(m.getUTCDate() + 7);
+  else if (rule === 'monthly') {
+    const day = keep ? keep.getUTCDate() : m.getUTCDate();
+    const target = m.getUTCMonth() + 1;
+    const last = new Date(Date.UTC(m.getUTCFullYear(), target + 1, 0)).getUTCDate();
+    m.setUTCDate(1); m.setUTCMonth(target); m.setUTCDate(Math.min(day, last));
+  }
   // Keep the time of day it was originally due.
-  if (from) { const f = new Date(from); d.setUTCHours(f.getUTCHours(), f.getUTCMinutes(), 0, 0); }
-  return d;
+  if (keep) m.setUTCHours(keep.getUTCHours(), keep.getUTCMinutes(), 0, 0);
+  return new Date(m.getTime() - OFF);
 }
 
 // ── SETTINGS: posting channels and daily targets ─────────────
@@ -241,7 +251,11 @@ async function createStaffTasks(list, createdBy) {
       const dup = await Task.findOne({ issueKey, $or: [{ status: { $ne: 'done' } }, { review: 'submitted' }] }).select('_id').lean();
       if (dup) { skipped.push({ title, why: 'Already given out' }); continue; }
     }
-    const assignedTo = (Array.isArray(t.assignedTo) ? t.assignedTo : [t.assignedTo]).filter(id => mongoose.isValidObjectId(id));
+    const asked = (Array.isArray(t.assignedTo) ? t.assignedTo : [t.assignedTo]).filter(id => mongoose.isValidObjectId(id));
+    // Only active, approved staff can be given work; a task given to nobody
+    // (or to an agent or a pending sign-up) would sit where no one sees it.
+    const assignedTo = asked.length ? (await Account.find({ _id: { $in: asked }, isActive: { $ne: false }, status: { $ne: 'pending' }, role: { $in: ['employee', 'admin'] } }).select('_id').lean()).map(a => a._id) : [];
+    if (!assignedTo.length) { skipped.push({ title, why: 'Pick who does it (an active staff member)' }); continue; }
     const task = await Task.create({
       title,
       description: clean(t.description, 5000),
@@ -518,6 +532,10 @@ function registerStaffRoutes(app) {
       const note = text => task.updates.push({ author: req.user.sub, authorName: who, authorEmail: req.user.email || '', text: clean(text, 2000), createdAt: now });
       let spawned = null;
 
+      // An approved task is closed: only the boss can change it again.
+      if (task.review === 'approved' && !mgr && ['start', 'check', 'stuck', 'submit', 'reopen'].includes(b.action)) {
+        return res.status(403).json({ error: 'This task was checked and approved. Ask the boss if it needs more work.' });
+      }
       switch (b.action) {
         case 'start':
           task.status = 'in_progress'; if (!task.startedAt) task.startedAt = now;
@@ -571,6 +589,8 @@ function registerStaffRoutes(app) {
           note('Sent back: ' + task.reviewNote);
           break;
         case 'reopen':
+          // Once the boss has approved it, only the boss can reopen it.
+          if (task.review === 'approved' && !mgr) return res.status(403).json({ error: 'This task was checked and approved. Ask the boss to reopen it.' });
           task.status = 'todo'; task.completedAt = null; task.review = '';
           break;
         case 'snooze': {

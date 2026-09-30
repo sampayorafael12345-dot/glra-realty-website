@@ -315,7 +315,8 @@ async function saveSettings(patch) {
   await Setting.findOneAndUpdate({ key: 'leasing' }, { value: next, updatedAt: new Date() }, { upsert: true });
   return next;
 }
-function publicSettings(s) { const { calToken, lastDigestKey, ...rest } = s; return { ...rest, hasCalToken: !!calToken, calFeedPath: calToken ? `/api/leasing-cal/${calToken}` : null }; }
+// The calendar feed address works without signing in, so it is shown to admins only.
+function publicSettings(s, user) { const { calToken, lastDigestKey, ...rest } = s; return { ...rest, hasCalToken: !!calToken, calFeedPath: calToken && user && user.role === 'admin' ? `/api/leasing-cal/${calToken}` : null }; }
 
 // ── INPUT SANITISER ──────────────────────────────────────────
 // Only known fields pass through, each clamped to its type. Unknown keys and
@@ -491,7 +492,7 @@ function kindLabel(k) { return ({ rent: 'Rent', advance: 'Advance rent', deposit
 function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 
 // ── ICS CALENDAR ─────────────────────────────────────────────
-function icsEscape(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function icsEscape(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n|\u2028|\u2029/g, '\\n').replace(/[\u0000-\u001f\u007f]/g, ''); }
 function vevent({ uid, dateStr, summary, description }) {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   return ['BEGIN:VEVENT', `UID:${uid}@glrarealty.com`, `DTSTAMP:${stamp}`,
@@ -534,7 +535,7 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
     try {
       const today = manilaToday();
       const [leases, settings] = await Promise.all([Lease.find().sort({ updatedAt: -1 }).lean(), getSettings()]);
-      res.json({ today, stages: STAGE_META, flow: LEASE_FLOW, settings: publicSettings(settings), leases: leases.map(l => withComputed(l, today)) });
+      res.json({ today, stages: STAGE_META, flow: LEASE_FLOW, settings: publicSettings(settings, req.user), leases: leases.map(l => withComputed(l, today)) });
     } catch (err) { console.error('leases list error:', err); res.status(500).json({ error: 'Server error' }); }
   });
 
@@ -557,7 +558,7 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
   });
 
   app.get('/api/admin/leasing/settings', ...view, async (req, res) => {
-    try { res.json(publicSettings(await getSettings())); }
+    try { res.json(publicSettings(await getSettings(), req.user)); }
     catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
 // Where alerts are sent can only be changed by an admin: otherwise any staff
@@ -574,7 +575,7 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       if (b.paymentInstructions !== undefined) patch.paymentInstructions = String(b.paymentInstructions || '').slice(0, 1500);
       const next = await saveSettings(patch);
       await logAudit(req, 'UPDATE', 'LeasingSettings', 'leasing', 'Leasing settings', patch);
-      res.json(publicSettings(next));
+      res.json(publicSettings(next, req.user));
     } catch (err) { console.error('leasing settings error:', err); res.status(500).json({ error: 'Server error' }); }
   });
 

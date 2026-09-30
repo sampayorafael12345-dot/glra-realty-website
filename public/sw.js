@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v126';
+const CACHE_VERSION = 'glra-cache-v127';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -35,12 +35,25 @@ self.addEventListener('activate', event => {
 // be answered with the fallback below. Returning true here takes the request out
 // of the service worker entirely: the browser fetches it normally.
 function isPassThrough(url){
-  if (/^\/(admin|agent)\.html$/i.test(url.pathname)) return true;
+  // Compared in lower case and decoded: "/API/admin/..." or "/%61pi/..." reach
+  // the same server routes and must not be cached either.
+  let p = url.pathname;
+  try { p = decodeURIComponent(p); } catch (_) {}
+  p = p.toLowerCase();
+  if (/^\/(admin|agent)\.html$/.test(p)) return true;
+  // Pages whose address carries a private key (unsubscribe, confirm, alerts)
+  // are never stored on the device.
+  if (/^\/(unsubscribe|confirm-subscription|alerts\.html)\b/.test(p)) return true;
   // Listing and hero photographs are served from /api/ but are immutable bytes,
   // so they stay on the cache-first path below.
-  if (url.pathname.startsWith('/api/property-image/')) return false;
-  if (url.pathname.startsWith('/api/hero-image/')) return false;
-  return url.pathname.startsWith('/api/');
+  if (p.startsWith('/api/property-image/')) return false;
+  if (p.startsWith('/api/hero-image/')) return false;
+  return p.startsWith('/api/');
+}
+// A response the server marked private or no-store is never kept.
+function storable(res){
+  const cc = (res.headers.get('Cache-Control') || '').toLowerCase();
+  return !/no-store|private/.test(cc);
 }
 
 function isHTMLRequest(req){
@@ -74,23 +87,29 @@ self.addEventListener('fetch', event => {
 
   // NETWORK-FIRST for HTML — always try fresh, fall back to cache when offline
   if (isHTMLRequest(req)) {
+    // One stored copy per page, whatever its ?query: every search used to be
+    // kept as its own full copy. The page reads the query itself.
+    const pageKey = url.origin + url.pathname;
     event.respondWith(
       fetch(req)
         .then(res => {
-          if (res && res.status === 200 && res.type === 'basic') {
+          if (res && res.status === 200 && res.type === 'basic' && storable(res)) {
             const clone = res.clone();
-            caches.open(CACHE_VERSION).then(c => c.put(req, clone)).catch(()=>{});
+            caches.open(CACHE_VERSION).then(c => c.put(pageKey, clone)).catch(()=>{});
           }
+          // A server error: the last good copy is better than an error page.
+          if (res && res.status >= 500) return caches.match(pageKey).then(r => r || res);
           return res;
         })
-        .catch(() => caches.match(req).then(r => {
+        .catch(() => caches.match(pageKey).then(r => {
           if (r) return r;
           // Only ever stand the home page in for a page the visitor navigated
           // to. Handing it to anything else turns a plain network error into a
           // parse error a long way from its cause, and on a phone it reads as
           // "the site redirected me to the home page".
           if (req.mode === 'navigate' && url.origin === self.location.origin) {
-            return caches.match('/index.html');
+            // The home page is stored under "/" when it was visited as the site's root.
+            return caches.match('/index.html').then(h => h || caches.match(self.location.origin + '/'));
           }
           return Response.error();
         }))
@@ -103,7 +122,7 @@ self.addEventListener('fetch', event => {
     caches.match(req).then(cached => {
       if (cached) return cached;
       return fetch(req).then(res => {
-        if (!res || res.status !== 200 || res.type !== 'basic') return res;
+        if (!res || res.status !== 200 || res.type !== 'basic' || !storable(res)) return res;
         const clone = res.clone();
         caches.open(CACHE_VERSION).then(c => c.put(req, clone)).catch(()=>{});
         return res;

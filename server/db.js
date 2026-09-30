@@ -1481,6 +1481,7 @@ const leadSchema = new mongoose.Schema({
   nextFollowUp:   { type: Date, default: null },
   followUpNote:   { type: String, default: '', maxlength: 300 },
   nudgedAt:       { type: Date, default: null },     // "still waiting for a reply" alert sent
+  nudgeFails:     { type: Number, default: 0 },      // reminder emails that failed (retried up to 3 times)
   archived:       { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

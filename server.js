@@ -36,6 +36,12 @@ if (missing.length) {
   console.error('Set these in your Render dashboard (Environment tab) or in a local .env file.\n');
   process.exit(1);
 }
+// The example value from .env.example is public, so tokens signed with it could be forged.
+if (/^replace-with-a-long-random-string/i.test(process.env.JWT_SECRET)) {
+  console.error('❌ JWT_SECRET is still the example value from .env.example. Generate a real one with:');
+  console.error('   node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
 if (process.env.JWT_SECRET.length < 32) {
   console.error('❌ JWT_SECRET must be at least 32 characters. Generate one with:');
   console.error('   node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
@@ -130,13 +136,13 @@ async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', rep
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.to = [{ email: to }];
-    sendSmtpEmail.sender = { email: 'hello@glrarealty.com', name: fromName };
+    sendSmtpEmail.sender = { email: 'hello@glrarealty.com', name: String(fromName || 'GLRA Realty').replace(/[\r\n\u2028\u2029]+/g, ' ').slice(0, 120) };
     // Replies route to Catherine's gmail instead of the no-reply hello@ address
     // so she sees every customer reply in her primary inbox.
     sendSmtpEmail.replyTo = (replyTo && replyTo.email)
       ? { email: replyTo.email, name: replyTo.name || fromName }
       : { email: 'glrarealty@gmail.com', name: 'GLRA Realty' };
-    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.subject = String(subject || '').replace(/[\r\n\u2028\u2029]+/g, ' ').slice(0, 250);
     sendSmtpEmail.htmlContent = htmlContent;
     if (headers && typeof headers === 'object') sendSmtpEmail.headers = headers;
     if (Array.isArray(attachments) && attachments.length) {
@@ -185,6 +191,19 @@ app.set('trust proxy', [
   '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32',
   '2a06:98c0::/29', '2c0f:f248::/32'
 ]);
+
+// Render's own address (glra-realty.onrender.com) served a full copy of the
+// site, which Google can index as a duplicate. Page visits there move to the
+// real domain; the health check and the API are left alone.
+app.use((req, res, next) => {
+  if ((req.method === 'GET' || req.method === 'HEAD') && /\.onrender\.com$/i.test(req.hostname || '') && !req.path.startsWith('/api/')) {
+    return res.redirect(301, 'https://glrarealty.com' + req.originalUrl);
+  }
+  next();
+});
+// Signed-in dashboards return clients', tenants' and leads' details: nothing
+// in between (a shared computer's cache, a proxy) may keep a copy.
+app.use(['/api/admin', '/api/agent', '/api/staff-bot'], (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 // Helmet — sensible default security headers.
 // CSP is configured separately below rather than here, so keep it off in the
@@ -568,6 +587,9 @@ app.use(express.static('public', {
       // someone has put on their home screen is not a good place to be
       // relying on leniency.
       res.setHeader('Content-Type', 'application/manifest+json; charset=UTF-8');
+    } else if (/[\\/]sw\.js$/i.test(path)) {
+      // The service worker itself: the browser must check for a new one.
+      res.setHeader('Cache-Control', 'no-cache');
     } else if (/\.(css|js)$/i.test(path)) {
       // These are requested with ?v=<CACHE_VERSION> now, so a changed file
       // arrives under a new URL and a cached one can never be stale. That
@@ -682,6 +704,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
+  defParamCharset: 'utf8',   // file names like "Peña.pdf" arrive intact, not "PeÃ±a.pdf"
   storage: storage,
   limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
@@ -714,6 +737,7 @@ function shrinkOnUpload(mime) {
     : {};
 }
 const uploadAttachment = multer({
+  defParamCharset: 'utf8',   // file names like "Peña.pdf" arrive intact, not "PeÃ±a.pdf"
   storage: storage,
   limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
@@ -1260,6 +1284,8 @@ function buildAreaPageHtml(area, rows, counts) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <title>Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty</title>
 <meta name="description" content="${esc(metaDesc)}">
@@ -1811,7 +1837,8 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     name: title,
     address: {
       '@type': 'PostalAddress',
-      addressLocality: loc || 'Metro Manila',
+      addressLocality: ownArea ? ownArea[1] : (String(loc || '').split(',').map(x => x.trim()).filter(Boolean).slice(-2, -1)[0] || String(loc || '').split(',')[0].trim() || 'Metro Manila'),
+      ...(loc ? { streetAddress: String(loc).slice(0, 200) } : {}),
       // Every listing used to claim Metro Manila, Boracay and Batangas included.
       ...(ownArea ? { addressRegion: METRO_AREA_SLUGS.has(ownArea[0]) ? 'Metro Manila' : ownArea[1] } : {}),
       addressCountry: 'PH'
@@ -1956,7 +1983,7 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     // A condominium unit, an apartment, an office or a commercial space inside
     // a building has no lot. Where one of those carries a land area it is the
     // floor area in the wrong box, so it is labelled plainly rather than wrongly.
-    .concat(p.landArea ? [[/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) ? 'Floor area' : 'Lot area',
+    .concat(p.landArea && !(/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) && Number(p.sqm) > 0) ? [[/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) ? 'Floor area' : 'Lot area',
                            Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
     .concat(p.parking ? [['Parking', p.parking]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
@@ -2101,6 +2128,8 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3d00">
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
 <title>${esc(seoTitle)}</title>
 <meta name="description" content="${esc(metaDesc)}">
@@ -2333,6 +2362,8 @@ h2.pg-section-label{font-weight:700}
   .pg-mact .pg-btn{justify-content:center;width:100%;min-height:48px}
 }
 .pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
+/* Two columns on a phone: an odd last tile spans the row instead of sitting alone at half width. */
+@media(max-width:640px){.pg-specs{grid-template-columns:1fr 1fr}.pg-specs>div:last-child:nth-child(odd){grid-column:1/-1}}
 .pg-brochure{display:inline-flex;align-items:center;gap:8px;margin:-10px 0 26px;padding:11px 14px;border:2px solid var(--ink,#0a0a0a);color:inherit;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .pg-brochure:hover,.pg-brochure:focus-visible{background:#ff3d00;border-color:#ff3d00;color:#fff}
 @media(min-width:1024px){.pg-brochure{display:none}}
@@ -2545,7 +2576,12 @@ async function pgSubmit(e){
     var r = await fetch('/api/inquiries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     var d = await r.json().catch(function(){ return {}; });
     if(r.ok && d.success){ result.style.color='#10b981'; result.textContent='Thank you! We received your inquiry and will respond within 24 hours.'; e.target.reset(); }
-    else { result.style.color='#ff3d00'; result.textContent=(d.error||'Something went wrong. Please call us instead.'); }
+    else {
+      // Say which box to fix instead of the server's bare 'Invalid input'.
+      var bad = d.details && d.details[0] ? (d.details[0].path || d.details[0].param) : '';
+      var why = { email: 'Please check your email address.', phone: 'Please check your phone number.', name: 'Please enter your name (200 characters at most).', message: 'Your message is too long (5,000 characters at most).' }[bad];
+      result.style.color='#ff3d00'; result.textContent=(why||d.error||'Something went wrong. Please call us instead.');
+    }
   } catch(_){ result.style.color='#ff3d00'; result.textContent='Network error. Please call or message us.'; }
   finally { btn.disabled=false; btn.textContent=orig; }
   return false;
@@ -2591,7 +2627,7 @@ function buildBrochureHtml(p) {
   if (Number(p.bedrooms) > 0) facts.push(['Bedrooms', String(p.bedrooms)]);
   if (Number(p.bathrooms) > 0) facts.push(['Bathrooms', String(p.bathrooms)]);
   if (Number(p.sqm) > 0) facts.push(['Floor area', fmtSqm(p.sqm)]);
-  if (Number(p.landArea) > 0) facts.push([noLot ? 'Floor area' : 'Lot area', fmtSqm(p.landArea)]);
+  if (Number(p.landArea) > 0 && !(noLot && Number(p.sqm) > 0)) facts.push([noLot ? 'Floor area' : 'Lot area', fmtSqm(p.landArea)]);
   if (Number(p.parking) > 0) facts.push(['Parking', String(p.parking)]);
   if (Number(saleP) > 0 && lt !== 'FOR LEASE') {
     const basis = noLot ? (Number(p.sqm) || Number(p.landArea) || 0) : (Number(p.landArea) || Number(p.sqm) || 0);
@@ -3073,7 +3109,7 @@ app.post('/api/inquiries',
       ` + getEmailFooter();
       // Reply goes straight to the buyer, not back to this inbox, and the
       // subject says who and what so the inbox list alone is enough to triage.
-      const isViewing = /^\s*\[?\s*(viewing request|schedule a viewing)/i.test(message) || /preferred (date|time)/i.test(message);
+      const isViewing = /^\s*\[?\s*(viewing request|schedule a viewing)/i.test(message) || /\bbook a viewing\b/i.test(message) || /preferred (date|time)/i.test(message);
       const subj = `${isViewing ? 'Viewing request' : 'New inquiry'}: ${listing ? listing.title : 'General'} - ${name}`.replace(/\s+/g, ' ').slice(0, 140);
       if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', subj, adminEmailHtml, 'GLRA Realty', { email, name });
 
@@ -3316,7 +3352,7 @@ app.post('/api/track/view',
 // mail account to put their own words in front of a stranger.
 async function listingForVisitorEmail(propertyId) {
   if (!/^[a-f0-9]{24}$/i.test(String(propertyId || ''))) return null;
-  const p = await Property.findById(propertyId).select('title location price monthlyRental listingType mainImage').lean().catch(() => null);
+  const p = await Property.findOne({ _id: propertyId, status: 'available' }).select('title location price monthlyRental listingType mainImage').lean().catch(() => null);
   if (!p) return null;
   const lease = isLeaseOnlyType(p.listingType);
   return { title: p.title || '', location: p.location || '', price: lease ? (Number(p.monthlyRental) || Number(p.price) || 0) : (Number(p.price) || 0),
@@ -4961,9 +4997,16 @@ app.post('/api/admin/forgot-password',
   handleValidation,
   async (req, res) => {
     const generic = { success: true, message: 'If that email has an account, a reset link is on its way. Check your inbox (and spam folder).' };
+    // Answered at once, the same way for every address, and the work done
+    // afterwards: waiting for the email only when an account existed told
+    // anyone timing the reply which addresses have accounts.
+    res.json(generic);
     try {
       const account = await Account.findOne({ email: req.body.email, isActive: true });
-      if (!account || account.status === 'pending') return res.json(generic);
+      if (!account || account.status === 'pending') return;
+      // One link per account per 5 minutes: each request used to replace the
+      // link already in the owner's inbox, so anyone could keep breaking it.
+      if (account.resetTokenExpires && account.resetTokenExpires.getTime() > Date.now() + 25 * 60 * 1000) return;
 
       const token = crypto.randomBytes(32).toString('hex');
       account.resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -4975,7 +5018,7 @@ app.post('/api/admin/forgot-password',
         await sendEmail(account.email, 'Reset your GLRA admin password',
           getEmailHeader() + `
           <h2 style="color:#0a1628;">Password Reset</h2>
-          <p>Hi ${account.name || 'there'},</p>
+          <p>Hi ${esc(account.name) || 'there'},</p>
           <p>Someone (hopefully you) asked to reset the password for <strong>${account.email}</strong> on the GLRA admin portal.</p>
           <p style="margin:24px 0"><a href="${link}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Choose a New Password</a></p>
           <p style="font-size:13px;color:#666">This link works for <strong>30 minutes</strong> and can be used once. If you didn't ask for this, you can safely ignore this email — your password stays the same.</p>
@@ -4984,10 +5027,8 @@ app.post('/api/admin/forgot-password',
 
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'PASSWORD_RESET_REQUEST', 'Account', account._id, account.email, null);
-      res.json(generic);
     } catch (e) {
       console.error('Forgot-password error:', e);
-      res.json(generic); // stay generic even on server error
     }
   }
 );
@@ -5000,7 +5041,11 @@ app.post('/api/admin/reset-password',
   async (req, res) => {
     try {
       const tokenHash = crypto.createHash('sha256').update(req.body.token).digest('hex');
-      const account = await Account.findOne({ resetTokenHash: tokenHash, resetTokenExpires: { $gt: new Date() } });
+      // Claimed and cleared in one step, so the same link sent twice at once
+      // cannot set two passwords.
+      const account = await Account.findOneAndUpdate(
+        { resetTokenHash: tokenHash, resetTokenExpires: { $gt: new Date() } },
+        { $set: { resetTokenHash: null, resetTokenExpires: null } });
       if (!account) {
         return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one from the sign-in page.' });
       }
@@ -5125,12 +5170,20 @@ app.put('/api/admin/accounts/:id',
   async (req, res) => {
     const { email, password, name, role, isActive, permissions } = req.body;
     try {
-      const before = await Account.findById(req.params.id, { password: 0 });
+      const before = await Account.findById(req.params.id, { password: 0, resetTokenHash: 0, resetTokenExpires: 0 });
       if (!before) return res.status(404).json({ error: 'Account not found' });
+      if (before.role === 'admin' && ((role && role !== 'admin') || isActive === false)) {
+        const others = await Account.countDocuments({ _id: { $ne: before._id }, role: 'admin', isActive: true, status: { $ne: 'pending' } });
+        if (!others) return res.status(400).json({ error: 'This is the only admin account. Make another admin first.' });
+      }
+      if (email && email !== before.email && await Account.exists({ email, _id: { $ne: before._id } })) {
+        return res.status(400).json({ error: 'Another account already uses that email.' });
+      }
 
       const update = {};
       if (email) update.email = email;
       if (password) { update.password = password; update.$inc = { tokenVersion: 1 }; } // hashed by pre-update hook; old sign-ins end
+      if (password || isActive === false) { update.resetTokenHash = null; update.resetTokenExpires = null; }   // an unused reset link stops working too
       if (name) update.name = name;
       if (role) update.role = role;
       if (isActive !== undefined) update.isActive = isActive;
@@ -5152,6 +5205,12 @@ app.put('/api/admin/accounts/:id',
 
 app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
+    const target = await Account.findById(req.params.id).select('role isActive').lean();
+    if (!target) return res.status(404).json({ error: 'Account not found' });
+    if (target.role === 'admin') {
+      const others = await Account.countDocuments({ _id: { $ne: target._id }, role: 'admin', isActive: true, status: { $ne: 'pending' } });
+      if (!others) return res.status(400).json({ error: 'This is the only admin account. Make another admin first.' });
+    }
     const account = await Account.findByIdAndDelete(req.params.id);
     if (!account) return res.status(404).json({ error: 'Account not found' });
     invalidateAccountState(req.params.id);   // a deleted account stops working on the very next request
@@ -5190,7 +5249,7 @@ app.post('/api/admin/accounts/:id/approve',
         await sendEmail(account.email, `Your GLRA ${isAgent ? 'Agent Workspace' : 'admin'} account has been approved`,
           getEmailHeader() + `
           <h2 style="color:#0a1628;">You're In! 🎉</h2>
-          <p>Hi ${account.name || 'there'},</p>
+          <p>Hi ${esc(account.name) || 'there'},</p>
           <p>Your account request has been <strong>approved</strong>. You can now sign in with the email and password you registered with.</p>
           ${isAgent ? `<p><a href="https://glrarealty.com/agent.html" style="display:inline-block;background:#0a0a0a;color:#ffffff;padding:12px 24px;text-decoration:none;font-weight:600">Open the Agent Workspace</a></p>` : ''}
         ` + getEmailFooter());
@@ -6222,8 +6281,9 @@ function unsubPage(title, body) {
 function unsubCheck(q) {
   const e = String((q && q.e) || '').toLowerCase().trim().slice(0, 254);
   const t = String((q && q.t) || '');
-  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && t.length === 32 &&
-    crypto.timingSafeEqual(Buffer.from(t.padEnd(32, '0').slice(0, 32)), Buffer.from(unsubToken(e)));
+  // Hex only: a non-ASCII token made the two buffers differ in length and crashed.
+  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && /^[a-f0-9]{32}$/.test(t) &&
+    crypto.timingSafeEqual(Buffer.from(t), Buffer.from(unsubToken(e)));
   return good ? e : null;
 }
 app.get('/unsubscribe', (req, res) => {
@@ -6262,8 +6322,8 @@ function confirmUrl(email) {
 function confirmCheck(q) {
   const e = String((q && q.e) || '').toLowerCase().trim().slice(0, 254);
   const t = String((q && q.t) || '');
-  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && t.length === 32 &&
-    crypto.timingSafeEqual(Buffer.from(t.padEnd(32, '0').slice(0, 32)), Buffer.from(confirmToken(e)));
+  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && /^[a-f0-9]{32}$/.test(t) &&
+    crypto.timingSafeEqual(Buffer.from(t), Buffer.from(confirmToken(e)));
   return good ? e : null;
 }
 function confirmEmailHtml(email, name) {
@@ -6530,6 +6590,14 @@ app.post('/api/admin/scheduled-emails/:id/resend',
 async function processDueScheduledEmails() {
   if (mongoose.connection.readyState !== 1) return; // wait for DB connection
   try {
+    // A campaign still 'sending' when this server started was cut off by a
+    // restart (only one server runs). It is marked failed, with a note, so it
+    // can be resent instead of showing 'sending' for ever.
+    if (!processDueScheduledEmails.sweptOnBoot) {
+      processDueScheduledEmails.sweptOnBoot = true;
+      const stuck = await ScheduledEmail.updateMany({ status: 'sending' }, { $set: { status: 'failed', sentAt: new Date(), result: { total: 0, sent: 0, failed: 0, errors: [{ error: 'Interrupted by a server restart part-way through. Some people may already have it; check before resending.' }] } } });
+      if (stuck.modifiedCount) console.warn('Scheduled email: marked ' + stuck.modifiedCount + ' interrupted campaign(s) as failed');
+    }
     while (true) {
       // Atomically claim one due pending email by flipping status to 'sending'.
       const due = await ScheduledEmail.findOneAndUpdate(
@@ -6783,8 +6851,10 @@ app.get('/api/admin/tasks-categories', verifyToken, requirePermission('tasks_vie
 // Active employees — for the assignee dropdown
 app.get('/api/admin/tasks-assignees', verifyToken, requirePermission('tasks_view'), async (req, res) => {
   try {
-    const accounts = await Account.find({ isActive: true }).select('email name role').sort({ name: 1 }).lean();
-    res.json(accounts);
+    // Active, approved staff only: pending sign-ups and agents were listed
+    // (with their emails) to every staff member.
+    const accounts = await Account.find({ isActive: true, status: { $ne: 'pending' }, role: { $in: ['admin', 'employee'] } }).select('email name role').sort({ name: 1 }).lean();
+    res.json(req.user.role === 'admin' ? accounts : accounts.map(a => ({ _id: a._id, name: a.name || a.email.split('@')[0], role: a.role })));
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -6869,6 +6939,10 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     if (update.description !== undefined) update.description = String(update.description).slice(0, 5000);
     if (update.category) update.category = String(update.category).trim().slice(0, 60);
     if (update.reference) update.reference = String(update.reference).trim().slice(0, 200);
+    // An approved task stays approved unless the boss (a task editor) changes it.
+    if (!hasEdit && existing.review === 'approved' && update.status && update.status !== 'done') {
+      return res.status(403).json({ error: 'This task was checked and approved. Ask the boss if it needs more work.' });
+    }
     // A posting task needs its proof link, which only the staff desk's Done
     // box asks for, so it cannot be finished from this board without one.
     if (!hasEdit && update.status === 'done' && existing.status !== 'done' && STAFF_PROOF_KINDS.includes(existing.kind) && !hasProofLink(existing)) {
@@ -7043,6 +7117,12 @@ app.delete('/api/admin/tasks/:id/attachments/:attId', verifyToken, requirePermis
     if (!task) return res.status(404).json({ error: 'Task not found' });
     const att = task.attachments.id(req.params.attId);
     if (!att) return res.status(404).json({ error: 'Attachment not found' });
+    // Only the person who added a file (or an admin / task editor) removes it:
+    // proof someone else attached is not theirs to delete.
+    if (req.user.role !== 'admin' && String(att.uploadedBy || '') !== String(req.user.sub)) {
+      const me = await Account.findById(req.user.sub).select('permissions').lean();
+      if (!(me && me.permissions && me.permissions.tasks_edit === true)) return res.status(403).json({ error: 'Only the person who added this file can remove it.' });
+    }
     try { await cloudinary.uploader.destroy(att.publicId, { resource_type: att.resourceType || 'image' }); } catch {}
     att.deleteOne();
     await task.save();
@@ -7098,6 +7178,7 @@ app.post('/api/property-submissions/upload-image',
    here. Nothing lands in public/uploads for longer than the round trip. */
 const ALLOWED_DOC_MIMES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
 const uploadOwnerDoc = multer({
+  defParamCharset: 'utf8',   // file names like "Peña.pdf" arrive intact, not "PeÃ±a.pdf"
   storage: storage,
   limits: { fileSize: 12 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
@@ -7230,7 +7311,7 @@ app.post('/api/property-submissions',
         documents: Array.isArray(b.documents)
           ? b.documents.slice(0, ALLOWED_DOCS).map(d => ({
               label:        String(d.label || '').slice(0, 120),
-              publicId:     String(d.publicId || '').slice(0, 300),
+              publicId:     /^glra_realty\/submission_docs\/[A-Za-z0-9_\-\/]+$/.test(String(d.publicId || '')) ? String(d.publicId).slice(0, 300) : '',
               resourceType: ['image','raw','video'].includes(d.resourceType) ? d.resourceType : 'image',
               format:       String(d.format || '').replace(/[^a-z0-9]/gi, '').slice(0, 12),
               name:         String(d.name || '').slice(0, 200),
@@ -7399,7 +7480,7 @@ app.get('/api/admin/property-submissions/:id/document/:idx',
     if (!sub) return res.status(404).json({ error: 'Submission not found' });
     const idx = parseInt(req.params.idx, 10);
     const doc = Array.isArray(sub.documents) ? sub.documents[idx] : null;
-    if (!doc || !doc.publicId) return res.status(404).json({ error: 'Document not found' });
+    if (!doc || !doc.publicId || !String(doc.publicId).startsWith('glra_realty/submission_docs/')) return res.status(404).json({ error: 'Document not found' });
 
     const url = cloudinary.utils.private_download_url(doc.publicId, doc.format, {
       resource_type: doc.resourceType || 'image',
@@ -7541,6 +7622,12 @@ app.use((err, req, res, next) => {
   if (err.message && (err.message.includes('CORS') || err.message.includes('Only JPEG'))) {
     return res.status(400).json({ error: err.message });
   }
+  // Upload problems are the sender's to fix, so say what went wrong.
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'That file is too large.' });
+    return res.status(400).json({ error: 'That upload could not be accepted (' + String(err.code || 'bad upload').toLowerCase().replace(/_/g, ' ') + ').' });
+  }
+  if (err.message && /^(File type not allowed|Upload a PDF)/.test(err.message)) return res.status(400).json({ error: err.message });
   res.status(500).json({ error: 'Server error' });
 });
 
