@@ -96,6 +96,28 @@ function initBrevo() {
 // shared inbox. Everything else leaves it off and keeps the default below.
 // attachments is optional too: [{ name, content }] where content is a Buffer
 // or a base64 string. The leasing module uses it for PDF statements/receipts.
+// Mail that a VISITOR can trigger (form confirmations and the admin copies of
+// them) is capped per destination address: 3 an hour, 8 a day. Without it one
+// script could send hundreds of GLRA emails to a stranger, or bury Catherine's
+// inbox, and use up the daily sending quota. Leads are still saved in the
+// database when a copy is skipped. A day-wide ceiling of 250 protects the quota.
+const _visitorMail = new Map();
+let _visitorMailDay = { d: '', n: 0 };
+function visitorMailOk(key, perHour = 3, perDay = 8) {
+  const now = Date.now(), k = String(key || '').toLowerCase().slice(0, 200);
+  const day = new Date(now + 8 * 3600e3).toISOString().slice(0, 10);
+  if (_visitorMailDay.d !== day) _visitorMailDay = { d: day, n: 0 };
+  const list = (_visitorMail.get(k) || []).filter(t => now - t < 864e5);
+  if (_visitorMailDay.n >= 250 || list.length >= perDay || list.filter(t => now - t < 36e5).length >= perHour) {
+    _visitorMail.set(k, list);
+    console.warn('visitor mail skipped (cap):', k.replace(/^[^@]{0,3}[^@]*/, m => m.slice(0, 3) + '***'));
+    return false;
+  }
+  list.push(now); _visitorMail.set(k, list); _visitorMailDay.n++;
+  if (_visitorMail.size > 5000) for (const [kk, v] of _visitorMail) if (!v.length || now - v[v.length - 1] > 864e5) _visitorMail.delete(kk);
+  return true;
+}
+
 async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null, attachments = null, headers = null) {
   if (!brevoApiInstance) {
     const initialized = initBrevo();
@@ -146,15 +168,23 @@ cloudinary.config({
 
 // ============ SECURITY MIDDLEWARE ============
 
-// Trust the first proxy (needed for correct req.ip behind Render/Heroku/etc.)
-app.set('trust proxy', 1);
-
-// TEMPORARY (1 Oct 2026): shows the caller its own forwarding headers so the
-// rate-limit key can be fixed. Removed in the next push.
-app.get('/api/_ipcheck', (req, res) => {
-  res.set('Cache-Control', 'no-store');
-  res.json({ ip: req.ip, ips: req.ips, xff: req.get('x-forwarded-for') || null, cf: req.get('cf-connecting-ip') || null, tci: req.get('true-client-ip') || null, xri: req.get('x-real-ip') || null, sock: req.socket.remoteAddress });
-});
+// Which proxies to believe when working out the visitor's address (req.ip).
+// A request reaches the app as: visitor -> Cloudflare -> Render's balancer
+// (10.x) -> a local sidecar (127.0.0.1), and X-Forwarded-For reads
+// "visitor, cloudflare, 10.x". Trusting just ONE hop made req.ip the 10.x
+// balancer, so every rate limit was shared by all visitors and split across
+// balancers for an attacker (checked live, 1 Oct 2026). Trusting only private
+// addresses and Cloudflare's published ranges walks back to the real visitor,
+// and a forged X-Forwarded-For typed by the visitor is still ignored.
+// Cloudflare ranges: https://www.cloudflare.com/ips/ (checked 1 Oct 2026).
+app.set('trust proxy', [
+  'loopback', 'linklocal', 'uniquelocal',
+  '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
+  '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17',
+  '162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+  '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32',
+  '2a06:98c0::/29', '2c0f:f248::/32'
+]);
 
 // Helmet — sensible default security headers.
 // CSP is configured separately below rather than here, so keep it off in the
@@ -308,8 +338,21 @@ app.use(cors({
 app.use(compression());
 
 // Body limits — sane defaults; multer handles large file uploads separately
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+// A body nested thousands of levels deep parses fine but overflows the stack
+// in the sanitiser that walks it, freezing the server. No real request nests
+// more than a few levels, so anything past 40 is refused before parsing.
+function jsonDepthGuard(req, res, buf) {
+  let depth = 0, inStr = false, esc = false;
+  for (let i = 0; i < buf.length; i++) {
+    const c = buf[i];
+    if (inStr) { if (esc) esc = false; else if (c === 92) esc = true; else if (c === 34) inStr = false; continue; }
+    if (c === 34) inStr = true;
+    else if (c === 123 || c === 91) { if (++depth > 40) { throw new Error('Request nested too deeply'); } }
+    else if (c === 125 || c === 93) depth--;
+  }
+}
+app.use(express.json({ limit: '1mb', verify: jsonDepthGuard }));
+app.use(express.urlencoded({ limit: '1mb', extended: true, depth: 8, parameterLimit: 2000 }));
 // An "email" sent as an array/object passes isEmail() on its first element but
 // changes the rate-limit key on every request. No route wants a non-string.
 app.use((req, res, next) => {
@@ -326,7 +369,7 @@ app.use((err, req, res, next) => {
   if (err && err.type === 'entity.too.large') {
     return res.status(413).json({ error: 'That request is too large. Maximum 1 MB.' });
   }
-  if (err && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+  if (err && (err.type === 'entity.parse.failed' || err.type === 'entity.verify.failed' || err instanceof SyntaxError)) {
     return res.status(400).json({ error: 'Malformed request body.' });
   }
   return next(err);
@@ -640,7 +683,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_IMAGE_MIMES.has(file.mimetype)) {
       cb(null, true);
@@ -672,7 +715,7 @@ function shrinkOnUpload(mime) {
 }
 const uploadAttachment = multer({
   storage: storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_TASK_ATTACHMENT_MIMES.has(file.mimetype)) {
       cb(null, true);
@@ -2980,7 +3023,7 @@ app.post('/api/inquiries',
       // The visitor's own message is no longer repeated back: this goes to
       // whatever address was typed in, so echoing the text let anyone use
       // GLRA's mail account to deliver their words to a stranger.
-      await sendEmail(email, 'Thank you for contacting GLRA Realty', userEmailHtml);
+      if (visitorMailOk(email)) await sendEmail(email, 'Thank you for contacting GLRA Realty', userEmailHtml);
 
       // Admin notification
       // A Philippine mobile in any common form -> a wa.me link Catherine can tap.
@@ -3003,7 +3046,7 @@ app.post('/api/inquiries',
       // subject says who and what so the inbox list alone is enough to triage.
       const isViewing = /^\s*\[?\s*(viewing request|schedule a viewing)/i.test(message) || /preferred (date|time)/i.test(message);
       const subj = `${isViewing ? 'Viewing request' : 'New inquiry'}: ${listing ? listing.title : 'General'} - ${name}`.replace(/\s+/g, ' ').slice(0, 140);
-      await sendEmail('glrarealty@gmail.com', subj, adminEmailHtml, 'GLRA Realty', { email, name });
+      if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', subj, adminEmailHtml, 'GLRA Realty', { email, name });
 
       res.json({ success: true });
     } catch (err) {
@@ -3070,7 +3113,7 @@ startCasesTick({ sendEmail: caseMail, esc });
 
 // The Staff tab: scorecards, time in/out, task kinds with checklists and
 // proof, a review step, repeating tasks. Built on the Task collection.
-const { registerStaffRoutes } = require('./server/staff');
+const { registerStaffRoutes, spawnNextTask, PROOF_KINDS: STAFF_PROOF_KINDS, hasProofLink } = require('./server/staff');
 registerStaffRoutes(app);
 // The cloud supervisor (a scheduled Claude agent) reads the desk, hands out
 // the day's tasks and emails reports, with its own key: server/staff-bot.js.
@@ -3241,7 +3284,7 @@ async function listingForVisitorEmail(propertyId) {
   if (!/^[a-f0-9]{24}$/i.test(String(propertyId || ''))) return null;
   const p = await Property.findById(propertyId).select('title location price monthlyRental listingType mainImage').lean().catch(() => null);
   if (!p) return null;
-  const lease = String(p.listingType || '').toUpperCase() === 'FOR LEASE';
+  const lease = isLeaseOnlyType(p.listingType);
   return { title: p.title || '', location: p.location || '', price: lease ? (Number(p.monthlyRental) || Number(p.price) || 0) : (Number(p.price) || 0),
     image: /^https:\/\//.test(p.mainImage || '') ? p.mainImage : '', raw: p };
 }
@@ -3300,7 +3343,7 @@ app.post('/api/wishlist',
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">You can view all your saved properties in the <a href="https://glrarealty.com/properties.html" style="color: #ff3d00;">properties page</a>.</p>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
       ` + getEmailFooter();
-      await sendEmail(email, `Saved to Wishlist: ${propertyTitle}`, userWishlistHtml);
+      if (visitorMailOk(email)) await sendEmail(email, `Saved to Wishlist: ${propertyTitle}`, userWishlistHtml);
 
       const adminWishlistHtml = getEmailHeader() + `
         <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Wishlist Item</h2>
@@ -3311,7 +3354,7 @@ app.post('/api/wishlist',
           <tr><td style="padding: 8px 0; font-weight: 600;">Price</td><td style="padding: 8px 0;">₱${Number(propertyPrice).toLocaleString()}</td></tr>
         </table>
       ` + getEmailFooter();
-      await sendEmail('glrarealty@gmail.com', `Wishlist Alert: ${propertyTitle}`, adminWishlistHtml);
+      if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Wishlist Alert: ${propertyTitle}`, adminWishlistHtml);
 
       res.json({ success: true, message: 'Property saved to wishlist!' });
     } catch (err) {
@@ -3404,7 +3447,7 @@ app.post('/api/price-alert',
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">You will receive an email notification immediately if the price drops.</p>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
       ` + getEmailFooter();
-      await sendEmail(email, `Price Alert Set: ${propertyTitle}`, userAlertHtml);
+      if (visitorMailOk(email)) await sendEmail(email, `Price Alert Set: ${propertyTitle}`, userAlertHtml);
 
       const adminAlertHtml = getEmailHeader() + `
         <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Price Alert Request</h2>
@@ -3414,7 +3457,7 @@ app.post('/api/price-alert',
           <tr><td style="padding: 8px 0; font-weight: 600;">Current Price</td><td style="padding: 8px 0;">₱${Number(propertyPrice).toLocaleString()}</td></tr>
         </table>
       ` + getEmailFooter();
-      await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
+      if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
 
       res.json({ success: true, message: 'You will be notified when price drops!' });
     } catch (err) {
@@ -3757,7 +3800,11 @@ async function runSavedSearchSweep() {
       SavedSearch.find({ confirmed: true, active: true }).lean()
     ]);
     stats.searches = searches.length;
+    // Someone who used a newsletter unsubscribe link gets no listing emails of
+    // any kind, including Property Finder alerts.
+    const off = new Set((await Subscriber.find({ email: { $in: searches.map(x => x.email) }, isActive: false }).select('email').lean()).map(x => String(x.email).toLowerCase()));
     for (const s of searches) {
+      if (off.has(String(s.email).toLowerCase())) continue;
       try {
         const sent = new Set(s.sentPropertyIds || []);
         const fresh = listings.filter(p => !sent.has(String(p._id)) && savedSearchMatches(p, s.criteria));
@@ -4536,7 +4583,7 @@ app.post('/api/saved-search',
         }
         await SavedSearch.updateOne({ _id: same._id }, { $set: { confirmSentAt: new Date() } });
         const { subject, html } = buildSavedSearchConfirmEmail(same, currentMatches);
-        const r = await sendEmail(email, subject, html);
+        const r = visitorMailOk(email) ? await sendEmail(email, subject, html) : null;
         const ok = !!(r && r.success);
         return res.json({
           success: true, resent: true, emailSent: ok, currentMatches,
@@ -4574,7 +4621,7 @@ app.post('/api/saved-search',
       });
 
       const { subject, html } = buildSavedSearchConfirmEmail(search, currentMatches);
-      const r = await sendEmail(email, subject, html);
+      const r = visitorMailOk(email) ? await sendEmail(email, subject, html) : null;
       const ok = !!(r && r.success);
       res.json({
         success: true, emailSent: ok, currentMatches,
@@ -4648,7 +4695,7 @@ app.post('/api/saved-search/:token/confirm', publicWriteLimiter, async (req, res
         <p style="margin: 20px 0;"><a href="${esc(savedSearchBrowseUrl(c))}" style="${SS_BTN}">See the current matches</a></p>
         <p style="${SS_P}">They will be emailed automatically when a new listing matches. A quick personal note from you now is usually the best follow-up.</p>
       ` + getEmailFooter();
-      sendEmail('glrarealty@gmail.com', `Property Finder lead: ${oneLine(search.summary, 110)}`, leadHtml)
+      (visitorMailOk('admin:' + email, 6, 15) ? sendEmail('glrarealty@gmail.com', `Property Finder lead: ${oneLine(search.summary, 110)}`, leadHtml) : Promise.resolve())
         .catch(e => console.error('Saved search lead email failed:', e.message));
     }
 
@@ -4697,15 +4744,26 @@ app.post('/api/saved-search/:token/unsubscribe', publicWriteLimiter, async (req,
 
 // ============ ADMIN LOGIN ============
 
-// The per-address limit above does nothing against guesses spread over many
-// addresses, so each ACCOUNT also gets 8 wrong passwords per 15 minutes,
-// whoever is typing. Successful sign-ins are not counted.
+// Wrong passwords are limited per account AND visitor: 8 per 15 minutes from
+// one address. Keying on the account alone let anyone lock the owner out by
+// typing 8 wrong passwords. A looser account-wide ceiling (60 an hour, from
+// everywhere) still stops guessing spread over many addresses. Successful
+// sign-ins are not counted.
 const accountLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 8,
   skipSuccessfulRequests: true,
-  keyGenerator: req => 'login:' + String((req.body && req.body.email) || '').toLowerCase(),
+  keyGenerator: req => 'login:' + String((req.body && req.body.email) || '').toLowerCase() + '|' + req.ip,
   message: { error: 'Too many wrong passwords for this account. Try again in 15 minutes, or use "Forgot password".' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const accountLoginCeiling = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 60,
+  skipSuccessfulRequests: true,
+  keyGenerator: req => 'loginall:' + String((req.body && req.body.email) || '').toLowerCase(),
+  message: { error: 'Too many wrong passwords for this account. Try again later, or use "Forgot password".' },
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -4719,6 +4777,7 @@ app.post('/api/admin/login',
   body('password').isString().isLength({ min: 1, max: 200 }),
   handleValidation,
   accountLoginLimiter,
+  accountLoginCeiling,
   async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -5484,6 +5543,9 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
   }
 });
 
+// A listing that is only for rent (not "FOR SALE / LEASE"): its price is the monthly rent.
+function isLeaseOnlyType(t) { return /LEASE|RENT/i.test(t || '') && !/SALE/i.test(t || ''); }
+
 app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_edit'), async (req, res) => {
   try {
     const oldProperty = await Property.findById(req.params.id);
@@ -5500,14 +5562,26 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
       updatedData.price = n;
     }
     let dropAlerts = null;
-    if (updatedData.price !== undefined && updatedData.price > 0 && updatedData.price < oldProperty.price) {
-      updatedData.previousPrice = oldProperty.price;
-      updatedData.priceUpdatedAt = new Date();
-      console.log(`💰 Price drop: ${oldProperty.title}: ₱${oldProperty.price.toLocaleString()} → ₱${updatedData.price.toLocaleString()}`);
+    // A rental's price lives in monthlyRental (price is usually blank), so a
+    // price alert on a FOR LEASE listing watches the rent. Watching the sale
+    // price meant a rent drop never alerted anyone.
+    if (updatedData.monthlyRental !== undefined) {
+      const r = Number(updatedData.monthlyRental);
+      if (!Number.isFinite(r) || r < 0) return res.status(400).json({ error: 'The monthly rent must be a number (no letters or peso signs).' });
+      updatedData.monthlyRental = r;
+    }
+    const leaseOnly = isLeaseOnlyType(updatedData.listingType !== undefined ? updatedData.listingType : oldProperty.listingType);
+    const watchField = leaseOnly ? 'monthlyRental' : 'price';
+    const oldWatch = Number(oldProperty[watchField]) || 0;
+    const newWatch = updatedData[watchField];
+    if (newWatch !== undefined && newWatch > 0 && newWatch < oldWatch) {
+      if (!leaseOnly) updatedData.previousPrice = oldWatch;
+      newWatchUpdatedAt = new Date();
+      console.log(`💰 Price drop: ${oldProperty.title}: ₱${oldWatch.toLocaleString()} → ₱${newWatch.toLocaleString()}`);
 
       // Everyone watching at a price above the new one: a watcher alerted at an
       // earlier drop is alerted again at the next one, instead of never.
-      let alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: updatedData.price } });
+      let alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: newWatch } });
       // Anyone who used the unsubscribe link gets no listing emails at all.
       if (alerts.length) {
         const off = new Set((await Subscriber.find({ email: { $in: alerts.map(a => a.email) }, isActive: false }).select('email').lean()).map(s => String(s.email).toLowerCase()));
@@ -5522,19 +5596,22 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
             <div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
               <p style="margin: 0 0 8px 0; font-weight: 600; color: #0a0a0a;">${esc(oldProperty.title)}</p>
               <p style="margin: 0 0 5px 0; color: #0a0a0a; font-size: 13px;">📍 ${esc(oldProperty.location)}</p>
-              <p style="margin: 0 0 5px 0; color: #6a6a6a; font-size: 14px; text-decoration: line-through;">Previous Price: ₱${oldProperty.price.toLocaleString()}</p>
-              <p style="margin: 0; color: #10b981; font-weight: 700; font-size: 18px;">New Price: ₱${Number(updatedData.price).toLocaleString()}</p>
-              <p style="margin: 10px 0 0 0; color: #0a0a0a; font-size: 13px;">Savings: ₱${(oldProperty.price - Number(updatedData.price)).toLocaleString()}</p>
+              <p style="margin: 0 0 5px 0; color: #6a6a6a; font-size: 14px; text-decoration: line-through;">Previous ${leaseOnly ? 'Rent' : 'Price'}: ₱${oldWatch.toLocaleString()}${leaseOnly ? ' a month' : ''}</p>
+              <p style="margin: 0; color: #10b981; font-weight: 700; font-size: 18px;">New ${leaseOnly ? 'Rent' : 'Price'}: ₱${newWatch.toLocaleString()}${leaseOnly ? ' a month' : ''}</p>
+              <p style="margin: 10px 0 0 0; color: #0a0a0a; font-size: 13px;">Savings: ₱${(oldWatch - newWatch).toLocaleString()}</p>
             </div>
             <p><a href="https://glrarealty.com/properties.html?property=${encodeURIComponent(req.params.id)}" style="background-color: #ff3d00; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius:0; display: inline-block;">View Property Details</a></p>
             <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
           ` + getEmailFooter();
-          const sent = await sendEmail(alert.email, `Price Drop Alert: ${oldProperty.title}`, priceDropHtml);
+          const sent = await sendEmail(alert.email, `${leaseOnly ? 'Rent' : 'Price'} Drop Alert: ${oldProperty.title}`, withUnsubFooter(priceDropHtml, alert.email), 'GLRA Realty', null, null, {
+            'List-Unsubscribe': `<${unsubUrl(alert.email)}>, <mailto:glrarealty@gmail.com?subject=Unsubscribe>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+          });
           if (!sent || !sent.success) continue;
 
           alert.isNotified = true;
           alert.notifiedAt = new Date();
-          alert.propertyPrice = Number(updatedData.price);
+          alert.propertyPrice = newWatch;
           await alert.save();
         }
 
@@ -5542,8 +5619,8 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
           type: 'price_drop',
           propertyId: req.params.id,
           propertyTitle: oldProperty.title,
-          oldPrice: oldProperty.price,
-          newPrice: updatedData.price,
+          oldPrice: oldWatch,
+          newPrice: newWatch,
           sentTo: alerts.length
         });
       };
@@ -5868,7 +5945,8 @@ app.post('/api/admin/cash', verifyToken, requirePermission('notarial_manage'), a
 app.put('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
-    const doc = await CashEntry.findByIdAndUpdate(req.params.id, data, { new: true });
+    delete data.business;
+    const doc = await CashEntry.findOneAndUpdate({ _id: req.params.id, business: 'notarial' }, data, { new: true });
     if (!doc) return res.status(404).json({ error: 'Not found' });
     await logAudit(req, 'UPDATE', 'CashEntry', String(doc._id), doc.kind, null);
     res.json(doc);
@@ -5876,7 +5954,7 @@ app.put('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage')
 });
 app.delete('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
   try {
-    const doc = await CashEntry.findById(req.params.id);
+    const doc = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     if (doc) {
       for (const p of (doc.proof || [])) {
         try { await cloudinary.uploader.destroy(p.publicId, { resource_type: p.resourceType || 'image' }); } catch {}
@@ -5891,7 +5969,7 @@ app.delete('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manag
 app.post('/api/admin/cash/:id/proof', verifyToken, requirePermission('notarial_manage'), uploadAttachment.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
-    const entry = await CashEntry.findById(req.params.id);
+    const entry = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     if (!entry) {
       if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
       return res.status(404).json({ error: 'Not found' });
@@ -5914,7 +5992,7 @@ app.post('/api/admin/cash/:id/proof', verifyToken, requirePermission('notarial_m
 });
 app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
   try {
-    const entry = await CashEntry.findById(req.params.id);
+    const entry = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     if (!entry) return res.status(404).json({ error: 'Not found' });
     const p = entry.proof.id(req.params.proofId);
     if (!p) return res.status(404).json({ error: 'Proof not found' });
@@ -6008,6 +6086,13 @@ app.delete('/api/admin/titling-cash/:id/proof/:proofId', verifyToken, requirePer
 
 app.delete('/api/admin/subscribers/:id', verifyToken, requirePermission('subscribers_delete'), async (req, res) => {
   try {
+    // An unsubscribed row is the only record that this person asked not to be
+    // emailed. Deleting it would let a later import or form sign them up
+    // again, so it stays (it is not on any mailing list).
+    const cur = await Subscriber.findById(req.params.id).select('isActive email').lean();
+    if (cur && cur.isActive === false) {
+      return res.status(409).json({ error: 'This person unsubscribed. Their address is kept so they are never emailed again.' });
+    }
     const sub = await Subscriber.findByIdAndDelete(req.params.id);
     if (sub) await logAudit(req, 'DELETE', 'Subscriber', req.params.id, sub.email, null);
     res.json({ success: true });
@@ -6465,11 +6550,12 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
   try {
     const properties = req.body;
     if (!Array.isArray(properties)) return res.status(400).json({ error: 'Expected an array' });
+    if (properties.length > 500) return res.status(400).json({ error: 'Import at most 500 listings at a time.' });
     let added = 0;
     for (const prop of properties) {
       const existing = await Property.findOne({ title: prop.title, location: prop.location });
       if (!existing) {
-        const clean = { ...(prop && typeof prop === 'object' ? prop : {}) };
+        const clean = stripPrivilegedPropertyFields(prop, req);
         delete clean.geo; delete clean.nearby; delete clean.hazard; // written only by the location worker
         await new Property(clean).save();
         added++;
@@ -6749,14 +6835,24 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     if (update.description !== undefined) update.description = String(update.description).slice(0, 5000);
     if (update.category) update.category = String(update.category).trim().slice(0, 60);
     if (update.reference) update.reference = String(update.reference).trim().slice(0, 200);
+    // A posting task needs its proof link, which only the staff desk's Done
+    // box asks for, so it cannot be finished from this board without one.
+    if (!hasEdit && update.status === 'done' && existing.status !== 'done' && STAFF_PROOF_KINDS.includes(existing.kind) && !hasProofLink(existing)) {
+      return res.status(400).json({ error: 'Finish this one on My desk so you can paste the link that proves it.' });
+    }
     // Auto-manage completedAt
     if (update.status === 'done' && existing.status !== 'done') update.completedAt = new Date();
     // A Staff-tab task finished from this board still goes to the boss to be
     // checked, exactly as if it had been marked done on the staff desk.
     if (!hasEdit && existing.kind && update.status === 'done' && existing.status !== 'done') update.review = 'submitted';
-    else if (update.status && update.status !== 'done' && existing.status === 'done') update.completedAt = null;
+    else if (update.status && update.status !== 'done' && existing.status === 'done') {
+      update.completedAt = null;
+      if (existing.review === 'submitted') update.review = '';   // no longer waiting to be checked
+    }
 
     const task = await Task.findByIdAndUpdate(req.params.id, update, { new: true });
+    // A repeating task finished here makes its next copy, as on the staff desk.
+    if (task && task.status === 'done' && existing.status !== 'done') await spawnNextTask(task).catch(e => console.error('spawn next task:', e.message));
     await logAudit(req, 'UPDATE', 'Task', task._id, task.title, update);
     res.json(task);
   } catch (err) {
@@ -6923,14 +7019,32 @@ app.delete('/api/admin/tasks/:id/attachments/:attId', verifyToken, requirePermis
 // ============ PROPERTY SUBMISSIONS (public listing form) ============
 // Public: image upload (rate-limited, no auth). Goes to a separate Cloudinary
 // folder so we can sweep orphans later without touching live property images.
+// What the file really is, from its first bytes. The type a browser declares
+// is whatever the sender says, so the public upload routes check the content.
+function sniffFileKind(p) {
+  let b;
+  try { const fd = fs.openSync(p, 'r'); b = Buffer.alloc(12); fs.readSync(fd, b, 0, 12, 0); fs.closeSync(fd); } catch { return ''; }
+  if (b.slice(0, 4).toString('latin1') === '%PDF') return 'pdf';
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpeg';
+  if (b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
+  if (b.slice(0, 4).toString('latin1') === 'RIFF' && b.slice(8, 12).toString('latin1') === 'WEBP') return 'webp';
+  if (/^GIF8[79]a/.test(b.slice(0, 6).toString('latin1'))) return 'gif';
+  return '';
+}
+
 app.post('/api/property-submissions/upload-image',
   submissionUploadLimiter,
   upload.single('image'),
   async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+      if (!['jpeg', 'png', 'webp', 'gif'].includes(sniffFileKind(req.file.path))) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        return res.status(400).json({ error: 'That file is not a JPEG, PNG, WEBP or GIF photo.' });
+      }
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'glra_realty/submissions',
+        resource_type: 'image',
         transformation: [{ width: 1600, height: 1200, crop: 'limit' }, { quality: 'auto' }]
       });
       if (fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch {}
@@ -6951,7 +7065,7 @@ app.post('/api/property-submissions/upload-image',
 const ALLOWED_DOC_MIMES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
 const uploadOwnerDoc = multer({
   storage: storage,
-  limits: { fileSize: 12 * 1024 * 1024 },
+  limits: { fileSize: 12 * 1024 * 1024, files: 1, fields: 10, fieldSize: 8 * 1024, parts: 12 },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_DOC_MIMES.has(file.mimetype)) cb(null, true);
     else cb(new Error('Upload a PDF or a photo (JPG, PNG, WEBP) of the document.'));
@@ -6965,13 +7079,18 @@ app.post('/api/property-submissions/upload-document',
     const tmp = req.file && req.file.path;
     try {
       if (!req.file) return res.status(400).json({ error: 'No document provided' });
+      const kind = sniffFileKind(tmp);
+      if (!['pdf', 'jpeg', 'png', 'webp'].includes(kind)) {
+        try { fs.unlinkSync(tmp); } catch {}
+        return res.status(400).json({ error: 'Upload a PDF or a photo (JPG, PNG, WEBP) of the document.' });
+      }
       // `authenticated` is the whole point: unlike the property photos,
       // the resulting URL cannot be opened by anyone who happens to have
       // it. Every view is a signed, expiring link minted for an admin.
       const result = await cloudinary.uploader.upload(tmp, {
         folder: 'glra_realty/submission_docs',
-        resource_type: 'auto',
-        ...shrinkOnUpload(req.file && req.file.mimetype),
+        resource_type: kind === 'pdf' ? 'raw' : 'image',
+        ...(kind === 'pdf' ? {} : shrinkOnUpload('image/' + kind)),
         type: 'authenticated'
       });
       if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {}
@@ -6990,8 +7109,14 @@ app.post('/api/property-submissions/upload-document',
   }
 );
 
+// Only photos this site's own upload route produced: GLRA's Cloudinary account
+// and the submissions folder. Any other Cloudinary URL would otherwise be
+// copied into the live listing on import.
 function isSubmittedPhotoUrl(u) {
-  return typeof u === 'string' && u.length <= 500 &&
+  const cloud = String(process.env.CLOUDINARY_CLOUD_NAME || '').replace(/[^A-Za-z0-9_-]/g, '');
+  return typeof u === 'string' && u.length <= 500 && !!cloud &&
+    u.startsWith('https://res.cloudinary.com/' + cloud + '/image/upload/') &&
+    u.includes('/glra_realty/submissions/') &&
     /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/upload\/[^\s"'<>`\\]+$/.test(u);
 }
 
@@ -7108,27 +7233,28 @@ app.post('/api/property-submissions',
 
       // Confirmation email to the submitter
       try {
-        const safeName = (b.submitterName || '').replace(/[<>]/g, '');
-        const safeTitle = (b.title || '').replace(/[<>]/g, '');
+        // The typed name and title are NOT echoed: this goes to whatever
+        // address was typed, so echoing text let anyone send their words
+        // to a stranger from GLRA's account (same rule as the enquiry mail).
         const userHtml = getEmailHeader() + `
-          <p style="margin:0 0 14px">Hi ${safeName},</p>
-          <p style="margin:0 0 14px">Thank you for submitting <strong style="color:#ff3d00">${safeTitle}</strong> to GLRA Realty. Our team will review your listing within 1–2 business days and reach out to you at this email.</p>
+          <p style="margin:0 0 14px">Hi ${esc(greetName(b.submitterName)) || 'there'},</p>
+          <p style="margin:0 0 14px">Thank you for submitting your property to GLRA Realty. Our team will review your listing within 1–2 business days and reach out to you at this email.</p>
           <p style="margin:0 0 14px">If you have additional details or photos, simply reply to this email.</p>
         ` + getEmailFooter();
-        await sendEmail(b.submitterEmail, 'We received your property listing — GLRA Realty', userHtml);
+        if (visitorMailOk(b.submitterEmail)) await sendEmail(b.submitterEmail, 'We received your property listing — GLRA Realty', userHtml);
       } catch (e) { console.error('Submitter confirmation email error:', e.message); }
 
       // Notification email to admin
       try {
-        const safeName = (b.submitterName || '').replace(/[<>]/g, '');
-        const safeTitle = (b.title || '').replace(/[<>]/g, '');
-        const safeLoc = (b.location || '').replace(/[<>]/g, '');
-        const safeEmail = (b.submitterEmail || '').replace(/[<>]/g, '');
-        const safePhone = (b.submitterPhone || '').replace(/[<>]/g, '');
+        const safeName = esc(b.submitterName || '');
+        const safeTitle = esc(b.title || '');
+        const safeLoc = esc(b.location || '');
+        const safeEmail = esc(b.submitterEmail || '');
+        const safePhone = esc(b.submitterPhone || '');
         const adminHtml = getEmailHeader() + `
           <h2 style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;text-transform:uppercase;color:#0a0a0a;margin:0 0 12px;padding-bottom:10px;border-bottom:2px solid #ff3d00">New Property Submission</h2>
           <p style="margin:0 0 8px;font-size:16px"><strong>${safeTitle}</strong> · ${safeLoc}</p>
-          <p style="margin:0 0 8px">Listing type: <strong>${(b.listingType||'').replace(/[<>]/g,'')}</strong> · Property type: ${(b.propertyType||'').replace(/[<>]/g,'')}</p>
+          <p style="margin:0 0 8px">Listing type: <strong>${esc(b.listingType || '')}</strong> · Property type: ${esc(b.propertyType || '')}</p>
           <p style="margin:0 0 14px">Price: ₱${(parseFloat(b.price)||0).toLocaleString()} · Rental: ₱${(parseFloat(b.monthlyRental)||0).toLocaleString()}/mo</p>
           <div style="border-top:1px solid #0a0a0a;padding-top:14px;margin-top:14px">
             <p style="margin:0 0 6px">Submitted by: <strong>${safeName}</strong></p>
@@ -7162,7 +7288,7 @@ app.post('/api/property-submissions',
           </div>` : '' }
           <p style="margin:18px 0 0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#6a6a6a">Open the admin dashboard → Submissions tab to review and import.</p>
         ` + getEmailFooter();
-        await sendEmail('glrarealty@gmail.com', `New Listing Submission: ${safeTitle}`, adminHtml);
+        if (visitorMailOk('admin:' + b.submitterEmail, 6, 15)) await sendEmail('glrarealty@gmail.com', `New Listing Submission: ${safeTitle}`, adminHtml);
       } catch (e) { console.error('Admin notification email error:', e.message); }
 
       ingestLead({ kind: 'submission', refId: sub._id, name: b.submitterName, email: b.submitterEmail, phone: b.submitterPhone,

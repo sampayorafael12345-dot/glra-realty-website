@@ -129,7 +129,12 @@ function schedule(lease) {
     rows.push({ i, month: `${y}-${pad2(m)}`, start: pStart, end: pEnd, due, amount,
       label: `${MONTHS[m - 1]} ${y}` });
   }
-  return rows;
+  // No rent for months that begin after the lease ended: an end date set
+  // earlier than the term, or a tenant who moved out early (stage Ended).
+  // Without this, those months showed as due and then overdue on statements.
+  const moveOut = lease.stage === 'ended' ? dk(lease.moveOutDate) : '';
+  const stop = [end, moveOut].filter(Boolean).sort()[0];
+  return stop ? rows.filter(r => r.i === 0 || r.start <= stop) : rows;
 }
 
 // FIFO allocation. Every peso that is not a deposit is poured into the oldest
@@ -545,6 +550,8 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
     try { res.json(publicSettings(await getSettings())); }
     catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
+// Where alerts are sent can only be changed by an admin: otherwise any staff
+// member with this tab could quietly send every alert to an outside address.
   app.put('/api/admin/leasing/settings', ...manage, async (req, res) => {
     try {
       const b = req.body || {}, patch = {};
@@ -553,7 +560,7 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       int('reminderDays', 0, 30); bool('overdueNotice'); bool('digestEnabled'); int('digestHour', 5, 20);
       int('defaultDueDay', 1, 31); int('defaultGraceDays', 0, 60); int('defaultDepositMonths', 0, 24); int('defaultAdvanceMonths', 0, 24);
       if (Array.isArray(b.expiryDays)) patch.expiryDays = [...new Set(b.expiryDays.map(x => parseInt(x, 10)).filter(n => n > 0 && n <= 365))].sort((x, y) => y - x).slice(0, 6);
-      if (b.notifyEmail !== undefined) { const e = String(b.notifyEmail || '').trim().toLowerCase(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) patch.notifyEmail = e; }
+      if (b.notifyEmail !== undefined && req.user && req.user.role === 'admin') { const e = String(b.notifyEmail || '').trim().toLowerCase(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) patch.notifyEmail = e; }
       if (b.paymentInstructions !== undefined) patch.paymentInstructions = String(b.paymentInstructions || '').slice(0, 1500);
       const next = await saveSettings(patch);
       await logAudit(req, 'UPDATE', 'LeasingSettings', 'leasing', 'Leasing settings', patch);

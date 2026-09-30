@@ -231,24 +231,35 @@ async function ingestLead(o) {
     if (src.attrib && !lead.firstTouch) lead.firstTouch = { ...src.attrib, at };
     if (!lead.firstInboundAt || at < lead.firstInboundAt) lead.firstInboundAt = at;
     if (!lead.lastInboundAt || at > lead.lastInboundAt) lead.lastInboundAt = at;
-    if (REPLY_KINDS.includes(kind) && (!lead.lastAskAt || at > lead.lastAskAt)) lead.lastAskAt = at;
+    if (REPLY_KINDS.includes(kind) && (!lead.lastAskAt || at > lead.lastAskAt)) {
+      lead.lastAskAt = at;
+      // A new question after the last reply is waiting again, so the
+      // "still waiting for a reply" alert may fire for it (it only picks
+      // leads whose nudgedAt is empty).
+      if (!o.backfill && (!lead.lastContactAt || at > lead.lastContactAt)) lead.nudgedAt = null;
+    }
     // An old enquiry marked handled was answered outside the dashboard; one
     // imported from more than 30 days ago most likely was too.
     if (o.backfill && REPLY_KINDS.includes(kind)) {
       const answered = o.handled ? (o.handledAt ? new Date(o.handledAt) : at) : (Date.now() - at.getTime() > 30 * 864e5 ? at : null);
       if (answered && (!lead.lastContactAt || answered > lead.lastContactAt)) lead.lastContactAt = answered;
     }
-    if (o.consent && !lead.consent.marketing) lead.consent = { marketing: true, at, how: cleanText(o.consent, 200) };
+    // A recorded withdrawal stands until a person on the team changes it on
+    // the lead itself: a re-imported list or a manual add must not undo it.
+    if (o.consent && !lead.consent.marketing && !/^Withdrawn/i.test(lead.consent.how || '')) lead.consent = { marketing: true, at, how: cleanText(o.consent, 200) };
     if (o.handled && lead.stage === 'new') { lead.stage = 'contacted'; lead.stageHistory.push({ stage: 'contacted', at, by: 'imported' }); }
     if (o.owner && !lead.ownerId) { lead.ownerId = String(o.owner.id || ''); lead.ownerName = cleanText(o.owner.name, 120); }
     // Someone we had closed out has come back to us: that is a new lead again.
-    if (!o.backfill && ['lost', 'nurture'].includes(lead.stage)) {
+    // An import or a manual add is the team's own doing, not the person coming
+    // back, so it leaves a closed or archived lead where staff put it.
+    const cameBack = !o.backfill && !['import', 'manual'].includes(kind);
+    if (cameBack && ['lost', 'nurture'].includes(lead.stage)) {
       lead.stage = 'new';
       lead.stageHistory.push({ stage: 'new', at, by: 'came back' });
       lead.activities.push({ type: 'system', text: `Came back: ${src.label}${src.propertyTitle ? ' about ' + src.propertyTitle : ''}`, at, byName: 'Website' });
       lead.nudgedAt = null;
     }
-    if (!o.backfill && lead.archived) lead.archived = false;
+    if (cameBack && lead.archived) lead.archived = false;
     await rescore(lead);
     lead.updatedAt = new Date();
     await lead.save();
@@ -672,6 +683,8 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       if (!lead) return res.status(404).json({ error: 'Lead not found' });
       const to = lead.emails[0];
       if (!to) return res.status(400).json({ error: 'This lead has no email address.' });
+      if (lead.consent && lead.consent.marketing === false && /^Withdrawn/i.test(lead.consent.how || '')) return res.status(400).json({ error: 'This person withdrew their consent to receive listings.' });
+      if (await Subscriber.exists({ email: to, isActive: false })) return res.status(400).json({ error: 'This person used an unsubscribe link, so GLRA does not email them listings.' });
       // Replying about homes to someone who asked us for homes is answering
       // their request. Anyone else needs a recorded marketing consent first.
       const asked = (lead.sources || []).some(s => ['inquiry', 'viewing', 'saved_search', 'price_alert', 'wishlist'].includes(s.kind));
@@ -765,12 +778,14 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       res.json({ settings: s, staff: staff.map(a => ({ _id: String(a._id), name: a.name || a.email, role: a.role })) });
     } catch (e) { res.status(500).json({ error: 'Could not load settings' }); }
   });
+// Where alerts are sent can only be changed by an admin: otherwise any staff
+// member with this tab could quietly send every alert to an outside address.
   app.put('/api/admin/leads-settings', ...manage, async (req, res) => {
     try {
       const b = req.body || {}, cur = await getLeadSettings();
       const t = b.templates && typeof b.templates === 'object' ? b.templates : {};
       const next = {
-        notifyEmail: normEmail(b.notifyEmail) || cur.notifyEmail,
+        notifyEmail: (req.user && req.user.role === 'admin' && normEmail(b.notifyEmail)) || cur.notifyEmail,
         slaMinutes: Math.max(5, Math.min(1440, Number(b.slaMinutes) || cur.slaMinutes)),
         digestHour: Math.max(5, Math.min(12, Number(b.digestHour) || cur.digestHour)),
         quietStart: cur.quietStart, quietEnd: cur.quietEnd,

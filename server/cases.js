@@ -53,6 +53,10 @@ const STAGE_META = {
 };
 const CASE_FLOW = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment', 'closed'];
 const OPEN_STAGES = ['intake', 'pre_filing', 'filed', 'pre_trial', 'trial', 'decision', 'post_judgment'];
+// A matter put On hold is dormant, not finished: its prescriptive period and
+// court deadlines keep running. It stays in the alerts, the diary, the
+// calendar and the phone feed (client hearing emails stay off while on hold).
+const WATCH_STAGES = [...OPEN_STAGES, 'on_hold'];
 
 // ── REFERENCE DATA ───────────────────────────────────────────
 // Shipped to the browser so the dropdowns are the same everywhere and a typo
@@ -658,7 +662,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       const today = manilaToday();
       const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 60));
       const until = addDays(today, days);
-      const docs = await Case.find({ stage: { $in: OPEN_STAGES } }).lean();
+      const docs = await Case.find({ stage: { $in: WATCH_STAGES } }).lean();
       const items = [];
       docs.forEach(c => {
         const comp = computeCase(c, today);
@@ -691,7 +695,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       const today = manilaToday();
       const days = Math.min(180, Math.max(1, parseInt(req.query.days, 10) || 30));
       const settings = await getSettings();
-      const docs = await Case.find({ stage: { $in: OPEN_STAGES } }).lean();
+      const docs = await Case.find({ stage: { $in: WATCH_STAGES } }).lean();
       const rows = [];
       docs.forEach(c => {
         const comp = computeCase(c, today);
@@ -743,6 +747,8 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
     const { calToken, ...safe } = s;
     res.json({ ...safe, calendarLinked: !!calToken });
   });
+// Where alerts are sent can only be changed by an admin: otherwise any staff
+// member with this tab could quietly send every alert to an outside address.
   app.put('/api/admin/cases/settings', ...manage, async (req, res) => {
     try {
       const cur = await getSettings();
@@ -754,7 +760,9 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
         idleAlertDays: Math.min(365, Math.max(0, parseInt(b.idleAlertDays, 10) || 0)),
         digestEnabled: !!b.digestEnabled,
         digestHour: Math.min(23, Math.max(0, parseInt(b.digestHour, 10) || 0)),
-        notifyEmail: str(b.notifyEmail, 160) || FIRM_INBOX,
+        notifyEmail: (req.user && req.user.role === 'admin')
+          ? (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str(b.notifyEmail, 160)) ? str(b.notifyEmail, 160).toLowerCase() : (cur.notifyEmail || FIRM_INBOX))
+          : (cur.notifyEmail || FIRM_INBOX),
         firmName: str(b.firmName, 200),
         firmAddress: str(b.firmAddress, 400),
         firmContact: str(b.firmContact, 300),
@@ -786,7 +794,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       const settings = await getSettings();
       if (!settings.calToken || settings.calToken !== token) return res.status(404).send('Not found');
       const today = manilaToday();
-      const docs = await Case.find({ stage: { $in: OPEN_STAGES } }).lean();
+      const docs = await Case.find({ stage: { $in: WATCH_STAGES } }).lean();
       const evs = [];
       docs.forEach(c => {
         const comp = computeCase(c, today);
@@ -1015,7 +1023,13 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
   });
 
   // Turn every attended-but-unbilled hearing into an appearance-fee charge.
+  // One billing run per case at a time: a double tap, a retry after a slow
+  // answer or two staff pressing together used to charge the client twice.
+  const billingNow = new Set();
   app.post('/api/admin/cases/:id/bill-appearances', ...manage, async (req, res) => {
+    const lockId = String(req.params.id);
+    if (billingNow.has(lockId)) return res.status(409).json({ error: 'Already billing this case. Refresh in a moment.' });
+    billingNow.add(lockId);
     try {
       const doc = await findCase(req, res); if (!doc) return;
       const fee = num(doc.appearanceFee);
@@ -1035,6 +1049,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       await logAudit(req, 'UPDATE', 'Case', String(doc._id), `${caseLabel(doc)} \u00b7 billed ${n} appearances`, null);
       res.json(withComputed(doc.toObject()));
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
+    finally { billingNow.delete(lockId); }
   });
 
   // ── payments (receipt-numbered) ──
@@ -1281,24 +1296,32 @@ function startCasesTick({ sendEmail, esc }) {
       const settings = await getSettings();
       const today = manilaToday();
       const hour = manilaHour();
-      const docs = await Case.find({ stage: { $in: OPEN_STAGES } });
+      const docs = await Case.find({ stage: { $in: WATCH_STAGES } });
 
       for (const c of docs) {
         const comp = computeCase(c.toObject(), today);
         const keys = c.reminderKeys && typeof c.reminderKeys === 'object' ? { ...c.reminderKeys } : {};
         let dirty = false;
+        // Keys used to leave out the date (h:<id>, d:<id>:<band>, p:<band>),
+        // so a corrected date never re-armed its alerts. An old key is carried
+        // over once to the current date so nothing already sent goes again.
+        const keyFor = (k, legacy) => {
+          if (legacy && keys[legacy] && !keys[k]) { keys[k] = keys[legacy]; delete keys[legacy]; dirty = true; }
+          return k;
+        };
+        const failedRecently = v => !!v && Date.now() - new Date(v).getTime() < 2 * 3600e3;
 
         // Hearing reminder to the client — only 8am to 8pm Manila.
-        if (settings.clientEmailsEnabled && c.autoEmails && c.clientEmail && hour >= 8 && hour < 20) {
+        if (settings.clientEmailsEnabled && c.autoEmails && c.clientEmail && c.stage !== 'on_hold' && hour >= 8 && hour < 20) {
           for (const h of comp.hearings) {
             if (!h.date || h.reset || h.daysAway === null) continue;
             if (h.daysAway < 0 || h.daysAway > settings.hearingReminderDays) continue;
-            const k = `h:${h.id}`;
-            if (keys[k] || keys[k + ':failed']) continue;
+            const k = keyFor(`h:${h.id}:${h.date}`, `h:${h.id}`);
+            if (keys[k] || failedRecently(keys[k + ':failed'])) continue;
             const built = buildEmail('hearing', c.toObject(), comp, settings, { esc, hearing: h });
             const ok = await sendEmail(c.clientEmail, built.subject, built.html,
               settings.firmName || 'GLRA Realty', settings.notifyEmail || FIRM_INBOX);
-            keys[ok ? k : k + ':failed'] = today;
+            if (ok) { keys[k] = today; delete keys[k + ':failed']; } else keys[k + ':failed'] = new Date().toISOString();
             dirty = true;
             const hh = c.hearings.id(h.id);
             if (hh && ok) hh.notified = true;
@@ -1309,8 +1332,9 @@ function startCasesTick({ sendEmail, esc }) {
         for (const d of comp.deadlines) {
           if (d.done || !d.dueDate || d.daysAway === null) continue;
           if (d.daysAway < 0 || d.daysAway > settings.deadlineAlertDays) continue;
-          const k = `d:${d.id}:${d.daysAway <= 1 ? '1' : d.daysAway <= 3 ? '3' : 'n'}`;
-          if (keys[k] || keys[k + ':failed']) continue;
+          const band = d.daysAway <= 1 ? '1' : d.daysAway <= 3 ? '3' : 'n';
+          const k = keyFor(`d:${d.id}:${d.dueDate}:${band}`, `d:${d.id}:${band}`);
+          if (keys[k] || failedRecently(keys[k + ':failed'])) continue;
           const when = d.daysAway === 0 ? 'TODAY' : `in ${d.daysAway} day${d.daysAway === 1 ? '' : 's'}`;
           const html = getEmailHeader() +
             `<p><b>${esc(d.critical ? 'CRITICAL DEADLINE' : 'Deadline')} ${esc(when)}</b></p>
@@ -1321,15 +1345,15 @@ function startCasesTick({ sendEmail, esc }) {
              <p>Due: <b>${esc(d.dueDate)}</b></p>` + getEmailFooter();
           const ok = await sendEmail(settings.notifyEmail || FIRM_INBOX,
             `${d.critical ? '[CRITICAL] ' : ''}${d.title} \u2014 due ${when}`, html, settings.firmName || 'GLRA Realty');
-          keys[ok ? k : k + ':failed'] = today;
+          if (ok) { keys[k] = today; delete keys[k + ':failed']; } else keys[k + ':failed'] = new Date().toISOString();
           dirty = true;
         }
 
         if (comp.prescription && comp.prescription.daysLeft >= 0 &&
             comp.prescription.daysLeft <= settings.prescriptionAlertDays) {
           const band = comp.prescription.daysLeft <= 7 ? '7' : comp.prescription.daysLeft <= 30 ? '30' : '90';
-          const k = `p:${band}`;
-          if (!keys[k] && !keys[k + ':failed']) {
+          const k = keyFor(`p:${comp.prescription.date}:${band}`, `p:${band}`);
+          if (!keys[k] && !failedRecently(keys[k + ':failed'])) {
             const html = getEmailHeader() +
               `<p><b>The prescriptive period on this matter lapses in ${comp.prescription.daysLeft} day(s).</b></p>
                <p style="font-size:17px;margin:6px 0"><b>${esc(c.title || '')}</b></p>
@@ -1338,7 +1362,7 @@ function startCasesTick({ sendEmail, esc }) {
                <p>If the action is not brought by then it can no longer be brought at all.</p>` + getEmailFooter();
             const ok = await sendEmail(settings.notifyEmail || FIRM_INBOX,
               `[PRESCRIPTION] ${comp.prescription.daysLeft} days \u2014 ${c.title || ''}`, html, settings.firmName || 'GLRA Realty');
-            keys[ok ? k : k + ':failed'] = today;
+            if (ok) { keys[k] = today; delete keys[k + ':failed']; } else keys[k + ':failed'] = new Date().toISOString();
             dirty = true;
           }
         }
@@ -1348,7 +1372,7 @@ function startCasesTick({ sendEmail, esc }) {
 
       // ── one morning digest ──
       if (settings.digestEnabled && hour >= settings.digestHour && settings.lastDigestKey !== today) {
-        const all = await Case.find({ stage: { $in: OPEN_STAGES } }).lean();
+        const all = await Case.find({ stage: { $in: WATCH_STAGES } }).lean();
         const hearings = [], deadlines = [], prescriptions = [], idle = [];
         all.forEach(c => {
           const comp = computeCase(c, today);
@@ -1396,7 +1420,7 @@ function startCasesTick({ sendEmail, esc }) {
 
 module.exports = {
   registerCaseRoutes, startCasesTick,
-  STAGE_META, CASE_FLOW, OPEN_STAGES, computeCase, getSettings, saveSettings,
+  STAGE_META, CASE_FLOW, OPEN_STAGES, WATCH_STAGES, computeCase, getSettings, saveSettings,
   DEFAULT_SETTINGS, DEADLINE_RULES, COURTS, CASE_TYPES, NATURES, CLIENT_ROLES,
   HEARING_PURPOSES, FEE_ARRANGEMENTS, CHARGE_KINDS, nextRef, buildEmail,
   _test: { dk, addDays, diffDays, money, peso, manilaToday, computeCase, sanitizeCaseBody, buildEmail }

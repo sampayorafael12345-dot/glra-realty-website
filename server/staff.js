@@ -131,6 +131,27 @@ async function tasksFor(accountId, sinceDays) {
 
 // Next due date for a repeating task, counted from the old due date (or now
 // if it was already overdue, so a late finish does not stack up a backlog).
+// Posting kinds are only done with a link that proves it (the post itself).
+const PROOF_KINDS = ['facebook', 'social', 'portal', 'upload'];
+function hasProofLink(task) { return /^https?:\/\/\S+/i.test(String(task.proofUrl || '')); }
+
+// The next copy of a repeating task. Called from every way a task can be
+// finished (the desk's Done, the boss's approve, the Tasks board), so a
+// routine never silently stops. Returns the new task, or null.
+async function spawnNextTask(task) {
+  if (!task || !task.recurrence || task.spawnedNext) return null;
+  const spawned = await Task.create({
+    title: task.title, description: task.description, category: task.category, kind: task.kind,
+    priority: task.priority, assignedTo: task.assignedTo, createdBy: task.createdBy,
+    dueDate: nextDue(task.dueDate, task.recurrence), checklist: (task.checklist || []).map(c => ({ text: c.text })),
+    propertyId: task.propertyId, link: task.link, reference: task.reference,
+    recurrence: task.recurrence, points: task.points
+  });
+  await Task.updateOne({ _id: task._id }, { $set: { spawnedNext: spawned._id } });
+  task.spawnedNext = spawned._id;
+  return spawned;
+}
+
 function nextDue(from, rule) {
   const base = new Date(Math.max(from ? new Date(from).getTime() : 0, Date.now()));
   const d = new Date(base);
@@ -316,13 +337,18 @@ async function buildSuggestions() {
   const push = s => { if (!openKeys.has(s.issueKey)) out.push(s); };
 
   const leadName = l => l.name || (l.emails && l.emails[0]) || (l.phones && l.phones[0]) || 'a lead';
-  const waiting = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, firstInboundAt: { $ne: null }, firstResponseAt: null })
-    .select('name emails phones type firstInboundAt').sort({ firstInboundAt: 1 }).limit(40).lean();
+  // Only people who actually ASKED something (an enquiry, viewing or
+  // valuation request) and have not been answered since. Newsletter sign-ups,
+  // imported lists and manual adds used to fill this list and hide the
+  // real enquiries. Same rule as the Leads tab's "waiting" badge.
+  const waiting = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, lastAskAt: { $ne: null, $gte: new Date(Date.now() - 60 * 864e5) },
+    $expr: { $or: [{ $eq: [{ $ifNull: ['$lastContactAt', null] }, null] }, { $lt: ['$lastContactAt', '$lastAskAt'] }] } })
+    .select('name emails phones type lastAskAt').sort({ lastAskAt: 1 }).limit(40).lean();
   waiting.forEach(l => push({
-    group: 'Leads waiting for a first reply', kind: 'lead', priority: 'high', issueKey: `lead:${l._id}:reply`,
+    group: 'Leads waiting for a reply', kind: 'lead', priority: 'high', issueKey: `lead:${l._id}:reply`,
     title: `Reply to ${leadName(l)} (${l.type})`, link: `/admin.html#leads`,
-    description: `Came in ${new Date(l.firstInboundAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} and nobody has answered yet. Open the Leads tab, find this person, call or message, and log it.`,
-    since: l.firstInboundAt
+    description: `Asked us ${new Date(l.lastAskAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} and nobody has answered since. Open the Leads tab, find this person, call or message, and log it.`,
+    since: l.lastAskAt
   }));
 
   const fu = await Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, nextFollowUp: { $ne: null, $lt: endToday } })
@@ -389,7 +415,7 @@ function registerStaffRoutes(app) {
           tasks
         });
       }
-      const reviewQueue = await Task.find({ review: 'submitted' })
+      const reviewQueue = await Task.find({ review: 'submitted', status: 'done' })
         .select(TASK_FIELDS).populate('assignedTo', 'name email').sort({ completedAt: 1 }).limit(100).lean();
       res.json({ today, staff: out, reviewQueue, config: cfg });
     } catch (err) { console.error('staff overview', err); res.status(500).json({ error: 'Server error' }); }
@@ -495,7 +521,9 @@ function registerStaffRoutes(app) {
       switch (b.action) {
         case 'start':
           task.status = 'in_progress'; if (!task.startedAt) task.startedAt = now;
-          if (task.review === 'returned') task.review = '';
+          // Working on it again takes it out of the boss's "to check" list.
+          if (['returned', 'submitted'].includes(task.review)) task.review = '';
+          task.completedAt = null;
           break;
         case 'check': {
           const i = parseInt(b.idx, 10);
@@ -505,7 +533,8 @@ function registerStaffRoutes(app) {
           break;
         }
         case 'stuck':
-          task.status = 'stuck';
+          task.status = 'stuck'; task.completedAt = null;
+          if (task.review === 'submitted') task.review = '';
           note('Stuck: ' + (clean(b.reason, 1500) || 'no reason given'));
           break;
         case 'comment':
@@ -513,24 +542,19 @@ function registerStaffRoutes(app) {
           note(b.text);
           break;
         case 'submit': {
+          task.proofUrl = cleanUrl(b.proofUrl) || task.proofUrl;
+          // Checked here too, not only in the browser's Done box.
+          if (PROOF_KINDS.includes(task.kind) && !hasProofLink(task) && req.user.role !== 'admin') {
+            return res.status(400).json({ error: 'Paste the link to the post (or the listing page) to prove it is done.' });
+          }
           task.status = 'done'; task.completedAt = now;
           if (!task.startedAt) task.startedAt = now;
-          task.proofUrl = cleanUrl(b.proofUrl) || task.proofUrl;
           task.proofNote = clean(b.proofNote, 1000);
           // A manager finishing their own task does not need to check it.
           task.review = (mgr && req.user.role === 'admin') ? 'approved' : 'submitted';
           if (task.review === 'approved') task.reviewedAt = now;
           note('Marked done' + (task.proofNote ? ': ' + task.proofNote : '') + (task.proofUrl ? ` (${task.proofUrl})` : ''));
-          if (task.recurrence && !task.spawnedNext) {
-            spawned = await Task.create({
-              title: task.title, description: task.description, category: task.category, kind: task.kind,
-              priority: task.priority, assignedTo: task.assignedTo, createdBy: task.createdBy,
-              dueDate: nextDue(task.dueDate, task.recurrence), checklist: task.checklist.map(c => ({ text: c.text })),
-              propertyId: task.propertyId, link: task.link, reference: task.reference,
-              recurrence: task.recurrence, points: task.points
-            });
-            task.spawnedNext = spawned._id;
-          }
+          spawned = await spawnNextTask(task);
           break;
         }
         case 'approve':
@@ -538,6 +562,7 @@ function registerStaffRoutes(app) {
           task.review = 'approved'; task.reviewedAt = now; task.reviewNote = clean(b.note, 1000);
           if (task.status !== 'done') { task.status = 'done'; task.completedAt = now; }
           note('Checked and approved' + (task.reviewNote ? ': ' + task.reviewNote : ''));
+          spawned = await spawnNextTask(task);
           break;
         case 'return':
           if (!mgr) return res.status(403).json({ error: 'Only the boss can send a task back' });
@@ -750,5 +775,5 @@ function registerStaffRoutes(app) {
   });
 }
 
-module.exports = { registerStaffRoutes, manilaDay, dayStart, scorecard, nextDue, KINDS, TASK_FIELDS, getConfig, countsFor, progressFor,
+module.exports = { registerStaffRoutes, manilaDay, dayStart, scorecard, nextDue, spawnNextTask, PROOF_KINDS, hasProofLink, KINDS, TASK_FIELDS, getConfig, countsFor, progressFor,
   staffList, createStaffTasks, buildActivity, buildSuggestions, tasksFor };
