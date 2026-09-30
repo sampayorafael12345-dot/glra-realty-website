@@ -503,6 +503,16 @@ function vevent({ uid, dateStr, summary, description }) {
 // ROUTES
 // =============================================================================
 function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary }) {
+  // Tenant IDs, contracts and receipts are private files: when their lease or
+  // payment is deleted they are removed from Cloudinary too, not left behind.
+  async function destroyFiles(files) {
+    for (const f of files || []) {
+      if (!f || !f.publicId) continue;
+      try { await cloudinary.uploader.destroy(f.publicId, { resource_type: f.resourceType === 'raw' ? 'raw' : f.resourceType === 'video' ? 'video' : 'image', type: 'authenticated' }); }
+      catch (e) { console.warn('cloudinary destroy failed:', e.message); }
+    }
+  }
+
   const view = [verifyToken, requirePermission('leasing_view')];
   const manage = [verifyToken, requirePermission('leasing_manage')];
   const byName = req => (req.user && (req.user.name || req.user.email)) || '';
@@ -675,7 +685,10 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
   app.delete('/api/admin/leases/:id', verifyToken, requireAdmin, async (req, res) => {
     try {
       const doc = await Lease.findByIdAndDelete(req.params.id);
-      if (doc) await logAudit(req, 'DELETE', 'Lease', String(doc._id), leaseLabel(doc), null);
+      if (doc) {
+        await destroyFiles(doc.files);
+        await logAudit(req, 'DELETE', 'Lease', String(doc._id), leaseLabel(doc), null);
+      }
       res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
@@ -765,7 +778,9 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       if (!p) return res.status(404).json({ error: 'Payment not found' });
       const label = `${p.receiptNo} (${peso(p.amount)})`;
       doc.payments.pull(p._id);
+      const gone = doc.files.filter(f => f.paymentId === String(p._id));
       doc.files = doc.files.filter(f => f.paymentId !== String(p._id));
+      await destroyFiles(gone);
       addNote(doc, 'payment', `Payment ${label} removed`, byName(req));
       await doc.save();
       await logAudit(req, 'DELETE', 'LeasePayment', req.params.pid, `${leaseLabel(doc)} · ${label}`, null);

@@ -18,7 +18,7 @@ function getEmailHeader() {
     <body style="margin:0;padding:0;background-color:#e8e4dd;font-family:'Inter','Helvetica Neue',Arial,sans-serif;color:#0a0a0a">
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#e8e4dd">
         <tr><td align="center" style="padding:30px 16px">
-          <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background-color:#f1eee9;border:2px solid #0a0a0a;border-collapse:collapse">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:600px;background-color:#f1eee9;border:2px solid #0a0a0a;border-collapse:collapse">
             <tr><td style="background-color:#0a0a0a;padding:24px 28px;border-bottom:4px solid #ff3d00">
               <div style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:30px;font-weight:900;letter-spacing:-1.5px;color:#ffffff;text-transform:uppercase;line-height:1">GLRA REALTY</div>
               <div style="font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;color:#ff3d00;text-transform:uppercase;margin-top:6px;font-weight:700">Premier Real Estate · Manila</div>

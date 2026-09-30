@@ -634,19 +634,30 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
     try {
       const q = str(req.query.q, 120);
       if (q.length < 2) return res.json({ query: q, hits: [] });
-      const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      const docs = await Case.find({
-        $or: [{ clientName: rx }, { 'adverseParties.name': rx }, { 'adverseParties.counsel': rx }, { title: rx }]
-      }).select('caseRef title stage clientName clientRole adverseParties createdAt').lean();
+      // Names are compared word by word, ignoring order, accents, case and
+      // punctuation: "Dela Cruz, Juan" finds "Juan dela Cruz", and "Pena" finds
+      // "Peña". A plain substring search missed reversed or re-spaced names.
+      const fold = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const qWords = fold(q).split(' ').filter(w => w.length >= 2 && !['and', 'of', 'the', 'vs', 'inc', 'corp', 'co'].includes(w));
+      const qFold = fold(q);
+      const matches = t => {
+        const f = fold(t);
+        if (!f) return false;
+        if (qFold && f.includes(qFold)) return true;
+        const words = f.split(' ');
+        return qWords.length > 0 && qWords.every(w => words.some(x => x.startsWith(w)));
+      };
+      const all = await Case.find({}).select('caseRef title stage clientName clientRole adverseParties createdAt').lean();
+      const docs = all.filter(c => matches(c.clientName) || matches(c.title) || (c.adverseParties || []).some(p => matches(p.name) || matches(p.counsel)));
       const hits = docs.map(c => {
-        const asClient = rx.test(c.clientName || '');
-        const adverse = (c.adverseParties || []).filter(p => rx.test(p.name || '') || rx.test(p.counsel || ''));
+        const asClient = matches(c.clientName);
+        const adverse = (c.adverseParties || []).filter(p => matches(p.name) || matches(p.counsel));
         return {
           id: String(c._id), caseRef: c.caseRef, title: c.title, stage: c.stage,
           clientName: c.clientName, clientRole: c.clientRole,
           matchedAs: asClient ? 'client' : (adverse.length ? 'adverse party' : 'case title'),
           adverse: adverse.map(p => p.name || p.counsel),
-          open: OPEN_STAGES.includes(c.stage)
+          open: WATCH_STAGES.includes(c.stage)
         };
       });
       // An existing CLIENT is a soft hit; an ADVERSE party in an open matter

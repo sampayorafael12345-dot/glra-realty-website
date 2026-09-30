@@ -971,9 +971,14 @@ function cloudinaryThumb(u, w, h) {
 // 1870": empty parts from a double comma, and the same part twice. Shown to
 // the public as "Havila, Antipolo, 1870" (a repeated part keeps its LAST
 // place, so a ZIP stays at the end). The stored text is not changed.
+// Parts a map geocoder adds that mean nothing to a buyer: the country, the
+// district names, and plus codes like "7Q6F+2X".
+const LOCATION_NOISE = /^(philippines|pilipinas|metro manila district|eastern manila district|kalakhang maynila|(first|second|third|fourth|1st|2nd|3rd|4th|\d+(st|nd|rd|th)?) district|[A-Z0-9]{4}\+[A-Z0-9]{2,3})$/i;
 function tidyLocation(s) {
-  if (typeof s !== 'string' || s.indexOf(',') < 0) return s;
-  const parts = s.split(',').map(x => x.trim()).filter(Boolean);
+  if (typeof s !== 'string') return s;
+  s = s.replace(/\bCIty\b/g, 'City').replace(/\s*\u00b7\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
+  if (s.indexOf(',') < 0) return s;
+  const parts = s.split(',').map(x => x.trim()).filter(x => x && !LOCATION_NOISE.test(x));
   const seen = new Set(), out = [];
   for (let i = parts.length - 1; i >= 0; i--) {
     const k = parts[i].toLowerCase();
@@ -1706,7 +1711,7 @@ function priceStripHtml(c, esc) {
     </section>`;
 }
 
-function buildPropertyPageHtml(p, related, comps) {
+function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
   const id = String(p._id);
   // Turn any base64 photo into a real image URL first, so the og:image, the
   // gallery and the <img> tags below all point at something fetchable rather
@@ -1753,8 +1758,15 @@ function buildPropertyPageHtml(p, related, comps) {
   const canonical = `${SITE_URL}/property/${id}`;
   // Cleaned first: Google was being handed the emoji and hashtags as the
   // search snippet for every listing.
-  const descBase = (String(p.webSummary || '').trim() || glraCleanDescription(p.description)).replace(/\s+/g, ' ').trim();
-  const metaDesc = (`${title}${loc ? ' in ' + loc : ''} — ${priceText}. ${descBase}`).slice(0, 160).trim();
+  let descBase = (String(p.webSummary || '').trim() || glraCleanDescription(p.description))
+    .replace(/[\p{Extended_Pictographic}\u2022\u25aa\u25cf\u2713\u2714\u27a4\u2b50\ufe0f]/gu, ' ')
+    .replace(/(^|\s)#[\p{L}\p{N}_]+/gu, ' ')
+    .replace(/\s+/g, ' ').trim();
+  // The description often opens by repeating the title; the snippet already has it.
+  if (title && descBase.toLowerCase().startsWith(String(title).toLowerCase())) descBase = descBase.slice(String(title).length).replace(/^[\s,.:;\-\u2013\u2014|]+/, '');
+  const inLoc = loc && !String(title).toLowerCase().includes(String(loc).split(',')[0].trim().toLowerCase()) ? ' in ' + loc : '';
+  const metaFull = `${title}${inLoc} — ${priceText}. ${descBase}`.trim();
+  const metaDesc = metaFull.length <= 160 ? metaFull : metaFull.slice(0, 157).replace(/\s+\S*$/, '') + '...';
   // Descriptions are written as Facebook posts and imported as typed, so they
   // arrive with emoji on every line, the broker's own contact block, a markdown
   // mail link that renders as raw text, and a tail of hashtags. Cleaned at
@@ -1778,6 +1790,9 @@ function buildPropertyPageHtml(p, related, comps) {
   // Which area page, if any, this listing belongs under. Needed by both the
   // structured data and the visible breadcrumb below.
   const ownArea = AREAS.find(a => a[2].test(((p.location || '') + ' ' + (p.title || '')).toLowerCase()));
+  // An area with fewer than AREA_MIN_LISTINGS listings has no page (its link
+  // redirects), so the breadcrumb and Google's trail link to a search instead.
+  const areaLive = !!ownArea && ((areaCountsNow || {})[ownArea[0]] || 0) >= AREA_MIN_LISTINGS;
 
   // The listing, the home itself, and the offer, as one connected graph.
   // `Product` alone said nothing about floor area, bedrooms or where it is,
@@ -1862,7 +1877,7 @@ function buildPropertyPageHtml(p, related, comps) {
           { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL + '/' },
           { '@type': 'ListItem', position: 2, name: 'Properties', item: SITE_URL + '/properties.html' },
           ...(ownArea
-            ? [{ '@type': 'ListItem', position: 3, name: ownArea[1], item: SITE_URL + '/properties/' + ownArea[0] }]
+            ? [{ '@type': 'ListItem', position: 3, name: ownArea[1], item: areaLive ? SITE_URL + '/properties/' + ownArea[0] : SITE_URL + '/properties.html?search=' + encodeURIComponent(ownArea[1]) }]
             : loc ? [{ '@type': 'ListItem', position: 3, name: loc, item: SITE_URL + '/properties.html?search=' + encodeURIComponent(loc) }] : []),
           { '@type': 'ListItem', position: loc ? 4 : 3, name: title, item: canonical }
         ]
@@ -1878,7 +1893,7 @@ function buildPropertyPageHtml(p, related, comps) {
   // destination for a reader, and what makes the area pages reachable without
   // JavaScript from every listing in that area.
   const areaCrumb = ownArea
-    ? `<a href="/properties/${ownArea[0]}">${esc(ownArea[1])}</a>`
+    ? (areaLive ? `<a href="/properties/${ownArea[0]}">${esc(ownArea[1])}</a>` : `<a href="/properties.html?search=${encodeURIComponent(ownArea[1])}">${esc(ownArea[1])}</a>`)
     : (loc ? `<a href="/properties.html?search=${encodeURIComponent(loc)}">${esc(loc)}</a>` : '');
   const crumbHtml = `<nav class="pg-crumbs" aria-label="Breadcrumb">
     <a href="/">Home</a> <span>/</span>
@@ -2170,6 +2185,7 @@ a.pg-hero:hover .pg-hero-count,a.pg-hero:focus-visible .pg-hero-count{background
 .pg-thumb:hover{border-color:var(--hot)}
 .pg-privacy{font-size:12px;line-height:1.5;margin:12px 0 0;opacity:.8}.pg-privacy a{color:inherit}
 .pg-bar{display:none}
+.pg-mact{display:none}
 .pg-grid{display:block}
 .pg-side{display:none}
 @media(min-width:1024px){
@@ -2313,6 +2329,8 @@ h2.pg-section-label{font-weight:700}
   .pg-bar .pg-bar-hot{background:var(--hot-btn);color:#fff}
   body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   .floating-buttons{display:none !important}
+  .pg-mact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .pg-mact .pg-btn{justify-content:center;width:100%;min-height:48px}
 }
 .pg-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
 .pg-brochure{display:inline-flex;align-items:center;gap:8px;margin:-10px 0 26px;padding:11px 14px;border:2px solid var(--ink,#0a0a0a);color:inherit;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
@@ -2408,6 +2426,11 @@ h2.pg-section-label{font-weight:700}
     <div class="pg-keyline">
       ${headPriceHtml}${reducedHtml}
       ${factsHtml}
+    </div>
+    <!-- Phones and tablets: the side card that holds these is hidden below 1024px. -->
+    <div class="pg-mact">
+      <a class="pg-btn pg-btn-ink" href="#inquire" data-pg-book><i class="far fa-calendar-check" aria-hidden="true"></i>Book a viewing</a>
+      <button class="pg-btn pg-btn-ghost" type="button" data-pg-share><i class="fas fa-share-nodes" aria-hidden="true"></i><span aria-live="polite">Share</span></button>
     </div>
   </header>
   <div class="pg-grid">
@@ -2756,9 +2779,9 @@ app.get('/property/:id', async (req, res) => {
     // Neighbours to link to. Preference order: same area, then same kind of
     // property, then simply the newest - so the block is never empty and a
     // crawler always has somewhere to go from here.
-    const [related, comps] = await Promise.all([findRelatedListings(p), findPriceComparables(p)]);
+    const [related, comps, counts] = await Promise.all([findRelatedListings(p), findPriceComparables(p), areaCounts()]);
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(buildPropertyPageHtml(p, related, comps));
+    res.send(buildPropertyPageHtml(p, related, comps, counts));
   } catch (err) {
     return res.redirect(302, '/properties.html');
   }
@@ -2798,8 +2821,11 @@ async function findRelatedListings(p) {
   const myPrice = priceOf(p, mySale), myBeds = Number(p.bedrooms) || 0;
   let out = [];
   try {
+    // Score on the small fields first; photos are loaded only for the six
+    // picked. Loading every listing's gallery on each page view made the
+    // listing pages slow (two listings still hold inline base64 photos).
     const rows = await Property.find({ status: 'available', _id: { $ne: p._id } })
-      .select(RELATED_FIELDS + ' bedrooms createdAt').lean();
+      .select('_id title location price monthlyRental listingType propertyType bedrooms createdAt').lean();
     out = rows.map(r => {
       let score = 0;
       if (mySale ? sells(r) : rents(r)) score += 3;
@@ -2817,8 +2843,11 @@ async function findRelatedListings(p) {
       .filter(x => String(x.r._id) !== id)
       .sort((a, b) => b.score - a.score || b.t - a.t)
       .slice(0, 6)
-      .map(x => { delete x.r.bedrooms; delete x.r.createdAt; return x.r; });
-  } catch (e) { /* a listing page must render even if this query fails */ }
+      .map(x => x.r._id);
+    const full = await Property.find({ _id: { $in: out } }).select(RELATED_FIELDS).slice('gallery', 3).lean();
+    const byId = new Map(full.map(r => [String(r._id), r]));
+    out = out.map(i => byId.get(String(i))).filter(Boolean);
+  } catch (e) { out = []; /* a listing page must render even if this query fails */ }
   out.forEach(optimizePropertyImages);
   return out;
 }
@@ -3266,7 +3295,12 @@ app.post('/api/track/view',
       const { vid, pid } = req.body;
       // One row per browser per listing per hour is plenty.
       const recent = await ListingView.exists({ vid, propertyId: pid, at: { $gt: new Date(Date.now() - 3600e3) } });
-      if (!recent) await ListingView.create({ vid, propertyId: pid });
+      if (!recent) {
+        await ListingView.create({ vid, propertyId: pid });
+        // The admin "views" figure used to count only the Properties page's
+        // pop-up, not visits to the listing's own page (most of Google's traffic).
+        await Property.updateOne({ _id: pid }, { $inc: { views: 1 } }).catch(() => {});
+      }
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'Server error' });

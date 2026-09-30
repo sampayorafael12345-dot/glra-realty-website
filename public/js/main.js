@@ -1132,6 +1132,8 @@ function glraLoadJsPDF() {
   _glraJsPDFPromise = new Promise(function (resolve, reject) {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.integrity = 'sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';   // refuse a tampered copy
+    s.crossOrigin = 'anonymous';
     s.onload = resolve;
     s.onerror = function () { _glraJsPDFPromise = null; reject(new Error('jspdf-load-failed')); };
     document.head.appendChild(s);
