@@ -149,6 +149,13 @@ cloudinary.config({
 // Trust the first proxy (needed for correct req.ip behind Render/Heroku/etc.)
 app.set('trust proxy', 1);
 
+// TEMPORARY (1 Oct 2026): shows the caller its own forwarding headers so the
+// rate-limit key can be fixed. Removed in the next push.
+app.get('/api/_ipcheck', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ip: req.ip, ips: req.ips, xff: req.get('x-forwarded-for') || null, cf: req.get('cf-connecting-ip') || null, tci: req.get('true-client-ip') || null, xri: req.get('x-real-ip') || null, sock: req.socket.remoteAddress });
+});
+
 // Helmet — sensible default security headers.
 // CSP is configured separately below rather than here, so keep it off in the
 // base call. Everything else (HSTS, X-Frame-Options, nosniff, ...) stays on.
