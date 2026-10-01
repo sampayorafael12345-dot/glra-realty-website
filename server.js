@@ -857,7 +857,7 @@ const PUBLIC_PROPERTY_FIELDS = [
   'sqm', 'landArea', 'description', 'mainImage', 'gallery', 'featured', 'status',
   'listingType', 'propertyType', 'parking', 'parkingPrice', 'additionalParkingStatus',
   'mapLocation', 'previousPrice', 'priceUpdatedAt',
-  'views', 'createdAt', 'facing', 'coverImage', 'floorPlan', 'webSummary',
+  'views', 'createdAt', 'facing', 'floor', 'coverImage', 'floorPlan', 'webSummary',
   // Reduced by publicGeo() to a rounded {lat, lng}; the lookup text, status
   // and timestamps never leave the server.
   'geo'
@@ -1985,7 +1985,8 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     // floor area in the wrong box, so it is labelled plainly rather than wrongly.
     .concat(p.landArea && !(/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) && Number(p.sqm) > 0) ? [[/^(condominium|apartment|office|commercial space|studio)/i.test(String(p.propertyType || '').trim()) ? 'Floor area' : 'Lot area',
                            Number(p.landArea).toLocaleString('en-US') + ' sqm']] : [])
-    .concat(p.parking ? [['Parking', p.parking]] : []);
+    .concat(p.parking ? [['Parking', p.parking]] : [])
+    .concat(String(p.floor || '').trim() ? [['Floor', String(p.floor).trim()]] : []);
   const specsHtml = `<div class="pg-specs">${specRows.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`;
 
   // ── Price, the way a buyer reads it. A sale-and-lease listing shows both,

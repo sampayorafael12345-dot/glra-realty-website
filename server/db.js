@@ -34,6 +34,9 @@ const propertySchema = new mongoose.Schema({
   listingType: { type: String, default: 'FOR SALE' },
   propertyType: { type: String, default: 'Condominium' },
   parking: { type: Number, default: 0 },
+  // The unit's floor ("12th", "Ground", "PH"). The edit form always sent it,
+  // but with no field here the database dropped it on every save (1 Oct 2026).
+  floor: { type: String, default: '', trim: true, maxlength: 40 },
   mapLocation: { type: String, default: '' },
   // Which way the unit's main windows face (N, NE, E, SE, S, SW, W, NW, or
   // blank). Optional; the listing page's sun path explains what it means.
