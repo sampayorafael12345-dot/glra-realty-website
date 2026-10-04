@@ -464,6 +464,14 @@
   .stagepick button.on em{ color:var(--accent); }
   .stagepick button.on.won{ background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
   .stagepick button.on.lost{ background:var(--bad-soft); border-color:var(--bad); color:var(--bad); }
+  /* On a phone the stages scrolled sideways behind a hidden scrollbar, so
+     Negotiation, Signing, Closing and Unsuccessful sat off screen. Two even
+     columns instead; an odd last button takes the full row. */
+  @media (max-width:600px){
+    .stagepick{ display:grid; grid-template-columns:1fr 1fr; overflow:visible; }
+    .stagepick button{ justify-content:flex-start; white-space:normal; text-align:left; }
+    .stagepick button:last-child:nth-child(odd){ grid-column:1 / -1; }
+  }
 
   /* ══ LEADS ══ */
   .lrow{

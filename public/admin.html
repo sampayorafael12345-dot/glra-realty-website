@@ -2528,6 +2528,9 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         #caseModal{padding:0 !important}
         #caseModal > .cs-modal-box{width:100% !important;max-width:none !important;max-height:none !important;min-height:100% !important;height:100%;border:0 !important;animation:none !important}
         #caseModal .ls-tabs{flex-wrap:wrap;overflow:visible}
+        /* The lease form had the same tab row running off the right edge on a phone. */
+        #leaseModal .ls-tabs{flex-wrap:wrap;overflow:visible}
+        #leaseModal .ls-tab{flex:1 1 auto;padding:10px 8px;text-align:center}
         #caseModal .ls-tab{flex:1 1 auto;padding:10px 8px;text-align:center}
         #caseModal .finput{font-size:16px}
         #caScroll{padding:16px !important}
@@ -2712,7 +2715,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
           <div style="padding:22px">
             <div class="ls-note" style="margin-bottom:12px">Search every matter in this system for a name — on either side. A name that is already an <b>adverse party in an open case</b> is the one that stops a new engagement; an existing client is only something to be aware of.</div>
             <div style="display:flex;gap:8px">
-              <input type="text" id="conflictQ" class="finput" placeholder="Name of the person or company" maxlength="120" onkeydown="if(event.key==='Enter')runConflictCheck()">
+              <input type="text" id="conflictQ" class="finput" style="flex:1;min-width:0" placeholder="Name of the person or company" maxlength="120" onkeydown="if(event.key==='Enter')runConflictCheck()">
               <button class="hdr-btn primary" onclick="runConflictCheck()"><i class="fas fa-search"></i> Check</button>
             </div>
             <div id="conflictResult"></div>
