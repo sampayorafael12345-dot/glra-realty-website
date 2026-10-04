@@ -310,3 +310,21 @@ html{scroll-behavior:smooth}
    calculators were 381px wide and scrolled sideways. */
 html body :is(.calc-container,.calculator-container,.calc-grid,.results-section) > *{min-width:0}
 html body .calc-card select,html body .input-group select{min-width:0 !important;max-width:100% !important;width:100%;text-overflow:ellipsis}
+
+/* ── 14. Search panel matches the other boxes (Oct 2026) ─────────────────
+   Rafael: the panel's 10px ORANGE offset shadow was half hidden by the tab
+   strip under it, so it read as a stray orange bar down the right side. It
+   now stands on the same ink offset shadow as the calculator cards (orange
+   glow in dark mode, like them), with room below so the shadow shows whole.
+   Everything inside uses the JetBrains Mono "map button" type he prefers. */
+html body .search-card{border:2px solid #0a0a0a !important;border-top:4px solid #ff3d00 !important;box-shadow:8px 8px 0 #0a0a0a !important;margin-bottom:34px !important}
+html body.dark-mode .search-card{border-color:#3a3833 !important;border-top-color:#ff3d00 !important;box-shadow:8px 8px 0 rgba(223,53,0,.55) !important}
+html body .search-card.search-card :is(input,select,textarea,button,a,label,p,small,.price-hist-note,.price-hist-lbl,.price-hist-val,.currency-rate-note){font-family:'JetBrains Mono',ui-monospace,monospace !important}
+html body .search-card.search-card :is(input,textarea)::placeholder{font-family:'JetBrains Mono',ui-monospace,monospace !important;letter-spacing:.2px !important;font-size:14px !important}
+html body .search-card.search-card :is(input,textarea){font-weight:600 !important;letter-spacing:.2px !important}
+html body .search-card.search-card .filter-group select,html body .search-card.search-card select{font-weight:700 !important;text-transform:uppercase !important;letter-spacing:1.2px !important;font-size:12.5px !important}
+html body .search-card.search-card :is(button,a):not(.search-btn-main){letter-spacing:.6px !important}
+@media (pointer:coarse){html body .search-card.search-card .filter-group select,html body .search-card.search-card :is(input,select,textarea){font-size:16px !important;letter-spacing:.4px !important}}
+@media(max-width:560px){html body .search-card{box-shadow:5px 5px 0 #0a0a0a !important;margin-right:5px !important}html body.dark-mode .search-card{box-shadow:5px 5px 0 rgba(223,53,0,.55) !important}}
+html body .search-card.search-card #currencySelect,html body #currencySelect#currencySelect{font-family:'JetBrains Mono',ui-monospace,monospace !important;font-weight:700 !important;letter-spacing:1.2px !important;font-size:12.5px !important;text-transform:uppercase !important}
+@media (pointer:coarse){html body #currencySelect#currencySelect{font-size:16px !important}}
