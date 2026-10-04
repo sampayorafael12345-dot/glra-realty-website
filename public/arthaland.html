@@ -565,8 +565,8 @@
 :root[data-arth] .thread-note + .thread-note{font-size:.98rem !important;color:rgba(241,238,233,.72) !important}
 
 /* close + buttons */
-:root[data-arth] .close-veil{background:linear-gradient(180deg,rgba(10,10,10,.94),rgba(10,10,10,.8) 46%,rgba(10,10,10,.96))}
-:root[data-arth] .close-bg{opacity:.38}
+:root[data-arth] .close-veil{background:linear-gradient(180deg,rgba(10,10,10,.82),rgba(10,10,10,.42) 40%,rgba(10,10,10,.5) 62%,rgba(10,10,10,.9))}
+:root[data-arth] .close-bg{opacity:.85;filter:saturate(.9)}
 :root[data-arth] .close .lede{color:var(--ink) !important}
 :root[data-arth] .close-btns{gap:22px}
 :root[data-arth] body .cta,:root[data-arth] body a.cta{background:var(--hot) !important;color:#0a0a0a !important;border:2px solid var(--ink) !important;
@@ -583,7 +583,7 @@
 :root[data-arth] .pane-name{font-size:clamp(1.15rem,1.7vw,1.6rem) !important}
 /* uniform rhythm: same padding top and bottom on every numbered section, the inline padding-top:0 no longer applies */
 :root[data-arth] .ah-sec{padding:clamp(60px,7vw,100px) 0 !important}
-:root[data-arth] .hero{min-height:0}
+:root[data-arth] .hero{height:auto !important}
 :root[data-arth] .wall{min-height:clamp(480px,62vh,640px)}
 :root[data-arth] .pane-name{bottom:124px}
 /* statement: headline left, copy right, like the home page sections */
@@ -618,7 +618,7 @@
   :root[data-arth] .cert-list li:nth-last-child(-n+2){border-bottom:0}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=138">
+<link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
 <body class="dark-mode">
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -1031,8 +1031,8 @@
   var hero = document.getElementById('top');
   function sizeHero() {
     if (!hero) return;
-    if (window.innerWidth <= 900) { hero.style.height = ''; return; }
-    hero.style.height = Math.max(600, window.innerHeight - hero.offsetTop) + 'px';
+    if (window.innerWidth <= 900) { hero.style.minHeight = ''; return; }
+    hero.style.minHeight = Math.max(600, window.innerHeight - hero.offsetTop) + 'px';
   }
   sizeHero();
   window.addEventListener('load', sizeHero);

@@ -371,3 +371,17 @@ html body .navbar .logo img{height:88px !important;margin:-12px 0 !important}
 html body .ab-hero-text h1 .underline::after{display:none !important}
 html body .ab-brand img{height:88px !important;margin:-12px 0 !important}
 @media(max-width:560px){html body .ab-brand img{height:76px !important;margin:-9px 0 !important}}
+
+/* 20. Home listing tabs = the same boxed tabs as the Properties page; View all gets a box */
+html body .section .listings-tabs.category-tabs{display:flex;max-width:1480px;margin:0 auto;padding:14px 40px 12px !important;border-bottom:0 !important;gap:10px !important;flex-wrap:wrap;justify-content:flex-start}
+html body .section .listings-tabs.category-tabs .listings-tab{border-right:2px solid var(--ab-ink,#0a0a0a)}
+html body.dark-mode .section .listings-tabs.category-tabs .listings-tab{border-right-color:#4a4843}
+html body.dark-mode .section .listings-tabs.category-tabs .listings-tab.active{border-right-color:#df3500}
+@media(max-width:640px){
+  html body .section .listings-tabs.category-tabs{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px !important;padding:12px 18px 10px !important}
+  html body .section .listings-tabs.category-tabs .listings-tab{padding:0 6px !important;gap:6px;font-size:10px !important;letter-spacing:.8px !important;min-height:44px !important}
+  html body .section .listings-tabs.category-tabs .listings-tab i{font-size:11px !important}
+}
+html body .view-all-wrapper .view-all-btn{border:2px solid var(--ab-ink,#0a0a0a) !important;box-shadow:5px 5px 0 var(--ab-hot,#ff3d00) !important;padding:16px 30px !important}
+html body.dark-mode .view-all-wrapper .view-all-btn{border-color:#f1eee9 !important;box-shadow:5px 5px 0 var(--ab-hot,#ff3d00) !important}
+html body .view-all-wrapper .view-all-btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ab-ink,#0a0a0a) !important}
