@@ -380,7 +380,7 @@ body.dark-mode .trust-strip{background:var(--ab-paper) !important;border-color:v
 body.dark-mode{background:var(--ab-paper) !important;color:var(--ab-ink) !important}
 body.dark-mode .navbar{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
 body.dark-mode .nav-links a{color:var(--ab-ink) !important}
-body.dark-mode .nav-links a:hover{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important}
+body.dark-mode .nav-links a:hover{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
 body.dark-mode .nav-dropdown-menu{background:var(--ab-paper) !important;border-color:var(--ab-line) !important}
 body.dark-mode .nav-dropdown-menu a{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important}
 body.dark-mode .page-hero{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
@@ -558,7 +558,7 @@ html body.dark-mode .prop-card:hover{background:var(--ab-paper-2) !important}
 html body.dark-mode .comm-btn.active{background:var(--ab-hot) !important;color:#fff !important;border-color:var(--ab-hot) !important}
 html body.dark-mode .navbar{background:var(--ab-paper) !important;border-bottom-color:var(--ab-line) !important}
 html body.dark-mode .nav-links a{color:var(--ab-ink) !important}
-html body.dark-mode .nav-links a:hover{background:var(--ab-paper-2) !important;color:var(--ab-ink) !important}
+html body.dark-mode .nav-links a:hover{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
 html body.dark-mode .contact-btn-nav,html body.dark-mode a.contact-btn-nav{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
 html body.dark-mode .nav-dropdown-menu{background:var(--ab-paper) !important;border-color:var(--ab-line) !important;box-shadow:6px 6px 0 var(--ab-paper-2) !important}
 html body.dark-mode .nav-dropdown-menu a{color:var(--ab-ink) !important;border-bottom-color:var(--ab-line) !important;background:transparent !important}
@@ -1947,7 +1947,6 @@ html body .doc-table thead,html body .doc-table th{--ab-hot-text:#ff3d00}
    Same root cause as the six invisible headings: --ab-ink and --ab-paper are
    not "dark" and "light", they are "foreground" and "background", and they
    trade places between modes. */
-html body.dark-mode .nav-links a:hover,
 html body.dark-mode .nav-links a.active,
 html body.dark-mode .nav-links a.gl-active,
 html body.dark-mode .nav-links > a.gl-active:not(.contact-btn-nav){
@@ -2025,3 +2024,17 @@ html body{--shell:min(var(--glra-max), 100% - 2 * var(--glra-gut))}
 /* Footer text on the same column (it sat on the 1480px frame, 40px wider). */
 html body footer{padding-left:var(--glra-pad) !important;padding-right:var(--glra-pad) !important}
 html body footer :is(.footer-content,.footer-bottom){max-width:none !important;margin-left:0 !important;margin-right:0 !important}
+
+/* iPhone Safari draws date/time boxes at their own natural width and ignores
+   width:100%, so they ran off the right edge of every card (Oct 2026). These
+   lines make every date-like box obey its column, on every page. */
+input[type="date"],input[type="datetime-local"],input[type="month"],input[type="time"],input[type="week"]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;min-width:0;max-width:100%;min-height:44px}
+input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-webkit-date-and-time-value,input[type="month"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+
+/* Hovering a navbar link in dark mode painted a cream block (Oct 2026); it now
+   takes the same orange as the menu items, with white text, on every page. */
+html body.dark-mode .nav-links a:not(.contact-btn-nav):hover,
+html body.dark-mode .nav-links > .nav-dropdown:hover > a,
+html body.dark-mode .nav-links > .nav-dropdown.ab-open > a{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
+html body.dark-mode .nav-links a:not(.contact-btn-nav):hover *,
+html body.dark-mode .nav-links > .nav-dropdown:hover > a *{color:#fff !important}

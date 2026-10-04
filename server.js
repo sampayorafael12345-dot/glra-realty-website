@@ -534,11 +534,9 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     const body = await publicListBody();
     const list = (_publicListCache.list || JSON.parse(body)).filter(p => p.status === 'available');
     let html = pageTemplate('index.html');
-    // Same pick as populateHeroFromListings() in index.html, so the photo the
+    // Same first photo as GLRA_HERO_BUILDINGS in index.html, so the photo the
     // server sends is the one the slider keeps.
-    const withImg = list.filter(p => p.mainImage);
-    const hero = (withImg.filter(p => p.featured)[0] || withImg[0]);
-    const heroUrl = hero ? heroPhotoUrl(hero.mainImage, 1400) : '';
+    const heroUrl = '/img/arthaland/sondris/01-aerial@1280.webp'; // first of the Arthaland buildings
     if (heroUrl) {
       html = html.replace(/<div class="swiper-slide is-on" data-glra-first-slide[^>]*><\/div>/,
         `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${esc(heroUrl)}')"></div>`);

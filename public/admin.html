@@ -1620,6 +1620,12 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
   }
 }
 
+
+/* iPhone Safari draws date/time boxes at their own natural width and ignores
+   width:100%, so they ran off the right edge of every card (Oct 2026). These
+   lines make every date-like box obey its column, on every page. */
+input[type="date"],input[type="datetime-local"],input[type="month"],input[type="time"],input[type="week"]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;min-width:0;max-width:100%;min-height:44px}
+input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-webkit-date-and-time-value,input[type="month"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
 </style>
 </head>
 <body>
