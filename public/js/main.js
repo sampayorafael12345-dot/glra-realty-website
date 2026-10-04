@@ -2385,3 +2385,46 @@ window.glraOpenPrintGate = function (label, collectFn) {
     document.documentElement.addEventListener('pointerleave', function () { if (magEl) { magEl.style.translate = ''; magEl = null; } });
   });
 })();
+
+/* Map-font rule: any text that is neither bold nor capitals is set in the
+   mono face used by the map and search box. Headings, bold labels and
+   uppercase text keep the display face. Reads styles first, writes after,
+   so it never forces a layout mid-pass. */
+(function () {
+  if (window.__glraMono) return; window.__glraMono = 1;
+  var KEEP = /mono|awesome|playfair|bodoni|garamond|newsreader|bricolage|icon/i;
+  var SKIP = 'script,style,noscript,svg,canvas,img,video,iframe,option,.leaflet-container,.maplibregl-map,.fa,.fas,.far,.fab,[class*="fa-"],[data-gm-nomono]';
+  function wanted(el) {
+    if (el.classList.contains('gm-mono') || el.matches(SKIP) || (el.closest && el.closest(SKIP))) return false;
+    var tag = el.tagName, own = false;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') own = true;
+    else for (var n = el.firstChild; n; n = n.nextSibling) { if (n.nodeType === 3 && /\S/.test(n.nodeValue)) { own = true; break; } }
+    return own;
+  }
+  function run(root) {
+    var list = [], all = root.querySelectorAll ? root.querySelectorAll('*') : [], i, el, cs, hit = [];
+    if (root.nodeType === 1) list.push(root);
+    for (i = 0; i < all.length; i++) list.push(all[i]);
+    for (i = 0; i < list.length; i++) { el = list[i]; if (el.nodeType === 1 && wanted(el)) hit.push(el); }
+    var mark = [];
+    for (i = 0; i < hit.length; i++) {
+      cs = getComputedStyle(hit[i]);
+      if (cs.display === 'none') continue;
+      if (parseInt(cs.fontWeight, 10) >= 600) continue;
+      if (cs.textTransform === 'uppercase') continue;
+      if (KEEP.test(cs.fontFamily)) continue;
+      mark.push(hit[i]);
+    }
+    for (i = 0; i < mark.length; i++) mark[i].classList.add('gm-mono');
+  }
+  function start() {
+    run(document.body);
+    var q = [], t = 0;
+    new MutationObserver(function (ms) {
+      ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) q.push(n); }); });
+      if (!t && q.length) t = setTimeout(function () { var b = q; q = []; t = 0; b.forEach(function (n) { if (n.isConnected) run(n); }); }, 120);
+    }).observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('load', function () { setTimeout(function () { run(document.body); }, 400); });
+  }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
