@@ -216,3 +216,38 @@ html body .faq-item summary>span:empty{display:none}
 /* Arthaland tiles: "31 STOREYS" vanished against a bright sky. */
 html body .arth-card::after{background:linear-gradient(180deg,rgba(5,5,6,.72) 0%,rgba(5,5,6,.25) 30%,rgba(5,5,6,0) 50%,rgba(5,5,6,.86) 100%) !important}
 html body .arth-top{color:rgba(236,235,231,.85) !important;text-shadow:0 1px 8px rgba(0,0,0,.55)}
+
+/* ── 9. Calculator pages look like the homepage (Oct 2026) ─────────────── */
+/* Rafael: "the boxes look plain". The 17 calculators share .calc-card,
+   .input-group and .section-divider, so one layer here lifts them all:
+   cards stand on an offset ink shadow like the homepage search panel, the
+   header carries an orange rule and icon tile, fields are solid white
+   slabs that lift when you point at them, and hints are plain readable
+   text instead of typewriter capitals. */
+html body .calc-card{border:2px solid var(--t-ink) !important;box-shadow:8px 8px 0 var(--t-ink) !important;overflow:visible !important;margin-bottom:34px !important}
+html body.dark-mode .calc-card{border-color:#3a3833 !important;box-shadow:8px 8px 0 rgba(223,53,0,.55) !important}
+html body .calc-card-header{position:relative;padding:20px 24px 18px !important;border-bottom:0 !important;background:#0a0a0a linear-gradient(135deg,#141412 0%,#0a0a0a 60%) !important}
+html body .calc-card-header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--t-btn) 0 64px,rgba(255,61,0,.35) 64px 100%)}
+html body .calc-card-header h2{font-size:19px !important;gap:12px !important}
+html body .calc-card-header h2 i{width:34px;height:34px;display:inline-flex !important;align-items:center;justify-content:center;background:var(--t-btn);color:#fff !important;font-size:15px !important;flex-shrink:0;box-shadow:3px 3px 0 rgba(255,255,255,.18)}
+html body .calc-card-header p{margin-top:10px !important;margin-left:46px !important;color:rgba(241,238,233,.78) !important}
+html body .calc-body{padding:26px 24px 22px !important;background:var(--ab-paper) linear-gradient(180deg,rgba(10,10,10,.025),transparent 120px) !important}
+html body .input-group{margin-bottom:18px !important}
+html body .input-group label{color:var(--t-ink) !important;opacity:.82;font-size:11.5px !important}
+html body.dark-mode .input-group label{color:#f1eee9 !important}
+html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select){background:#fff !important;border:2px solid var(--t-ink) !important;min-height:52px;padding:13px 16px !important;font-size:16px !important;font-weight:700 !important;box-shadow:3px 3px 0 rgba(10,10,10,.14) !important;transition:transform .16s var(--t-ease),box-shadow .16s var(--t-ease),border-color .16s !important}
+html body.dark-mode .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select){background:#1a1917 !important;border-color:#4a4843 !important;box-shadow:3px 3px 0 rgba(0,0,0,.5) !important}
+@media(hover:hover){html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select):not(:focus):hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--t-btn) !important}}
+html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select):focus{box-shadow:5px 5px 0 var(--t-btn),0 0 0 3px rgba(255,61,0,.22) !important}
+html body .input-hint{font-family:'Inter',system-ui,sans-serif !important;font-size:12.5px !important;letter-spacing:0 !important;font-weight:500 !important;line-height:1.55 !important;margin-top:8px !important}
+html body .section-divider{display:flex !important;align-items:center;gap:10px;border-top:2px dashed var(--ab-line,#d6d1c7) !important;padding-top:22px !important;margin:28px 0 16px !important;font-weight:800 !important;font-family:'JetBrains Mono',monospace}
+html body .section-divider::before{content:'';width:22px;height:4px;background:var(--t-btn);flex-shrink:0}
+html body :is(.alarm,.result-block,.result-item,.result-mini,.vs-card,.phase){box-shadow:4px 4px 0 rgba(10,10,10,.12)}
+html body.dark-mode :is(.alarm,.result-block,.result-item,.result-mini,.vs-card,.phase){box-shadow:4px 4px 0 rgba(0,0,0,.5)}
+@media(max-width:560px){
+  html body .calc-card{box-shadow:5px 5px 0 var(--t-ink) !important;margin-right:5px}
+  html body .calc-card-header{padding:18px 18px 16px !important}
+  html body .calc-card-header p{margin-left:0 !important}
+  html body .calc-body{padding:22px 18px 18px !important}
+}
+@media(prefers-reduced-motion:reduce){html body .input-group :is(input,select){transition:none !important}}
