@@ -310,8 +310,40 @@ const taskSchema = new mongoose.Schema({
     verdict: { type: String, default: '' },
     note:    { type: String, default: '', maxlength: 1000 },
     at:      { type: Date, default: null }
+  },
+  // Oct 2026 staff hardening. proofChannel: the posting channel key (SM, SM2..)
+  // a post task was done on; proofShots: screenshots added as EXTRA proof
+  // (never the only proof of a post); closeFlags: why a close looked wrong
+  // ('bulk' = several closed within minutes, 'self_made' = staff gave it to
+  // themselves); proofCheck: the server's own check of the proof link.
+  proofChannel: { type: String, default: '', maxlength: 20 },
+  proofShots: { type: [{ _id: false, url: String, publicId: String, at: Date }], default: () => [] },
+  closeFlags: { type: [String], default: () => [] },
+  proofCheck: {
+    ok:     { type: Boolean, default: null },
+    kind:   { type: String, default: '' },        // fb_post | instagram | portal | page | none
+    reason: { type: String, default: '', maxlength: 300 },
+    at:     { type: Date, default: null }
   }
 }, { timestamps: true });
+
+// ── DELETED TASKS (Oct 2026) ─────────────────────────────────
+// A deleted task is copied here first, whole, so a deletion can never make
+// work (or missing work) disappear. Only admins can delete tasks.
+const deletedTaskSchema = new mongoose.Schema({
+  taskId:        { type: String, required: true, index: true },
+  title:         { type: String, default: '' },
+  kind:          { type: String, default: '' },
+  status:        { type: String, default: '' },
+  dueDate:       { type: Date, default: null },
+  assignedTo:    [{ type: mongoose.Schema.Types.ObjectId, ref: 'Account' }],
+  deletedBy:     { type: String, default: '' },     // account id
+  deletedByName: { type: String, default: '' },
+  reason:        { type: String, default: '', maxlength: 500 },
+  copy:          { type: mongoose.Schema.Types.Mixed, default: null },
+  deletedAt:     { type: Date, default: Date.now, index: true }
+});
+const DeletedTask = mongoose.model('DeletedTask', deletedTaskSchema);
 
 // ── STAFF DAY (one per person per Manila date) ──────────────
 // Time in / time out, the status they are showing right now, and the
@@ -336,7 +368,16 @@ const staffDaySchema = new mongoose.Schema({
   // activeByHour: { '9': 52, '10': 47, ... } in Manila hours.
   activeMin: { type: Number, default: 0 },
   activeByHour: { type: mongoose.Schema.Types.Mixed, default: undefined },
-  lastPulse: { type: Date, default: null }
+  lastPulse: { type: Date, default: null },
+  // Oct 2026: the minute-of-day (Manila, 0-1439) of every active minute, so
+  // idle stretches and lunch can be worked out exactly instead of guessed.
+  mins: { type: [Number], default: undefined },
+  // Minutes used while NOT timed in (counted, and flagged, instead of lost).
+  untimedMin: { type: Number, default: 0 },
+  // Closed by the server at 18:30 because nobody pressed Time out.
+  autoOut: { type: Boolean, default: false },
+  // Timed out (or auto-closed) without an end-of-day report.
+  noReport: { type: Boolean, default: false }
 }, { timestamps: true });
 staffDaySchema.index({ account: 1, day: 1 }, { unique: true });
 
@@ -1459,6 +1500,11 @@ const leadSchema = new mongoose.Schema({
     notes:     { type: String, default: '', maxlength: 2000 }
   },
   tags:     { type: [String], default: [] },
+  // The office sheet's Priority and Source columns (Oct 2026). source is the
+  // channel the person came from in plain words; filled from the first
+  // recorded source when empty.
+  priority: { type: String, enum: ['low', 'normal', 'high', 'urgent'], default: 'normal' },
+  source:   { type: String, default: '', maxlength: 80 },
   // Marketing consent under RA 10173 / NPC Circular 2023-04: only ever true
   // from a clear action (a ticked box, a confirmed alert, a newsletter
   // sign-up, or staff recording a consent they obtained). Replying to what a
@@ -1556,6 +1602,7 @@ module.exports = {
   AuditLog,
   Account,
   Task,
+  DeletedTask,
   StaffDay,
   StaffPosting,
   StaffMessage,

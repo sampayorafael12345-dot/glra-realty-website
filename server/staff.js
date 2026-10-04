@@ -21,7 +21,8 @@
 // and reading everyone's desk needs tasks_create.
 // =============================================================================
 const mongoose = require('mongoose');
-const { Task, StaffDay, StaffPosting, StaffMessage, AuditLog, Setting, Account, Lead, Inquiry, PropertySubmission, Property } = require('./db');
+const { Task, DeletedTask, StaffDay, StaffPosting, StaffMessage, AuditLog, Setting, Account, Lead, Inquiry, PropertySubmission, Property } = require('./db');
+const rules = require('./staff-rules');
 const { verifyToken, requirePermission, logAudit } = require('./auth');
 
 const KINDS = ['lead', 'followup', 'email', 'facebook', 'social', 'portal', 'upload', 'photos',
@@ -40,6 +41,17 @@ function dayStart(dayStr) { return new Date(dayStr + 'T00:00:00+08:00'); }
 function clean(s, max) { return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim().slice(0, max); }
 function cleanUrl(u) { const s = clean(u, 500); return /^https?:\/\//i.test(s) ? s : ''; }
 
+// The boss for one task: an admin, or someone allowed to hand out work who is
+// NOT doing this task. Nobody approves, sends back or moves the due date of
+// their own work (Oct 2026: a staff account that had been given task powers
+// could otherwise sign off its own tasks).
+async function bossFor(req, task) {
+  if (req.user.role === 'admin') return true;
+  const a = await Account.findById(req.user.sub).select('role permissions').lean();
+  if (a && a.role === 'admin') return true;
+  const assigned = (task.assignedTo || []).some(x => String(x._id || x) === String(req.user.sub));
+  return !assigned && !!(a && a.permissions && a.permissions.tasks_create === true);
+}
 async function managerCheck(req) {
   if (req.user.role === 'admin') return true;
   const a = await Account.findById(req.user.sub).select('role permissions').lean();
@@ -121,7 +133,7 @@ function presence(lastSeen) {
   return m < 3 ? 'online' : m < 15 ? 'idle' : 'offline';
 }
 
-const TASK_FIELDS = 'title description kind status priority dueDate assignedTo createdBy completedAt startedAt checklist propertyId issueKey link proofUrl proofNote recurrence review reviewNote reviewedAt botCheck points category reference updates createdAt updatedAt';
+const TASK_FIELDS = 'title description kind status priority dueDate assignedTo createdBy completedAt startedAt checklist propertyId issueKey link proofUrl proofNote recurrence review reviewNote reviewedAt botCheck points category reference updates createdAt updatedAt proofCheck proofShots proofChannel closeFlags attachments';
 
 async function tasksFor(accountId, sinceDays) {
   const since = new Date(Date.now() - (sinceDays || 60) * 864e5);
@@ -189,11 +201,11 @@ async function getConfig() {
   const doc = await Setting.findOne({ key: 'staff_config' }).lean();
   const v = (doc && doc.value) || {};
   const channels = Array.isArray(v.channels) && v.channels.length ? v.channels : DEFAULT_CHANNELS;
-  return { channels, targets: v.targets || {} };
+  return { channels, targets: v.targets || {}, notStaff: Array.isArray(v.notStaff) ? v.notStaff.map(String) : [] };
 }
 function targetsFor(cfg, id) { return { ...DEFAULT_TARGETS, ...((cfg.targets || {})[String(id)] || {}) }; }
 
-const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
+const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
 // What one person got done between two instants.
 async function countsFor(acc, from, to) {
   const email = String(acc.email || '').toLowerCase();
@@ -234,9 +246,16 @@ async function progressFor(acc, cfg, todayDoc) {
 
 // Everyone the boss can hand work to: active employees (not agents, who
 // have their own workspace, and not pending sign-ups).
-async function staffList() {
-  return Account.find({ role: 'employee', isActive: { $ne: false }, status: { $ne: 'pending' } })
+// Accounts the admin has marked "not staff" (test or old accounts) are left
+// out of the desk, the snapshot and the weekly score (Oct 2026: they showed
+// up with all zeros).
+async function staffList(opts) {
+  const list = await Account.find({ role: 'employee', isActive: { $ne: false }, status: { $ne: 'pending' } })
     .select('name email role lastSeen lastLogin').sort({ name: 1 }).lean();
+  if (opts && opts.all) return list;
+  const cfg = await getConfig();
+  const skip = new Set(cfg.notStaff || []);
+  return list.filter(a => !skip.has(String(a._id)));
 }
 
 // Hand out tasks (the Staff tab and the cloud supervisor). A task with an
@@ -256,6 +275,14 @@ async function createStaffTasks(list, createdBy) {
     // (or to an agent or a pending sign-up) would sit where no one sees it.
     const assignedTo = asked.length ? (await Account.find({ _id: { $in: asked }, isActive: { $ne: false }, status: { $ne: 'pending' }, role: { $in: ['employee', 'admin'] } }).select('_id').lean()).map(a => a._id) : [];
     if (!assignedTo.length) { skipped.push({ title, why: 'Pick who does it (an active staff member)' }); continue; }
+    const due = t.dueDate && !isNaN(new Date(t.dueDate)) ? new Date(t.dueDate) : null;
+    const dueWhy = rules.dueProblem(due);
+    if (dueWhy) { skipped.push({ title, why: dueWhy }); continue; }
+    // The same task twice for the same person on the same day is a duplicate.
+    const sameTitle = new RegExp('^\\s*' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '\\s*$', 'i');
+    const twins = await Task.find({ assignedTo: { $in: assignedTo }, title: sameTitle, $or: [{ status: { $ne: 'done' } }, { completedAt: { $gte: new Date(Date.now() - 12 * 3600e3) } }] }).select('dueDate').lean();
+    if (twins.some(x => (x.dueDate ? manilaDay(x.dueDate) : '') === (due ? manilaDay(due) : ''))) { skipped.push({ title, why: 'Already on the list for that day' }); continue; }
+    const selfMade = createdBy && assignedTo.some(id => String(id) === String(createdBy)) && !(await Account.exists({ _id: createdBy, role: 'admin' }));
     const task = await Task.create({
       title,
       description: clean(t.description, 5000),
@@ -263,7 +290,8 @@ async function createStaffTasks(list, createdBy) {
       kind: KINDS.includes(t.kind) ? t.kind : 'other',
       priority: ['low', 'medium', 'high', 'critical'].includes(t.priority) ? t.priority : 'medium',
       assignedTo,
-      dueDate: t.dueDate && !isNaN(new Date(t.dueDate)) ? new Date(t.dueDate) : null,
+      dueDate: due,
+      closeFlags: selfMade ? ['self_made'] : [],
       checklist: (Array.isArray(t.checklist) ? t.checklist : []).map(x => clean(typeof x === 'string' ? x : x && x.text, 300)).filter(Boolean).slice(0, 30).map(text => ({ text })),
       propertyId: mongoose.isValidObjectId(t.propertyId) ? t.propertyId : null,
       issueKey,
@@ -277,6 +305,42 @@ async function createStaffTasks(list, createdBy) {
     created.push(task);
   }
   return { created, skipped };
+}
+
+// One day's time record, worked out from the time-in, the time-out and the
+// minute-by-minute activity (Oct 2026). Lunch (12:00-13:00) is never idle and
+// never paid; 15 minutes or more with no activity inside working time,
+// outside a break / field / meeting status, is idle.
+function timeRecordOf(sd, day) {
+  const W = rules.WORK;
+  const out = { day, timedIn: !!(sd && sd.checkIn), checkIn: (sd && sd.checkIn) || null, checkOut: (sd && sd.checkOut) || null,
+    autoOut: !!(sd && sd.autoOut), noReport: !!(sd && sd.noReport), late: false, lateMin: 0, leftEarlyMin: 0,
+    workedMin: 0, activeMin: (sd && sd.activeMin) || 0, untimedMin: (sd && sd.untimedMin) || 0, lunch: '12:00-13:00', idle: [], idleMin: 0 };
+  if (!sd || !sd.checkIn) return out;
+  const inC = rules.manilaClock(sd.checkIn);
+  out.lateMin = Math.max(0, inC.min - W.start);
+  out.late = out.lateMin > 15;
+  const isToday = day === manilaDay();
+  const endAt = sd.checkOut || (isToday ? new Date() : new Date(dayStart(day).getTime() + W.end * 60e3));
+  out.workedMin = rules.workedMinutes(sd.checkIn, endAt);
+  if (sd.checkOut) { const oc = rules.manilaClock(sd.checkOut); out.leftEarlyMin = Math.max(0, W.end - oc.min); }
+  const active = new Set(sd.mins || []);
+  const away = [];
+  const log = (sd.stateLog || []).map(x => ({ s: x.state, m: rules.manilaClock(x.at).min })).sort((a, b) => a.m - b.m);
+  log.forEach((x, i) => { if (['break', 'lunch', 'field', 'meeting'].includes(x.s)) away.push([x.m, log[i + 1] ? log[i + 1].m : 24 * 60]); });
+  const isAway = m => away.some(([a, b]) => m >= a && m < b);
+  const from = Math.max(inC.min, W.start), to = Math.min(rules.manilaClock(endAt).min, W.end);
+  // Only judge idle if minute data exists for this day (older days have none).
+  if (sd.mins && sd.mins.length) {
+    let run = null;
+    for (let m = from; m <= to; m++) {
+      const quiet = m < to && rules.isWorkMinute(m) && !active.has(m) && !isAway(m);
+      if (quiet) { if (run == null) run = m; }
+      else if (run != null) { if (m - run >= 15) out.idle.push({ from: rules.hm(run), to: rules.hm(m), min: m - run }); run = null; }
+    }
+    out.idleMin = out.idle.reduce((t, x) => t + x.min, 0);
+  }
+  return out;
 }
 
 // Everything one person did on one Manila day, in order, with the gaps.
@@ -311,7 +375,7 @@ async function buildActivity(accId, dayIn) {
   });
   const chName = k => (cfg.channels.find(c => c.key === k) || {}).label || k;
   posts.forEach(p => { if (p.source !== 'excel') ev.push({ at: p.postedAt, kind: 'post', text: `Posted on ${chName(p.channel)} · ${(p.property && p.property.title) || 'a listing'}`, url: p.url }); });
-  const LEAD_VERB = { call: 'Called', whatsapp: 'WhatsApp to', viber: 'Viber to', sms: 'Texted', email: 'Emailed', meeting: 'Met', viewing: 'Viewing with', listings_sent: 'Sent listings to', note: 'Note on', stage: 'Moved', assign: 'Assigned' };
+  const LEAD_VERB = { call: 'Called', whatsapp: 'WhatsApp to', viber: 'Viber to', messenger: 'Messenger to', sms: 'Texted', email: 'Emailed', meeting: 'Met', viewing: 'Viewing with', listings_sent: 'Sent listings to', note: 'Note on', stage: 'Moved', assign: 'Assigned' };
   leads.forEach(l => (l.activities || []).forEach(x => {
     if (x.by !== email || !x.at || x.at < from || x.at >= to || x.type === 'system') return;
     const who = l.name || (l.emails && l.emails[0]) || 'a lead';
@@ -339,7 +403,8 @@ async function buildActivity(accId, dayIn) {
   }
   const counts = await countsFor(acc, from, to);
   counts.activeMin = (sd && sd.activeMin) || 0;
-  return { day, account: { _id: acc._id, name: acc.name || acc.email }, staffDay: sd, events: ev, gaps, counts,
+  const timeRecord = timeRecordOf(sd, day);
+  return { day, account: { _id: acc._id, name: acc.name || acc.email }, staffDay: sd, events: ev, gaps, counts, timeRecord,
     activeByHour: (sd && sd.activeByHour) || {}, targets: targetsFor(cfg, accId) };
 }
 
@@ -396,7 +461,135 @@ async function buildSuggestions() {
     description: `${p.listingType || ''} · ${p.location || ''}`, since: p.createdAt
   }));
 
+  // Listings that look like the same unit twice, and listings with weak data.
+  (await listingProblems()).forEach(x => push(x));
   return out;
+}
+
+// Duplicate and weak listings (Oct 2026). Same unit = same building name
+// (brackets and punctuation ignored) AND the same floor area, price or main
+// photo. Weak = under 8 photos, a description under 200 characters, no map
+// location, or no floor/lot area or price.
+const normTitle = t => String(t || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]+/g, ' ').replace(/\b(for|sale|lease|rent|unit|the)\b/g, ' ').replace(/\s+/g, ' ').trim();
+async function listingProblems() {
+  const props = await Property.find({ status: 'available' })
+    .select('title location listingType price monthlyRental sqm landArea mainImage gallery description geo.status createdAt').lean();
+  const out = [];
+  const groups = {};
+  props.forEach(p => { const k = normTitle(p.title); if (k) (groups[k] = groups[k] || []).push(p); });
+  Object.values(groups).filter(g => g.length > 1).forEach(g => {
+    for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) {
+      const a = g[i], b = g[j];
+      const same = (a.sqm && a.sqm === b.sqm) || (a.price && a.price === b.price && a.listingType === b.listingType) || (a.mainImage && a.mainImage === b.mainImage);
+      if (!same) continue;
+      const [older, newer] = new Date(a.createdAt) <= new Date(b.createdAt) ? [a, b] : [b, a];
+      out.push({ group: 'Possible duplicate listings', kind: 'listing_fix', priority: 'high', issueKey: `dup:${older._id}:${newer._id}`,
+        title: `Duplicate? "${newer.title}" looks like "${older.title}"`, propertyId: newer._id, link: `/property/${newer._id}`,
+        description: `Same building and the same ${a.sqm && a.sqm === b.sqm ? 'floor area (' + a.sqm + ' sqm)' : a.mainImage === b.mainImage ? 'main photo' : 'price'}. Open both. If it is the same unit, merge the details into one and mark the other unavailable; if they are different units, add the unit or floor to both titles.`,
+        since: newer.createdAt });
+    }
+  });
+  props.forEach(p => {
+    const miss = [];
+    if ((p.gallery || []).length < 8) miss.push(`only ${(p.gallery || []).length} photos (8 or more)`);
+    if (String(p.description || '').trim().length < 200) miss.push('a short description (200+ characters)');
+    if (!(p.geo && p.geo.status === 'ok')) miss.push('no map location');
+    if (!(Number(p.sqm) > 0 || Number(p.landArea) > 0)) miss.push('no floor or lot area');
+    if (!(Number(p.price) > 0 || Number(p.monthlyRental) > 0)) miss.push('no price');
+    if (!miss.length) return;
+    out.push({ group: 'Listings with weak data', kind: 'listing_fix', priority: miss.some(m => /price|area/.test(m)) ? 'high' : 'medium',
+      issueKey: `weak:${p._id}`, title: `Fix "${p.title}": ${miss.length} problem${miss.length === 1 ? '' : 's'}`, propertyId: p._id, link: `/property/${p._id}`,
+      description: 'Missing: ' + miss.join('; ') + '.', since: p.createdAt });
+  });
+  return out;
+}
+
+// ── BOSS DASHBOARD (Oct 2026) ───────────────────────────────
+// One staff member over a period: grade trend, targets against proof-checked
+// actuals, late tasks, deleted tasks, unanswered leads by age, listing
+// problems, and a red / amber / green summary of the lot.
+async function dashboardFor(acc, days, dayListIn) {
+  const cfg = await getConfig();
+  const today = manilaDay();
+  let dayList = [];
+  // Days still to come are not counted (a Monday weekly view has 1 day so far, not 5).
+  if (Array.isArray(dayListIn) && dayListIn.length) {
+    dayList = dayListIn.slice().sort().filter(d => d <= today);
+    if (!dayList.length) dayList = [today];
+  } else {
+    const want = Math.max(1, Math.min(31, days || 7));
+    for (let i = 0; dayList.length < want && i < 60; i++) {
+      const d = manilaDay(dayStart(today).getTime() - i * 864e5 + 12 * 3600e3);
+      if (rules.isWorkday(dayStart(d).getTime() + 12 * 3600e3)) dayList.unshift(d);
+    }
+    if (!dayList.length) dayList = [today];
+  }
+  const n = dayList.length;
+  const t1 = new Date(Math.min(dayStart(dayList[n - 1]).getTime() + 864e5, dayStart(today).getTime() + 864e5));
+  const from = dayStart(dayList[0]);
+  const email = String(acc.email || '').toLowerCase();
+  const { StaffReport } = require('./db');
+  const [sds, posts, done, lateOpen, deleted, audits, reports, leadsWaiting] = await Promise.all([
+    StaffDay.find({ account: acc._id, day: { $in: dayList } }).lean(),
+    StaffPosting.find({ by: acc._id, source: { $ne: 'excel' }, postedAt: { $gte: from, $lt: t1 } }).select('url postedAt channel property').lean(),
+    Task.find({ assignedTo: acc._id, status: 'done', completedAt: { $gte: from, $lt: t1 } }).select('title kind proofUrl proofNote proofCheck checklist review closeFlags completedAt dueDate botCheck').lean(),
+    Task.find({ assignedTo: acc._id, status: { $ne: 'done' }, dueDate: { $lt: new Date() } }).select('title dueDate kind priority').sort({ dueDate: 1 }).limit(100).lean(),
+    DeletedTask.find({ $or: [{ assignedTo: acc._id }, { deletedBy: String(acc._id) }], deletedAt: { $gte: from } }).select('-copy').sort({ deletedAt: -1 }).limit(100).lean(),
+    AuditLog.find({ action: { $in: ['TASK_DELETED', 'TASK_REOPENED', 'TASK_DUE_CHANGED', 'TASK_BULK_CLOSE', 'DELETE'] }, timestamp: { $gte: from } }).sort({ timestamp: -1 }).limit(200).lean(),
+    StaffReport.find({ kind: 'morning', createdAt: { $gte: new Date(from.getTime() - 3 * 864e5) } }).select('day subject').sort({ day: 1 }).lean(),
+    Lead.find({ archived: { $ne: true }, stage: { $nin: ['won', 'lost'] }, lastAskAt: { $ne: null, $gte: new Date(Date.now() - 60 * 864e5) },
+      $expr: { $or: [{ $eq: [{ $ifNull: ['$lastContactAt', null] }, null] }, { $lt: ['$lastContactAt', '$lastAskAt'] }] } }).select('name emails lastAskAt').lean()
+  ]);
+  const tg = targetsFor(cfg, acc._id);
+  const goodPost = p => rules.checkProofUrl(p.url, /^SM/.test(p.channel) ? 'fb' : '').ok;
+  const verifiedPosts = posts.filter(goodPost).length;
+  const provenTasks = done.filter(t => t.review !== 'returned' && !(t.closeFlags || []).includes('self_made') && (t.checklist || []).every(c => c.done) && (String(t.proofNote || '').trim().length >= 10 || (t.proofCheck && t.proofCheck.ok)));
+  const contacts = (await Lead.aggregate([
+    { $match: { 'activities.by': email, 'activities.at': { $gte: from, $lt: t1 } } }, { $unwind: '$activities' },
+    { $match: { 'activities.by': email, 'activities.at': { $gte: from, $lt: t1 }, 'activities.type': { $in: CONTACT_TYPES } } },
+    { $project: { o: '$activities.outcome', t: '$activities.text' } }
+  ]));
+  const provenContacts = contacts.filter(c => String(c.o || '').trim() || String(c.t || '').trim().length >= 5).length;
+  const records = dayList.map(d => timeRecordOf(sds.find(x => x.day === d), d));
+  const worked = records.filter(r => r.timedIn);
+  const ageDays = d => (Date.now() - new Date(d).getTime()) / 864e5;
+  const leadAge = { underOneDay: 0, oneToTwo: 0, threePlus: 0 };
+  leadsWaiting.forEach(l => { const a = ageDays(l.lastAskAt); if (a < 1) leadAge.underOneDay++; else if (a < 3) leadAge.oneToTwo++; else leadAge.threePlus++; });
+  const problems = await listingProblems();
+  const grades = reports.map(r => ({ day: r.day, grade: (/grade\s+([A-F][+-]?)/i.exec(r.subject) || [])[1] || '' })).filter(x => x.grade && dayList.includes(x.day));
+  const wd = Math.max(1, worked.length);
+  const actual = { posts: verifiedPosts, contacts: provenContacts, tasks: provenTasks.length, activeMin: worked.reduce((t, r) => t + r.activeMin, 0) };
+  const target = { posts: tg.posts * n, contacts: tg.contacts * n, tasks: tg.tasks * n, activeMin: tg.activeMin * n };
+  const pct = k => target[k] ? Math.round(100 * actual[k] / target[k]) : null;
+  // Red / amber / green: the worst signal wins.
+  const signals = [];
+  const sig = (level, text) => signals.push({ level, text });
+  const missedDays = records.filter(r => !r.timedIn && r.day !== today).length;
+  if (missedDays) sig(missedDays > 1 ? 'red' : 'amber', `${missedDays} working day${missedDays === 1 ? '' : 's'} with no time-in`);
+  const noReport = records.filter(r => r.timedIn && (r.noReport || r.autoOut)).length;
+  if (noReport) sig('amber', `${noReport} day${noReport === 1 ? '' : 's'} without a proper time-out and report`);
+  if (deleted.length) sig('red', `${deleted.length} task${deleted.length === 1 ? '' : 's'} deleted`);
+  if (lateOpen.length) sig(lateOpen.length > 5 ? 'red' : 'amber', `${lateOpen.length} late task${lateOpen.length === 1 ? '' : 's'}`);
+  if (leadAge.oneToTwo + leadAge.threePlus) sig(leadAge.threePlus ? 'red' : 'amber', `${leadAge.oneToTwo + leadAge.threePlus} lead${leadAge.oneToTwo + leadAge.threePlus === 1 ? '' : 's'} unanswered for a working day or more`);
+  ['posts', 'contacts', 'tasks'].forEach(k => { const p = pct(k); if (p != null && p < 50) sig(p < 25 ? 'red' : 'amber', `${k} at ${p}% of target (proof-checked)`); });
+  const bulk = done.filter(t => (t.closeFlags || []).includes('bulk')).length;
+  if (bulk) sig('amber', `${bulk} task${bulk === 1 ? '' : 's'} closed in bulk`);
+  const idleMin = worked.reduce((t, r) => t + r.idleMin, 0);
+  if (idleMin >= 120) sig('amber', `${Math.round(idleMin / 6) / 10} h idle while timed in`);
+  const rag = signals.some(x => x.level === 'red') ? 'red' : signals.length ? 'amber' : 'green';
+  return {
+    account: { id: String(acc._id), name: acc.name || acc.email }, days: dayList, rag, signals, grades,
+    targets: target, actual, percent: { posts: pct('posts'), contacts: pct('contacts'), tasks: pct('tasks'), activeMin: pct('activeMin') },
+    daysWorked: worked.length, hoursWorked: Math.round(worked.reduce((t, r) => t + r.workedMin, 0) / 6) / 10, idleMin,
+    timeRecords: records,
+    lateTasks: lateOpen.map(t => ({ id: String(t._id), title: t.title, dueDate: t.dueDate, kind: t.kind, priority: t.priority })),
+    deletedTasks: deleted.map(d => ({ id: d.taskId, title: d.title, deletedAt: d.deletedAt, by: d.deletedByName, reason: d.reason })),
+    unansweredLeads: leadAge, unansweredLeadList: leadsWaiting.slice(0, 30).map(l => ({ id: String(l._id), name: l.name || (l.emails && l.emails[0]) || 'a lead', askedAt: l.lastAskAt })),
+    listingProblems: { duplicates: problems.filter(x => x.issueKey.startsWith('dup:')).length, weak: problems.filter(x => x.issueKey.startsWith('weak:')).length },
+    flaggedTasks: done.filter(t => (t.closeFlags || []).length || (t.botCheck && t.botCheck.verdict === 'problem')).map(t => ({ id: String(t._id), title: t.title, flags: t.closeFlags || [], botCheck: t.botCheck && t.botCheck.verdict || '' })),
+    audit: audits.filter(a => a.actor === email || (a.changes && JSON.stringify(a.changes).includes(String(acc._id))) || ['TASK_DELETED'].includes(a.action)).slice(0, 60)
+      .map(a => ({ action: a.action, by: a.actorName || a.actor, title: a.targetTitle, at: a.timestamp, changes: a.changes }))
+  };
 }
 
 function registerStaffRoutes(app) {
@@ -453,7 +646,10 @@ function registerStaffRoutes(app) {
       ]);
       // Opening the desk counts as reading what is on it.
       await StaffMessage.updateMany({ to: req.user.sub, readAt: null }, { $set: { readAt: new Date() } });
-      res.json({ today, me, day: td, recentDays: days.slice(0, 14), stats: scorecard(tasks, days), tasks, progress, messages, config: cfg });
+      // isStaff: this account is a real staff member (not marked "not staff"); the
+      // dashboard then always shows them their own desk, whatever their permissions.
+      const isStaff = me && me.role === 'employee' && !(cfg.notStaff || []).includes(String(req.user.sub));
+      res.json({ today, me, isStaff, day: td, recentDays: days.slice(0, 14), stats: scorecard(tasks, days), tasks, progress, messages, config: cfg, workHours: rules.WORK_TEXT });
     } catch (err) { console.error('staff me', err); res.status(500).json({ error: 'Server error' }); }
   });
 
@@ -465,7 +661,14 @@ function registerStaffRoutes(app) {
       const set = {};
       const now = new Date();
       if (b.action === 'in') { set.checkIn = now; set.checkOut = null; set.state = 'working'; set.stateAt = now; set.stateNote = ''; }
-      if (b.action === 'out') { set.checkOut = now; set.state = 'off'; set.stateAt = now; set.stateNote = ''; }
+      if (b.action === 'out') {
+        // The end-of-day report comes before time-out (Oct 2026).
+        const rep = clean(b.report !== undefined ? b.report : ((await StaffDay.findOne({ account: req.user.sub, day }).select('report').lean()) || {}).report, 4000);
+        if (req.user.role !== 'admin' && rep.replace(/[-*\s]/g, '').length < 20) {
+          return res.status(400).json({ error: 'Write your end-of-day report first (what you did today), then time out.' });
+        }
+        set.checkOut = now; set.state = 'off'; set.stateAt = now; set.stateNote = ''; set.noReport = false; set.autoOut = false;
+      }
       if (b.state !== undefined && STATES.includes(b.state)) { set.state = b.state; set.stateAt = now; set.stateNote = clean(b.stateNote, 200); }
       if (b.plan !== undefined) set.plan = clean(b.plan, 2000);
       if (b.report !== undefined) set.report = clean(b.report, 4000);
@@ -524,16 +727,17 @@ function registerStaffRoutes(app) {
       const task = await Task.findById(req.params.id);
       if (!task) return res.status(404).json({ error: 'Task not found' });
       const mgr = await managerCheck(req);
+      const boss = await bossFor(req, task);
       const mine = (task.assignedTo || []).some(a => a.toString() === req.user.sub) || task.createdBy.toString() === req.user.sub;
       if (!mgr && !mine) return res.status(403).json({ error: 'Not your task' });
       const b = req.body || {};
       const now = new Date();
       const who = req.user.name || req.user.email || '';
       const note = text => task.updates.push({ author: req.user.sub, authorName: who, authorEmail: req.user.email || '', text: clean(text, 2000), createdAt: now });
-      let spawned = null;
+      let spawned = null, reopened = false, dueMoved = null;
 
       // An approved task is closed: only the boss can change it again.
-      if (task.review === 'approved' && !mgr && ['start', 'check', 'stuck', 'submit', 'reopen'].includes(b.action)) {
+      if (task.review === 'approved' && !boss && ['start', 'check', 'stuck', 'submit', 'reopen'].includes(b.action)) {
         return res.status(403).json({ error: 'This task was checked and approved. Ask the boss if it needs more work.' });
       }
       switch (b.action) {
@@ -560,42 +764,93 @@ function registerStaffRoutes(app) {
           note(b.text);
           break;
         case 'submit': {
-          task.proofUrl = cleanUrl(b.proofUrl) || task.proofUrl;
-          // Checked here too, not only in the browser's Done box.
-          if (PROOF_KINDS.includes(task.kind) && !hasProofLink(task) && req.user.role !== 'admin') {
-            return res.status(400).json({ error: 'Paste the link to the post (or the listing page) to prove it is done.' });
+          const isAdmin = req.user.role === 'admin';
+          const url = cleanUrl(b.proofUrl) || task.proofUrl;
+          const pnote = clean(b.proofNote, 1000);
+          if (!isAdmin) {
+            // Oct 2026 rules: every step ticked, a proof note, and for a post a
+            // link to the post itself that has not been used before.
+            const open = (task.checklist || []).filter(c => !c.done).length;
+            if (open) return res.status(400).json({ error: `Tick all the steps first (${open} not ticked).` });
+            if (pnote.length < 10) return res.status(400).json({ error: "Write a short proof note: what you did and how Ma'am can check it." });
+            if (PROOF_KINDS.includes(task.kind)) {
+              if (!url) return res.status(400).json({ error: 'Paste the link to the post to prove it is done.' });
+              const chk = rules.checkProofUrl(url, task.kind === 'facebook' ? 'fb' : '');
+              if (!chk.ok) return res.status(400).json({ error: chk.reason });
+              const key = rules.normUrl(url);
+              const [otherTasks, otherPosts] = await Promise.all([
+                Task.find({ _id: { $ne: task._id }, proofUrl: { $ne: '' } }).select('proofUrl propertyId title').sort({ completedAt: -1 }).limit(3000).lean(),
+                StaffPosting.find({ url: { $ne: '' } }).select('url property channel').limit(8000).lean()
+              ]);
+              const usedTask = otherTasks.find(x => rules.normUrl(x.proofUrl) === key);
+              // The same post already logged on the posting board for THIS listing is fine.
+              const usedPost = otherPosts.find(x => rules.normUrl(x.url) === key && !(task.propertyId && String(x.property) === String(task.propertyId)));
+              if (usedTask || usedPost) return res.status(400).json({ error: 'That link was already used as proof' + (usedTask ? ` for "${usedTask.title}"` : ' for another post') + '. Each post needs its own link.' });
+              task.proofCheck = { ok: true, kind: chk.kind, reason: '', at: now };
+            }
           }
+          task.proofUrl = url || '';
+          if (url && !(task.proofCheck && task.proofCheck.at)) { const chk = rules.checkProofUrl(url, ''); task.proofCheck = { ok: chk.ok, kind: chk.kind, reason: chk.reason || '', at: now }; }
           task.status = 'done'; task.completedAt = now;
           if (!task.startedAt) task.startedAt = now;
-          task.proofNote = clean(b.proofNote, 1000);
+          task.proofNote = pnote;
+          // Several tasks closed within minutes looks like bulk closing: allowed,
+          // but flagged for the boss and the cloud checker.
+          const recent = await Task.countDocuments({ _id: { $ne: task._id }, assignedTo: req.user.sub, completedAt: { $gte: new Date(now.getTime() - 5 * 60e3) } });
+          if (recent >= 2 && !task.closeFlags.includes('bulk')) task.closeFlags.push('bulk');
           // A manager finishing their own task does not need to check it.
-          task.review = (mgr && req.user.role === 'admin') ? 'approved' : 'submitted';
+          task.review = (mgr && isAdmin) ? 'approved' : 'submitted';
           if (task.review === 'approved') task.reviewedAt = now;
           note('Marked done' + (task.proofNote ? ': ' + task.proofNote : '') + (task.proofUrl ? ` (${task.proofUrl})` : ''));
+          // A post on a listing becomes a dated, linked entry on the posting board.
+          if (PROOF_KINDS.includes(task.kind) && task.propertyId && task.proofUrl && task.proofCheck && task.proofCheck.ok) {
+            const cfg = await getConfig();
+            const ch = cfg.channels.find(c => c.key === clean(b.channel, 20)) || (task.kind === 'facebook' ? cfg.channels.find(c => c.key === 'SM') : null);
+            if (ch && !(await StaffPosting.exists({ property: task.propertyId, channel: ch.key, url: task.proofUrl }))) {
+              const me = await Account.findById(req.user.sub).select('name email').lean();
+              await StaffPosting.create({ property: task.propertyId, channel: ch.key, url: task.proofUrl, note: 'From task: ' + task.title.slice(0, 200), postedAt: now,
+                by: req.user.sub, byName: (me && (me.name || me.email)) || '' });
+              task.proofChannel = ch.key;
+            }
+          }
           spawned = await spawnNextTask(task);
+          if (task.closeFlags.includes('bulk')) await logAudit(req, 'TASK_BULK_CLOSE', 'Task', task._id, task.title, { closedInLast5Min: recent + 1 });
+          break;
+        }
+        case 'shot': {
+          // A screenshot already uploaded as an attachment becomes extra proof.
+          const att = (task.attachments || []).find(a => String(a._id) === String(b.attachmentId));
+          if (!att) return res.status(400).json({ error: 'Upload the screenshot first' });
+          if (!task.proofShots.some(x => x.url === att.url)) task.proofShots.push({ url: att.url, publicId: att.publicId, at: now });
+          note('Added a screenshot as proof');
           break;
         }
         case 'approve':
-          if (!mgr) return res.status(403).json({ error: 'Only the boss can approve' });
+          if (!boss) return res.status(403).json({ error: 'Only the boss can approve, and nobody approves their own task' });
           task.review = 'approved'; task.reviewedAt = now; task.reviewNote = clean(b.note, 1000);
           if (task.status !== 'done') { task.status = 'done'; task.completedAt = now; }
           note('Checked and approved' + (task.reviewNote ? ': ' + task.reviewNote : ''));
           spawned = await spawnNextTask(task);
           break;
         case 'return':
-          if (!mgr) return res.status(403).json({ error: 'Only the boss can send a task back' });
+          if (!boss) return res.status(403).json({ error: 'Only the boss can send a task back' });
           task.review = 'returned'; task.reviewedAt = now; task.reviewNote = clean(b.note, 1000) || 'Please look at this again';
           task.status = 'todo'; task.completedAt = null;
           note('Sent back: ' + task.reviewNote);
           break;
         case 'reopen':
           // Once the boss has approved it, only the boss can reopen it.
-          if (task.review === 'approved' && !mgr) return res.status(403).json({ error: 'This task was checked and approved. Ask the boss to reopen it.' });
+          if (task.review === 'approved' && !boss) return res.status(403).json({ error: 'This task was checked and approved. Ask the boss to reopen it.' });
+          reopened = task.status === 'done';
           task.status = 'todo'; task.completedAt = null; task.review = '';
           break;
         case 'snooze': {
-          if (!mgr) return res.status(403).json({ error: 'Only the boss can move a due date' });
-          task.dueDate = b.dueDate && !isNaN(new Date(b.dueDate)) ? new Date(b.dueDate) : null;
+          if (!boss) return res.status(403).json({ error: 'Only the boss can move a due date' });
+          const nd = b.dueDate && !isNaN(new Date(b.dueDate)) ? new Date(b.dueDate) : null;
+          const why = rules.dueProblem(nd);
+          if (why) return res.status(400).json({ error: why });
+          dueMoved = { from: task.dueDate, to: nd };
+          task.dueDate = nd;
           break;
         }
         default:
@@ -603,6 +858,9 @@ function registerStaffRoutes(app) {
       }
       await task.save();
       if (['submit', 'approve', 'return', 'stuck'].includes(b.action)) await logAudit(req, 'TASK_' + b.action.toUpperCase(), 'Task', task._id, task.title, null);
+      // Status reversals and due-date moves are written down too (Oct 2026).
+      if (reopened) await logAudit(req, 'TASK_REOPENED', 'Task', task._id, task.title, null);
+      if (dueMoved) await logAudit(req, 'TASK_DUE_CHANGED', 'Task', task._id, task.title, dueMoved);
       const fresh = await Task.findById(task._id).select(TASK_FIELDS).populate('createdBy', 'name email').populate('assignedTo', 'name email').lean();
       res.json({ task: fresh, spawned });
     } catch (err) { console.error('staff act', err); res.status(500).json({ error: 'Server error' }); }
@@ -614,19 +872,46 @@ function registerStaffRoutes(app) {
     try {
       const now = new Date();
       const hour = String(new Date(now.getTime() + 8 * 3600e3).getUTCHours());
+      const minute = rules.manilaClock(now).min;
+      const fresh = { $or: [{ lastPulse: null }, { lastPulse: { $lt: new Date(now.getTime() - 50e3) } }] };
       const doc = await StaffDay.findOneAndUpdate(
-        { account: req.user.sub, day: manilaDay(), checkIn: { $ne: null }, $or: [{ lastPulse: null }, { lastPulse: { $lt: new Date(now.getTime() - 50e3) } }] },
-        { $inc: { activeMin: 1, ['activeByHour.' + hour]: 1 }, $set: { lastPulse: now } },
+        { account: req.user.sub, day: manilaDay(), checkIn: { $ne: null }, checkOut: null, ...fresh },
+        { $inc: { activeMin: 1, ['activeByHour.' + hour]: 1 }, $set: { lastPulse: now }, $addToSet: { mins: minute } },
         { new: true, projection: { activeMin: 1 } }).lean();
       if (doc) return res.json({ ok: true, activeMin: doc.activeMin });
-      const day = await StaffDay.findOne({ account: req.user.sub, day: manilaDay() }).select('checkIn').lean();
-      res.json({ ok: false, timedIn: !!(day && day.checkIn) });
+      // Working in the dashboard without a time-in (or after time-out): the
+      // minutes are kept as "untimed" so the boss sees them, not lost.
+      const loose = await StaffDay.findOneAndUpdate(
+        { account: req.user.sub, day: manilaDay(), ...fresh },
+        { $inc: { untimedMin: 1 }, $set: { lastPulse: now }, $addToSet: { mins: minute } },
+        { upsert: true, new: true, setDefaultsOnInsert: true, projection: { checkIn: 1, checkOut: 1 } }).lean().catch(() => null);
+      res.json({ ok: false, timedIn: !!(loose && loose.checkIn && !loose.checkOut) });
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  });
+
+  // ── Dashboard: the boss sees anyone's, staff see their own (same numbers) ──
+  app.get('/api/admin/staff/dashboard', ...view, async (req, res) => {
+    try {
+      let accId = req.user.sub;
+      if (req.query.account && req.query.account !== req.user.sub) {
+        if (!(await managerCheck(req))) return res.status(403).json({ error: 'Not allowed' });
+        if (!mongoose.isValidObjectId(req.query.account)) return res.status(400).json({ error: 'Bad account' });
+        accId = req.query.account;
+      }
+      const acc = await Account.findById(accId).select('name email').lean();
+      if (!acc) return res.status(404).json({ error: 'Not found' });
+      res.json(await dashboardFor(acc, parseInt(req.query.days, 10) || 7));
+    } catch (err) { console.error('staff dashboard', err); res.status(500).json({ error: 'Server error' }); }
   });
 
   // ── Settings: posting channels and one person's daily targets ──
   app.get('/api/admin/staff/config', ...view, async (req, res) => {
-    try { res.json(await getConfig()); } catch (err) { res.status(500).json({ error: 'Server error' }); }
+    try {
+      const cfg = await getConfig();
+      // The boss also gets every employee account, to mark who is not real staff.
+      if (await managerCheck(req)) cfg.employees = (await staffList({ all: true })).map(a => ({ _id: a._id, name: a.name || a.email, email: a.email, lastSeen: a.lastSeen }));
+      res.json(cfg);
+    } catch (err) { res.status(500).json({ error: 'Server error' }); }
   });
   app.put('/api/admin/staff/config', ...manage, async (req, res) => {
     try {
@@ -643,12 +928,14 @@ function registerStaffRoutes(app) {
         })).filter(c => c.key && c.label && !seen.has(c.key) && seen.add(c.key));
         if (!next.channels.length) return res.status(400).json({ error: 'Keep at least one channel' });
       }
+      if (Array.isArray(b.notStaff)) next.notStaff = b.notStaff.map(String).filter(id => mongoose.isValidObjectId(id)).slice(0, 50);
+      else next.notStaff = cur.notStaff || [];
       if (b.targets && mongoose.isValidObjectId(b.targets.account)) {
         const n = (v, max) => Math.max(0, Math.min(max, parseInt(v, 10) || 0));
         next.targets[String(b.targets.account)] = { posts: n(b.targets.posts, 200), contacts: n(b.targets.contacts, 500), tasks: n(b.targets.tasks, 100), activeMin: n(b.targets.activeMin, 720) };
       }
       await Setting.findOneAndUpdate({ key: 'staff_config' }, { $set: { value: next, updatedAt: new Date() } }, { upsert: true });
-      await logAudit(req, 'UPDATE', 'StaffSettings', '', b.targets ? 'daily targets' : 'posting channels', null);
+      await logAudit(req, 'UPDATE', 'StaffSettings', '', b.targets ? 'daily targets' : Array.isArray(b.notStaff) ? 'who counts as staff' : 'posting channels', null);
       res.json(next);
     } catch (err) { console.error('staff config', err); res.status(500).json({ error: 'Server error' }); }
   });
@@ -675,6 +962,15 @@ function registerStaffRoutes(app) {
       if (!prop) return res.status(404).json({ error: 'Listing not found' });
       const url = cleanUrl(b.url);
       if (!url) return res.status(400).json({ error: 'Paste the link to the post (it is the proof)' });
+      // Facebook channels need the post itself; Authority to Sell can be any document link.
+      if (ch.key !== 'ATS') {
+        const chk = rules.checkProofUrl(url, /^SM/.test(ch.key) ? 'fb' : '');
+        if (!chk.ok) return res.status(400).json({ error: chk.reason });
+      }
+      const key = rules.normUrl(url);
+      const clash = (await StaffPosting.find({ url: { $ne: '' } }).select('url property').limit(8000).lean())
+        .find(x => rules.normUrl(x.url) === key && String(x.property) !== String(prop._id));
+      if (clash) return res.status(400).json({ error: 'That link is already recorded for another listing. Each post needs its own link.' });
       let postedAt = b.postedAt && !isNaN(new Date(b.postedAt)) ? new Date(b.postedAt) : new Date();
       if (postedAt > new Date(Date.now() + 5 * 60e3) || postedAt < new Date(Date.now() - 60 * 864e5)) postedAt = new Date();
       const me = await Account.findById(req.user.sub).select('name email').lean();
@@ -796,4 +1092,4 @@ function registerStaffRoutes(app) {
 }
 
 module.exports = { registerStaffRoutes, manilaDay, dayStart, scorecard, nextDue, spawnNextTask, PROOF_KINDS, hasProofLink, KINDS, TASK_FIELDS, getConfig, countsFor, progressFor,
-  staffList, createStaffTasks, buildActivity, buildSuggestions, tasksFor };
+  staffList, createStaffTasks, buildActivity, buildSuggestions, tasksFor, timeRecordOf, dashboardFor, listingProblems, CONTACT_TYPES };

@@ -755,7 +755,7 @@ const db = require('./server/db');
 const { applyWebsiteCover } = require('./server/cover');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
-  AlertLog, AuditLog, Account, Task, PropertySubmission, ScheduledEmail,
+  AlertLog, AuditLog, Account, Task, DeletedTask, PropertySubmission, ScheduledEmail,
   TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage, ListingView,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
@@ -3178,11 +3178,13 @@ startCasesTick({ sendEmail: caseMail, esc });
 // The Staff tab: scorecards, time in/out, task kinds with checklists and
 // proof, a review step, repeating tasks. Built on the Task collection.
 const { registerStaffRoutes, spawnNextTask, PROOF_KINDS: STAFF_PROOF_KINDS, hasProofLink } = require('./server/staff');
+const staffRules = require('./server/staff-rules');
 registerStaffRoutes(app);
 // The cloud supervisor (a scheduled Claude agent) reads the desk, hands out
 // the day's tasks and emails reports, with its own key: server/staff-bot.js.
 require('./server/staff-bot').registerStaffBot(app, { sendEmail, esc });
 require('./server/staff-bot').startWeeklyScore({ sendEmail, esc });
+require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
 // One-time notes for the staff member's desk (listing problems found on 30 Sept).
 setTimeout(() => require('./server/staff-memo').deliverStaffMemos(), 60e3);
 
@@ -6933,6 +6935,9 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     }
     if (update.dueDate !== undefined) {
       update.dueDate = update.dueDate && !isNaN(new Date(update.dueDate)) ? new Date(update.dueDate) : null;
+      // Staff tasks follow the working hours (9:00-18:00, lunch 12:00-13:00).
+      const why = existing.kind ? staffRules.dueProblem(update.dueDate) : '';
+      if (why) return res.status(400).json({ error: why });
     }
     if (update.title) update.title = String(update.title).trim().slice(0, 200);
     if (update.description !== undefined) update.description = String(update.description).slice(0, 5000);
@@ -6942,10 +6947,10 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     if (!hasEdit && existing.review === 'approved' && update.status && update.status !== 'done') {
       return res.status(403).json({ error: 'This task was checked and approved. Ask the boss if it needs more work.' });
     }
-    // A posting task needs its proof link, which only the staff desk's Done
-    // box asks for, so it cannot be finished from this board without one.
-    if (!hasEdit && update.status === 'done' && existing.status !== 'done' && STAFF_PROOF_KINDS.includes(existing.kind) && !hasProofLink(existing)) {
-      return res.status(400).json({ error: 'Finish this one on My desk so you can paste the link that proves it.' });
+    // A staff task is finished on My desk, where the steps, the proof note and
+    // the post link are checked (Oct 2026: before, only posting tasks were).
+    if (!isAdmin && update.status === 'done' && existing.status !== 'done' && existing.kind) {
+      return res.status(400).json({ error: 'Finish this one on My desk (Staff tab) so the steps and proof are recorded.' });
     }
     // Auto-manage completedAt
     if (update.status === 'done' && existing.status !== 'done') update.completedAt = new Date();
@@ -6958,6 +6963,11 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     }
 
     const task = await Task.findByIdAndUpdate(req.params.id, update, { new: true });
+    // Due-date moves and status reversals are written down on their own.
+    if (update.dueDate !== undefined && String(existing.dueDate || '') !== String(update.dueDate || '')) {
+      await logAudit(req, 'TASK_DUE_CHANGED', 'Task', task._id, task.title, { from: existing.dueDate, to: update.dueDate });
+    }
+    if (existing.status === 'done' && update.status && update.status !== 'done') await logAudit(req, 'TASK_REOPENED', 'Task', task._id, task.title, null);
     // A repeating task finished here makes its next copy, as on the staff desk.
     if (task && task.status === 'done' && existing.status !== 'done') await spawnNextTask(task).catch(e => console.error('spawn next task:', e.message));
     await logAudit(req, 'UPDATE', 'Task', task._id, task.title, update);
@@ -6969,15 +6979,26 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
 });
 
 // Delete — requires tasks_delete. Cleans Cloudinary attachments.
+// Oct 2026: admins only (a staff account had been deleting its own tasks), and
+// the whole task is copied to DeletedTask first, with who, when and why.
 app.delete('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_delete'), async (req, res) => {
   try {
+    const me = await Account.findById(req.user.sub).select('role name email').lean();
+    if (!(req.user.role === 'admin' || (me && me.role === 'admin'))) {
+      return res.status(403).json({ error: 'Only an admin can delete a task. Ask Ma\'am, or mark it stuck with the reason.' });
+    }
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
+    const reason = String((req.body && req.body.reason) || req.query.reason || '').trim().slice(0, 500);
+    await DeletedTask.create({ taskId: String(task._id), title: task.title, kind: task.kind || '', status: task.status, dueDate: task.dueDate,
+      assignedTo: task.assignedTo || [], deletedBy: String(req.user.sub), deletedByName: (me && (me.name || me.email)) || req.user.email || '',
+      reason, copy: task.toObject() });
     for (const att of (task.attachments || [])) {
       try { await cloudinary.uploader.destroy(att.publicId, { resource_type: att.resourceType || 'image' }); } catch {}
     }
     await Task.findByIdAndDelete(req.params.id);
     await logAudit(req, 'DELETE', 'Task', req.params.id, task.title, null);
+    await logAudit(req, 'TASK_DELETED', 'Task', req.params.id, task.title, { reason, assignedTo: (task.assignedTo || []).map(String), status: task.status, dueDate: task.dueDate });
     res.json({ success: true });
   } catch (err) {
     console.error('Task delete error:', err);

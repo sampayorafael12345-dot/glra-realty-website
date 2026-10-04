@@ -403,7 +403,11 @@ function isWaiting(l) {
   return !l.lastContactAt || new Date(l.lastContactAt) < new Date(l.lastAskAt);
 }
 // ── HELPERS FOR THE ROUTES ───────────────────────────────────
-const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
+const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
+// The office sheet's Source column in plain words, from how the lead first came in.
+const SOURCE_WORDS = { inquiry: 'Website enquiry', viewing: 'Website viewing request', valuation: 'Valuation request', submission: 'Owner submission',
+  saved_search: 'Saved search', price_alert: 'Price alert', wishlist: 'Wishlist', newsletter: 'Newsletter', manual: 'Added by staff', import: 'Imported list' };
+const sourceOf = l => l.source || SOURCE_WORDS[((l.sources || [])[0] || {}).kind] || 'Added by staff';
 function pushActivity(lead, a) {
   lead.activities.push(a);
   if (lead.activities.length > MAX_ACTIVITIES) lead.activities = lead.activities.slice(-MAX_ACTIVITIES);
@@ -423,7 +427,8 @@ function listRow(l) {
     intent: l.intent, touches: (l.sources || []).length, lastKind: src.kind || '', lastLabel: src.label || '', lastProperty: src.propertyTitle || '',
     waiting: isWaiting(l), lastMessage: (src.message || '').slice(0, 160), firstSource: ((l.sources || [])[0] || {}).kind || '',
     firstTouch: l.firstTouch || null, createdAt: l.createdAt, lastInboundAt: l.lastInboundAt, lastAskAt: l.lastAskAt, firstInboundAt: l.firstInboundAt,
-    firstResponseAt: l.firstResponseAt, lastContactAt: l.lastContactAt, nextFollowUp: l.nextFollowUp, followUpNote: l.followUpNote, archived: !!l.archived
+    firstResponseAt: l.firstResponseAt, lastContactAt: l.lastContactAt, nextFollowUp: l.nextFollowUp, followUpNote: l.followUpNote, archived: !!l.archived,
+    priority: l.priority || 'normal', source: sourceOf(l), lastDayOfContact: l.lastContactAt || null
   };
 }
 function median(a) { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
@@ -566,6 +571,8 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
         };
       }
       if (Array.isArray(b.tags)) lead.tags = Array.from(new Set(b.tags.map(t => cleanText(t, 30).toLowerCase()).filter(Boolean))).slice(0, 12);
+      if (b.priority !== undefined && ['low', 'normal', 'high', 'urgent'].includes(b.priority)) lead.priority = b.priority;
+      if (b.source !== undefined) lead.source = cleanText(b.source, 80);
       if (b.nextFollowUp !== undefined) {
         const d = b.nextFollowUp ? new Date(b.nextFollowUp) : null;
         lead.nextFollowUp = d && !isNaN(d) ? d : null;
@@ -611,11 +618,17 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
   app.post('/api/admin/leads/:id/activity', ...manage, async (req, res) => {
     try {
       const b = req.body || {};
-      const type = ['note', 'call', 'whatsapp', 'viber', 'sms', 'email', 'meeting', 'viewing'].includes(b.type) ? b.type : 'note';
+      const type = ['note', 'call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing'].includes(b.type) ? b.type : 'note';
       const lead = await Lead.findById(req.params.id);
       if (!lead) return res.status(404).json({ error: 'Lead not found' });
       const w = who(req);
-      pushActivity(lead, { type, outcome: cleanText(b.outcome, 60), text: cleanText(b.text, 3000), at: new Date(), ...w });
+      // A contact is only a contact with an outcome (Oct 2026): who (this lead),
+      // how (the type), when (now, or up to 7 days back) and what came of it.
+      const outcome = cleanText(b.outcome, 60), text = cleanText(b.text, 3000);
+      if (type !== 'note' && !outcome && text.length < 5) return res.status(400).json({ error: 'Say what happened (the outcome), e.g. "no answer", "will view Saturday".' });
+      let at = new Date();
+      if (b.at) { const d = new Date(b.at); if (!isNaN(d) && d <= new Date() && d > new Date(Date.now() - 7 * 864e5)) at = d; }
+      pushActivity(lead, { type, outcome, text, at, ...w });
       if (b.followUp) {
         const d = new Date(b.followUp);
         if (!isNaN(d)) { lead.nextFollowUp = d; lead.followUpNote = cleanText(b.followUpNote, 300); }
