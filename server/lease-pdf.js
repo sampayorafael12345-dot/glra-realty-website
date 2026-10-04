@@ -14,6 +14,9 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 
 const FONT_DIR = path.join(__dirname, 'fonts');
+// The real GLRA mark (white cut, cropped tight) for the black letterhead band.
+const LOGO_WHITE = path.join(__dirname, 'glra-logo-white.png');
+const LOGO_RATIO = 330 / 176;
 const FONTS = {
   sans: path.join(FONT_DIR, 'Inter-Regular.ttf'),
   semi: path.join(FONT_DIR, 'Inter-SemiBold.ttf'),
@@ -77,8 +80,9 @@ function letterhead(doc, title, metaLines) {
   const w = W(doc);
   doc.save().rect(0, 0, w, 78).fill(INK).restore();
   doc.save().rect(0, 78, w, 4).fill(HOT).restore();
-  bold(doc, 22, WHITE).text('GLRA REALTY', M, 24, { characterSpacing: -0.8, lineBreak: false });
-  mono(doc, 7, HOT).text('PREMIER REAL ESTATE · MANILA', M, 50, { characterSpacing: 2, lineBreak: false });
+  try { doc.image(LOGO_WHITE, M, 16, { height: 34, width: 34 * LOGO_RATIO }); }
+  catch (e) { bold(doc, 22, WHITE).text('GLRA REALTY', M, 24, { characterSpacing: -0.8, lineBreak: false }); }
+  mono(doc, 6.5, HOT).text('LICENSED REAL ESTATE BROKER · METRO MANILA & LUZON', M, 58, { characterSpacing: 1.6, lineBreak: false });
   const rx = w / 2, rw = w / 2 - M;
   monoB(doc, 9.5, WHITE).text(title.toUpperCase(), rx, 26, { width: rw, align: 'right', characterSpacing: 2, lineBreak: false });
   let y = 42;
@@ -89,7 +93,8 @@ function letterhead(doc, title, metaLines) {
 function runningHead(doc, title) {
   const w = W(doc);
   doc.save().rect(0, 0, w, 26).fill(INK).restore();
-  bold(doc, 10, WHITE).text('GLRA REALTY', M, 8, { lineBreak: false });
+  try { doc.image(LOGO_WHITE, M, 5, { height: 16, width: 16 * LOGO_RATIO }); }
+  catch (e) { bold(doc, 10, WHITE).text('GLRA REALTY', M, 8, { lineBreak: false }); }
   mono(doc, 7, '#cfcfcf').text(title.toUpperCase(), w / 2, 10, { width: w / 2 - M, align: 'right', characterSpacing: 1.5, lineBreak: false });
   return 44;
 }
@@ -410,8 +415,9 @@ async function receiptPdf(l, p, c, H) {
   const w = W(doc);
   doc.save().rect(0, 0, w, 58).fill(INK).restore();
   doc.save().rect(0, 58, w, 3).fill(HOT).restore();
-  bold(doc, 18, WHITE).text('GLRA REALTY', M, 18, { characterSpacing: -0.6, lineBreak: false });
-  mono(doc, 6.5, HOT).text('PREMIER REAL ESTATE · MANILA', M, 40, { characterSpacing: 2, lineBreak: false });
+  try { doc.image(LOGO_WHITE, M, 10, { height: 26, width: 26 * LOGO_RATIO }); }
+  catch (e) { bold(doc, 18, WHITE).text('GLRA REALTY', M, 18, { characterSpacing: -0.6, lineBreak: false }); }
+  mono(doc, 6, HOT).text('LICENSED REAL ESTATE BROKER · METRO MANILA & LUZON', M, 42, { characterSpacing: 1.4, lineBreak: false });
   monoB(doc, 9, WHITE).text('ACKNOWLEDGEMENT RECEIPT', w / 2, 20, { width: w / 2 - M, align: 'right', characterSpacing: 2, lineBreak: false });
   bold(doc, 13, HOT).text(p.receiptNo || '', w / 2, 34, { width: w / 2 - M, align: 'right', lineBreak: false });
 
@@ -430,7 +436,7 @@ async function receiptPdf(l, p, c, H) {
   const cw = (w - 2 * M) / 3;
   label(doc, M, y, 'Mode'); sans(doc, 9.5).text(p.mode || '—', M, y + 10, { lineBreak: false });
   label(doc, M + cw, y, 'Reference'); sans(doc, 9.5).text(p.reference || '—', M + cw, y + 10, { width: cw - 8, lineBreak: false });
-  label(doc, M + 2 * cw, y, 'Balance after this payment'); semi(doc, 9.5, c.balance > 0 ? BAD : OK).text(c.balance > 0 ? `${H.peso(c.balance)} still due` : c.balance < 0 ? `${H.peso(-c.balance)} credit` : 'Fully paid to date', M + 2 * cw, y + 10, { width: cw, lineBreak: false });
+  label(doc, M + 2 * cw, y, 'Lease balance as of today'); semi(doc, 9.5, c.balance > 0 ? BAD : OK).text(c.balance > 0 ? `${H.peso(c.balance)} still due` : c.balance < 0 ? `${H.peso(-c.balance)} credit` : 'Fully paid to date', M + 2 * cw, y + 10, { width: cw, lineBreak: false });
   y += 34;
   if (p.note) { label(doc, M, y, 'Note'); sans(doc, 8.5, GRAY).text(p.note, M, y + 10, { width: w - 2 * M }); y += 12 + doc.heightOfString(p.note, { width: w - 2 * M }) + 6; }
 

@@ -251,3 +251,10 @@ html body.dark-mode :is(.alarm,.result-block,.result-item,.result-mini,.vs-card,
   html body .calc-body{padding:22px 18px 18px !important}
 }
 @media(prefers-reduced-motion:reduce){html body .input-group :is(input,select){transition:none !important}}
+
+/* ── 10. No side scrollbar on the page itself (Oct 2026) ───────────────── */
+/* The orange reading-progress bar along the top already shows how far down
+   you are, so the page's own orange scrollbar on the right was a second,
+   competing indicator. Inner scroll boxes (tables, menus) keep theirs. */
+html{scrollbar-width:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{width:0 !important;height:0 !important;display:none}

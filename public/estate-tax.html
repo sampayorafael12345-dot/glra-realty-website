@@ -94,7 +94,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 @media(max-width:900px){.calc-container{grid-template-columns:1fr}}
 @media(max-width:768px){.est-headline .value{font-size:30px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=129">
+<link rel="stylesheet" href="/css/tactile.css?v=130">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -327,7 +327,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=124"></script>
+<script src="/js/main.js?v=130"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -372,7 +372,9 @@ function recalc(){
   const inherited = Math.max(0, gross - debts - spouseShare);
 
   // Transfer & processing estimates (rough, based on property value)
-  const regFee = propVal * 0.0025 + 5000;   // Registry of Deeds registration (~0.25% + fixed)
+  // Registry of Deeds fee: the same LRA schedule as /ercf.html and the
+  // closing-fees calculator (the old ~0.25% + P5,000 guess disagreed with both).
+  const regFee = calculateRegistrationFee(propVal);
   const transferTax = propVal * 0.005;       // LGU transfer tax (~0.5%)
   const notarialPub = Math.max(8000, propVal * 0.005); // notarial for EJS + newspaper publication
   const transferTotal = estateTax + regFee + transferTax + notarialPub;
@@ -380,11 +382,11 @@ function recalc(){
   // Estate-tax card
   document.getElementById('estTax').textContent = fmtPeso(estateTax);
   document.getElementById('rGross').textContent = fmtPeso(gross);
-  document.getElementById('rStd').textContent = '−' + fmtPeso(STD_DEDUCTION);
-  document.getElementById('rFam').textContent = '−' + fmtPeso(famDeduction);
-  document.getElementById('rDebts').textContent = '−' + fmtPeso(debts);
+  document.getElementById('rStd').textContent = (STD_DEDUCTION>0?'−':'')+fmtPeso(STD_DEDUCTION);
+  document.getElementById('rFam').textContent = (famDeduction>0?'−':'')+fmtPeso(famDeduction);
+  document.getElementById('rDebts').textContent = (debts>0?'−':'')+fmtPeso(debts);
   document.getElementById('rowSpouse').style.display = shared ? '' : 'none';
-  document.getElementById('rSpouse').textContent = '−' + fmtPeso(spouseShare);
+  document.getElementById('rSpouse').textContent = (spouseShare>0?'−':'')+fmtPeso(spouseShare);
   document.getElementById('rNet').textContent = fmtPeso(net);
   document.getElementById('rTax').textContent = fmtPeso(estateTax);
 
@@ -400,6 +402,26 @@ function recalc(){
 }
 
 document.addEventListener('DOMContentLoaded', recalc);
+function calculateRegistrationFee(price) {
+  // LRA / Registry of Deeds tiered schedule
+  // Same brackets as the dedicated ERCF calculator (/ercf.html)
+  let baseFee = 0;
+  if (price <= 0) return 0;
+  else if (price <= 1700)    baseFee = 22;
+  else if (price <= 8000)    baseFee = 22    + Math.ceil((price - 1700)    / 500)   * 3.50;
+  else if (price <= 20000)   baseFee = 66    + Math.ceil((price - 8000)    / 500)   * 3.00;
+  else if (price <= 50000)   baseFee = 138   + Math.ceil((price - 20000)   / 500)   * 5.50;
+  else if (price <= 100000)  baseFee = 468   + Math.ceil((price - 50000)   / 500)   * 5.50;
+  else if (price <= 200000)  baseFee = 1018  + Math.ceil((price - 100000)  / 1000)  * 11;
+  else if (price <= 500000)  baseFee = 2118  + Math.ceil((price - 200000)  / 1000)  * 13;
+  else if (price <= 1000000) baseFee = 6018  + Math.ceil((price - 500000)  / 1000)  * 11;
+  else if (price <= 1700000) baseFee = 11518 + Math.ceil((price - 1000000) / 5000)  * 32;
+  else                       baseFee = 16000 + Math.ceil((price - 1700000) / 20000) * 90;
+  // Plus Legal Research Fund (1% of base fee, minimum P10) and IT Service Fee (P40)
+  const lrf = Math.max(10, baseFee * 0.01);
+  const itFee = 40;
+  return baseFee + lrf + itFee;
+}
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker/BIR.</div>
 <script src="/js/brutalist-shell.js?v=117" defer></script>

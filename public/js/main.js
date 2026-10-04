@@ -1144,11 +1144,20 @@ function glraLoadJsPDF() {
 // jsPDF's built-in fonts can't render ₱ or fancy dashes — swap for safe text.
 function glraPdfText(s) {
   return String(s == null ? '' : s)
-    .replace(/₱/g, 'PHP ')
-    .replace(/[–—]/g, '-')
+    // "(₱)" in a label must read "(PHP)", not "(PHP )".
+    .replace(/₱\s*(?=[)\]\/,]|$)/g, 'PHP')
+    .replace(/₱\s*/g, 'PHP ')
+    .replace(/[–—−‒]/g, '-')
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/ /g, ' ')
+    .replace(/×/g, 'x')
+    .replace(/…/g, '...')
+    .replace(/≥/g, '>=').replace(/≤/g, '<=')
+    .replace(/•/g, '-')
+    // Anything else outside Latin-1 prints as garbage in jsPDF's fonts.
+    .replace(/[^\x09\x0a\x20-\x7e\xa0-\xff]/g, '')
+    .replace(/ {2,}/g, ' ')
     .trim();
 }
 
@@ -1263,13 +1272,13 @@ async function glraBuildAndSavePDF(label, dataOverride) {
 
   // Report title + date. When data.bottomTitle is set the title is moved to the
   // FOOTER (closing-fees PDF), so only the date sits up here under the letterhead.
-  if (data.bottomTitle) {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
-    doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y);
-    y += 26;
-  } else {
+  // Report title + date, always under the letterhead (Oct 2026: the title used
+  // to drop to the footer as the browser-tab title on 3 of the 12 reports).
+  {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(10, 10, 10);
-    doc.text(glraPdfText(data.title || label || 'Report'), M, y);
+    const tl = doc.splitTextToSize(glraPdfText(data.title || label || 'Report'), W - 2 * M);
+    doc.text(tl, M, y);
+    y += (tl.length - 1) * 20;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
     doc.text('Generated ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }), M, y + 16);
     y += 40;
@@ -1282,16 +1291,30 @@ async function glraBuildAndSavePDF(label, dataOverride) {
     doc.text(glraPdfText(heading).toUpperCase(), M, y); y += 8;
     doc.setDrawColor(10, 10, 10); doc.setLineWidth(0.8); doc.line(M, y, W - M, y); y += 18;
     rows.forEach(function (pair) {
-      if (y > Hh - 70) { doc.addPage(); y = 58; }
+      if (y > Hh - 80) { doc.addPage(); y = 58; }
       var value = glraPdfText(pair[1]);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(10, 10, 10);
-      doc.text(value, W - M, y, { align: 'right' });
-      var vw = doc.getTextWidth(value);
-      // Wrap long labels (e.g. the city lists) so they never collide with the value.
-      doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 90, 90);
-      var lines = doc.splitTextToSize(glraPdfText(pair[0]), Math.max(60, (W - 2 * M) - vw - 16));
-      doc.text(lines, M, y);
-      y += Math.max(19, lines.length * 13 + 5);
+      var label = glraPdfText(pair[0]);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+      var vw = value ? doc.getTextWidth(value) : 0;
+      if (vw > (W - 2 * M) * 0.5) {
+        // A sentence, not a figure: label on its own line, the text wrapped
+        // full width under it (it used to run off the left edge).
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(90, 90, 90);
+        if (label) { doc.text(label, M, y); y += 14; }
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(10, 10, 10);
+        var vl = doc.splitTextToSize(value, W - 2 * M);
+        if (y + vl.length * 13 > Hh - 70) { doc.addPage(); y = 58; }
+        doc.text(vl, M, y);
+        y += vl.length * 13 + 8;
+      } else {
+        doc.setTextColor(10, 10, 10);
+        if (value) doc.text(value, W - M, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 90, 90);
+        var lines = doc.splitTextToSize(label, Math.max(60, (W - 2 * M) - vw - 20));
+        doc.text(lines, M, y);
+        y += Math.max(19, lines.length * 13 + 6);
+      }
+      doc.setDrawColor(228, 224, 216); doc.setLineWidth(0.4); doc.line(M, y - 13, W - M, y - 13);
     });
     y += 16;
   }
@@ -1303,13 +1326,17 @@ async function glraBuildAndSavePDF(label, dataOverride) {
   }
 
   // Footer — optional document-title line at the very bottom, then the disclaimer.
-  if (data.bottomTitle) {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(10, 10, 10);
-    doc.text(glraPdfText(data.bottomTitle), W / 2, Hh - 48, { align: 'center' });
+  // Footer on every page: a hairline, the disclaimer, and "Page x of y".
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(10, 10, 10); doc.setLineWidth(0.6); doc.line(M, Hh - 46, W - M, Hh - 46);
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
+    doc.text('Estimates only - please verify with your broker or bank before deciding. GLRA Realty - glrarealty.com',
+      M, Hh - 32, { maxWidth: W - 2 * M - 70 });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(10, 10, 10);
+    doc.text('Page ' + i + ' of ' + pages, W - M, Hh - 32, { align: 'right' });
   }
-  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120);
-  doc.text('Estimates only - please verify with your broker or bank before deciding. Generated from glrarealty.com.',
-    M, Hh - 34, { maxWidth: W - 2 * M });
 
   const fname = 'GLRA Realty - ' + String(label || 'Report').replace(/[^\w \-]/g, '') + '.pdf';
   doc.save(fname);
