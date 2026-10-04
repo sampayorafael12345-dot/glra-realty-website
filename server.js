@@ -563,6 +563,10 @@ app.use(express.static('public', {
   // Everything else (css, js, img, manifest) is safe to keep for a week —
   // the service worker's CACHE_VERSION is what retires an old asset.
   setHeaders(res, path) {
+    // cors() stamps "Vary: Origin" on everything, which tells an edge cache
+    // (Cloudflare) the file differs per caller and keeps it from storing
+    // static assets. They never differ, so say only what is true.
+    if (!/\.html?$/i.test(path)) res.setHeader('Vary', 'Accept-Encoding');
     if (/\.html?$/i.test(path)) {
       res.setHeader('Cache-Control', 'no-cache');
       // The two private portals say noindex in their <head> already; saying it
