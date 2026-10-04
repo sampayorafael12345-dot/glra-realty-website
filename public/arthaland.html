@@ -41,7 +41,6 @@
      sixteen letters those five names actually use. Five families for a few
      kilobytes. They must never be applied to anything but the names, or the
      missing glyphs will silently fall back. -->
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500&family=Bricolage+Grotesque:wght@700&family=EB+Garamond:wght@500&family=Newsreader:wght@400&family=Playfair+Display:wght@500&text=SondrisEluriaLivUnaLucima&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
@@ -452,7 +451,159 @@
   .close-bg,.close-veil,.noir-grain,.noir-vig{display:none}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=137">
+<style id="arth-brutalist">
+/* ═══ ARTHALAND HUB: BRUTALIST SKIN ═════════════════════════════════════
+   Same language as the home page: Inter 900 capitals for headings, the
+   map font (JetBrains Mono) for everything else, 2px hard borders, offset
+   shadows and one vermilion accent. Each building keeps its own serif for
+   its name only — that is its logo — and its own colour, which now shows
+   up as the offset shadow behind its picture. Loads after the page's
+   original block, so it only has to out-rank it. */
+:root[data-arth]{
+  --hot:#ff3d00;--ink:#f1eee9;--blk:#0a0a0a;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --disp:'Inter','Segoe UI',Arial,sans-serif;
+  --line:rgba(241,238,233,.9);--line-2:rgba(241,238,233,.9);
+  --shell:min(1400px,calc(100% - 80px));
+}
+@media(max-width:700px){:root[data-arth]{--shell:calc(100% - 40px)}}
+:root[data-arth] body{font-family:var(--mono) !important;background:var(--blk) !important;
+  background-image:linear-gradient(rgba(241,238,233,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(241,238,233,.04) 1px,transparent 1px) !important;
+  background-size:56px 56px !important}
+:root[data-arth]{background:var(--blk) !important}
+.noir-grain,.noir-vig{display:none !important}
+
+/* section numbers, like the home page */
+:root[data-arth] .ah{counter-reset:asec}
+:root[data-arth] .ah-sec{counter-increment:asec;border-top:2px solid var(--ink)}
+:root[data-arth] .ah-sec > .ah-wrap::before{
+  content:counter(asec,decimal-leading-zero) ".";display:block;
+  font:900 clamp(3.4rem,9vw,8rem)/.9 var(--disp);letter-spacing:-.05em;color:var(--ink);margin-bottom:26px}
+:root[data-arth] .ah-sec{--pad:clamp(70px,9vw,130px)}
+:root[data-arth] #properties > .ah-wrap::before,:root[data-arth] #compare > .ah-wrap::before{margin-top:0}
+
+/* type */
+:root[data-arth] body .ah h1,:root[data-arth] body .ah h2{
+  font-family:var(--disp) !important;font-weight:900 !important;text-transform:uppercase !important;
+  letter-spacing:-.045em !important;line-height:.94 !important;color:var(--ink) !important}
+:root[data-arth] body .ah h1.hero-name{font-size:clamp(2.6rem,7.4vw,6.4rem) !important;max-width:14ch}
+:root[data-arth] body .ah h2{font-size:clamp(2.4rem,6.2vw,5.4rem) !important;max-width:16ch}
+:root[data-arth] body .ah h3{font-family:var(--mono) !important;font-size:.9rem !important;font-weight:700 !important;letter-spacing:.14em !important;color:var(--hot) !important}
+:root[data-arth] body .ah .eyebrow{font-family:var(--mono) !important;font-size:13px !important;font-weight:700 !important;letter-spacing:.2em !important;color:var(--hot) !important}
+:root[data-arth] body .ah .eyebrow::before{content:"// "}
+:root[data-arth] body .ah .lede,:root[data-arth] body .ah .hero-sub{font-family:var(--mono) !important;font-size:clamp(1.05rem,1.5vw,1.25rem) !important;line-height:1.7 !important;color:rgba(241,238,233,.88) !important;max-width:62ch}
+:root[data-arth] body .ah .hero-sub{margin-top:22px !important}
+:root[data-arth] body .ah .lede{margin:44px 0 0 !important}
+:root[data-arth] body .ah .lede + .lede{margin-top:24px !important}
+:root[data-arth] body .ah .say h2{max-width:18ch}
+
+/* hero */
+:root[data-arth] .hero{background:var(--blk);border-bottom:2px solid var(--ink)}
+:root[data-arth] .hero-head{padding:clamp(44px,6vh,80px) 0 clamp(34px,4.6vh,56px)}
+:root[data-arth] .wall{gap:0;background:var(--ink);border-top:2px solid var(--ink)}
+:root[data-arth] .pane{border-right:2px solid var(--ink)}
+:root[data-arth] .pane:last-child{border-right:0}
+:root[data-arth] .pane-top b{font:900 clamp(2.4rem,4.2vw,4.2rem)/.9 var(--disp);letter-spacing:-.05em;color:#fff}
+:root[data-arth] .pane-top span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.2em;color:var(--ink)}
+:root[data-arth] .pane-name{font-size:clamp(1.5rem,2.3vw,2.2rem);bottom:128px}
+:root[data-arth] #navbar a.contact-btn-nav{background:var(--hot) !important;border-color:var(--hot) !important;color:#0a0a0a !important}
+:root[data-arth] .pane-meta{opacity:1;transform:none;border-top:2px solid var(--ink);padding-top:12px}
+:root[data-arth] .pane-meta b{font-family:var(--mono);font-size:14px;letter-spacing:.14em;color:#fff}
+:root[data-arth] .pane-meta i{font-family:var(--mono);font-size:13px;color:var(--ink);margin-top:5px}
+:root[data-arth] .pane-rule{height:8px;background:var(--hot);transform:scaleX(1)}
+:root[data-arth] .pane:hover .pane-rule{background:var(--ac)}
+
+/* statement numbers: boxed cells */
+:root[data-arth] .nums{border:2px solid var(--ink);border-block:2px solid var(--ink);gap:0;background:var(--blk)}
+:root[data-arth] .num{border-left:2px solid var(--ink);padding:48px 22px;text-align:left}
+:root[data-arth] .num:first-child{border-left:0}
+:root[data-arth] .num b{font:900 clamp(3rem,6.6vw,6rem)/.9 var(--disp);letter-spacing:-.05em;color:var(--ink)}
+:root[data-arth] .num b::after{content:".";color:var(--hot)}
+:root[data-arth] .num span{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.16em;color:var(--hot);margin-top:20px}
+
+/* building names: one brutalist voice, the colour carries the identity */
+:root[data-arth] body .ah .f-sondris,:root[data-arth] body .ah .f-eluria,:root[data-arth] body .ah .f-liv,:root[data-arth] body .ah .f-una,:root[data-arth] body .ah .f-lucima,
+:root[data-arth] body .ah h2.f-sondris,:root[data-arth] body .ah h2.f-eluria,:root[data-arth] body .ah h2.f-liv,:root[data-arth] body .ah h2.f-una,:root[data-arth] body .ah h2.f-lucima{
+  font-family:var(--disp) !important;font-weight:900 !important;text-transform:uppercase !important;letter-spacing:-.04em !important}
+/* the five */
+:root[data-arth] .five{gap:clamp(70px,8vw,120px)}
+:root[data-arth] .pl{gap:clamp(36px,5vw,76px)}
+:root[data-arth] .pl-fig{border:2px solid var(--ink);box-shadow:12px 12px 0 var(--ac);aspect-ratio:4/3}
+:root[data-arth] .pl:hover .pl-fig{box-shadow:16px 16px 0 var(--ac)}
+:root[data-arth] .pl-where{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.18em;border-left:4px solid var(--ac);padding-left:14px}
+:root[data-arth] body .ah .pl h2{font-size:clamp(3.2rem,7.4vw,6.6rem) !important;line-height:.92 !important}
+:root[data-arth] .pl-line{font-family:var(--mono);font-size:clamp(1rem,1.3vw,1.14rem);line-height:1.7;color:rgba(241,238,233,.9);max-width:50ch}
+:root[data-arth] .pl-facts{border:2px solid var(--ink);border-top:2px solid var(--ink);margin-top:34px}
+:root[data-arth] .pl-facts span{font-family:var(--mono);font-size:.98rem;font-weight:700;padding:15px 20px}
+:root[data-arth] .pl-facts span + span{border-left:2px solid var(--ink);padding-left:20px}
+:root[data-arth] .pl-go{margin-top:30px;gap:12px;padding:16px 26px;background:var(--hot);color:#0a0a0a;border:2px solid var(--ink);
+  font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:.16em;box-shadow:6px 6px 0 var(--ink);
+  transition:transform .2s,box-shadow .2s}
+:root[data-arth] .pl-go em{background:#0a0a0a;width:34px;transform:none}
+:root[data-arth] .pl:hover .pl-go{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink)}
+
+/* compare: a real boxed table */
+:root[data-arth] .cmp{border:2px solid var(--ink);margin-top:clamp(40px,5vw,64px);background:var(--blk)}
+:root[data-arth] .cmp-head{padding:18px 22px;background:var(--ink);border-bottom:2px solid var(--ink)}
+:root[data-arth] .cmp-head span{font-family:var(--mono);font-size:12px;font-weight:800;letter-spacing:.18em;color:#0a0a0a}
+:root[data-arth] .cmp-row{padding:26px 22px;border-bottom:2px solid var(--ink);gap:20px}
+:root[data-arth] .cmp-row:last-child{border-bottom:0}
+:root[data-arth] .cmp-row > span:not(.cmp-name){font-family:var(--mono);font-size:1rem;color:var(--ink)}
+:root[data-arth] .cmp-name{font-size:clamp(1.8rem,2.6vw,2.5rem) !important;color:var(--ink) !important}
+:root[data-arth] .cmp-from{font-weight:800}
+:root[data-arth] .cmp-row:hover,:root[data-arth] .cmp-row:focus-visible{background:var(--hot)}
+:root[data-arth] .cmp-row:hover > span,:root[data-arth] .cmp-row:hover .cmp-name{color:#0a0a0a !important}
+:root[data-arth] .cmp-foot{font-family:var(--mono);font-size:.95rem;line-height:1.7;color:rgba(241,238,233,.8);max-width:72ch;margin-top:30px !important}
+
+/* thread */
+:root[data-arth] .thread{background:#050505}
+:root[data-arth] .cert-list{gap:0;border:2px solid var(--ink);display:inline-flex;flex-wrap:wrap}
+:root[data-arth] .cert-list li{font-family:var(--mono);font-size:clamp(1.2rem,2vw,1.6rem);font-weight:800;letter-spacing:.12em;border:0;border-right:2px solid var(--ink);padding:22px 30px;transition:background .2s,color .2s}
+:root[data-arth] .cert-list li:last-child{border-right:0}
+:root[data-arth] .cert-list li:hover{background:var(--hot);color:#0a0a0a}
+:root[data-arth] .thread-note{font-family:var(--mono);font-size:1.05rem !important;line-height:1.7 !important;color:rgba(241,238,233,.9) !important;max-width:60ch}
+:root[data-arth] .thread-note + .thread-note{font-size:.98rem !important;color:rgba(241,238,233,.72) !important}
+
+/* close + buttons */
+:root[data-arth] .close-veil{background:linear-gradient(180deg,rgba(10,10,10,.94),rgba(10,10,10,.8) 46%,rgba(10,10,10,.96))}
+:root[data-arth] .close-bg{opacity:.38}
+:root[data-arth] .close .lede{color:var(--ink) !important}
+:root[data-arth] .close-btns{gap:22px}
+:root[data-arth] body .cta,:root[data-arth] body a.cta{background:var(--hot) !important;color:#0a0a0a !important;border:2px solid var(--ink) !important;
+  font-family:var(--mono) !important;font-size:14px !important;font-weight:800 !important;letter-spacing:.14em !important;padding:20px 34px;box-shadow:7px 7px 0 var(--ink)}
+:root[data-arth] body .cta:hover{background:var(--hot) !important;border-color:var(--ink) !important;transform:translate(-3px,-3px);box-shadow:10px 10px 0 var(--ink)}
+:root[data-arth] body .cta:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink)}
+:root[data-arth] body .cta.ghost{background:var(--blk) !important;color:var(--ink) !important}
+:root[data-arth] body .cta.ghost:hover{background:var(--ink) !important;color:#0a0a0a !important}
+:root[data-arth] body main#main a.cta.cta{background:var(--hot) !important;color:#0a0a0a !important;border:2px solid var(--ink) !important;box-shadow:7px 7px 0 var(--ink) !important;font-family:var(--mono) !important;font-size:14px !important;font-weight:800 !important;letter-spacing:.14em !important;padding:20px 34px !important}
+:root[data-arth] body main#main a.cta.cta:hover{background:var(--hot) !important;transform:translate(-3px,-3px);box-shadow:10px 10px 0 var(--ink) !important}
+:root[data-arth] body main#main a.cta.cta.ghost{background:var(--blk) !important;color:var(--ink) !important}
+:root[data-arth] body main#main a.cta.cta.ghost:hover{background:var(--ink) !important;color:#0a0a0a !important}
+:root[data-arth] body .ah .close .lede{margin-bottom:46px !important}
+:root[data-arth] .pane-name{font-size:clamp(1.15rem,1.7vw,1.6rem) !important}
+:root[data-arth] .disc{font-family:var(--mono);font-size:.9rem;line-height:1.8;color:rgba(241,238,233,.7);border-top:2px solid var(--ink)}
+
+@media(max-width:900px){
+  :root[data-arth] .pane{border-right:0;border-bottom:2px solid var(--ink);margin-bottom:0}
+  :root[data-arth] .pane-name{font-size:clamp(1.9rem,8vw,2.6rem) !important;color:#fff !important}
+  :root[data-arth] .pl-fig{box-shadow:8px 8px 0 var(--ac)}
+}
+@media(max-width:760px){
+  :root[data-arth] .num{border-left:0;border-top:2px solid var(--ink);padding:30px 18px}
+  :root[data-arth] .num:nth-child(2){border-left:2px solid var(--ink)}
+  :root[data-arth] .num:nth-child(3){border-left:0}
+  :root[data-arth] .num:nth-child(4){border-left:2px solid var(--ink)}
+  :root[data-arth] .num:first-child,:root[data-arth] .num:nth-child(2){border-top:0}
+  :root[data-arth] .cmp-head{display:none}
+  :root[data-arth] .cmp-row{padding:22px 16px}
+  :root[data-arth] .pl-facts{display:grid;grid-template-columns:1fr}
+  :root[data-arth] .pl-facts span + span{border-left:0;border-top:2px solid var(--ink);padding-left:20px}
+  :root[data-arth] .cert-list li{flex:1 1 50%;text-align:center;border-bottom:2px solid var(--ink)}
+  :root[data-arth] .cert-list li:nth-child(2n){border-right:0}
+  :root[data-arth] .cert-list li:nth-last-child(-n+2){border-bottom:0}
+}
+</style>
+<link rel="stylesheet" href="/css/tactile.css?v=138">
 </head>
 <body class="dark-mode">
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
