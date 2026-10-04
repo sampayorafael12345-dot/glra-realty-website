@@ -328,3 +328,29 @@ html body .search-card.search-card :is(button,a):not(.search-btn-main){letter-sp
 @media(max-width:560px){html body .search-card{box-shadow:5px 5px 0 #0a0a0a !important;margin-right:5px !important}html body.dark-mode .search-card{box-shadow:5px 5px 0 rgba(223,53,0,.55) !important}}
 html body .search-card.search-card #currencySelect,html body #currencySelect#currencySelect{font-family:'JetBrains Mono',ui-monospace,monospace !important;font-weight:700 !important;letter-spacing:1.2px !important;font-size:12.5px !important;text-transform:uppercase !important}
 @media (pointer:coarse){html body #currencySelect#currencySelect{font-size:16px !important}}
+
+/* ── 15. One panel colour, and listing tabs you can see (Oct 2026) ────────
+   The search row and the advanced-filter block painted their own darker
+   background (#0e0e0c) inside the panel (#141412), so the middle of the panel
+   looked blacker than its edges. They now take the panel's colour.
+   The All / For sale / For lease / Featured tabs were plain text with a thin
+   underline; Rafael could not see them. They are boxed buttons now: orange
+   icon, ink border, and the chosen one solid orange on an ink offset. */
+html body .search-card.search-card :is(.search-row,.advanced-filters,.filter-grid){background:transparent !important}
+html body .category-tabs-wrap.category-tabs-wrap{padding:14px 0 !important}
+html body .category-tabs.category-tabs{gap:10px !important;padding-top:2px !important;padding-bottom:8px !important;overflow:visible !important;flex-wrap:wrap}
+html body .category-tabs.category-tabs .tab-btn{display:inline-flex !important;align-items:center;gap:9px;min-height:46px !important;padding:0 20px !important;margin:0 !important;
+  border:2px solid var(--ab-ink,#0a0a0a) !important;background:var(--ab-paper,#f1eee9) !important;color:var(--ab-ink,#0a0a0a) !important;
+  font:800 12px/1 'JetBrains Mono',ui-monospace,monospace !important;letter-spacing:1.6px !important;text-transform:uppercase !important;
+  box-shadow:3px 3px 0 var(--ab-ink,#0a0a0a) !important;transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s,background-color .16s,color .16s !important}
+html body .category-tabs.category-tabs .tab-btn:first-child{padding-left:20px !important}
+html body .category-tabs.category-tabs .tab-btn i{color:#ff3d00 !important;font-size:13px !important}
+@media(hover:hover){html body .category-tabs.category-tabs .tab-btn:not(.active):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #df3500 !important;border-color:#df3500 !important}}
+html body .category-tabs.category-tabs .tab-btn.active{background:#df3500 !important;border-color:#0a0a0a !important;color:#fff !important;box-shadow:4px 4px 0 #0a0a0a !important}
+html body .category-tabs.category-tabs .tab-btn.active i{color:#fff !important}
+html body.dark-mode .category-tabs.category-tabs .tab-btn{background:#141412 !important;border-color:#4a4843 !important;color:#f1eee9 !important;box-shadow:3px 3px 0 #000 !important}
+html body.dark-mode .category-tabs.category-tabs .tab-btn.active{background:#df3500 !important;border-color:#df3500 !important;color:#fff !important;box-shadow:4px 4px 0 rgba(255,61,0,.35) !important}
+@media(max-width:640px){
+  html body .category-tabs.category-tabs{display:grid !important;grid-template-columns:1fr 1fr;padding-right:8px !important}
+  html body .category-tabs.category-tabs .tab-btn,html body .category-tabs.category-tabs .tab-btn:first-child{justify-content:center;padding:0 10px !important;letter-spacing:1px !important;font-size:11px !important}
+}
