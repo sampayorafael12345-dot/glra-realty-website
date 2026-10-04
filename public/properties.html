@@ -6,7 +6,14 @@
 
 <!-- glra-early-theme: prevents white flash before external CSS loads (must be FIRST in <head>) -->
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark-mode-pre')}catch(e){}})();</script>
-<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}</style>
+<style>html,body{background:#f1eee9;color:#0a0a0a}html.dark-mode-pre,html.dark-mode-pre body{background:#0e0e0c;color:#f1eee9}#glraEarlyLoader{position:fixed;inset:0;background:#f1eee9;z-index:2147483646;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Inter',system-ui,sans-serif}html.dark-mode-pre #glraEarlyLoader{background:#0e0e0c}#glraEarlyLoader b{font-size:48px;font-weight:900;letter-spacing:-2px;color:#0a0a0a;text-transform:uppercase;display:block}html.dark-mode-pre #glraEarlyLoader b{color:#f1eee9}#glraEarlyLoader i{display:block;width:120px;height:3px;background:rgba(0,0,0,.1);margin:18px auto 0;position:relative;overflow:hidden;font-style:normal}html.dark-mode-pre #glraEarlyLoader i{background:rgba(255,255,255,.1)}#glraEarlyLoader i::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:#ff3d00;animation:glraEarlyBar 1.2s linear infinite}@keyframes glraEarlyBar{from{left:-50%}to{left:100%}}#glraEarlyLoader.hide{opacity:0;transition:opacity .35s;pointer-events:none}
+/* One font across the browse toolbar (Oct 2026): the dropdowns were Inter
+   while the buttons beside them were JetBrains Mono capitals. */
+html body :is(#nearSelect,#sortSelect,#currencySelect){font-family:'JetBrains Mono',monospace !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:1.6px !important;font-size:11.5px !important}
+html body .currency-switcher > span,html body .currency-switcher .cs-label{font-family:'JetBrains Mono',monospace !important;font-weight:700 !important;letter-spacing:1.8px !important}
+/* iPhone zooms into any field under 16px, so touch screens keep 16px. */
+@media (pointer:coarse){html body :is(#nearSelect,#sortSelect,#currencySelect){font-size:16px !important;letter-spacing:.8px !important}}
+</style>
 <title>Browse Properties | GLRA Realty Philippines</title>
 <meta name="description" content="Browse premium properties for sale and lease in Metro Manila and Luzon. Save favorites, set price drop alerts, and find your perfect home with GLRA Realty.">
 <meta name="keywords" content="properties for sale philippines,properties for lease metro manila,real estate makati,condominiums BGC,house and lot philippines,GLRA Realty">
@@ -38,7 +45,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
-<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}</style>
+<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
 <link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
 <style>
@@ -569,6 +576,15 @@ html body .price-hist-range input[type=range]{position:absolute;left:0;top:0;wid
 .price-hist-range input[type=range]::-webkit-slider-runnable-track{background:transparent;height:30px}
 .price-hist-range input[type=range]::-moz-range-track{background:transparent;height:30px}
 .price-hist-range input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;margin-top:4px;background:#f1eee9;border:3px solid #0a0a0a;box-shadow:0 0 0 2px #ff3d00;cursor:grab}
+/* The site-wide slider rule (brutalist-theme.css §14) forces every range to a
+   6px track with a 14px margin and pulls the thumb up 6px, all !important; that
+   left this slider's thumb below its own track. Win it back here. */
+html body .price-hist-range input[type=range]{height:30px !important;margin:0 !important;background:transparent !important}
+html body .price-hist-range input[type=range]::-webkit-slider-runnable-track{height:30px !important;background:transparent !important}
+html body .price-hist-range input[type=range]::-webkit-slider-thumb{margin-top:4px !important;width:22px !important;height:22px !important;background:#f1eee9 !important;border:3px solid #0a0a0a !important}
+html body .price-hist-range input[type=range]::-moz-range-track{height:30px !important;background:transparent !important}
+html body .price-hist-range input[type=range]::-moz-range-progress{background:transparent !important}
+html body .price-hist-range input[type=range]::-moz-range-thumb{width:22px !important;height:22px !important;background:#f1eee9 !important;border:3px solid #0a0a0a !important}
 .price-hist-range input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:0;background:#f1eee9;border:3px solid #0a0a0a;box-shadow:0 0 0 2px #ff3d00;cursor:grab}
 .price-hist-range input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px #ff3d00}
 .price-hist-range input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px #ff3d00}
@@ -780,7 +796,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
    chip reads as "there is more", not as a mistake. */
 @media(max-width:768px){html body .popular-chips{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=130">
+<link rel="stylesheet" href="/css/tactile.css?v=133">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -1164,7 +1180,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <!--GLRA_LIST-->
-<script src="/js/main.js?v=130"></script>
+<script src="/js/main.js?v=133"></script>
 <script src="/js/smart-search.js?v=116"></script>
 <script src="/js/glra-maps.js?v=117"></script>
 <script src="/js/gallery.js?v=116" defer></script>
@@ -2721,7 +2737,7 @@ let liveRatesDate = null;
 
 // Cache key includes a version suffix — bump when the cache shape changes or
 // when we want to force-refresh stale rates on the next page load.
-const FX_CACHE_KEY = 'glraFxRates_v2';
+const FX_CACHE_KEY = 'glraFxRates_v3';
 const FX_TTL_MS = 6 * 60 * 60 * 1000;        // hard expiry: 6h (was 12h)
 const FX_REFRESH_MS = 2 * 60 * 60 * 1000;    // background refresh after 2h
 // Pin to a stable API endpoint with cache-busting via Date header.
@@ -2730,7 +2746,7 @@ const FX_FALLBACK = 'https://latest.currency-api.pages.dev/v1/currencies/php.jso
 
 async function loadLiveRates(){
   // Drop any pre-v2 cached payload so users on the old cache shape get fresh rates.
-  try{ localStorage.removeItem('glraFxRates'); }catch{}
+  try{ localStorage.removeItem('glraFxRates'); localStorage.removeItem('glraFxRates_v2'); }catch{}
 
   // 1. Try cache first
   try{
@@ -2749,19 +2765,15 @@ async function loadLiveRates(){
 }
 
 async function fetchAndApplyRates(){
-  let data;
-  // Pass {cache:'no-store'} so the browser doesn't replay a stale CDN response.
+  // Ask both copies of the rate feed at once and keep the newer one: the
+  // jsDelivr copy sits behind a CDN cache that can lag a day or more behind
+  // (Oct 2026: it still said 2026-10-03 when the other copy had 10-04).
   const init = { cache: 'no-store' };
-  try{
-    const r = await fetch(FX_PRIMARY, init);
-    if(!r.ok) throw new Error('primary HTTP '+r.status);
-    data = await r.json();
-  }catch(e1){
-    console.warn('FX primary failed:', e1.message, '— trying fallback');
-    const r = await fetch(FX_FALLBACK, init);
-    if(!r.ok) throw new Error('FX API unavailable (HTTP '+r.status+')');
-    data = await r.json();
-  }
+  const get = u => fetch(u, init).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+  const got = (await Promise.allSettled([get(FX_PRIMARY), get(FX_FALLBACK)]))
+    .filter(x => x.status === 'fulfilled' && x.value && x.value.php).map(x => x.value);
+  if(!got.length) throw new Error('FX API unavailable');
+  const data = got.sort((a, b) => String(b.date||'').localeCompare(String(a.date||'')))[0];
   const phpRates = data.php || {};
   const clean = {};
   Object.keys(CURRENCY_RATES).forEach(code => {
@@ -2811,16 +2823,18 @@ function changeCurrency(code){
   }
 }
 
+// "2026-10-04" -> "Oct 4, 2026", the way every other date on the site reads.
+function fxDateLabel(d){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]+' '+(+m[3])+', '+m[1] : (d||''); }
 function updateCurrencyNote(){
   const note = document.getElementById('currencyRateNote');
   if(!note) return;
   if(currentCurrency==='PHP'){
-    note.textContent = liveRatesDate ? 'Live rates as of ' + liveRatesDate : '';
+    note.textContent = liveRatesDate ? 'Live rates as of ' + fxDateLabel(liveRatesDate) : '';
   } else {
     const r = CURRENCY_RATES[currentCurrency];
     const phpPerUnit = (1 / r.rate).toFixed(2);
     let txt = '≈ 1 ' + currentCurrency + ' = ₱' + Number(phpPerUnit).toLocaleString();
-    if(liveRatesDate) txt += ' · live, as of ' + liveRatesDate;
+    if(liveRatesDate) txt += ' · live, as of ' + fxDateLabel(liveRatesDate);
     note.textContent = txt;
   }
 }

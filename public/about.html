@@ -37,7 +37,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
-<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}</style>
+<style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
 <link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
 
@@ -83,8 +83,26 @@
   .coverage-section h2{font-size:28px!important}
   .btn-gold,.btn-outline{margin:6px 0;display:flex;justify-content:center}
 }
+
+/* Even grids (Oct 2026): every row full, nothing orphaned, content centred. */
+html body .trust-strip .trust-grid{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+html body .trust-strip .trust-item{align-items:center !important;justify-content:center !important;text-align:center !important}
+@media(min-width:901px){html body .trust-strip .trust-item{border-right:1px solid var(--ab-line) !important}html body .trust-strip .trust-item:last-child{border-right:0 !important}}
+@media(max-width:900px){html body .trust-strip .trust-item{border-right:0 !important}html body .trust-strip .trust-item:nth-child(odd):not(:last-child){border-right:1px solid var(--ab-line) !important}}
+html body .values-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+html body .coverage-grid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;max-width:1100px;margin-left:auto !important;margin-right:auto !important}
+html body .coverage-item{justify-content:center !important}
+/* Catherine's photo is square: show all of it instead of cropping to 6:5. */
+html body .about-intro img{aspect-ratio:1/1 !important;height:auto !important;max-height:none !important;max-width:560px;justify-self:center;object-fit:cover;object-position:50% 20%}
+@media(max-width:900px){
+  html body .trust-strip .trust-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  html body .trust-strip .trust-item:last-child{grid-column:1/-1}
+  html body .values-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  html body .coverage-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+}
+@media(max-width:560px){html body .values-grid{grid-template-columns:1fr !important}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=130">
+<link rel="stylesheet" href="/css/tactile.css?v=133">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -280,7 +298,7 @@
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=130"></script>
+<script src="/js/main.js?v=133"></script>
 <script src="/js/brutalist-shell.js?v=117" defer></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/chat.js?v=121" defer></script>

@@ -565,10 +565,15 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     '.glra-mega-col{padding:20px 20px 18px;border-right:1px solid var(--ab-line,#0a0a0a);min-width:0}' +
     '.glra-mega-col:nth-child(4){border-right:0}' +
     '.glra-mega-h{display:flex;align-items:center;gap:8px;font:700 10.5px/1.2 "JetBrains Mono",monospace;letter-spacing:1.6px;text-transform:uppercase;color:var(--ab-hot-text,#c02e00);margin:0 0 12px;padding-bottom:10px;border-bottom:2px solid var(--ab-line,#0a0a0a)}' +
-    'html body .glra-mega .glra-mega-col a{display:block !important;padding:8px 0 !important;border:0 !important;background:none !important;color:var(--ab-ink,#0a0a0a) !important;' +
-    'font:600 13.5px/1.35 Inter,system-ui,sans-serif !important;letter-spacing:0 !important;text-transform:none !important;white-space:normal !important;height:auto !important}' +
-    'html body .glra-mega .glra-mega-col a:hover,html body .glra-mega .glra-mega-col a:focus-visible{color:var(--ab-hot-text,#c02e00) !important;text-decoration:underline !important;text-underline-offset:3px}' +
+    // Items read like the Guides dropdown (Oct 2026, Rafael's pick): bold Inter
+    // capitals with a "//" lead, hairline rows, and an inverted block on hover.
+    'html body .glra-mega .glra-mega-col a{display:block !important;padding:10px 10px !important;margin:0 -10px !important;border:0 !important;border-bottom:1px solid rgba(127,127,127,.22) !important;background:none !important;color:var(--ab-ink,#0a0a0a) !important;' +
+    'font:800 12px/1.35 Inter,system-ui,sans-serif !important;letter-spacing:.3px !important;text-transform:uppercase !important;white-space:normal !important;height:auto !important;text-decoration:none !important;transition:background-color .12s,color .12s}' +
+    'html body .glra-mega .glra-mega-col a:last-child{border-bottom:0 !important}' +
+    'html body .glra-mega .glra-mega-col a::before{content:"// ";font-weight:800}' +
+    'html body .glra-mega .glra-mega-col a:hover,html body .glra-mega .glra-mega-col a:focus-visible{background:var(--ab-ink,#0a0a0a) !important;color:var(--ab-paper,#f1eee9) !important;text-decoration:none !important}' +
     'html body .glra-mega .glra-mega-col a.is-here{color:var(--ab-hot-text,#c02e00) !important}' +
+    'html body .glra-mega .glra-mega-col a.is-here:hover{color:var(--ab-paper,#f1eee9) !important}' +
     '.glra-mega-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-top:2px solid var(--ab-line,#0a0a0a);background:var(--ab-paper-2,#e8e4dd)}' +
     '.glra-mega-foot span{font-size:13px;color:var(--ab-ink,#0a0a0a);font-family:Inter,system-ui,sans-serif}' +
     'html body .glra-mega .glra-mega-foot a{display:inline-flex !important;align-items:center !important;gap:8px !important;padding:10px 16px !important;border:0 !important;background:#df3500 !important;color:#fff !important;' +
@@ -921,10 +926,7 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     if (img.closest && img.closest(SKIP_IN)) return true;
     var aw = parseInt(img.getAttribute('width'), 10), ah = parseInt(img.getAttribute('height'), 10);
     if (aw && ah && aw < MIN && ah < MIN) return true;
-    var w = img.offsetWidth, h = img.offsetHeight;
-    if (w && w < MIN) return true;
-    if (w && h && h < 48) return true;
-    return false;
+    return false;                          // rendered size is checked in measure(), from the observer
   }
   function settle(img, host) {
     img.classList.remove('glra-img-wait', 'glra-ph');
@@ -937,21 +939,35 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     img.addEventListener('animationend', clean, { once: true });
     setTimeout(clean, 450);                // in case animations are suppressed
   }
-  function prep(img) {
-    if (img.__glraImg) return;
+  // Two phases (Oct 2026): measure every queued image first, then change
+  // classes. Interleaving the two made the browser redo layout once per image
+  // (~1 s of a slow phone's time on the Properties page with 60 cards).
+  // Sizes come from an IntersectionObserver entry, which the browser hands over
+  // after it has laid the page out anyway: reading them costs nothing, where
+  // offsetWidth here used to force an early layout of the whole page per batch.
+  function measure(img, box) {
+    if (img.__glraImg) return null;
     img.__glraImg = 1;
-    if (excluded(img)) return;
-    var pending = isPlaceholder(img) || !img.complete;
-    if (!pending) {                        // loaded (or already failed): leave it alone,
+    if (excluded(img)) return null;
+    var w = Math.round(box.width), h = Math.round(box.height);
+    if (w && w < MIN) return null;
+    if (w && h && h < 48) return null;
+    var rec = { img: img, pending: isPlaceholder(img) || !img.complete, w: w, h: h, p: img.parentElement };
+    if (rec.p && rec.p !== document.body) { rec.pw = rec.p.clientWidth; rec.ph = rec.p.clientHeight; }
+    return rec;
+  }
+  function apply(rec) {
+    var img = rec.img;
+    if (!rec.pending) {                    // loaded (or already failed): leave it alone,
       img.classList.remove('glra-img-wait', 'glra-ph', 'glra-img-in');   // bar classes a
-      var pp = img.parentElement;          // carousel clone may have copied from its original
+      var pp = rec.p;                      // carousel clone may have copied from its original
       if (pp && !pp.__glraHost) pp.classList.remove('glra-ph');
       return;
     }
-    var host = null, w = img.offsetWidth, h = img.offsetHeight;
+    var host = null, w = rec.w, h = rec.h;
     if (w >= MIN && h >= 48) {
-      var p = img.parentElement;
-      if (p && p !== document.body && Math.abs(p.clientWidth - w) <= 4 && Math.abs(p.clientHeight - h) <= 4) {
+      var p = rec.p;
+      if (p && p !== document.body && Math.abs(rec.pw - w) <= 4 && Math.abs(rec.ph - h) <= 4) {
         host = p;
         host.__glraHost = 1;
         host.classList.add('glra-ph');
@@ -983,16 +999,18 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     // Finished between the check above and now? Settle straight away.
     if (!isPlaceholder(img) && img.complete) onLoad();
   }
-  var queue = [], qPending = false;
-  function flush() {
-    qPending = false;
-    var q = queue; queue = [];
-    for (var i = 0; i < q.length; i++) if (q[i].isConnected) prep(q[i]);
-  }
+  var sizer = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+    var recs = [];
+    for (var i = 0; i < entries.length; i++) {
+      sizer.unobserve(entries[i].target);
+      if (entries[i].target.isConnected) { var r = measure(entries[i].target, entries[i].boundingClientRect); if (r) recs.push(r); }
+    }
+    for (var k = 0; k < recs.length; k++) apply(recs[k]);
+  }) : null;
   function enqueue(img) {
-    if (img.__glraImg) return;
-    queue.push(img);
-    if (!qPending) { qPending = true; frame(flush); }
+    if (img.__glraImg || img.__glraQ) return;
+    img.__glraQ = 1;
+    if (sizer) sizer.observe(img);
   }
   ready(function () {
     Array.prototype.forEach.call(document.images, enqueue);
@@ -1701,7 +1719,8 @@ window.glraOpenPrintGate = function (label, collectFn) {
       if (!('IntersectionObserver' in window)) return;
 
       var CARD_SEL = '.blog-card, .prop-card, .resource-card, .value-card, ' +
-                     '.testimonial-card, .neighborhood-card';
+                     '.testimonial-card, .neighborhood-card, .tool-card, .calc-card, ' +
+                     '.coverage-item, .arth-card, .area-card, .nh-card, .why-card, .step-card';
       var BLOCK_SEL = 'section, .about-intro, .values-bg, .stats-section, .calculator-container';
 
       function mark(el){
@@ -2024,11 +2043,22 @@ window.glraOpenPrintGate = function (label, collectFn) {
        cannot be read at all. */
     try { if (window.localStorage.getItem('glra_no_track') === '1') return; }
     catch (e) { return; }
-    (function(c,l,a,r,i,t,y){
-      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-      t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;
-      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, 'clarity', 'script', CLARITY_ID);
+    /* The recorder itself costs ~1 s of a mid-range phone's processor while
+       the page is still building (Oct 2026 profile), so it starts once the
+       page has loaded and the browser is idle, or at the first tap, scroll
+       or key press, whichever comes first. The command queue exists at once,
+       so nothing that calls clarity() early is lost. */
+    window.clarity = window.clarity || function(){ (window.clarity.q = window.clarity.q || []).push(arguments); };
+    var started = false;
+    function startClarity(){
+      if (started) return; started = true;
+      ['pointerdown','keydown','scroll','touchstart'].forEach(function(ev){ window.removeEventListener(ev, startClarity, true); });
+      var t = document.createElement('script'); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + CLARITY_ID;
+      var y = document.getElementsByTagName('script')[0]; y.parentNode.insertBefore(t, y);
+    }
+    ['pointerdown','keydown','scroll','touchstart'].forEach(function(ev){ window.addEventListener(ev, startClarity, { capture: true, passive: true, once: true }); });
+    function whenIdle(){ (window.requestIdleCallback || function(f){ setTimeout(f, 1500); })(startClarity, { timeout: 4000 }); }
+    if (document.readyState === 'complete') whenIdle(); else window.addEventListener('load', whenIdle, { once: true });
   })();
 
   /* 2) WhatsApp pre-filled greeting -------------------------------------- */
@@ -2231,3 +2261,127 @@ window.glraOpenPrintGate = function (label, collectFn) {
   (document.head || document.documentElement).appendChild(st);
 })();
 /* FAB-TUCK-END */
+
+
+// ── PREMIUM MOTION (Oct 2026) ─────────────────────────────────────────────
+// One layer for every public page, on top of the scroll reveal above:
+//   • section headings rise in word by word as they reach the screen
+//   • large photos unveil (a clip that opens upward with a slow settle)
+//   • cards carry a soft orange glow that follows the pointer
+//   • main buttons lean a few pixels toward the cursor ("magnetic")
+//   • the navbar gains a shadow once the page scrolls
+// Uses only transform/opacity/clip-path (no layout work), the CSS `translate`
+// and `scale` properties so it never fights the hover transforms in
+// tactile.css, and switches itself off for prefers-reduced-motion.
+(function () {
+  if (typeof window === 'undefined' || !document.documentElement) return;
+  if (/\/(admin|agent)\.html$/.test(location.pathname)) return;
+  var RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FINE = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+  function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+
+  ready(function () {
+    var root = document.documentElement;
+
+    // Navbar shadow once the page has moved.
+    var nav = document.querySelector('.navbar, .ab-nav');
+    if (nav) {
+      var onScroll = function () { nav.classList.toggle('gm-scrolled', window.scrollY > 12); };
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    }
+
+    if (RM || !('IntersectionObserver' in window)) return;
+    root.classList.add('gm');
+    var SKIP = 'nav, footer, header, .navbar, .modal, [role=dialog], .glra-mega, .page-hero, .ab-hero, .hero, form, .prop-card, .chat-widget';
+
+    // 1. Headings: split into words, each rises from below a clip line.
+    var heads = [].slice.call(document.querySelectorAll('main h2, section h2, .section-header h2, .values-section h2, .coverage-section h2, .about-intro h2'));
+    heads.forEach(function (h) {
+      if (h.closest(SKIP) || h.dataset.gm || (h.textContent || '').length > 90 || !h.getClientRects().length) return;   // hidden fallback copies are never animated
+      h.dataset.gm = '1';
+      var n = 0, walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT), nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (t) {
+        var parts = t.nodeValue.split(/(\s+)/), frag = document.createDocumentFragment();
+        parts.forEach(function (w) {
+          if (!w) return;
+          if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(w)); return; }
+          var o = document.createElement('span'), i = document.createElement('span');
+          o.className = 'gm-w'; i.className = 'gm-wi'; i.style.setProperty('--i', n++); i.textContent = w;
+          o.appendChild(i); frag.appendChild(o);
+        });
+        t.parentNode.replaceChild(frag, t);
+      });
+      h.classList.add('gm-head');
+    });
+
+    // 2. Big photos below the first screen unveil as they arrive.
+    var fold = window.innerHeight;
+    [].slice.call(document.querySelectorAll('main img, section img, .about-intro img, .pane img')).forEach(function (img) {
+      if (img.closest(SKIP)) return;
+      // Cards and the homepage's revealing sections already have an entrance of their own.
+      if (img.closest('.reveal, .gl-reveal, [class*="-card"], [class*="card-"]')) return;
+      var r = img.getBoundingClientRect();             // cheap tests first; the ancestor walk below is not
+      if (r.width < 260 || r.top < fold) return;      // never hold back what is already on screen
+      if (r.width > window.innerWidth * 0.95) return; // full-bleed photos have their own cinematic motion
+      // Photos inside a strip that scrolls sideways (the Arthaland reels) keep
+      // that strip's own motion, not this.
+      for (var p = img.parentElement; p && p !== document.body; p = p.parentElement) {
+        if (p.scrollWidth > p.clientWidth + 2 && /auto|scroll|hidden|clip/.test(getComputedStyle(p).overflowX)) return;
+      }
+      // A photo bigger than the frame that crops it is being panned or zoomed by its own section.
+      for (var q = img.parentElement; q && q !== document.body; q = q.parentElement) {
+        if (/hidden|clip/.test(getComputedStyle(q).overflow)) { var qr = q.getBoundingClientRect(); if (r.width > qr.width + 2 || r.height > qr.height + 2) return; break; }
+      }
+      img.classList.add('gm-img');
+    });
+
+    var ioFired = false;
+    var io = new IntersectionObserver(function (es) {
+      ioFired = true;
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('gm-in');
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
+    document.querySelectorAll('.gm-head, .gm-img').forEach(function (el) { io.observe(el); });
+    // Safety net: if the observer never reports at all, show everything (no
+    // measuring here: a forced layout of a long page cost ~250 ms on a phone).
+    setTimeout(function () {
+      if (!ioFired) document.querySelectorAll('.gm-head, .gm-img').forEach(function (el) { el.classList.add('gm-in'); });
+    }, 3000);
+
+    if (!FINE) return;
+
+    // 3. Pointer glow on cards (a child layer, so card transforms stay untouched).
+    var GLOW = '.prop-card, .tool-card, .value-card, .calc-card, .arth-card, .resource-card, .area-card, .nh-card, .testimonial-card, .coverage-item, .blog-card, .pane, .vs-card';
+    document.addEventListener('pointerover', function (ev) {
+      var c = ev.target.closest && ev.target.closest(GLOW);
+      if (!c || c.querySelector(':scope > .gm-glow')) return;
+      if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
+      var g = document.createElement('span'); g.className = 'gm-glow'; g.setAttribute('aria-hidden', 'true');
+      c.appendChild(g);
+    }, { passive: true });
+    document.addEventListener('pointermove', function (ev) {
+      var c = ev.target.closest && ev.target.closest(GLOW);
+      if (!c) return;
+      var r = c.getBoundingClientRect();
+      c.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
+      c.style.setProperty('--my', (ev.clientY - r.top) + 'px');
+    }, { passive: true });
+
+    // 4. Magnetic primary buttons.
+    var MAG = '.cta-btn, .submit-btn, .contact-btn-nav, .glra-btn, .calculate-btn, .print-btn, .view-all-btn, .cta-primary, .ss-cta, .reset-filters-btn';
+    var magEl = null;
+    document.addEventListener('pointermove', function (ev) {
+      var b = ev.target.closest && ev.target.closest(MAG);
+      if (magEl && magEl !== b) { magEl.style.translate = ''; magEl = null; }
+      if (!b) return;
+      var r = b.getBoundingClientRect();
+      var dx = (ev.clientX - (r.left + r.width / 2)) / (r.width / 2), dy = (ev.clientY - (r.top + r.height / 2)) / (r.height / 2);
+      b.style.translate = (dx * 5).toFixed(1) + 'px ' + (dy * 4).toFixed(1) + 'px'; magEl = b;
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', function () { if (magEl) { magEl.style.translate = ''; magEl = null; } });
+  });
+})();
