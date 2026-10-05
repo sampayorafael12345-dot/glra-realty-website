@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v142';
+const CACHE_VERSION = 'glra-cache-v143';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -12,6 +12,9 @@ const STATIC_ASSETS = [
   '/img/agent-photo.jpg',
   '/manifest.json'
 ];
+
+const UA = (self.navigator && self.navigator.userAgent) || '';
+const IS_WEBKIT = /iphone|ipad|ipod/i.test(UA) || (/safari/i.test(UA) && !/chrome|chromium|crios|android|edg/i.test(UA));
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -84,6 +87,15 @@ self.addEventListener('fetch', event => {
   // enforced. Let the browser load them directly under img-src/script-src.
   if (url.origin !== self.location.origin) return;
   if (isPassThrough(url)) return;
+  // A partial-content request (Range) must never be answered from a stored
+  // whole copy; let the browser ask the server itself.
+  if (req.headers.has('range')) return;
+  // Every browser on an iPhone or iPad is WebKit, and so is desktop Safari.
+  // WebKit refuses some answers a service worker gives to a page navigation
+  // (a redirected response, a stale shell), and then the page never finishes
+  // loading. Pages therefore go straight to the network there. Images, styles
+  // and scripts still use the cache below.
+  if (IS_WEBKIT && isHTMLRequest(req)) return;
 
   // NETWORK-FIRST for HTML — always try fresh, fall back to cache when offline
   if (isHTMLRequest(req)) {
