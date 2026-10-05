@@ -1572,6 +1572,18 @@ const StaffMessage      = mongoose.model('StaffMessage',      staffMessageSchema
 const StaffReport       = mongoose.model('StaffReport',       staffReportSchema);
 const PropertySubmission = mongoose.model('PropertySubmission', propertySubmissionSchema);
 const ScheduledEmail    = mongoose.model('ScheduledEmail',    scheduledEmailSchema);
+
+// One row per (campaign, recipient) the moment a send to that person is
+// claimed. The unique pair is what makes a double send impossible: a second
+// click, a retry after a timeout, or a resend after a restart all find the row
+// and skip that person. Rows expire after 60 days.
+const bulkSendLogSchema = new mongoose.Schema({
+  key:   { type: String, required: true },   // sha1 of subject + body
+  email: { type: String, required: true },
+  at:    { type: Date, default: Date.now, expires: 60 * 24 * 3600 }
+});
+bulkSendLogSchema.index({ key: 1, email: 1 }, { unique: true });
+const BulkSendLog = mongoose.model('BulkSendLog', bulkSendLogSchema);
 const TitlingCase       = mongoose.model('TitlingCase',       titlingCaseSchema);
 const NotarialJob       = mongoose.model('NotarialJob',       notarialJobSchema);
 const CashEntry         = mongoose.model('CashEntry',         cashEntrySchema);
@@ -1609,6 +1621,7 @@ module.exports = {
   StaffReport,
   PropertySubmission,
   ScheduledEmail,
+  BulkSendLog,
   TitlingCase,
   NotarialJob,
   CashEntry,

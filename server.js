@@ -759,7 +759,7 @@ const db = require('./server/db');
 const { applyWebsiteCover } = require('./server/cover');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
-  AlertLog, AuditLog, Account, Task, DeletedTask, PropertySubmission, ScheduledEmail,
+  AlertLog, AuditLog, Account, Task, DeletedTask, PropertySubmission, ScheduledEmail, BulkSendLog,
   TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage, ListingView,
   PERMISSION_KEYS, defaultPermissionsForRole
 } = db;
@@ -6376,8 +6376,9 @@ app.post('/confirm-subscription', publicWriteLimiter, async (req, res) => {
   }
 });
 
-async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5 }) {
-  let sent = 0, failed = 0, skipped = 0;
+async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5, useLedger = true }) {
+  let sent = 0, failed = 0, skipped = 0, already = 0;
+  const campaignKey = crypto.createHash('sha1').update(String(subject) + '|' + String(html)).digest('hex');
   const errors = [];
   let cursor = 0;
   // Whoever unsubscribed is never mailed again, however the list was made.
@@ -6388,22 +6389,35 @@ async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency =
     while (cursor < clean.length) {
       const idx = cursor++;
       const to = clean[idx];
+      // Claim this person for this campaign before sending. If the row is
+      // already there they have been mailed (or are being mailed right now by
+      // a double click), so skip them.
+      if (useLedger) {
+        try {
+          const c = await BulkSendLog.updateOne({ key: campaignKey, email: to }, { $setOnInsert: { at: new Date() } }, { upsert: true });
+          if (!c.upsertedCount) { already++; continue; }
+        } catch (e) {
+          if (e && e.code === 11000) { already++; continue; }
+          throw e;
+        }
+      }
       try {
         const r = await sendEmail(to, subject, withUnsubFooter(html, to), fromName, null, null, {
           'List-Unsubscribe': `<${unsubUrl(to)}>, <mailto:glrarealty@gmail.com?subject=Unsubscribe>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
         });
         if (r && r.success) sent++;
-        else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); }
+        else { failed++; errors.push({ to, error: String(r?.error?.message || r?.error || 'unknown') }); if (useLedger) await BulkSendLog.deleteOne({ key: campaignKey, email: to }).catch(() => {}); }
       } catch (e) {
         failed++;
         errors.push({ to, error: e.message });
+        if (useLedger) await BulkSendLog.deleteOne({ key: campaignKey, email: to }).catch(() => {});
       }
     }
   }
   const workers = Array.from({ length: Math.min(concurrency, clean.length) }, () => worker());
   await Promise.all(workers);
-  return { sent, failed, errors, skipped };
+  return { sent, failed, errors, skipped, already };
 }
 
 // Send a single email body to many recipients. Validates + dedupes server-side
@@ -6430,7 +6444,7 @@ app.post('/api/admin/bulk-email',
       const safeFrom = String(fromName || 'GLRA Realty').slice(0, 80);
       const safeSubject = subject.slice(0, 200);
 
-      const { sent, failed, errors, skipped } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html });
+      const { sent, failed, errors, skipped, already } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html, useLedger: !isTest });
 
       await logAudit(req, 'BULK_EMAIL', 'BulkEmail', '', safeSubject, {
         recipients: clean.length,
@@ -6439,7 +6453,7 @@ app.post('/api/admin/bulk-email',
         isTest: !!isTest
       });
 
-      res.json({ success: true, total: clean.length, sent, failed, skipped, errors: errors.slice(0, 10) });
+      res.json({ success: true, total: clean.length, sent, failed, skipped, already, errors: errors.slice(0, 10) });
     } catch (err) {
       console.error('bulk-email error:', err);
       res.status(500).json({ error: 'Bulk email failed' });
@@ -6623,15 +6637,15 @@ async function processDueScheduledEmails() {
       }
 
       try {
-        const { sent, failed, errors } = await dispatchBulkEmail({
+        const { sent, failed, errors, already } = await dispatchBulkEmail({
           clean: due.recipients,
           subject: due.subject,
           fromName: due.fromName,
           html: due.html
         });
-        due.status = (failed === due.recipients.length) ? 'failed' : 'sent';
+        due.status = (failed > 0 && failed === due.recipients.length - already) ? 'failed' : 'sent';
         due.sentAt = new Date();
-        due.result = { total: due.recipients.length, sent, failed, errors: errors.slice(0, 10) };
+        due.result = { total: due.recipients.length, sent, failed, already, errors: errors.slice(0, 10) };
         await due.save();
         console.log(`📧 Scheduled email ${due._id} done: ${sent} sent / ${failed} failed`);
       } catch (e) {

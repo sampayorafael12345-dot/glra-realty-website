@@ -8627,7 +8627,7 @@ async function bmSend(){
       showToast(`Sent: ${d.sent} succeeded, ${d.failed} failed`);
       const result = document.getElementById('bmResult');
       result.style.display = '';
-      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (unsubscribed or never confirmed)` : '');
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (unsubscribed or never confirmed)` : '') + (d.already ? ` · ${d.already} already received this exact email, not sent again` : '');
     } else {
       showToast(d.error || 'Send failed', true);
     }
