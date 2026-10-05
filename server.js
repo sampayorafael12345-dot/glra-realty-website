@@ -880,15 +880,34 @@ const PUBLIC_PROPERTY_FIELDS = [
 // never has to wait out a timer to see her own edit.
 const PUBLIC_LIST_TTL_MS = 60 * 1000;
 let _publicListCache = { at: 0, body: null };
-function invalidatePublicListingsCache() { _publicListCache = { at: 0, body: null, list: null }; }
-async function publicListBody() {
-  if (_publicListCache.body && Date.now() - _publicListCache.at < PUBLIC_LIST_TTL_MS) return _publicListCache.body;
-  const properties = await Property.find({ status: 'available' })
-    .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
-  properties.forEach(optimizePropertyImages);
-  _publicListCache = { at: Date.now(), body: JSON.stringify(properties), list: properties };
-  return _publicListCache.body;
+let _publicListGen = 0, _publicListInflight = null;
+function invalidatePublicListingsCache() { _publicListGen++; _publicListCache = { at: 0, body: null, list: null }; _sitemapCache.at = 0; }
+// One refresh at a time. A visitor never waits for the database once there is
+// an answer to show: a stale one is sent at once and replaced in the background.
+// (An edit still drops the answer outright, so Catherine sees her own change.)
+function publicListRefresh() {
+  if (_publicListInflight) return _publicListInflight;
+  const gen = _publicListGen;
+  _publicListInflight = (async () => {
+    const properties = await Property.find({ status: 'available' })
+      .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
+    properties.forEach(optimizePropertyImages);
+    const next = { at: Date.now(), body: JSON.stringify(properties), list: properties };
+    if (gen === _publicListGen) _publicListCache = next;   // an edit landed meanwhile: do not store the old copy
+    return next.body;
+  })().finally(() => { _publicListInflight = null; });
+  return _publicListInflight;
 }
+async function publicListBody() {
+  const c = _publicListCache;
+  if (c.body) {
+    if (Date.now() - c.at >= PUBLIC_LIST_TTL_MS) publicListRefresh().catch(() => {});
+    return c.body;
+  }
+  return publicListRefresh();
+}
+// Keep the answer warm so even the first visitor after a quiet spell gets it at once.
+setInterval(() => { if (mongoose.connection.readyState === 1) publicListBody().catch(() => {}); }, 45 * 1000).unref();
 
 app.get('/api/properties', async (req, res) => {
   try {
@@ -2895,7 +2914,26 @@ async function findRelatedListings(p) {
 // for every available listing so Google discovers new properties quickly.
 // Registered near the top of the file (before express.static) so no leftover
 // static sitemap.xml can shadow it.
+let _sitemapCache = { at: 0, xml: '' }, _sitemapBusy = null;
+const SITEMAP_TTL_MS = 10 * 60 * 1000;
+function refreshSitemap() {
+  if (_sitemapBusy) return _sitemapBusy;
+  _sitemapBusy = new Promise(resolve => {
+    const cap = { set() { return cap; }, status() { return cap; }, send(x) { if (typeof x === 'string' && x.startsWith('<?xml')) _sitemapCache = { at: Date.now(), xml: x }; resolve(); return cap; } };
+    buildSitemapRaw({}, cap).catch(() => resolve());
+  }).finally(() => { _sitemapBusy = null; });
+  return _sitemapBusy;
+}
+// Built from the database only now and then; every other request gets the last copy at once.
 async function buildSitemap(req, res) {
+  if (_sitemapCache.xml && Date.now() - _sitemapCache.at > SITEMAP_TTL_MS) refreshSitemap().catch(() => {});
+  if (!_sitemapCache.xml) await refreshSitemap();
+  if (!_sitemapCache.xml) return res.status(500).send('');
+  res.set('Content-Type', 'application/xml; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(_sitemapCache.xml);
+}
+async function buildSitemapRaw(req, res) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     // Bump when the marketing pages themselves get a real content change.
@@ -2937,9 +2975,12 @@ async function buildSitemap(req, res) {
       ['/liv.html', 'monthly', '0.8'], ['/una.html', 'monthly', '0.8'],
       ['/lucima.html', 'monthly', '0.8']
     ];
-    const props = await Property.find({ status: 'available' },
-      { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, mainImage: 1, gallery: 1, coverImage: 1, location: 1 })
-      .sort({ createdAt: -1 }).limit(5000).lean();
+    const props = await Property.aggregate([
+      { $match: { status: 'available' } },
+      { $project: { _id: 1, createdAt: 1, priceUpdatedAt: 1, title: 1, location: 1, mainImage: dataStub('$mainImage'), coverImage: dataStub('$coverImage'),
+          gallery: { $map: { input: { $ifNull: ['$gallery', []] }, as: 'g', in: dataStub('$$g') } } } },
+      { $sort: { createdAt: -1 } }, { $limit: 5000 }
+    ]);
     // A base64 photo is not a fetchable image URL — without this it would be
     // pasted into <image:loc> and balloon the sitemap to megabytes.
     props.forEach(pr => applyWebsiteCover(externalizeInlineImages(pr)));
@@ -3025,15 +3066,28 @@ function externalizeHeroImage(h) {
   return h;
 }
 
+// A photo stored inline is replaced by a short stub on the database side, so
+// the 2.5 MB of base64 never crosses the wire just to be swapped for a URL.
+const dataStub = f => ({ $cond: [{ $eq: [{ $substrCP: [{ $convert: { input: f, to: 'string', onError: '', onNull: '' } }, 0, 5] }, 'data:'] }, 'data:', f] });
+let _heroCache = { at: 0, body: null }, _heroInflight = null;
+function invalidateHeroCache() { _heroCache = { at: 0, body: null }; }
+function heroRefresh() {
+  if (_heroInflight) return _heroInflight;
+  _heroInflight = (async () => {
+    const images = await HeroImage.aggregate([{ $project: { order: 1, createdAt: 1, url: dataStub('$url') } }, { $sort: { order: 1 } }]);
+    images.forEach(i => { externalizeHeroImage(i); if (i.url) i.url = optimizeCloudinary(i.url); });
+    _heroCache = { at: Date.now(), body: JSON.stringify(images) };
+    return _heroCache.body;
+  })().finally(() => { _heroInflight = null; });
+  return _heroInflight;
+}
 app.get('/api/hero-images', async (req, res) => {
   try {
-    const images = await HeroImage.find().sort({ order: 1 }).lean();
-    images.forEach(i => {
-      externalizeHeroImage(i);
-      if (i.url) i.url = optimizeCloudinary(i.url);
-    });
+    let body = _heroCache.body;
+    if (body) { if (Date.now() - _heroCache.at > 120 * 1000) heroRefresh().catch(() => {}); }
+    else body = await heroRefresh();
     res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
-    res.json(images);
+    res.type('application/json').send(body);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -6758,6 +6812,7 @@ app.post('/api/admin/hero-images/upload', verifyToken, requirePermission('hero_u
     const count = await HeroImage.countDocuments();
     const newImage = new HeroImage({ url: result.secure_url, order: count });
     await newImage.save();
+    invalidateHeroCache();
     await logAudit(req, 'CREATE', 'HeroImage', newImage._id, '', null);
     res.json(newImage);
   } catch (err) {
@@ -6776,6 +6831,7 @@ app.post('/api/admin/hero-images/reorder', verifyToken, requirePermission('hero_
     for (const img of images) {
       await HeroImage.findByIdAndUpdate(img._id, { order: img.order });
     }
+    invalidateHeroCache();
     await logAudit(req, 'REORDER', 'HeroImage', '', `${images.length} images`, null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
@@ -6794,6 +6850,7 @@ app.put('/api/admin/hero-images/:id/default', verifyToken, requirePermission('he
       }
       await img.save();
     }
+    invalidateHeroCache();
     await logAudit(req, 'SET_DEFAULT', 'HeroImage', req.params.id, '', null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
@@ -6802,6 +6859,7 @@ app.put('/api/admin/hero-images/:id/default', verifyToken, requirePermission('he
 app.delete('/api/admin/hero-images/:id', verifyToken, requirePermission('hero_delete'), async (req, res) => {
   try {
     await HeroImage.findByIdAndDelete(req.params.id);
+    invalidateHeroCache();
     await logAudit(req, 'DELETE', 'HeroImage', req.params.id, '', null);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
