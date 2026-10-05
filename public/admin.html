@@ -2232,6 +2232,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
             <div id="tlCashWrap"></div>
 
             <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+              <button class="hdr-btn" id="tlBillBtn" style="display:none;margin-right:auto" onclick="titlingBillingPdf(document.getElementById('tlId').value, document.getElementById('tlClientName').value)" title="Uses the figures as last saved"><i class="fas fa-file-pdf"></i> Download billing (PDF)</button>
               <button class="hdr-btn" onclick="closeTitlingModal()" aria-label="Close">Cancel</button>
               <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
             </div>
@@ -9285,6 +9286,7 @@ function renderTitling(){
       <td style="font-size:11px;white-space:nowrap;color:${overdue?'#ef4444':'var(--gray)'};font-weight:${overdue?'700':'400'}">${fmtDateShort(t.updatedAt||t.createdAt)}${overdue?' <span title="Past target date">&#9888;</span>':''}</td>
       <td><div class="act-btns" style="display:flex;gap:5px">
         ${canAdvance?`<button class="act" style="background:rgba(200,169,110,.12);color:var(--ab-hot-text,#c02e00);border:1px solid rgba(200,169,110,.3);width:auto;padding:0 8px;gap:5px;font-size:11px" onclick="advanceTitling('${t._id}')" title="Move to ${escA(nextLabel)}">Next <i class="fas fa-arrow-right"></i></button>`:''}
+        <button class="act act-view" onclick="titlingBillingPdf('${t._id}','${escA(t.clientName||'')}')" title="Download billing (PDF)"><i class="fas fa-file-pdf"></i></button>
         ${canManage?`<button class="act act-view" onclick="openTitlingModal('${t._id}')" title="Edit"><i class="fas fa-pen"></i></button><button class="act act-del" onclick="deleteTitling('${t._id}')" title="Delete"><i class="fas fa-trash"></i></button>`:'<span style="font-size:11px;color:var(--gray)">View only</span>'}
       </div></td>
     </tr>`;
@@ -9410,6 +9412,7 @@ function openTitlingModal(id){
   const t = id ? titlingData.find(x=>x._id===id) : null;
   document.getElementById('titlingModalTitle').textContent = t ? 'Edit Titling Job' : 'Add Titling Job';
   document.getElementById('tlId').value = t ? t._id : '';
+  document.getElementById('tlBillBtn').style.display = t ? '' : 'none';
   document.getElementById('tlBranch').value = (t&&t.branch) || '';
   document.getElementById('tlClientName').value = (t&&t.clientName) || '';
   document.getElementById('tlClientPhone').value = (t&&t.clientPhone) || '';
@@ -9443,6 +9446,11 @@ function openTitlingModal(id){
   titlingLiqRecalc();
   loadTitlingCash(t ? t._id : '');
   document.getElementById('titlingModal').style.display='flex';
+}
+function titlingBillingPdf(id, name){
+  if(!id){ showToast('Save the job first', true); return; }
+  const who = String(name||'client').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'') || 'client';
+  lsDownload('/api/admin/titling/'+id+'/billing.pdf?download=1', 'GLRA-billing-'+who+'.pdf');
 }
 function closeTitlingModal(){ document.getElementById('titlingModal').style.display='none'; }
 

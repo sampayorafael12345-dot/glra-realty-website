@@ -5865,6 +5865,21 @@ app.put('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage
   } catch (err) { console.error('titling update error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
+// Billing statement for one titling job, as a PDF. Same letterhead as the lease statements.
+app.get('/api/admin/titling/:id/billing.pdf', verifyToken, requirePermission('titling_view'), async (req, res) => {
+  try {
+    if (!/^[a-f\d]{24}$/i.test(req.params.id)) return res.status(404).json({ error: 'Job not found' });
+    const t = await TitlingCase.findById(req.params.id).lean();
+    if (!t) return res.status(404).json({ error: 'Job not found' });
+    const buf = await require('./server/titling-pdf').billingPdf(t);
+    const who = String(t.clientName || 'client').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '') || 'client';
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `${req.query.download === '1' ? 'attachment' : 'inline'}; filename="GLRA-billing-${who}.pdf"`);
+    res.set('Cache-Control', 'private, no-store');
+    res.send(buf);
+  } catch (err) { console.error('titling billing pdf error:', err); res.status(500).json({ error: 'Could not build the PDF' }); }
+});
+
 app.delete('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
   try {
     const doc = await TitlingCase.findByIdAndDelete(req.params.id);

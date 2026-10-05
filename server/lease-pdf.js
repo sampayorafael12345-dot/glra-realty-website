@@ -480,4 +480,5 @@ async function rentRollPdf(roll, H) {
   return toBuffer(doc);
 }
 
-module.exports = { leasePdf, receiptPdf, rentRollPdf, _test: { amountInWords } };
+module.exports = { leasePdf, receiptPdf, rentRollPdf, _test: { amountInWords },
+  kit: { newDoc, toBuffer, letterhead, runningHead, footers, ensure, section, kvGrid, statCards, table, note, label, mono, monoB, sans, semi, bold, rule, amountInWords, M, INK, HOT, GRAY, RULE, OK, BAD, WARN, W, bottomY } };
