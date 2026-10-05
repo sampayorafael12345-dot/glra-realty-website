@@ -1155,12 +1155,12 @@ function areaHaystack(p) {
   return ((p.location || '') + ' ' + (p.title || '')).toLowerCase();
 }
 
+// Taken from the same in-memory list the home page uses, never straight from the
+// database: reading every listing with its photos for each area page took 35 s.
 async function areaListings(area) {
-  const rows = await Property.find({ status: 'available' })
-    .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
-  const mine = rows.filter(p => area[2].test(areaHaystack(p)));
-  mine.forEach(optimizePropertyImages);
-  return mine;
+  await publicListBody();
+  const rows = _publicListCache.list || JSON.parse(_publicListCache.body || '[]');
+  return rows.filter(p => area[2].test(areaHaystack(p))).map(p => ({ ...p }));
 }
 
 // How many listings each area has right now, for the sitemap and for the
