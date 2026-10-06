@@ -11,8 +11,9 @@
 //   balance  = charges - payments received
 // =============================================================================
 const { kit } = require('./lease-pdf');
-const { newDoc, toBuffer, letterhead, footers, ensure, section, kvGrid, statCards, table, note, label, sans, semi, bold, rule, amountInWords, M, INK, HOT, GRAY, OK, BAD, W } = kit;
+const { newDoc, toBuffer, letterhead, footers, ensure, section, kvGrid, statCards, table, note, label, sans, semi, bold, rule, amountInWords, M, INK, HOT, GRAY, OK, BAD, W, monoB } = kit;
 
+const RULE_COLOR = '#cfc9bf';
 const STAGES = {
   documents: 'Collecting documents', bir: 'At the BIR', transfer_tax: 'Transfer tax', registry: 'Registry of Deeds',
   tax_dec: 'Assessor\'s Office (tax declaration)', completed: 'Completed', on_hold: 'On hold', lra: 'LRA'
@@ -39,7 +40,7 @@ function billingFigures(t) {
   return { expenses, payments, fee, disb, received, charges, balance: Math.round((charges - received) * 100) / 100 };
 }
 
-async function billingPdf(t) {
+async function billingPdf(t, pay) {
   const ctx = { title: 'Billing Statement' };
   const f = billingFigures(t);
   const ref = 'T-' + String(t._id || '').slice(-6).toUpperCase();
@@ -110,6 +111,46 @@ async function billingPdf(t) {
   line(y + 49, bal < -0.004 ? 'Overpaid' : 'Balance due', peso(Math.abs(bal)), true, bal > 0.004 ? BAD : OK);
   if (bal > 0.004) { label(doc, M, y + 4, 'Amount due in words'); semi(doc, 9).text(amountInWords(bal), M, y + 16, { width: bx - M - 16 }); }
   y += 76;
+
+  // How to pay: each method the office set up in Titling > Payment details. Left out once the job is fully settled.
+  const pm = ((pay && pay.methods) || []).filter(m => m.method || m.accountName || m.accountNumber || m.qrBuf);
+  if (pm.length && (bal > 0.004 || f.received <= 0)) {
+    const gap = 12, cw = (W(doc) - 2 * M - gap) / 2, QR = 92, PAD = 11;
+    const measure = (m) => {
+      const tw = cw - 2 * PAD - (m.qrBuf ? QR + 10 : 0);
+      semi(doc, 9.6); const hn = m.accountName ? doc.heightOfString(m.accountName, { width: tw }) : 0;
+      monoB(doc, 11.5); const hu = m.accountNumber ? doc.heightOfString(m.accountNumber, { width: tw }) : 0;
+      const text = PAD + 12 + (m.accountName ? 11 + hn + 7 : 0) + (m.accountNumber ? 11 + hu + 7 : 0) + 4;
+      return { tw, hn, hu, h: Math.max(text, m.qrBuf ? PAD + QR + 16 + PAD : 0, 58) };
+    };
+    for (let i = 0; i < pm.length; i += 2) {
+      const row = pm.slice(i, i + 2).map(m => ({ m, g: measure(m) }));
+      const rh = Math.max(...row.map(r => r.g.h));
+      // the heading travels with its first row of cards
+      if (i === 0) { y = ensure(doc, y, 34 + rh + 6, ctx.title); y = section(doc, y, 'How to pay', ctx); }
+      y = ensure(doc, y, rh + 6, ctx.title);
+      row.forEach((r, k) => {
+        const x = M + k * (cw + gap), { m, g } = r;
+        doc.save().rect(x, y, cw, rh).lineWidth(1.2).strokeColor(INK).stroke().restore();
+        doc.save().rect(x, y, 4, rh).fill(HOT).restore();
+        let yy = y + PAD;
+        label(doc, x + PAD + 4, yy, m.method || 'Payment', { size: 7.4, color: HOT, width: g.tw - 4 }); yy += 12;
+        if (m.accountName) { label(doc, x + PAD + 4, yy, 'Account name', { width: g.tw - 4 }); yy += 11; semi(doc, 9.6).text(m.accountName, x + PAD + 4, yy, { width: g.tw - 4 }); yy += g.hn + 7; }
+        if (m.accountNumber) { label(doc, x + PAD + 4, yy, 'Account number', { width: g.tw - 4 }); yy += 11; monoB(doc, 11.5).text(m.accountNumber, x + PAD + 4, yy, { width: g.tw - 4 }); yy += g.hu + 7; }
+        if (m.qrBuf) {
+          const qx = x + cw - QR - PAD, qy = y + PAD;
+          try {
+            doc.save().rect(qx - 3, qy - 3, QR + 6, QR + 6).lineWidth(0.6).strokeColor(RULE_COLOR).stroke().restore();
+            doc.image(m.qrBuf, qx, qy, { fit: [QR, QR], align: 'center', valign: 'center' });
+            label(doc, qx - 3, qy + QR + 6, 'Scan to pay', { size: 6.2, width: QR + 6, align: 'center' });
+          } catch (e) { /* an unreadable picture is skipped, the numbers above still print */ }
+        }
+      });
+      y += rh + 10;
+    }
+    if (pay && pay.note) y = note(doc, y, pay.note, ctx);
+    y += 4;
+  }
 
   // Where the title is in the process
   const miles = [

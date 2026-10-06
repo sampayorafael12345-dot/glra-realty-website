@@ -538,9 +538,12 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     // server sends is the one the slider keeps.
     const heroUrl = '/img/arthaland/sondris/01-aerial@1280.webp'; // first of the Arthaland buildings
     if (heroUrl) {
+      // 1x screens get the 1280 px file, retina and phone screens the 1920 px one.
+      const heroHi = heroUrl.replace('@1280.webp', '@1920.webp');
+      const u1 = esc(heroUrl), u2 = esc(heroHi);
       html = html.replace(/<div class="swiper-slide is-on" data-glra-first-slide[^>]*><\/div>/,
-        `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${esc(heroUrl)}')"></div>`);
-      html = html.replace('</title>', `</title>\n<link rel="preload" as="image" href="${esc(heroUrl)}" fetchpriority="high">`);
+        `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${u1}');background-image:-webkit-image-set(url('${u1}') 1x,url('${u2}') 2x);background-image:image-set(url('${u1}') 1x,url('${u2}') 2x)"></div>`);
+      html = html.replace('</title>', `</title>\n<link rel="preload" as="image" href="${u1}" imagesrcset="${u1} 1x, ${u2} 2x" fetchpriority="high">`);
     }
     const n = String(list.length);
     html = html.replace('<span id="topCount">24</span> <span id="topCountWord">listings</span>',
@@ -5919,13 +5922,83 @@ app.put('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage
   } catch (err) { console.error('titling update error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
+// ── TITLING PAYMENT DETAILS (printed on the billing PDF) ──
+// Up to four ways to pay (bank, GCash...), each with an account name, an account
+// number and an optional QR image. The QR is kept as a small PNG/JPEG inside one
+// Setting row and is only ever read by these routes and the PDF, never by a list.
+const PAY_KEY = 'titling_payment';
+const PAY_MAX = 4;
+const PAY_QR_MAX_BYTES = 450 * 1024;
+async function loadPaymentInfo() {
+  const doc = await Setting.findOne({ key: PAY_KEY }).lean();
+  const v = (doc && doc.value) || {};
+  return { methods: Array.isArray(v.methods) ? v.methods : [], note: String(v.note || '') };
+}
+function payQrBuffer(dataUri) {
+  const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUri || ''));
+  if (!m) return null;
+  const buf = Buffer.from(m[2], 'base64');
+  return buf.length && buf.length <= PAY_QR_MAX_BYTES ? buf : null;
+}
+app.get('/api/admin/titling-payment', verifyToken, requirePermission('titling_view'), async (req, res) => {
+  try {
+    const info = await loadPaymentInfo();
+    res.set('Cache-Control', 'private, no-store');
+    res.json({
+      note: info.note,
+      methods: info.methods.map(m => ({ id: m.id, method: m.method || '', accountName: m.accountName || '', accountNumber: m.accountNumber || '', hasQr: !!m.qr }))
+    });
+  } catch (err) { console.error('titling payment get error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+app.get('/api/admin/titling-payment/:id/qr', verifyToken, requirePermission('titling_view'), async (req, res) => {
+  try {
+    const info = await loadPaymentInfo();
+    const m = info.methods.find(x => x.id === req.params.id);
+    const buf = m && payQrBuffer(m.qr);
+    if (!buf) return res.status(404).end();
+    res.set('Content-Type', /^data:image\/png/.test(m.qr) ? 'image/png' : 'image/jpeg');
+    res.set('Cache-Control', 'private, no-store');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.end(buf);
+  } catch (err) { res.status(404).end(); }
+});
+app.put('/api/admin/titling-payment', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!Array.isArray(body.methods)) return res.status(400).json({ error: 'Expected a list of payment methods' });
+    if (body.methods.length > PAY_MAX) return res.status(400).json({ error: `At most ${PAY_MAX} payment methods` });
+    const old = await loadPaymentInfo();
+    const clip = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, n);
+    const methods = [];
+    for (const raw of body.methods) {
+      if (!raw || typeof raw !== 'object') continue;
+      const m = { id: /^[a-f0-9]{12}$/.test(String(raw.id || '')) ? String(raw.id) : crypto.randomBytes(6).toString('hex'),
+        method: clip(raw.method, 60), accountName: clip(raw.accountName, 120), accountNumber: clip(raw.accountNumber, 60), qr: '' };
+      if (!m.method && !m.accountName && !m.accountNumber && !raw.qr) continue;
+      if (typeof raw.qr === 'string' && raw.qr.startsWith('data:')) {
+        if (!payQrBuffer(raw.qr)) return res.status(400).json({ error: 'The QR picture must be a PNG or JPEG under 450 KB.' });
+        m.qr = raw.qr;
+      } else if (raw.qr === undefined || raw.qr === null) {
+        const prev = old.methods.find(x => x.id === m.id);          // not touched: keep the stored picture
+        if (prev && prev.qr) m.qr = prev.qr;
+      }                                                              // '' = removed
+      methods.push(m);
+    }
+    const next = { methods, note: clip(body.note, 300) };
+    await Setting.updateOne({ key: PAY_KEY }, { $set: { value: next, updatedAt: new Date() } }, { upsert: true });
+    await logAudit(req, 'UPDATE', 'TitlingPaymentInfo', '', `${methods.length} payment method${methods.length === 1 ? '' : 's'}`, null);
+    res.json({ success: true, methods: methods.map(m => ({ id: m.id, method: m.method, accountName: m.accountName, accountNumber: m.accountNumber, hasQr: !!m.qr })), note: next.note });
+  } catch (err) { console.error('titling payment save error:', err); res.status(500).json({ error: 'Server error' }); }
+});
+
 // Billing statement for one titling job, as a PDF. Same letterhead as the lease statements.
 app.get('/api/admin/titling/:id/billing.pdf', verifyToken, requirePermission('titling_view'), async (req, res) => {
   try {
     if (!/^[a-f\d]{24}$/i.test(req.params.id)) return res.status(404).json({ error: 'Job not found' });
     const t = await TitlingCase.findById(req.params.id).lean();
     if (!t) return res.status(404).json({ error: 'Job not found' });
-    const buf = await require('./server/titling-pdf').billingPdf(t);
+    const pay = await loadPaymentInfo().catch(() => ({ methods: [], note: '' }));
+    const buf = await require('./server/titling-pdf').billingPdf(t, { methods: pay.methods.map(m => ({ ...m, qrBuf: payQrBuffer(m.qr) })), note: pay.note });
     const who = String(t.clientName || 'client').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '') || 'client';
     res.set('Content-Type', 'application/pdf');
     res.set('Content-Disposition', `${req.query.download === '1' ? 'attachment' : 'inline'}; filename="GLRA-billing-${who}.pdf"`);

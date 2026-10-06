@@ -2130,6 +2130,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
             </div>
             <span id="titlingJobBtns" style="display:inline-flex;gap:8px;flex-wrap:wrap">
               <button class="hdr-btn" id="tlImportBtn" onclick="tlImpOpen()" style="display:none"><i class="fas fa-file-import"></i> Import</button>
+              <button class="hdr-btn" id="tlPayBtn" onclick="tlPayOpen()" style="display:none" title="Bank / GCash details and QR code printed on the billing PDF"><i class="fas fa-qrcode"></i> Payment details</button>
               <button class="hdr-btn" onclick="exportTitlingCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
               <button class="hdr-btn primary" id="addTitlingBtn" onclick="openTitlingModal()" style="display:none"><i class="fas fa-plus"></i> Add Titling Job</button>
             </span>
@@ -2235,6 +2236,26 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
               <button class="hdr-btn" id="tlBillBtn" style="display:none;margin-right:auto" onclick="titlingBillingPdf(document.getElementById('tlId').value, document.getElementById('tlClientName').value)" title="Uses the figures as last saved"><i class="fas fa-file-pdf"></i> Download billing (PDF)</button>
               <button class="hdr-btn" onclick="closeTitlingModal()" aria-label="Close">Cancel</button>
               <button class="hdr-btn primary" id="tlSaveBtn" onclick="saveTitling()"><i class="fas fa-save"></i> Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TITLING PAYMENT DETAILS (printed under "How to pay" on every billing PDF) -->
+      <div class="modal-ov" id="tlPayModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px">
+        <div style="background:var(--card-bg);max-width:760px;width:98%;border:1px solid var(--border-color);animation:modalIn .25s ease;margin:auto;display:flex;flex-direction:column;max-height:calc(100vh - 48px)">
+          <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,169,110,.15);flex-shrink:0">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;font-weight:600"><i class="fas fa-qrcode" style="font-size:16px"></i> Payment details</div>
+            <button onclick="tlPayClose()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer" aria-label="Close"><i class="fas fa-times"></i></button>
+          </div>
+          <div style="padding:22px 24px;overflow-y:auto;min-height:0">
+            <div class="ls-note" style="margin-bottom:16px">These print under <b>How to pay</b> on every titling billing PDF while the client still owes something. Add up to four, for example a bank account and GCash. A QR picture is optional.</div>
+            <div id="tlPayList"></div>
+            <button class="hdr-btn" id="tlPayAdd" onclick="tlPayAddRow()" style="margin-top:6px"><i class="fas fa-plus"></i> Add a payment method</button>
+            <div class="fg" style="margin-top:18px"><label class="flbl" for="tlPayNote">Note under the payment details (optional)</label><input type="text" id="tlPayNote" class="finput" maxlength="300" placeholder="e.g. Please send the proof of payment to our number after you pay."></div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px">
+              <button class="hdr-btn" onclick="tlPayClose()">Cancel</button>
+              <button class="hdr-btn primary" id="tlPaySave" onclick="tlPaySave()"><i class="fas fa-save"></i> Save</button>
             </div>
           </div>
         </div>
@@ -9535,6 +9556,91 @@ function exportTitlingCSV(){
 // Reuses the SheetJS (XLSX) parser + impNorm/impFindCol helpers from the
 // property importer. Money/liquidation is left empty (her sheet has none).
 const tlImpState = { rows: [] };
+// ── Titling payment details (bank / GCash + QR, printed on the billing PDF) ──
+let tlPayState = [];
+function tlPayBlank(){ return { id: '', method: '', accountName: '', accountNumber: '', qr: undefined, hasQr: false, preview: '' }; }
+function tlPayClose(){
+  tlPayState.forEach(m => { if(m.preview && m.preview.startsWith('blob:')) URL.revokeObjectURL(m.preview); });
+  document.getElementById('tlPayModal').style.display = 'none';
+}
+async function tlPayOpen(){
+  if(!hasPerm('titling_manage')){ showToast('You don\'t have permission to change payment details', true); return; }
+  document.getElementById('tlPayModal').style.display = 'flex';
+  document.getElementById('tlPayList').innerHTML = '<div class="ls-note">Loading…</div>';
+  tlPayState = [];
+  try{
+    const r = await apiFetch('/api/admin/titling-payment'); const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'load failed');
+    document.getElementById('tlPayNote').value = d.note || '';
+    tlPayState = (d.methods || []).map(m => ({ ...tlPayBlank(), ...m, qr: undefined }));
+    await Promise.all(tlPayState.filter(m => m.hasQr).map(async m => {
+      try{ const q = await apiFetch('/api/admin/titling-payment/' + m.id + '/qr'); if(q.ok) m.preview = URL.createObjectURL(await q.blob()); }catch(e){}
+    }));
+  }catch(e){ showToast('Could not load the saved payment details', true); }
+  if(!tlPayState.length) tlPayState.push(tlPayBlank());
+  tlPayRender();
+}
+function tlPayRender(){
+  const box = document.getElementById('tlPayList');
+  box.innerHTML = tlPayState.map((m, i) => `
+    <div style="border:1px solid var(--border-color);padding:14px 16px;margin-bottom:12px;display:grid;grid-template-columns:1fr 150px;gap:16px;align-items:start">
+      <div style="display:grid;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="flbl">Payment method ${i + 1}</span>
+          <button class="act act-del" onclick="tlPayRemove(${i})" title="Remove this method" aria-label="Remove this method"><i class="fas fa-trash"></i></button></div>
+        <div class="fg"><label class="flbl" for="tlPayM${i}">Bank or app</label><input type="text" id="tlPayM${i}" class="finput" maxlength="60" value="${escA(m.method)}" placeholder="e.g. GCash, BPI, BDO, Maya" oninput="tlPayState[${i}].method=this.value"></div>
+        <div class="fg"><label class="flbl" for="tlPayN${i}">Account name</label><input type="text" id="tlPayN${i}" class="finput" maxlength="120" value="${escA(m.accountName)}" placeholder="Name on the account" oninput="tlPayState[${i}].accountName=this.value"></div>
+        <div class="fg"><label class="flbl" for="tlPayA${i}">Account number</label><input type="text" id="tlPayA${i}" class="finput" maxlength="60" value="${escA(m.accountNumber)}" placeholder="Account or mobile number" oninput="tlPayState[${i}].accountNumber=this.value"></div>
+      </div>
+      <div style="text-align:center">
+        <div class="flbl" style="margin-bottom:6px">QR code</div>
+        <div style="width:150px;height:150px;border:1px dashed var(--border-color);display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden">
+          ${m.preview ? `<img src="${escA(m.preview)}" alt="QR code preview" style="max-width:100%;max-height:100%">` : '<span style="font-size:12px;color:#777;padding:8px">No QR yet</span>'}
+        </div>
+        <label class="hdr-btn" style="margin-top:8px;display:inline-flex;cursor:pointer"><i class="fas fa-upload"></i> ${m.preview ? 'Replace' : 'Upload'}<input type="file" accept="image/*" style="display:none" onchange="tlPayPick(${i},this.files[0]);this.value=''"></label>
+        ${m.preview ? `<div><button class="hdr-btn" style="margin-top:6px" onclick="tlPayClearQr(${i})">Remove QR</button></div>` : ''}
+      </div>
+    </div>`).join('');
+  document.getElementById('tlPayAdd').style.display = tlPayState.length >= 4 ? 'none' : '';
+}
+function tlPayAddRow(){ if(tlPayState.length < 4){ tlPayState.push(tlPayBlank()); tlPayRender(); } }
+function tlPayRemove(i){ tlPayState.splice(i, 1); if(!tlPayState.length) tlPayState.push(tlPayBlank()); tlPayRender(); }
+function tlPayClearQr(i){ tlPayState[i].qr = ''; tlPayState[i].preview = ''; tlPayState[i].hasQr = false; tlPayRender(); }
+// The picture is redrawn on a white canvas as a PNG, at most 700 px, so any phone photo or
+// screenshot of a QR becomes a small clean file the PDF can print.
+function tlPayPick(i, file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ showToast('Please choose a picture file (PNG or JPG)', true); return; }
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    let out = '', max = 700;
+    for(let k = 0; k < 5; k++){
+      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * s)); c.height = Math.max(1, Math.round(img.naturalHeight * s));
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      out = c.toDataURL('image/png'); if(out.length * 0.75 < 200 * 1024) break;
+      out = c.toDataURL('image/jpeg', 0.9); if(out.length * 0.75 < 200 * 1024) break;
+      max = Math.round(max * 0.8);
+    }
+    URL.revokeObjectURL(url);
+    if(out.length * 0.75 >= 220 * 1024){ showToast('That picture is too detailed to shrink. Try a screenshot of the QR instead.', true); return; }
+    tlPayState[i].qr = out; tlPayState[i].preview = out; tlPayState[i].hasQr = true; tlPayRender();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); showToast('Could not read that picture', true); };
+  img.src = url;
+}
+async function tlPaySave(){
+  const btn = document.getElementById('tlPaySave'); btn.disabled = true;
+  try{
+    const methods = tlPayState.map(m => { const o = { id: m.id, method: m.method, accountName: m.accountName, accountNumber: m.accountNumber }; if(m.qr !== undefined) o.qr = m.qr; return o; });
+    const r = await apiFetch('/api/admin/titling-payment', { method: 'PUT', body: JSON.stringify({ methods, note: document.getElementById('tlPayNote').value }) });
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error || 'Could not save', true); return; }
+    showToast('Payment details saved. They will print on the next billing PDF.');
+    tlPayClose();
+  }catch(e){ showToast('Could not save', true); }
+  finally{ btn.disabled = false; }
+}
+
 function tlImpOpen(){
   if(!hasPerm('titling_manage')){ showToast('You don\'t have permission to import titling jobs', true); return; }
   if(typeof XLSX === 'undefined'){ showToast('Spreadsheet reader still loading — try again in a second.', true); return; }
@@ -10006,6 +10112,8 @@ function switchTab(name){
   // Add titling button — gated by titling_manage, only on titling tab
   const addTitlingBtn=document.getElementById('addTitlingBtn');
   if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
+  const tlPayBtn=document.getElementById('tlPayBtn');
+  if(tlPayBtn)tlPayBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   const tlImportBtn=document.getElementById('tlImportBtn');
   if(tlImportBtn)tlImportBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   // New lease button — gated by leasing_manage, only on the leasing tab

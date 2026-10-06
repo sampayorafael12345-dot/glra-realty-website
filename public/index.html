@@ -2429,20 +2429,31 @@ function populateHeroFromListings(properties){
   wrapper.innerHTML='';
   // A sized copy of each photo; only the first loads straight away, the other
   // four once the page has finished loading, so they don't compete with it.
-  const bg=u=>'url("'+String((window.glraImgSize||(x=>x))(u,1400)).replace(/["\\\n\r]/g,encodeURIComponent)+'")';
+  // Retina and phone screens get the 1920 px file, ordinary screens the 1280 px
+  // one, so the photo is sharp wherever it is shown. A 1280 px file stretched
+  // over a 2x screen is what made it look soft. A very large 1x monitor is
+  // bumped to the 1920 file as well.
+  const big=window.innerWidth>=1700;
+  const q=u=>'url("'+String(u).replace(/["\\\n\r]/g,encodeURIComponent)+'")';
+  const hi=u=>String(u).replace('@1280.webp','@1920.webp');
+  const bg=u=>{u=(window.glraImgSize||(x=>x))(u,1400);if(!/@1280\.webp$/.test(u))return q(u);
+    if(big)return q(hi(u));
+    return 'image-set('+q(u)+' 1x, '+q(hi(u))+' 2x)'};
+  // Older Safari only knows the prefixed name; the last valid assignment wins.
+  const paint=(el,v)=>{if(/^image-set/.test(v)){el.style.backgroundImage='-webkit-'+v;el.style.backgroundImage=v}else el.style.backgroundImage=v};
   pool.forEach((p,i)=>{
     const s=document.createElement('div');
     s.className='swiper-slide';
     // The first photo is shown at once (no fade in): it is the same photo the
     // server already put on screen, so the swap is invisible.
-    if(i===0){s.style.backgroundImage=bg(p.mainImage);s.classList.add('is-on')}else s.dataset.bg=bg(p.mainImage);
+    if(i===0){paint(s,bg(p.mainImage));s.classList.add('is-on')}else s.dataset.bg=bg(p.mainImage);
     wrapper.appendChild(s);
   });
   window.heroPool=pool;
   setHeroCaption(pool[0]);
   if(window.heroSwiper)window.heroSwiper.destroy();
   initSwiper();
-  window.glraHeroFillAt=k=>{const all=document.querySelectorAll('#heroSliderWrapper .swiper-slide');const s=all[((k%all.length)+all.length)%all.length];if(s&&s.dataset.bg){s.style.backgroundImage=s.dataset.bg;s.removeAttribute('data-bg')}};
+  window.glraHeroFillAt=k=>{const all=document.querySelectorAll('#heroSliderWrapper .swiper-slide');const s=all[((k%all.length)+all.length)%all.length];if(s&&s.dataset.bg){paint(s,s.dataset.bg);s.removeAttribute('data-bg')}};
   window.glraHeroFill=()=>document.querySelectorAll('#heroSliderWrapper .swiper-slide').forEach((_,k)=>glraHeroFillAt(k));
   // Only the second photo is fetched after load; each later one is fetched when the one before it shows.
   const next=()=>setTimeout(()=>glraHeroFillAt(1),1500);
