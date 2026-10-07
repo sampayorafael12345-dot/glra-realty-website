@@ -1628,6 +1628,18 @@ body.dark-mode{--gray:#9a9082 !important;--ab-gray:#9a9082 !important}
    lines make every date-like box obey its column, on every page. */
 input[type="date"],input[type="datetime-local"],input[type="month"],input[type="time"],input[type="week"]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;min-width:0;max-width:100%;min-height:44px}
 input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-webkit-date-and-time-value,input[type="month"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+
+/* Menu helpers: quick-jump box + collapsible groups */
+.sb-find{padding:8px 14px 4px}
+.sb-find input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;padding:9px 10px;font-size:16px;font-family:inherit;border-radius:0;outline:0}
+.sb-find input::placeholder{color:#a39d92}
+.sb-find input:focus{border-color:#ff3d00}
+.sb-section.has-grp{cursor:pointer;display:flex !important;align-items:center;justify-content:space-between;user-select:none}
+.sb-section.has-grp::after{content:"\25BE";font-size:11px;transition:transform .15s}
+.sb-section.has-grp.collapsed::after{transform:rotate(-90deg)}
+.nav-item.grp-hide,.nav-item.find-hide,.sb-section.find-hide{display:none !important}
+.sb-empty{padding:10px 20px;color:#a39d92;font-size:12px;display:none}
+@media(min-width:900px){.sb-find input{font-size:13px}}
 </style>
 </head>
 <body>
@@ -1711,6 +1723,8 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
   <aside class="sidebar" id="sidebar">
     <div class="sb-head"><img src="/img/hero-logo-384.png" alt="GLRA Realty" width="384" height="384"><div class="sb-brand">GLRA<small>Admin Dashboard</small></div></div>
     <nav class="sb-nav">
+      <div class="sb-find"><input type="search" id="sbFind" placeholder="Jump to… (press /)" aria-label="Jump to a page" autocomplete="off"></div>
+      <div class="sb-empty" id="sbEmpty">No page matches that.</div>
       <div class="sb-section">Overview</div>
       <a class="nav-item active" data-perm="dashboard_view" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
       <div class="sb-section" style="margin-top:6px">Listings</div>
@@ -4501,23 +4515,41 @@ function logout(){
 }
 
 // ── DATA ──────────────────────────────────────────────────
-function loadAll(){
-  loadStats();loadAllProps();loadHeroImages();
-  // Only the lists this person may see; a switched-off list is not fetched at all.
-  if(hasPerm('inquiries_view')) loadInquiries();
-  if(hasPerm('customers_view')){ loadSubscribers(); loadCalcStats(); loadAlerts(); }
-  if(isAdmin()){loadAccounts();}
-  if(hasPerm('tasks_view')) loadTasksData();
-  if(hasPerm('tasks_view')){ const l=document.getElementById('navStaffLbl'); if(l) l.textContent=hasPerm('tasks_create')?'Staff':'My Desk'; sfLoad(); }
-  if(hasPerm('submissions_view')) loadSubmissionStats();
-  if(hasPerm('titling_view')) loadTitling();
-  if(hasPerm('cases_view')) loadCases();
-  if(hasPerm('leasing_view')) loadLeasing();
-  if(hasPerm('leads_view')) loadLeads();
-  if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
-  renderDashboard();
+// Freshness stamps: a tab you just loaded is not fetched again for 20 s, so
+// hopping between tabs stays instant. Refresh (and a save) clears them.
+const __loadedAt = {};
+function due(key, ms){ const n=Date.now(); if(__loadedAt[key] && n-__loadedAt[key] < (ms||20000)) return false; __loadedAt[key]=n; return true; }
+function markLoaded(key){ __loadedAt[key]=Date.now(); }
+// Run the slow lists a few at a time so the first screen is not fighting
+// fifteen requests for the same connection.
+function loadQueue(jobs, width){
+  let i=0;
+  const next=()=>{ if(i>=jobs.length) return; const j=jobs[i++]; Promise.resolve().then(j).catch(()=>{}).finally(next); };
+  for(let k=0;k<(width||3);k++) next();
 }
-function refreshAll(){loadAll();showToast('Data refreshed')}
+function loadAll(){
+  // First screen: the numbers, the property list and the dashboard feeds.
+  loadStats();loadAllProps();
+  if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
+  if(hasPerm('inquiries_view')) loadInquiries();
+  if(hasPerm('tasks_view')){ const l=document.getElementById('navStaffLbl'); if(l) l.textContent=hasPerm('tasks_create')?'Staff':'My Desk'; }
+  renderDashboard();
+  // Everything else (badges, tab data) follows in the background, 3 at a time.
+  // Hero images and the calculator figures load only when their tab is opened.
+  const jobs=[];
+  const add=(key,fn)=>jobs.push(()=>{ markLoaded(key); return fn(); });
+  if(hasPerm('tasks_view')){ add('tasks',loadTasksData); add('staff',sfLoad); }
+  if(hasPerm('leads_view')) add('leads',loadLeads);
+  if(hasPerm('titling_view')) add('titling',loadTitling);
+  if(hasPerm('cases_view')) add('cases',loadCases);
+  if(hasPerm('leasing_view')) add('leasing',loadLeasing);
+  if(hasPerm('submissions_view')) add('submissions',loadSubmissionStats);
+  if(hasPerm('customers_view')){ add('subscribers',()=>{loadCalcStats();return loadSubscribers();}); add('alerts',loadAlerts); }
+  if(isAdmin()) add('accounts',loadAccounts);
+  setTimeout(()=>loadQueue(jobs,3), 400);
+  if(!window.__tabRestored){ window.__tabRestored=true; if(window.__restoreTab) setTimeout(window.__restoreTab,0); }
+}
+function refreshAll(){ for(const k in __loadedAt) delete __loadedAt[k]; loadAll(); loadHeroImages(); showToast('Data refreshed')}
 
 async function loadStats(){
   try{
@@ -10069,6 +10101,7 @@ function openTitlingCash(kind,id){ const jid=document.getElementById('tlId').val
 function deleteTitlingCash(id){ const jid=document.getElementById('tlId').value; if(!jid) return; cashUseTitling(jid); deleteCash(id); }
 
 function switchTab(name){
+  try{localStorage.setItem('glra_admin_tab',name);}catch(e){}
   document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
@@ -10129,17 +10162,19 @@ function switchTab(name){
     if(cb) cb.checked = false;
   }
   // Refresh tasks on tab visit
-  if(name==='tasks' && hasPerm('tasks_view')){
+  if(name==='hero' && due('hero')) loadHeroImages();
+  if((name==='subscribers'||name==='alerts') && hasPerm('customers_view') && due(name)){ if(name==='subscribers'){loadCalcStats();loadSubscribers();} else loadAlerts(); }
+  if(name==='tasks' && hasPerm('tasks_view') && due('tasks')){
     loadTasksData();
   }
-  if(name==='leads' && hasPerm('leads_view')){ ldSetView(LD.view); loadLeads(); }
-  if(name==='staff' && hasPerm('tasks_view')){ sfRender(); sfLoad(); }
+  if(name==='leads' && hasPerm('leads_view')){ ldSetView(LD.view); if(due('leads')) loadLeads(); }
+  if(name==='staff' && hasPerm('tasks_view')){ sfRender(); if(due('staff')) sfLoad(); }
   // Refresh agents on tab visit — the Agents tab is admin-only
-  if(name==='agents' && isAdmin()){
+  if(name==='agents' && isAdmin() && due('agents')){
     loadAgentsTab();
   }
   // Refresh submissions on tab visit
-  if(name==='submissions' && hasPerm('submissions_view')){
+  if(name==='submissions' && hasPerm('submissions_view') && due('submissions')){
     loadSubmissions();
   }
   // Lazy-load bulk email data + render preview on first visit
@@ -10148,17 +10183,17 @@ function switchTab(name){
   }
   // Refresh titling jobs on tab visit
   if(name==='titling' && hasPerm('titling_view')){
-    loadTitling();
+    if(due('titling')) loadTitling();
     if(titlingView==='cash') loadTitlingCashAll();
   }
   // Refresh the case files on tab visit
   if(name==='cases' && hasPerm('cases_view')){
-    loadCases();
+    if(due('cases')) loadCases();
     if(csView==='settings'){ renderCasesSettings(); csLoadStorage(false); }
   }
   // Refresh leases on tab visit
   if(name==='leasing' && hasPerm('leasing_view')){
-    loadLeasing();
+    if(due('leasing')) loadLeasing();
     setLeasingView(lsView);
   }
   // Close mobile sidebar
@@ -14883,5 +14918,53 @@ async function sfBotMails(){
 setInterval(() => { const p = document.getElementById('tab-staff'), a = document.activeElement; const typing = a && p && p.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName); if(p && p.style.display !== 'none' && !document.hidden && !typing && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
 </script>
 <script src="/js/a11y.js?v=116" defer></script>
+<script>
+// Menu helpers: type to jump, click a heading to fold its group, reopen where you left off.
+(function(){
+  const nav=document.querySelector('.sb-nav'); if(!nav) return;
+  const inp=document.getElementById('sbFind'), empty=document.getElementById('sbEmpty');
+  let folded={}; try{ folded=JSON.parse(localStorage.getItem('glra_sb_fold')||'{}'); }catch(e){}
+  let cur=null;
+  Array.from(nav.children).forEach(el=>{
+    if(el.classList.contains('sb-section')){ cur=el.textContent.trim(); el.classList.add('has-grp'); el.dataset.g=cur; el.setAttribute('role','button'); el.tabIndex=0; el.classList.toggle('collapsed',!!folded[cur]); }
+    else if(el.classList.contains('nav-item') && cur){ el.dataset.g=cur; }
+  });
+  function apply(){ nav.querySelectorAll('.nav-item[data-g]').forEach(n=>{ n.classList.toggle('grp-hide', !!folded[n.dataset.g] && !n.classList.contains('active') && !inp.value); }); }
+  function toggle(h){ const g=h.dataset.g; folded[g]=!folded[g]; h.classList.toggle('collapsed',folded[g]); try{localStorage.setItem('glra_sb_fold',JSON.stringify(folded));}catch(e){} apply(); }
+  nav.addEventListener('click',e=>{ const h=e.target.closest('.sb-section.has-grp'); if(h && !inp.value) toggle(h); });
+  nav.addEventListener('keydown',e=>{ const h=e.target.closest&&e.target.closest('.sb-section.has-grp'); if(h&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); toggle(h);} });
+  new MutationObserver(apply).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});
+  apply();
+  inp.addEventListener('input',()=>{
+    const q=inp.value.trim().toLowerCase(); let shown=0;
+    nav.querySelectorAll('.nav-item').forEach(n=>{
+      const hit=!q || n.textContent.toLowerCase().includes(q);
+      n.classList.toggle('find-hide',!hit);
+      if(hit && n.style.display!=='none') shown++;
+    });
+    nav.querySelectorAll('.sb-section').forEach(s=>s.classList.toggle('find-hide',!!q));
+    apply();
+    empty.style.display=(q && !shown)?'block':'none';
+  });
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ const f=Array.from(nav.querySelectorAll('.nav-item:not(.find-hide)')).find(n=>n.style.display!=='none'); if(f){ f.click(); inp.value=''; inp.dispatchEvent(new Event('input')); inp.blur(); } }
+    if(e.key==='Escape'){ inp.value=''; inp.dispatchEvent(new Event('input')); inp.blur(); }
+  });
+  document.addEventListener('keydown',e=>{
+    const a=document.activeElement||{};
+    if(e.key==='/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.isContentEditable && document.getElementById('adminShell').classList.contains('visible')){
+      e.preventDefault(); const sb=document.getElementById('sidebar');
+      if(window.innerWidth<900 && typeof toggleSidebar==='function' && !sb.classList.contains('open')) toggleSidebar();
+      inp.focus();
+    }
+  });
+  window.__restoreTab=function(){
+    let t=null; try{t=localStorage.getItem('glra_admin_tab');}catch(e){}
+    if(!t||t==='dashboard') return;
+    const item=Array.from(nav.querySelectorAll('.nav-item')).find(n=>(n.getAttribute('onclick')||'').includes("'"+t+"'"));
+    if(item && item.style.display!=='none') switchTab(t);
+  };
+})();
+</script>
 </body>
 </html>
