@@ -1436,7 +1436,7 @@ tr.sub-detail:hover>td{background:var(--ab-paper-2) !important}
 .sb-backdrop{position:fixed;inset:0;background:rgba(5,12,22,.55);z-index:299;
   opacity:0;pointer-events:none;transition:opacity .25s ease;border:0}
 .sb-backdrop.on{opacity:1;pointer-events:auto}
-@media(min-width:769px){.sb-backdrop{display:none}}
+@media(min-width:901px){.sb-backdrop{display:none}}
 
 /* 5. LONG TABLES keep their headings in view while the body scrolls. */
 .tbl-wrap{position:relative}
@@ -1660,6 +1660,24 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 @media(min-width:769px) and (max-width:1100px){
   .page-content{padding:16px}
   .page-content table th,.page-content table td{padding:10px 8px !important}
+}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0 !important}.sidebar-toggle{display:flex !important}
+  .hdr-right .hdr-btn span{display:none}
+}
+@media(max-width:560px){
+  .page-content table.stack{display:block;width:100% !important;min-width:0 !important;border:0}
+  .page-content table.stack thead{position:absolute;left:-9999px;height:0;overflow:hidden}
+  .page-content table.stack tbody{display:block}
+  .page-content table.stack tr{display:block;border:2px solid var(--ab-line,#111);margin:0 0 12px;background:var(--card-bg);padding:4px 0}
+  .page-content table.stack td{display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:right;padding:8px 12px !important;border:0 !important;border-bottom:1px solid rgba(0,0,0,.08) !important;white-space:normal !important;word-break:break-word}
+  .page-content table.stack td:last-child{border-bottom:0 !important}
+  .page-content table.stack td[data-label]:not([data-label=""])::before{content:attr(data-label);flex:0 0 36%;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray)}
+  .page-content table.stack td[colspan]{display:block;text-align:center}
+  .page-content table.stack td:has(>div){flex-direction:column;align-items:flex-start;text-align:left;gap:4px}
+  .page-content table.stack td:has(>div)>*{max-width:100%;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
+  .page-content table.stack td:has(>div)::before{flex:none}
 }
 /* Menu helpers: quick-jump box + collapsible groups */
 .sb-find{padding:8px 14px 4px}
@@ -4559,6 +4577,7 @@ function loadQueue(jobs, width){
   const next=()=>{ if(i>=jobs.length) return; const j=jobs[i++]; Promise.resolve().then(j).catch(()=>{}).finally(next); };
   for(let k=0;k<(width||3);k++) next();
 }
+window.addEventListener('unhandledrejection',e=>{ const r=e.reason; if(r && typeof r==='object' && r.httpError) e.preventDefault(); });
 function loadAll(){
   // First screen: the numbers, the property list and the dashboard feeds.
   loadStats();loadAllProps();
@@ -12860,12 +12879,12 @@ function toggleSidebar(){
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   const sb = document.getElementById('sidebar');
-  if(sb && sb.classList.contains('open') && window.innerWidth <= 768) closeSidebar();
+  if(sb && sb.classList.contains('open') && window.innerWidth <= 900) closeSidebar();
 });
 // Choosing a destination on a phone should put the menu away.
 document.addEventListener('click', e => {
   const item = e.target.closest && e.target.closest('.sb-nav .nav-item');
-  if(item && window.innerWidth <= 768) setTimeout(closeSidebar, 80);
+  if(item && window.innerWidth <= 900) setTimeout(closeSidebar, 80);
 });
 // Drop the "there is more below" fade once the menu is fully scrolled, and
 // skip it entirely when nothing is cut off.
@@ -14996,6 +15015,25 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
     const item=Array.from(nav.querySelectorAll('.nav-item')).find(n=>(n.getAttribute('onclick')||'').includes("'"+t+"'"));
     if(item && item.style.display!=='none') switchTab(t);
   };
+})();
+</script>
+<script>
+// Phone tables: give every cell its column name so a row can read as a card.
+(function(){
+  function label(t){
+    const ths=t.tHead&&t.tHead.rows[0]?Array.from(t.tHead.rows[0].cells):[];
+    if(ths.length<2) return;
+    const names=ths.map(h=>(h.textContent||'').trim());
+    Array.from(t.tBodies).forEach(tb=>Array.from(tb.rows).forEach(r=>{
+      if(r.cells.length!==names.length && !Array.from(r.cells).some(c=>c.colSpan>1)) return;
+      let col=0; Array.from(r.cells).forEach(c=>{ if(c.colSpan>1){col+=c.colSpan;return;} if(!c.hasAttribute('data-label')) c.setAttribute('data-label',names[col]||''); col++; });
+    }));
+    t.classList.add('stack'); t.dataset.stackDone=String(t.rows.length);
+  }
+  let q=0;
+  function scan(){ q=0; document.querySelectorAll('.page-content table:not(.no-stack)').forEach(label); }
+  new MutationObserver(()=>{ if(!q) q=setTimeout(scan,120); }).observe(document.querySelector('.page-content')||document.body,{childList:true,subtree:true});
+  scan();
 })();
 </script>
 </body>
