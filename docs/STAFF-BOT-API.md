@@ -23,7 +23,7 @@ Query: `?day=YYYY-MM-DD`, `?day=today` or `?day=prev`. `prev` is the default: th
 | `workHoursDetail` **(new)** | `{ days, start, end, lunchStart, lunchEnd, timezone, noDueBetween: "12:01-12:59" }` |
 | `channels` | Posting channels: `{ key, col, label, every }`. SM = Facebook page, SM2 = groups, LC = portal, ATS = Authority to Sell. |
 | `staff[]` | One entry per real staff account. Accounts marked "not staff" in the Staff tab are left out. |
-| `waitingWork[]` | Suggested work: leads waiting, follow-ups, unanswered enquiries, owner submissions, listings not posted. Also, **(new)** possible duplicate listings (`issueKey dup:<a>:<b>`) and weak listings (`weak:<id>`): under 8 photos, a description under 200 characters, no map, or no area or price. |
+| `waitingWork[]` | Suggested work: leads waiting, follow-ups, unanswered enquiries, owner submissions, listings not posted. Also, **(new)** possible duplicate listings (`issueKey dup:<a>:<b>`) and weak listings (`weak:<id>`): too few photos (under 5, or under 3 for a lot), a description under 200 characters, no map, or no area or price. |
 | `listings[]` | Available listings with photo count, description length, map status and `lastPosted` per channel. |
 | `previousReports[]` | The last 6 reports, including the new `alert` reports. |
 

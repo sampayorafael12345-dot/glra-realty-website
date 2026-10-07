@@ -468,12 +468,16 @@ async function buildSuggestions() {
 
 // Duplicate and weak listings (Oct 2026). Same unit = same building name
 // (brackets and punctuation ignored) AND the same floor area, price or main
-// photo. Weak = under 8 photos, a description under 200 characters, no map
+// photo. Weak = too few photos (under 5, or under 3 for a lot: a bare lot has
+// little to photograph), a description under 200 characters, no map
 // location, or no floor/lot area or price.
+// A lot is bare land. "House and Lot" and a lot with a building on it count as houses.
+const isLot = p => { const s = String(p.propertyType || '').trim() || String(p.title || ''); return /\b(lot|land|farm|agricultural|vacant)\b/i.test(s) && !/\b(house|townhouse|building|warehouse|condo|condominium|apartment|commercial space)\b/i.test(s); };
+const minPhotos = p => (isLot(p) ? 3 : 5);
 const normTitle = t => String(t || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]+/g, ' ').replace(/\b(for|sale|lease|rent|unit|the)\b/g, ' ').replace(/\s+/g, ' ').trim();
 async function listingProblems() {
   const props = await Property.find({ status: 'available' })
-    .select('title location listingType price monthlyRental sqm landArea mainImage gallery description geo.status createdAt').lean();
+    .select('title location listingType propertyType price monthlyRental sqm landArea mainImage gallery description geo.status createdAt').lean();
   const out = [];
   const groups = {};
   props.forEach(p => { const k = normTitle(p.title); if (k) (groups[k] = groups[k] || []).push(p); });
@@ -491,7 +495,7 @@ async function listingProblems() {
   });
   props.forEach(p => {
     const miss = [];
-    if ((p.gallery || []).length < 8) miss.push(`only ${(p.gallery || []).length} photos (8 or more)`);
+    if ((p.gallery || []).length < minPhotos(p)) miss.push(`only ${(p.gallery || []).length} photos (${minPhotos(p)} or more${isLot(p) ? ', enough for a lot' : ''})`);
     if (String(p.description || '').trim().length < 200) miss.push('a short description (200+ characters)');
     if (!(p.geo && p.geo.status === 'ok')) miss.push('no map location');
     if (!(Number(p.sqm) > 0 || Number(p.landArea) > 0)) miss.push('no floor or lot area');
