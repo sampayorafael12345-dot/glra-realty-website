@@ -157,7 +157,11 @@ const priceAlertSchema = new mongoose.Schema({
   propertyPrice: { type: Number, default: 0 },
   notifiedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
-  isNotified: { type: Boolean, default: false }
+  isNotified: { type: Boolean, default: false },
+  // New alerts start unconfirmed and are mailed only after the visitor clicks
+  // the link in the confirmation email. Rows made before this existed have no
+  // field, read back as true, and keep working.
+  confirmed: { type: Boolean, default: true }
 });
 
 // ── SAVED SEARCHES (Property Finder email alerts) ──────────
