@@ -329,7 +329,7 @@
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>Assumptions matter:</strong> This is a simplified model. It doesn't account for income tax on rent, mortgage insurance, transaction friction on future sale, or your personal situation and risk appetite. Small changes to appreciation and interest assumptions can flip the result — treat it as a conversation starter, not financial advice. Want a grounded view for your exact property? <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Talk to Catherine →</a></div>
+    <div><strong>Assumptions matter:</strong> This is a simplified model. It deducts about 8% of the future price as selling costs (taxes, transfer and broker fees), but it doesn't account for income tax on rent, mortgage insurance, or your personal situation and risk appetite. Small changes to appreciation and interest assumptions can flip the result — treat it as a conversation starter, not financial advice. Want a grounded view for your exact property? <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Talk to Catherine →</a></div>
   </div>
 </div>
 
@@ -471,7 +471,10 @@ function recalcBuy(years){
   // Value & equity at end
   const endValue = price*Math.pow(1+appr, years);
   const endBalance = balanceAfter(loan, rate, term, monthsPaid);
-  const endEquity = endValue - endBalance;
+  // Selling is not free: capital gains tax, documentary stamp, transfer and broker
+  // fees take roughly 8% of the price. Leaving that out made buying look better.
+  const SELL_COST = 0.08;
+  const endEquity = endValue*(1-SELL_COST) - endBalance;
 
   // Net cost of buying = money spent − equity you'd get back on sale
   const netBuyCost = cashOut - endEquity;
