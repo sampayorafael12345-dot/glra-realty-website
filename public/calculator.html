@@ -294,7 +294,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
         </div>
         <div class="radio-option" data-value="ordinary" onclick="selectAssetType('ordinary')">
           <input type="radio" name="assetType" value="ordinary" id="assetType-ordinary" aria-label="Ordinary asset: rented out, or sold by a developer or corporation. VAT 12 percent plus expanded withholding tax 6 percent." onchange="selectAssetType('ordinary')"> 
-          <span><i class="fas fa-building" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i> Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--ab-hot-text,#c02e00);">VAT 12% + EWT 6% (Total 18%)</strong></span>
+          <span><i class="fas fa-building" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i> Ordinary Asset <small>(Rented / Developer / Corporation)</small><br><strong style="color:var(--ab-hot-text,#c02e00);">VAT 12% + EWT 6% (Total 18%)</strong> <small>estimate, confirm with a broker</small></span>
         </div>
       </div>
     </div>
@@ -840,7 +840,7 @@ function calculateAll() {
     sellerTaxLabel = 'Capital Gains Tax (6%)';
   } else {
     sellerTax = taxBasis * 0.18;
-    sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18%';
+    sellerTaxLabel = 'VAT (12%) + EWT (6%) = 18% (estimate)';
   }
   
   const netBeforeCommission = sellingPrice - sellerTax;
