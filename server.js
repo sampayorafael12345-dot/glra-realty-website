@@ -2958,7 +2958,7 @@ async function buildSitemapRaw(req, res) {
     // Bump when the marketing pages themselves get a real content change.
     // Stamping every page with "today" on every crawl makes Google distrust
     // lastmod entirely, so only genuinely-changing pages get today's date.
-    const STATIC_LASTMOD = '2026-07-25';
+    const STATIC_LASTMOD = '2026-10-10';
     const staticPages = [
       ['/', 'daily', '1.0'], ['/properties.html', 'daily', '0.9'],
       ['/list-property.html', 'monthly', '0.8'], ['/about.html', 'monthly', '0.7'],
@@ -3573,7 +3573,7 @@ app.post('/api/price-alert',
         return res.json({ success: true, message: 'Already subscribed to price alerts for this property' });
       }
 
-      const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice });
+      const alert = new PriceAlert({ email, propertyId, propertyTitle, propertyPrice, confirmed: false });
       await alert.save();
       ingestLead({ kind: 'price_alert', refId: alert._id, email, propertyId, propertyTitle, vid,
         hints: hintsFromListing(listing.raw) }).catch(() => {});
@@ -3585,17 +3585,18 @@ app.post('/api/price-alert',
       await stitchCalcIdentity(vid, email);
 
       const userAlertHtml = getEmailHeader() + `
-        <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">Price Alert Confirmation</h2>
+        <h2 style="color: #0a0a0a; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 22px; margin: 0 0 8px 0;">One click to start your price alert</h2>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Dear Valued Client,</p>
-        <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">You have successfully set a price alert for the following property:</p>
+        <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Someone (we hope you) asked to be told if the price drops on this property:</p>
         <div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
           <p style="margin: 0 0 8px 0; font-weight: 600; color: #0a0a0a;">${esc(propertyTitle)}</p>
           <p style="margin: 0; color: #ff3d00; font-weight: 600; font-size: 16px;">Current Price: ₱${Number(propertyPrice).toLocaleString()}</p>
         </div>
-        <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">You will receive an email notification immediately if the price drops.</p>
+        <p style="margin:24px 0"><a href="${alertConfirmUrl(email, propertyId)}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Yes, alert me if the price drops</a></p>
+        <p style="color:#666;line-height:1.6;font-size:13px;">If this wasn't you, ignore this email: the alert stays switched off and you will not hear from us about it.</p>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
       ` + getEmailFooter();
-      if (visitorMailOk(email)) await sendEmail(email, `Price Alert Set: ${propertyTitle}`, userAlertHtml);
+      if (visitorMailOk(email)) await sendEmail(email, `Confirm your price alert: ${propertyTitle}`, userAlertHtml);
 
       const adminAlertHtml = getEmailHeader() + `
         <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Price Alert Request</h2>
@@ -3607,7 +3608,7 @@ app.post('/api/price-alert',
       ` + getEmailFooter();
       if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
 
-      res.json({ success: true, message: 'You will be notified when price drops!' });
+      res.json({ success: true, message: 'Check your email and click the confirmation link to start the alert.' });
     } catch (err) {
       console.error('Price alert error:', err);
       res.status(500).json({ error: 'Server error' });
@@ -5027,8 +5028,9 @@ app.post('/api/admin/signup',
     try {
       const existing = await Account.findOne({ email }).lean();
       if (existing) {
-        // Don't leak whether the account is pending/active — same message either way.
-        return res.status(400).json({ error: 'An account with this email already exists. If you just signed up, please wait for admin approval.' });
+        // Never reveal that an account exists: answer exactly as for a new request
+        // and create nothing.
+        return res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
       }
       // Zero permissions until approval — the admin picks them on the approval screen.
       const noPerms = {};
@@ -5058,7 +5060,7 @@ app.post('/api/admin/signup',
 
       res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
     } catch (e) {
-      if (e.code === 11000) return res.status(400).json({ error: 'An account with this email already exists.' });
+      if (e.code === 11000) return res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
       console.error('Signup error:', e);
       res.status(500).json({ error: 'Server error' });
     }
@@ -5751,7 +5753,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
 
       // Everyone watching at a price above the new one: a watcher alerted at an
       // earlier drop is alerted again at the next one, instead of never.
-      let alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: newWatch } });
+      let alerts = await PriceAlert.find({ propertyId: req.params.id, propertyPrice: { $gt: newWatch }, confirmed: { $ne: false } });
       // Anyone who used the unsubscribe link gets no listing emails at all.
       if (alerts.length) {
         const off = new Set((await Subscriber.find({ email: { $in: alerts.map(a => a.email) }, isActive: false }).select('email').lean()).map(s => String(s.email).toLowerCase()));
@@ -6497,6 +6499,45 @@ function confirmEmailHtml(email, name) {
     <p style="color:#666;line-height:1.6;font-size:13px;">If this wasn't you, ignore this email: you will not hear from us again.</p>
   ` + getEmailFooter();
 }
+// ── CONFIRM A PRICE ALERT (double opt-in) ───────────────────
+// The alert is created switched off; only the button press on this page turns
+// it on. Same shape as the newsletter link: signed, button page, POST to act.
+function alertToken(email, propertyId) {
+  return crypto.createHmac('sha256', JWT_SECRET).update('alert:' + String(email).toLowerCase().trim() + '|' + String(propertyId)).digest('hex').slice(0, 32);
+}
+function alertConfirmUrl(email, propertyId) {
+  const e = String(email).toLowerCase().trim();
+  return `${SITE_URL}/confirm-price-alert?e=${encodeURIComponent(e)}&p=${encodeURIComponent(propertyId)}&t=${alertToken(e, propertyId)}`;
+}
+function alertConfirmCheck(q) {
+  const e = String((q && q.e) || '').toLowerCase().trim().slice(0, 254);
+  const p = String((q && q.p) || '').slice(0, 100);
+  const t = String((q && q.t) || '');
+  const good = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && p && /^[a-f0-9]{32}$/.test(t) &&
+    crypto.timingSafeEqual(Buffer.from(t), Buffer.from(alertToken(e, p)));
+  return good ? { e, p } : null;
+}
+app.get('/confirm-price-alert', (req, res) => {
+  const c = alertConfirmCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!c) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the button in the confirmation email, or set the alert again on glrarealty.com.</p>'));
+  res.send(unsubPage('Confirm', `<h1>Start this price alert?</h1><p>We will email <strong>${esc(c.e)}</strong> only if the price of this property drops.</p>
+    <form method="post" action="/confirm-price-alert?e=${encodeURIComponent(c.e)}&p=${encodeURIComponent(c.p)}&t=${alertToken(c.e, c.p)}"><button type="submit">Yes, confirm</button></form>`));
+});
+app.post('/confirm-price-alert', publicWriteLimiter, async (req, res) => {
+  const c = alertConfirmCheck(req.query);
+  res.set('Cache-Control', 'no-store');
+  if (!c) return res.status(400).send(unsubPage('Link not valid', '<h1>This link is not valid</h1><p>Please use the button in the confirmation email.</p>'));
+  try {
+    const r = await PriceAlert.updateOne({ email: c.e, propertyId: c.p }, { $set: { confirmed: true } });
+    if (!r.matchedCount) return res.status(404).send(unsubPage('Not found', '<h1>We could not find this alert</h1><p>Please set it again on glrarealty.com.</p>'));
+    res.send(unsubPage('Confirmed', `<h1>Your price alert is on</h1><p>We will email <strong>${esc(c.e)}</strong> if the price drops.</p><p><a href="/properties.html">Browse the listings</a></p>`));
+  } catch (err) {
+    console.error('Confirm price alert failed:', err.message);
+    res.status(500).send(unsubPage('Something went wrong', '<h1>Something went wrong</h1><p>Please try the link again in a minute.</p>'));
+  }
+});
+
 app.get('/confirm-subscription', (req, res) => {
   const e = confirmCheck(req.query);
   res.set('Cache-Control', 'no-store');
