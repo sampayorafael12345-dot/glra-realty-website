@@ -1230,7 +1230,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       const mode = ['summary', 'statement', 'full'].includes(req.query.mode) ? req.query.mode : 'summary';
       const buf = await pdf.casePdf(obj, comp, mode, settings);
       res.set('Content-Type', 'application/pdf');
-      res.set('Content-Disposition', `inline; filename="${(obj.caseRef || 'case')}-${mode}.pdf"`);
+      res.set('Content-Disposition', `inline; filename="${String(obj.caseRef || 'case').replace(/[^a-z0-9._-]/gi, '_')}-${String(mode).replace(/[^a-z0-9._-]/gi, '_')}.pdf"`);
       res.send(buf);
     } catch (err) { console.error('case pdf error:', err); res.status(500).json({ error: 'Could not build the PDF' }); }
   });
@@ -1245,7 +1245,7 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       if (!p) return res.status(404).json({ error: 'Payment not found' });
       const buf = await pdf.receiptPdf(obj, p, comp, settings);
       res.set('Content-Type', 'application/pdf');
-      res.set('Content-Disposition', `inline; filename="${p.receiptNo || 'receipt'}.pdf"`);
+      res.set('Content-Disposition', `inline; filename="${String(p.receiptNo || 'receipt').replace(/[^a-z0-9._-]/gi, '_')}.pdf"`);
       res.send(buf);
     } catch (err) { console.error('case receipt error:', err); res.status(500).json({ error: 'Could not build the receipt' }); }
   });
