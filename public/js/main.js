@@ -82,7 +82,8 @@ try {
 } catch (e) {}
 
 // Apply saved dark mode preference on load
-if (localStorage.getItem('darkMode') === 'true') {
+let __dm = false; try { __dm = localStorage.getItem('darkMode') === 'true'; } catch (e) {}
+if (__dm) {
   document.body.classList.add('dark-mode');
   document.addEventListener('DOMContentLoaded', () => {
     syncDarkModePre();
