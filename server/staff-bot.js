@@ -84,7 +84,12 @@ function registerStaffBot(app, { sendEmail, esc }) {
       next();
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
   }
-  const bot = [botLimiter, botAuth];
+  // Wrong-key attempts are counted per caller (only failures count), and only a
+  // request with the right key spends the shared bot allowance, so a stranger
+  // spamming this route cannot lock the supervisor out.
+  const badKeyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false,
+    skipSuccessfulRequests: true, message: { error: 'Too many requests' } });
+  const bot = [badKeyLimiter, botAuth, botLimiter];
 
   // ── Admin: make / revoke the key, choose who gets the reports ──
   app.get('/api/admin/staff-bot', verifyToken, requireAdmin, async (req, res) => {
