@@ -897,7 +897,7 @@ function calculateFromDesiredProceed() {
     const improvements = getRawValue('improvementsValue');
     const totalAssessed = totalZv + improvements;
     const taxBasis = Math.max(sellingPrice, totalAssessed);
-    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : sellingPrice * 0.18;
+    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : taxBasis * 0.18;
     const brokerCommission = sellingPrice * (currentCommission / 100);
     const netProceed = sellingPrice - sellerTax - brokerCommission;
     if (Math.abs(netProceed - desiredNet) < 100) break;
@@ -916,7 +916,6 @@ function calculateFromDesiredProceed() {
   document.getElementById('desiredResult').style.display = 'block';
   document.getElementById('requiredSellingPrice').innerHTML = formatCurrency(sellingPrice);
   document.getElementById('desiredAmountDisplay').innerHTML = formatCurrency(desiredNet);
-  isReversing = true;
 }
 
 function calculateRegistrationFee(price) {
