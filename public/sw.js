@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v144';
+const CACHE_VERSION = 'glra-cache-v145';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -102,13 +102,21 @@ self.addEventListener('fetch', event => {
     // One stored copy per page, whatever its ?query: every search used to be
     // kept as its own full copy. The page reads the query itself.
     const pageKey = url.origin + url.pathname;
+    // A slow server must not leave a blank page when a saved copy exists: after
+    // 5 s the saved copy is shown while the real request carries on and refreshes
+    // the store for next time.
+    const live = fetch(req).then(res => {
+      if (res && res.status === 200 && res.type === 'basic' && storable(res)) {
+        const clone = res.clone();
+        caches.open(CACHE_VERSION).then(c => c.put(pageKey, clone)).catch(()=>{});
+      }
+      return res;
+    });
+    live.catch(() => {});   // a late failure after the 5 s fallback is not an error
+    const slow = new Promise(resolve => setTimeout(() => resolve(null), 5000));
     event.respondWith(
-      fetch(req)
+      Promise.race([live, slow]).then(first => first || caches.match(pageKey).then(c => c || live))
         .then(res => {
-          if (res && res.status === 200 && res.type === 'basic' && storable(res)) {
-            const clone = res.clone();
-            caches.open(CACHE_VERSION).then(c => c.put(pageKey, clone)).catch(()=>{});
-          }
           // A server error: the last good copy is better than an error page.
           if (res && res.status >= 500) return caches.match(pageKey).then(r => r || res);
           return res;
