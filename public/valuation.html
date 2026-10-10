@@ -286,6 +286,9 @@ body.dark-mode .lead-note{background:#0e0e0c}
           </div>
         </div>
         <div class="input-group">
+          <label for="vConsent" style="display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;line-height:1.4"><input type="checkbox" id="vConsent" style="width:auto;margin-top:3px;flex:none"> <span>I agree that GLRA Realty may contact me about this valuation. See the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Notice</a>.</span></label>
+        </div>
+        <div class="input-group">
           <label for="vAddr">Property Address / Landmark</label>
           <input type="text" id="vAddr" placeholder="e.g. Tower name, subdivision, or barangay & city">
         </div>
@@ -490,6 +493,8 @@ async function submitValuation(){
 
   if(!name) return showErr('Please enter your name.');
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Please enter a valid email address.');
+  if(phone && phone.replace(/\D/g,'').length < 7) return showErr('That mobile number looks too short.');
+  if(!document.getElementById('vConsent').checked) return showErr('Please tick the box to let us contact you about this valuation.');
 
   // Build a rich message so it lands in the admin with full context
   const type = document.getElementById('ptype').options[document.getElementById('ptype').selectedIndex].text;
