@@ -777,11 +777,27 @@ mongoose.connect(MONGODB_URI, {
     console.log('✅ MongoDB connected successfully!');
     await seedDefaultAdmin();
   })
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch(err => { console.error('❌ MongoDB connection error:', err); scheduleDbReconnect(); });
 
+// One pending reconnect at a time. Mongoose already retries a live connection;
+// this only covers a first connect that failed or a driver that gave up, and it
+// never stacks timers when 'disconnected' fires repeatedly.
+let dbReconnectTimer = null;
+function scheduleDbReconnect() {
+  if (dbReconnectTimer) return;
+  dbReconnectTimer = setTimeout(() => {
+    dbReconnectTimer = null;
+    const st = mongoose.connection.readyState;           // 0 off, 1 on, 2 connecting, 3 closing
+    if (st === 1 || st === 2) return;
+    mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 30000, socketTimeoutMS: 45000 })
+      .then(() => console.log('✅ MongoDB reconnected'))
+      .catch(err => { console.error('❌ MongoDB reconnect failed:', err.message); scheduleDbReconnect(); });
+  }, 5000);
+  dbReconnectTimer.unref();
+}
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected! Reconnecting...');
-  setTimeout(() => mongoose.connect(MONGODB_URI), 5000);
+  console.log('⚠️ MongoDB disconnected! Waiting to reconnect...');
+  scheduleDbReconnect();
 });
 
 // ============ AUTH + AUDIT ============
@@ -1397,7 +1413,7 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=125">
+<link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
 <body>
 <nav class="ar-nav">
@@ -2466,7 +2482,7 @@ h2.pg-section-label{font-weight:700}
 .pg-foot a{color:var(--hot-text)}
 @media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=125">
+<link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
 <body>
 <nav class="pg-nav">
@@ -2612,7 +2628,7 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=124"></script>
+<script src="/js/main.js?v=134"></script>
 <script src="/js/a11y.js?v=116" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
 ${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
@@ -5423,13 +5439,12 @@ app.get('/api/admin/audit-stats', verifyToken, requirePermission('audit_view'), 
 
 app.get('/api/admin/stats', verifyToken, async (req, res) => {
   try {
-    const totalProperties = await Property.countDocuments();
-    const availableProperties = await Property.countDocuments({ status: 'available' });
-    const totalInquiries = await Inquiry.countDocuments();
-    const heroImages = await HeroImage.countDocuments();
-    const subscribers = await Subscriber.countDocuments({ isActive: true });
-    const activeAlerts = await PriceAlert.countDocuments({ isNotified: false });
-    const wishlistCount = await Wishlist.countDocuments();
+    // Seven independent counts: ask for all of them at once (they used to run one after another,
+    // so the dashboard waited for seven database round trips in a row).
+    const [totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts, wishlistCount] = await Promise.all([
+      Property.countDocuments(), Property.countDocuments({ status: 'available' }), Inquiry.countDocuments(), HeroImage.countDocuments(),
+      Subscriber.countDocuments({ isActive: true }), PriceAlert.countDocuments({ isNotified: false }), Wishlist.countDocuments()
+    ]);
 
     res.json({ totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts, wishlistCount });
   } catch (err) {
@@ -7817,7 +7832,7 @@ app.use((err, req, res, next) => {
 
 // ============ START SERVER ============
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
+const httpServer = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   ╔═══════════════════════════════════════════════════════════════╗
   ║              🏠 GLRA REALTY WEBSITE IS READY!                ║
@@ -7827,6 +7842,14 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   Allowed origins: ${corsAllowlist.join(', ').padEnd(43).slice(0, 43)}║
   ╚═══════════════════════════════════════════════════════════════╝
   `);
+});
+
+// Render sends SIGTERM on every deploy: stop taking requests, let the ones in
+// flight finish, close the database, then exit (hard stop after 10 s).
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down');
+  const force = setTimeout(() => process.exit(0), 10000); force.unref();
+  httpServer.close(() => { mongoose.connection.close(false).catch(() => {}).finally(() => process.exit(0)); });
 });
 
 // Nothing in the app requires server.js; this only lets a test script that
