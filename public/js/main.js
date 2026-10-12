@@ -115,11 +115,34 @@ function closeMobileMenu() {
 }
 
 // ── Toast notifications ───────────────────────────────────
+// Screen readers do not reliably read a box that appears already filled in,
+// so the message is also written into a live region that stays on the page
+// (polite for news, assertive for errors). The visible toast is hidden from
+// them to avoid hearing it twice.
+function glraAnnounce(message, isError) {
+  try {
+    const id = isError ? 'glraLiveAlert' : 'glraLiveStatus';
+    let r = document.getElementById(id);
+    if (!r) {
+      r = document.createElement('div');
+      r.id = id;
+      r.setAttribute('role', isError ? 'alert' : 'status');
+      r.setAttribute('aria-live', isError ? 'assertive' : 'polite');
+      r.setAttribute('aria-atomic', 'true');
+      r.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0';
+      document.body.appendChild(r);
+    }
+    r.textContent = '';
+    setTimeout(() => { r.textContent = String(message || ''); }, 60);
+  } catch (_) {}
+}
 function showToast(message, isError = false) {
   const t = document.createElement('div');
   t.className = 'toast' + (isError ? ' err' : '');
+  t.setAttribute('aria-hidden', 'true');
   t.textContent = message;
   document.body.appendChild(t);
+  glraAnnounce(message, isError);
   setTimeout(() => t.remove(), 3500);
 }
 
@@ -245,6 +268,8 @@ var glraDisplayTitle = (function () {
     s = s.replace(RX.pict, '').replace(/️/g, '');
     s = s.replace(/ [—–-] /g, ' - ');
     s = s.replace(/\s+/g, ' ').trim();
+    // A bracket opened at the end and never closed: "Resort (Pasay".
+    s = s.replace(/ \(([^()]+)$/, ', $1');
     var letters = count(s, RX.letter);
     if (!letters || count(s, RX.upper) / letters < 0.7) return s;
     var words = s.split(' ');
@@ -381,6 +406,10 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     /* toasts clear the button */
     'html body .toast{bottom:calc(var(--glra-dock,0px) + 90px) !important}',
     '@media (max-width:600px){html body .toast{bottom:calc(var(--glra-dock,0px) + 86px) !important;max-width:calc(100vw - 32px)}}',
+    /* the footer's last row clears the button too, so the Privacy and Sitemap
+       links are never under it at the bottom of the page (audit MI-98) */
+    'html body:has(#glraContact) footer{padding-bottom:calc(var(--glra-dock,0px) + 90px) !important}',
+    '@media (max-width:600px){html body:has(#glraContact) footer{padding-bottom:calc(var(--glra-dock,0px) + 84px + env(safe-area-inset-bottom,0px)) !important}}',
 
     /* ── Theme toggle in the navigation ── */
     'html body button.glra-theme-toggle{display:inline-flex !important;align-items:center !important;justify-content:center !important;align-self:stretch !important;',
@@ -506,7 +535,9 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
     // The listing pages built by server.js have a two-link nav of their own.
     var pg = document.querySelector('.pg-nav');
     if (pg && !pg.querySelector('.glra-theme-toggle')) {
-      pg.insertBefore(makeToggle('is-boxed'), pg.querySelector('.pg-back'));
+      // The back link may sit in a .pg-links group, so insert beside it, not into the nav.
+      var pgBack = pg.querySelector('.pg-back');
+      (pgBack ? pgBack.parentNode : pg).insertBefore(makeToggle('is-boxed'), pgBack);
     }
     // Mobile menu: a labelled row at the very top, above the first section.
     var ov = document.querySelector('#mobileOverlay .mobile-overlay-links, .mobile-overlay .mobile-overlay-links');
@@ -1406,9 +1437,9 @@ window.glraOpenPrintGate = function (label, collectFn) {
         <i class="fas fa-file-pdf"></i>
         <h3>Download Your PDF</h3>
         <p>Enter your email and we'll prepare a clean PDF copy of your results to download.</p>
-        <input type="email" placeholder="Your email address" autocomplete="email" />
+        <input type="email" placeholder="Your email address" autocomplete="email" maxlength="254" />
         <button class="glra-print-gate-submit" type="button">Download PDF</button>
-        <p class="glra-print-gate-fine">We'll occasionally send new listings &amp; market insights. Unsubscribe anytime.</p>
+        <p class="glra-print-gate-fine">We'll keep your email so Catherine can follow up. No mailing list. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
       </div>
     `;
     document.body.appendChild(modal);
@@ -1540,17 +1571,17 @@ window.glraOpenPrintGate = function (label, collectFn) {
           }
         }
       } catch (_) { /* never block the real request */ }
-      // Where this visitor first came from, on the two forms that create a
-      // lead, so the Leads tab can say which channel is bringing clients.
+      // Where this visitor came from, on every form that creates a lead, so
+      // the Leads tab can say which channel is bringing clients.
       try {
         var u2 = (typeof input === 'string') ? input : (input && input.url) || '';
         var post2 = init && init.method && String(init.method).toUpperCase() === 'POST';
-        if (post2 && typeof init.body === 'string' && /\/api\/(inquiries|property-submissions)(\?|$)/.test(u2)) {
+        if (post2 && typeof init.body === 'string' && /\/api\/(inquiries|property-submissions|subscribe|price-alert|wishlist|saved-search)(\?|$)/.test(u2)) {
           var s2 = readSrc();
           if (s2) {
             var p2 = JSON.parse(init.body);
             if (p2 && typeof p2 === 'object' && !p2.src) {
-              p2.src = { src: s2.src || '', med: s2.med || '', cmp: s2.cmp || '', ref: s2.ref || '', land: s2.land || '' };
+              p2.src = { src: s2.src || '', med: s2.med || '', cmp: s2.cmp || '', cnt: s2.cnt || '', trm: s2.trm || '', ref: s2.ref || '', land: s2.land || '' };
               init = Object.assign({}, init, { body: JSON.stringify(p2) });
             }
           }
@@ -1580,11 +1611,16 @@ window.glraOpenPrintGate = function (label, collectFn) {
       if (ref && ref === window.location.hostname.replace(/^www\./, '')) ref = '';
       var src = qp.get('utm_source') || (qp.get('fbclid') ? 'facebook' : qp.get('gclid') ? 'google' : '');
       if (!src && !ref) return;
-      if (readSrc()) return;
+      // The first source is kept for 90 days, except that a campaign (utm tags
+      // or an ad click) replaces one that was only a referring site.
+      var prev = readSrc();
+      if (prev && !(src && !prev.src)) return;
       window.localStorage.setItem('glra_src', JSON.stringify({
         src: String(src).slice(0, 60),
         med: String(qp.get('utm_medium') || (qp.get('gclid') ? 'cpc' : qp.get('fbclid') ? 'social' : ref ? 'referral' : '')).slice(0, 60),
         cmp: String(qp.get('utm_campaign') || '').slice(0, 80),
+        cnt: String(qp.get('utm_content') || '').slice(0, 80),
+        trm: String(qp.get('utm_term') || '').slice(0, 80),
         ref: ref.slice(0, 80),
         land: here.pathname.slice(0, 160),
         at: Date.now()

@@ -110,6 +110,9 @@ const inquirySchema = new mongoose.Schema({
   assignedToName: { type: String, default: '' },
   assignedAt: { type: Date, default: null },
   assignedBy: { type: String, default: '' },
+  // True when the alert email to Catherine failed to send (Brevo down, quota
+  // used up): admin shows a red "email failed" badge so the lead isn't missed.
+  notifyFailed: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -161,7 +164,10 @@ const priceAlertSchema = new mongoose.Schema({
   // New alerts start unconfirmed and are mailed only after the visitor clicks
   // the link in the confirmation email. Rows made before this existed have no
   // field, read back as true, and keep working.
-  confirmed: { type: Boolean, default: true }
+  confirmed: { type: Boolean, default: true },
+  // When the confirmation link was last emailed: a repeat sign-up re-sends it
+  // at most once per 15 minutes.
+  confirmSentAt: { type: Date, default: null }
 });
 
 // ── SAVED SEARCHES (Property Finder email alerts) ──────────
@@ -197,6 +203,9 @@ const savedSearchSchema = new mongoose.Schema({
   emailsSent:      { type: Number, default: 0 },
   lastSentAt:      { type: Date, default: null },
   vid:             { type: String, default: '' },
+  // Where the visitor came from ({ src, med, cmp, cnt, trm, ref, land }), held
+  // until the search is confirmed, which is when it becomes a lead.
+  attrib:          { type: mongoose.Schema.Types.Mixed, default: undefined },
   confirmSentAt:   { type: Date, default: null },
   createdAt:       { type: Date, default: Date.now }
 });
@@ -277,6 +286,10 @@ const taskSchema = new mongoose.Schema({
     filename: { type: String, default: '' },
     size: { type: Number, default: 0 },
     resourceType: { type: String, default: 'image' },
+    // 'authenticated' = private Cloudinary file opened only by a signed,
+    // expiring link (Oct 2026 on); empty = an older public file.
+    delivery: { type: String, default: '' },
+    format: { type: String, default: '' },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
     uploadedByName: { type: String, default: '' },
     uploadedAt: { type: Date, default: Date.now }
@@ -643,6 +656,8 @@ const cashProofSchema = new mongoose.Schema({
   filename:      { type: String, default: '' },
   size:          { type: Number, default: 0 },
   resourceType:  { type: String, default: 'image' },
+  delivery:      { type: String, default: '' },   // 'authenticated' = private, signed links only
+  format:        { type: String, default: '' },
   uploadedByName:{ type: String, default: '' },
   uploadedAt:    { type: Date, default: Date.now }
 });

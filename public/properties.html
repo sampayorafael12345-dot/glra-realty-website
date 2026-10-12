@@ -37,17 +37,16 @@ html body .currency-switcher > span,html body .currency-switcher .cs-label{font-
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Browse Properties","description":"Premium properties for sale and lease in Metro Manila and Luzon, Philippines.","url":"https://glrarealty.com/properties.html","isPartOf":{"@type":"WebSite","name":"GLRA Realty","url":"https://glrarealty.com"},"about":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Properties","item":"https://glrarealty.com/properties.html"}]}</script>
-<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
 <style>
 /* ── PAGE-SPECIFIC ── */
 /* SEARCH */
@@ -181,6 +180,8 @@ html body .prop-card .prop-title{text-transform:none !important;letter-spacing:-
 body.dark-mode .prop-title{color:#f1eee9 !important}
 .prop-location{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.6px !important;text-transform:uppercase !important;color:#656565 !important;font-weight:600 !important}
 .prop-location i{color:var(--ab-hot-text,#c02e00) !important}
+/* #656565 is 3.3:1 on the dark cards; the light grey reads at 7:1. */
+html body.dark-mode .prop-location{color:#a9a9a9 !important}
 .prop-divider{display:none !important}
 .prop-specs{font-family:'JetBrains Mono',monospace !important;font-size:10.5px !important;letter-spacing:1.4px !important;text-transform:uppercase !important;color:#0a0a0a !important;font-weight:600 !important;gap:12px !important;padding:12px 0 !important;border-top:1px solid #0a0a0a !important;border-bottom:1px solid #0a0a0a !important;margin:0 0 14px !important}
 body.dark-mode .prop-specs{color:#f1eee9 !important;border-color:#3a3a36 !important}
@@ -268,6 +269,10 @@ body.dark-mode #modal .modal-share{border-color:#3a3a36}
 .email-modal-content input:focus{outline:none;border-color:var(--gold)}
 .email-modal-content .submit-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;font-weight:500;cursor:pointer;transition:var(--transition);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:'Inter',sans-serif}
 .email-modal-content .submit-btn:hover{background:var(--gold)}
+.email-modal-content .glra-modal-form{display:contents}
+.email-modal-content [aria-invalid="true"],.email-modal-content [aria-invalid="true"]:focus{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.35)}
+.email-modal-content .glra-form-err{color:var(--ab-hot-text,#c02e00);font-weight:600;margin:12px 0 0;text-align:left}
+.email-modal-content .glra-form-err[hidden]{display:none}
 .close-modal-btn{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;color:var(--gray);background:none;border:none}
 .close-modal-btn:hover{color:var(--ab-hot-text,#c02e00)}
 
@@ -551,6 +556,10 @@ html body .category-tabs .tab-btn i{color:inherit;font-size:11px}
 html body .category-tabs .tab-btn.active i{color:#ff3d00}
 @media(max-width:640px){html body .category-tabs .tab-btn{padding:0 14px !important;min-height:48px !important;letter-spacing:1.4px !important}}
 html body .grid .prop-card{display:flex !important;flex-direction:column}
+/* All 64 cards are built at once; cards off screen skip layout and paint
+   until scrolled near (2,900 elements, 800 ms of blocking on a mid phone).
+   600px is a card's real height at phone and desktop widths (Oct 2026). */
+html body .grid .prop-card{content-visibility:auto;contain-intrinsic-size:auto 600px}
 html body .grid .prop-card .prop-card-image{flex:0 0 auto}
 html body .grid .prop-card-image::after{content:'';position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(180deg,transparent,rgba(10,10,10,.55));pointer-events:none;z-index:1}
 html body .grid .prop-info{flex:1 1 auto;display:flex;flex-direction:column}
@@ -795,6 +804,15 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
 /* The area chips scroll sideways on a phone; fade the right edge so a cut-off
    chip reads as "there is more", not as a mistake. */
 @media(max-width:768px){html body .popular-chips{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}}
+/* (MI-96) Explains why sale + lease is more than the total. The line is
+   always there (a blank one until filled) so filling it never shifts the page. */
+html body .pr-hero p.pr-stats-note{margin:10px 0 0 !important;max-width:620px !important;font:500 12px/1.45 'JetBrains Mono',monospace !important;letter-spacing:.3px !important;color:rgba(241,238,233,.72) !important}
+/* Oct 2026 audit (MI-63): nothing under 11px on a phone. */
+@media(max-width:600px){
+  html body .prop-badge,html body .badge-featured,html body .badge-fresh,html body .photo-count,
+  html body .prop-location,html body .prop-added,html body .prop-specs span,html body .cmp-lbl,
+  html body .popular-chips .chips-label,html body .currency-rate-note,html body .pr-stat span{font-size:11px !important}
+}
 </style>
 <link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
@@ -862,6 +880,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
         <div class="pr-stat"><b id="prStatCities">&nbsp;</b><span>Cities</span></div>
         <div class="pr-stat"><b id="prStatNew">&nbsp;</b><span>New in 30 days</span></div>
       </div>
+      <p class="pr-stats-note" id="prStatsNote">&nbsp;</p>
     </div>
     <div class="pr-hero-art" id="prHeroArt" aria-label="Featured listings">
       <span class="pr-tile is-ph"></span><span class="pr-tile is-ph"></span><span class="pr-tile is-ph"></span>
@@ -874,7 +893,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" aria-label="Search listings by city, property name or keyword" placeholder="Try: 2BR condo in BGC under 15M" autocomplete="off" oninput="handleSearchInput(this.value)">
+        <input type="text" id="locationInput" aria-label="Search listings by city, property name or keyword" placeholder="Try: 2BR condo in Makati" autocomplete="off" oninput="handleSearchInput(this.value)">
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button type="button" class="search-btn-main" onclick="performSearch()"><i class="fas fa-search" aria-hidden="true"></i> <span id="searchBtnLabel">Search</span></button>
@@ -1013,28 +1032,33 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
 </section>
 <!-- Price Alert Modal -->
 <div id="emailModal" class="email-modal">
-  <div class="email-modal-content">
-    <button class="close-modal-btn" onclick="closeEmailModal()" aria-label="Close"><i class="fas fa-times"></i></button>
-    <i class="fas fa-bell modal-icon"></i>
-    <h3>Price Drop Alert</h3>
+  <div class="email-modal-content" role="dialog" aria-modal="true" aria-labelledby="paTitle" aria-describedby="modalPropertyName">
+    <button type="button" class="close-modal-btn" onclick="closeEmailModal()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+    <i class="fas fa-bell modal-icon" aria-hidden="true"></i>
+    <h3 id="paTitle">Price Drop Alert</h3>
     <p id="modalPropertyName">Get notified when this property's price drops</p>
-    <input type="email" id="modalEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address">
+    <form class="glra-modal-form" novalidate onsubmit="event.preventDefault();submitPriceAlert()">
+    <input type="email" id="modalEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address" maxlength="254" required>
     <input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice">
-    <button class="submit-btn" onclick="submitPriceAlert()">Notify Me When Price Drops</button>
-    <p style="font-size:11px;margin-top:10px;color:var(--gray)">We'll only email you about this property when price changes.</p>
+    <button type="submit" class="submit-btn" id="paSubmit">Notify Me When Price Drops</button>
+    </form>
+    <p style="font-size:11px;margin-top:10px;color:var(--gray)">We'll only email you about this property when price changes. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
   </div>
 </div>
 <!-- Wishlist Modal -->
 <div id="wishlistModal" class="email-modal">
-  <div class="email-modal-content">
-    <button class="close-modal-btn" onclick="closeWishlistModal()" aria-label="Close"><i class="fas fa-times"></i></button>
-    <i class="fas fa-heart modal-icon"></i>
-    <h3>Save to Wishlist</h3>
-    <p>Enter your email to save this property to your wishlist</p>
-    <input type="email" id="wishlistEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address">
+  <div class="email-modal-content" role="dialog" aria-modal="true" aria-labelledby="wlTitle" aria-describedby="wlIntro">
+    <button type="button" class="close-modal-btn" onclick="closeWishlistModal()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+    <i class="fas fa-heart modal-icon" aria-hidden="true"></i>
+    <h3 id="wlTitle">Save to Wishlist</h3>
+    <p id="wlIntro">Enter your email to save this property to your wishlist</p>
+    <form class="glra-modal-form" novalidate onsubmit="event.preventDefault();submitWishlist()">
+    <input type="email" id="wishlistEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address" maxlength="254" required>
     <input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle">
     <input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage">
-    <button class="submit-btn" onclick="submitWishlist()">Save to Wishlist</button>
+    <button type="submit" class="submit-btn" id="wlSubmit">Save to Wishlist</button>
+    </form>
+    <p style="font-size:11px;margin-top:10px;color:var(--gray)">Catherine keeps your email with this property so she can follow up. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
   </div>
 </div>
 <!-- Property Finder: email me new matches for this search -->
@@ -1049,7 +1073,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
       <label for="ssEmail">Your email</label>
       <input type="email" id="ssEmail" name="email" placeholder="you@example.com" autocomplete="email" required>
       <button type="submit" class="submit-btn" id="ssSubmit">Email me new matches</button>
-      <p class="ss-note">We'll send a confirmation link first. One click stops the alerts.</p>
+      <p class="ss-note">We'll send a confirmation link first. One click stops the alerts. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
     </form>
     <div id="ssNoFilter" class="ss-nofilter" hidden>
       <p>Set at least one filter first: a location, a property type, bedrooms, bathrooms, a price range, or the For Sale or For Lease tab. Then we can tell you when something new matches.</p>
@@ -1089,24 +1113,25 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
 
 <!-- SCHEDULE A VIEWING MODAL -->
 <div id="scheduleModal" class="email-modal">
-  <div class="email-modal-content" style="max-width:480px">
-    <button class="close-modal-btn" onclick="closeScheduleModal()" aria-label="Close"><i class="fas fa-times"></i></button>
-    <i class="far fa-calendar-check modal-icon"></i>
-    <h3>Schedule a Viewing</h3>
+  <div class="email-modal-content" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="schedTitle" aria-describedby="scheduleSubtitle">
+    <button type="button" class="close-modal-btn" onclick="closeScheduleModal()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+    <i class="far fa-calendar-check modal-icon" aria-hidden="true"></i>
+    <h3 id="schedTitle">Schedule a Viewing</h3>
     <p id="scheduleSubtitle" style="margin-bottom:18px">For: <strong>...</strong></p>
+    <form class="glra-modal-form" novalidate onsubmit="event.preventDefault();submitScheduleViewing()">
     <div style="display:grid;gap:12px;text-align:left">
       <div>
         <label style="font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedName">Your Name</label>
-        <input type="text" id="schedName" placeholder="Full name" required autocomplete="name">
+        <input type="text" id="schedName" placeholder="Full name" required autocomplete="name" maxlength="200">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
           <label style="font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedEmail">Email</label>
-          <input type="email" id="schedEmail" placeholder="you@example.com" required autocomplete="email">
+          <input type="email" id="schedEmail" placeholder="you@example.com" required autocomplete="email" maxlength="254">
         </div>
         <div>
           <label style="font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedPhone">Phone</label>
-          <input type="tel" id="schedPhone" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel" required>
+          <input type="tel" id="schedPhone" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel" required maxlength="50">
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1130,11 +1155,13 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
       </div>
       <div>
         <label style="font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:6px" for="schedMessage">Message (optional)</label>
-        <textarea id="schedMessage" rows="3" placeholder="Anything Catherine should know in advance?" style="width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;font-family:'Inter',sans-serif;background:var(--white);color:var(--text-color);resize:vertical"></textarea>
+        <textarea id="schedMessage" rows="3" maxlength="2000" placeholder="Anything Catherine should know in advance?" style="width:100%;padding:14px;border:1px solid var(--border-color);font-size:13px;font-family:'Inter',sans-serif;background:var(--white);color:var(--text-color);resize:vertical"></textarea>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitScheduleViewing()" style="margin-top:16px"><i class="far fa-calendar-check"></i> &nbsp;Request Viewing</button>
-    <p style="font-size:11px;margin-top:12px;color:var(--gray)">Catherine will confirm the appointment via your preferred channel.</p>
+    <p id="schedErr" class="glra-form-err" role="alert" hidden></p>
+    <button type="submit" class="submit-btn" id="schedSubmit" style="margin-top:16px"><i class="far fa-calendar-check" aria-hidden="true"></i> &nbsp;Request Viewing</button>
+    </form>
+    <p style="font-size:11px;margin-top:12px;color:var(--gray)">Catherine will confirm the appointment via your preferred channel. Your details are used only for this viewing. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
   </div>
 </div>
 
@@ -1151,6 +1178,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
     <div class="footer-col"><h4>Properties</h4><ul>
       <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
       <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
+      <li><a href="/properties/all">Every Listing (List)</a></li>
     </ul></div>
     <div class="footer-col"><h4>Resources</h4><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li>
       <li><a href="/calculator.html">Closing Fees Calculator</a></li>
@@ -1180,7 +1208,7 @@ html body .search-card #currencySelect{width:100%;padding-left:46px !important}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 <!--GLRA_LIST-->
-<script src="/js/main.js?v=134"></script>
+<script src="/js/main.js?v=146"></script>
 <script src="/js/smart-search.js?v=116"></script>
 <script src="/js/glra-maps.js?v=117"></script>
 <script src="/js/gallery.js?v=116" defer></script>
@@ -1332,6 +1360,10 @@ function glraHeroFill(list){
   function set(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; }
   set('prStatSale', String(list.filter(isForSale).length));
   set('prStatLease', String(list.filter(isForLease).length));
+  /* A listing offered for sale AND lease counts in both boxes, so the two
+     numbers add up to more than the listings there are. Say so. */
+  var both = list.filter(function(p){ return isForSale(p) && isForLease(p); }).length;
+  if (both) set('prStatsNote', list.length + ' listings in all. ' + both + (both === 1 ? ' is' : ' are') + ' offered for both sale and lease, so ' + (both === 1 ? 'it counts' : 'they count') + ' in each.');
   var cities = {};
   list.forEach(function(p){
     var t = ' ' + String(p.location || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]+/g, ' ') + ' ';
@@ -2575,7 +2607,7 @@ function handleSearchInput(val){showSuggestions(val);applyFilters(currentCategor
 function showSuggestions(val){const d=document.getElementById('searchSuggestions');if(!val||val.length<2){d.style.display='none';return;}const f=allPropertyTitles.filter(t=>t.toLowerCase().includes(val.toLowerCase())).slice(0,8);d.innerHTML=f.map(t=>`<div data-t="${glraEsc(t)}" onclick="selectSuggestion(this.dataset.t)">${glraEsc(glraTitle(t))}</div>`).join('');d.style.display=f.length?'block':'none';}
 function selectSuggestion(title){document.getElementById('searchSuggestions').style.display='none';const p=allProperties.find(p=>p.title===title);if(p)openDetail(p._id);else{document.getElementById('locationInput').value=title;applyFilters(currentCategory,cachedProperties);}}
 document.addEventListener('click',e=>{if(!e.target.closest('.search-field-wrapper'))document.getElementById('searchSuggestions').style.display='none';});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('modal').style.display==='block'&&!glraGalleryOpen(e))closeModal();if(document.getElementById('emailModal').style.display==='flex')closeEmailModal();if(document.getElementById('wishlistModal').style.display==='flex')closeWishlistModal();document.getElementById('searchSuggestions').style.display='none';}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('modal').style.display==='block'&&!glraGalleryOpen(e))closeModal();if(document.getElementById('emailModal').style.display==='flex')closeEmailModal();if(document.getElementById('wishlistModal').style.display==='flex')closeWishlistModal();if(document.getElementById('scheduleModal').style.display==='flex')closeScheduleModal();document.getElementById('searchSuggestions').style.display='none';}});
 function toggleAdvancedFilter(){const f=document.getElementById('advancedFilters');const b=document.getElementById('advancedFilterBtn');const i=document.getElementById('filterIcon');f.classList.toggle('show');b.classList.toggle('active');if(i)i.style.transform=f.classList.contains('show')?'rotate(180deg)':'rotate(0)';}
 /* Filters apply as you type, so Search just takes you to the results (the
    button reads "Show 23 homes"). It used to reload the page with the same
@@ -2600,11 +2632,17 @@ function findPropById(id){
 }
 function openPriceAlertModal(id){var p=findPropById(id);if(!p)return;document.getElementById('modalPropertyId').value=id;document.getElementById('modalPropertyTitle').value=p.title||'';document.getElementById('modalPropertyPrice').value=p.price||0;document.getElementById('modalPropertyName').innerHTML=`Get notified when <strong>${glraEsc(glraTitle(p.title)||'this property')}</strong> price drops`;document.getElementById('emailModal').style.display='flex';}
 function closeEmailModal(){document.getElementById('emailModal').style.display='none';document.getElementById('modalEmail').value='';}
-async function submitPriceAlert(){const email=document.getElementById('modalEmail').value;const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}const btn=event.target;btn.textContent='Subscribing...';btn.disabled=true;try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json();if(d.success){closeEmailModal();showToast((typeof d==='object'&&d&&d.message)||'Check your email to confirm the alert.');}else showToast('Failed to subscribe.',true);}catch{showToast('Network error.',true);}finally{btn.textContent='Notify Me When Price Drops';btn.disabled=false;}}
+// Shared checks for the three small forms below. The button is looked up by id
+// (event.target was the icon when the icon was clicked, so the button never
+// disabled and a double tap sent twice), and a bad field is marked and focused.
+const GLRA_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function glraBadField(id,msg,errId){const el=document.getElementById(id);if(el){el.setAttribute('aria-invalid','true');el.focus();el.addEventListener('input',()=>el.removeAttribute('aria-invalid'),{once:true});}const box=errId&&document.getElementById(errId);if(box){box.textContent=msg;box.hidden=false;}showToast(msg,true);return false;}
+function glraLocalDay(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+async function submitPriceAlert(){const btn=document.getElementById('paSubmit');if(btn&&btn.disabled)return;const email=document.getElementById('modalEmail').value.trim();const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!GLRA_EMAIL_RE.test(email)){glraBadField('modalEmail','Please enter a valid email address, like you@example.com');return;}if(btn){btn.textContent='Subscribing...';btn.disabled=true;}try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json().catch(()=>({}));if(r.ok&&d.success){closeEmailModal();showToast(d.message||'Check your email to confirm the alert.');}else showToast(d.error||(r.status===429?'Too many requests. Please wait a few minutes and try again.':'Could not set the alert. Please try again.'),true);}catch{showToast('Network error.',true);}finally{if(btn){btn.textContent='Notify Me When Price Drops';btn.disabled=false;}}}
 /* ---- WISHLIST ---- */
 function openWishlistModal(id){var p=findPropById(id);if(!p)return;document.getElementById('wishlistPropertyId').value=id;document.getElementById('wishlistPropertyTitle').value=p.title||'';document.getElementById('wishlistPropertyPrice').value=p.price||0;document.getElementById('wishlistPropertyLocation').value=p.location||'';document.getElementById('wishlistPropertyImage').value=p.mainImage||'';document.getElementById('wishlistModal').style.display='flex';}
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value='';}
-async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const loc=document.getElementById('wishlistPropertyLocation').value;const img=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:loc,propertyImage:img})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist.');}else showToast('Failed to save.',true);}catch{showToast('Network error.',true);}finally{btn.textContent='Save to Wishlist';btn.disabled=false;}}
+async function submitWishlist(){const btn=document.getElementById('wlSubmit');if(btn&&btn.disabled)return;const email=document.getElementById('wishlistEmail').value.trim();const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const loc=document.getElementById('wishlistPropertyLocation').value;const img=document.getElementById('wishlistPropertyImage').value;if(!GLRA_EMAIL_RE.test(email)){glraBadField('wishlistEmail','Please enter a valid email address, like you@example.com');return;}if(btn){btn.textContent='Saving...';btn.disabled=true;}try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:loc,propertyImage:img})});const d=await r.json().catch(()=>({}));if(r.ok&&d.success){closeWishlistModal();showToast('Property saved to your wishlist.');}else showToast(d.error||(r.status===429?'Too many requests. Please wait a few minutes and try again.':'Could not save. Please try again.'),true);}catch{showToast('Network error.',true);}finally{if(btn){btn.textContent='Save to Wishlist';btn.disabled=false;}}}
 /* ---- SHARE ---- */
 function shareProperty(platform,property){const url=encodeURIComponent(`${location.origin}/property/${property._id}`);const title=encodeURIComponent(glraTitle(property.title));const text=encodeURIComponent(`${glraTitle(property.title)} - ${property.location} - ${getDisplayPrice(property)}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger'){/* facebook.com/dialog/send needs a registered FB app id; on phones the Messenger deep link works with none, on desktop we hand the visitor the link */const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(isMobile){location.href=`fb-messenger://share/?link=${url}`;return}navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied — paste it into Messenger');return;}else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${location.origin}/property/${property._id}`);showToast('Link copied!');return;}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400');}
 /* ---- PROPERTIES DATA ---- */
@@ -2646,13 +2684,27 @@ function addedLabel(p){
   if(d<8)return 'Added '+Math.floor(d)+' days ago';
   return 'Added '+new Date(p.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
 }
-function effectivePrice(p){return isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);}
+// Monthly rent in the For Lease tab; everywhere else the sale price whenever
+// the unit is for sale (a sale-and-lease unit included), and the rent only for
+// a lease-only unit.
+function effectivePrice(p){
+  if(currentCategory==='FOR LEASE')return isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0);
+  return (isForSale(p)&&p.price>0)?p.price:(isForLease(p)?(p.monthlyRental||p.price||0):(p.price||0));
+}
+// Rents and sale prices are not on one scale: sorted together, every 28,000
+// rent came before any 8.5M sale. Outside the For Lease tab, sales come first,
+// lease-only units after them, and units with no price last.
+function priceGroup(p){
+  if(!(effectivePrice(p)>0))return 2;
+  if(currentCategory==='FOR LEASE')return 0;
+  return (isForSale(p)&&p.price>0)?0:1;
+}
 let currentSort='newest';
 function changeSort(v){currentSort=v;applyFilters(currentCategory,cachedProperties);}
 function sortProperties(list){
   const f=[...list];
-  if(currentSort==='price-asc')f.sort((a,b)=>effectivePrice(a)-effectivePrice(b));
-  else if(currentSort==='price-desc')f.sort((a,b)=>effectivePrice(b)-effectivePrice(a));
+  if(currentSort==='price-asc')f.sort((a,b)=>(priceGroup(a)-priceGroup(b))||(effectivePrice(a)-effectivePrice(b)));
+  else if(currentSort==='price-desc')f.sort((a,b)=>(priceGroup(a)-priceGroup(b))||(effectivePrice(b)-effectivePrice(a)));
   else if(currentSort==='sqm-desc')f.sort((a,b)=>glraAreaBasis(b)-glraAreaBasis(a));
   else if(currentSort==='near'&&GLRA_NEAR){const d=p=>{const k=glraNearKm(p);return k===null?Infinity:k;};f.sort((a,b)=>d(a)-d(b));}
   else f.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
@@ -2900,8 +2952,11 @@ function openScheduleViewing(propId){
   const mm = String(def.getMonth() + 1).padStart(2, '0');
   const dd = String(def.getDate()).padStart(2, '0');
   document.getElementById('schedDate').value = yyyy + '-' + mm + '-' + dd;
-  document.getElementById('schedDate').min = new Date().toISOString().slice(0, 10);
+  // The visitor's own calendar day (toISOString is UTC, a day behind in Manila before 8 am).
+  document.getElementById('schedDate').min = glraLocalDay();
+  const err = document.getElementById('schedErr'); if(err){ err.hidden = true; err.textContent = ''; }
   document.getElementById('scheduleModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('schedName')?.focus(), 50);
 }
 
 function closeScheduleModal(){
@@ -2916,10 +2971,16 @@ async function submitScheduleViewing(){
   const time = document.getElementById('schedTime').value;
   const message = document.getElementById('schedMessage').value.trim();
 
-  if(!name || !email.includes('@') || !phone || !date){
-    showToast('Please fill in name, email, phone and date', true);
-    return;
-  }
+  const btn = document.getElementById('schedSubmit');
+  if(btn && btn.disabled) return;   // already sending: a second tap must not send twice
+  const errBox = document.getElementById('schedErr');
+  if(errBox){ errBox.hidden = true; errBox.textContent = ''; }
+  if(!name) return glraBadField('schedName', 'Please enter your name.', 'schedErr');
+  if(!GLRA_EMAIL_RE.test(email)) return glraBadField('schedEmail', 'Please enter a valid email address, like you@example.com', 'schedErr');
+  const phoneDigits = phone.replace(/\D/g, '');
+  if(phoneDigits.length < 7 || phoneDigits.length > 15) return glraBadField('schedPhone', 'Please enter a phone number we can call, like 0917 123 4567.', 'schedErr');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return glraBadField('schedDate', 'Please pick a preferred date.', 'schedErr');
+  if(date < glraLocalDay()) return glraBadField('schedDate', 'That date has passed. Please pick today or a later day.', 'schedErr');
 
   const prop = (cachedProperties || []).find(p => p._id === schedulingPropertyId);
   const propTitle = prop ? prop.title : '';
@@ -2932,10 +2993,8 @@ async function submitScheduleViewing(){
     `Preferred Time: ${time}\n\n` +
     `Note: ${message || '(none)'}`;
 
-  const btn = event.target;
-  const original = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-  btn.disabled = true;
+  const original = btn ? btn.innerHTML : '';
+  if(btn){ btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Sending...'; btn.disabled = true; }
   try {
     const r = await fetch('/api/inquiries', {
       method: 'POST',
@@ -2950,14 +3009,18 @@ async function submitScheduleViewing(){
       closeScheduleModal();
       showToast('Viewing request sent. Catherine will confirm shortly.');
       ['schedName','schedEmail','schedPhone','schedMessage'].forEach(id => document.getElementById(id).value = '');
+    } else if(r.status === 400 || r.status === 429){
+      const d = await r.json().catch(() => ({}));
+      const msg = r.status === 429 ? 'Too many requests for now. Please wait a few minutes, or use WhatsApp or call.' : (d.error || 'Please check the form and try again.');
+      if(errBox){ errBox.textContent = msg; errBox.hidden = false; }
+      showToast(msg, true);
     } else {
       showToast('Could not send. Please try WhatsApp or call directly.', true);
     }
   } catch {
     showToast('Network error. Please try again.', true);
   } finally {
-    btn.innerHTML = original;
-    btn.disabled = false;
+    if(btn){ btn.innerHTML = original; btn.disabled = false; }
   }
 }
 // Stale-while-revalidate: paint instantly from the last saved copy, then refresh in the background.
@@ -3291,8 +3354,8 @@ loadProperties();
 </script>
 <script src="/js/brutalist-shell.js?v=117" defer></script>
 <script src="/js/description.js?v=116" defer></script>
-<script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=121" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/chat.js?v=146" defer></script>
 <script>
 /* The search box types out a real example now and then, so it reads as
    "ask me anything" rather than an empty strip. Only while it is empty and
@@ -3300,7 +3363,7 @@ loadProperties();
 (function(){
   var el = document.getElementById('locationInput');
   if(!el || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-  var ex = ['Try: 2BR condo in BGC under 15M', 'Try: house and lot in Alabang', 'Try: office for lease in Makati', 'Try: studio near Ateneo', 'Try: lot in Tagaytay'];
+  var ex = ['Try: 2BR condo in Makati', 'Try: house and lot in Alabang', 'Try: office for lease in Makati', 'Try: studio near Ateneo', 'Try: house and lot in Tagaytay'];
   var i = 0, timer = null;
   function idle(){ return !el.value && document.activeElement !== el && !document.hidden; }
   function type(text, k){

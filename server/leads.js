@@ -50,7 +50,7 @@ function cleanText(s, max) { return String(s == null ? '' : s).replace(/[\u0000-
 function cleanAttrib(a) {
   if (!a || typeof a !== 'object') return undefined;
   const out = {};
-  for (const k of ['src', 'med', 'cmp', 'ref', 'land']) {
+  for (const k of ['src', 'med', 'cmp', 'cnt', 'trm', 'ref', 'land']) {
     const v = cleanText(a[k], k === 'land' ? 200 : 100);
     if (v) out[k] = v;
   }
@@ -228,7 +228,10 @@ async function ingestLead(o) {
     lead.intent = mergeIntent(plainIntent(lead), o.hints);
     lead.sources.push(src);
     if (lead.sources.length > MAX_SOURCES) lead.sources = lead.sources.slice(-MAX_SOURCES);
-    if (src.attrib && !lead.firstTouch) lead.firstTouch = { ...src.attrib, at };
+    // The first touch is kept, except that a campaign (utm tags, an ad click)
+    // replaces one that was only a referring site: the campaign is the thing
+    // worth crediting.
+    if (src.attrib && (!lead.firstTouch || (src.attrib.src && !lead.firstTouch.src))) lead.firstTouch = { ...src.attrib, at };
     if (!lead.firstInboundAt || at < lead.firstInboundAt) lead.firstInboundAt = at;
     if (!lead.lastInboundAt || at > lead.lastInboundAt) lead.lastInboundAt = at;
     if (REPLY_KINDS.includes(kind) && (!lead.lastAskAt || at > lead.lastAskAt)) {
@@ -894,6 +897,6 @@ function startLeadsTick({ sendEmail, esc }) {
 }
 
 module.exports = {
-  registerLeadRoutes, startLeadsTick, ingestLead, backfillLeads, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria,
+  registerLeadRoutes, startLeadsTick, ingestLead, backfillLeads, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib,
   _test: { normEmail, normPhone, computeScore, matchListings, mergeIntent, baseType, areaOf, leadStats, isWaiting }
 };

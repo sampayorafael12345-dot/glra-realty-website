@@ -52,10 +52,10 @@ const ACCOUNT_TTL_MS = 30 * 1000;
 async function loadAccountState(userId) {
   const hit = _accountState.get(userId);
   if (hit && Date.now() - hit.at < ACCOUNT_TTL_MS) return hit.state;
-  const acc = await Account.findById(userId).select('isActive status role tokenVersion').lean();
+  const acc = await Account.findById(userId).select('isActive status role tokenVersion permissions').lean();
   const state = acc
     ? { exists: true, isActive: acc.isActive !== false, status: acc.status, role: acc.role,
-        tv: acc.tokenVersion || 0 }
+        tv: acc.tokenVersion || 0, permissions: acc.permissions || null }
     : { exists: false };
   _accountState.set(userId, { at: Date.now(), state });
   return state;
@@ -89,7 +89,7 @@ async function verifyToken(req, res, next) {
     if (!state.exists) return res.status(401).json({ error: 'Account no longer exists' });
     if (!state.isActive) return res.status(403).json({ error: 'Account is inactive' });
     if ((payload.tv || 0) !== state.tv) {
-      return res.status(401).json({ error: 'Your password was changed, so please sign in again.' });
+      return res.status(401).json({ error: 'This sign-in has ended (password changed or signed out everywhere). Please sign in again.' });
     }
     if (state.status === 'pending') {
       return res.status(403).json({ error: 'Account is awaiting admin approval' });
@@ -129,7 +129,10 @@ function requirePermission(key) {
     if (!req.user) return res.status(401).json({ error: 'Authentication required' });
     if (req.user.role === 'admin') return next();
     try {
-      const account = await Account.findById(req.user.sub).select('permissions isActive role status').lean();
+      // Same short-lived cache verifyToken already filled: a staff member's request no longer
+      // costs a second database lookup. Saving an account clears it (invalidateAccountState).
+      const st = await loadAccountState(req.user.sub);
+      const account = st.exists ? { permissions: st.permissions, isActive: st.isActive, role: st.role, status: st.status } : null;
       if (!account || account.isActive === false) {
         return res.status(403).json({ error: 'Account is inactive' });
       }

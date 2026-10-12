@@ -68,7 +68,7 @@ ${String(text).split('\n').map(l => {
 <p style="margin-top:22px"><a href="https://glrarealty.com/admin.html" style="color:#de3500">Open the Staff tab</a></p></div>`;
 }
 
-function registerStaffBot(app, { sendEmail, esc }) {
+function registerStaffBot(app, { sendEmail, esc, cloudFileLink }) {
   const botLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false,
     keyGenerator: () => 'staff-bot', message: { error: 'Too many requests' } });
 
@@ -204,7 +204,7 @@ function registerStaffBot(app, { sendEmail, esc }) {
           day: activity, todayStatus: todayDoc ? { checkIn: todayDoc.checkIn, checkOut: todayDoc.checkOut, state: todayDoc.state, activeMin: todayDoc.activeMin } : null,
           tasksFinishedOnDay: doneOnDay.map(t => ({ id: String(t._id), title: t.title, kind: t.kind, completedAt: t.completedAt, dueDate: t.dueDate, proofUrl: t.proofUrl, proofNote: t.proofNote,
             steps: (t.checklist || []).map(c => ({ text: c.text, done: c.done })), review: t.review, propertyId: t.propertyId, botCheck: t.botCheck,
-            proofCheck: t.proofCheck || null, proofChannel: t.proofChannel || '', screenshots: (t.proofShots || []).map(x => x.url), closeFlags: t.closeFlags || [] })),
+            proofCheck: t.proofCheck || null, proofChannel: t.proofChannel || '', screenshots: (t.proofShots || []).map(x => (cloudFileLink ? cloudFileLink(x, 3600) : x.url)), closeFlags: t.closeFlags || [] })),
           postsOnDay: postsOnDay.map(p => ({ id: String(p._id), listing: p.property && p.property.title, propertyId: p.property && String(p.property._id), channel: p.channel, url: p.url, postedAt: p.postedAt, note: p.note, reusedLink: reused(p.url) })),
           openTasks: openTasks.map(t => ({ id: String(t._id), title: t.title, kind: t.kind, status: t.status, dueDate: t.dueDate, late: !!(t.dueDate && new Date(t.dueDate) < new Date()), review: t.review, reviewNote: t.reviewNote, recurrence: t.recurrence, propertyId: t.propertyId, issueKey: t.issueKey,
             dueDay: t.dueDate ? staff.manilaDay(t.dueDate) : null, workdaysUntilDue: t.dueDate ? workdaysBetween(today, staff.manilaDay(t.dueDate)) : null, dueProblem: rules.dueProblem(t.dueDate) || '' })),

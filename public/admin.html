@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer">
 <!-- SheetJS 0.20.3, served from this site: 0.18.5 had two known flaws (CVE-2023-30533, CVE-2024-22363) and the fixed builds are not on npm. -->
-<script src="/js/vendor/xlsx-0.20.3.full.min.js"></script>
+<script src="/js/vendor/xlsx-0.20.3.full.min.js" defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -1152,7 +1152,7 @@ html body .rp-btn.rp-wa:hover,html body .rp-btn.rp-vb:hover{filter:brightness(1.
 
 /* Two-up layout */
 .dash-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:900px){.dash-two{grid-template-columns:1fr}}
+@media(max-width:900px){.dash-two{grid-template-columns:minmax(0,1fr)}.dash-two>*{min-width:0}}
 
 /* Bar chart */
 .bar-chart{display:flex;align-items:flex-end;gap:3px;height:130px;padding-top:6px}
@@ -1706,6 +1706,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
     <div class="login-field"><label for="lgPass">Password</label><input type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
     <button class="login-btn" id="lgBtn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
     <div class="login-error" id="lgErr">Invalid email or password.</div>
+    <div class="login-sub" id="lgNote" role="status" style="display:none;text-align:center;margin-top:14px;margin-bottom:0"></div>
     <div class="login-switch"><a onclick="showForgot(true)">Forgot password?</a></div>
     <div class="login-switch" style="margin-top:10px">New employee? <a onclick="showSignup(true)">Request an account</a></div>
   </div>
@@ -1814,6 +1815,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <button class="sb-btn" onclick="toggleDarkMode()" id="dmBtn"><i class="fas fa-moon"></i> Theme</button>
         <button class="sb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
+      <button class="sb-btn" onclick="logoutEverywhere()" style="width:100%;margin-top:8px" title="End this account's sign-in on every computer and phone"><i class="fas fa-power-off"></i> Sign out all devices</button>
     </div>
   </aside>
 
@@ -1836,6 +1838,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 
       <!-- DASHBOARD -->
       <div id="tab-dashboard">
+        <div id="mailFailBanner" role="alert" style="display:none;margin:0 0 14px;padding:12px 14px;border:2px solid #dc2626;background:rgba(220,38,38,.08);color:var(--text-color);font-size:13px;line-height:1.5"></div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-ico ico-gold"><i class="fas fa-home"></i></div><div><div class="stat-num" id="st-props">—</div><div class="stat-lbl" id="statLblProperties">Properties</div></div></div>
           <div class="stat-card"><div class="stat-ico ico-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-num" id="st-avail">—</div><div class="stat-lbl">Available</div></div></div>
@@ -2613,9 +2616,9 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
       @media(max-width:640px){
         #caseModal{padding:0 !important}
         #caseModal > .cs-modal-box{width:100% !important;max-width:none !important;max-height:none !important;min-height:100% !important;height:100%;border:0 !important;animation:none !important}
-        #caseModal .ls-tabs{flex-wrap:wrap;overflow:visible}
+        #caseModal .ls-tabs{flex-wrap:wrap !important;overflow:visible !important}
         /* The lease form had the same tab row running off the right edge on a phone. */
-        #leaseModal .ls-tabs{flex-wrap:wrap;overflow:visible}
+        #leaseModal .ls-tabs{flex-wrap:wrap !important;overflow:visible !important}
         #leaseModal .ls-tab{flex:1 1 auto;padding:10px 8px;text-align:center}
         #caseModal .ls-tab{flex:1 1 auto;padding:10px 8px;text-align:center}
         #caseModal .finput{font-size:16px}
@@ -3316,6 +3319,24 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
             <div id="bkInfo" style="font-size:12px;color:var(--gray);margin-top:10px"></div>
           </div>
         </div>
+        <!-- Personal data requests (admin only, RA 10173) -->
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-head"><div class="panel-title"><i class="fas fa-user-shield"></i> Personal Data Request</div></div>
+          <div class="panel-body">
+            <div style="font-size:13px;color:var(--gray);line-height:1.7;margin-bottom:14px">
+              When someone asks what we hold about them, or asks us to delete it, enter their email.
+              <br>&bull; <strong>Export</strong> downloads every website record about them (enquiries, Leads CRM, wishlist, alerts, saved searches, newsletter, owner submissions, calculator use) as a file you can send them.
+              <br>&bull; <strong>Erase</strong> deletes those records and the owner's document scans. Their email stays on a do-not-email list so they are never signed up again by accident.
+              <br>Client files (cases, titling, notarial, leases) and agents' journals are only counted, never erased here: they are legal records.
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <input class="finput" id="pdrEmail" type="email" maxlength="254" placeholder="person@example.com" autocomplete="off" style="flex:1 1 220px;max-width:340px">
+              <button class="hdr-btn primary" id="pdrExportBtn" onclick="pdrExport()"><i class="fas fa-file-export"></i> Export</button>
+              <button class="hdr-btn" id="pdrEraseBtn" onclick="pdrErase()" style="color:var(--ab-hot-text,#c02e00)"><i class="fas fa-user-slash"></i> Erase</button>
+            </div>
+            <div id="pdrInfo" style="font-size:12px;color:var(--gray);margin-top:10px;line-height:1.6"></div>
+          </div>
+        </div>
       </div>
 
       <!-- AUDIT LOG TAB (admin only) -->
@@ -3877,7 +3898,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <div class="fg full"><label for="accName">Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
         <div class="fg full"><label for="accEmail">Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
         <div class="fg full"><label for="accPass">Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
-        <div class="fg full"><label for="accRole">Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below.</div></div>
+        <div class="fg full"><label for="accRole">Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="agent">Agent (Agent Workspace only)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below. Agents get no admin access; they work in the Agent Workspace (agent.html).</div></div>
         <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
         <!-- Granular permissions (only relevant for employees; ignored for admins) -->
         <div class="fg full" id="accPermsWrap">
@@ -4241,13 +4262,33 @@ async function apiFetch(url, opts = {}){
     headers.set('Content-Type', 'application/json');
   }
   const res = await fetch(url, { ...opts, headers });
-  if(res.status === 401){
+  // A 401, or a 403 that says the account itself is switched off or still
+  // pending, means this sign-in is over: say so and sign out. Other 403s are
+  // ordinary "no permission for this" answers and are left to the caller.
+  let ended = res.status === 401;
+  if(!ended && res.status === 403){
+    try{ const j = await res.clone().json(); ended = /inactive|awaiting admin approval/i.test(j && j.error || ''); }catch(e){}
+  }
+  if(ended && token){
     setToken(null);
     CU = null;
-    if(typeof logout === 'function') logout();
+    if(typeof logout === 'function') logout('Your session ended. Please sign in again.');
     throw new Error('Session expired. Please log in again.');
   }
   return res;
+}
+
+// GET a JSON list/object for a loader. Throws on an error answer (or, with
+// expectArray, on anything that is not a list), so the caller's catch runs and
+// the data already on screen stays: one failed refresh used to replace the
+// whole Properties list (and about twenty others) with nothing.
+async function apiJson(url, expectArray){
+  const res = await apiFetch(url);
+  let d = null;
+  try{ d = await res.json(); }catch(e){}
+  if(!res.ok) throw new Error((d && d.error) || ('Request failed (' + res.status + ')'));
+  if(expectArray && !Array.isArray(d)) throw new Error('Unexpected answer from ' + url);
+  return d;
 }
 
 // ── UTILS ─────────────────────────────────────────────────
@@ -4269,7 +4310,7 @@ const fmtDateShort = d => d?new Date(d).toLocaleDateString('en-PH',{month:'short
 const isAdmin = () => CU?.role === 'admin';
 
 function showToast(m,e=false){
-  const t=document.createElement('div');t.className='toast';
+  const t=document.createElement('div');t.className='toast';t.setAttribute('role',e?'alert':'status');
   t.style.borderLeftColor=e?'#ef4444':'var(--gold)';
   t.innerHTML=`<i class="fas fa-${e?'exclamation-circle':'check-circle'}" style="margin-right:8px;color:${e?'#ef4444':'var(--gold)'}"></i>${esc(m)}`;
   document.body.appendChild(t);setTimeout(()=>t.remove(),4500);
@@ -4386,7 +4427,10 @@ function onRoleChange(){
     notice.innerHTML = '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.';
     wrap.insertBefore(notice, grid);
   }
-  if(role === 'admin'){
+  if(role === 'admin' || role === 'agent'){
+    notice.innerHTML = role === 'admin'
+      ? '<i class="fas fa-info-circle"></i> Admin accounts automatically have every permission. Checkboxes below are ignored.'
+      : '<i class="fas fa-info-circle"></i> Agents have no admin access. They sign in to the Agent Workspace, so the checkboxes below are ignored.';
     grid.classList.add('disabled');
     notice.classList.add('show');
   } else {
@@ -4409,7 +4453,7 @@ async function login(){
     if(res.ok&&d.success&&d.token){
       // Agents have their own workspace — this portal has nothing for them
       // (the server refuses them everywhere anyway).
-      if(d.role==='agent'){ window.location.href='agent.html'; return; }
+      if(d.role==='agent'){ try{ localStorage.setItem('glraAgentToken', d.token); }catch(e){} window.location.href='agent.html'; return; }
       setToken(d.token);
       CU={email:d.email,name:d.name,role:d.role,id:d.id,permissions:d.permissions||{}};
       document.getElementById('loginScreen').style.display='none';
@@ -4542,11 +4586,12 @@ async function signup(){
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-user-plus"></i> Send Request'}
 }
 
-function logout(){
+function logout(reason){
   // Tell the server to record a LOGOUT in the audit log (best-effort, fire-and-forget).
   // We do this BEFORE clearing the token, so apiFetch still has a valid Authorization header.
+  // keepalive lets the request finish even though the page reloads below.
   if(getToken()){
-    apiFetch('/api/admin/logout', { method: 'POST' }).catch(()=>{});
+    apiFetch('/api/admin/logout', { method: 'POST', keepalive: true }).catch(()=>{});
   }
   CU=null;
   setToken(null);
@@ -4562,6 +4607,27 @@ function logout(){
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('lgPass').value='';
   document.getElementById('lgErr').style.display='none';
+  // Reload so nothing the last person loaded (clients, leads, cases) stays in
+  // this page's memory or DOM for the next person at this computer.
+  try{ if(reason) sessionStorage.setItem('glraLoginNote', String(reason)); }catch(e){}
+  location.reload();
+}
+
+// "Sign out everywhere": ends every sign-in of this account (a lost phone, a
+// shared PC), not just this browser's.
+async function logoutEverywhere(){
+  if(!confirm('Sign out on every device?\n\nEvery computer and phone signed in to this account, including this one, will need to sign in again.')) return;
+  try{
+    const res = await apiFetch('/api/account/logout-everywhere', { method: 'POST' });
+    if(!res.ok){ showToast('Could not sign out everywhere. Try again.', true); return; }
+  }catch(e){ showToast('Could not reach the server. Try again.', true); return; }
+  setToken(null);
+  logout('You are signed out on every device.');
+}
+
+function lgNote(msg){
+  const n = document.getElementById('lgNote'); if(!n) return;
+  n.textContent = msg || ''; n.style.display = msg ? '' : 'none';
 }
 
 // ── DATA ──────────────────────────────────────────────────
@@ -4604,7 +4670,7 @@ function refreshAll(){ for(const k in __loadedAt) delete __loadedAt[k]; loadAll(
 
 async function loadStats(){
   try{
-    const s=await apiFetch('/api/admin/stats').then(r=>r.json());
+    const s=await apiJson('/api/admin/stats');
     // One listing should read "1 Property", not "1 Properties".
     const plural=(id,n,one,many)=>{const e=document.getElementById(id);if(e)e.textContent=(n===1?one:many);};
     plural('statLblProperties', s.totalProperties||0, 'Property', 'Properties');
@@ -4618,12 +4684,20 @@ async function loadStats(){
     document.getElementById('st-alerts').textContent=s.activeAlerts||0;
     const b=document.getElementById('inqBadge');
     if(s.totalInquiries>0){b.textContent=s.totalInquiries;b.style.display=''}else b.style.display='none';
+    // Red banner when GLRA's emails (lead alerts, confirmations) failed to send in the last 24 hours.
+    const mb=document.getElementById('mailFailBanner'), m=s.mail||{};
+    if(mb){
+      if(m.failures24h>0){
+        mb.innerHTML=`<strong><i class="fas fa-triangle-exclamation"></i> ${m.failures24h} email${m.failures24h===1?'':'s'} failed to send in the last 24 hours.</strong> New leads are still saved here, but alert emails may not have reached the inbox. Check the Inquiries tab for rows marked "Email failed". Last failure: ${esc(new Date(m.lastFailAt).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))}${m.lastFailReason?' ('+esc(m.lastFailReason)+')':''}.`;
+        mb.style.display='';
+      } else mb.style.display='none';
+    }
   }catch(e){console.error(e)}
 }
 
 async function loadAllProps(){
   try{
-    allProps=await apiFetch('/api/admin/all-properties').then(r=>r.json());
+    allProps=await apiJson('/api/admin/all-properties', true);
     renderProps(allProps);
     renderDashboard();
   }catch(e){console.error(e)}
@@ -5332,7 +5406,8 @@ async function loadInquiries(){
     document.getElementById('inqTbody').innerHTML=data.length?
       data.map(i=>{
         const handled = !!i.handled;
-        const handledBadge = handled ? ` <span style="display:inline-block;background:#10b981;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle">✓ Handled</span>` : '';
+        const handledBadge = (handled ? ` <span style="display:inline-block;background:#10b981;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle">✓ Handled</span>` : '')
+          + (i.notifyFailed ? ` <span style="display:inline-block;background:#dc2626;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;vertical-align:middle" title="The alert email for this inquiry did not send. Reply from here.">Email failed</span>` : '');
         const replyBtn = (i.email||i.phone) ? `<button class="act act-view" onclick="openInqReply('${i._id}')" title="Quick reply: WhatsApp, Viber or email"><i class="fas fa-reply"></i></button>` : '';
         const handledBtn = handled
           ? `<button class="act" style="background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.3)" onclick="toggleInqHandled('${i._id}',false)" title="Mark as NOT handled"><i class="fas fa-rotate-left"></i></button>`
@@ -5597,7 +5672,7 @@ async function loadSubscribers(){
     `<tr class="sk-row"><td></td><td><span class="sk-line" style="width:170px"></span></td><td><span class="sk-line" style="width:70px"></span></td><td><span class="sk-line" style="width:130px"></span></td><td><span class="sk-line" style="width:56px"></span></td><td><span class="sk-line" style="width:66px"></span></td><td><span class="sk-line" style="width:52px"></span></td><td><span class="sk-line" style="width:34px"></span></td></tr>`
   ).join('');
   try{
-    const data = await apiFetch('/api/admin/subscribers').then(r=>r.json());
+    const data = await apiJson('/api/admin/subscribers', true);
     window.lastSubscribers = Array.isArray(data) ? data : [];
     subFillSources();
     renderSubscribers();
@@ -5780,7 +5855,7 @@ async function delSub(id){
 // ── ALERTS ────────────────────────────────────────────────
 async function loadAlerts(){
   try{
-    const data=await apiFetch('/api/admin/price-alerts').then(r=>r.json());
+    const data=await apiJson('/api/admin/price-alerts', true);
     document.getElementById('alertTbody').innerHTML=data.length?
       data.map(a=>`<tr><td style="font-size:13px">${esc(a.email)}</td><td style="font-size:12px">${esc(a.propertyTitle||'—')}</td><td style="font-size:13px;color:var(--ab-hot-text,#c02e00);font-family:'Cormorant Garamond',serif">${fmt(a.propertyPrice)}</td><td><span class="badge ${!a.isNotified?'b-avail':'b-sold'}">${a.isNotified?'Notified':'Watching'}</span></td></tr>`).join(''):
       `<tr><td colspan="4"><div class="empty-st"><i class="fas fa-bell"></i><p>No price alerts</p></div></td></tr>`;
@@ -5815,7 +5890,7 @@ async function loadSavedSearches(){
 // ── HERO IMAGES ───────────────────────────────────────────
 async function loadHeroImages(){
   try{
-    const data=await apiFetch('/api/admin/hero-images').then(r=>r.json());
+    const data=await apiJson('/api/admin/hero-images', true);
     document.getElementById('heroGrid').innerHTML=data.length?
       data.map(img=>`<div class="hero-card"><img src="${esc(img.url)}" alt="Hero" loading="lazy"><div class="hero-foot">${img.isDefault?'<span class="hero-def"><i class="fas fa-star"></i> Default</span>':(hasPerm('hero_edit')?`<button class="hero-btn" onclick="setHeroDef('${img._id}')">Set Default</button>`:'')}<div class="hero-acts">${hasPerm('hero_delete')?`<button class="hero-btn danger" onclick="delHero('${img._id}')"><i class="fas fa-trash"></i></button>`:''}</div></div></div>`).join(''):
       `<div class="empty-st"><i class="fas fa-images"></i><p>No hero images yet. Upload images to display in the homepage slider.</p></div>`;
@@ -5835,7 +5910,7 @@ let allAccounts = [];
 async function loadAccounts(){
   if(!isAdmin())return;
   try{
-    const data = await apiFetch('/api/admin/accounts').then(r=>r.json());
+    const data = await apiJson('/api/admin/accounts', true);
     allAccounts = Array.isArray(data) ? data : [];
     renderPendingAccounts(allAccounts.filter(a=>a.status==='pending'));
     const active = allAccounts.filter(a=>a.status!=='pending');
@@ -5853,7 +5928,7 @@ async function loadAccounts(){
             <div style="font-weight:600;font-size:14px;color:var(--text-color)">${esc(a.name||'—')}</div>
             <div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(a.email)}</div>
             <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <span class="badge ${a.role==='admin'?'b-admin':'b-emp'}"><i class="fas fa-${a.role==='admin'?'shield-alt':'user'}"></i> ${a.role==='admin'?'Administrator':'Staff Employee'}</span>
+              <span class="badge ${a.role==='admin'?'b-admin':'b-emp'}"><i class="fas fa-${a.role==='admin'?'shield-alt':a.role==='agent'?'user-tie':'user'}"></i> ${a.role==='admin'?'Administrator':a.role==='agent'?'Agent':'Staff Employee'}</span>
               <span class="badge ${a.isActive!==false?'b-avail':'b-sold'}">${a.isActive!==false?'Active':'Inactive'}</span>
               ${a.lastLogin?`<span style="font-size:11px;color:var(--gray)"><i class="fas fa-clock" style="margin-right:4px"></i>Last login: ${fmtDateShort(a.lastLogin)}</span>`:'<span style="font-size:11px;color:var(--gray)">Never logged in</span>'}
             </div>
@@ -5919,7 +5994,9 @@ async function saveAccount(){
   const btn = document.getElementById('saveAccBtn');
   const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
   try{
-    const body = {email,name,role,isActive,permissions: readPermsGrid()};
+    const body = {email,name,isActive};
+    if(role) body.role = role;                                  // a blank select never sends role:'' (that was a 400)
+    if(role !== 'agent') body.permissions = readPermsGrid();   // an agent's admin permissions are all off; the server sets them
     if(pass) body.password = pass;
     const url = editAccId ? `/api/admin/accounts/${editAccId}` : '/api/admin/accounts';
     const method = editAccId ? 'PUT' : 'POST';
@@ -6161,6 +6238,47 @@ async function doAssign(){
   finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-user-tag"></i> Assign lead'; } }
 }
 
+// ── PERSONAL DATA REQUEST (export / erase one person by email) ──
+function pdrSummary(counts, kept){
+  const names = { inquiries:'enquiries', leads:'Leads CRM records', wishlist:'wishlist items', priceAlerts:'price alerts', savedSearches:'saved searches', subscribers:'newsletter rows', submissions:'owner submissions', calcUsage:'calculator uses', listingViews:'listing views' };
+  const found = Object.entries(counts||{}).filter(([,n])=>n).map(([k,n])=>`${n} ${names[k]||k}`);
+  const keptNames = { agentJournalEntries:'agent journal entries', titlingCases:'titling cases', notarialJobs:'notarial jobs', lawCases:'law cases', leases:'leases' };
+  const k = Object.entries(kept||{}).filter(([,n])=>n).map(([x,n])=>`${n} ${keptNames[x]||x}`);
+  return (found.length ? found.join(', ') : 'No website records') + (k.length ? `. Kept (legal or work records, handle by hand): ${k.join(', ')}.` : '.');
+}
+async function pdrExport(){
+  const email = (document.getElementById('pdrEmail').value||'').trim();
+  const info = document.getElementById('pdrInfo');
+  if(!email){ showToast('Enter the email first', true); return; }
+  const btn = document.getElementById('pdrExportBtn'); btn.disabled = true;
+  try{
+    const r = await apiFetch('/api/admin/privacy/person?email='+encodeURIComponent(email));
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error||'Export failed', true); return; }
+    const blob = new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `GLRA-personal-data-${d.email.replace(/[^a-z0-9]+/gi,'-')}.json`; a.click(); URL.revokeObjectURL(a.href);
+    info.textContent = 'Exported: ' + pdrSummary(d.counts, d.kept);
+  }catch(e){ showToast('Export failed', true); }
+  finally{ btn.disabled = false; }
+}
+async function pdrErase(){
+  const email = (document.getElementById('pdrEmail').value||'').trim();
+  const info = document.getElementById('pdrInfo');
+  if(!email){ showToast('Enter the email first', true); return; }
+  const again = prompt(`This permanently deletes every website record about ${email} and cannot be undone. Export first if they asked for a copy.\n\nType the email again to confirm:`);
+  if(again === null) return;
+  const btn = document.getElementById('pdrEraseBtn'); btn.disabled = true;
+  try{
+    const r = await apiFetch('/api/admin/privacy/erase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, confirm: again.trim() }) });
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error||'Erase failed', true); return; }
+    info.textContent = 'Erased: ' + pdrSummary(d.erased, d.kept);
+    showToast('Erased');
+  }catch(e){ showToast('Erase failed', true); }
+  finally{ btn.disabled = false; }
+}
+
 // ── DATA BACKUP ───────────────────────────────────────────
 // One button = everything. Excel gets one sheet per section (nested data like
 // payment lists is stored as JSON text in the cell); JSON is the full copy.
@@ -6168,8 +6286,20 @@ const BACKUP_SHEETS = {
   properties:'Properties', inquiries:'Inquiries', heroImages:'Hero Images', subscribers:'Subscribers',
   priceAlerts:'Price Alerts', savedSearches:'Saved Searches', wishlists:'Wishlists', accounts:'Accounts', tasks:'Tasks',
   submissions:'Submissions', scheduledEmails:'Scheduled Emails', titlingCases:'Titling Jobs',
-  notarialJobs:'Notarial', cashEntries:'Cash Ledger', auditLogs:'Audit Log', alertLogs:'Alert Log'
+  notarialJobs:'Notarial', cashEntries:'Cash Ledger', auditLogs:'Audit Log', alertLogs:'Alert Log',
+  case:'Cases', lead:'Leads', lease:'Leasing'
 };
+// The server sends every collection it has; anything without a friendly name
+// above gets one made from its key ("staffDay" -> "Staff Day").
+function bkSheets(data){
+  const used = new Set(['summary']), out = [];
+  Object.keys((data&&data.collections)||BACKUP_SHEETS).forEach(k=>{
+    let label = (BACKUP_SHEETS[k] || k.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase())).slice(0,31);
+    let n = 2; while(used.has(label.toLowerCase())) label = label.slice(0,28)+' '+(n++);
+    used.add(label.toLowerCase()); out.push([k,label]);
+  });
+  return out;
+}
 
 function bkFlatten(row){
   const out = {};
@@ -6178,6 +6308,9 @@ function bkFlatten(row){
     if(v===null||v===undefined) out[k]='';
     else if(typeof v==='object') out[k]=JSON.stringify(v);
     else out[k]=v;
+    // Excel refuses cells over 32,767 characters (e.g. an old photo stored
+    // as text). The JSON backup keeps the full value.
+    if(typeof out[k]==='string' && out[k].length>32000) out[k]=out[k].slice(0,32000)+' [cut: see the JSON backup]';
   });
   return out;
 }
@@ -6202,9 +6335,9 @@ async function downloadBackup(fmt){
     } else {
       const wb = XLSX.utils.book_new();
       const summary = [{Section:'Backup generated', Records:new Date(data.generatedAt).toLocaleString('en-PH')}]
-        .concat(Object.entries(BACKUP_SHEETS).map(([k,label])=>({Section:label, Records:(data.counts&&data.counts[k])||0})));
+        .concat(bkSheets(data).map(([k,label])=>({Section:label, Records:(data.counts&&data.counts[k])||0})));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Summary');
-      Object.entries(BACKUP_SHEETS).forEach(([k,label])=>{
+      bkSheets(data).forEach(([k,label])=>{
         const rows = (data.collections&&data.collections[k])||[];
         if(!rows.length) return;
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(bkFlatten)), label.slice(0,31));
@@ -6224,7 +6357,7 @@ async function loadAuditLog(){
   if(!hasPerm('audit_view'))return;
   try{
     const [logs, stats] = await Promise.all([
-      apiFetch('/api/admin/audit-log').then(r=>r.json()),
+      apiJson('/api/admin/audit-log', true),
       apiFetch('/api/admin/audit-stats').then(r=>r.json()).catch(()=>null)
     ]);
     allAuditLogs = Array.isArray(logs) ? logs : [];
@@ -6330,6 +6463,8 @@ function describeAuditAction(l){
     case 'PASSWORD_RESET_REQUEST': return `Requested a password reset link: ${title}`;
     case 'PASSWORD_RESET':         return `Changed password via reset link: ${title}`;
     case 'BACKUP':      return `Downloaded a full data backup (${title})`;
+    case 'PRIVACY_EXPORT': return `Exported a person's data (${title})`;
+    case 'PRIVACY_ERASE':  return `Erased a person's data (${title})`;
     default:            return `${action} ${target}${title ? ': ' + title : ''}`;
   }
 }
@@ -6413,13 +6548,30 @@ function logAuditLocally(action, target, title){
 }
 
 // ── SESSION RESTORE ───────────────────────────────────────
-async function restoreSession(){
+async function restoreSession(attempt){
+  attempt = attempt || 0;
+  if(attempt === 0){ try{ const note = sessionStorage.getItem('glraLoginNote'); if(note){ sessionStorage.removeItem('glraLoginNote'); lgNote(note); } }catch(e){} }
   if(!getToken()) return false;
+  // The server sleeps when idle and takes up to a minute to wake. Until it
+  // answers, say so and keep trying instead of showing a bare sign-in form.
+  const waking = () => {
+    if(attempt >= 24){ lgNote('The server is not answering. Check your connection and refresh the page.'); return false; }
+    lgNote('Server waking up… this can take up to a minute.');
+    setTimeout(() => restoreSession(attempt + 1), 5000);
+    return false;
+  };
   try{
     const res = await apiFetch('/api/admin/me');
+    if(res.status >= 500) return waking();
+    if(res.status === 403){
+      // An agent's token: the office dashboard refuses it, so hand it to the Agent Workspace.
+      let j = {}; try{ j = await res.json(); }catch(e){}
+      if(/Agent Workspace/i.test(j.error || '')){ try{ localStorage.setItem('glraAgentToken', getToken()); }catch(e){} setToken(null); window.location.href='agent.html'; }
+      return false;
+    }
     if(!res.ok) return false;
     const d = await res.json();
-    if(d.role==='agent'){ window.location.href='agent.html'; return false; }
+    lgNote('');
     CU = { email: d.email, name: d.name, role: d.role, id: d.id, permissions: d.permissions || {} };
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminShell').classList.add('visible');
@@ -6432,7 +6584,10 @@ async function restoreSession(){
     loadAll();
     landOnAllowedTab();
     return true;
-  }catch(e){ return false; }
+  }catch(e){
+    if(!getToken()) return false;   // the session ended (apiFetch already signed out)
+    return waking();                // network error: the server is still starting
+  }
 }
 
 // If the user can't see the dashboard, drop them on the first tab they CAN see.
@@ -6481,7 +6636,7 @@ async function loadSubmissionStats(){
 async function loadSubmissions(){
   if(!hasPerm('submissions_view')) return;
   try{
-    const subs = await apiFetch('/api/admin/property-submissions').then(r=>r.json());
+    const subs = await apiJson('/api/admin/property-submissions', true);
     allSubmissions = Array.isArray(subs) ? subs : [];
     renderSubmissions();
     loadSubmissionStats();
@@ -6712,7 +6867,7 @@ async function importSubmission(){
   const original = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
   try{
-    const res = await apiFetch('/api/admin/property-submissions/'+activeSubId+'/import', { method:'POST', body: JSON.stringify({}) });
+    const res = await importSubmissionReq(activeSubId);
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.error||'Import failed');
     showToast('Imported! New property created.');
@@ -6726,11 +6881,28 @@ async function importSubmission(){
     btn.disabled = false; btn.innerHTML = original;
   }
 }
+// The server refuses to publish a sale listing at ₱0 (needPrice): ask for the
+// asking price once and import with it. Cancelling leaves the submission as is.
+async function importSubmissionReq(id){
+  const url = '/api/admin/property-submissions/'+id+'/import';
+  let res = await apiFetch(url, { method:'POST', body: JSON.stringify({}) });
+  if(res.status===400){
+    const d = await res.clone().json().catch(()=>({}));
+    if(d.needPrice){
+      const typed = prompt('This submission has no sale price. Enter the asking price in pesos (numbers only):', '');
+      const price = Number(String(typed||'').replace(/[^\d.]/g,''));
+      if(typed===null) throw new Error('Import cancelled');
+      if(!(price>0)) throw new Error('Please enter a price above zero');
+      res = await apiFetch(url, { method:'POST', body: JSON.stringify({ price }) });
+    }
+  }
+  return res;
+}
 async function quickImportSubmission(id){
   if(!hasPerm('submissions_import')) return;
   if(!confirm('Import this submission into Properties?')) return;
   try{
-    const res = await apiFetch('/api/admin/property-submissions/'+id+'/import', { method:'POST', body: JSON.stringify({}) });
+    const res = await importSubmissionReq(id);
     if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.error||'Import failed'); }
     showToast('Imported successfully');
     await loadSubmissions();
@@ -6812,13 +6984,14 @@ async function loadTasksData(){
   if(!hasPerm('tasks_view')) return;
   try{
     const [employeesRes, categoriesRes, tasksRes] = await Promise.all([
-      apiFetch('/api/admin/tasks-assignees').then(r=>r.json()).catch(()=>[]),
-      apiFetch('/api/admin/tasks-categories').then(r=>r.json()).catch(()=>[]),
-      apiFetch('/api/admin/tasks').then(r=>r.json()).catch(()=>[])
+      apiJson('/api/admin/tasks-assignees', true).catch(()=>null),
+      apiJson('/api/admin/tasks-categories', true).catch(()=>null),
+      apiJson('/api/admin/tasks', true).catch(()=>null)
     ]);
-    allEmployees = Array.isArray(employeesRes) ? employeesRes : [];
-    allCategories = Array.isArray(categoriesRes) ? categoriesRes : [];
-    allTasks = Array.isArray(tasksRes) ? tasksRes : [];
+    // A list that failed to load keeps what was already on screen.
+    if(employeesRes) allEmployees = employeesRes;
+    if(categoriesRes) allCategories = categoriesRes;
+    if(tasksRes) allTasks = tasksRes;
     populateTaskFilters();
     renderTasks();
     refreshTasksBadge();
@@ -7522,6 +7695,18 @@ function renderTaskComments(t){
   }).join('');
 }
 
+// Private office files (payment proofs, task attachments uploaded from Oct
+// 2026) open through a 5-minute signed link from the server. The tab is
+// opened first, inside the click, so phone browsers do not block it.
+function isPrivateFile(f){ return !!f && (f.delivery === 'authenticated' || /\/authenticated\//.test(f.url || '')); }
+async function openSignedFile(path){
+  const w = window.open('', '_blank');
+  try{
+    const r = await apiFetch(path); const d = await r.json();
+    if(!r.ok || !d.url) throw new Error(d.error || 'Could not open the file');
+    if(w){ w.opener = null; w.location.href = d.url; } else window.open(d.url, '_blank', 'noopener');
+  }catch(e){ if(w) w.close(); showToast(e.message || 'Could not open the file', true); }
+}
 function renderTaskAttachments(t, canEdit){
   const cont = document.getElementById('tpAttachments');
   const cnt = document.getElementById('tpAttachCount');
@@ -7543,8 +7728,11 @@ function renderTaskAttachments(t, canEdit){
     else if(['txt'].includes(ext)) icon = 'fa-file-alt';
     const sizeKb = a.size ? Math.round(a.size/1024) : 0;
     const sizeLabel = sizeKb > 1024 ? `${(sizeKb/1024).toFixed(1)} MB` : `${sizeKb} KB`;
+    const href = isPrivateFile(a)
+      ? `href="#" onclick="openSignedFile('/api/admin/tasks/${esc(t._id)}/attachments/${esc(a._id)}/link');return false"`
+      : `href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener"`;
     return `<div class="tp-attach">
-      <a href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener">
+      <a ${href}>
         <span class="att-icon"><i class="fas ${icon}"></i></span>
         <span class="att-info">
           <span class="att-name" title="${esc(a.filename||'file')}">${esc(a.filename||'file')}</span>
@@ -8365,7 +8553,7 @@ function bmRenderInq(){
   const wrap = document.getElementById('bmInqList');
   if(!wrap) return;
   if(!items.length){
-    wrap.innerHTML = '<div class="empty-st" style="padding:30px 16px"><p>No inquiries with email</p></div>';
+    wrap.innerHTML = '<div class="empty-st" style="padding:30px 16px"><p>No enquirers who agreed to receive listings. Record consent on the person in Leads to add them here.</p></div>';
     return;
   }
   wrap.innerHTML = items.map(s => {
@@ -9306,7 +9494,7 @@ function titlingBalanceOf(t){ return -titlingLiq(t).balance; }
 async function loadTitling(){
   if(!hasPerm('titling_view')) return;
   try{
-    const data = await apiFetch('/api/admin/titling').then(r=>r.json());
+    const data = await apiJson('/api/admin/titling', true);
     titlingData = Array.isArray(data) ? data : [];
     const badge = document.getElementById('titlingBadge');
     if(badge){ const active = titlingData.filter(t=>t.status!=='completed').length; badge.textContent = active; badge.style.display = active>0?'':'none'; }
@@ -10010,8 +10198,12 @@ function renderCashProof(){
   const proofs=(cashCurrent&&cashCurrent.proof)||[];
   const items = proofs.map(p=>{
     const isImg=(p.resourceType==='image')|| /\.(jpe?g|png|webp|gif)$/i.test(p.url||'');
-    const thumb = isImg ? `<img src="${esc(p.url)}" style="width:60px;height:60px;object-fit:cover;border:1px solid var(--border-color)">` : `<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color)"><i class="fas fa-file-pdf" style="font-size:22px;color:var(--gray)"></i></div>`;
-    return `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border-color);padding:6px;background:var(--card-bg)"><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${thumb}</a><div style="flex:1;font-size:11px;color:var(--gray);word-break:break-all">${esc(p.filename||'proof')}</div><button type="button" class="act act-del" title="Remove" onclick="deleteCashProof('${esc(p._id)}')"><i class="fas fa-times"></i></button></div>`;
+    const priv = isPrivateFile(p);
+    const thumb = (isImg && !priv) ? `<img src="${esc(p.url)}" style="width:60px;height:60px;object-fit:cover;border:1px solid var(--border-color)">` : `<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color)"><i class="fas ${isImg?'fa-file-image':'fa-file-pdf'}" style="font-size:22px;color:var(--gray)"></i></div>`;
+    const href = priv
+      ? `href="#" title="Open (private file)" onclick="openSignedFile('${esc(cashCtx.base)}/${esc(id)}/proof/${esc(p._id)}/link');return false"`
+      : `href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener"`;
+    return `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border-color);padding:6px;background:var(--card-bg)"><a ${href}>${thumb}</a><div style="flex:1;font-size:11px;color:var(--gray);word-break:break-all">${esc(p.filename||'proof')}</div><button type="button" class="act act-del" title="Remove" onclick="deleteCashProof('${esc(p._id)}')"><i class="fas fa-times"></i></button></div>`;
   }).join('');
   area.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-bottom:10px">${items||'<div style="font-size:12px;color:var(--gray)">No proof attached yet.</div>'}</div>
     <label class="hdr-btn" style="cursor:pointer;display:inline-block"><i class="fas fa-upload"></i> Add proof <input type="file" accept="image/*,application/pdf" style="display:none" onchange="uploadCashProof(this)"></label>`;
@@ -10109,9 +10301,9 @@ async function loadTitlingCashAll(){
   if(!hasPerm('titling_view')) return;
   cashUseTitlingAll();
   try{
-    const data = await apiFetch('/api/admin/titling-cash').then(r=>r.json());
-    titlingCashAll = Array.isArray(data) ? data : [];
-  }catch(e){ titlingCashAll=[]; }
+    const data = await apiJson('/api/admin/titling-cash', true);
+    titlingCashAll = data;
+  }catch(e){ console.error('titling cash', e); }
   renderTitlingLedger();
 }
 function openTitlingCashLedger(kind,id){ cashUseTitlingAll(); openCashModal(kind,id); }
@@ -12494,7 +12686,7 @@ function caSend(q, file){
         renderCases();
       } else {
         q.state = 'err'; q.error = d.error || ('Upload failed (' + x.status + ')');
-        if(x.status === 401){ setToken(null); if(typeof logout === 'function') logout(); }
+        if(x.status === 401){ setToken(null); if(typeof logout === 'function') logout('Your session ended. Please sign in again.'); }
       }
       done();
     };
@@ -13482,7 +13674,7 @@ function ldPaint(){
     if(d.views && d.views.length) right += '<p class="ld-note" style="margin:0 0 6px"><b>Listings opened:</b> ' + d.views.slice(0, 8).map(function(v){ return (v.live ? '<a href="/property/' + esc(v.propertyId) + '" target="_blank" rel="noopener">' : '') + esc(typeof glraDisplayTitle === 'function' ? glraDisplayTitle(v.title) : v.title) + (v.live ? '</a>' : '') + (v.n > 1 ? ' (' + v.n + '×)' : ''); }).join(', ') + '</p>';
     if(d.calc && d.calc.length) right += '<p class="ld-note" style="margin:0 0 6px"><b>Calculators used:</b> ' + d.calc.map(function(c){ return esc(c.label) + (c.n > 1 ? ' (' + c.n + '×)' : ''); }).join(', ') + '</p>';
   }
-  if(l.firstTouch) right += '<p class="ld-note" style="margin:6px 0 0"><b>First came from:</b> ' + esc([l.firstTouch.src, l.firstTouch.med, l.firstTouch.cmp].filter(Boolean).join(' / ') || l.firstTouch.ref || '') + (l.firstTouch.land ? ' (landed on ' + esc(l.firstTouch.land) + ')' : '') + '</p>';
+  if(l.firstTouch) right += '<p class="ld-note" style="margin:6px 0 0"><b>First came from:</b> ' + esc([l.firstTouch.src, l.firstTouch.med, l.firstTouch.cmp, l.firstTouch.cnt, l.firstTouch.trm].filter(Boolean).join(' / ') || l.firstTouch.ref || '') + (l.firstTouch.land ? ' (landed on ' + esc(l.firstTouch.land) + ')' : '') + '</p>';
   var events = [];
   l.sources.forEach(function(s){ events.push({ at: s.at, cls: 'in', meta: (LD_KIND[s.kind] || s.kind) + ' · website', text: [s.label !== (LD_KIND[s.kind] || '') ? s.label : '', s.propertyTitle ? 'Listing: ' + s.propertyTitle : '', s.message].filter(Boolean).join('\n') }); });
   l.activities.forEach(function(a){ events.push({ at: a.at, cls: ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'].includes(a.type) ? 'out' : '', meta: (LD_ACT[a.type] || a.type) + (a.outcome ? ' · ' + a.outcome : '') + (a.byName ? ' · ' + a.byName : ''), text: a.text || '' }); });
@@ -14970,7 +15162,7 @@ async function sfBotMails(){
 // Keep "who's doing what" fresh while the tab is open.
 setInterval(() => { const p = document.getElementById('tab-staff'), a = document.activeElement; const typing = a && p && p.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName); if(p && p.style.display !== 'none' && !document.hidden && !typing && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
 </script>
-<script src="/js/a11y.js?v=116" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
 <script>
 // Menu helpers: type to jump, click a heading to fold its group, reopen where you left off.
 (function(){

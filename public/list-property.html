@@ -31,7 +31,6 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"Property Listing Service","provider":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com","telephone":"+639171774572","email":"glrarealty@gmail.com","address":{"@type":"PostalAddress","streetAddress":"17F, 252 Sen. Gil J. Puyat Ave.","addressLocality":"Makati City","addressRegion":"Metro Manila","addressCountry":"PH"}},"areaServed":{"@type":"Country","name":"Philippines"},"serviceType":"Real Estate Listing","description":"Submit your property to be listed for sale or lease with GLRA Realty. Licensed broker reviews every submission. No upfront fees.","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP","description":"Free to list. Standard broker commission applies only on successful transactions."}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"List Your Property","item":"https://glrarealty.com/list-property.html"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How long does it take to review a submitted listing?","acceptedAnswer":{"@type":"Answer","text":"Our licensed broker reviews each property submission within 1–2 business days and reaches out to the owner directly."}},{"@type":"Question","name":"Are there any upfront fees to list with GLRA Realty?","acceptedAnswer":{"@type":"Answer","text":"No. Listing your property is free. Standard broker commission applies only when the property is successfully sold or leased."}},{"@type":"Question","name":"Who can submit a property listing?","acceptedAnswer":{"@type":"Answer","text":"Owners, co-owners, authorised representatives, and brokers may submit a property listing through the public form."}}]}</script>
-<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +39,7 @@
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
 
 <style>
 .list-hero{padding:120px 5% 60px;background:var(--navy);color:#fff;text-align:center;background-image:radial-gradient(ellipse at 20% 50%,rgba(255,61,0,.12) 0%,transparent 60%)}
@@ -62,7 +61,7 @@
 .form-section{padding:32px 36px;border-bottom:1px solid var(--border-color)}
 .form-section:last-of-type{border-bottom:none}
 .form-section-head{margin-bottom:22px}
-.form-section-head .num{display:inline-block;width:28px;height:28px;background:var(--gold);color:#fff;font-family:'Inter',serif;font-size:15px;font-weight:600;border-radius:50%;text-align:center;line-height:28px;margin-right:10px}
+.form-section-head .num{display:inline-block;width:28px;height:28px;background:var(--ab-hot-btn,#df3500);color:#fff;font-family:'Inter',serif;font-size:15px;font-weight:600;border-radius:50%;text-align:center;line-height:28px;margin-right:10px}
 .form-section-head h3{font-family:'Inter',serif;font-size:24px;color:var(--text-color);font-weight:600;display:inline-block}
 .form-section-head p{font-size:12.5px;color:var(--gray);margin-top:6px;margin-left:38px;line-height:1.6}
 
@@ -198,10 +197,11 @@
    theme flips to dark; --gray remains the fallback. */
 .doc-item .doc-d{display:block;font-size:12.5px;line-height:1.55;margin-top:4px;max-width:56ch;
   color:var(--gray);color:color-mix(in srgb, var(--text-color) 70%, transparent)}
-.doc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.1px;
+.doc-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.1px;
   text-transform:uppercase;padding:3px 7px;margin-left:8px;white-space:nowrap;vertical-align:2px}
 .doc-tag.need{background:var(--gold);color:#fff}
-.doc-tag.later{background:transparent;color:var(--gray);border:1px solid var(--border-color);opacity:.65}
+.doc-tag.later{background:transparent;color:var(--gray);color:color-mix(in srgb, var(--text-color) 72%, transparent);border:1px solid var(--border-color)}
+@media(max-width:600px){.doc-tag{font-size:11px}}
 
 /* Attach control lives in the third column, so the row keeps one line
    of type per idea however long the description runs. */
@@ -294,6 +294,10 @@ body.dark-mode .lf-error{color:#fca5a5}
 
 /* Subtle counter for description */
 .lf-counter{font-size:11px;color:var(--gray);margin-top:4px;text-align:right}
+/* Oct 2026 audit (MI-63): nothing under 11px on a phone. */
+@media(max-width:600px){
+  html body .listing-toggle .lt-sub,html body .doc-head,html body .doc-head .ct,html body .legal-note .hd{font-size:11px !important}
+}
 </style>
 <link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
@@ -543,7 +547,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 
     <!-- Section 9: Documents -->
     <div class="form-section">
-      <div class="form-section-head"><span class="num">9</span><h3>Documents</h3><p>Tick what you already have. Nothing is uploaded here &mdash; we collect the actual copies securely once we have spoken.</p></div>
+      <div class="form-section-head"><span class="num">9</span><h3>Documents</h3><p>Tick what you have. You can attach copies now or later; attached files are stored privately.</p></div>
 
       <div id="docListSale">
         <div class="doc-head">Required to list <span class="rule"></span> <span class="ct">4 documents</span></div>
@@ -572,9 +576,9 @@ body.dark-mode .lf-error{color:#fca5a5}
             <label class="doc-t" for="ds5">Latest real property tax receipt<span class="doc-tag later">Before closing</span>
               <span class="doc-d">Proof the amilyar is current. Arrears are settled before transfer.</span></label>
             <button type="button" class="doc-attach">Attach</button></div>
-          <div class="doc-item"><input type="checkbox" id="ds6" data-doc="Notarised Special Power of Attorney">
-            <label class="doc-t" for="ds6">Notarised Special Power of Attorney<span class="doc-tag later">If representing</span>
-              <span class="doc-d">Only if you are signing for the owner. It has to be notarised, and for an owner abroad, consularised or apostilled.</span></label>
+          <div class="doc-item"><input type="checkbox" id="ds6" data-doc="Notarized Special Power of Attorney">
+            <label class="doc-t" for="ds6">Notarized Special Power of Attorney<span class="doc-tag later">If representing</span>
+              <span class="doc-d">Only if you are signing for the owner. It has to be notarized, and for an owner abroad, consularised or apostilled.</span></label>
             <button type="button" class="doc-attach">Attach</button></div>
           <div class="doc-item"><input type="checkbox" id="ds7" data-doc="Condominium certificate of management / dues clearance">
             <label class="doc-t" for="ds7">Condo certificate of management or dues clearance<span class="doc-tag later">Condos</span>
@@ -659,31 +663,31 @@ body.dark-mode .lf-error{color:#fca5a5}
         <label class="consent-item" id="ci-ats"><input type="checkbox" id="ackAuthority">
           <span>I understand this form is <b>not</b> an Authority to Sell or Lease, and that GLRA Realty cannot conclude a transaction until I have signed a separate written authority.</span></label>
         <label class="consent-item" id="ci-privacy"><input type="checkbox" id="ackPrivacy">
-          <span>I consent to GLRA Realty collecting and processing my personal data for this listing, as described in the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+          <span>I consent to GLRA Realty collecting and processing my personal data for this listing, as described in the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>. Your IP address and browser are recorded with the submission as a security record.</span></label>
       </div>
 
       <!-- This note is the honest answer to "can a tick box be the
            authority?". Under Article 1874 of the Civil Code a sale of
            land through an agent whose authority is not in writing is
            VOID, not merely unenforceable, and Article 1358(3) puts the
-           power to sell into a notarised public instrument. The
+           power to sell into a notarized public instrument. The
            E-Commerce Act gives electronic signatures legal effect but
-           carves out anything requiring notarisation. So the boxes
+           carves out anything requiring notarization. So the boxes
            above record intent and permission to advertise, which is
            genuinely useful and legally sound — and the signed paper
            still has to follow. -->
       <div class="legal-note">
         <span class="hd">Why we still need a signed document</span>
-        Under Article 1874 of the Civil Code, where land is sold through an agent, the agent's authority must be in writing &mdash; otherwise the sale itself is void. A tick box records that you want us to market the property, and that is enough for us to start. It cannot stand in for the signed Authority to Sell, and a Special Power of Attorney has to be notarised on top of that.
-        <span class="cite">Civil Code arts. 1874 &amp; 1358(3) · RA 8792 recognises e-signatures but excludes documents requiring notarisation · This is general information, not legal advice.</span>
+        Under Article 1874 of the Civil Code, where land is sold through an agent, the agent's authority must be in writing &mdash; otherwise the sale itself is void. A tick box records that you want us to market the property, and that is enough for us to start. It cannot stand in for the signed Authority to Sell, and a Special Power of Attorney has to be notarized on top of that.
+        <span class="cite">Civil Code arts. 1874 &amp; 1358(3) · RA 8792 recognises e-signatures but excludes documents requiring notarization · This is general information, not legal advice.</span>
       </div>
     </div>
 
-    <div class="lf-error" id="formError"></div>
+    <div class="lf-error" id="formError" role="alert"></div>
 
     <!-- Actions -->
     <div class="lf-actions">
-      <div class="lf-disclaimer">By submitting, you confirm the information is accurate and that you have the right to list this property. Read our <a href="/about.html">terms</a>. We typically respond within 1–2 business days.</div>
+      <div class="lf-disclaimer">By submitting, you confirm the information is accurate and that you have the right to list this property. See our <a href="/privacy.html">privacy policy</a>. We typically respond within 1–2 business days.</div>
       <button type="submit" class="lf-submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Submit listing</button>
     </div>
   </form>
@@ -768,7 +772,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=134"></script>
+<script src="/js/main.js?v=146"></script>
 <script>
 // ── State ──
 const uploadedImages = []; // [{url, name, size, status:'uploaded'|'uploading'|'failed', tempId}]
@@ -1164,7 +1168,7 @@ async function submitListing(){
 }
 </script>
 <script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=121" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/chat.js?v=146" defer></script>
 </body>
 </html>

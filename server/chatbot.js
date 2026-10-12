@@ -254,11 +254,28 @@ async function getAllAvailableListingsCached() {
     return _chatListingCache.items;
   }
   try {
-    const items = await Property.find({ status: 'available' })
-      .sort({ featured: -1, createdAt: -1 })
-      .limit(CHAT_LISTING_LIMIT)
-      .select('_id title location price monthlyRental listingType bedrooms bathrooms sqm landArea propertyType featured mainImage gallery coverImage')
-      .lean();
+    // An aggregation, not find().select(): a photo kept in the database as a
+    // multi-megabyte base64 data: URI must never be read just to draw a chat
+    // card (one such photo made the first answer after a quiet minute take
+    // about 36 s). Inline main photos become their /api/property-image URL on
+    // the database side; inline gallery photos are left out.
+    const isData = f => ({ $eq: [{ $substrCP: [{ $convert: { input: f, to: 'string', onError: '', onNull: '' } }, 0, 5] }, 'data:'] });
+    const items = await Property.aggregate([
+      { $match: { status: 'available' } },
+      { $sort: { featured: -1, createdAt: -1 } },
+      { $limit: CHAT_LISTING_LIMIT },
+      { $project: {
+        title: 1, location: 1, price: 1, monthlyRental: 1, listingType: 1, bedrooms: 1, bathrooms: 1,
+        sqm: 1, landArea: 1, propertyType: 1, featured: 1,
+        mainImage: { $cond: [isData('$mainImage'),
+          { $concat: ['/api/property-image/', { $toString: '$_id' }, '/main'] }, '$mainImage'] },
+        gallery: { $filter: {
+          input: { $cond: [{ $isArray: '$gallery' }, '$gallery', []] },
+          cond: { $not: [isData('$$this')] }
+        } },
+        coverImage: { $cond: [isData('$coverImage'), '', '$coverImage'] }
+      } }
+    ]);
     items.forEach(applyWebsiteCover);
     _chatListingCache = { at: now, items };
     return items;
@@ -304,6 +321,77 @@ const TITLE_STOPWORDS = new Set([
   'unit','units','floor','floors','property','properties','sqm','br','ba'
 ]);
 
+// The visitor's budget in pesos, or null. It used to take the FIRST number in
+// the message, so "2 bedroom condo under 10 million" read a budget of 2 and
+// "10 million" was never seen. Order of preference: a number after a budget
+// word ("under", "max", "budget"...), then any number written with a unit
+// ("10M", "8.5 million", "30k"), then a plain number of 10,000 or more
+// ("30,000"). A bare small number with no unit ("under 10") is not guessed.
+function parseBudget(message) {
+  const m = String(message || '').toLowerCase()
+    .replace(/₱|\bphp\b/g, ' ')
+    .replace(/\bp(?=\s*\d)/g, ' ');
+  const UNIT = '(m|mil|mill?ion|millions|k|thousand)';
+  const toPesos = (raw, unit) => {
+    const n = parseFloat(String(raw).replace(/,/g, ''));
+    if (!isFinite(n) || n <= 0) return null;
+    const u = (unit || '').toLowerCase();
+    if (u === 'k' || u === 'thousand') return Math.round(n * 1_000);
+    if (u) return Math.round(n * 1_000_000);
+    return n >= 1000 ? Math.round(n) : null;
+  };
+  const afterWord = m.match(new RegExp(
+    '\\b(?:under|below|max(?:imum)?|less than|up to|upto|within|not more than|no more than|budget(?:\\s+(?:is|of))?|around|about)\\s*(?:of\\s*)?(?:≤|<=|<)?\\s*(\\d[\\d,]*(?:\\.\\d+)?)\\s*' + UNIT + '?\\b'));
+  if (afterWord) {
+    const v = toPesos(afterWord[1], afterWord[2]);
+    if (v) return v;
+  }
+  const withUnit = m.match(new RegExp('(\\d[\\d,]*(?:\\.\\d+)?)\\s*' + UNIT + '\\b'));
+  if (withUnit) {
+    const v = toPesos(withUnit[1], withUnit[2]);
+    if (v) return v;
+  }
+  const bare = m.match(/\b(\d{1,3}(?:,\d{3})+|\d{5,})\b/);
+  if (bare) return toPesos(bare[1], '');
+  return null;
+}
+
+// What the visitor asked for that a listing must actually satisfy. A budget
+// under 1M is read as a monthly rent; anything above it as a purchase price.
+function parseQueryConstraints(message) {
+  const m = (message || '').toLowerCase();
+  const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
+  const wantedBR = brMatch ? parseInt(brMatch[1], 10) : null;
+  const budget = parseBudget(m);
+  const wantsLease = /\b(rent|rental|lease|leasing|monthly)\b/.test(m);
+  const wantsSale  = /\b(buy|buying|purchase|sale|for sale)\b/.test(m);
+  const rentMode = budget ? budget < 1_000_000 : (wantsLease && !wantsSale);
+  return {
+    budget,
+    wantedBR: wantedBR && wantedBR > 0 ? wantedBR : null,
+    rentMode,
+    wantsLease,
+    wantsSale,
+    wantedLocs: KNOWN_LOCATIONS.filter(loc => m.includes(loc)),
+  };
+}
+
+// The price of a listing that is comparable with the visitor's budget, or
+// null when the listing cannot be had that way (a sale-only unit for someone
+// with a rent budget, or a lease-only unit for a buyer).
+function comparablePrice(p, rentMode) {
+  const lt = (p.listingType || '').toUpperCase();
+  const both = lt.includes('SALE') && (lt.includes('LEASE') || lt.includes('RENT'));
+  const leaseOnly = !both && (lt.includes('LEASE') || lt.includes('RENT'));
+  if (rentMode) {
+    if (both) return Number(p.monthlyRental) || null;
+    if (leaseOnly) return Number(p.monthlyRental || p.price) || null;
+    return null;
+  }
+  if (leaseOnly) return null;
+  return Number(p.price) || null;
+}
+
 function scoreListings(message, listings) {
   const m = (message || '').toLowerCase();
   const wantedLocs = KNOWN_LOCATIONS.filter(loc => m.includes(loc));
@@ -317,17 +405,7 @@ function scoreListings(message, listings) {
   const brMatch = m.match(/(\d+)\s*-?\s*(?:br|bed|bedroom)/);
   const wantedBR = brMatch ? parseInt(brMatch[1], 10) : null;
 
-  let budget = null;
-  const bMatch = m.match(/(\d[\d,.]*)\s*(m|mil|million|k|thousand)?/);
-  if (bMatch) {
-    const raw = parseFloat(bMatch[1].replace(/,/g, ''));
-    const unit = (bMatch[2] || '').toLowerCase();
-    if (!isNaN(raw)) {
-      if (unit === 'm' || unit === 'mil' || unit === 'million') budget = raw * 1_000_000;
-      else if (unit === 'k' || unit === 'thousand') budget = raw * 1_000;
-      else if (raw >= 1000) budget = raw;
-    }
-  }
+  const budget = parseBudget(m);
 
   function scoreOne(p) {
     let s = 0;
@@ -421,17 +499,10 @@ function deriveSearchFromMessage(message) {
     labelParts.unshift(`${brMatch[1]}BR`);
   }
 
-  const bMatch = m.match(/(?:under|below|max|less than|≤|<=|<)\s*₱?\s*([\d,.]+)\s*(m|mil|million|k|thousand)?/);
-  if (bMatch) {
-    const raw = parseFloat(bMatch[1].replace(/,/g, ''));
-    const unit = (bMatch[2] || '').toLowerCase();
-    let n = raw;
-    if (unit === 'm' || unit === 'mil' || unit === 'million') n = raw * 1_000_000;
-    else if (unit === 'k' || unit === 'thousand') n = raw * 1_000;
-    if (n > 0) {
-      params.maxPrice = Math.round(n);
-      labelParts.push(`under ₱${Math.round(n).toLocaleString()}`);
-    }
+  const n = parseBudget(m);
+  if (n > 0) {
+    params.maxPrice = Math.round(n);
+    labelParts.push(`under ₱${Math.round(n).toLocaleString()}`);
   }
 
   if (Object.keys(params).length === 0) return null;
@@ -492,6 +563,25 @@ function buildActions(message, hasMatches, search) {
   if (/\b(bgc|bonifacio)\b/.test(m)) push({ label: 'Living in BGC', url: '/living-in-bgc.html', kind: 'secondary' });
   if (/\b(makati)\b/.test(m))        push({ label: 'Living in Makati', url: '/living-in-makati.html', kind: 'secondary' });
   if (/\b(alabang|muntinlupa)\b/.test(m)) push({ label: 'Living in Alabang', url: '/living-in-alabang.html', kind: 'secondary' });
+
+  if (/\b(estate tax|inherit(ed|ance)?|heirs?|extrajudicial|deceased)\b/.test(m)) {
+    push({ label: 'Estate tax calculator', url: '/estate-tax.html', kind: 'primary' });
+  }
+  if (/\b(rent (or|vs\.?|versus) buy|buy (or|vs\.?|versus) rent|rent vs buy)\b/.test(m)) {
+    push({ label: 'Rent vs buy calculator', url: '/rent-vs-buy.html', kind: 'primary' });
+  }
+  if (/\b(pag-?ibig|hdmf|loanable)\b/.test(m)) {
+    push({ label: 'Pag-IBIG loanable amount', url: '/pagibig-loanable.html', kind: 'primary' });
+  }
+  if (/\b(pre-?selling|reservation fee|turnover)\b/.test(m)) {
+    push({ label: 'Pre-selling payment schedule', url: '/pre-selling.html', kind: 'secondary' });
+  }
+  if (/\b(amilyar)\b/.test(m)) {
+    push({ label: 'Amilyar calculator', url: '/property-tax.html', kind: 'primary' });
+  }
+  if (/\b(worth|valuation|apprais(al|e)|market value of my)\b/.test(m)) {
+    push({ label: 'Free valuation', url: '/valuation.html', kind: 'primary' });
+  }
 
   if (/\b(sell|selling|list (my|a) property|i (have|own) a property|i'?m a seller|i want to lease out|rent out)\b/.test(m)) {
     push({ label: 'List your property', url: '/list-property.html', kind: 'primary' });
@@ -554,10 +644,22 @@ function buildFollowUps(message, matches, search) {
   return out.slice(0, 4);
 }
 
-function shapeListingCard(p) {
+// rentMode: true shows the monthly rent of a sale-and-lease unit, false its
+// sale price, null (no preference in the question) both. note is a short
+// warning appended to the price, e.g. "above your budget".
+function shapeListingCard(p, rentMode = null, note = '') {
   const lt = (p.listingType || '').toUpperCase();
-  const isLease = lt.includes('LEASE') || lt.includes('RENT');
+  const both = lt.includes('SALE') && (lt.includes('LEASE') || lt.includes('RENT'));
+  const leaseOnly = !both && (lt.includes('LEASE') || lt.includes('RENT'));
+  const isLease = leaseOnly || (both && rentMode === true);
   const priceNum = isLease ? (p.monthlyRental || p.price || 0) : (p.price || 0);
+  let priceLabel = isLease
+    ? `₱${Number(priceNum).toLocaleString()}/mo`
+    : `₱${Number(priceNum).toLocaleString()}`;
+  if (both && rentMode === null && Number(p.monthlyRental) > 0) {
+    priceLabel += ` or ₱${Number(p.monthlyRental).toLocaleString()}/mo`;
+  }
+  if (note) priceLabel += ` · ${note}`;
   return {
     id: String(p._id),
     title: p.title || 'Untitled',
@@ -565,14 +667,14 @@ function shapeListingCard(p) {
     propertyType: p.propertyType || '',
     listingType: isLease ? 'FOR LEASE' : 'FOR SALE',
     price: priceNum,
-    priceLabel: isLease
-      ? `₱${Number(priceNum).toLocaleString()}/mo`
-      : `₱${Number(priceNum).toLocaleString()}`,
+    priceLabel,
     bedrooms: p.bedrooms || 0,
     bathrooms: p.bathrooms || 0,
     sqm: p.sqm || 0,
     image: p.mainImage || '',
-    url: `/properties.html?property=${encodeURIComponent(String(p._id))}`,
+    // The listing's own page (photos, map, hazard card, enquiry form), not the
+    // properties.html pop-up.
+    url: `/property/${encodeURIComponent(String(p._id))}`,
   };
 }
 
@@ -595,6 +697,21 @@ CALCULATORS & TOOLS:
 - /rental-yield.html  → Gross & net rental yield calculator
 - /zonal.html         → BIR Zonal Value lookup (NCR + key provinces)
 - /ercf.html          → Estimated Registration & Closing Fees (LRA, BIR, RD)
+- /tools.html         → All free calculators on one page
+- /valuation.html     → "What's my property worth?" free valuation request for owners
+- /estate-tax.html    → Estate tax on inherited property (6%, with the surviving spouse's share)
+- /rent-vs-buy.html   → Rent vs buy comparison over the years
+- /pagibig-loanable.html → Pag-IBIG maximum loanable amount from income and age
+- /savings-goal.html  → Down payment savings planner
+- /pre-selling.html   → Pre-selling payment schedule (reservation, down payment, balance)
+- /property-tax.html  → Amilyar / real property tax estimate
+- /principal-residence.html → Capital gains tax exemption on selling a principal residence
+- /vat-exemption.html → Does VAT apply to this property sale?
+- /rental-income-tax.html → Tax on rental income for owners who lease out
+- /lease-escalation.html → Rent increases over a lease term
+- /bir-deadlines.html → BIR filing deadlines and late-payment penalties for a sale
+- /arthaland.html     → Arthaland developments (Sondris, Liv, Una, Eluria, Lucima)
+These pages above (from /tools.html down) are NOT rendered as buttons, so when one is the right answer you MAY link it as a markdown link, e.g. [estate tax calculator](/estate-tax.html).
 
 SERVICES OFFERED:
 - Buy-side brokerage (residential & commercial, NCR + key provinces)
@@ -652,6 +769,9 @@ function registerChatbot(app, { handleValidation }) {
         let listingContext = '';
         let topMatches = [];
         let serverSearchLink = null;
+        let budgetCheck = '';
+        let cardRentMode = null;
+        const budgetNotes = new Map();
         const propertyIntent = hasPropertyIntent(message);
         try {
           const allListings = await getAllAvailableListingsCached();
@@ -661,13 +781,56 @@ function registerChatbot(app, { handleValidation }) {
 
             const RELEVANCE_THRESHOLD = 4;
             const scored = scoreListings(message, allListings);
-            const relevant = scored.filter(x => x.s >= RELEVANCE_THRESHOLD).slice(0, 12).map(x => x.p);
+            let relevant = scored.filter(x => x.s >= RELEVANCE_THRESHOLD).map(x => x.p);
 
+            // Budget and bedrooms are FILTERS, not just score points: the chat
+            // once answered "Yes, we have a few" to "2 bedroom condo in Makati
+            // under 10 million" and showed a 20M unit and two 1BR units.
+            // Within budget first, then up to 15% over (labelled), and when
+            // nothing fits, the closest options, all labelled as over budget.
+            const qc = parseQueryConstraints(message);
+            const hasConstraint = !!(qc.budget || qc.wantedBR);
+            if (hasConstraint) {
+              const fitsBR = p => !qc.wantedBR || (Number(p.bedrooms) || 0) >= qc.wantedBR;
+              const priceOf = p => comparablePrice(p, qc.rentMode);
+              let pool = relevant.filter(fitsBR);
+              // Asked for an area: keep to that area when anything there fits.
+              if (qc.wantedLocs.length) {
+                const inArea = p => qc.wantedLocs.some(w =>
+                  String(p.location || '').toLowerCase().includes(w) || String(p.title || '').toLowerCase().includes(w));
+                if (pool.some(inArea)) pool = pool.filter(inArea);
+              }
+              let within = pool, near = [], closest = [];
+              if (qc.budget) {
+                within = pool.filter(p => { const v = priceOf(p); return v && v <= qc.budget; });
+                near = pool.filter(p => { const v = priceOf(p); return v && v > qc.budget && v <= qc.budget * 1.15; })
+                  .sort((a, b) => priceOf(a) - priceOf(b));
+                if (!within.length && !near.length) {
+                  closest = pool.filter(p => priceOf(p) > 0).sort((a, b) => priceOf(a) - priceOf(b)).slice(0, 3);
+                }
+              }
+              for (const p of near) budgetNotes.set(String(p._id), 'slightly above your budget');
+              for (const p of closest) budgetNotes.set(String(p._id), 'above your budget');
+              relevant = [...within, ...near, ...closest];
+              const ask = [qc.wantedBR ? `at least ${qc.wantedBR} bedroom(s)` : '',
+                qc.budget ? `a ${qc.rentMode ? 'monthly rent' : 'price'} of at most ₱${qc.budget.toLocaleString()}` : '']
+                .filter(Boolean).join(' and ');
+              budgetCheck = within.length
+                ? `\n\nBUDGET CHECK (computed by the server, trust it): the visitor asked for ${ask}. ${within.length} listing(s) fit.` +
+                  (near.length ? ` ${near.length} more are slightly above the budget (within 15%) and are marked ABOVE BUDGET below; mention that if you refer to them.` : '')
+                : `\n\nBUDGET CHECK (computed by the server, trust it): the visitor asked for ${ask}. NO published listing fits that. Say so plainly first (for example "Nothing in our current listings fits that exactly."), never say "yes, we have matches". ` +
+                  (relevant.length ? 'The listings below marked ABOVE BUDGET are the closest options; present them as such. ' : '') +
+                  'Suggest messaging Catherine at m.me/glrarealty so she can source one.';
+            }
+            relevant = relevant.slice(0, 12);
             topMatches = propertyIntent ? relevant.slice(0, 3) : [];
+            cardRentMode = qc.budget ? qc.rentMode : (qc.wantsLease && !qc.wantsSale ? true : (qc.wantsSale && !qc.wantsLease ? false : null));
 
             const seen = new Set();
             const merged = [];
-            for (const p of [...relevant, ...featuredSet]) {
+            // No featured filler when the question has a budget or bedroom
+            // count: those listings were never checked against it.
+            for (const p of [...relevant, ...(hasConstraint ? [] : featuredSet)]) {
               const key = String(p._id);
               if (seen.has(key)) continue;
               seen.add(key);
@@ -695,9 +858,9 @@ LIVE INVENTORY SNAPSHOT (do NOT invent listings — only reference what's below)
 - By area: ${locIndex}
 
 MOST RELEVANT LISTINGS for this query:
-${merged.map(fmtListing).join('\n')}
+${merged.length ? merged.map((p, i) => fmtListing(p, i) + (budgetNotes.has(String(p._id)) ? ' — ABOVE BUDGET' : '')).join('\n') : '(none)'}
 
-The frontend will automatically render the top 3 relevant listings as visual cards under your reply, plus a "Browse all" search button. So you do NOT need to repeat the full property details — just write a short, natural intro paragraph (1-3 sentences) like "Yes — here are some matches in Makati right now:" and the cards/button will appear below. If the user's area is not in the "By area" list, say so honestly and suggest contacting Catherine.`;
+The frontend will automatically render the top 3 relevant listings as visual cards under your reply, plus a "Browse all" search button. So you do NOT need to repeat the full property details — just write a short, natural intro paragraph (1-3 sentences) like "Yes — here are some matches in Makati right now:" (only when the listings really match) and the cards/button will appear below. If the user's area is not in the "By area" list, say so honestly and suggest contacting Catherine.${budgetCheck}`;
           } else {
             listingContext = `
 
@@ -810,7 +973,7 @@ ${SITE_MAP}${listingContext}`;
 
         const payload = {
           reply: finalReply,
-          properties: topMatches.map(shapeListingCard),
+          properties: topMatches.map(p => shapeListingCard(p, cardRentMode, budgetNotes.get(String(p._id)) || '')),
           search: serverSearchLink,
           actions,
           suggestions,

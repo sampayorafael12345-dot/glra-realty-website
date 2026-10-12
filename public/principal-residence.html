@@ -30,7 +30,6 @@
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Principal Residence CGT Exemption Calculator","description":"Checks eligibility for the Philippine principal-residence capital gains tax exemption and computes the pro-rata tax when the proceeds are only partly utilised.","applicationCategory":"FinanceApplication","operatingSystem":"Web","inLanguage":"en-PH","url":"https://glrarealty.com/principal-residence.html","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"creator":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://glrarealty.com/tools.html"},{"@type":"ListItem","position":3,"name":"Principal Residence Exemption","item":"https://glrarealty.com/principal-residence.html"}]}</script>
-<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +38,7 @@
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -189,7 +188,7 @@ body.dark-mode .ref-table th{background:#0e0e0c}
       <div class="input-group">
         <label for="saleDate">Date Of Sale</label>
         <input type="date" id="saleDate" value="" onchange="recalc()" oninput="recalc()">
-        <div class="input-hint">The date the deed of sale was notarised. Leave blank for today.</div>
+        <div class="input-hint">The date the deed of sale was notarized. Leave blank for today.</div>
       </div>
 
       <div class="input-pair">
@@ -254,7 +253,7 @@ body.dark-mode .ref-table th{background:#0e0e0c}
         <div class="input-group" style="margin-bottom:0">
           <label for="cgtRate">Capital Gains Tax</label>
           <input type="number" id="cgtRate" value="6" min="0" max="20" step="0.5" oninput="recalc()">
-          <div class="input-hint">Per cent</div>
+          <div class="input-hint">Percent</div>
         </div>
         <div class="input-group" style="margin-bottom:0">
           <label for="window">Utilisation Window</label>
@@ -356,6 +355,8 @@ body.dark-mode .ref-table th{background:#0e0e0c}
         </div>
       </div>
 
+      <p style="font-size:12px;color:var(--gray);line-height:1.7;margin-top:16px">This is an estimate, not legal or tax advice. Have an accountant confirm the figures before you file.</p>
+
       <div class="cta-row">
         <a href="/#contact" class="cta-primary"><i class="fas fa-comments"></i> Ask Catherine</a>
         <a href="/calculator.html" class="cta-outline"><i class="fas fa-calculator"></i> Closing Fees</a>
@@ -449,7 +450,7 @@ body.dark-mode .ref-table th{background:#0e0e0c}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=134"></script>
+<script src="/js/main.js?v=146"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -604,7 +605,7 @@ function recalc(){
 document.addEventListener('DOMContentLoaded', recalc);
 </script>
 <script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=121" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/chat.js?v=146" defer></script>
 </body>
 </html>

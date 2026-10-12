@@ -6,7 +6,9 @@
    brutalist-shell.js script to upgrade the nav/footer.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Fonts: each page's own <link> loads Inter + JetBrains Mono (all weights the
+   theme uses). An @import here was only found after this file downloaded,
+   a second round trip before any text could paint. */
 
 /* ── Hijack the CSS variables: anything using --gold/--navy etc. flips automatically ── */
 :root{
@@ -277,6 +279,9 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
   color:var(--ab-paper) !important;border-radius:0 !important;font-size:14px !important;
 }
 .footer-social a:hover{background:var(--ab-hot) !important;border-color:var(--ab-hot) !important;color:#fff !important}
+/* 44px hit area around the 36px squares, same look (Oct 2026 audit, MI-64). */
+.footer-social a{position:relative}
+.footer-social a::after{content:'';position:absolute;inset:-5px}
 .footer-divider{display:none !important}
 .footer-bottom{
   font-family:'JetBrains Mono',monospace !important;font-size:11px !important;letter-spacing:1.5px !important;
@@ -478,7 +483,7 @@ body.dark-mode .form-input,body.dark-mode .zonal-search-input{background:var(--a
 .ab-top-strip *{color:#f1eee9 !important}
 .ab-top-strip .live{display:inline-block;width:7px;height:7px;background:var(--ab-hot) !important;margin-right:8px;animation:abpulse 1.5s infinite}
 @keyframes abpulse{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:640px){.ab-top-strip{font-size:10.5px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
+@media(max-width:640px){.ab-top-strip{font-size:11px;letter-spacing:.5px;padding:8px 14px}.ab-top-strip > :last-child{display:none}}
 
 /* Calculator fee-row padding so values don't touch the box edge */
 .fee-row,.cost-row,.amort-row,.rental-row{padding-left:18px !important;padding-right:18px !important}
@@ -1599,9 +1604,9 @@ button[aria-disabled="true"]{
 @media(max-width:768px){
   .footer-bottom-links{gap:6px;flex-wrap:wrap}
   .footer-bottom-links a{
-    display:inline-block;
+    display:inline-flex;align-items:center;
     padding:9px 10px !important;
-    min-height:24px;
+    min-height:44px;
   }
   .presets button,.preset-btn,.chip-btn{
     padding:9px 12px !important;

@@ -30,7 +30,6 @@
 <meta name="twitter:image" content="https://glrarealty.com/img/social-card.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Blog","name":"GLRA Realty Blog","description":"Guides to living in Makati, BGC and Alabang, plus the documents and fees to know before you buy or sell property in the Philippines.","url":"https://glrarealty.com/blog.html","inLanguage":"en-PH","publisher":{"@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com","logo":{"@type":"ImageObject","url":"https://glrarealty.com/img/logo.png"}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://glrarealty.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://glrarealty.com/blog.html"}]}</script>
-<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +38,7 @@
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=128">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -135,7 +134,7 @@
     <div class="blog-card-body">
       <span class="blog-card-tag">Area Guide</span>
       <h3>Living in Makati</h3>
-      <p>Salcedo, Legaspi, Rockwell and Poblacion: condo prices, schools, transit, dining and lifestyle for buyers and renters.</p>
+      <p>Salcedo, Legazpi, Rockwell and Poblacion: condo prices, schools, transit, dining and lifestyle for buyers and renters.</p>
       <div class="blog-card-meta"><span class="read-more">Read the guide <i class="fas fa-arrow-right"></i></span></div>
     </div>
   </a>
@@ -181,9 +180,10 @@
   <h2>Stay In the Know</h2>
   <p>Get market updates, new property listings, and expert tips delivered straight to your inbox.</p>
   <div class="newsletter-form">
-    <input type="email" id="newsletterEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address">
+    <input type="email" id="newsletterEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address" maxlength="254">
     <button onclick="subscribeNewsletter()">Subscribe</button>
   </div>
+  <p style="font-size:12px;margin:14px 0 0;color:var(--gray)">We'll email a confirmation link first. One click unsubscribes. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p>
 </div>
 
 </main>
@@ -247,7 +247,7 @@
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=134"></script>
+<script src="/js/main.js?v=146"></script>
 <script>
 async function subscribeNewsletter(){
   const email=document.getElementById('newsletterEmail').value;
@@ -256,7 +256,7 @@ async function subscribeNewsletter(){
   try{
     const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'blog_newsletter'})});
     const d=await r.json();
-    if(d.success){document.getElementById('newsletterEmail').value='';showToast(d.message||'Check your inbox: tap the link in our email to confirm.')}
+    if(d.success){document.getElementById('newsletterEmail').value='';showToast(d.message||"If you're not already on our list, a confirmation email is on its way.")}
     else showToast('Something went wrong. Please try again.',true)
   }catch{showToast('Network error. Please try again.',true)}
   finally{btn.textContent=orig;btn.disabled=false}
@@ -264,7 +264,7 @@ async function subscribeNewsletter(){
 
 </script>
 <script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=116" defer></script>
-<script src="/js/chat.js?v=121" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/chat.js?v=146" defer></script>
 </body>
 </html>

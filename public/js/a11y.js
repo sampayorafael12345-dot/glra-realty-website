@@ -29,6 +29,11 @@
    5. DECORATIVE ICONS. ~1,600 Font Awesome `<i>` elements sit next to visible
       text. Each one is an empty element a screen reader may still stop on;
       aria-hidden takes them out of the tree.
+
+   7. LANDMARKS AND HEADINGS (Oct 2026 audit, MI-97). The main navs get a name,
+      the top strip sits in a named region instead of outside every landmark,
+      and the footer's column titles (h4 straight after the page's h2s) are
+      announced at level 2 so the heading outline never skips a level.
 */
 (function () {
   'use strict';
@@ -73,7 +78,7 @@
   }
 
   function closeAllDropdowns(except) {
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-dropdown.ab-open'), function (o) {
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-dropdown.ab-open, .ab-nav-dropdown.ab-open'), function (o) {
       if (o === except) return;
       o.classList.remove('ab-open');
       var t = o.firstElementChild;
@@ -125,8 +130,10 @@
     );
 
     /* 3. Nav dropdowns ------------------------------------------------- */
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-dropdown'), function (dd, i) {
-      var menu = dd.querySelector('.nav-dropdown-menu');
+    // Inner pages use .nav-dropdown (brutalist-shell.js); the home page's own
+    // navbar calls the same thing .ab-nav-dropdown.
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-dropdown, .ab-nav-dropdown'), function (dd, i) {
+      var menu = dd.querySelector('.nav-dropdown-menu, .ab-nav-dropdown-menu');
       var trigger = dd.firstElementChild;
       if (!menu || !trigger || trigger === menu) return;
       if (trigger.hasAttribute('href')) return;   // a real link, leave it alone
@@ -175,7 +182,7 @@
       });
     });
     document.addEventListener('click', function (e) {
-      if (e.target && e.target.closest && e.target.closest('.nav-dropdown')) return;
+      if (e.target && e.target.closest && e.target.closest('.nav-dropdown, .ab-nav-dropdown')) return;
       closeAllDropdowns(null);
     });
 
@@ -190,6 +197,10 @@
       }
       if (!opener) opener = candidates[0] || null;
       if (!overlay) return;
+      // Full-screen menu: announce it as a modal dialog with a name.
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      if (!overlay.hasAttribute('aria-label')) overlay.setAttribute('aria-label', 'Site menu');
       if (opener) {
         opener.setAttribute('aria-expanded', 'false');
         opener.setAttribute('aria-controls', 'mobileOverlay');
@@ -274,6 +285,24 @@
       );
     }
     hideIcons(document);
+
+    /* 7. Landmarks and heading levels ------------------------------------ */
+    function landmarks() {
+      Array.prototype.forEach.call(document.querySelectorAll('nav.navbar, nav.ab-nav'), function (n) {
+        if (!n.hasAttribute('aria-label') && !n.hasAttribute('aria-labelledby')) n.setAttribute('aria-label', 'Main');
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.ab-top-strip, .ab-top'), function (t) {
+        if (t.hasAttribute('role') || t.closest('header,nav,main,footer,aside,[role]')) return;
+        t.setAttribute('role', 'region');
+        t.setAttribute('aria-label', 'Site notice');
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('footer h4'), function (h) {
+        if (!h.hasAttribute('aria-level')) h.setAttribute('aria-level', '2');
+      });
+    }
+    landmarks();
+    // brutalist-shell.js may add the top strip after this runs.
+    window.addEventListener('load', landmarks);
 
     // Most of this site's icons arrive after load — listing cards, the chat
     // widget, the floating buttons. Debounced so a burst of inserted cards

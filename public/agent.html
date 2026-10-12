@@ -977,7 +977,7 @@ const TAB_IDS = NAV.map(n => n.id);
 // ═════════ state + helpers ═════════
 const TK = 'glraAgentToken';
 const THEME_KEY = 'glraAgentTheme';
-let ME = null, STAGES = [], LEADS = [], editLeadId = null;
+let ME = null, STAGES = [], LEADS = [], LEADS_OK = false, editLeadId = null;
 let calMonth = null, selDay = null, calItems = [];
 const SKELETON = '<div class="card"><div class="cbody"><div class="sk"><i></i><i></i><i></i><i></i></div></div></div>';
 
@@ -1001,7 +1001,27 @@ async function api(path, opts = {}) {
   if (tk) headers.Authorization = 'Bearer ' + tk;
   const res = await fetch(path, { ...opts, headers });
   if (res.status === 401) { signOut(true); throw new Error('Signed out'); }
+  // A 403 that says the account is switched off or still pending ends the
+  // sign-in too; any other 403 is left to the caller.
+  if (res.status === 403) {
+    let j = null; try { j = await res.clone().json(); } catch (e) {}
+    if (j && /inactive|awaiting admin approval/i.test(j.error || '')) { signOut(true); throw new Error('Signed out'); }
+  }
   return res;
+}
+// GET for a tab loader: throws on an error answer, so the loader's catch can
+// keep what was on screen (or offer a retry) instead of a shimmer forever.
+async function apiJson(path) {
+  const res = await api(path);
+  let d = null; try { d = await res.json(); } catch (e) {}
+  if (!res.ok || !d) throw new Error((d && d.error) || 'Could not load');
+  return d;
+}
+// A tab whose data could not load: re-show the last good copy with a toast,
+// or, the first time, a card with a Try again button.
+function loadFailed(tab, retry, haveOld, rerender) {
+  if (haveOld) { try { rerender(); } catch (e) {} toast('Could not refresh. Showing what was loaded before.', true); return; }
+  $('tab-' + tab).innerHTML = `<div class="card"><div class="cbody"><p class="note">Could not load this page. Check your connection and try again.</p><button class="btn sm alt" style="margin-top:14px" onclick="${retry}()">Try again</button></div></div>`;
 }
 
 // ═════════ theme ═════════
@@ -1102,11 +1122,24 @@ async function forgotPass() {
   } catch (e) { authMsg('Network problem. Please try again.', 'bad'); }
 }
 
-function signOut(expired) {
+function signOut(expired, msg) {
   localStorage.removeItem(TK);
   $('appView').classList.remove('on');
   $('authView').style.display = 'flex';
-  if (expired) authMsg('Your session ended. Please sign in again.', 'bad');
+  // Reload so the last person's leads and clients do not stay in this page's
+  // memory for whoever uses this device next. The message survives the reload.
+  const note = msg || (expired === true ? 'Your session ended. Please sign in again.' : '');
+  try { if (note) sessionStorage.setItem('glraAgentNote', note); } catch (e) {}
+  location.reload();
+}
+// "Sign out everywhere": ends every sign-in of this account, not just this device's.
+async function signOutEverywhere() {
+  if (!confirm('Sign out on every device? Every phone and computer signed in to this account, including this one, will need to sign in again.')) return;
+  try {
+    const res = await api('/api/account/logout-everywhere', { method: 'POST' });
+    if (!res.ok) return toast('Could not sign out everywhere. Try again.', true);
+  } catch (e) { if (e.message !== 'Signed out') toast('Could not reach the server. Try again.', true); return; }
+  signOut(false, 'You are signed out on every device.');
 }
 
 // ═════════ app boot ═════════
@@ -1128,7 +1161,9 @@ function buildChrome() {
 async function enterApp() {
   try {
     const res = await api('/api/agent/me');
-    if (!res.ok) { const d = await res.json().catch(() => ({})); signOut(); return authMsg(d.error || 'Could not load your workspace.', 'bad'); }
+    if (res.status >= 500) return wakeRetry();
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return signOut(false, d.error || 'Could not load your workspace.'); }
+    authMsg('');
     ME = await res.json();
     STAGES = ME.stages || [];
     $('authView').style.display = 'none';
@@ -1140,7 +1175,16 @@ async function enterApp() {
     $('adminLinkSide').style.display = showAdmin; $('adminLinkTop').style.display = showAdmin;
     setBadge(ME.unread);
     showTab('gps');
-  } catch (e) { /* 401 already handled in api() */ }
+  } catch (e) {
+    // 401 is already handled in api(); a network error means the server is still waking up.
+    if (e.message !== 'Signed out') wakeRetry();
+  }
+}
+let wakeTries = 0;
+function wakeRetry() {
+  if (++wakeTries > 24) return authMsg('The server is not answering. Check your connection and refresh the page.', 'bad');
+  authMsg('Server waking up\u2026 this can take up to a minute.', 'ok');
+  setTimeout(enterApp, 5000);
 }
 function setBadge(n) {
   ['bellBadgeSide', 'bellBadgeTop'].forEach(id => {
@@ -1324,10 +1368,9 @@ const PERIOD_WORD = { daily: 'day', weekly: 'week', monthly: 'month' };
 async function loadActions() {
   $('tab-actions').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/actions');
-    ACT = await res.json();
+    ACT = await apiJson('/api/agent/actions');
     renderActions();
-  } catch (e) {}
+  } catch (e) { if (e.message !== 'Signed out') loadFailed('actions', 'loadActions', !!ACT, renderActions); }
 }
 
 const targetOf = a => { const n = Math.round(Number(a.target)); return n > 1 ? Math.min(99, n) : 1; };
@@ -1501,7 +1544,7 @@ function restoreStd(id) {
 async function loadReport() {
   $('tab-report').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/report'); const r = await res.json();
+    const r = await apiJson('/api/agent/report');
     const rate = s => s.score >= .8 ? ['ON TRACK', 'ok'] : s.score >= .5 ? ['CATCHING UP', 'mid'] : ['BEHIND', 'bad'];
     const sc = (label, s) => { const [t, c] = rate(s); return `<div class="score"><div class="k">${label}</div><div class="v">${s.done}<small>/${s.total}</small></div><div class="r ${c}">${t}</div></div>`; };
     // The report is not typed twice: these rows are the actions ticked on the
@@ -1554,7 +1597,7 @@ async function loadReport() {
       <div class="metaline">${salePct}% of your closed-deal target</div>
     </div></div>`;
     reveal($('tab-report'));
-  } catch (e) {}
+  } catch (e) { if (e.message !== 'Signed out') loadFailed('report', 'loadReport', false); }
 }
 
 // ═════════ LEADS ═════════
@@ -1576,9 +1619,10 @@ function stageChip(stage) {
 async function loadLeads() {
   $('tab-leads').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/leads'); const d = await res.json();
-    LEADS = d.leads; renderLeads();
-  } catch (e) {}
+    const d = await apiJson('/api/agent/leads');
+    if (!Array.isArray(d.leads)) throw new Error('Could not load');
+    LEADS = d.leads; LEADS_OK = true; renderLeads();
+  } catch (e) { if (e.message !== 'Signed out') loadFailed('leads', 'loadLeads', LEADS_OK, renderLeads); }
 }
 function renderLeads() {
   const q = ($('leadQ')?.value || '').toLowerCase();
@@ -1776,9 +1820,9 @@ let PIPE = null, openStage = null, pipeView = 'stage';
 async function loadPipeline() {
   $('tab-pipeline').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/pipeline'); PIPE = await res.json();
+    PIPE = await apiJson('/api/agent/pipeline');
     renderPipeline();
-  } catch (e) {}
+  } catch (e) { if (e.message !== 'Signed out') loadFailed('pipeline', 'loadPipeline', !!PIPE, renderPipeline); }
 }
 function daysInStage(l) {
   const hist = l.stageHistory || [];
@@ -1915,9 +1959,9 @@ async function loadCalendar() {
   if (!calMonth) calMonth = todayStr().slice(0, 7);
   $('tab-calendar').innerHTML = SKELETON;
   try {
-    const res = await api('/api/agent/calendar?month=' + calMonth); const d = await res.json();
-    calItems = d.items; renderCalendar(d.today);
-  } catch (e) {}
+    const d = await apiJson('/api/agent/calendar?month=' + calMonth);
+    calItems = Array.isArray(d.items) ? d.items : []; renderCalendar(d.today);
+  } catch (e) { if (e.message !== 'Signed out') loadFailed('calendar', 'loadCalendar', false); }
 }
 function renderCalendar(todayKey) {
   const [y, m] = calMonth.split('-').map(Number);
@@ -2058,6 +2102,10 @@ function renderProfile() {
         <div class="sl"><b>Sign out of this device</b><span>You will need your email and password to get back in.</span></div>
         <button class="btn sm alt" onclick="signOut()">Sign out</button>
       </div>
+      <div class="swrow">
+        <div class="sl"><b>Sign out of every device</b><span>For a lost phone or a shared computer. Every device, this one included, will need to sign in again.</span></div>
+        <button class="btn sm alt" onclick="signOutEverywhere()">Sign out all</button>
+      </div>
       ${ME.role === 'admin' ? `<div class="swrow"><div class="sl"><b>Admin Portal</b><span>Listings, inquiries, staff and the notarial board. Admin accounts only.</span></div><a class="btn sm alt" href="admin.html">Open portal</a></div>` : ''}
       <p class="note" style="margin-top:12px">Need your role or permissions changed? Ask the broker.</p>
     </div>
@@ -2148,7 +2196,7 @@ async function toggleBell() {
   p.style.display = 'block';
   p.innerHTML = '<div class="nrow"><div class="sk"><i></i><i></i></div></div>';
   try {
-    const res = await api('/api/agent/notifications'); const d = await res.json();
+    const d = await apiJson('/api/agent/notifications');
     p.innerHTML = d.notifications.length
       ? d.notifications.map(n => `<div class="nrow${n.read ? '' : ' unread'}">${esc(n.message)}<div class="t">${new Date(n.createdAt).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}</div></div>`).join('')
       : '<div class="nrow">Nothing yet. Follow-ups, birthdays and unfinished actions land here.</div>';
@@ -2171,8 +2219,9 @@ document.addEventListener('keydown', e => {
 });
 buildChrome();
 applyTheme(currentTheme());
+try { const n = sessionStorage.getItem('glraAgentNote'); if (n) { sessionStorage.removeItem('glraAgentNote'); authMsg(n, /every device/.test(n) ? 'ok' : 'bad'); } } catch (e) {}
 if (localStorage.getItem(TK)) enterApp();
 </script>
-<script src="/js/a11y.js?v=116" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
 </body>
 </html>

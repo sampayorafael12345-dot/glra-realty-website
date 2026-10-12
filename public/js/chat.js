@@ -299,7 +299,7 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
       '<div class="glra-chat-body" id="glraChatBody"></div>' +
       '<div class="glra-chat-suggest" id="glraChatSuggest"></div>' +
       '<form class="glra-chat-form" id="glraChatForm">' +
-        '<input class="glra-chat-input" id="glraChatInput" type="text" placeholder="Ask anything about Philippine real estate…" maxlength="1500" autocomplete="off" />' +
+        '<input class="glra-chat-input" id="glraChatInput" type="text" aria-label="Ask GLRA a question" placeholder="Ask anything about Philippine real estate…" maxlength="1500" autocomplete="off" />' +
         '<button type="submit" class="glra-chat-send" id="glraChatSend">Send</button>' +
       '</form>';
     document.body.appendChild(panel);

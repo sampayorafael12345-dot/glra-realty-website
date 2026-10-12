@@ -38,7 +38,6 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@id":"https://glrarealty.com/#organization","@type":"RealEstateAgent","name":"GLRA Realty","url":"https://glrarealty.com","logo":"https://glrarealty.com/img/logo.png","image":"https://glrarealty.com/img/hero-logo.png","description":"Licensed Real Estate Broker in Metro Manila and Luzon, Philippines — over 10 years of experience helping buyers, sellers, and investors find the right property.","address":{"@type":"PostalAddress","streetAddress":"17th Floor, 252 Senator Gil J. Puyat Avenue","addressLocality":"Makati City","addressRegion":"Metro Manila","addressCountry":"PH","postalCode":"1200"},"geo":{"@type":"GeoCoordinates","latitude":"14.5547","longitude":"121.0244"},"telephone":"+639171774572","email":"glrarealty@gmail.com","areaServed":["Metro Manila","Luzon","Philippines"],"priceRange":"₱₱-₱₱₱₱","openingHours":"Mo-Sa 09:00-18:00","employee":{"@type":"Person","name":"Catherine SB Sampayo","jobTitle":"Licensed Real Estate Broker"},"sameAs":["https://instagram.com/glra_realty","https://m.me/glrarealty"],"contactPoint":{"@type":"ContactPoint","telephone":"+639171774572","contactType":"customer service","email":"glrarealty@gmail.com","areaServed":"PH","availableLanguage":["English","Filipino"]},"knowsLanguage":["en","fil"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"GLRA Realty","url":"https://glrarealty.com","inLanguage":"en-PH","potentialAction":{"@type":"SearchAction","target":"https://glrarealty.com/properties.html?search={search_term_string}","query-input":"required name=search_term_string"},"publisher":{"@id":"https://glrarealty.com/#organization"}}</script>
 
-<link rel="preload" href="/img/logo-384.png" as="image">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -227,6 +226,10 @@ body.dark-mode .ab-nav-links > a:not(.cta):hover,body.dark-mode .ab-nav-links > 
 .ab-nav-dropdown > a::after{content:'▾';font-size:10px;margin-left:2px}
 .ab-nav-dropdown-menu{position:absolute;top:100%;left:0;min-width:240px;background:var(--ab-paper);border:2px solid var(--ab-line);border-top:0;display:none;flex-direction:column;z-index:60;box-shadow:6px 6px 0 var(--ab-ink)}
 .ab-nav-dropdown:hover .ab-nav-dropdown-menu{display:flex}
+/* Keyboard and tap: a11y.js toggles .ab-open on the trigger; Tab into the menu keeps it open. */
+.ab-nav-dropdown.ab-open .ab-nav-dropdown-menu,.ab-nav-dropdown:focus-within .ab-nav-dropdown-menu{display:flex}
+.ab-nav-links > .ab-nav-dropdown.ab-open > a,.ab-nav-links > .ab-nav-dropdown:focus-within > a{background:var(--ab-ink);color:var(--ab-paper)}
+body.dark-mode .ab-nav-links > .ab-nav-dropdown.ab-open > a{background:var(--ab-hot-btn,#df3500);color:#fff}
 .ab-nav-dropdown-menu a{padding:12px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ab-ink);border-bottom:1px solid var(--ab-line);transition:.12s}
 .ab-nav-dropdown-menu a:last-child{border-bottom:0}
 .ab-nav-dropdown-menu a:hover{background:var(--ab-hot);color:#fff}
@@ -637,7 +640,7 @@ body.dark-mode .resource-btn{border-top-color:var(--ab-line) !important}
 .testimonial-author{display:flex !important;align-items:center !important;gap:12px !important;border-top:1px solid var(--ab-line) !important;padding-top:14px !important;margin-top:auto !important}
 .testimonials-grid{align-items:stretch !important}
 .testimonial-avatar{
-  width:38px !important;height:38px !important;background:var(--ab-hot) !important;color:#fff !important;
+  width:38px !important;height:38px !important;background:var(--ab-hot-btn,#df3500) !important;color:#fff !important;
   border-radius:0 !important;display:flex;align-items:center;justify-content:center;
   font-family:'JetBrains Mono',monospace !important;font-weight:700 !important;font-size:13px !important;letter-spacing:1px !important;
 }
@@ -928,6 +931,7 @@ html.dark-mode-pre .loader-bar,body.dark-mode .loader-bar{background:#1a1a17}
 .email-modal-content input{width:100%;padding:14px 16px;border:2px solid var(--ab-line);background:var(--ab-paper);font-size:14px;margin-bottom:14px;font-family:'Inter',sans-serif}
 .email-modal-content button{width:100%;background:var(--ab-ink);color:var(--ab-paper);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;border:0;cursor:pointer}
 .email-modal-content button:hover{background:var(--ab-hot)}
+.email-modal-content [aria-invalid="true"]{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.35)}
 .close-modal{position:absolute;top:10px;right:14px;font-size:26px;cursor:pointer;color:var(--ab-ink);background:transparent;border:0}
 #modal{display:none;position:fixed;inset:0;background:rgba(10,10,10,.92);z-index:9000;overflow-y:auto}
 #modal .close{position:fixed;top:14px;right:14px;width:42px;height:42px;background:var(--ab-ink);color:var(--ab-paper);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9100;font-size:18px;border:0;padding:0}
@@ -985,6 +989,8 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
 .form-field.has-error .field-error{display:block}
 .form-field.has-error .form-input{border-color:var(--ab-hot) !important}
 /* On-brand fallback panel shown when the message can't be sent */
+.form-privacy{font-size:12px;line-height:1.5;color:var(--ab-ink-soft);margin:10px 0 0}
+.form-privacy a{color:inherit;text-decoration:underline}
 .send-fallback{display:none;border:2px solid var(--ab-line);border-left:6px solid var(--ab-hot);padding:18px 20px;margin-top:4px}
 .send-fallback.show{display:block}
 .send-fallback strong{display:block;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:-.3px;margin-bottom:6px;color:var(--ab-ink)}
@@ -994,8 +1000,9 @@ body.gl-keyboard :is(a,button,summary,input,textarea,select,[role="button"]):foc
 .send-fallback .fb-row a:hover{background:var(--ab-hot);color:#fff}
 /* Mobile menu group labels */
 .mo-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ab-hot);font-weight:700;padding:20px 4px 6px;text-align:left}
-/* Active page in mobile menu: brand orange, not legacy gold */
-.mobile-overlay-links a.gl-active{color:var(--ab-hot-text,#c02e00) !important}
+/* Active page in mobile menu: brand orange, not legacy gold. The menu is always
+   black, so it takes the bright orange (5.9:1), not the dark text orange (3.6:1). */
+.mobile-overlay-links a.gl-active{color:#ff3d00 !important}
 /* Mobile: loosen display tracking so letters don't collide at small sizes */
 @media(max-width:560px){
   .ab-hero-text h1{letter-spacing:-2px;font-size:clamp(44px,12.5vw,60px)}
@@ -1223,7 +1230,7 @@ html body .home-map-btn:hover{background:#ff3d00 !important;border-color:#ff3d00
 html body .home-map-btn:hover i{color:#fff}
 html body .home-map-btn[aria-pressed="true"]{background:#0a0a0a !important;border-color:#0a0a0a !important;color:#f1eee9 !important}
 body.dark-mode .home-map-btn[aria-pressed="true"]{background:#f1eee9 !important;border-color:#f1eee9 !important;color:#0a0a0a !important}
-html body .home-map-btn.is-cta{background:#ff3d00 !important;border-color:#0a0a0a !important;color:#fff !important}
+html body .home-map-btn.is-cta{background:var(--ab-hot-btn,#df3500) !important;border-color:#0a0a0a !important;color:#fff !important}
 html body .home-map-btn.is-cta i{color:#fff}
 html body .home-map-btn.is-cta:hover{background:#0a0a0a !important}
 .home-map{position:relative;z-index:0;height:clamp(420px,62vh,640px);border:2px solid var(--ab-line);box-shadow:6px 6px 0 var(--ab-line);background:#e8e4dd}
@@ -1558,6 +1565,24 @@ html body .contact-form .submit-btn{align-self:flex-start;padding:18px 30px !imp
   .ab-hero-photo::after{display:none}
   .hs-dot[aria-current="true"]::before{animation:none;background-size:100% 100%}
 }
+/* Oct 2026 audit (MI-64): 44px tap targets without changing what anything looks
+   like. Invisible hit areas on the small links, and taller slider dots whose
+   bar is lowered by the same 10px so the dots stay exactly where they were. */
+.hx-link{position:relative}
+.hx-link::after{content:'';position:absolute;left:0;right:0;top:-12px;bottom:-12px}
+.hs-dot{height:44px}
+.hs-dots{bottom:114px}
+@media(max-width:560px){.hs-dots{bottom:94px}}
+.social-links a{position:relative}
+.social-links a::after{content:'';position:absolute;inset:-5px}
+.footer-links a{display:inline-flex;align-items:center;min-height:44px}
+/* (MI-63) Nothing under 11px on a phone: badges, tags and small labels. */
+@media(max-width:600px){
+  html body .arth-top,html body .arth-meta,html body .section .listings-tabs.category-tabs .listings-tab.tab-btn,
+  html body .section .prop-badge,html body .section .badge-featured,html body .section .prop-location,
+  html body .prop-badge,html body .badge-featured,html body .prop-location,html body .prop-specs span,
+  html body .home-map-key,html body .home-map-btn,html body .resource-btn,html body .ab-top-inner{font-size:11px !important}
+}
 </style>
 <link rel="stylesheet" href="/css/tactile.css?v=139">
 </head>
@@ -1709,7 +1734,7 @@ html body .contact-form .submit-btn{align-self:flex-start;padding:18px 30px !imp
     <div class="search-row">
       <div class="search-field-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" id="locationInput" aria-label="Search listings by city, property name or keyword" placeholder="Try: 2BR condo in BGC under 15M" autocomplete="off" oninput="handleSearchInput(this.value)">
+        <input type="text" id="locationInput" aria-label="Search listings by city, property name or keyword" placeholder="Try: 2BR condo in Makati" autocomplete="off" oninput="handleSearchInput(this.value)">
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <button class="search-btn-main" onclick="performSearch()"><i class="fas fa-search"></i> Search</button>
@@ -1954,7 +1979,7 @@ html body .contact-form .submit-btn{align-self:flex-start;padding:18px 30px !imp
       <span class="eyebrow">THE BROKER</span>
       <h2>Catherine<br>SB <em>Sampayo.</em></h2>
       <p>"Real estate is a relationship business pretending to be a transaction business. I work the other way around: fewer clients, deeper care, the long view."</p>
-      <p>Ten years brokering Metro Manila: first condos, family houses, legacy estates. PRC-licensed, REBAP-affiliated, BGC-based. Small client list by design.</p>
+      <p>Ten years brokering Metro Manila: first condos, family houses, legacy estates. PRC-licensed, REBAP-affiliated, Makati-based. Small client list by design.</p>
       <p>Every showing is with me. Every document checked twice. The number on this page is mine. And yes, you can call on a Sunday.</p>
       <div class="broker-contact-buttons">
         <a href="https://m.me/glrarealty" class="broker-btn" target="_blank" rel="noopener"><i class="fab fa-facebook-messenger"></i> Messenger</a>
@@ -2008,26 +2033,27 @@ html body .contact-form .cf-consent input{width:20px;height:20px;min-height:0;fl
     <div class="form-row">
       <div class="form-field">
         <label for="cfName">Full name</label>
-        <input type="text" id="cfName" name="name" class="form-input" placeholder="Juan Dela Cruz" required autocomplete="name">
+        <input type="text" id="cfName" name="name" class="form-input" placeholder="Juan Dela Cruz" required autocomplete="name" maxlength="200">
         <span class="field-error">Please enter your name</span>
       </div>
       <div class="form-field">
         <label for="cfEmail">Email address</label>
-        <input type="email" id="cfEmail" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+        <input type="email" id="cfEmail" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email" maxlength="254">
         <span class="field-error">Please enter a valid email address</span>
       </div>
     </div>
     <div class="form-field">
       <label for="cfPhone">Phone (optional)</label>
-      <input type="tel" id="cfPhone" name="phone" class="form-input" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel">
+      <input type="tel" id="cfPhone" name="phone" class="form-input" placeholder="0917 123 4567" inputmode="tel" autocomplete="tel" maxlength="50">
     </div>
     <div class="form-field">
       <label for="cfMessage">What are you looking for?</label>
-      <textarea id="cfMessage" name="message" class="form-input" placeholder="Location, budget, property type..." rows="4"></textarea>
+      <textarea id="cfMessage" name="message" class="form-input" placeholder="Location, budget, property type..." rows="4" maxlength="5000"></textarea>
       <span class="field-error">Tell us a little about what you need</span>
     </div>
     <label class="cf-consent" for="cfMarketing"><input type="checkbox" id="cfMarketing" name="marketing"><span>Also email me listings that match what I'm looking for. I can stop them any time.</span></label>
     <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> &nbsp;Send Message →</button>
+    <p class="form-privacy">We use these details only to answer you and keep a record of your enquiry. See our <a href="/privacy.html">privacy notice</a>.</p>
     <div class="send-fallback" id="sendFallback">
       <strong>Message didn't go through</strong>
       <p>The server couldn't be reached, but your message isn't lost. Send it to Catherine directly instead:</p>
@@ -2052,7 +2078,7 @@ html body .contact-form .cf-consent input{width:20px;height:20px;min-height:0;fl
         <a href="tel:+639171774572" aria-label="Call"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
-    <div class="footer-col"><h4>// Listings</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li><li><a href="/properties.html?category=all">All Listings</a></li><li><a href="/list-property.html">List a Property</a></li></ul></div>
+    <div class="footer-col"><h4>// Listings</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li><li><a href="/properties.html?category=all">All Listings</a></li><li><a href="/properties/all">Every Listing (List)</a></li><li><a href="/list-property.html">List a Property</a></li></ul></div>
     <div class="footer-col"><h4>// Tools</h4><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/calculator.html">Closing Fees</a></li><li><a href="/rent-vs-buy.html">Rent vs Buy</a></li><li><a href="/amortization.html#compare">Loan Comparison</a></li><li><a href="/tools.html">All Tools →</a></li></ul></div>
     <div class="footer-col"><h4>// Direct</h4><ul><li><a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a></li><li><a href="tel:+639171774572">+63 917 177 4572</a></li><li><a href="/about.html">About</a></li><li><a href="#contact-form">Book →</a></li></ul></div>
   </div>
@@ -2073,12 +2099,12 @@ html body .contact-form .cf-consent input{width:20px;height:20px;min-height:0;fl
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
 <!-- MODALS -->
-<div id="emailModal" class="email-modal"><div class="email-modal-content"><button class="close-modal" onclick="closeEmailModal()" aria-label="Close">&times;</button><i class="fas fa-bell" style="font-size:32px;color:var(--ab-hot-text,#c02e00);margin-bottom:10px;display:block"></i><h3>Price Drop Alert</h3><p id="modalPropertyName">Get notified when price drops</p><input type="email" id="modalEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address"><input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice"><button onclick="submitPriceAlert()">Notify me when price drops →</button><p style="font-size:10px;margin-top:12px;color:var(--ab-gray)">We'll only email you when the price changes.</p></div></div>
-<div id="wishlistModal" class="email-modal"><div class="email-modal-content"><button class="close-modal" onclick="closeWishlistModal()" aria-label="Close">&times;</button><i class="fas fa-heart" style="font-size:32px;color:var(--ab-hot-text,#c02e00);margin-bottom:10px;display:block"></i><h3>Save to Wishlist</h3><p>Enter your email to save this property</p><input type="email" id="wishlistEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address"><input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle"><input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage"><button onclick="submitWishlist()">Save to wishlist →</button></div></div>
+<div id="emailModal" class="email-modal"><div class="email-modal-content" role="dialog" aria-modal="true" aria-labelledby="paTitle" aria-describedby="modalPropertyName"><button type="button" class="close-modal" onclick="closeEmailModal()" aria-label="Close">&times;</button><i class="fas fa-bell" aria-hidden="true" style="font-size:32px;color:var(--ab-hot-text,#c02e00);margin-bottom:10px;display:block"></i><h3 id="paTitle">Price Drop Alert</h3><p id="modalPropertyName">Get notified when price drops</p><form style="display:contents" novalidate onsubmit="event.preventDefault();submitPriceAlert()"><input type="email" id="modalEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address" maxlength="254" required><input type="hidden" id="modalPropertyId"><input type="hidden" id="modalPropertyTitle"><input type="hidden" id="modalPropertyPrice"><button type="submit" id="paSubmit">Notify me when price drops →</button></form><p style="font-size:10px;margin-top:12px;color:var(--ab-gray)">We'll only email you when the price changes. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p></div></div>
+<div id="wishlistModal" class="email-modal"><div class="email-modal-content" role="dialog" aria-modal="true" aria-labelledby="wlTitle" aria-describedby="wlIntro"><button type="button" class="close-modal" onclick="closeWishlistModal()" aria-label="Close">&times;</button><i class="fas fa-heart" aria-hidden="true" style="font-size:32px;color:var(--ab-hot-text,#c02e00);margin-bottom:10px;display:block"></i><h3 id="wlTitle">Save to Wishlist</h3><p id="wlIntro">Enter your email to save this property</p><form style="display:contents" novalidate onsubmit="event.preventDefault();submitWishlist()"><input type="email" id="wishlistEmail" placeholder="you@example.com" autocomplete="email" aria-label="Your email address" maxlength="254" required><input type="hidden" id="wishlistPropertyId"><input type="hidden" id="wishlistPropertyTitle"><input type="hidden" id="wishlistPropertyPrice"><input type="hidden" id="wishlistPropertyLocation"><input type="hidden" id="wishlistPropertyImage"><button type="submit" id="wlSubmit">Save to wishlist →</button></form><p style="font-size:10px;margin-top:12px;color:var(--ab-gray)">Catherine keeps your email with this property so she can follow up. <a href="/privacy.html" style="color:inherit;text-decoration:underline">Privacy notice</a>.</p></div></div>
 <div id="modal"><button class="close" onclick="closeModal()" aria-label="Close property details"><i class="fas fa-times"></i></button><div id="modal-content" class="modal-body"></div></div>
 
 <!--GLRA_LIST-->
-<script src="/js/main.js?v=134"></script>
+<script src="/js/main.js?v=146"></script>
 <script src="/js/glra-maps.js?v=117" defer></script>
 <script src="/js/smart-search.js?v=116"></script>
 <script src="/js/gallery.js?v=116" defer></script>
@@ -2248,7 +2274,7 @@ function openMobileMenu(){document.getElementById('mobileOverlay').classList.add
 function closeMobileMenu(){document.getElementById('mobileOverlay').classList.remove('show')}
 function goHome(){window.location.href='/'}
 function escapeHtml(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-function showToast(msg,err){const t=document.createElement('div');t.className='toast';t.textContent=msg;if(err)t.style.borderLeftColor='#ef4444';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function showToast(msg,err){const t=document.createElement('div');t.className='toast';t.setAttribute('aria-hidden','true');t.textContent=msg;if(typeof glraAnnounce==='function')glraAnnounce(msg,!!err);else t.setAttribute('role',err?'alert':'status'),t.removeAttribute('aria-hidden');if(err)t.style.borderLeftColor='#ef4444';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
 window.addEventListener('load',()=>{initLazyLoading();const l=document.getElementById('loader');if(l){l.classList.add('hidden');setTimeout(()=>l.style.display='none',500)}});
 async function loadHeroImages(){try{const r=await fetch('/api/hero-images');const imgs=await r.json();const wrapper=document.getElementById('heroSliderWrapper');if(wrapper&&imgs&&imgs.length>0){wrapper.innerHTML='';imgs.forEach(img=>{const s=document.createElement('div');s.className='swiper-slide';s.style.backgroundImage=`url('${img.url}')`;wrapper.appendChild(s)});if(window.heroSwiper)window.heroSwiper.update();else initSwiper()}else initSwiper()}catch{initSwiper()}}
 /* Hero cross-fade: the same small interface the page used from Swiper
@@ -2315,10 +2341,14 @@ function findPropById(id){
 }
 function openPriceAlertModal(id){var p=findPropById(id);if(!p)return;document.getElementById('modalPropertyId').value=id;document.getElementById('modalPropertyTitle').value=p.title||'';document.getElementById('modalPropertyPrice').value=p.price||0;document.getElementById('modalPropertyName').innerHTML=`Get notified when <strong>${escapeHtml(glraTitle(p.title)||'this property')}</strong> price drops`;document.getElementById('emailModal').style.display='flex'}
 function closeEmailModal(){document.getElementById('emailModal').style.display='none';document.getElementById('modalEmail').value=''}
-async function submitPriceAlert(){const email=document.getElementById('modalEmail').value;const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Subscribing...';btn.disabled=true;try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json();if(d.success){closeEmailModal();showToast(d.message||'Check your email to confirm the alert.')}else showToast('Failed to subscribe.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Notify me when price drops →';btn.disabled=false}}
+// The button is looked up by id: event.target is not always the button, so
+// it never disabled and a double tap could send twice. Real email check too.
+const GLRA_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function glraBadEmail(id){const el=document.getElementById(id);if(el){el.setAttribute('aria-invalid','true');el.focus();el.addEventListener('input',()=>el.removeAttribute('aria-invalid'),{once:true});}showToast('Please enter a valid email address, like you@example.com',true);}
+async function submitPriceAlert(){const btn=document.getElementById('paSubmit');if(btn&&btn.disabled)return;const email=document.getElementById('modalEmail').value.trim();const id=document.getElementById('modalPropertyId').value;const title=document.getElementById('modalPropertyTitle').value;const price=parseFloat(document.getElementById('modalPropertyPrice').value);if(!GLRA_EMAIL_RE.test(email)){glraBadEmail('modalEmail');return}if(btn){btn.textContent='Subscribing...';btn.disabled=true}try{const r=await fetch('/api/price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price})});const d=await r.json().catch(()=>({}));if(r.ok&&d.success){closeEmailModal();showToast(d.message||'Check your email to confirm the alert.')}else showToast(d.error||(r.status===429?'Too many requests. Please wait a few minutes and try again.':'Could not set the alert. Please try again.'),true)}catch{showToast('Network error.',true)}finally{if(btn){btn.textContent='Notify me when price drops →';btn.disabled=false}}}
 function openWishlistModal(id){var p=findPropById(id);if(!p)return;document.getElementById('wishlistPropertyId').value=id;document.getElementById('wishlistPropertyTitle').value=p.title||'';document.getElementById('wishlistPropertyPrice').value=p.price||0;document.getElementById('wishlistPropertyLocation').value=p.location||'';document.getElementById('wishlistPropertyImage').value=p.mainImage||'';document.getElementById('wishlistModal').style.display='flex'}
 function closeWishlistModal(){document.getElementById('wishlistModal').style.display='none';document.getElementById('wishlistEmail').value=''}
-async function submitWishlist(){const email=document.getElementById('wishlistEmail').value;const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const location=document.getElementById('wishlistPropertyLocation').value;const image=document.getElementById('wishlistPropertyImage').value;if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return}const btn=event.target;btn.textContent='Saving...';btn.disabled=true;try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:location,propertyImage:image})});const d=await r.json();if(d.success){closeWishlistModal();showToast('Property saved to your wishlist!')}else showToast('Failed to save.',true)}catch{showToast('Network error.',true)}finally{btn.textContent='Save to wishlist →';btn.disabled=false}}
+async function submitWishlist(){const btn=document.getElementById('wlSubmit');if(btn&&btn.disabled)return;const email=document.getElementById('wishlistEmail').value.trim();const id=document.getElementById('wishlistPropertyId').value;const title=document.getElementById('wishlistPropertyTitle').value;const price=parseFloat(document.getElementById('wishlistPropertyPrice').value);const location=document.getElementById('wishlistPropertyLocation').value;const image=document.getElementById('wishlistPropertyImage').value;if(!GLRA_EMAIL_RE.test(email)){glraBadEmail('wishlistEmail');return}if(btn){btn.textContent='Saving...';btn.disabled=true}try{const r=await fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,propertyId:id,propertyTitle:title,propertyPrice:price,propertyLocation:location,propertyImage:image})});const d=await r.json().catch(()=>({}));if(r.ok&&d.success){closeWishlistModal();showToast('Property saved to your wishlist!')}else showToast(d.error||(r.status===429?'Too many requests. Please wait a few minutes and try again.':'Could not save. Please try again.'),true)}catch{showToast('Network error.',true)}finally{if(btn){btn.textContent='Save to wishlist →';btn.disabled=false}}}
 function shareProperty(platform,property){const url=encodeURIComponent(`${window.location.origin}/property/${property._id}`);const title=encodeURIComponent(glraTitle(property.title));const price=getDisplayPrice(property);const text=encodeURIComponent(`Check out: ${glraTitle(property.title)} in ${property.location} for ${price}`);let shareUrl='';if(platform==='facebook')shareUrl=`https://www.facebook.com/sharer/sharer.php?u=${url}`;else if(platform==='messenger'){/* facebook.com/dialog/send needs a registered FB app id; on phones the Messenger deep link works with none, on desktop we hand the visitor the link */const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(isMobile){window.location.href=`fb-messenger://share/?link=${url}`;return}navigator.clipboard.writeText(`${window.location.origin}/property/${property._id}`);showToast('Link copied — paste it into Messenger');return}else if(platform==='email')shareUrl=`mailto:?subject=${title}&body=${text}%0A%0AView: ${url}`;else if(platform==='copy'){navigator.clipboard.writeText(`${window.location.origin}/property/${property._id}`);showToast('Link copied!');return}if(shareUrl)window.open(shareUrl,'_blank','width=600,height=400')}
 let allProperties=[],galleryImages=[],currentProperty=null,cachedProperties=null;
 function isForLease(p){const t=(p.listingType||'').toUpperCase();return t==='FOR LEASE'||t==='SALE AND LEASE'}
@@ -2561,6 +2591,7 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
   const mkt=document.getElementById('cfMarketing');if(mkt&&mkt.checked)payload.marketing=true;
   if(currentProperty?._id)payload.propertyId=currentProperty._id;
   if(currentProperty?.title)payload.propertyTitle=currentProperty.title;
+  else if(window.glraEnquireProject)payload.propertyTitle=window.glraEnquireProject;
   // On any failure: reveal the on-brand fallback panel (Messenger / prefilled email)
   const showFallback=()=>{
     const link=document.getElementById('fbEmailLink');
@@ -2580,8 +2611,15 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
     if(r.ok){
       showToast("Thank you! We'll get back to you soon.");
       form.reset();
-    }else{
+    }else if(r.status>=500){
       showFallback();
+    }else{
+      // A 400 or 429 is an answer from the server, not an outage: say what
+      // to fix (or to wait) instead of "the server couldn't be reached".
+      const bad=body.details&&body.details[0]?body.details[0].path:'';
+      const field={name:'cfName',email:'cfEmail',message:'cfMessage'}[bad];
+      if(field){setFieldError(field,true);document.getElementById(field)?.focus();}
+      showToast(body.error||(r.status===429?'Too many messages for now. Please wait a few minutes and try again.':'Please check the form and try again.'),true);
     }
   }catch(err){
     console.log('[inquiry submit] network error',err);
@@ -2595,6 +2633,18 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
 ['cfName','cfEmail','cfMessage'].forEach(id=>{
   document.getElementById(id)?.addEventListener('input',()=>setFieldError(id,false));
 });
+// The Arthaland pages link here as /?enquire=liv#contact: keep which project
+// the visitor was looking at, so the enquiry (and Catherine's email) says so.
+(function(){
+  let key='';
+  try{key=(new URLSearchParams(location.search).get('enquire')||'').toLowerCase();}catch(_){}
+  const names={liv:'Liv (Arthaland, Katipunan)',sondris:'Sondris (Arthaland, Makati)',una:'Una Apartments (Arthaland, Sevina Park)',eluria:'Eluria (Arthaland, Makati)',lucima:'Lucima (Arthaland, Cebu)',arthaland:'Arthaland projects'};
+  const name=names[key];
+  if(!name)return;
+  window.glraEnquireProject=name;
+  const msg=document.getElementById('cfMessage');
+  if(msg&&!msg.value.trim())msg.value="Hi, I'm interested in "+name+". Please send me the available units, prices and payment terms.";
+})();
 (function(){
   if(!('IntersectionObserver' in window)) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -2646,8 +2696,8 @@ document.getElementById('contactForm')?.addEventListener('submit',async function
    only the fallback (fetching both downloaded ~2 MB for nothing). */
 loadProperties();
 </script>
-<script src="/js/chat.js?v=121" defer></script>
+<script src="/js/chat.js?v=146" defer></script>
 <script src="/js/description.js?v=116" defer></script>
-<script src="/js/a11y.js?v=116" defer></script>
+<script src="/js/a11y.js?v=146" defer></script>
 </body>
 </html>
