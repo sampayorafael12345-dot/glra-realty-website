@@ -398,6 +398,10 @@ function jsonDepthGuard(req, res, buf) {
     else if (c === 123 || c === 91) { if (++depth > 40) { throw new Error('Request nested too deeply'); } }
     else if (c === 125 || c === 93) depth--;
   }
+  // Meta signs the exact bytes it sends (X-Hub-Signature-256), and the
+  // sanitiser further down rewrites the parsed body, so the webhook keeps its
+  // raw bytes. Only that one path: no other route's body is held twice.
+  if (req.originalUrl && req.originalUrl.startsWith('/api/meta/webhook')) req.rawBody = buf;
 }
 app.use(express.json({ limit: '1mb', verify: jsonDepthGuard }));
 app.use(express.urlencoded({ limit: '1mb', extended: true, depth: 8, parameterLimit: 2000 }));
@@ -3561,6 +3565,14 @@ registerStaffRoutes(app);
 require('./server/staff-bot').registerStaffBot(app, { sendEmail, esc, cloudFileLink });
 require('./server/staff-bot').startWeeklyScore({ sendEmail, esc });
 require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
+// ============ META (Facebook / Instagram) ============
+// Lead Ads webhook + hourly safety net, Page/Instagram/ad insights and the
+// Page inbox, each behind its own switch (META_LEADS_ENABLED,
+// META_INSIGHTS_ENABLED, META_INBOX_ENABLED; all off by default). Read-only
+// towards Meta: see server/meta.js.
+const { registerMetaRoutes, startMetaTick } = require('./server/meta');
+registerMetaRoutes(app, { sendEmail, esc });
+startMetaTick({ sendEmail, esc });
 // One-time notes for the staff member's desk (listing problems found on 30 Sept).
 setTimeout(() => require('./server/staff-memo').deliverStaffMemos(), 60e3);
 

@@ -125,12 +125,18 @@ function mergeIntent(intent, h) {
 const KIND_LABEL = {
   inquiry: 'Enquiry', viewing: 'Viewing request', valuation: 'Valuation request', submission: 'Listed a property',
   saved_search: 'Saved a search', price_alert: 'Price alert', wishlist: 'Saved a listing', newsletter: 'Newsletter',
-  manual: 'Added by staff', import: 'Imported'
+  manual: 'Added by staff', import: 'Imported',
+  // From Facebook and Instagram (server/meta.js)
+  meta_lead: 'Facebook / Instagram lead ad', messenger: 'Messenger message', fb_comment: 'Facebook comment',
+  ig_dm: 'Instagram message', ig_comment: 'Instagram comment'
 };
 // Touches that ask us something and so start the reply clock.
-const REPLY_KINDS = ['inquiry', 'viewing', 'valuation', 'submission'];
+const REPLY_KINDS = ['inquiry', 'viewing', 'valuation', 'submission', 'meta_lead', 'messenger', 'fb_comment', 'ig_dm', 'ig_comment'];
 // Touches that show a person actively looking right now, heaviest first.
-const KIND_POINTS = { viewing: 26, valuation: 22, submission: 22, inquiry: 16, saved_search: 12, price_alert: 9, wishlist: 6, newsletter: 3, manual: 10, import: 4 };
+const KIND_POINTS = { viewing: 26, valuation: 22, submission: 22, inquiry: 16, saved_search: 12, price_alert: 9, wishlist: 6, newsletter: 3, manual: 10, import: 4,
+  meta_lead: 16, messenger: 14, ig_dm: 14, fb_comment: 8, ig_comment: 8 };
+// Facebook / Instagram people are matched on these ids when they gave no email or phone.
+function normMetaId(m) { const s = String(m || '').trim(); return /^(fb|ig):\d{1,40}$/.test(s) ? s : ''; }
 
 function classifyInquiry(message, propertyTitle) {
   const m = String(message || '');
@@ -202,17 +208,19 @@ async function rescore(lead) {
 // closed-out lead who has come back. Returns the lead, or null. Never throws.
 async function ingestLead(o) {
   try {
-    const email = normEmail(o.email), phone = normPhone(o.phone);
-    if (!email && !phone) return null;
-    const at = o.at ? new Date(o.at) : new Date();
+    const email = normEmail(o.email), phone = normPhone(o.phone), metaId = normMetaId(o.metaId);
+    if (!email && !phone && !metaId) return null;
+    const at = o.at && !isNaN(new Date(o.at)) ? new Date(o.at) : new Date();
     let lead = null;
     if (email) lead = await Lead.findOne({ emails: email });
     if (!lead && phone) lead = await Lead.findOne({ phones: phone });
+    if (!lead && metaId) lead = await Lead.findOne({ metaIds: metaId });
     const kind = o.kind || 'inquiry';
     const src = {
       kind, refId: o.refId ? String(o.refId) : '', label: cleanText(o.label || KIND_LABEL[kind] || kind, 300),
       message: cleanText(o.message, 2000), propertyId: o.propertyId ? String(o.propertyId) : '',
-      propertyTitle: cleanText(o.propertyTitle, 300), attrib: cleanAttrib(o.attrib), at
+      propertyTitle: cleanText(o.propertyTitle, 300), attrib: cleanAttrib(o.attrib), at,
+      link: /^https:\/\/[^\s"'<>]+$/.test(String(o.link || '')) ? String(o.link).slice(0, 300) : ''
     };
     if (!lead) {
       lead = new Lead({ createdAt: at, stage: 'new', stageHistory: [{ stage: 'new', at, by: 'website' }] });
@@ -223,6 +231,7 @@ async function ingestLead(o) {
     if (name && (!lead.name || /^(website|valued|unknown)/i.test(lead.name))) lead.name = name;
     if (email && !lead.emails.includes(email)) lead.emails.push(email);
     if (phone && !lead.phones.includes(phone)) lead.phones.push(phone);
+    if (metaId && !(lead.metaIds || []).includes(metaId)) lead.metaIds.push(metaId);
     if (o.vid && /^[a-z0-9]{8,64}$/i.test(o.vid) && !lead.vids.includes(o.vid)) lead.vids.push(o.vid);
     if (o.type && LEAD_TYPES.includes(o.type) && (lead.isNew || lead.type === 'buyer')) lead.type = o.type;
     lead.intent = mergeIntent(plainIntent(lead), o.hints);
@@ -406,10 +415,13 @@ function isWaiting(l) {
   return !l.lastContactAt || new Date(l.lastContactAt) < new Date(l.lastAskAt);
 }
 // ── HELPERS FOR THE ROUTES ───────────────────────────────────
-const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'];
+// social_reply: the Page itself answered in Messenger, Instagram or a comment
+// (recorded by server/meta.js), so the reply clock stops for that person too.
+const CONTACT_TYPES = ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent', 'social_reply'];
 // The office sheet's Source column in plain words, from how the lead first came in.
 const SOURCE_WORDS = { inquiry: 'Website enquiry', viewing: 'Website viewing request', valuation: 'Valuation request', submission: 'Owner submission',
-  saved_search: 'Saved search', price_alert: 'Price alert', wishlist: 'Wishlist', newsletter: 'Newsletter', manual: 'Added by staff', import: 'Imported list' };
+  saved_search: 'Saved search', price_alert: 'Price alert', wishlist: 'Wishlist', newsletter: 'Newsletter', manual: 'Added by staff', import: 'Imported list',
+  meta_lead: 'Facebook / Instagram lead ad', messenger: 'Messenger', fb_comment: 'Facebook comment', ig_dm: 'Instagram message', ig_comment: 'Instagram comment' };
 const sourceOf = l => l.source || SOURCE_WORDS[((l.sources || [])[0] || {}).kind] || 'Added by staff';
 function pushActivity(lead, a) {
   lead.activities.push(a);
@@ -559,7 +571,7 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       if (b.type !== undefined && LEAD_TYPES.includes(b.type)) lead.type = b.type;
       if (Array.isArray(b.emails)) lead.emails = Array.from(new Set(b.emails.map(normEmail).filter(Boolean))).slice(0, 5);
       if (Array.isArray(b.phones)) lead.phones = Array.from(new Set(b.phones.map(normPhone).filter(Boolean))).slice(0, 5);
-      if (!lead.emails.length && !lead.phones.length) return res.status(400).json({ error: 'A lead needs an email address or a mobile number.' });
+      if (!lead.emails.length && !lead.phones.length && !(lead.metaIds || []).length) return res.status(400).json({ error: 'A lead needs an email address or a mobile number.' });
       if (b.intent && typeof b.intent === 'object') {
         const i = b.intent, cur = lead.intent || {};
         lead.intent = {
@@ -898,5 +910,6 @@ function startLeadsTick({ sendEmail, esc }) {
 
 module.exports = {
   registerLeadRoutes, startLeadsTick, ingestLead, backfillLeads, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib,
+  getLeadSettings, pushActivity, isWaiting, KIND_LABEL,
   _test: { normEmail, normPhone, computeScore, matchListings, mergeIntent, baseType, areaOf, leadStats, isWaiting }
 };

@@ -70,3 +70,41 @@ Admin dashboard, Backup section: one button downloads every collection in the
 database as Excel or JSON. Passwords, reset tokens, calendar-feed tokens and
 key hashes are deliberately left out, so after a restore everyone sets a new
 password with "Forgot password". Keep the JSON copy; Excel cuts very long cells.
+
+## Facebook and Instagram (Meta)
+
+`server/meta.js` connects the Facebook Page, the Instagram account and the ad
+account to the dashboard. It only **reads** from Meta: there is no code that
+creates, edits or pauses ads or changes a budget. The one write is the admin
+button "Connect Page to webhook" (it tells Meta to send the Page's events
+here).
+
+Three switches in Render's Environment settings, all off by default. While a
+switch is off its routes answer 404 and its timers never start.
+
+| Switch | What it turns on |
+|---|---|
+| `META_LEADS_ENABLED=1` | Lead-ad forms arrive by webhook at `/api/meta/webhook` and land in the Leads tab (kind "Facebook / Instagram lead ad"), deduplicated like any website enquiry. An email goes to the Leads alert address and, if set, a Telegram message. An hourly check of every lead form catches anything the webhook missed. |
+| `META_INSIGHTS_ENABLED=1` | A daily snapshot (about 6 am Manila) of Page, Instagram and ad-account numbers, the admin **Meta** tab (date filters, campaigns with cost per lead, top posts, CSV export) and a Monday 8 am summary email. |
+| `META_INBOX_ENABLED=1` | Messenger and Instagram messages and comments on posts become lead touches with a link to the conversation; the Page's own reply counts as contact and stops the reply clock. Needs Meta App Review first. |
+
+Other settings: `META_APP_ID`, `META_APP_SECRET`, `META_VERIFY_TOKEN`,
+`META_SYSTEM_TOKEN` (System User token, expiry "Never"), `META_PAGE_ID`,
+`META_IG_USER_ID`, `META_AD_ACCOUNT_ID`, `META_GRAPH_VERSION` (default v24.0),
+`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. See `.env.example`.
+
+- **Who can see it:** the Meta tab needs the `meta_view` permission (admins
+  only by default; switch it on per person in Accounts). The leads themselves
+  are in the Leads tab as before (`leads_view`).
+- **Token check:** once a day the token is checked with Meta. If it is
+  invalid, expires within 7 days or is missing a permission, the Meta tab
+  shows a red banner and one email goes out.
+- **Errors:** every Graph API error lands in the Meta tab's error log (kept 90
+  days). Raw webhook deliveries are kept 30 days. Tokens are never logged.
+- **When Meta renames a metric:** the metric names are listed once, near the
+  top of the insights section in `server/meta.js` (`PAGE_METRICS`,
+  `IG_METRICS`). A retired name only marks its own tile "Retired by Meta".
+- **Testing locally:** `scripts/test-meta.js` sends signed fake webhooks to a
+  local server pointed at a stub Graph API (`META_GRAPH_BASE` and
+  `TELEGRAM_API_BASE` are honoured only for a localhost address). Read the
+  top of that file for how to run it.

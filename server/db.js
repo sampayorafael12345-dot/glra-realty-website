@@ -765,7 +765,8 @@ const PERMISSION_KEYS = [
   'leads_manage',        // update, assign, log contact, email listings, import
   'leads_delete',        // delete or merge leads
   'customers_view',      // see Subscribers, Price Alerts, saved searches, wishlists, calculator use
-  'inquiries_view'       // see and mark website enquiries
+  'inquiries_view',      // see and mark website enquiries
+  'meta_view'            // see the Meta tab: Facebook/Instagram insights, ad results, Meta error log (admin-only by default)
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
@@ -828,7 +829,10 @@ function defaultPermissionsForRole(role) {
     // On by default (staff already had them); the admin can now switch them
     // off per person in Accounts, and the server honours it.
     customers_view: true,
-    inquiries_view: true
+    inquiries_view: true,
+    // Ad spend and the Meta connection's error log are the owner's view; an
+    // admin can switch it on for a staff member in Accounts.
+    meta_view: false
   };
 }
 
@@ -1480,13 +1484,14 @@ const counterSchema = new mongoose.Schema({
 const LEAD_STAGES = ['new', 'contacted', 'qualified', 'viewing', 'negotiating', 'won', 'lost', 'nurture'];
 const LEAD_TYPES = ['buyer', 'renter', 'seller', 'landlord', 'investor', 'broker', 'other'];
 const leadSourceSchema = new mongoose.Schema({
-  kind:          { type: String, default: 'inquiry' },   // inquiry | viewing | valuation | submission | saved_search | price_alert | wishlist | newsletter | manual | import
+  kind:          { type: String, default: 'inquiry' },   // inquiry | viewing | valuation | submission | saved_search | price_alert | wishlist | newsletter | manual | import | meta_lead | messenger | fb_comment | ig_dm | ig_comment
   refId:         { type: String, default: '' },          // the original record's _id
   label:         { type: String, default: '', maxlength: 300 },
   message:       { type: String, default: '', maxlength: 2000 },
   propertyId:    { type: String, default: '' },
   propertyTitle: { type: String, default: '', maxlength: 300 },
   attrib:        { type: mongoose.Schema.Types.Mixed, default: undefined },   // { src, med, cmp, ref, land }
+  link:          { type: String, default: '', maxlength: 300 },   // where to answer it (a Messenger / Instagram conversation, a post)
   at:            { type: Date, default: Date.now }
 }, { _id: false });
 const leadActivitySchema = new mongoose.Schema({
@@ -1537,6 +1542,10 @@ const leadSchema = new mongoose.Schema({
   activities: { type: [leadActivitySchema], default: () => [] },
   firstTouch: { type: mongoose.Schema.Types.Mixed, default: undefined },
   vids:       { type: [String], default: [] },
+  // Facebook / Instagram people who wrote to the Page (server/meta.js):
+  // 'fb:<page-scoped id>' or 'ig:<instagram-scoped id>'. A Messenger contact
+  // has no email or phone, so this is how their next message finds them.
+  metaIds:    { type: [String], default: [] },
   score:      { type: Number, default: 0 },
   scoreParts: { type: mongoose.Schema.Types.Mixed, default: undefined },
   firstInboundAt: { type: Date, default: null },
@@ -1557,6 +1566,8 @@ const leadSchema = new mongoose.Schema({
 leadSchema.index({ emails: 1 });
 leadSchema.index({ phones: 1 });
 leadSchema.index({ vids: 1 });
+leadSchema.index({ metaIds: 1 });
+leadSchema.index({ 'sources.refId': 1 });
 leadSchema.index({ stage: 1, lastInboundAt: -1 });
 leadSchema.index({ nextFollowUp: 1 });
 
@@ -1570,6 +1581,45 @@ const listingViewSchema = new mongoose.Schema({
 });
 listingViewSchema.index({ vid: 1, at: -1 });
 listingViewSchema.index({ at: 1 }, { expireAfterSeconds: 180 * 86400 });
+
+// ── META (Facebook / Instagram, server/meta.js) ───────────────
+// MetaEvent: every webhook delivery, one row per lead / message / comment
+// (the unique key is what stops a re-delivered event being handled twice).
+// Raw payloads hold names and messages, so they go after 30 days.
+const metaEventSchema = new mongoose.Schema({
+  key:     { type: String, required: true },          // 'leadgen:<id>' | 'msg:<mid>' | 'comment:<id>' ...
+  object:  { type: String, default: '' },             // page | instagram
+  field:   { type: String, default: '' },             // leadgen | messages | feed | comments
+  status:  { type: String, default: 'new' },          // new | working | done | failed | skipped
+  tries:   { type: Number, default: 0 },
+  error:   { type: String, default: '', maxlength: 500 },
+  raw:     { type: mongoose.Schema.Types.Mixed, default: undefined },
+  at:      { type: Date, default: Date.now, expires: 30 * 24 * 3600 },
+  doneAt:  { type: Date, default: null }
+});
+metaEventSchema.index({ key: 1 }, { unique: true });
+metaEventSchema.index({ status: 1, field: 1 });
+// MetaLog: Graph API errors and warnings, kept 90 days, shown in the Meta tab.
+// Never holds a token (meta.js scrubs them before writing).
+const metaLogSchema = new mongoose.Schema({
+  level:   { type: String, default: 'error' },        // error | warn | info
+  area:    { type: String, default: '' },             // graph | webhook | leads | insights | token | telegram | inbox | email
+  message: { type: String, default: '', maxlength: 1000 },
+  code:    { type: String, default: '' },
+  path:    { type: String, default: '', maxlength: 300 },
+  at:      { type: Date, default: Date.now, expires: 90 * 24 * 3600 }
+});
+metaLogSchema.index({ at: -1 });
+// MetaDaily: one row per day and surface (page | ig | ads), from the daily
+// snapshot. The Meta tab's date ranges are read from here, not from Meta.
+const metaDailySchema = new mongoose.Schema({
+  date:      { type: String, required: true },        // YYYY-MM-DD
+  surface:   { type: String, required: true },        // page | ig | ads
+  metrics:   { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  campaigns: { type: [{ _id: false, id: String, name: String, spend: Number, impressions: Number, clicks: Number, leads: Number }], default: undefined },
+  updatedAt: { type: Date, default: Date.now }
+});
+metaDailySchema.index({ date: 1, surface: 1 }, { unique: true });
 
 // ============================================================================
 // COMPILED MODELS
@@ -1619,6 +1669,9 @@ const Counter           = mongoose.model('Counter',           counterSchema);
 const Case              = mongoose.model('Case',              caseSchema);
 const Lead              = mongoose.model('Lead',              leadSchema);
 const ListingView       = mongoose.model('ListingView',       listingViewSchema);
+const MetaEvent         = mongoose.model('MetaEvent',         metaEventSchema);
+const MetaLog           = mongoose.model('MetaLog',           metaLogSchema);
+const MetaDaily         = mongoose.model('MetaDaily',         metaDailySchema);
 
 module.exports = {
   // models
@@ -1657,6 +1710,9 @@ module.exports = {
   Case,
   Lead,
   ListingView,
+  MetaEvent,
+  MetaLog,
+  MetaDaily,
   LEAD_STAGES,
   LEAD_TYPES,
   AGENT_LEAD_STAGES,

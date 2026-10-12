@@ -1787,6 +1787,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
       <a class="nav-item" data-perm="customers_view" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
       <a class="nav-item" data-perm="customers_view" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
+      <a class="nav-item" data-perm="meta_view" onclick="switchTab('meta')" style="display:none"><i class="fab fa-facebook"></i> Meta <span class="nav-badge" id="metaBadge" style="display:none">!</span></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <a class="nav-item" id="navStaff" data-perm="tasks_view" onclick="switchTab('staff')" style="display:none"><i class="fas fa-user-check"></i> <span id="navStaffLbl">Staff</span> <span class="nav-badge" id="staffBadge" style="display:none">0</span></a>
@@ -3034,6 +3035,84 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <div id="ldSettingsWrap" style="display:none"></div>
       </div>
 
+      <!-- META: Facebook / Instagram (server/meta.js) -->
+      <style>
+      .mt-banner{border:2px solid #dc2626;background:rgba(220,38,38,.07);padding:12px 16px;margin-bottom:14px;font-size:13px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+      .mt-banner i{color:#dc2626;margin-top:3px}
+      .mt-banner.warn{border-color:#d97706;background:rgba(217,119,6,.08)}.mt-banner.warn i{color:#d97706}
+      .mt-banner.ok{border-color:#10b981;background:rgba(16,185,129,.07)}.mt-banner.ok i{color:#10b981}
+      .mt-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+      .mt-seg{display:flex;flex-wrap:wrap}
+      .mt-seg .hdr-btn{margin-right:-1px}
+      .mt-seg .hdr-btn.on{background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a !important}
+      .mt-custom{display:none;gap:6px;align-items:center;flex-wrap:wrap}
+      .mt-custom.show{display:flex}
+      .mt-custom .finput{padding:7px 9px;font-size:13px;max-width:160px}
+      .mt-h{font:700 10.5px/1.2 'JetBrains Mono',monospace;letter-spacing:1.3px;text-transform:uppercase;color:var(--gray);margin:20px 0 8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+      .mt-h .s{font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:0;font-weight:400;font-size:12px}
+      .mt-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+      .mt-tile{border:2px solid var(--border-color);padding:10px 12px;background:var(--card-bg);min-width:0}
+      .mt-tile .k{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);font-family:'JetBrains Mono',monospace;line-height:1.3}
+      .mt-tile .v{font-size:24px;font-weight:800;margin-top:4px;line-height:1.05;overflow-wrap:anywhere}
+      .mt-tile .d{font-size:11px;color:var(--gray);margin-top:3px}
+      .mt-tile .d.up{color:#0f8a5f}.mt-tile .d.down{color:#c02e00}
+      .mt-tile svg{display:block;width:100%;height:26px;margin-top:6px}
+      .mt-tile.off .v{font-size:15px;color:var(--gray)}
+      .mt-tile.retired{border-style:dashed}
+      .mt-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+      .mt-stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;font-size:13px}
+      .mt-stat div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border-color);padding:6px 0;min-width:0}
+      .mt-stat b{font-weight:600;text-align:right;overflow-wrap:anywhere}
+      .mt-on{color:#0f8a5f;font-weight:700}.mt-off{color:var(--gray);font-weight:700}.mt-bad{color:#dc2626;font-weight:700}
+      .mt-post{border-bottom:1px solid var(--border-color);padding:8px 0;font-size:13px;line-height:1.45}
+      .mt-post .m{font-size:11px;color:var(--gray);margin-top:2px}
+      .mt-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .mt-log td{font-size:12px;vertical-align:top}
+      .mt-log .lv{font:700 10px 'JetBrains Mono',monospace;text-transform:uppercase}
+      .mt-log .lv.error{color:#dc2626}.mt-log .lv.warn{color:#d97706}.mt-log .lv.info{color:var(--gray)}
+      .mt-num{text-align:right;white-space:nowrap}
+      @media(max-width:640px){.mt-grid2{grid-template-columns:1fr}.mt-seg{width:100%;display:grid;grid-template-columns:repeat(4,1fr)}.mt-seg .hdr-btn{justify-content:center}.mt-tiles>.mt-tile:last-child:nth-child(odd){grid-column:1/-1}.mt-tools .hdr-btn{flex:1 1 100%;justify-content:center}.mt-tile .v{font-size:20px}.mt-custom .finput{font-size:16px;max-width:none;flex:1}.mt-top>.hdr-btn{flex:1 1 auto;justify-content:center}}
+      </style>
+      <div id="tab-meta" style="display:none">
+        <div id="mtBanner"></div>
+        <div id="mtOff" style="display:none"></div>
+        <div id="mtMain">
+          <div class="mt-top">
+            <div class="mt-seg" id="mtRange" role="group" aria-label="Date range">
+              <button class="hdr-btn" data-mtr="7" onclick="mtSetRange(7)">7 days</button>
+              <button class="hdr-btn on" data-mtr="30" onclick="mtSetRange(30)">30 days</button>
+              <button class="hdr-btn" data-mtr="90" onclick="mtSetRange(90)">90 days</button>
+              <button class="hdr-btn" data-mtr="custom" onclick="mtSetRange('custom')">Custom</button>
+            </div>
+            <div class="mt-custom" id="mtCustom">
+              <input type="date" class="finput" id="mtFrom" aria-label="From">
+              <input type="date" class="finput" id="mtTo" aria-label="To">
+              <button class="hdr-btn" onclick="mtApplyCustom()"><i class="fas fa-check"></i> Apply</button>
+            </div>
+            <button class="hdr-btn" onclick="mtExportCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button class="hdr-btn admin-only" id="mtSnapBtn" onclick="mtSnapshot()" style="display:none"><i class="fas fa-camera"></i> Snapshot now</button>
+          </div>
+          <div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-plug"></i> Connection</div><span class="ld-note" id="mtChecked"></span></div><div class="panel-body"><div class="mt-stat" id="mtStatus"></div></div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-bullseye"></i> Leads from Facebook and Instagram</div><button class="hdr-btn" data-perm="leads_view" onclick="switchTab('leads')" style="display:none"><i class="fas fa-arrow-right"></i> Open Leads</button></div><div class="panel-body"><div id="mtLeads"></div></div></div>
+          <div id="mtInsights"></div>
+          <div class="panel admin-only" style="display:none"><div class="panel-head"><div class="panel-title"><i class="fas fa-tools"></i> Admin tools</div></div><div class="panel-body">
+            <div class="mt-tools">
+              <button class="hdr-btn" onclick="mtAction('check-token','Checking the token…')"><i class="fas fa-key"></i> Check token</button>
+              <button class="hdr-btn" onclick="mtAction('bulk-read','Checking every lead form…')"><i class="fas fa-sync-alt"></i> Check lead forms now</button>
+              <button class="hdr-btn" onclick="mtAction('test-telegram','Sending…')"><i class="fab fa-telegram"></i> Test Telegram</button>
+              <button class="hdr-btn" onclick="mtFindChats()"><i class="fas fa-search"></i> Find my Telegram chat id</button>
+              <button class="hdr-btn" onclick="mtAction('weekly-send','Sending the weekly summary…')"><i class="fas fa-envelope"></i> Send weekly summary now</button>
+              <button class="hdr-btn" onclick="mtSubscribe()"><i class="fas fa-link"></i> Connect Page to webhook</button>
+            </div>
+            <label class="rp-check" style="margin-top:14px !important"><input type="checkbox" id="mtTgDetails" onchange="mtSaveTg(this.checked)"> <span>Put the lead's name and mobile number in Telegram messages (off: the message only says "new lead, open the admin")</span></label>
+            <div class="ld-note" id="mtToolOut" style="white-space:pre-wrap"></div>
+          </div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-triangle-exclamation"></i> Error log</div>
+            <select class="finput" id="mtLogLevel" onchange="mtLoadLogs().then(mtRenderLogs)" style="padding:6px 9px;font-size:13px" aria-label="Show"><option value="">Everything</option><option value="error">Errors only</option><option value="warn">Warnings</option></select></div>
+            <div class="panel-body" style="padding:0"><div class="tbl-wrap"><table class="mt-log"><thead><tr><th scope="col">When</th><th scope="col">Level</th><th scope="col">Area</th><th scope="col">What happened</th></tr></thead><tbody id="mtLogBody"><tr><td colspan="4"><div class="empty-st"><p>Loading…</p></div></td></tr></tbody></table></div></div></div>
+        </div>
+      </div>
+
       <!-- Lead dialog -->
       <div class="modal-ov" id="leadModal" style="position:fixed;inset:0;background:rgba(5,12,22,.88);display:none;align-items:flex-start;justify-content:center;z-index:2000;overflow:auto;padding:24px 16px" role="dialog" aria-modal="true" aria-labelledby="ldName">
         <div class="ld-dlg">
@@ -4222,7 +4301,8 @@ const PERM_DEFS = [
   { key: 'leads_manage',            name: 'Work Leads',              desc: 'Can log calls and messages, change stages, assign, email listings, add and import leads' },
   { key: 'leads_delete',            name: 'Delete / Merge Leads',    desc: 'Can delete a lead or merge duplicates' },
   { key: 'customers_view',          name: 'View Customer Lists',     desc: 'Can see Subscribers, Price Alerts, saved searches, wishlists and calculator use (names and emails)' },
-  { key: 'inquiries_view',          name: 'View Inquiries',          desc: 'Can see and mark website enquiries (names, emails, phone numbers, messages)' }
+  { key: 'inquiries_view',          name: 'View Inquiries',          desc: 'Can see and mark website enquiries (names, emails, phone numbers, messages)' },
+  { key: 'meta_view',               name: 'View Meta',               desc: 'Can see the Meta tab: Facebook/Instagram numbers, ad spend per campaign and the connection error log' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -4236,7 +4316,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   bulkmail_send: false,
   leasing_view: false, leasing_manage: false,
   leads_view: true, leads_manage: true, leads_delete: false,
-  customers_view: true, inquiries_view: true
+  customers_view: true, inquiries_view: true,
+  meta_view: false
 };
 
 // Check if the currently logged-in user has a permission.
@@ -4657,6 +4738,7 @@ function loadAll(){
   const add=(key,fn)=>jobs.push(()=>{ markLoaded(key); return fn(); });
   if(hasPerm('tasks_view')){ add('tasks',loadTasksData); add('staff',sfLoad); }
   if(hasPerm('leads_view')) add('leads',loadLeads);
+  if(hasPerm('meta_view')) add('meta',loadMeta);
   if(hasPerm('titling_view')) add('titling',loadTitling);
   if(hasPerm('cases_view')) add('cases',loadCases);
   if(hasPerm('leasing_view')) add('leasing',loadLeasing);
@@ -10351,7 +10433,7 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pane=document.getElementById('tab-'+name);if(pane)pane.style.display='';
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+name+"'"))n.classList.add('active')});
-  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing',leads:'Leads',staff:hasPerm('tasks_create')?'Staff':'My Desk'};
+  const titles={dashboard:'Dashboard',properties:'Properties',hero:'Hero Images',inquiries:'Inquiries',subscribers:'Subscribers',alerts:'Price Alerts',accounts:'Team Accounts',auditlog:'Audit Log',tasks:'Tasks',submissions:'Property Submissions',bulkmail:'Email Campaigns',titling:'Titling Jobs',cases:'Cases',agents:'Agents',leasing:'Leasing',leads:'Leads',meta:'Meta',staff:hasPerm('tasks_create')?'Staff':'My Desk'};
   const subs={
     dashboard:'Everything that needs you today, in one place',
     properties:'Your listings — add, edit and publish what the website shows',
@@ -10369,6 +10451,7 @@ function switchTab(name){
     agents:'Your field agents — scorecards, pipelines, and lead journals',
     leasing:'Rentals from prospect to move-out — rent roll, tenant ledgers, statements and reminders',
     leads:'Every person who reached out, in one place: answer fast, follow up, close',
+    meta:'Facebook and Instagram: leads, reach, followers and what the ads cost',
     staff:hasPerm('tasks_create')?'What your staff is doing, how far along they are, and what to give them next':'Your day, your tasks, and how you are doing'};
   document.getElementById('pageTitle').textContent=titles[name]||name;
   const subEl = document.getElementById('pageSub');
@@ -10413,6 +10496,7 @@ function switchTab(name){
     loadTasksData();
   }
   if(name==='leads' && hasPerm('leads_view')){ ldSetView(LD.view); if(due('leads')) loadLeads(); }
+  if(name==='meta' && hasPerm('meta_view')){ if(MT.loaded) mtRender(); if(due('meta')) loadMeta(); }
   if(name==='staff' && hasPerm('tasks_view')){ sfRender(); if(due('staff')) sfLoad(); }
   // Refresh agents on tab visit — the Agents tab is admin-only
   if(name==='agents' && isAdmin() && due('agents')){
@@ -13214,9 +13298,11 @@ var LD_STAGE = {
 };
 var LD_TYPE = { buyer: 'Buyer', renter: 'Renter', seller: 'Seller', landlord: 'Landlord', investor: 'Investor', broker: 'Broker', other: 'Other' };
 var LD_KIND = { inquiry: 'Enquiry', viewing: 'Viewing request', valuation: 'Valuation request', submission: 'Listed a property', saved_search: 'Saved search',
-  price_alert: 'Price alert', wishlist: 'Wishlist', newsletter: 'Newsletter', manual: 'Added by staff', import: 'Imported' };
+  price_alert: 'Price alert', wishlist: 'Wishlist', newsletter: 'Newsletter', manual: 'Added by staff', import: 'Imported',
+  meta_lead: 'Facebook / Instagram lead ad', messenger: 'Messenger message', fb_comment: 'Facebook comment', ig_dm: 'Instagram message', ig_comment: 'Instagram comment' };
+var LD_META_KINDS = ['meta_lead', 'messenger', 'fb_comment', 'ig_dm', 'ig_comment'];
 var LD_ACT = { note: 'Note', call: 'Call', whatsapp: 'WhatsApp', viber: 'Viber', messenger: 'Messenger', sms: 'Text', email: 'Email', meeting: 'Meeting', viewing: 'Viewing',
-  stage: 'Stage', assign: 'Assigned', system: 'System', listings_sent: 'Listings emailed' };
+  stage: 'Stage', assign: 'Assigned', system: 'System', listings_sent: 'Listings emailed', social_reply: 'Page replied' };
 
 function ldCan(){ return hasPerm('leads_manage'); }
 function ldTemp(s){ return s >= 70 ? ['ld-hot', 'HOT'] : s >= 40 ? ['ld-warm', 'WARM'] : ['ld-cold', 'COLD']; }
@@ -13676,10 +13762,10 @@ function ldPaint(){
   }
   if(l.firstTouch) right += '<p class="ld-note" style="margin:6px 0 0"><b>First came from:</b> ' + esc([l.firstTouch.src, l.firstTouch.med, l.firstTouch.cmp, l.firstTouch.cnt, l.firstTouch.trm].filter(Boolean).join(' / ') || l.firstTouch.ref || '') + (l.firstTouch.land ? ' (landed on ' + esc(l.firstTouch.land) + ')' : '') + '</p>';
   var events = [];
-  l.sources.forEach(function(s){ events.push({ at: s.at, cls: 'in', meta: (LD_KIND[s.kind] || s.kind) + ' · website', text: [s.label !== (LD_KIND[s.kind] || '') ? s.label : '', s.propertyTitle ? 'Listing: ' + s.propertyTitle : '', s.message].filter(Boolean).join('\n') }); });
-  l.activities.forEach(function(a){ events.push({ at: a.at, cls: ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent'].includes(a.type) ? 'out' : '', meta: (LD_ACT[a.type] || a.type) + (a.outcome ? ' · ' + a.outcome : '') + (a.byName ? ' · ' + a.byName : ''), text: a.text || '' }); });
+  l.sources.forEach(function(s){ var social = LD_META_KINDS.indexOf(s.kind) >= 0; events.push({ at: s.at, cls: 'in', link: s.link || '', meta: (LD_KIND[s.kind] || s.kind) + ' · ' + (social ? (s.attrib && s.attrib.src === 'instagram' ? 'Instagram' : 'Facebook') : 'website'), text: [s.label !== (LD_KIND[s.kind] || '') ? s.label : '', s.propertyTitle ? (social ? 'Interested in: ' : 'Listing: ') + s.propertyTitle : '', s.message].filter(Boolean).join('\n') }); });
+  l.activities.forEach(function(a){ events.push({ at: a.at, cls: ['call', 'whatsapp', 'viber', 'messenger', 'sms', 'email', 'meeting', 'viewing', 'listings_sent', 'social_reply'].includes(a.type) ? 'out' : '', meta: (LD_ACT[a.type] || a.type) + (a.outcome ? ' · ' + a.outcome : '') + (a.byName ? ' · ' + a.byName : ''), text: a.text || '' }); });
   events.sort(function(a, b){ return new Date(b.at) - new Date(a.at); });
-  right += '<div class="ld-h">Timeline</div>' + events.map(function(e){ return '<div class="ld-tl ' + e.cls + '"><div class="m">' + esc(ldFmt(e.at)) + ' · ' + esc(e.meta) + '</div>' + (e.text ? '<div class="t">' + esc(e.text) + '</div>' : '') + '</div>'; }).join('');
+  right += '<div class="ld-h">Timeline</div>' + events.map(function(e){ return '<div class="ld-tl ' + e.cls + '"><div class="m">' + esc(ldFmt(e.at)) + ' · ' + esc(e.meta) + '</div>' + (e.text ? '<div class="t">' + esc(e.text) + '</div>' : '') + (e.link ? '<div class="t"><a href="' + esc(safeUrl(e.link)) + '" target="_blank" rel="noopener">Open the conversation <i class="fas fa-external-link-alt" style="font-size:9px"></i></a></div>' : '') + '</div>'; }).join('');
   document.getElementById('ldRight').innerHTML = right;
 }
 function ldListVal(id){ return (document.getElementById(id).value || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean); }
@@ -13827,6 +13913,251 @@ document.addEventListener('drop', function(e){
 window.addEventListener('load', function(){ if(location.hash === '#leads') { var t = setInterval(function(){ if(CU && hasPerm('leads_view')){ clearInterval(t); switchTab('leads'); } }, 400); setTimeout(function(){ clearInterval(t); }, 20000); } });
 // Keep the waiting timers honest while the tab is open.
 setInterval(function(){ if(!document.hidden && LD.loaded && CU && hasPerm('leads_view')) loadLeads(); }, 120000);
+</script>
+
+<script>
+/* ══ META ═══════════════════════════════════════════════════════════════════
+   Facebook / Instagram (server/meta.js). Everything shown here is read from
+   our own database: the daily snapshot (MetaDaily), the leads already in the
+   Leads tab, and the connection's error log. Opening this tab never calls
+   Meta. While every META_*_ENABLED switch is off the server answers 404 and
+   this tab says so. */
+var MT = { range: 30, from: '', to: '', status: null, data: null, logs: [], off: false, loaded: false, err: '' };
+var MT_KIND = { meta_lead: 'Lead-ad forms', messenger: 'Messenger', ig_dm: 'Instagram messages', fb_comment: 'Facebook comments', ig_comment: 'Instagram comments' };
+function mtDay(d){ var x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }
+function mtRangeDates(){
+  if(MT.range === 'custom' && MT.from && MT.to) return { from: MT.from, to: MT.to };
+  var to = new Date(); to.setDate(to.getDate() - 1);
+  var from = new Date(to); from.setDate(from.getDate() - (Number(MT.range) || 30) + 1);
+  return { from: mtDay(from), to: mtDay(to) };
+}
+function mtNum(v, money){
+  if(v == null || v === '') return '–';
+  var n = Number(v);
+  if(money) return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if(Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  return n.toLocaleString('en-PH', { maximumFractionDigits: 1 });
+}
+function mtWhen(d){ return d ? ldFmt(d) + ' (' + ldAgo(d) + ' ago)' : 'never'; }
+async function mtGet(url){
+  var r = await apiFetch(url);
+  if(r.status === 404){ var e = new Error('off'); e.off = true; throw e; }
+  var d = null; try{ d = await r.json(); }catch(x){}
+  if(!r.ok) throw new Error((d && d.error) || ('Request failed (' + r.status + ')'));
+  return d;
+}
+async function mtLoadStatus(){
+  try{ MT.status = await mtGet('/api/admin/meta/status'); MT.off = false; }
+  catch(e){ if(e.off){ MT.off = true; MT.status = null; } else throw e; }
+  mtBadge();
+}
+async function mtLoadInsights(){
+  if(!MT.status || !MT.status.switches.insights){ MT.data = null; return; }
+  var r = mtRangeDates();
+  MT.data = await mtGet('/api/admin/meta/insights?from=' + r.from + '&to=' + r.to);
+}
+async function mtLoadLogs(){
+  if(MT.off) return;
+  var lv = (document.getElementById('mtLogLevel') || {}).value || '';
+  var d = await mtGet('/api/admin/meta/logs?limit=150' + (lv ? '&level=' + lv : ''));
+  MT.logs = d.logs || [];
+}
+async function loadMeta(){
+  if(!hasPerm('meta_view')) return;
+  try{
+    MT.err = '';
+    await mtLoadStatus();
+    if(!MT.off) await Promise.all([mtLoadInsights(), mtLoadLogs()]);
+  }catch(e){ MT.err = e.message || 'Could not load'; console.error('meta', e); }
+  MT.loaded = true;
+  var pane = document.getElementById('tab-meta');
+  if(pane && pane.style.display !== 'none') mtRender();
+}
+function mtBadge(){
+  var b = document.getElementById('metaBadge'); if(!b) return;
+  var bad = MT.status && MT.status.token && MT.status.token.ok === false;
+  b.style.display = bad ? '' : 'none';
+}
+function mtSetRange(r){
+  MT.range = r;
+  document.querySelectorAll('#mtRange [data-mtr]').forEach(function(b){ b.classList.toggle('on', String(b.getAttribute('data-mtr')) === String(r)); });
+  document.getElementById('mtCustom').classList.toggle('show', r === 'custom');
+  if(r === 'custom'){
+    var d = mtRangeDates();
+    if(!document.getElementById('mtFrom').value) document.getElementById('mtFrom').value = MT.from || d.from;
+    if(!document.getElementById('mtTo').value) document.getElementById('mtTo').value = MT.to || d.to;
+    return;
+  }
+  mtLoadInsights().then(mtRenderInsights).catch(function(e){ showToast(e.message || 'Could not load', true); });
+}
+function mtApplyCustom(){
+  var f = document.getElementById('mtFrom').value, t = document.getElementById('mtTo').value;
+  if(!f || !t){ showToast('Pick both dates', true); return; }
+  MT.from = f <= t ? f : t; MT.to = f <= t ? t : f;
+  mtLoadInsights().then(mtRenderInsights).catch(function(e){ showToast(e.message || 'Could not load', true); });
+}
+function mtRender(){
+  var off = document.getElementById('mtOff'), main = document.getElementById('mtMain'), ban = document.getElementById('mtBanner');
+  if(MT.off){
+    main.style.display = 'none'; ban.innerHTML = ''; off.style.display = '';
+    off.innerHTML = '<div class="panel"><div class="panel-body"><div class="empty-st"><i class="fab fa-facebook"></i><p><b>The Meta connection is switched off.</b></p><p class="ld-note" style="max-width:560px;margin:8px auto 0;line-height:1.6">Nothing here talks to Facebook or Instagram until a switch is turned on in Render (Environment): META_LEADS_ENABLED=1 for lead ads, META_INSIGHTS_ENABLED=1 for these numbers, META_INBOX_ENABLED=1 for Messenger and comments. See the README section "Facebook and Instagram (Meta)".</p></div></div></div>';
+    return;
+  }
+  off.style.display = 'none'; main.style.display = '';
+  mtRenderBanner(); mtRenderStatus(); mtRenderLeads(); mtRenderInsights(); mtRenderLogs();
+  var cb = document.getElementById('mtTgDetails'); if(cb && MT.status) cb.checked = !!(MT.status.prefs && MT.status.prefs.telegramDetails);
+}
+function mtRenderBanner(){
+  var ban = document.getElementById('mtBanner'), s = MT.status;
+  if(MT.err){ ban.innerHTML = '<div class="mt-banner"><i class="fas fa-exclamation-circle"></i><div>' + esc(MT.err) + '</div></div>'; return; }
+  if(!s){ ban.innerHTML = ''; return; }
+  var t = s.token;
+  if(t && t.ok === false){ ban.innerHTML = '<div class="mt-banner"><i class="fas fa-exclamation-triangle"></i><div><b>The Meta connection needs attention.</b> ' + esc(t.problem || '') + '<div class="ld-note">Checked ' + esc(mtWhen(t.checkedAt)) + '</div></div></div>'; return; }
+  if(!t){ ban.innerHTML = '<div class="mt-banner warn"><i class="fas fa-hourglass-half"></i><div>The Meta token has not been checked yet. It is checked once a day; an admin can press "Check token" below.</div></div>'; return; }
+  var exp = t.neverExpires ? 'never expires' : (t.expiresAt ? 'expires ' + ldFmt(t.expiresAt) : '');
+  ban.innerHTML = '<div class="mt-banner ok"><i class="fas fa-check-circle"></i><div>Meta token is valid' + (exp ? ', ' + esc(exp) : '') + '. Checked ' + esc(mtWhen(t.checkedAt)) + '.</div></div>';
+}
+function mtRenderStatus(){
+  var s = MT.status; if(!s) return;
+  var sw = function(on){ return on ? '<span class="mt-on">ON</span>' : '<span class="mt-off">OFF</span>'; };
+  var yes = function(v){ return v ? '<span class="mt-on">set</span>' : '<span class="mt-bad">missing</span>'; };
+  var c = s.config || {}, br = s.lastBulkRead;
+  var rows = [
+    ['Lead ads (Module 1)', sw(s.switches.leads)], ['Insights (Module 2)', sw(s.switches.insights)], ['Inbox (Module 3)', sw(s.switches.inbox)],
+    ['Graph API version', esc(c.graphVersion || '')],
+    ['App id / secret', yes(c.appId) + ' / ' + yes(c.appSecret)], ['System token', yes(c.systemToken)], ['Webhook verify token', yes(c.verifyToken)],
+    ['Page id', yes(c.pageId)], ['Instagram id', yes(c.igUserId)], ['Ad account', yes(c.adAccount)], ['Telegram', c.telegram ? '<span class="mt-on">set</span>' : '<span class="mt-off">not set</span>'],
+    ['Last webhook delivery', esc(mtWhen(s.lastWebhookAt))],
+    ['Last hourly lead check', br ? esc(mtWhen(br.at)) + (br.ok === false ? ' <span class="mt-bad">failed</span>' : ' · ' + esc((br.added || 0) + ' new')) : 'never'],
+    ['Last insights snapshot', esc(mtWhen(s.lastSnapshotAt))],
+    ['Errors in the last 24 h', s.errors24h ? '<span class="mt-bad">' + s.errors24h + '</span>' : '0']
+  ];
+  if(s.token && s.token.missing && s.token.missing.length) rows.push(['Missing permissions', '<span class="mt-bad">' + esc(s.token.missing.join(', ')) + '</span>']);
+  document.getElementById('mtStatus').innerHTML = rows.map(function(r){ return '<div><span>' + esc(r[0]) + '</span><b>' + r[1] + '</b></div>'; }).join('');
+  document.getElementById('mtChecked').textContent = 'Webhook: ' + (s.webhookUrl || '');
+}
+function mtRenderLeads(){
+  var s = MT.status; if(!s || !s.leads) return;
+  var d7 = s.leads.d7, d30 = s.leads.d30;
+  var kinds = Object.keys(MT_KIND);
+  var tiles = '<div class="mt-tiles">' +
+    mtTileHtml({ label: 'Lead-ad forms, 7 days', value: d7.byKind.meta_lead || 0 }) +
+    mtTileHtml({ label: 'Lead-ad forms, 30 days', value: d30.byKind.meta_lead || 0 }) +
+    mtTileHtml({ label: 'Messages + comments, 30 days', value: kinds.filter(function(k){ return k !== 'meta_lead'; }).reduce(function(a, k){ return a + (d30.byKind[k] || 0); }, 0) }) +
+    '<div class="mt-tile"><div class="k">Waiting for a reply</div><div class="v"' + (d30.waiting ? ' style="color:#dc2626"' : '') + '>' + (d30.waiting || 0) + '</div><div class="d">of ' + d30.people + ' people (30 days)</div></div>' +
+    '<div class="mt-tile"><div class="k">Median first reply</div><div class="v">' + (d30.medianResponseMin == null ? '–' : esc(ldDur(d30.medianResponseMin))) + '</div><div class="d">' + (d30.withinSla == null ? 'no replies logged yet' : d30.withinSla + '% within ' + d30.slaMinutes + ' min') + '</div></div>' +
+    '</div>';
+  var camps = Object.keys(d30.byCampaign || {}).sort(function(a, b){ return d30.byCampaign[b] - d30.byCampaign[a]; });
+  var list = camps.length ? '<div class="mt-h">Lead-ad forms by campaign, 30 days</div><div class="tbl-wrap"><table><thead><tr><th scope="col">Campaign</th><th scope="col" class="mt-num">Forms</th></tr></thead><tbody>' +
+    camps.slice(0, 12).map(function(c){ return '<tr><td>' + esc(c) + '</td><td class="mt-num">' + d30.byCampaign[c] + '</td></tr>'; }).join('') + '</tbody></table></div>' : '';
+  document.getElementById('mtLeads').innerHTML = tiles + list;
+}
+function mtSpark(series){
+  if(!series || series.length < 2) return '';
+  var vals = series.map(function(x){ return Number(x[1]) || 0; });
+  var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), rng = (mx - mn) || 1;
+  var pts = vals.map(function(v, i){ return (i / (vals.length - 1) * 100).toFixed(1) + ',' + (24 - (v - mn) / rng * 22).toFixed(1); }).join(' ');
+  return '<svg viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="#ff3d00" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>';
+}
+function mtTileHtml(t, money){
+  if(t.status === 'retired') return '<div class="mt-tile off retired" title="' + esc(t.statusMsg || '') + '"><div class="k">' + esc(t.label) + '</div><div class="v">Retired by Meta</div><div class="d">This metric no longer exists; the code needs a new name for it.</div></div>';
+  if(t.value == null) return '<div class="mt-tile off"' + (t.statusMsg ? ' title="' + esc(t.statusMsg) + '"' : '') + '><div class="k">' + esc(t.label) + '</div><div class="v">' + (t.status === 'error' ? 'Could not read' : 'No data yet') + '</div>' + (t.status === 'error' ? '<div class="d">See the error log</div>' : '') + '</div>';
+  var d = '';
+  if(t.agg === 'last' && t.change != null && t.change !== 0) d = '<div class="d ' + (t.change > 0 ? 'up' : 'down') + '">' + (t.change > 0 ? '+' : '') + mtNum(t.change) + ' in this range</div>';
+  else if(t.agg !== 'last' && t.prev != null && t.prev > 0){ var pc = Math.round((t.value - t.prev) / t.prev * 100); d = '<div class="d ' + (pc > 0 ? 'up' : pc < 0 ? 'down' : '') + '">' + (pc > 0 ? '+' : '') + pc + '% vs the period before</div>'; }
+  else if(t.status === 'error') d = '<div class="d down">Last read failed: older numbers</div>';
+  return '<div class="mt-tile"><div class="k">' + esc(t.label) + '</div><div class="v">' + esc(mtNum(t.value, money)) + '</div>' + d + mtSpark(t.series) + '</div>';
+}
+function mtRenderInsights(){
+  var el = document.getElementById('mtInsights'); if(!el) return;
+  var s = MT.status;
+  if(!s) { el.innerHTML = ''; return; }
+  if(!s.switches.insights){ el.innerHTML = '<div class="panel"><div class="panel-body"><p class="ld-note" style="margin:0">Insights are switched off (META_INSIGHTS_ENABLED). Lead capture works without them.</p></div></div>'; return; }
+  var d = MT.data;
+  if(!d){ el.innerHTML = '<div class="panel"><div class="panel-body"><p class="ld-note" style="margin:0">Loading the numbers…</p></div></div>'; return; }
+  var sec = function(title, icon, tiles, moneyKey){ return '<div class="panel"><div class="panel-head"><div class="panel-title"><i class="' + icon + '"></i> ' + title + '</div></div><div class="panel-body"><div class="mt-tiles">' + tiles.map(function(t){ return mtTileHtml(t, t.key === moneyKey); }).join('') + '</div></div></div>'; };
+  var ads = d.tiles.ads.slice();
+  ads.push({ key: 'cpl', label: 'Cost per lead', agg: 'sum', value: d.totals.cpl, prev: d.prevTotals ? d.prevTotals.cpl : null, series: [], status: (d.tiles.ads[0] || {}).status });
+  var html = '<div class="mt-h"><span>' + esc(d.from) + ' to ' + esc(d.to) + '</span><span class="s">Snapshot ' + esc(mtWhen(d.lastSnapshotAt)) + '. Reach is Meta’s estimate, added up day by day.</span></div>';
+  html += sec('Facebook Page', 'fab fa-facebook', d.tiles.page);
+  html += sec('Instagram', 'fab fa-instagram', d.tiles.ig);
+  html += '<div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-bullhorn"></i> Ads (read-only)</div></div><div class="panel-body"><div class="mt-tiles">' + ads.map(function(t){ return mtTileHtml(t, t.key === 'spend' || t.key === 'cpl'); }).join('') + '</div>';
+  html += '<div class="mt-h">Campaigns</div>' + (d.campaigns.length ? '<div class="tbl-wrap"><table><thead><tr><th scope="col">Campaign</th><th scope="col" class="mt-num">Spend</th><th scope="col" class="mt-num">Impressions</th><th scope="col" class="mt-num">Clicks</th><th scope="col" class="mt-num">CTR</th><th scope="col" class="mt-num">Leads</th><th scope="col" class="mt-num">Per lead</th></tr></thead><tbody>' +
+    d.campaigns.map(function(c){ return '<tr><td>' + esc(c.name || c.id) + '</td><td class="mt-num">' + esc(mtNum(c.spend, true)) + '</td><td class="mt-num">' + esc(mtNum(c.impressions)) + '</td><td class="mt-num">' + esc(mtNum(c.clicks)) + '</td><td class="mt-num">' + (c.ctr == null ? '–' : esc(c.ctr + '%')) + '</td><td class="mt-num">' + esc(mtNum(c.leads)) + '</td><td class="mt-num">' + esc(mtNum(c.cpl, true)) + '</td></tr>'; }).join('') +
+    '</tbody></table></div>' : '<p class="ld-note">No ad spend in this range.</p>');
+  html += '</div></div>';
+  var tp = d.topPosts || {};
+  var post = function(p, ig){ return '<div class="mt-post">' + esc(p.text || '(no caption)') + '<div class="m">' + esc(ldFmt(p.at)) + ' · ' + (ig ? esc(mtNum(p.likes)) + ' likes · ' + esc(mtNum(p.comments)) + ' comments' : esc(mtNum(p.reactions)) + ' reactions · ' + esc(mtNum(p.comments)) + ' comments · ' + esc(mtNum(p.shares)) + ' shares') + (p.views != null ? ' · ' + esc(mtNum(p.views)) + ' views' : '') + (p.link ? ' · <a href="' + esc(safeUrl(p.link)) + '" target="_blank" rel="noopener">Open</a>' : '') + '</div></div>'; };
+  html += '<div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-star"></i> Top posts (latest snapshot)</div></div><div class="panel-body"><div class="mt-grid2">' +
+    '<div><div class="mt-h" style="margin-top:0">Facebook</div>' + ((tp.fb || []).map(function(p){ return post(p, false); }).join('') || '<p class="ld-note">None yet.</p>') + '</div>' +
+    '<div><div class="mt-h" style="margin-top:0">Instagram</div>' + ((tp.ig || []).map(function(p){ return post(p, true); }).join('') || '<p class="ld-note">None yet.</p>') + '</div>' +
+    '</div></div></div>';
+  el.innerHTML = html;
+}
+function mtRenderLogs(){
+  var b = document.getElementById('mtLogBody'); if(!b) return;
+  if(!MT.logs.length){ b.innerHTML = '<tr><td colspan="4"><div class="empty-st"><p>Nothing logged. Errors and warnings from the Meta connection appear here for 90 days.</p></div></td></tr>'; return; }
+  b.innerHTML = MT.logs.map(function(l){ return '<tr><td style="white-space:nowrap">' + esc(ldFmt(l.at)) + '</td><td><span class="lv ' + esc(l.level) + '">' + esc(l.level) + '</span></td><td>' + esc(l.area) + '</td><td>' + esc(l.message) + (l.code ? ' <span class="ld-note">(' + esc(l.code) + ')</span>' : '') + '</td></tr>'; }).join('');
+}
+function mtExportCSV(){
+  var d = MT.data;
+  if(!d || !d.daily || !d.daily.length){ showToast('No numbers in this range to export', true); return; }
+  var keys = {};
+  d.daily.forEach(function(r){ Object.keys(r.metrics || {}).forEach(function(k){ keys[r.surface + '.' + k] = 1; }); });
+  var cols = Object.keys(keys).sort();
+  var byDate = {};
+  d.daily.forEach(function(r){ var row = byDate[r.date] = byDate[r.date] || {}; Object.keys(r.metrics || {}).forEach(function(k){ row[r.surface + '.' + k] = r.metrics[k]; }); });
+  var rows = [['Date'].concat(cols)];
+  Object.keys(byDate).sort().forEach(function(day){ rows.push([day].concat(cols.map(function(c){ return byDate[day][c] == null ? '' : byDate[day][c]; }))); });
+  rows.push([]); rows.push(['Campaign', 'Spend (PHP)', 'Impressions', 'Clicks', 'CTR %', 'Leads', 'Cost per lead (PHP)']);
+  d.campaigns.forEach(function(c){ rows.push([c.name || c.id, c.spend, c.impressions, c.clicks, c.ctr == null ? '' : c.ctr, c.leads, c.cpl == null ? '' : c.cpl]); });
+  downloadCSV('glra-meta-' + d.from + '-to-' + d.to + '.csv', rows);
+}
+async function mtPost(path, body){
+  var r = await apiFetch('/api/admin/meta/' + path, { method: path === 'settings' ? 'PUT' : 'POST', body: JSON.stringify(body || {}) });
+  var d = null; try{ d = await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((d && d.error) || ('Failed (' + r.status + ')'));
+  return d;
+}
+async function mtSnapshot(){
+  showLoad('Reading the numbers from Meta…');
+  try{ var d = await mtPost('snapshot'); showToast('Snapshot saved: ' + d.rows + ' day rows' + (d.errors && d.errors.length ? ', ' + d.errors.length + ' metric(s) not read' : '')); await loadMeta(); }
+  catch(e){ showToast(e.message, true); }
+  hideLoad();
+}
+async function mtAction(path, msg){
+  var out = document.getElementById('mtToolOut');
+  showLoad(msg || 'Working…');
+  try{
+    var d = await mtPost(path);
+    var txt = path === 'check-token' ? (d.token.ok ? 'Token OK.' : 'Problem: ' + d.token.problem) :
+      path === 'bulk-read' ? (d.skipped ? 'Skipped: ' + d.skipped : 'Checked ' + d.forms + ' form(s): ' + d.found + ' lead(s) seen, ' + d.added + ' new' + (d.retried ? ', ' + d.retried + ' retried' : '') + '.') :
+      path === 'test-telegram' ? 'Telegram test message sent.' :
+      path === 'weekly-send' ? 'Weekly summary emailed (' + d.from + ' to ' + d.to + ').' : 'Done.';
+    if(out) out.textContent = txt; showToast(txt);
+    await loadMeta();
+  }catch(e){ if(out) out.textContent = e.message; showToast(e.message, true); }
+  hideLoad();
+}
+async function mtFindChats(){
+  var out = document.getElementById('mtToolOut');
+  try{
+    var d = await mtGet('/api/admin/meta/telegram-chats');
+    out.textContent = d.chats && d.chats.length ? 'Chats that wrote to the bot recently (put the id in Render as TELEGRAM_CHAT_ID):\n' + d.chats.map(function(c){ return c.id + '  ' + c.type + '  ' + c.name; }).join('\n') : 'No chats yet. Send your bot a message ("hi") in Telegram, then press this again.';
+  }catch(e){ out.textContent = e.message; }
+}
+async function mtSubscribe(){
+  if(!confirm('Ask Meta to send this Page’s new leads' + (MT.status && MT.status.switches.inbox ? ', messages and comments' : '') + ' to the website?\n\nThis is the only change the website ever makes on the Meta side.')) return;
+  showLoad('Connecting…');
+  try{ var d = await mtPost('subscribe-page'); showToast('Connected: ' + d.fields.join(', ')); document.getElementById('mtToolOut').textContent = 'The Page now sends these to the website: ' + d.fields.join(', ') + '.'; await loadMeta(); }
+  catch(e){ showToast(e.message, true); document.getElementById('mtToolOut').textContent = e.message; }
+  hideLoad();
+}
+async function mtSaveTg(on){
+  try{ await mtPost('settings', { telegramDetails: !!on }); showToast(on ? 'Telegram will show name and mobile' : 'Telegram will show no personal details'); if(MT.status) MT.status.prefs = { telegramDetails: !!on }; }
+  catch(e){ showToast(e.message, true); }
+}
+window.addEventListener('load', function(){ if(location.hash === '#meta') { var t = setInterval(function(){ if(CU && hasPerm('meta_view')){ clearInterval(t); switchTab('meta'); } }, 400); setTimeout(function(){ clearInterval(t); }, 20000); } });
 </script>
 
 <script>
