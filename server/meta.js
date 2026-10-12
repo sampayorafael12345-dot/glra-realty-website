@@ -439,12 +439,21 @@ async function handleDelivery(body) {
   const obj = String((body && body.object) || '');
   const entries = Array.isArray(body && body.entry) ? body.entry.slice(0, 100) : [];
   await patchState({ lastWebhookAt: new Date() });
+  // The "Test" button in the Meta dashboard sends a made-up lead (ids all 4s),
+  // sometimes wrapped as { sample: {...} }. Record that it arrived; there is no
+  // real lead to fetch.
+  const isSample = v => v && /^4+$/.test(String(v.leadgen_id || ''));
+  if (body && body.sample) {
+    logMeta('info', 'webhook', `Test event from the Meta dashboard received (${clean(body.sample.field, 40) || 'unknown field'}); nothing to fetch`);
+    return;
+  }
   for (const e of entries) {
     for (const ch of (Array.isArray(e && e.changes) ? e.changes : []).slice(0, 200)) {
       const v = (ch && ch.value) || {};
       if (obj === 'page' && ch.field === 'leadgen') {
         if (!LEADS_ON()) continue;
         if (!idOk(v.leadgen_id)) { logMeta('warn', 'webhook', 'leadgen event without a valid leadgen_id'); continue; }
+        if (isSample(v)) { logMeta('info', 'webhook', 'Test lead from the Meta dashboard received; nothing to fetch'); continue; }
         await onEvent('leadgen:' + v.leadgen_id, obj, 'leadgen', v, () => processLeadgen(String(v.leadgen_id)));
       } else if (obj === 'page' && ch.field === 'feed' && v.item === 'comment' && v.verb === 'add') {
         if (!INBOX_ON() || !idOk(v.comment_id)) continue;
