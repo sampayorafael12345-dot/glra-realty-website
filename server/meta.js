@@ -336,7 +336,7 @@ async function recordMetaLead(d, via) {
   const lead = await ingestLead({ kind: 'meta_lead', refId: m.id, name: m.name, email: m.email, phone: m.phone, message: m.message,
     propertyTitle: m.propertyTitle, label: m.label, attrib: m.attrib, at: m.at, consent: m.optIn ? LEAD_CONSENT : undefined });
   if (!lead) { logMeta('warn', 'leads', `Lead ${m.id} had no usable email or phone number, so it was not added`); return 'skipped'; }
-  if (via === 'hourly') logMeta('info', 'leads', `Lead ${m.id} was picked up by the hourly check (the webhook had not delivered it)`);
+  if (via === 'hourly') logMeta('info', 'leads', `Lead ${m.id} was picked up by the 10-minute check (the webhook had not delivered it)`);
   await sendLeadAlerts(lead, m, via).catch(e => logMeta('error', 'email', 'Lead alert failed: ' + e.message));
   return 'done';
 }
@@ -354,7 +354,7 @@ async function sendLeadAlerts(lead, m, via) {
     <table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(r => `<tr><td style="padding:5px 10px 5px 0;color:#555;white-space:nowrap;vertical-align:top">${esc(r[0])}</td><td style="padding:5px 0;font-weight:600">${esc(r[1])}</td></tr>`).join('')}</table>
     ${m.message ? `<p style="background:#f6f4ef;padding:12px 16px;font-size:14px;white-space:pre-line">${esc(m.message)}</p>` : ''}
     <p style="font-size:14px">${lead.phones[0] ? `<a href="https://wa.me/${esc(lead.phones[0])}">WhatsApp ${esc(phone)}</a>` : ''}</p>
-    <p style="font-size:13px;color:#555">Reply within five minutes if you can: lead-ad leads go cold fastest.${via === 'hourly' ? ' This one was picked up by the hourly check, so it may be up to an hour old.' : ''}</p>
+    <p style="font-size:13px;color:#555">Reply within five minutes if you can: lead-ad leads go cold fastest.${via === 'hourly' ? ' This one was picked up by the 10-minute check, so it may be up to ten minutes old.' : ''}</p>
     <p><a href="${SITE_URL}/admin.html#leads" style="display:inline-block;background:#0a0a0a;color:#fff;padding:11px 20px;text-decoration:none;font-weight:600">Open the Leads tab</a></p>
   ` + getEmailFooter();
   const r = await sendEmail(s.notifyEmail, `New ${m.where} lead: ${m.name || 'no name given'}`, html).catch(() => null);
@@ -373,7 +373,7 @@ async function processLeadgen(leadgenId) {
   return recordMetaLead(d, 'webhook');
 }
 
-// Hourly safety net: every lead form's leads since the last check (with a
+// Safety net (every 10 minutes): every lead form's leads since the last check (with a
 // 15-minute overlap). Anything already in the Leads tab is skipped.
 async function bulkRead(reason) {
   if (!LEADS_ON()) return { skipped: 'off' };
@@ -424,7 +424,7 @@ async function onEvent(key, object, field, raw, fn) {
     return r;
   } catch (e) {
     await MetaEvent.updateOne({ _id: ev._id }, { $set: { status: 'failed', error: scrub(e.message).slice(0, 500) } });
-    logMeta('error', field === 'leadgen' ? 'leads' : 'inbox', `${key} could not be processed (${scrub(e.message).slice(0, 200)})${field === 'leadgen' ? '; the hourly check will try again' : ''}`, { code: e.code });
+    logMeta('error', field === 'leadgen' ? 'leads' : 'inbox', `${key} could not be processed (${scrub(e.message).slice(0, 200)})${field === 'leadgen' ? '; the next check will try again' : ''}`, { code: e.code });
     return 'failed';
   }
 }
@@ -1001,8 +1001,8 @@ function startMetaTick(deps) {
       const day = manilaDay(), hour = manilaHour();
       let st = await getState();
       if (st.tokenCheckedDay !== day) { await checkToken(true); st = await getState(); }
-      if (LEADS_ON() && (!st.lastBulkReadAt || Date.now() - new Date(st.lastBulkReadAt).getTime() >= 55 * 60e3)) {
-        await bulkRead('hourly').catch(e => logMeta('error', 'leads', 'Hourly lead check failed: ' + e.message));
+      if (LEADS_ON() && (!st.lastBulkReadAt || Date.now() - new Date(st.lastBulkReadAt).getTime() >= 8 * 60e3)) {
+        await bulkRead('hourly').catch(e => logMeta('error', 'leads', 'Lead check failed: ' + e.message));
       }
       if (INSIGHTS_ON() && hour >= 6 && st.lastSnapshotDay !== day) {
         await snapshot(st.backfilled ? 3 : 30, 'daily').catch(e => logMeta('error', 'insights', 'Daily snapshot failed: ' + e.message));
