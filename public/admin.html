@@ -5,6 +5,10 @@
 <!-- viewport-fit=cover so the page can reach under an iPhone notch; the CSS
      then pays it back with env(safe-area-inset-*) padding. -->
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- THE ADMIN'S LOOK (Oct 2026): Classic (default), Glass or Bold, chosen per
+     device. Set on <html> before anything paints so the page never flashes
+     one look and flips to another. Rules live in /css/admin-looks.css. -->
+<script>(function(){var l='classic',d=false;try{l=localStorage.getItem('glra.admin.look')||'classic';d=localStorage.getItem('darkMode')==='true'}catch(e){}if(l!=='glass'&&l!=='bold')l='classic';var h=document.documentElement;h.setAttribute('data-glra-look',l);h.setAttribute('data-glra-mode',d?'dark':'light')})();</script>
 <title>Admin Dashboard | GLRA Realty</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/png" href="/img/favicon-64.png">
@@ -1691,6 +1695,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 .sb-empty{padding:10px 20px;color:#a39d92;font-size:12px;display:none}
 @media(min-width:900px){.sb-find input{font-size:13px}}
 </style>
+<link rel="stylesheet" href="/css/admin-looks.css?v=3">
 </head>
 <body>
 
@@ -1816,6 +1821,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <button class="sb-btn" onclick="toggleDarkMode()" id="dmBtn"><i class="fas fa-moon"></i> Theme</button>
         <button class="sb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
+      <button type="button" class="sb-btn glra-look-sb" id="glraLookSb" style="width:100%;margin-top:8px" aria-label="Look: Classic. Tap to change"><i class="fas fa-palette"></i> <span>Look: Classic</span></button>
       <button class="sb-btn" onclick="logoutEverywhere()" style="width:100%;margin-top:8px" title="End this account's sign-in on every computer and phone"><i class="fas fa-power-off"></i> Sign out all devices</button>
     </div>
   </aside>
@@ -1828,6 +1834,12 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <div><h1 class="page-title" id="pageTitle" style="margin:0">Dashboard</h1><div class="page-sub" id="pageSub">Welcome back</div></div>
       </div>
       <div class="hdr-right">
+        <div class="glra-looks" id="glraLooks" role="radiogroup" aria-label="Dashboard look">
+          <button type="button" role="radio" data-look="classic" aria-checked="true">Classic</button>
+          <button type="button" role="radio" data-look="glass" aria-checked="false" tabindex="-1">Glass</button>
+          <button type="button" role="radio" data-look="bold" aria-checked="false" tabindex="-1">Bold</button>
+        </div>
+        <button type="button" class="hdr-btn glra-look-cycle" id="glraLookCycle" aria-label="Look: Classic. Tap to change" title="Change the look"><i class="fas fa-palette"></i></button>
         <button class="hdr-btn" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> <span>Refresh</span></button>
         <button class="hdr-btn admin-only" id="importPropBtn" onclick="impOpen()" style="display:none"><i class="fas fa-file-import"></i> <span>Import</span></button>
         <button class="hdr-btn primary admin-only" id="addPropBtn" onclick="openAddProperty()" style="display:none"><i class="fas fa-plus"></i> <span>Add Property</span></button>
@@ -15559,6 +15571,284 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
   function scan(){ q=0; document.querySelectorAll('.page-content table:not(.no-stack)').forEach(label); }
   new MutationObserver(()=>{ if(!q) q=setTimeout(scan,120); }).observe(document.querySelector('.page-content')||document.body,{childList:true,subtree:true});
   scan();
+})();
+</script>
+<script>
+// THE LOOK SWITCH (Oct 2026). Classic | Glass | Bold, kept on this device.
+// The early script in <head> already painted the saved look; this only wires
+// the header switch (and the phone's single cycle button) and crossfades.
+(function(){
+  var LOOKS=['classic','glass','bold'], NAMES={classic:'Classic',glass:'Glass',bold:'Bold'}, KEY='glra.admin.look';
+  var root=document.documentElement, group=document.getElementById('glraLooks'), cycle=document.getElementById('glraLookCycle'), cycleSb=document.getElementById('glraLookSb');
+  var meta=document.querySelector('meta[name="theme-color"]'), metaOrig=meta?meta.getAttribute('content'):'';
+  var TINT={glass:'#140d09',bold:'#0e0e10'}, TINT_LIGHT={glass:'#f6f1ec',bold:'#f4f4f1'};
+  function cur(){ var l=root.getAttribute('data-glra-look'); return LOOKS.indexOf(l)>=0?l:'classic'; }
+  // Light or dark follows the existing Theme button (body.dark-mode); mirrored on <html>
+  // so the head script can paint the right mode before <body> exists.
+  function isDark(){ return document.body.classList.contains('dark-mode'); }
+  function syncMode(){ var m=isDark()?'dark':'light'; if(root.getAttribute('data-glra-mode')!==m) root.setAttribute('data-glra-mode',m); paint(); }
+  function paint(){
+    var l=cur();
+    if(meta){ var t=(isDark()?TINT:TINT_LIGHT)[l]; meta.setAttribute('content',t||metaOrig); }
+    if(group) Array.prototype.forEach.call(group.querySelectorAll('[data-look]'),function(b){
+      var on=b.getAttribute('data-look')===l; b.setAttribute('aria-checked',on?'true':'false'); b.tabIndex=on?0:-1; b.classList.toggle('on',on);
+    });
+    if(cycle){ cycle.setAttribute('aria-label','Look: '+NAMES[l]+'. Tap to change'); cycle.title='Look: '+NAMES[l]+' (tap to change)'; }
+    if(cycleSb){ cycleSb.setAttribute('aria-label','Look: '+NAMES[l]+'. Tap to change'); var sp=cycleSb.querySelector('span'); if(sp) sp.textContent='Look: '+NAMES[l]; }
+  }
+  function apply(l){ root.setAttribute('data-glra-look',l); try{localStorage.setItem(KEY,l)}catch(e){} paint(); }
+  function pick(l){
+    if(LOOKS.indexOf(l)<0||l===cur()) return;
+    var reduced=false; try{reduced=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+    if(typeof document.startViewTransition==='function'&&!reduced){
+      try{ var t=document.startViewTransition(function(){apply(l)}); if(t&&t.finished&&t.finished.catch) t.finished.catch(function(){}); if(t&&t.ready&&t.ready.catch) t.ready.catch(function(){}); return; }catch(e){}
+    }
+    apply(l);
+  }
+  if(group){
+    group.addEventListener('click',function(e){ var b=e.target.closest('[data-look]'); if(b) pick(b.getAttribute('data-look')); });
+    group.addEventListener('keydown',function(e){
+      var d=(e.key==='ArrowRight'||e.key==='ArrowDown')?1:(e.key==='ArrowLeft'||e.key==='ArrowUp')?-1:0; if(!d) return;
+      e.preventDefault(); var n=LOOKS[(LOOKS.indexOf(cur())+d+LOOKS.length)%LOOKS.length]; pick(n);
+      var nb=group.querySelector('[data-look="'+n+'"]'); if(nb) nb.focus();
+    });
+  }
+  if(cycle) cycle.addEventListener('click',function(){ pick(LOOKS[(LOOKS.indexOf(cur())+1)%LOOKS.length]); });
+  if(cycleSb) cycleSb.addEventListener('click',function(){ pick(LOOKS[(LOOKS.indexOf(cur())+1)%LOOKS.length]); });
+  try{ new MutationObserver(syncMode).observe(document.body,{attributes:true,attributeFilter:['class']}); }catch(e){}
+  syncMode();
+})();
+</script>
+<script>
+// THE EMBER OPS MOTION LAYER (14 Oct 2026). Glass and Bold only: in classic every
+// function below returns early and the two elements it adds stay display:none.
+// It never calls or changes switchTab: it watches the menu's .active class.
+//   - the gliding "you are here" marker behind the floating rail (>=1000px)
+//   - the page name beside the icon you point at (one label, outside the rail's scroll)
+//   - a page "arrives" for a moment after it changes (.glra-enter, see admin-looks.css)
+//   - the dashboard figures count up from 0 the first time they land (drawn in an
+//     overlay: the text other code reads is never touched)
+//   - a focus ring only for the keyboard
+(function(){
+  var root=document.documentElement, sb=document.getElementById('sidebar'), nav=sb&&sb.querySelector('.sb-nav');
+  if(!sb||!nav) return;
+  var mm=function(q){ try{ return matchMedia(q); }catch(e){ return {matches:false,addEventListener:function(){}}; } };
+  var mqRail=mm('(min-width:1000px)'), mqRM=mm('(prefers-reduced-motion: reduce)');
+  function newLook(){ var l=root.getAttribute('data-glra-look'); return l==='glass'||l==='bold'; }
+  function rail(){ return newLook()&&mqRail.matches; }
+  function still(){ return mqRM.matches; }
+
+  // keyboard or pointer: the CSS hides the ring after a click, keeps it for Tab
+  document.addEventListener('pointerdown',function(){ root.setAttribute('data-glra-input','pointer'); },true);
+  document.addEventListener('keydown',function(e){ if(e.key==='Tab'||/^Arrow/.test(e.key)) root.setAttribute('data-glra-input','key'); },true);
+
+  // ---- the marker -----------------------------------------------------------
+  var mark=document.createElement('span'); mark.className='glra-rail-mark'; mark.setAttribute('aria-hidden','true');
+  nav.insertBefore(mark,nav.firstChild);
+  var placed=false, lastActive=null, railWas=null, q=0;
+  function sections(on){
+    if(railWas===on) return; railWas=on;
+    Array.prototype.forEach.call(nav.querySelectorAll('.sb-section.has-grp'),function(h){
+      if(on){ h.setAttribute('tabindex','-1'); h.setAttribute('aria-hidden','true'); } else { h.setAttribute('tabindex','0'); h.removeAttribute('aria-hidden'); }
+    });
+  }
+  function place(){
+    q=0;
+    var on=rail(); sections(on); fit();
+    var act=nav.querySelector('.nav-item.active');
+    var changed=false;
+    if(act!==lastActive){ var first=lastActive===null; lastActive=act; changed=!first; if(changed) enter(); }
+    if(!on||!act||!act.offsetWidth){ mark.classList.remove('on'); nav.classList.remove('has-mark'); placed=false; ends(); return; }
+    if(!placed||still()) mark.style.transition='none';
+    mark.style.width=act.offsetWidth+'px'; mark.style.height=act.offsetHeight+'px';
+    mark.style.transform='translate('+act.offsetLeft+'px,'+act.offsetTop+'px)';
+    mark.classList.add('on'); nav.classList.add('has-mark');
+    if(!placed||still()){ void mark.offsetWidth; mark.style.transition=''; }
+    // a new page that is scrolled out of the rail comes into view (only when the page changes)
+    var top=act.offsetTop, bot=top+act.offsetHeight;
+    if(placed&&changed&&(top<nav.scrollTop||bot>nav.scrollTop+nav.clientHeight)) nav.scrollTo({top:Math.max(0,top-nav.clientHeight/2),behavior:still()?'auto':'smooth'});
+    placed=true;
+    ends();
+  }
+  function schedule(){ if(!q) q=requestAnimationFrame(place); }
+  new MutationObserver(function(rs){ for(var i=0;i<rs.length;i++){ if(rs[i].target!==mark){ schedule(); return; } } })
+    .observe(nav,{subtree:true,attributes:true,attributeFilter:['class','style']});
+  new MutationObserver(function(){ placed=false; schedule(); hideTip(); }).observe(root,{attributes:true,attributeFilter:['data-glra-look']});
+  window.addEventListener('resize',function(){ placed=false; if(q){ cancelAnimationFrame(q); } place(); });
+  nav.addEventListener('scroll',function(){ hideTip(); },{passive:true});
+  if(mqRail.addEventListener) mqRail.addEventListener('change',function(){ placed=false; schedule(); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ placed=false; schedule(); });
+
+  // ---- a page arrives ---------------------------------------------------------
+  var enterT=0, entered=null;
+  function enter(ms){
+    if(!newLook()||still()) return;
+    var pane=Array.prototype.find.call(document.querySelectorAll('.page-content > [id^="tab-"]'),function(p){ return p.style.display!=='none'; });
+    if(!pane) return;
+    if(entered&&entered!==pane) entered.classList.remove('glra-enter');
+    pane.classList.remove('glra-enter'); void pane.offsetWidth; pane.classList.add('glra-enter'); entered=pane;
+    clearTimeout(enterT); enterT=setTimeout(function(){ pane.classList.remove('glra-enter'); },ms||900);
+  }
+
+  // ---- the label beside the icon ----------------------------------------------
+  var tip=document.createElement('div'); tip.className='glra-rail-tip'; tip.setAttribute('aria-hidden','true'); document.body.appendChild(tip);
+  var TIPS='.sb-nav .nav-item,.sb-foot .sb-btn,.sb-foot .user-pill,.sb-find';
+  function words(el){
+    if(el.classList.contains('sb-find')) return 'Jump to a page  ( / )';
+    if(el.classList.contains('user-pill')){ var n=document.getElementById('userName'), r=document.getElementById('userRole'); return (n?n.textContent.trim():'')+(r&&r.textContent.trim()?' · '+r.textContent.trim():''); }
+    var t='', badge='';
+    Array.prototype.forEach.call(el.childNodes,function(c){
+      if(c.nodeType===1&&c.classList.contains('nav-badge')){ if(c.style.display!=='none'&&c.textContent.trim()) badge=c.textContent.trim(); }
+      else t+=c.textContent;
+    });
+    t=t.replace(/\s+/g,' ').trim();
+    return badge?t+'  ·  '+badge:t;
+  }
+  var tipFor=null;
+  function showTip(el){
+    if(!rail()) return;
+    clearTimeout(tipClr);
+    var w=words(el); if(!w) return;
+    var b=el.getBoundingClientRect(), s=sb.getBoundingClientRect();
+    tip.textContent=w; tip.style.left=(s.right+12)+'px'; tip.style.top=(b.top+b.height/2)+'px';
+    tipFor=el; tip.classList.add('on');
+  }
+  var tipClr=0;
+  function hideTip(){ tipFor=null; tip.classList.remove('on'); clearTimeout(tipClr); tipClr=setTimeout(function(){ if(!tipFor) tip.textContent=''; },300); }
+  // after a click or a scroll of the rail, a different icon can end up under a pointer that never moved:
+  // no label until the pointer really moves again
+  var hold=null;
+  function holdTip(e){ hideTip(); sb.classList.add('glra-hold'); hold=(e&&e.clientX!=null)?{x:e.clientX,y:e.clientY}:(hold||{x:-1,y:-1}); }
+  document.addEventListener('pointermove',function(e){ if(!hold) return; if(hold.x<0){ hold.x=e.clientX; hold.y=e.clientY; return; } if(Math.abs(e.clientX-hold.x)+Math.abs(e.clientY-hold.y)>3){ hold=null; sb.classList.remove('glra-hold'); var el=e.target&&e.target.closest&&e.target.closest(TIPS); if(el&&sb.contains(el)&&el!==tipFor&&!(el.classList.contains('sb-find')&&el.contains(document.activeElement))) showTip(el); } },{passive:true});
+  sb.addEventListener('mouseover',function(e){ if(hold) return; var el=e.target.closest&&e.target.closest(TIPS); if(!el||!sb.contains(el)){ return; } if(el.classList.contains('sb-find')&&el.contains(document.activeElement)) return; if(el!==tipFor) showTip(el); });
+  sb.addEventListener('mouseleave',hideTip);
+  sb.addEventListener('mouseout',function(e){ var to=e.relatedTarget; if(tipFor&&(!to||!tipFor.contains(to))) hideTip(); });
+  sb.addEventListener('focusin',function(e){ var el=e.target.closest&&e.target.closest(TIPS); if(!el) return; if(el.classList.contains('sb-find')){ hideTip(); return; } var fv=false; try{ fv=e.target.matches(':focus-visible'); }catch(x){} if(fv) showTip(el); });
+  sb.addEventListener('focusout',hideTip);
+  // a pointer click: the label stays on the button under the pointer, with its new words (a page that just
+  // became active, a theme that just changed); anything that moves the rail under the pointer still holds it
+  sb.addEventListener('click',function(e){
+    if(!e.detail){ hideTip(); return; }
+    var el=e.target.closest&&e.target.closest(TIPS);
+    if(!el||!sb.contains(el)||el.classList.contains('sb-find')){ holdTip(e); return; }
+    var y=nav.scrollTop;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      if(hold||nav.scrollTop!==y) return;
+      var hov=false; try{ hov=el.matches(':hover'); }catch(x){}
+      if(hov&&el.offsetParent!==null){ tipFor=null; showTip(el); }
+    }); });
+  });
+  nav.addEventListener('scroll',function(){ if(rail()) holdTip(); },{passive:true});
+
+  // the rail search: a filtered list starts at its top, the pill keeps its height while you type,
+  // and leaving the box (click elsewhere) puts the full list back
+  var find=document.getElementById('sbFind');
+  if(find){
+    find.addEventListener('focus',function(){ if(rail()) sb.style.minHeight=sb.offsetHeight+'px'; });
+    // (a window without focus gets no 'focus' event: hold the height before the first letter lands too)
+    find.addEventListener('beforeinput',function(){ if(rail()&&!sb.style.minHeight) sb.style.minHeight=sb.offsetHeight+'px'; });
+    find.addEventListener('input',function(){ if(rail()) nav.scrollTop=0; else sb.style.minHeight=''; });
+    find.addEventListener('blur',function(){
+      if(!rail()) return;
+      setTimeout(function(){ if(document.activeElement===find) return; if(find.value){ find.value=''; find.dispatchEvent(new Event('input')); } sb.style.minHeight=''; },250);
+    });
+  }
+
+  // ---- figures count up the first time they land ------------------------------
+  function countUp(el){
+    if(el.__glraCounted) return;
+    var txt=(el.textContent||'').trim();
+    if(!/^(\d{1,3}(,\d{3})+|\d{1,7})$/.test(txt)) return;
+    el.__glraCounted=true;
+    if(!newLook()||still()) return;
+    var n=+txt.replace(/,/g,''); if(!n) return;
+    var comma=txt.indexOf(',')>=0, t0=0, ms=550;
+    function out(v){ return comma?v.toLocaleString('en-US'):String(v); }
+    function done(){ el.classList.remove('glra-counting'); el.removeAttribute('data-glra-count'); }
+    el.setAttribute('data-glra-count','0'); el.classList.add('glra-counting');
+    function f(t){
+      if(!t0) t0=t;
+      if((el.textContent||'').trim()!==txt||!newLook()){ done(); return; }   // someone changed it: stop, show the truth
+      var p=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-p,3);
+      el.setAttribute('data-glra-count',out(Math.round(n*e)));
+      if(p<1) requestAnimationFrame(f); else done();
+    }
+    requestAnimationFrame(f);
+  }
+  var dash=document.getElementById('tab-dashboard');
+  if(dash){
+    Array.prototype.forEach.call(dash.querySelectorAll('.stats-grid .stat-num'),function(el){
+      new MutationObserver(function(){ countUp(el); }).observe(el,{childList:true,characterData:true,subtree:true});
+    });
+    var na=document.getElementById('dashNeedsAttention'), naDone=false;
+    if(na) new MutationObserver(function(){ if(naDone) return; var ns=na.querySelectorAll('.na-num'); if(!ns.length) return; naDone=true; Array.prototype.forEach.call(ns,countUp); }).observe(na,{childList:true});
+  }
+
+  // ---- the rail fits the screen (final fit pass, 14 Oct 2026) -------------------
+  // the buttons shrink from 40px to 34px (--glra-k) so the whole menu fits when it can;
+  // when it cannot, the end with more shows a fade and a small chevron that scrolls it
+  var head=sb.querySelector('.sb-head'), foot=sb.querySelector('.sb-foot'), findBox=sb.querySelector('.sb-find'), findIn=document.getElementById('sbFind');
+  function fit(){
+    if(!rail()){ sb.style.removeProperty('--glra-k'); return; }
+    if(findIn&&findIn.value) return;   // a filtered list keeps the size it had
+    var items=Array.prototype.filter.call(nav.querySelectorAll('.nav-item'),function(e){ return e.offsetParent!==null; });
+    if(!items.length) return;
+    var fixed=0;
+    Array.prototype.forEach.call(nav.querySelectorAll('.sb-section'),function(h){ if(h.offsetParent!==null){ var c=getComputedStyle(h); fixed+=h.offsetHeight+parseFloat(c.marginTop)+parseFloat(c.marginBottom); } });
+    var cs=getComputedStyle(sb), ns=getComputedStyle(nav);
+    var room=innerHeight-20-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-(head?head.offsetHeight:0)-(foot?foot.offsetHeight:0)
+      -parseFloat(ns.paddingTop)-parseFloat(ns.paddingBottom)-fixed-3;
+    // the search button is one more button of the same size
+    var k=Math.floor(room/(items.length+1))-2;
+    k=Math.max(34,Math.min(40,k));
+    if(sb.style.getPropertyValue('--glra-k')!==k+'px') sb.style.setProperty('--glra-k',k+'px');
+  }
+  var moreUp=document.createElement('button'), moreDn=document.createElement('button');
+  [[moreUp,'up','Show the menu items above'],[moreDn,'down','Show more menu items']].forEach(function(a){
+    a[0].type='button'; a[0].className='glra-rail-more '+a[1]; a[0].setAttribute('aria-label',a[2]); a[0].tabIndex=-1;
+    a[0].innerHTML='<i class="fas fa-chevron-'+a[1]+'" aria-hidden="true"></i>';
+    a[0].addEventListener('click',function(e){ e.stopPropagation(); nav.scrollBy({top:(a[1]==='up'?-1:1)*Math.round(nav.clientHeight*.6),behavior:still()?'auto':'smooth'}); });
+    sb.appendChild(a[0]);
+  });
+  function ends(){
+    var on=rail();
+    var up=on&&nav.scrollTop>2, dn=on&&nav.scrollTop+nav.clientHeight<nav.scrollHeight-2;
+    nav.classList.toggle('glra-more-up',up); nav.classList.toggle('glra-more-dn',dn);
+    if(on){ moreUp.style.top=(nav.offsetTop+4)+'px'; moreDn.style.top=(nav.offsetTop+nav.offsetHeight-22)+'px'; }
+    moreUp.classList.toggle('on',up); moreDn.classList.toggle('on',dn);
+  }
+  nav.addEventListener('scroll',ends,{passive:true});
+  if(window.ResizeObserver) new ResizeObserver(function(){ placed=false; schedule(); }).observe(nav);
+
+  // ---- sideways lanes say there is more (boards, tab strips) -------------------
+  // .glra-xs marks a lane the script watches; .glra-more-r / .glra-more-l are set from the real scroll
+  // position, so a lane with nothing hidden shows no fade (admin-looks.css; classic has no such rules)
+  var XS='#ldBoardWrap,#lsBoardWrap,#titlingBoardWrap,.sf-seg,.ld-seg,.cs-views,.ls-tabs,#leTabs';
+  var xsQ=0, xsSeen=typeof WeakSet==='function'?new WeakSet():null, xsRO=window.ResizeObserver?new ResizeObserver(function(){ xsSync(); }):null;
+  function xsOne(el){
+    var max=el.scrollWidth-el.clientWidth;
+    el.classList.toggle('glra-more-r',max>2&&el.scrollLeft<max-2);
+    el.classList.toggle('glra-more-l',max>2&&el.scrollLeft>2);
+  }
+  function xsSync(){
+    if(xsQ) return;
+    xsQ=requestAnimationFrame(function(){
+      xsQ=0;
+      Array.prototype.forEach.call(document.querySelectorAll(XS),function(el){
+        if(xsSeen&&!xsSeen.has(el)){ xsSeen.add(el); el.classList.add('glra-xs'); el.addEventListener('scroll',function(){ xsOne(el); },{passive:true}); if(xsRO) xsRO.observe(el); }
+        if(el.offsetParent!==null) xsOne(el);
+      });
+    });
+  }
+  if(xsSeen){
+    new MutationObserver(xsSync).observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('resize',xsSync);
+    xsSync();
+  }
+
+  // the first page shown also arrives, while its data comes in
+  enter(2400);
+  schedule();
 })();
 </script>
 </body>
