@@ -1695,7 +1695,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 .sb-empty{padding:10px 20px;color:#a39d92;font-size:12px;display:none}
 @media(min-width:900px){.sb-find input{font-size:13px}}
 </style>
-<link rel="stylesheet" href="/css/admin-looks.css?v=3">
+<link rel="stylesheet" href="/css/admin-looks.css?v=5">
 </head>
 <body>
 
@@ -10515,7 +10515,8 @@ function switchTab(name){
     loadAgentsTab();
   }
   // Refresh submissions on tab visit
-  if(name==='submissions' && hasPerm('submissions_view') && due('submissions')){
+  // (the start-up load fetches only the counts, so the list itself loads on the first visit too)
+  if(name==='submissions' && hasPerm('submissions_view') && (due('submissions') || !(document.getElementById('submTbody')||{}).children?.length)){
     loadSubmissions();
   }
   // Lazy-load bulk email data + render preview on first visit
@@ -13950,7 +13951,7 @@ function mtNum(v, money){
   if(Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
   return n.toLocaleString('en-PH', { maximumFractionDigits: 1 });
 }
-function mtWhen(d){ return d ? ldFmt(d) + ' (' + ldAgo(d) + ' ago)' : 'never'; }
+function mtWhen(d){ if(!d) return 'never'; var a = ldAgo(d); return ldFmt(d) + ' (' + (a === 'just now' ? a : a + ' ago') + ')'; }
 async function mtGet(url){
   var r = await apiFetch(url);
   if(r.status === 404){ var e = new Error('off'); e.off = true; throw e; }
@@ -15654,10 +15655,12 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
   }
   function place(){
     q=0;
-    var on=rail(); sections(on); fit();
+    var on=rail(); sections(on); fit(); if(window.__glraGroups) window.__glraGroups.sync(on);
     var act=nav.querySelector('.nav-item.active');
     var changed=false;
-    if(act!==lastActive){ var first=lastActive===null; lastActive=act; changed=!first; if(changed) enter(); }
+    if(act!==lastActive){ var first=lastActive===null; lastActive=act; changed=!first; if(changed){ enter(); if(window.__glraGroups) window.__glraGroups.close(); } }
+    // grouped rail: the marker sits behind the group button that holds the current page
+    if(on&&window.__glraGroups&&window.__glraGroups.on()) act=window.__glraGroups.active();
     if(!on||!act||!act.offsetWidth){ mark.classList.remove('on'); nav.classList.remove('has-mark'); placed=false; ends(); return; }
     if(!placed||still()) mark.style.transition='none';
     mark.style.width=act.offsetWidth+'px'; mark.style.height=act.offsetHeight+'px';
@@ -15692,9 +15695,10 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
 
   // ---- the label beside the icon ----------------------------------------------
   var tip=document.createElement('div'); tip.className='glra-rail-tip'; tip.setAttribute('aria-hidden','true'); document.body.appendChild(tip);
-  var TIPS='.sb-nav .nav-item,.sb-foot .sb-btn,.sb-foot .user-pill,.sb-find';
+  var TIPS='.sb-nav .nav-item,.sb-foot .sb-btn,.sb-foot .user-pill,.sb-find,.glra-grp';
   function words(el){
     if(el.classList.contains('sb-find')) return 'Jump to a page  ( / )';
+    if(el.classList.contains('glra-grp')) return el.getAttribute('data-tip')||'';
     if(el.classList.contains('user-pill')){ var n=document.getElementById('userName'), r=document.getElementById('userRole'); return (n?n.textContent.trim():'')+(r&&r.textContent.trim()?' · '+r.textContent.trim():''); }
     var t='', badge='';
     Array.prototype.forEach.call(el.childNodes,function(c){
@@ -15707,6 +15711,7 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
   var tipFor=null;
   function showTip(el){
     if(!rail()) return;
+    if(el.getAttribute('aria-expanded')==='true') return;   // its flyout is open: the flyout is the label
     clearTimeout(tipClr);
     var w=words(el); if(!w) return;
     var b=el.getBoundingClientRect(), s=sb.getBoundingClientRect();
@@ -15739,6 +15744,8 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
     }); });
   });
   nav.addEventListener('scroll',function(){ if(rail()) holdTip(); },{passive:true});
+  // a click that changes the page puts the label away until the pointer moves again (it covered the page's first tile)
+  sb.addEventListener('click',function(e){ if(e.detail&&rail()){ var el=e.target.closest&&e.target.closest('.glra-grp,.nav-item'); if(el&&el.getAttribute('aria-expanded')!=='true') holdTip(e); } });
 
   // the rail search: a filtered list starts at its top, the pill keeps its height while you type,
   // and leaving the box (click elsewhere) puts the full list back
@@ -15789,7 +15796,7 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
   // when it cannot, the end with more shows a fade and a small chevron that scrolls it
   var head=sb.querySelector('.sb-head'), foot=sb.querySelector('.sb-foot'), findBox=sb.querySelector('.sb-find'), findIn=document.getElementById('sbFind');
   function fit(){
-    if(!rail()){ sb.style.removeProperty('--glra-k'); return; }
+    if(!rail()||(window.__glraGroups&&window.__glraGroups.on())){ sb.style.removeProperty('--glra-k'); return; }
     if(findIn&&findIn.value) return;   // a filtered list keeps the size it had
     var items=Array.prototype.filter.call(nav.querySelectorAll('.nav-item'),function(e){ return e.offsetParent!==null; });
     if(!items.length) return;
@@ -15846,9 +15853,230 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
     xsSync();
   }
 
+  // ---- one button per group, its pages in a flyout (15 Oct 2026) --------------
+  // The owner: the rail was "cramped" (20 icons + 11 dividers squeezed to 34px). On the rail
+  // (Glass/Bold, >=1000px) each menu heading becomes ONE 44px button; a group with one page you
+  // may open goes straight there, a group with several opens a panel beside the rail with its
+  // pages as rows. The rows only CLICK the real menu items (switchTab, onclick, links in a new
+  // tab all stay theirs); the real items are just hidden on the rail. Classic never sees any of it.
+  (function(){
+    var GICON={'Overview':'fa-th-large','Listings':'fa-home','CRM':'fa-address-book','Workspace':'fa-clipboard-check',
+      'Outreach':'fa-paper-plane','Titling':'fa-stamp','Law Office':'fa-scale-balanced','Rentals':'fa-key','Agents':'fa-id-badge','Admin':'fa-user-shield'};
+    var groups=[], links=[], cur=null;
+    Array.prototype.forEach.call(nav.children,function(el){
+      if(el.classList.contains('sb-section')){ var n=(el.getAttribute('data-g')||el.textContent).trim(); cur=n==='Links'?null:{name:n,items:[]}; if(cur) groups.push(cur); else cur='links'; }
+      else if(el.classList.contains('nav-item')){ if(cur==='links') links.push(el); else if(cur) cur.items.push(el); }
+    });
+    if(!groups.length) return;
+    function vis(n){ return n.style.display!=='none'&&!n.hidden; }
+    function name(n){ var t=''; Array.prototype.forEach.call(n.childNodes,function(c){ if(!(c.nodeType===1&&c.classList.contains('nav-badge'))) t+=c.textContent; }); return t.replace(/\s+/g,' ').trim(); }
+    function badgeOf(n){ var b=n.querySelector('.nav-badge'); if(!b||b.style.display==='none') return ''; return (b.textContent||'').trim(); }
+    function set(el,a,v){ if(v===null){ if(el.hasAttribute(a)) el.removeAttribute(a); } else if(el.getAttribute(a)!==v) el.setAttribute(a,v); }
+    var box=document.createElement('div'); box.className='glra-groups';
+    var anchor=document.getElementById('sbEmpty')||nav.querySelector('.sb-find');
+    nav.insertBefore(box,anchor?anchor.nextSibling:nav.firstChild);
+    groups.forEach(function(g){
+      var b=document.createElement('button'); b.type='button'; b.className='glra-grp'; b.setAttribute('data-g',g.name);
+      var ic=document.createElement('i'), first=g.items[0]&&g.items[0].querySelector('i');
+      ic.className=GICON[g.name]?'fas '+GICON[g.name]:(first?first.className:'fas fa-circle'); ic.setAttribute('aria-hidden','true');
+      var bd=document.createElement('span'); bd.className='glra-grp-badge'; bd.setAttribute('aria-hidden','true');
+      b.appendChild(ic); b.appendChild(bd); box.appendChild(b); g.btn=b; g.badge=bd; g.shown=[];
+    });
+    sb.classList.add('glra-grouped');
+    var pill=sb.querySelector('.sb-foot .user-pill');
+    var acct={name:'Account',acct:true,btn:pill,shown:[]};
+
+    // ---- state: shown pages, active group, summed badge --------------------------
+    function sync(on){
+      groups.forEach(function(g){
+        g.shown=g.items.filter(vis);
+        var hide=!g.shown.length; if(g.btn.hidden!==hide) g.btn.hidden=hide;
+        var act=g.shown.some(function(n){ return n.classList.contains('active'); });
+        if(g.btn.classList.contains('active')!==act) g.btn.classList.toggle('active',act);
+        set(g.btn,'aria-current',act?'page':null);
+        var sum=0, flag=false;
+        g.shown.forEach(function(n){ var t=badgeOf(n); if(/^\d+$/.test(t)) sum+=+t; else if(t) flag=true; });
+        var bt=sum?(sum>99?'99+':String(sum)):(flag?'!':'');
+        if(g.badge.textContent!==bt) g.badge.textContent=bt;
+        if(g.badge.classList.contains('on')!==!!bt) g.badge.classList.toggle('on',!!bt);
+        var multi=g.shown.length>1, label=multi?g.name:(g.shown[0]?name(g.shown[0]):g.name);
+        set(g.btn,'data-tip',bt?label+'  ·  '+bt:label);
+        set(g.btn,'aria-label',label+(multi?' ('+g.shown.length+' pages)':'')+(bt?', '+bt+' new':''));
+        set(g.btn,'aria-haspopup',multi?'menu':null);
+        set(g.btn,'aria-expanded',multi?(fly.g===g?'true':'false'):null);
+      });
+      // the avatar opens the account panel on the rail only (elsewhere it stays a plain name tag)
+      if(pill){
+        var nm=document.getElementById('userName');
+        set(pill,'role',on?'button':null); set(pill,'tabindex',on?'0':null);
+        set(pill,'aria-haspopup',on?'menu':null); set(pill,'aria-expanded',on?(fly.g===acct?'true':'false'):null);
+        set(pill,'aria-label',on?'Account: '+(nm?nm.textContent.trim():''):null);
+      }
+      if(!on&&fly.g) close();
+    }
+    function active(){ for(var i=0;i<groups.length;i++){ if(groups[i].btn.classList.contains('active')&&!groups[i].btn.hidden) return groups[i].btn; } return null; }
+
+    // ---- the flyout ----------------------------------------------------------------
+    var fly=document.createElement('div'); fly.className='glra-fly'; fly.setAttribute('role','menu'); fly.hidden=true;
+    fly.g=null; fly.how=''; document.body.appendChild(fly);
+    var closeT=0, openT=0;
+    function row(icon,label,badge,on,run,ext){
+      var r=document.createElement('button'); r.type='button'; r.className='glra-fly-row'+(on?' on':''); r.setAttribute('role','menuitem');
+      if(on) r.setAttribute('aria-current','page');
+      var i=document.createElement('i'); i.className=icon; i.setAttribute('aria-hidden','true');
+      var s=document.createElement('span'); s.className='glra-fly-name'; s.textContent=label;
+      r.appendChild(i); r.appendChild(s);
+      if(ext){ var x=document.createElement('i'); x.className='fas fa-arrow-up-right-from-square glra-fly-ext'; x.setAttribute('aria-hidden','true'); r.appendChild(x); }
+      if(badge){ var b=document.createElement('span'); b.className='glra-fly-badge'; b.textContent=badge; r.appendChild(b); }
+      r.addEventListener('pointerdown',function(e){ if(fly.how==='search') e.preventDefault(); });
+      r.addEventListener('click',function(ev){ var how=fly.how, srch=how.indexOf('search')===0; close(!ev.detail&&!srch); run(); if(srch&&find){ find.value=''; find.dispatchEvent(new Event('input')); find.blur(); } });
+      fly.appendChild(r); return r;
+    }
+    function pageRow(n){
+      var ic=n.querySelector('i'), ext=n.getAttribute('target')==='_blank';
+      var r=row(ic?ic.className.replace(/\bfa-external-link-alt\b/,'fa-globe'):'fas fa-circle',name(n),badgeOf(n),n.classList.contains('active'),function(){ n.click(); },ext);
+      r.setAttribute('data-nav',n.getAttribute('onclick')||n.getAttribute('href')||'');
+      return r;
+    }
+    function head(t,sub){
+      var h=document.createElement('div'); h.className='glra-fly-head';
+      var a=document.createElement('div'); a.className='glra-fly-title'; a.textContent=t; h.appendChild(a);
+      if(sub){ var b=document.createElement('div'); b.className='glra-fly-sub'; b.textContent=sub; h.appendChild(b); }
+      fly.appendChild(h);
+    }
+    function fill(g){
+      fly.textContent='';
+      if(g==='search'){
+        head('Jump to');
+        Array.prototype.forEach.call(nav.querySelectorAll('.nav-item:not(.find-hide)'),function(n){ if(vis(n)) pageRow(n); });
+        return;
+      }
+      if(g===acct){
+        var nm=document.getElementById('userName'), rl=document.getElementById('userRole');
+        head(nm?nm.textContent.trim():'Account',rl?rl.textContent.trim():'');
+        var lk=document.getElementById('glraLookSb');
+        if(lk){ var ls=lk.querySelector('span'); row('fas fa-palette',(ls?ls.textContent.trim():'Look')+' (tap to change)','',false,function(){ lk.click(); }); }
+        links.filter(vis).forEach(pageRow);
+        return;
+      }
+      head(g.name); g.shown.forEach(pageRow);
+    }
+    function rows(){ return Array.prototype.slice.call(fly.querySelectorAll('.glra-fly-row')); }
+    function position(g){
+      var s=sb.getBoundingClientRect(), r;
+      if(g==='search'&&find){ r=find.getBoundingClientRect(); fly.style.left=Math.round(r.left)+'px'; fly.style.top=Math.round(r.bottom+8)+'px'; fly.style.maxHeight=Math.max(160,innerHeight-r.bottom-24)+'px'; return; }
+      fly.style.maxHeight=(innerHeight-24)+'px';
+      r=g.btn.getBoundingClientRect();
+      var h=fly.offsetHeight, top=r.top+r.height/2-30;
+      if(g===acct) top=r.bottom-h+6;
+      top=Math.max(12,Math.min(top,innerHeight-h-12));
+      fly.style.left=Math.round(s.right+12)+'px'; fly.style.top=Math.round(top)+'px';
+    }
+    function open(g,how,focusFirst){
+      clearTimeout(closeT); clearTimeout(openT);
+      var prev=fly.g; fly.g=g; fly.how=how;
+      if(prev&&prev!==g&&prev.btn) set(prev.btn,'aria-expanded','false');
+      if(g.btn) set(g.btn,'aria-expanded','true');
+      fly.setAttribute('aria-label',g==='search'?'Matching pages':(g.name||'Menu'));
+      fill(g); fly.hidden=false; position(g);
+      if(!prev){ fly.classList.remove('on'); void fly.offsetWidth; } fly.classList.add('on');
+      hideTip();
+      if(focusFirst){ var rs=rows(), a=rs.filter(function(x){ return x.classList.contains('on'); })[0]||rs[0]; if(a) a.focus(); }
+    }
+    function close(refocus){
+      clearTimeout(closeT); clearTimeout(openT);
+      var g=fly.g; if(!g) return;
+      fly.g=null; fly.how=''; fly.classList.remove('on'); fly.hidden=true; fly.textContent='';
+      if(g.btn){ set(g.btn,'aria-expanded','false'); if(refocus) g.btn.focus(); }
+    }
+    function groupOf(btn){ if(btn===pill) return acct; for(var i=0;i<groups.length;i++) if(groups[i].btn===btn) return groups[i]; return null; }
+    function activate(g,e){
+      if(!rail()) return;
+      if(g!==acct&&g.shown.length===1){ close(); g.shown[0].click(); return; }
+      if(fly.g===g){ if(fly.how==='hover'){ fly.how='click'; return; } close(!e.detail); return; }
+      open(g,e.detail?'click':'key',!e.detail);
+    }
+    box.addEventListener('click',function(e){ var b=e.target.closest('.glra-grp'); if(b) activate(groupOf(b),e); });
+    if(pill){
+      pill.addEventListener('click',function(e){ if(rail()) activate(acct,e); });
+      pill.addEventListener('keydown',function(e){ if(rail()&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); activate(acct,{detail:0}); } });
+    }
+    // hover intent (a real mouse only): open after a short rest, switch at once while one is open
+    var fine=mm('(hover:hover) and (pointer:fine)');
+    function hoverIn(btn,e){
+      if(e.pointerType&&e.pointerType!=='mouse') return; if(!fine.matches||!rail()||hold) return;
+      var g=groupOf(btn); if(!g||g===acct) return;   // the account panel opens on a click only
+      clearTimeout(closeT); clearTimeout(openT);
+      if(fly.g===g||fly.how.indexOf('search')===0) return;
+      if(g.shown.length<2){ if(fly.g) closeT=setTimeout(close,160); return; }
+      // an open panel follows the pointer to the next group at once (a pinned one stays pinned)
+      var how=fly.g&&fly.how!=='hover'?fly.how:'hover';
+      openT=setTimeout(function(){ open(g,how); },fly.g?40:170);
+    }
+    function hoverOut(e){
+      clearTimeout(openT);
+      var to=e.relatedTarget; if(to&&(fly.contains(to)||(fly.g&&fly.g.btn&&fly.g.btn.contains(to)))) return;
+      if(fly.g&&fly.how==='hover') closeT=setTimeout(close,320);
+    }
+    box.addEventListener('pointerover',function(e){ var b=e.target.closest('.glra-grp'); if(b) hoverIn(b,e); });
+    box.addEventListener('pointerout',function(e){ var b=e.target.closest('.glra-grp'); if(b&&!(e.relatedTarget&&b.contains(e.relatedTarget))) hoverOut(e); });
+    fly.addEventListener('pointerenter',function(){ clearTimeout(closeT); });
+    fly.addEventListener('pointerleave',function(e){ hoverOut(e); });
+    // keyboard inside the panel
+    fly.addEventListener('keydown',function(e){
+      var rs=rows(), i=rs.indexOf(document.activeElement);
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); var n=rs[(i+(e.key==='ArrowDown'?1:-1)+rs.length)%rs.length]; if(n) n.focus(); }
+      else if(e.key==='Home'||e.key==='End'){ e.preventDefault(); var m=e.key==='Home'?rs[0]:rs[rs.length-1]; if(m) m.focus(); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); if(fly.how.indexOf('search')===0){ close(); if(find) find.focus(); } else close(true); }
+      else if(e.key==='Tab'&&fly.g&&fly.g.btn){ var b=fly.g.btn; close(); b.focus(); }   // the browser then moves on from the group button
+    });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&fly.g&&fly.g.btn&&document.activeElement===fly.g.btn){ e.preventDefault(); close(); } },true);
+    document.addEventListener('pointerdown',function(e){
+      if(!fly.g) return; var t=e.target;
+      if(fly.contains(t)||(fly.g.btn&&fly.g.btn.contains(t))||(fly.how.indexOf('search')===0&&t.closest&&t.closest('.sb-find'))) return;
+      close();
+    },true);
+    window.addEventListener('resize',function(){ if(fly.g){ if(!rail()) close(); else position(fly.g); } });
+    // the search box: on the rail its matches show in the same panel, under the search pill
+    if(find){
+      find.addEventListener('input',function(){
+        if(!rail()) return;
+        if(find.value.trim()){ var any=Array.prototype.some.call(nav.querySelectorAll('.nav-item:not(.find-hide)'),vis); if(any) open('search','search'); else close(); }
+        else if(fly.how==='search'||(fly.how==='search-key'&&!fly.contains(document.activeElement))) close();
+      });
+      find.addEventListener('keydown',function(e){ if(e.key==='ArrowDown'&&fly.how==='search'){ var r=rows()[0]; if(r){ e.preventDefault(); fly.how='search-key'; r.focus(); } } });
+    }
+    // a badge's number changing (text, not class): refresh the group's sum
+    new MutationObserver(function(rs){ for(var i=0;i<rs.length;i++){ if(!box.contains(rs[i].target)){ schedule(); return; } } })
+      .observe(nav,{subtree:true,childList:true,characterData:true});
+    window.__glraGroups={sync:sync,active:active,close:function(){ close(); },on:function(){ return rail()&&sb.classList.contains('glra-grouped'); },open:function(n){ for(var i=0;i<groups.length;i++) if(groups[i].name===n&&!groups[i].btn.hidden){ open(groups[i],'click'); return true; } if(n==='Account'&&pill){ open(acct,'click'); return true; } return false; }};
+  })();
+
   // the first page shown also arrives, while its data comes in
   enter(2400);
   schedule();
+
+  // the email preview is its own page: in the new looks it gets the same thin rounded scrollbar as the rest
+  var pv=document.getElementById('bmPreview');
+  if(pv) pv.addEventListener('load',function(){
+    try{
+      var lk=document.documentElement.getAttribute('data-glra-look'); if(!lk||lk==='classic') return;
+      var d=pv.contentDocument; if(!d||!d.head||d.getElementById('glra-sb')) return;
+      var st=d.createElement('style'); st.id='glra-sb';
+      st.textContent='::-webkit-scrollbar{width:8px;height:8px;background:transparent}::-webkit-scrollbar-track{background:transparent;margin:10px 0}::-webkit-scrollbar-button{display:none}::-webkit-scrollbar-thumb{background:rgba(40,30,25,.25);border-radius:999px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:rgba(40,30,25,.45);background-clip:padding-box}';
+      d.head.appendChild(st);
+    }catch(x){}
+  });
+  // ...and on a phone the new looks size the preview to the email itself (admin-looks.css reads
+  // --glra-pvh; classic has no such rule, so nothing changes there)
+  if(pv) pv.addEventListener('load',function(){
+    try{
+      var d=pv.contentDocument, b=d&&d.body; if(!b) return;
+      var cs=d.defaultView.getComputedStyle(b);
+      var h=Math.ceil(b.getBoundingClientRect().height+parseFloat(cs.marginTop||0)+parseFloat(cs.marginBottom||0));
+      if(h>0) pv.style.setProperty('--glra-pvh',(h+4)+'px');
+    }catch(x){}
+  });
 })();
 </script>
 </body>

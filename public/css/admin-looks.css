@@ -442,7 +442,7 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-chip.on,html:is([d
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style]{background:var(--lk-scrim) !important;-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1)}
 html[data-glra-look="bold"] .modal-ov,html[data-glra-look="bold"] .modal-ov[style]{background:var(--lk-scrim) !important}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov > div:first-of-type,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-box,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-dlg,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg{
-  background:var(--lk-sheet) !important;border:1px solid var(--lk-line) !important;border-radius:24px !important;overflow:hidden;
+  background:var(--lk-sheet) !important;border:1px solid var(--lk-line) !important;border-radius:24px !important;overflow:clip;
   box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 var(--lk-highlight) !important}
 html[data-glra-look="glass"] .modal-ov > div:first-of-type,html[data-glra-look="glass"] .modal-box,html[data-glra-look="glass"] .ld-dlg,html[data-glra-look="glass"] .cs-dlg{-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3)}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-hd,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-head,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h{background:rgb(var(--lk-tint) / .05) !important;border-bottom:1px solid var(--lk-line) !important}
@@ -536,11 +536,6 @@ html[data-glra-look="glass"] th,html[data-glra-look="glass"] .tbl-wrap thead th{
 /* ============================================================================
    BOLD ONLY - the headline card is electric blue, the figures are big
    ========================================================================== */
-html[data-glra-look="bold"] .stats-grid > .stat-card:first-child,html[data-glra-look="bold"] .sub-stats > .sub-stat:first-child,html[data-glra-look="bold"] .tasks-stats-grid > .tasks-stat:first-child{
-  background:#2f46ff !important;border-color:transparent !important}
-html[data-glra-look="bold"] .stats-grid > .stat-card:first-child *,html[data-glra-look="bold"] .sub-stats > .sub-stat:first-child *,html[data-glra-look="bold"] .tasks-stats-grid > .tasks-stat:first-child *{color:#fff !important}
-html[data-glra-look="bold"] .stats-grid > .stat-card:first-child .stat-ico{background:rgba(255,255,255,.18) !important}
-html[data-glra-look="bold"] .stats-grid > .stat-card:first-child:hover,html[data-glra-look="bold"] .sub-stats > .sub-stat:first-child:hover{background:#3d53ff !important}
 html[data-glra-look="bold"] .stat-num{font-size:42px !important}
 html[data-glra-look="bold"] .na-tile .na-num{font-size:38px !important}
 html[data-glra-look="bold"] .sub-stat-num,html[data-glra-look="bold"] .ts-num{font-size:32px !important;font-weight:800 !important}
@@ -592,8 +587,6 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-kpi .k,html:is([da
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-kpi .s,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-kpi .s{color:var(--lk-mute) !important}
 html[data-glra-look="bold"] .ld-kpi .v,html[data-glra-look="bold"] .ls-kpi .v{font-size:30px !important}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-kpi.alarm .v{color:var(--lk-bad) !important}
-html[data-glra-look="bold"] .ld-kpis > .ld-kpi:first-child,html[data-glra-look="bold"] .ls-kpis > .ls-kpi:first-child{background:#2f46ff !important}
-html[data-glra-look="bold"] .ld-kpis > .ld-kpi:first-child *,html[data-glra-look="bold"] .ls-kpis > .ls-kpi:first-child *{color:#fff !important}
 /* columns of a board */
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .kanban-col,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-col,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-bd-col,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tl-col,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-col{border-radius:22px !important;border:1px solid var(--lk-line) !important;background:rgb(var(--lk-tint) / .035) !important;padding:10px !important}
 html[data-glra-look="bold"] .kanban-col,html[data-glra-look="bold"] .ld-col,html[data-glra-look="bold"] .cs-bd-col,html[data-glra-look="bold"] .tl-col,html[data-glra-look="bold"] .ls-col{background:var(--lk-rail) !important;border-color:var(--lk-raise) !important}
@@ -759,10 +752,10 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h .s{color:var
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg > label{display:block;margin-bottom:6px !important}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg + .fg{margin-top:2px}
 /* one close button in every dialog: a soft round icon button */
-html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov button[aria-label="Close"]:not(.fbtn),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-close,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel-close{width:38px !important;height:38px !important;min-height:0 !important;padding:0 !important;
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov button[aria-label="Close"]:has(> i):not(.fbtn),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-close,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel-close{width:38px !important;height:38px !important;min-height:0 !important;padding:0 !important;
   display:inline-flex !important;align-items:center;justify-content:center;border-radius:50% !important;border:1px solid var(--lk-line) !important;
   background:rgb(var(--lk-tint) / .06) !important;color:var(--lk-dim) !important;font-size:15px !important;flex:none}
-html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov button[aria-label="Close"]:not(.fbtn):hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-close:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel-close:hover{background:rgb(var(--lk-tint) / .14) !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov button[aria-label="Close"]:has(> i):not(.fbtn):hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-close:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel-close:hover{background:rgb(var(--lk-tint) / .14) !important;color:var(--lk-ink) !important}
 /* the lease dialog head: close stays top right, title in the display weight */
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) div:has(> #leHeadBtns){position:relative;padding-right:66px !important}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) div:has(> #leHeadBtns) > button[aria-label="Close"]{position:absolute;top:14px;right:16px;margin:0 !important}
@@ -830,7 +823,7 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-col{min-width:0}
 /* leasing board: five columns share the width; narrower screens scroll with snap */
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoard{min-width:0 !important}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoard > .tl-col{flex:1 0 196px !important;min-width:196px}
-html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoardWrap{scroll-snap-type:x proximity;scrollbar-width:thin}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoardWrap{scroll-snap-type:x proximity}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoard > .tl-col{scroll-snap-align:start}
 html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-card{min-width:0;overflow-wrap:anywhere}
 /* sidebar: a shorter fade so the last link does not look disabled */
@@ -857,7 +850,6 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-sub{white-space:
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-content table.stack td{background:transparent !important}
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-content table.stack td[colspan] .empty-st{padding:32px 12px}
   /* figure grids of two: an odd last tile takes the full row */
-  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stats-grid,.na-row,.qa-row,.sub-stats,.ls-kpis,.ld-kpis,.tasks-stats-grid,.sf-kpis) > :last-child:nth-child(odd){grid-column:1/-1}
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) #titlingTotals{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) #titlingTotals > div{padding:10px !important}
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) #titlingTotals > div > div:last-child{font-size:15px !important}
@@ -1252,10 +1244,8 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov .fsec:first-
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) .pipe-strip:has(> :nth-child(8):last-child){grid-template-columns:repeat(4,minmax(0,1fr)) !important}
 }
 @media(min-width:1280px){
-  /* nine tiles on a wide screen: six, then three twice as wide, so the last row is full too */
-  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.na-row,.qa-row):has(> :nth-child(9):last-child){grid-template-columns:repeat(12,minmax(0,1fr)) !important}
-  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.na-row,.qa-row):has(> :nth-child(9):last-child) > *{grid-column:span 2 !important}
-  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.na-row,.qa-row):has(> :nth-child(9):last-child) > :nth-child(n+7){grid-column:span 4 !important}
+  /* nine tiles on a wide screen: three even rows of three (never six and then three wide ones) */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.na-row,.qa-row):has(> :nth-child(9):last-child){grid-template-columns:repeat(3,minmax(0,1fr)) !important}
 }
 @media(max-width:560px){
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) .pipe-strip:has(> :nth-child(8):last-child){grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:8px !important}
@@ -1393,3 +1383,563 @@ html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.sf-seg,.ld-seg,.c
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.hdr-btn,.fbtn,.act,.hero-btn,.lh-btn,.lh-more,.rp-btn,.ld-chip,.cs-view,.cs-ag-btn,.sub-import-btn,.tl-today,.sub-to-task-btn,.tqa-add,.modal-close,.ls-tab,.bm-srt):active,
   html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-card,.na-tile,.qa-btn,.ld-kpi,.ls-kpi,.tasks-stat,.sub-stat):active{transform:none !important}
 }
+
+/* ---- 9. GROUPED RAIL, FLYOUTS, SCROLLBARS (15 Oct 2026) ---------------------
+   The owner (Email Campaigns, Bold dark): "the cramped floating menu tab and the scroll wheel ...
+   I want everything to be consistent". The rail now holds ONE 44px button per menu group
+   (the script adds .glra-groups and marks the rail .glra-grouped; the real menu items stay in
+   the page, hidden on the rail, and the flyout rows click them). A group with several pages
+   opens a panel beside the rail (.glra-fly). The foot is a calm column: you, theme, sign out
+   everywhere, log out. The 34px squeeze, the dividers and the chevrons are gone. */
+.glra-groups,.glra-fly{display:none}
+@media(min-width:1000px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped{--glra-gap:clamp(4px,calc((100vh - 720px) / 18),10px);padding:8px 0 !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-head{padding:2px 0 5px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-nav{flex:0 1 auto;padding:2px 0 6px !important;-webkit-mask-image:none !important;mask-image:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-nav > a.nav-item,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-nav > .sb-section{display:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .glra-rail-more{display:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-find{width:44px;height:44px;margin:0 auto var(--glra-gap)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-find input{width:44px !important;height:44px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-find::before{font-size:16px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-groups{display:flex;flex-direction:column;align-items:center;gap:var(--glra-gap);width:100%;flex:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp{display:flex;align-items:center;justify-content:center;position:relative;z-index:1;flex:none;width:44px;height:44px;padding:0;margin:0;
+    border:0 !important;border-radius:50% !important;background:transparent;color:var(--lk-dim);font-size:17px;cursor:pointer;box-shadow:none;
+    transition:color 260ms var(--lk-e-out),background-color var(--lk-t-state) var(--lk-e-out),transform 300ms var(--lk-spring)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp[hidden]{display:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp:hover:not(.active){transform:scale(1.07);background:rgb(var(--lk-tint) / .08);color:var(--lk-ink)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp:active{transform:scale(.94)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp[aria-expanded="true"]:not(.active){background:rgb(var(--lk-tint) / .12);color:var(--lk-ink);transform:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp.active{color:var(--lk-on-active)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp.active[aria-expanded="true"]{box-shadow:0 0 0 3px rgb(var(--lk-tint) / .16)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp:focus-visible{outline:2px solid var(--lk-accent-text);outline-offset:2px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-hold .glra-grp:hover:not(.active){transform:none;background:transparent}
+  /* the summed count: a dot on the button's corner with a ring of the rail */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp-badge{display:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp-badge.on{display:block;position:absolute;top:-2px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;box-sizing:border-box;
+    font:800 9.5px/18px 'Inter','Segoe UI',system-ui,sans-serif;text-align:center;letter-spacing:0;box-shadow:0 0 0 2px var(--lk-page);z-index:2}
+  html[data-glra-look="glass"] .glra-grp-badge.on{background:#b4501a;color:#fff}
+  html[data-glra-look="bold"] .glra-grp-badge.on{background:#2f46ff;color:#fff}
+  /* the foot: one calm column, a hairline above it */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot{display:flex !important;flex-direction:column;align-items:center;gap:3px;padding:4px 0 0 !important;border-top:0 !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot::before{content:"";order:0;width:24px;height:1px;background:var(--lk-line);margin:0 0 5px;flex:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-btns{display:contents !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill{order:1;width:38px !important;height:38px !important;margin:0 !important;display:flex !important;align-items:center;justify-content:center;
+    border-radius:50% !important;cursor:pointer;transition:background-color var(--lk-t-state) var(--lk-e-out),transform 300ms var(--lk-spring)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill[aria-expanded="true"]{background:rgb(var(--lk-tint) / .1) !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill:focus-visible{outline:2px solid var(--lk-accent-text);outline-offset:2px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .user-av{width:30px !important;height:30px !important;font-size:12px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot #dmBtn{order:2}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot > .sb-btn:not(.glra-look-sb){order:3}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn.danger{order:4}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn{width:38px !important;height:38px !important;color:var(--lk-dim) !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn i{font-size:15px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn:hover{color:var(--lk-ink) !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn.danger:hover{color:var(--lk-bad) !important}
+
+  /* the flyout: a rounded card beside the rail; frosted in glass, solid in bold */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly{display:block;position:fixed;left:0;top:0;z-index:2590;box-sizing:border-box;min-width:232px;max-width:300px;overflow-y:auto;overscroll-behavior:contain;
+    padding:8px;border-radius:20px !important;border:1px solid var(--lk-line-2);background:var(--lk-sheet);color:var(--lk-ink);
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;box-shadow:0 24px 54px rgba(0,0,0,.38);
+    opacity:0;transform:translateX(-8px) scale(.98);transform-origin:left top;
+    transition:opacity var(--lk-t-state) var(--lk-e-out),transform 300ms var(--lk-spring)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly[hidden]{display:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly.on{opacity:1;transform:none}
+  html[data-glra-look="glass"] .glra-fly{background:rgba(40,27,20,.84);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border-color:rgba(255,255,255,.16)}
+  html[data-glra-look="glass"][data-glra-mode="light"] .glra-fly{background:rgba(255,251,247,.86);border-color:rgba(255,255,255,.85);box-shadow:0 22px 48px rgba(60,35,20,.16)}
+  html[data-glra-look="bold"] .glra-fly{background:#1b1b1e;border-color:#2b2b30}
+  html[data-glra-look="bold"][data-glra-mode="light"] .glra-fly{background:#fff;border-color:#e3e3de;box-shadow:0 2px 4px rgba(0,0,0,.05),0 18px 40px rgba(0,0,0,.12)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-head{padding:8px 12px 8px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--lk-mute);line-height:1.3}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-sub{font-size:12px;color:var(--lk-mute);margin-top:2px;text-transform:none;letter-spacing:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-head:has(.glra-fly-sub) .glra-fly-title{font-size:14px;text-transform:none;letter-spacing:-.005em;color:var(--lk-ink)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;margin:0;padding:0 12px;box-sizing:border-box;border:0 !important;border-radius:12px !important;
+    background:transparent;color:var(--lk-dim);font:500 14px/1.25 'Inter','Segoe UI',system-ui,sans-serif;letter-spacing:0;text-transform:none;text-align:left;cursor:pointer;
+    transition:background-color var(--lk-t-state) var(--lk-e-out),color var(--lk-t-state) var(--lk-e-out)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row + .glra-fly-row{margin-top:2px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row > i:first-child{width:18px;flex:none;text-align:center;font-size:14px;color:var(--lk-mute)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row:focus-visible{background:rgb(var(--lk-tint) / .08);color:var(--lk-ink)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row:hover > i:first-child,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row:focus-visible > i:first-child{color:inherit}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row:focus-visible{outline:2px solid var(--lk-accent-text);outline-offset:-2px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row.on,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row.on:hover{background:var(--lk-active);color:var(--lk-on-active);font-weight:700}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row.on > i:first-child{color:inherit}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-name{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-ext{font-size:10px;opacity:.6;flex:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-badge{flex:none;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:999px;font-size:11px;font-weight:700;line-height:20px;text-align:center}
+  html[data-glra-look="glass"] .glra-fly-badge{background:#b4501a;color:#fff}
+  html[data-glra-look="bold"] .glra-fly-badge{background:#2f46ff;color:#fff}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row.on .glra-fly-badge{background:var(--lk-on-active);color:var(--lk-active)}
+}
+@media(prefers-reduced-motion:reduce){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-row,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill{transition:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp:active{transform:none !important}
+}
+
+/* scrollbars: one thin rounded bar in the look's own neutral tone everywhere (lists, dialogs,
+   tables, boards, text boxes, the page). Chromium and Safari draw the ::-webkit-scrollbar parts, so
+   the standard properties go back to auto there: Chromium ignores the parts once those are set, and
+   the older stylesheet sets them on every element (the arrows and the gold or blue bar). Bars hidden
+   on purpose (scrollbar-width:none on a class) keep their own rule, which is stronger. */
+:where(html:is([data-glra-look="glass"],[data-glra-look="bold"])),:where(html:is([data-glra-look="glass"],[data-glra-look="bold"])) *{scrollbar-width:auto;scrollbar-color:auto}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar{width:8px;height:8px;background:transparent}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-track,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-track{background:transparent !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-corner,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-corner{background:transparent}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-button,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-button{display:none;width:0;height:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-thumb,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-thumb{background:rgb(var(--lk-tint) / .22) !important;border-radius:999px !important;
+  border:2px solid transparent;background-clip:padding-box !important;min-height:36px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-thumb:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-thumb:hover{background:rgb(var(--lk-tint) / .38) !important;background-clip:padding-box !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) ::-webkit-scrollbar-thumb:active,html:is([data-glra-look="glass"],[data-glra-look="bold"])::-webkit-scrollbar-thumb:active{background:rgb(var(--lk-tint) / .5) !important;background-clip:padding-box !important}
+@supports not selector(::-webkit-scrollbar){
+  :where(html:is([data-glra-look="glass"],[data-glra-look="bold"])),:where(html:is([data-glra-look="glass"],[data-glra-look="bold"])) *{scrollbar-width:thin;scrollbar-color:rgb(var(--lk-tint) / .3) transparent}
+}
+
+/* Email Campaigns: the recipients list fills its panel so the two panels line up (top and, on a
+   desktop, about the same height); every picker row uses the same type */
+@media(min-width:1101px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid{align-items:start}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-source .bm-list{height:740px;max-height:none}
+}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-list > .empty-st{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-row-email,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-prop-title{font-size:13px !important;font-weight:600 !important;letter-spacing:0 !important;line-height:1.35}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-row-meta,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-prop-meta{font-size:11.5px !important;font-weight:500 !important;letter-spacing:0 !important;text-transform:none !important;margin-top:2px}
+
+/* ---- 10. ONE SYSTEM (15 Oct 2026) -------------------------------------------
+   The owner: "there is still a lot of inconsistencies ... I want everything to be consistent and
+   looks good". One card, one heading scale, one field height, one button system, one chip, one table,
+   one empty state, the same dialog family. Written after everything above, so it wins ties. */
+
+/* type: no leftover brutalist capitals or tracking anywhere inside the app */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .admin-shell *:not(i):not(.fa):not(.fas):not(.far):not(.fab),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov *:not(i),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel *:not(i){text-transform:none !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(th,.stat-lbl,.sub-stat-lbl,.ts-lbl,.pc-lbl,.ck-lbl,.na-lbl,.dash-section-lbl,.pf-legend,.pf-sub,.vis-note,.chart-kpi,.chart-kpi *,.bar-axis,.lh-sum,.lp-sub,
+  .tv-meta,.pres-seen,.pres-state,.sub-note,.sub-count,.ld-kpi .k,.ls-kpi .k,.mt-tile .k,.mt-h,.sf-kpi span,.tcal-dow,.cs-cal-wd,.flbl,.fg label,.ld-f > span,
+  .glra-fly-title,.user-rl,.tasks-views-bar .tv-label,.sf-pbh,.imp-l){letter-spacing:0 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-title{letter-spacing:-.02em !important}
+/* chips and status pills: sentence case whatever the data says ("FOR SALE", "available" -> "For sale", "Available") */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.badge,.b-sale,.b-lease,.b-avail,.b-sold,.b-emp,.b-pending,.b-admin,.audit-action):not(#glra-z){display:inline-block;text-transform:lowercase !important;line-height:1.35 !important;
+  font-size:11.5px !important;font-weight:600 !important;padding:4px 10px !important;white-space:nowrap;vertical-align:middle}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.badge,.b-sale,.b-lease,.b-avail,.b-sold,.b-emp,.b-pending,.b-admin,.audit-action):not(#glra-z)::first-letter{text-transform:uppercase}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .badge > i{margin-right:4px}
+/* one small-label voice: 12px, semibold, quiet colour, sentence case */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) th,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tbl-wrap thead th,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .imp-tbl th{font-size:12px !important;font-weight:600 !important;color:var(--lk-mute) !important;white-space:nowrap}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .dash-section-lbl{font-size:13px !important;font-weight:700 !important;color:var(--lk-dim) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .vis-note,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bar-axis,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .pf-legend,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .pf-sub,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .chart-kpi span,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .lp-sub,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tv-meta,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .pres-seen{font-size:12px !important;font-weight:500 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-lbl,.sub-stat-lbl,.ts-lbl,.na-lbl,.pc-lbl,.ld-kpi .k,.ls-kpi .k,.mt-tile .k,.sf-kpi span){font-size:12.5px !important;font-weight:600 !important;color:var(--lk-mute) !important;line-height:1.3 !important}
+
+/* headings: page 25 / card 15 / dialog 19 / section 14, everywhere */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .panel-head{min-height:60px !important;padding:12px 20px !important;gap:10px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .panel-title{font-size:15px !important;font-weight:700 !important;letter-spacing:-.01em !important;min-width:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-card > .sf-ch{min-height:60px;box-sizing:border-box;padding:12px 20px !important;border-bottom:1px solid var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-card > .sf-cb{padding:18px 20px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-h,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-card > .sf-ch > :first-child{font:700 15px/1.3 'Inter',sans-serif !important;letter-spacing:-.01em !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-title,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-head h3,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #leTitle,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h h3,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #sfTaskH,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov [style*="background:var(--navy);padding"] > div:first-child{
+  font:800 19px/1.2 'Inter',sans-serif !important;letter-spacing:-.02em !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-hd,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov [style*="background:var(--navy);padding"]{min-height:68px;box-sizing:border-box;padding-top:14px !important;padding-bottom:14px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-title i,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov [style*="background:var(--navy);padding"] > div:first-child i{margin-right:10px}
+
+/* fields: one height, one weight, one radius, one chevron, one focus ring */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]),select,.fsel,.finput){
+  min-height:40px;box-sizing:border-box;font-size:14px !important;font-weight:500 !important;border-radius:12px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fsearch input{min-height:40px;border-radius:12px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) textarea{font-size:14px !important;border-radius:14px !important;resize:vertical}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sb-find input,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .assignee-input input,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-quickadd input{min-height:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) select:not([multiple]):not(#glra-z){-webkit-appearance:none;appearance:none;padding-right:36px !important;background-repeat:no-repeat !important;
+  background-position:right 13px center !important;background-size:12px 12px !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23cfc6bf' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"])[data-glra-mode="light"] select:not([multiple]):not(#glra-z){background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%235f5f68' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input::-webkit-calendar-picker-indicator{opacity:.7;cursor:pointer;filter:none}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input::-webkit-calendar-picker-indicator:hover{opacity:1}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="date"],html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="datetime-local"],html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="time"],html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="month"]{font-weight:500 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[list]::-webkit-calendar-picker-indicator{display:none !important}
+/* the ring: a soft accent halo for the keyboard or typing, never stacked on an outline */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(input,select,textarea):focus{box-shadow:none !important;outline:none !important;border-color:var(--lk-accent-text) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(input,select,textarea):focus-visible{box-shadow:0 0 0 3px rgba(245,154,91,.22) !important;outline:none !important}
+html[data-glra-look="bold"] :is(input,select,textarea):focus-visible{box-shadow:0 0 0 3px rgba(198,244,50,.22) !important}
+html[data-glra-look="bold"][data-glra-mode="light"] :is(input,select,textarea):focus-visible{box-shadow:0 0 0 3px rgba(130,170,10,.25) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="file"]:focus,html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="file"]:focus-visible{box-shadow:none !important;border-color:transparent !important}
+/* labels above fields, helpers below them: the label stronger than the helper, a steady 6px under the label */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.flbl,.fg > label,.form-group > label,.ld-f > span,.modal-ov label:not(:has(input[type=checkbox],input[type=radio]))){font-size:12px !important;font-weight:600 !important;
+  color:var(--lk-dim) !important;letter-spacing:0 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-f{display:flex !important;flex-direction:column;gap:6px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-g{row-gap:16px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.field-hint,.fhint,.input-hint,.form-help,.ld-note){font-size:12px !important;font-weight:400 !important;color:var(--lk-mute) !important;line-height:1.5 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg .field-hint,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg > small{margin-top:6px !important;display:block}
+/* checkboxes: one rounded box in the look's colours */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="checkbox"]:not(.sw *):not(.ld-sw *){-webkit-appearance:none;appearance:none;width:18px !important;height:18px !important;min-height:0 !important;margin:0;flex:none;
+  border:1.5px solid var(--lk-line-2) !important;border-radius:6px !important;background:var(--lk-well) !important;cursor:pointer;vertical-align:-4px;display:inline-grid;place-content:center;
+  transition:background-color var(--lk-t-state) var(--lk-e-out),border-color var(--lk-t-state) var(--lk-e-out);box-shadow:none !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="checkbox"]:not(.sw *):not(.ld-sw *):checked{background:var(--lk-accent) !important;border-color:var(--lk-accent) !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5 6.5 11.5 12.5 4.5' fill='none' stroke='%2318120a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-size:14px 14px !important;background-position:center !important;background-repeat:no-repeat !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="checkbox"]:not(.sw *):not(.ld-sw *):focus-visible{box-shadow:0 0 0 3px rgba(245,154,91,.25) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) input[type="checkbox"]:not(.sw *):not(.ld-sw *):disabled{opacity:.45;cursor:not-allowed}
+
+/* buttons: pills 40px tall beside the 40px fields; one primary per row; destructive only red when pointed at */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn{min-height:40px;box-sizing:border-box;align-items:center;justify-content:center;gap:7px;line-height:1.2 !important;padding:0 16px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn > i{margin:0 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fbtn{min-height:42px;box-sizing:border-box;align-items:center;justify-content:center;gap:8px;padding:0 22px !important;font-size:13px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-seg,.sf-seg,.mt-seg,.cs-views,.ls-tabs,#leTabs,.tasks-view-toggle) :is(.hdr-btn,button,.cs-view,.ls-tab){min-height:34px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn) > .hdr-btn{min-height:34px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn.danger,html:is([data-glra-look="glass"],[data-glra-look="bold"]) button.danger:not(.sb-btn),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn[style*="color:#dc2626"]{background:rgb(var(--lk-tint) / .06) !important;color:var(--lk-bad) !important;border-color:var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn.danger:hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) button.danger:not(.sb-btn):hover,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn[style*="color:#dc2626"]:hover{background:#d93445 !important;color:#fff !important;border-color:#d93445 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.hdr-btn,.fbtn,button.primary):disabled{opacity:1 !important;filter:none !important;cursor:not-allowed !important;
+  background:rgb(var(--lk-tint) / .06) !important;color:var(--lk-mute) !important;border:1px dashed var(--lk-line-2) !important}
+/* a selected chip written inline by the scripts reads in the active colours (its own orange border used to win the text colour) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .admin-shell .hdr-btn:is([aria-pressed="true"],[style*="background:#ff3d00"],[style*="background: rgb(255, 61, 0)"],[style*="background:var(--gold)"],[style*="background: var(--gold)"]){
+  background:var(--lk-active) !important;color:var(--lk-on-active) !important;border-color:transparent !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .admin-shell .hdr-btn:is([aria-pressed="true"],[style*="background:#ff3d00"],[style*="background: rgb(255, 61, 0)"],[style*="background:var(--gold)"],[style*="background: var(--gold)"]) *{color:inherit !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn) > .hdr-btn:is([style*="background: rgb(255, 61, 0)"],[style*="background:#ff3d00"]){background:var(--lk-active) !important;color:var(--lk-on-active) !important}
+/* row actions in tables: quiet round icon buttons, all the same; delete turns red only on hover */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .act{width:34px;height:34px;min-height:0;padding:0 !important;display:inline-flex;align-items:center;justify-content:center;border-radius:50% !important;font-size:13px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-edit,.act.act-edit,.act-view,.act.act-view,.act-del,.act.act-del){background:rgb(var(--lk-tint) / .07) !important;border:1px solid var(--lk-line) !important;color:var(--lk-dim) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-edit,.act.act-edit) i{color:var(--lk-accent-text)}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-del,.act.act-del) i{color:var(--lk-bad)}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-edit,.act-view):hover{background:rgb(var(--lk-tint) / .16) !important;color:var(--lk-ink) !important;border-color:var(--lk-line-2) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-del,.act.act-del):hover{background:#d93445 !important;border-color:#d93445 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.act-del,.act.act-del):hover i{color:#fff !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .act-btns{gap:6px !important;align-items:center}
+/* dialog footers: Cancel then the primary, at the right, in every dialog; pinned to the bottom of a long form */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .form-actions{display:flex !important;flex-direction:row-reverse;justify-content:flex-start;gap:10px !important;border-top:1px solid var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-body .form-actions{position:sticky;bottom:-24px;z-index:3;margin:26px -24px -24px !important;padding:16px 24px !important;
+  background:var(--lk-head) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-box > .form-actions{margin:0 !important;padding:16px 24px !important}
+/* dialogs that scroll as a whole sheet: the head stays at the top and the buttons at the bottom */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style*="overflow:auto"] > div:first-child > div[style*="background:var(--navy)"]:first-child{position:sticky;top:-24px;z-index:4;background:var(--lk-head) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style*="overflow:auto"] > div:first-child > div:last-child[style*="border-top:1px solid"][style*="justify-content:flex-end"]{position:sticky;bottom:-24px;z-index:4;background:var(--lk-head) !important}
+/* the inner scroller's bar stays clear of the rounded corners */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-body,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-pane,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #leScroll{scrollbar-gutter:stable}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.modal-body,.ld-pane,#leScroll,.modal-ov,.task-panel)::-webkit-scrollbar-track{margin-block:18px}
+/* the page-level scrollbar never shifts the layout between views */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]){scrollbar-gutter:stable}
+
+/* tiles: one tile family (dashboard, subscribers, submissions, tasks, leads, leasing, cases, audit log) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-card,.sub-stat,.tasks-stat){min-height:100px;box-sizing:border-box;border-radius:20px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .stat-card{padding:20px 22px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.sub-stat,.tasks-stat){padding:18px 20px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-num,.sub-stat-num,.ts-num){font-size:30px !important;font-weight:800 !important;letter-spacing:-.04em !important;line-height:1.05 !important;color:var(--lk-ink) !important}
+html[data-glra-look="bold"] :is(.stat-num,.sub-stat-num,.ts-num){font-size:34px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sub-stat-num.hot{color:var(--lk-accent-text) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-kpi,.ls-kpi,.na-tile,.qa-btn,.pipe-cell,.mt-tile,.sf-kpi){border-radius:18px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-kpi,.ls-kpi){border-width:1px !important;min-height:92px;box-sizing:border-box}
+/* the chosen tile: the same accent ring in every row of tiles, no size change */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.tasks-stat.active,.sub-stat.active,.sub-stat.on,.stat-card.active,.ld-kpi.on,.ls-kpi.on){border-color:var(--lk-accent-text) !important;box-shadow:inset 0 0 0 1px var(--lk-accent-text) !important;background:var(--lk-hot-tile) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-stat i{color:var(--lk-mute) !important;opacity:1 !important}
+/* "needs attention": the same warm alert in both looks (lime on olive was not an alarm) */
+html[data-glra-look="bold"] .na-tile.na-hot{background:rgba(255,190,61,.1) !important;border:1px solid rgba(255,190,61,.45) !important}
+html[data-glra-look="bold"] .na-tile.na-hot .na-num{color:var(--lk-warn) !important}
+html[data-glra-look="bold"][data-glra-mode="light"] .na-tile.na-hot{background:#fff6e0 !important;border:1px solid #f0cf7a !important;box-shadow:var(--lk-card-shadow) !important}
+html[data-glra-look="bold"][data-glra-mode="light"] .na-tile.na-hot .na-num{color:#8c5a06 !important}
+/* tile grids: every tile in a row the same height */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stats-grid,.na-row,.qa-row,.sub-stats,.tasks-stats-grid,.ld-kpis,.ls-kpis,.mt-tiles){align-items:stretch !important}
+@media(max-width:560px){
+  /* phone: an odd count puts the FIRST tile across the top, the rest pair evenly; equal rows */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stats-grid,.na-row,.qa-row,.sub-stats,.ls-kpis,.ld-kpis,.tasks-stats-grid) > :first-child:nth-last-child(odd):not(:only-child){grid-column:1/-1}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stats-grid,.na-row,.qa-row,.sub-stats,.ls-kpis,.ld-kpis,.tasks-stats-grid){grid-auto-rows:1fr}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-card,.sub-stat,.tasks-stat){min-height:84px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stat-num,.sub-stat-num,.ts-num){font-size:26px !important}
+}
+
+/* cards: one border in every look; Bold's cards get an edge so they read on the page */
+html[data-glra-look="bold"] :is(.panel,.stat-card,.sub-stat,.tasks-stat,.na-tile:not(.na-hot),.qa-btn,.acc-card,.hero-card,.ld-kpi,.ls-kpi,.sf-card,.mt-tile,.pipe-cell,.cs-day,.tl-card){border:1px solid #2a2a2f !important}
+html[data-glra-look="bold"][data-glra-mode="light"] :is(.panel,.stat-card,.sub-stat,.tasks-stat,.na-tile:not(.na-hot),.qa-btn,.acc-card,.hero-card,.ld-kpi,.ls-kpi,.sf-card,.mt-tile,.pipe-cell,.cs-day,.tl-card){border:1px solid #e3e3de !important}
+html[data-glra-look="bold"] :is(.tasks-stat.active,.sub-stat.active,.sub-stat.on,.stat-card.active,.ld-kpi.on,.ls-kpi.on){border-color:var(--lk-accent-text) !important}
+html[data-glra-look="bold"][data-glra-mode="light"] .sidebar{border:1px solid #d6d6d0 !important}
+html[data-glra-look="bold"][data-glra-mode="light"] body{--lk-page:#ececE7}
+
+/* tables: the photo placeholder is the house mark, not an empty box; names get room; prices in the UI face */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) img.tbl-img{width:52px !important;height:40px !important;border-radius:10px !important;object-fit:cover;border:1px solid var(--lk-line) !important;
+  background:var(--lk-well) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 40'%3E%3Cpath d='M18 21.5 26 14l8 7.5V29a1 1 0 0 1-1 1h-4.5v-5h-5v5H19a1 1 0 0 1-1-1z' fill='none' stroke='%23a69a91' stroke-width='1.7' stroke-linejoin='round'/%3E%3C/svg%3E") center/52px 40px no-repeat !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) img.tbl-img[src^="data:"]{opacity:1 !important;object-fit:contain;
+  content:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 40'%3E%3Cpath d='M18 21.5 26 14l8 7.5V29a1 1 0 0 1-1 1h-4.5v-5h-5v5H19a1 1 0 0 1-1-1z' fill='none' stroke='%23a69a91' stroke-width='1.7' stroke-linejoin='round'/%3E%3C/svg%3E")}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #propTbody td > div[style*="max-width:220px"]{max-width:min(380px,30vw) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) td[style*="Cormorant Garamond"]{font-size:14px !important;font-weight:700 !important}
+/* an empty table head over an empty message reads as a broken page: hide it */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) table:has(> tbody > tr:only-child > td[colspan] :is(.empty-st,.tasks-empty)) > thead{display:none}
+
+/* empty states: the same icon, size and spacing on every page */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.empty-st,.tasks-empty,.sf-empty){padding:40px 20px !important;text-align:center !important;color:var(--lk-mute) !important;font-size:13.5px !important;line-height:1.5}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.empty-st,.tasks-empty) > i{display:block;font-size:26px !important;margin:0 auto 12px !important;color:var(--lk-mute) !important;opacity:.55}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.empty-st,.tasks-empty) p{font-size:14px !important;font-weight:600 !important;color:var(--lk-dim) !important;margin:0 auto !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.empty-st,.tasks-empty) p + p{font-size:13px !important;font-weight:400 !important;color:var(--lk-mute) !important;margin-top:8px !important;line-height:1.55 !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.empty-st,.tasks-empty) small{display:block;font-size:12.5px !important;color:var(--lk-mute) !important;margin-top:6px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-sched-list .empty-st{padding:28px 16px !important}
+/* a chart with nothing in it says so, instead of a row of dashes in an empty box */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bar-chart:not(:has(.bar-fill:not(.is-zero))){height:96px !important;position:relative}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bar-chart:not(:has(.bar-fill:not(.is-zero)))::after{content:"Nothing recorded in this period yet";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:var(--lk-mute)}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bar-chart:not(:has(.bar-fill:not(.is-zero))) .bar-fill{opacity:.5}
+html[data-glra-look="bold"][data-glra-mode="light"] .bar-fill.is-zero{background:#e3e3de !important}
+
+/* phone page header: the subtitle wraps to two lines instead of being cut mid-sentence; header buttons one size */
+@media(max-width:900px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-sub{white-space:normal !important;text-overflow:clip;display:-webkit-box !important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-left{min-width:0;flex:1 1 auto}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-left > div{padding-right:8px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar-toggle{width:44px !important;height:44px !important;flex:none}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-right > .hdr-btn{width:44px;height:44px;min-height:44px;padding:0 !important;flex:none;font-size:0 !important;gap:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-right > .hdr-btn i{font-size:15px !important}
+}
+
+/* phone fields: 16px so iPhone does not zoom, the same for every field; labels and buttons step up to match */
+@media(max-width:700px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]),select,.fsel,.finput,textarea){font-size:16px !important;font-weight:500 !important;min-height:44px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .hdr-btn{min-height:44px;font-size:13.5px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.flbl,.fg > label,.form-group > label,.ld-f > span,.modal-ov label:not(:has(input[type=checkbox],input[type=radio]))){font-size:13px !important}
+  /* filter rows: search across the top, the rest in an even two-column grid; an odd last one takes the row */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.filter-bar,.sub-toolbar){display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px !important;align-items:stretch}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.filter-bar,.sub-toolbar) > *{min-width:0 !important;width:100% !important;max-width:none !important;margin:0 !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.filter-bar,.sub-toolbar) > .fsearch{grid-column:1/-1}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.filter-bar,.sub-toolbar) > :not(.fsearch){grid-column:auto !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.filter-bar,.sub-toolbar) > :last-child:nth-child(even):not(#glra-z){grid-column:1/-1 !important}
+  /* a listing card on a phone: the photo needs no "Image" label */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) #propTbody td:first-child::before{display:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) #propTbody td:first-child{justify-content:flex-start !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .filter-bar > .res-count{display:flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--lk-line);border-radius:12px;font-size:13px;color:var(--lk-mute)}
+  /* every action row on a phone: full-width, even buttons */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.form-actions,.modal-ov > div:first-of-type > div:last-child[style*="justify-content:flex-end"]){display:grid !important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .form-actions{direction:rtl}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .form-actions > *{direction:ltr}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.form-actions,.modal-ov > div:first-of-type > div:last-child[style*="justify-content:flex-end"]) > :is(button,.hdr-btn,.fbtn){width:100%;justify-content:center}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-send-row{display:grid !important;grid-template-columns:1fr 1fr;gap:8px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-send-row > *{width:100%;justify-content:center}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-send-row > #bmSendBtn,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-send-row > .bm-result{grid-column:1/-1}
+}
+
+/* dialogs on a phone: one sheet style for all, inset 10px with rounded corners */
+@media(max-width:560px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov{padding:10px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov > div:first-of-type,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-box,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-dlg,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg{width:100% !important;max-width:100% !important;margin:0 auto !important;border-radius:20px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style*="overflow:auto"] > div:first-child > div[style*="background:var(--navy)"]:first-child{top:-10px}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style*="overflow:auto"] > div:first-child > div:last-child[style*="border-top:1px solid"][style*="justify-content:flex-end"]{bottom:-10px}
+}
+
+/* rail: the count badges are round (the classic skin squares every corner), Bold's are lime;
+   the foot icons as big as the menu icons; the theme button shows a theme icon, not a sun "cog" */
+@media(min-width:1000px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp-badge.on,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-fly-badge,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .nav-badge{border-radius:999px !important}
+  html[data-glra-look="bold"] .glra-grp-badge.on,html[data-glra-look="bold"] .glra-fly-badge{background:#c6f432 !important;color:#12150a !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .glra-grp.active .glra-grp-badge.on{background:var(--lk-ink) !important;color:var(--lk-page) !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn{width:44px !important;height:44px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .sb-btn i{font-size:16px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot .user-pill{width:44px !important;height:44px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .user-av{width:34px !important;height:34px !important;font-size:13px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sidebar.glra-grouped .sb-foot::before{display:block !important;width:28px}
+}
+html[data-glra-look="bold"] .nav-badge{background:#c6f432 !important;color:#12150a !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #dmBtn > i::before{content:"\f042"}
+/* header: no slab at the top of the page; it frosts in once the page scrolls under it */
+@supports (animation-timeline:scroll()){
+  @keyframes glra-hdr{from{background-color:transparent;box-shadow:none}to{background-color:var(--lk-header);box-shadow:0 1px 0 var(--lk-line)}}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .main-header{background:transparent !important;animation:glra-hdr linear both;animation-timeline:scroll(root);animation-range:0 64px}
+}
+
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .res-count{font-size:12.5px !important;font-weight:600 !important;color:var(--lk-mute) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #tab-inquiries > div:first-child[style*="justify-content:flex-end"]{margin-bottom:12px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #submTbody .tasks-empty code{font-size:12px;padding:2px 6px;border-radius:6px !important;background:rgb(var(--lk-tint) / .08)}
+
+/* subscribers on a phone: the disabled chevron row goes, so every card starts alike */
+@media(max-width:560px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) #subTbody td:has(> .sub-exp[disabled]){display:none !important}
+}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sub-exp[disabled]{opacity:.35}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .admin-shell :is(.stat-num,.sub-stat-num,.ts-num,.na-num,.page-title,.panel-title,.modal-title,h1,h2,h3,h4){text-shadow:none !important}
+@media(max-width:560px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-content table.stack td[data-label="Actions"]{flex-direction:row !important;align-items:center !important;flex-wrap:nowrap !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .page-content table.stack td[data-label="Actions"] > *{margin-left:auto}
+}
+
+/* Meta: change lines and status words in readable tints; the success icon is green; sparklines in the accent */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-tile .d.up,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-on{color:var(--lk-ok) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-tile .d.down,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-bad{color:var(--lk-bad) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-banner.ok i{color:var(--lk-ok) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-banner.warn i{color:var(--lk-warn) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-banner.ok{border-color:rgba(110,231,183,.45) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-banner.warn{border-color:rgba(252,211,77,.45) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-tile svg polyline{stroke:var(--lk-accent) !important;stroke-width:2 !important}
+html[data-glra-look="bold"][data-glra-mode="light"] .mt-tile svg polyline{stroke:#7aa30f !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-log .lv{display:inline-block;font:600 11.5px/1 'Inter',sans-serif !important;padding:4px 9px;border-radius:999px !important;background:rgb(var(--lk-tint) / .08);color:var(--lk-dim) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-log .lv::first-letter{text-transform:uppercase}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-log .lv.error{background:rgba(255,120,130,.14);color:var(--lk-bad) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-log .lv.warn{background:rgba(252,211,77,.14);color:var(--lk-warn) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-h{font:700 14px/1.3 'Inter',sans-serif !important;color:var(--lk-ink) !important;margin:24px 0 10px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-h .s{font-size:12.5px !important;font-weight:500 !important;color:var(--lk-mute) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-stat{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-stat div{border-bottom-color:var(--lk-line) !important;align-items:baseline}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-stat div > :first-child{flex:none}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-stat b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-post{border-bottom-color:var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .mt-grid2{align-items:start}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) label.rp-check{font-size:13.5px !important}
+
+/* Leads: reports in an even 3 + 3 grid, panels as tall as their content; the board's columns even;
+   the filters and the bulk bar only where they do something */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-rep{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:18px !important;align-items:start}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-rep > .panel{margin:0 !important;min-width:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-rep .panel-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-weeks{padding-top:24px !important;height:132px !important;align-items:flex-end}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-weeks div{border-radius:6px 6px 2px 2px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-weeks div span{top:-19px !important;font:700 11px 'Inter',sans-serif !important;color:var(--lk-dim)}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-weeks + .ld-note{margin-top:14px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-bar{grid-template-columns:minmax(0,130px) 1fr 40px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-bar em{font-family:'Inter',sans-serif !important;font-weight:700}
+@media(max-width:1199px){html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-rep{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+@media(max-width:700px){html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-rep{grid-template-columns:minmax(0,1fr) !important}}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-filters[style*="display: none"],html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-filters[style*="display:none"]{display:none !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-bulk:not(.show){display:none !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-board{align-items:stretch !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ld-quick button{font-size:12.5px !important;padding:7px 13px !important;min-height:32px}
+
+/* bulk email: Recipients beside Compose at one height; the preview under Recipients; Send, Schedule and
+   the queue under Compose. The send buttons sit in a card like every other action. */
+@media(min-width:1101px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) !important;grid-template-rows:auto auto auto auto minmax(0,1fr);align-items:start !important;row-gap:18px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col{display:contents !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col > *{margin:0 !important;min-width:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:first-child > .panel{grid-column:1;grid-row:1;align-self:stretch;display:flex;flex-direction:column}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:first-child > .panel > .panel-body{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid .bm-source:not([style*="none"]){flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid .bm-source .bm-list{flex:1 1 0 !important;height:auto !important;min-height:320px;max-height:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:nth-child(2) > .panel:first-child{grid-column:2;grid-row:1}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:nth-child(2) > .panel:has(#bmPreview){grid-column:1;grid-row:2 / 6}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:nth-child(2) > .bm-send-row{grid-column:2;grid-row:2}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:nth-child(2) > .panel:has(#bmSendAt){grid-column:2;grid-row:3}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-grid > .bm-col:nth-child(2) > .panel:has(#bmScheduledList){grid-column:2;grid-row:4}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) #bmSrc-upload .upload-zone{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center}
+}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-send-row{background:var(--lk-surface);border:1px solid var(--lk-line);border-radius:22px !important;padding:16px 20px !important;margin-top:0 !important}
+html[data-glra-look="glass"] .bm-send-row{-webkit-backdrop-filter:blur(12px) saturate(1.25);backdrop-filter:blur(12px) saturate(1.25)}
+html[data-glra-look="bold"] .bm-send-row{border-color:#2a2a2f}
+html[data-glra-look="bold"][data-glra-mode="light"] .bm-send-row{background:#fff;border-color:#e3e3de}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .panel:has(#bmPreview) .panel-title::after{content:"as it arrives in the inbox";font-size:12px;font-weight:500;color:var(--lk-mute);margin-left:10px;letter-spacing:0}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-preview-frame{border:0 !important;border-radius:0 0 22px 22px !important;background:#fff}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .upload-zone{padding:30px 20px !important;text-align:center}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .upload-zone p{font-family:'Inter',sans-serif !important;letter-spacing:0 !important;color:var(--lk-mute) !important;font-size:12.5px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .upload-zone p:first-of-type{font-size:14px !important;font-weight:700 !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .upload-zone i{font-size:26px !important;margin-bottom:8px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-saved{border-top:1px solid var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-props-list,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-list{scrollbar-gutter:stable}
+@media(max-width:700px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-source-tabs{display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:18px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-srt{padding:9px 2px !important;font-size:12px !important;text-align:center;white-space:nowrap;min-width:0}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-list-toolbar{display:grid !important;grid-template-columns:1fr 1fr;gap:8px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-list-toolbar > .fsearch{grid-column:1/-1;min-width:0 !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-list-toolbar > .hdr-btn{width:100%}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .panel:has(#bmSendAt) .panel-body > div:first-child{display:grid !important;grid-template-columns:1fr;gap:10px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) #bmScheduleBtn{width:100%}
+}
+
+/* tasks: the views label readable, the Save view chip a chip */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-views-bar{border-bottom-color:var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-views-bar .tv-label{font-size:12.5px !important;font-weight:600 !important;color:var(--lk-mute) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tv-chip{font-size:12.5px !important;padding:7px 13px !important;border-color:var(--lk-line) !important;background:rgb(var(--lk-tint) / .06) !important;color:var(--lk-dim) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tcal-cell{border-color:var(--lk-line) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tcal-dow,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-cal-wd{font-size:12px !important;font-weight:600 !important;color:var(--lk-mute) !important}
+@media(max-width:700px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-views-bar{flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .tasks-views-bar > *{flex:none}
+}
+
+/* staff: chips, tiles and legends in the soft shapes (no square leftovers) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-chip{border-radius:999px !important;padding:3px 10px !important;border-color:var(--lk-line-2) !important;font-size:11.5px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-kind{border-radius:16px !important;border-color:var(--lk-line) !important;background:var(--lk-surface) !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-kind:hover{border-color:var(--lk-line-2) !important;background:var(--lk-surface-2) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-kinds > :last-child:nth-child(odd){grid-column:1/-1}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-inbox > .sf-ch{background:var(--lk-hot-tile) !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sf-bulk{border-radius:18px !important;margin-top:12px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .admin-shell span[style*="border:1px solid"][style*="padding"]:not([style*="border-radius"]){border-radius:999px !important}
+
+/* cases / titling / leasing */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-ag-btn.is-hot,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-day-h.today,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-ag-date.is-today{background:var(--lk-active) !important;color:var(--lk-on-active) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-ag-btn.is-hot *,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-ag-date.is-today *{color:var(--lk-on-active) !important}
+@media(max-width:560px){
+  /* the five case views fit as five even buttons, icon over label */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-views{display:grid !important;grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible !important;-webkit-mask-image:none !important;mask-image:none !important;border-radius:18px !important;width:100%;box-sizing:border-box}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-view{flex-direction:column !important;gap:3px !important;padding:7px 2px !important;min-height:52px !important;font-size:11px !important;white-space:nowrap;justify-content:center !important;min-width:0 !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-view i{font-size:14px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-view span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoardWrap,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #ldBoardWrap,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #titlingBoardWrap{scrollbar-width:auto !important}
+/* reply dialog: the summary labels in the small-label voice, every field with room above and below */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .rp-meta{gap:6px !important;margin-bottom:14px !important;font-size:13.5px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .rp-meta b{font:600 12px/1.4 'Inter',sans-serif !important;letter-spacing:0 !important;color:var(--lk-mute) !important;min-width:64px}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg:has(> #qrTpl),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg:has(> #qrText){margin:0 0 14px !important;display:block}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg > label[for="qrTpl"]:not(#glra-z),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .fg > label[for="qrText"]:not(#glra-z){display:block;margin:0 0 6px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) label.rp-check{margin:0 0 16px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .rp-quote{max-height:120px;overflow:auto}
+html[data-glra-look="bold"] .pres-av{background:#c6f432 !important;color:#12150a !important}
+/* dialog titles: words only (Import had an icon the others lack) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-title > i:first-child{display:none}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-title > i:first-child + span{margin-left:0 !important}
+/* nothing in the app is set below 11.5px any more (the scripts' inline 9 - 10.5px captions) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.admin-shell,.modal-ov,.task-panel) :not(i):is([style*="font-size:9px"],[style*="font-size:9.5px"],[style*="font-size:10px"],[style*="font-size:10.5px"],[style*="font-size: 10px"]){font-size:11.5px !important;letter-spacing:0 !important}
+/* a label that follows a grid of boxes gets the same room above it as any other field */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov div[style*="display:grid"] + :is(label,.flbl){margin-top:16px !important;display:block}
+
+/* ---- 11. FINAL POLISH (15 Oct 2026) -----------------------------------------
+   The last QA round: solid pinned footers, one scroll area per dialog, one segmented pattern on a
+   phone, equal board columns with a clear "more" edge, a readable sticky header. */
+/* pinned dialog footers are solid: the look's head tint laid over the page colour, so nothing scrolls through */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-body .form-actions,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-f,
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov[style*="overflow:auto"] > div:first-child > div:last-child[style*="border-top:1px solid"][style*="justify-content:flex-end"],
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov > div:first-child > div[style*="overflow-y:auto"] > div:last-child[style*="justify-content:flex-end"][style*="margin-top:22px"]{
+  background:linear-gradient(var(--lk-head),var(--lk-head)),var(--lk-page) !important}
+/* titling, payment details, import and money request dialogs: the buttons pinned at the bottom like every other form */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov > div:first-child > div[style*="overflow-y:auto"] > div:last-child[style*="justify-content:flex-end"][style*="margin-top:22px"]{
+  position:sticky;bottom:-24px;z-index:4;margin:24px -24px -24px !important;padding:16px 24px !important;border-top:1px solid var(--lk-line) !important;align-items:center}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov > div:first-child > div[style*="padding:22px 24px;overflow-y:auto"] > div:last-child[style*="justify-content:flex-end"][style*="margin-top:22px"]{bottom:-22px;margin-bottom:-22px !important}
+/* team account dialogs: the permissions list grows with the dialog, so there is one scrollbar, not two */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov .perm-grid{max-height:none !important;overflow:visible !important}
+/* every dialog title in the same weight and size (After the hearing, Conflict check had the old serif) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h .t,html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov [style*="background:var(--navy);padding"] > div:first-child > div:first-child[style*="Cormorant"]{
+  font:800 19px/1.2 'Inter',sans-serif !important;letter-spacing:-.02em !important;color:var(--lk-ink) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .modal-ov [style*="background:var(--navy);padding"] > div:first-child > div:first-child[style*="Cormorant"] + div{
+  font:500 12.5px/1.35 'Inter',sans-serif !important;letter-spacing:0 !important;color:var(--lk-mute) !important;margin-top:3px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .cs-dlg-h .s{font:500 12.5px/1.35 'Inter',sans-serif !important;letter-spacing:0 !important;margin-top:3px !important}
+/* leasing and titling boards: every column as tall as the tallest, like Leads and Cases */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #lsBoard,html:is([data-glra-look="glass"],[data-glra-look="bold"]) #titlingBoard{align-items:stretch !important}
+/* a board wider than its column: a long, clear fade at the edge that has more */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(#ldBoardWrap,#lsBoardWrap,#titlingBoardWrap).glra-more-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 140px),transparent) !important;mask-image:linear-gradient(90deg,#000 calc(100% - 140px),transparent) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(#ldBoardWrap,#lsBoardWrap,#titlingBoardWrap).glra-more-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 100px) !important;mask-image:linear-gradient(90deg,transparent,#000 100px) !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(#ldBoardWrap,#lsBoardWrap,#titlingBoardWrap).glra-more-l.glra-more-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 100px,#000 calc(100% - 140px),transparent) !important;mask-image:linear-gradient(90deg,transparent,#000 100px,#000 calc(100% - 140px),transparent) !important}
+/* bold light: the leasing and titling view switches have the same white segments as Leads and Staff */
+html[data-glra-look="bold"][data-glra-mode="light"] div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn) > .hdr-btn:not([style*="background:var(--gold)"]):not([style*="background: var(--gold)"]):not([style*="background:#ff3d00"]):not([style*="background: rgb(255, 61, 0)"]){background:#fff !important}
+/* the sticky page header: a solid band once the page scrolls under it, so nothing shows through
+   (the header's own background is transparent !important, which an animation cannot override, so the
+   band is a layer behind its content that fades in over the first 64px of scroll) */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .main-header{--lk-header:color-mix(in srgb,var(--lk-page) 96%,transparent)}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .main-header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--lk-header);opacity:0}
+@supports (animation-timeline:scroll()){
+  @keyframes glra-hdr-band{to{opacity:1}}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .main-header::before{animation:glra-hdr-band linear both;animation-timeline:scroll(root);animation-range:0 64px}
+}
+/* dashboard: cards as tall as what they hold; only the like-for-like pairs share a height */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) #dashInqChart .bar-chart:has(.bar-fill:not(.is-zero)){height:104px !important}
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .dash-two:has(#dashPortfolio),html:is([data-glra-look="glass"],[data-glra-look="bold"]) .dash-two:has(#dashVisitors){align-items:start !important}
+@media(max-width:560px){
+  /* one tile gap on a phone, the same as Needs attention */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.stats-grid,.na-row,.qa-row,.sub-stats,.ls-kpis,.ld-kpis,.tasks-stats-grid){gap:10px !important}
+  /* segmented view switches: one even grid inside the pill, never wider than the phone
+     (4 = 2 x 2; an odd count puts the first across the top, like the tiles) */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-seg,.sf-seg,div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn)):not(#glra-z){display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));
+    flex:1 1 100% !important;width:100% !important;max-width:100% !important;box-sizing:border-box;padding:4px !important;gap:4px !important;border-radius:18px !important;
+    overflow:visible !important;-webkit-mask-image:none !important;mask-image:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-seg,.sf-seg,div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn)) > :first-child:nth-last-child(odd):not(:only-child){grid-column:1/-1}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) :is(.ld-seg,.sf-seg,div[style*="display:inline-flex;border:1px solid var(--border-color)"]:has(> .hdr-btn)) > :is(.hdr-btn,button){width:100%;min-width:0 !important;margin:0 !important;
+    justify-content:center;padding:9px 8px !important;border-radius:14px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) div:has(> .ld-seg),html:is([data-glra-look="glass"],[data-glra-look="bold"]) div:has(> div[style*="display:inline-flex;border:1px solid var(--border-color)"] > #lsViewBoardBtn){width:100%}
+  /* dialog tab strips (case, lease): the same 3 + 2 grid inside the pill */
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-tabs:not(#glra-z){display:grid !important;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;box-sizing:border-box;padding:4px !important;gap:4px !important;
+    border-radius:18px !important;overflow:visible !important;-webkit-mask-image:none !important;mask-image:none !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-tabs > *{grid-column:span 2;min-width:0;white-space:normal !important;text-align:center;justify-content:center;line-height:1.25 !important;padding:8px 6px !important;border-radius:14px !important}
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .ls-tabs > :nth-child(n+4):nth-last-child(-n+2){grid-column:span 3}
+}
+/* the phone menu drawer: the last link stays fully readable; the "more below" fade is a short edge under it */
+@media(max-width:900px){
+  html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sb-nav{padding-bottom:14px !important}
+  @supports (animation-timeline:scroll()){
+    html:is([data-glra-look="glass"],[data-glra-look="bold"]) .sb-nav{-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 14px),rgb(0 0 0 / var(--glra-gr)) 100%) !important;
+      mask-image:linear-gradient(180deg,#000 calc(100% - 14px),rgb(0 0 0 / var(--glra-gr)) 100%) !important}
+  }
+}
+/* email preview on a phone: as tall as the email (the script measures it), so its footer is never cut */
+@media(max-width:700px){html:is([data-glra-look="glass"],[data-glra-look="bold"]) .bm-preview-frame{height:var(--glra-pvh,520px) !important}}
+/* a closed task / subscriber panel overlay never catches a click while it fades out */
+html:is([data-glra-look="glass"],[data-glra-look="bold"]) .task-panel-overlay:not(.open){pointer-events:none}
