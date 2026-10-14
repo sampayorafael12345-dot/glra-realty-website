@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v146';
+const CACHE_VERSION = 'glra-cache-v147';
 const STATIC_ASSETS = [
   '/img/logo.png',
   '/img/hero-logo.png',
@@ -43,7 +43,7 @@ function isPassThrough(url){
   let p = url.pathname;
   try { p = decodeURIComponent(p); } catch (_) {}
   p = p.toLowerCase();
-  if (/^\/(admin|agent)\.html$/.test(p)) return true;
+  if (/^\/(admin|agent|social|social-approve)\.html$/.test(p)) return true;
   // Pages whose address carries a private key (unsubscribe, confirm, alerts)
   // are never stored on the device.
   if (/^\/(unsubscribe|confirm-subscription|alerts\.html)\b/.test(p)) return true;

@@ -49,29 +49,21 @@ const LEAD_FIELDS = 'id,field_data,created_time,ad_id,ad_name,adset_name,campaig
 const LEAD_CONSENT = 'Ticked yes to updates on a Meta Lead Ad form (privacy policy linked on the form)';
 
 // ── SETTINGS FROM THE ENVIRONMENT (read on every use) ─────────
-const env = k => String(process.env[k] || '').trim();
-const flag = k => /^(1|true|yes|on)$/i.test(env(k));
+// The Graph client, the page token, the env readers and the MetaLog writer
+// live in server/meta-graph.js (shared with server/social.js).
+const G = require('./meta-graph');
+const { env, flag, graphBase, telegramBase, sleep, scrub, logMeta, MetaError, appsecretProof, metaGet, metaGetAll, pageToken, PAGE_ID } = G;
 const LEADS_ON = () => flag('META_LEADS_ENABLED');
 const INSIGHTS_ON = () => flag('META_INSIGHTS_ENABLED');
 const INBOX_ON = () => flag('META_INBOX_ENABLED');
+// GLRA Social (server/social.js) also receives Page events through this webhook.
+const SOCIAL_ON = () => flag('SOCIAL_ENABLED');
 const anyOn = () => LEADS_ON() || INSIGHTS_ON() || INBOX_ON();
-const webhookOn = () => LEADS_ON() || INBOX_ON();
-const PAGE_ID = () => (env('META_PAGE_ID').match(/^\d{1,30}$/) || [''])[0];
+const webhookOn = () => LEADS_ON() || INBOX_ON() || SOCIAL_ON();
 const IG_ID = () => (env('META_IG_USER_ID').match(/^\d{1,30}$/) || [''])[0];
 const AD_ACCOUNT = () => (env('META_AD_ACCOUNT_ID').replace(/^act_/, '').match(/^\d{1,30}$/) || [''])[0];
-// A base-URL override exists only for the local test kit (scripts/test-meta.js
-// points it at a stub server). It is honoured only for a localhost address, so
-// a stray value in production can never send a token anywhere but Meta.
-function localOverride(name) {
-  const v = env(name).replace(/\/+$/, '');
-  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(v) ? v : '';
-}
-const graphBase = () => (localOverride('META_GRAPH_BASE') || 'https://graph.facebook.com') + '/' + (/^v\d+\.\d+$/.test(env('META_GRAPH_VERSION')) ? env('META_GRAPH_VERSION') : 'v24.0');
-const telegramBase = () => localOverride('TELEGRAM_API_BASE') || 'https://api.telegram.org';
-const retryBase = () => Math.max(20, Math.min(10000, Number(env('META_RETRY_BASE_MS')) || 1000));
 
 // ── SMALL HELPERS ─────────────────────────────────────────────
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const pad2 = n => String(n).padStart(2, '0');
 function manilaDay(d) { const x = new Date((d ? new Date(d).getTime() : Date.now()) + 8 * 3600e3); return `${x.getUTCFullYear()}-${pad2(x.getUTCMonth() + 1)}-${pad2(x.getUTCDate())}`; }
 function manilaHour() { return new Date(Date.now() + 8 * 3600e3).getUTCHours(); }
@@ -90,27 +82,6 @@ function endDay(endTime) { const d = metaTime(endTime); return d ? new Date(d.ge
 const num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)) ? Number(v) : null);
 const clean = (s, max) => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim().slice(0, max);
 
-// Removes anything that could be a token before text is logged or stored.
-function scrub(s) {
-  let out = String(s == null ? '' : s)
-    .replace(/(access_token|appsecret_proof|input_token)=[^&\s"']+/gi, '$1=[hidden]')
-    .replace(/\bEA[A-Za-z0-9]{20,}/g, '[token]')
-    .replace(/bot\d{5,}:[A-Za-z0-9_-]{20,}/g, 'bot[token]')
-    .replace(/\b\d{5,}\|[A-Za-z0-9_-]{16,}/g, '[app-token]');
-  for (const k of ['META_SYSTEM_TOKEN', 'META_APP_SECRET', 'META_VERIFY_TOKEN', 'TELEGRAM_BOT_TOKEN']) {
-    const v = env(k);
-    if (v.length >= 6) out = out.split(v).join('[hidden]');
-  }
-  return out;
-}
-
-// Every error and warning lands in MetaLog (kept 90 days, shown in the Meta tab).
-function logMeta(level, area, message, x) {
-  const m = scrub(message).slice(0, 1000);
-  (level === 'error' ? console.error : console.log)('[meta] ' + area + ': ' + m);
-  return MetaLog.create({ level, area, message: m, code: String((x && x.code) || '').slice(0, 40), path: scrub((x && x.path) || '').slice(0, 300) }).catch(() => {});
-}
-
 async function getState() { const d = await Setting.findOne({ key: STATE_KEY }).lean(); return (d && d.value) || {}; }
 async function patchState(patch) {
   const set = { updatedAt: new Date() };
@@ -124,114 +95,8 @@ async function getPrefs() { const d = await Setting.findOne({ key: PREFS_KEY }).
 let _chain = Promise.resolve();
 function enqueue(fn) { const p = _chain.then(fn); _chain = p.catch(() => {}); return p; }
 
-// ══ GRAPH API CLIENT (read-only) ══════════════════════════════
-class MetaError extends Error {
-  constructor(message, o) { super(message); Object.assign(this, { code: '', path: '', retryable: false }, o || {}); }
-}
-// Rate-limit and temporary errors worth another try (Meta's own list), plus any HTTP 5xx.
-const RETRY_CODES = new Set([4, 17, 32, 613]);
-const isRetryCode = c => RETRY_CODES.has(c) || (c >= 80000 && c <= 80014);
-function appsecretProof(token) { return crypto.createHmac('sha256', env('META_APP_SECRET')).update(token).digest('hex'); }
-
-// Meta reports how close we are to its limits in response headers. Near the
-// top we slow down; at the top we stop non-urgent calls until it says so.
-let _slowUntil = 0, _pauseUntil = 0, _usageWarnAt = 0;
-function noteUsage(h) {
-  const pct = []; let regainMin = 0;
-  const read = name => { try { return JSON.parse(h.get(name) || 'null'); } catch (e) { return null; } };
-  const app = read('x-app-usage');
-  if (app) pct.push(app.call_count, app.total_cputime, app.total_time);
-  const acct = read('x-ad-account-usage');
-  if (acct) pct.push(acct.acc_id_util_pct);
-  const buc = read('x-business-use-case-usage');
-  if (buc && typeof buc === 'object') {
-    for (const arr of Object.values(buc)) for (const u of [].concat(arr || [])) {
-      if (!u) continue;
-      pct.push(u.call_count, u.total_cputime, u.total_time);
-      regainMin = Math.max(regainMin, Number(u.estimated_time_to_regain_access) || 0);
-    }
-  }
-  const top = Math.max(0, ...pct.map(Number).filter(n => isFinite(n)));
-  if (regainMin > 0) _pauseUntil = Date.now() + Math.min(regainMin, 120) * 60e3;
-  else if (top >= 95) _pauseUntil = Date.now() + 5 * 60e3;
-  else if (top >= 75) _slowUntil = Date.now() + 60e3;
-  if (top >= 75 && Date.now() - _usageWarnAt > 10 * 60e3) { _usageWarnAt = Date.now(); logMeta('warn', 'graph', `Meta usage at ${Math.round(top)}% of its limit; slowing down`); }
-}
-
-// GET one Graph object or edge. Retries rate-limit / temporary errors up to 4
-// times with exponential backoff and jitter; every failure is logged.
-// opts: token, area, tries, quiet (no error log), urgent (ignore a usage pause), noProof.
-async function metaGet(path, params, opts) {
-  const o = opts || {};
-  const token = o.token || env('META_SYSTEM_TOKEN');
-  const p = String(path || '').replace(/^\/+/, '');
-  if (!token) throw new MetaError('META_SYSTEM_TOKEN is not set', { code: 'no_token', path: p });
-  if (!/^[A-Za-z0-9_./]+$/.test(p)) throw new MetaError('Bad Graph path', { code: 'bad_path', path: p.slice(0, 80) });
-  if (_pauseUntil > Date.now() && !o.urgent) {
-    const e = new MetaError(`Paused until ${new Date(_pauseUntil).toISOString()}: Meta usage limit reached`, { code: 'usage_pause', path: p });
-    if (!o.quiet) logMeta('warn', o.area || 'graph', e.message, e);
-    throw e;
-  }
-  const tries = Math.max(1, Math.min(4, o.tries || 4));
-  let last = null;
-  for (let i = 0; i < tries; i++) {
-    if (_slowUntil > Date.now()) await sleep(1500);
-    const qs = new URLSearchParams();
-    for (const [k, v] of Object.entries(params || {})) {
-      if (v === undefined || v === null || v === '') continue;
-      qs.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
-    }
-    qs.set('access_token', token);
-    if (!o.noProof && env('META_APP_SECRET')) qs.set('appsecret_proof', appsecretProof(token));
-    let res = null, body = null;
-    try {
-      res = await fetch(graphBase() + '/' + p + '?' + qs.toString(), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(o.timeoutMs || 20000) });
-      noteUsage(res.headers);
-      body = await res.json().catch(() => null);
-    } catch (e) {
-      last = new MetaError('Network error: ' + scrub(e.message), { code: 'network', path: p, retryable: true });
-    }
-    if (res) {
-      if (res.ok && body && !body.error) return body;
-      const er = (body && body.error) || {};
-      const code = Number(er.code) || 0;
-      last = new MetaError(scrub(er.message || ('HTTP ' + res.status)), {
-        code: code || res.status, subcode: er.error_subcode || '', status: res.status, path: p,
-        retryable: res.status >= 500 || isRetryCode(code) || er.is_transient === true
-      });
-    }
-    if (!last.retryable || i === tries - 1) break;
-    const wait = Math.min(60000, retryBase() * 2 ** i) + Math.floor(Math.random() * retryBase());
-    logMeta('warn', o.area || 'graph', `Graph error ${last.code} on ${p}: ${last.message} (try ${i + 1} of ${tries}, again in ${Math.round(wait / 100) / 10}s)`, last);
-    await sleep(wait);
-  }
-  if (!o.quiet) logMeta('error', o.area || 'graph', `Graph error ${last.code} on ${p}: ${last.message}`, last);
-  throw last;
-}
-// Follows the "after" cursor for edges that page (forms, leads, posts, ad rows).
-async function metaGetAll(path, params, opts, maxPages) {
-  const out = [];
-  let after;
-  for (let i = 0; i < (maxPages || 10); i++) {
-    const d = await metaGet(path, { ...params, after }, opts);
-    if (Array.isArray(d.data)) out.push(...d.data);
-    after = d.paging && d.paging.cursors && d.paging.cursors.after;
-    if (!after || !(d.paging && d.paging.next)) break;
-  }
-  return out;
-}
-
-// The Page's own token, derived from the system-user token and kept in memory.
-let _pageTok = { token: '', at: 0 };
-async function pageToken() {
-  if (_pageTok.token && Date.now() - _pageTok.at < 6 * 3600e3) return _pageTok.token;
-  if (!PAGE_ID()) return env('META_SYSTEM_TOKEN');
-  try {
-    const d = await metaGet(PAGE_ID(), { fields: 'access_token' }, { area: 'token', tries: 2, urgent: true });
-    if (d && typeof d.access_token === 'string' && d.access_token) { _pageTok = { token: d.access_token, at: Date.now() }; return d.access_token; }
-  } catch (e) { /* logged by metaGet; the system token can still read most things */ }
-  return env('META_SYSTEM_TOKEN');
-}
+// ══ GRAPH API CLIENT ══════════════════════════════════════════
+// metaGet / metaGetAll / pageToken: see server/meta-graph.js.
 
 // THE ONLY GRAPH WRITE: ask Meta to send this Page's events to our webhook.
 // Pressed by an admin in the Meta tab after the app is set up.
@@ -447,6 +312,12 @@ async function handleDelivery(body) {
     logMeta('info', 'webhook', `Test event from the Meta dashboard received (${clean(body.sample.field, 40) || 'unknown field'}); nothing to fetch`);
     return;
   }
+  // GLRA Social keeps its own copy of comments and messages (its inbox). This
+  // never changes what happens below: Leads still get their touches.
+  if (SOCIAL_ON()) {
+    try { await require('./social').ingestWebhook(body); }
+    catch (e) { logMeta('error', 'social', 'Social inbox could not take a webhook delivery: ' + scrub(e.message).slice(0, 200)); }
+  }
   for (const e of entries) {
     for (const ch of (Array.isArray(e && e.changes) ? e.changes : []).slice(0, 200)) {
       const v = (ch && ch.value) || {};
@@ -494,7 +365,7 @@ async function processMessage(obj, m) {
   const own = ig ? IG_ID() : PAGE_ID();
   const at = metaTime(m.timestamp) || new Date();
   const sender = String((m.sender && m.sender.id) || ''), recipient = String((m.recipient && m.recipient.id) || '');
-  if (m.message.is_echo || (own && sender === own)) {
+  if (m.message.is_echo || (own && sender === own) || G.isOwnId(sender)) {
     if (!idOk(recipient)) return 'skipped';
     return recordPageReply({ metaIds: (ig ? 'ig:' : 'fb:') + recipient }, at, ig ? 'The Page replied on Instagram' : 'The Page replied in Messenger');
   }
@@ -509,7 +380,7 @@ async function processMessage(obj, m) {
 async function processFbComment(v) {
   const from = v.from || {};
   const at = metaTime(v.created_time) || new Date();
-  if (PAGE_ID() && String(from.id) === PAGE_ID()) {
+  if ((PAGE_ID() && String(from.id) === PAGE_ID()) || G.isOwnId(from.id)) {
     if (!idOk(v.parent_id)) return 'skipped';
     return recordPageReply({ sources: { $elemMatch: { kind: 'fb_comment', refId: String(v.parent_id) } } }, at, 'The Page replied to the comment');
   }
@@ -522,7 +393,7 @@ async function processFbComment(v) {
 async function processIgComment(v) {
   const from = v.from || {};
   const at = metaTime(v.timestamp) || new Date();
-  if (IG_ID() && String(from.id) === IG_ID()) {
+  if ((IG_ID() && String(from.id) === IG_ID()) || G.isOwnId(from.id)) {
     if (!idOk(v.parent_id)) return 'skipped';
     return recordPageReply({ sources: { $elemMatch: { kind: 'ig_comment', refId: String(v.parent_id) } } }, at, 'The Page replied to the Instagram comment');
   }

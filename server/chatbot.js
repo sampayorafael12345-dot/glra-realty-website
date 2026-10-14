@@ -992,4 +992,4 @@ ${SITE_MAP}${listingContext}`;
   );
 }
 
-module.exports = { registerChatbot, invalidateChatListingsCache };
+module.exports = { registerChatbot, invalidateChatListingsCache, callGemini, callGroq };

@@ -1793,6 +1793,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
       <a class="nav-item" data-perm="customers_view" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
       <a class="nav-item" data-perm="meta_view" onclick="switchTab('meta')" style="display:none"><i class="fab fa-facebook"></i> Meta <span class="nav-badge" id="metaBadge" style="display:none">!</span></a>
+      <a class="nav-item" data-perm="social_view" href="/social.html" target="_blank" rel="noopener" style="display:none"><i class="fas fa-share-nodes"></i> Social <span class="nav-badge" id="socialBadge" style="display:none">0</span> <i class="fas fa-external-link-alt" style="font-size:9px;margin-left:auto"></i></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <a class="nav-item" id="navStaff" data-perm="tasks_view" onclick="switchTab('staff')" style="display:none"><i class="fas fa-user-check"></i> <span id="navStaffLbl">Staff</span> <span class="nav-badge" id="staffBadge" style="display:none">0</span></a>
@@ -4314,7 +4315,10 @@ const PERM_DEFS = [
   { key: 'leads_delete',            name: 'Delete / Merge Leads',    desc: 'Can delete a lead or merge duplicates' },
   { key: 'customers_view',          name: 'View Customer Lists',     desc: 'Can see Subscribers, Price Alerts, saved searches, wishlists and calculator use (names and emails)' },
   { key: 'inquiries_view',          name: 'View Inquiries',          desc: 'Can see and mark website enquiries (names, emails, phone numbers, messages)' },
-  { key: 'meta_view',               name: 'View Meta',               desc: 'Can see the Meta tab: Facebook/Instagram numbers, ad spend per campaign and the connection error log' }
+  { key: 'meta_view',               name: 'View Meta',               desc: 'Can see the Meta tab: Facebook/Instagram numbers, ad spend per campaign and the connection error log' },
+  { key: 'social_view',             name: 'View GLRA Social',        desc: 'Can open GLRA Social (social.html): the Pages, calendar, inbox, insights and activity log' },
+  { key: 'social_draft',            name: 'Write Social Drafts',     desc: 'Can write posts, replies and templates in GLRA Social. They wait for an approver; nothing goes out' },
+  { key: 'social_approve',          name: 'Approve & Publish Social', desc: 'Can publish and schedule posts, send replies, hide or delete comments on the Facebook Pages and Instagram (owner-level trust)' }
 ];
 
 const DEFAULT_EMPLOYEE_PERMS = {
@@ -4329,7 +4333,8 @@ const DEFAULT_EMPLOYEE_PERMS = {
   leasing_view: false, leasing_manage: false,
   leads_view: true, leads_manage: true, leads_delete: false,
   customers_view: true, inquiries_view: true,
-  meta_view: false
+  meta_view: false,
+  social_view: false, social_draft: false, social_approve: false
 };
 
 // Check if the currently logged-in user has a permission.
@@ -4751,6 +4756,7 @@ function loadAll(){
   if(hasPerm('tasks_view')){ add('tasks',loadTasksData); add('staff',sfLoad); }
   if(hasPerm('leads_view')) add('leads',loadLeads);
   if(hasPerm('meta_view')) add('meta',loadMeta);
+  if(hasPerm('social_view')) jobs.push(loadSocialBadge);
   if(hasPerm('titling_view')) add('titling',loadTitling);
   if(hasPerm('cases_view')) add('cases',loadCases);
   if(hasPerm('leasing_view')) add('leasing',loadLeasing);
@@ -13974,6 +13980,20 @@ async function mtLoadLogs(){
   var lv = (document.getElementById('mtLogLevel') || {}).value || '';
   var d = await mtGet('/api/admin/meta/logs?limit=150' + (lv ? '&level=' + lv : ''));
   MT.logs = d.logs || [];
+}
+// GLRA Social (social.html) badge on the menu link: posts and replies waiting
+// for approval plus overdue conversations; "!" when a Page connection has a problem.
+// The module may be switched off (404): then the badge simply stays hidden.
+async function loadSocialBadge(){
+  try{
+    const r=await fetch('/api/admin/social/badge',{headers:{Authorization:'Bearer '+getToken()}});
+    if(!r.ok) return;
+    const b=await r.json(), el=document.getElementById('socialBadge');
+    if(!el) return;
+    const n=(b.pending||0)+(b.unanswered||0);
+    el.textContent=b.tokenProblem?'!':String(n);
+    el.style.display=(b.tokenProblem||n)?'':'none';
+  }catch(e){}
 }
 async function loadMeta(){
   if(!hasPerm('meta_view')) return;

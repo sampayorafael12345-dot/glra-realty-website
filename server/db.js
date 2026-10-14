@@ -766,7 +766,12 @@ const PERMISSION_KEYS = [
   'leads_delete',        // delete or merge leads
   'customers_view',      // see Subscribers, Price Alerts, saved searches, wishlists, calculator use
   'inquiries_view',      // see and mark website enquiries
-  'meta_view'            // see the Meta tab: Facebook/Instagram insights, ad results, Meta error log (admin-only by default)
+  'meta_view',           // see the Meta tab: Facebook/Instagram insights, ad results, Meta error log (admin-only by default)
+  // GLRA Social (social.html): staff draft, the owner approves. Only
+  // social_approve can publish, send, hide or delete anything on a Page.
+  'social_view',         // open GLRA Social: Pages, calendar, inbox, insights, activity
+  'social_draft',        // write posts, replies and templates (they wait for approval)
+  'social_approve'       // approve: publish / schedule posts, send replies, hide or delete comments
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
@@ -832,7 +837,13 @@ function defaultPermissionsForRole(role) {
     inquiries_view: true,
     // Ad spend and the Meta connection's error log are the owner's view; an
     // admin can switch it on for a staff member in Accounts.
-    meta_view: false
+    meta_view: false,
+    // GLRA Social is switched on per person by an admin in Accounts, like the
+    // Meta tab: social_view + social_draft for a staff member who posts, and
+    // social_approve only for someone trusted to publish (Catherine).
+    social_view: false,
+    social_draft: false,
+    social_approve: false
   };
 }
 
@@ -1621,6 +1632,223 @@ const metaDailySchema = new mongoose.Schema({
 });
 metaDailySchema.index({ date: 1, surface: 1 }, { unique: true });
 
+// ── GLRA SOCIAL (server/social.js, public/social.html) ────────
+// SocialPost: one composition for one or more Pages / Instagram accounts.
+// Each target is one network on one Page and carries its own result.
+// Flow: draft -> pending (waiting for approval) -> approved -> publishing ->
+// published | failed (or changes: sent back with a note). Only an account
+// with social_approve moves a post past "pending" (enforced in social.js).
+const socialTargetSchema = new mongoose.Schema({
+  network:     { type: String, enum: ['fb', 'ig'], required: true },
+  pageId:      { type: String, required: true },
+  igId:        { type: String, default: '' },
+  caption:     { type: String, default: '', maxlength: 5000 },  // per-network text (empty = the shared caption)
+  status:      { type: String, default: 'draft' },  // draft | waiting | scheduled | publishing | container | published | failed | cancelled
+  metaId:      { type: String, default: '' },        // the published (or natively scheduled) post / media id
+  containerId: { type: String, default: '' },        // Instagram media container while it processes
+  permalink:   { type: String, default: '' },
+  error:       { type: String, default: '', maxlength: 600 },
+  unknown:     { type: Boolean, default: false },    // a write that may or may not have reached Meta
+  attempts:    { type: Number, default: 0 },
+  publishedAt: { type: Date, default: null },
+  stats:       { type: mongoose.Schema.Types.Mixed, default: undefined }
+}, { _id: true });
+const socialPostSchema = new mongoose.Schema({
+  title:       { type: String, default: '', maxlength: 200 },   // internal label
+  caption:     { type: String, default: '', maxlength: 5000 },
+  link:        { type: String, default: '', maxlength: 1000 },  // Facebook link posts only
+  media:       { type: [{ _id: false, url: String, type: { type: String, default: 'image' }, width: Number, height: Number, publicId: String, mediaId: String }], default: [] },
+  targets:     { type: [socialTargetSchema], default: [] },
+  status:      { type: String, default: 'draft' },  // draft | pending | changes | approved | publishing | scheduled | published | partial | failed | cancelled
+  scheduledAt: { type: Date, default: null },       // null = as soon as approved
+  propertyId:  { type: String, default: '' },
+  batchId:     { type: String, default: '' },
+  recurringId: { type: String, default: '' },
+  origin:      { type: String, default: 'compose' }, // compose | listing | csv | recurring | review_key
+  createdBy:   { id: String, name: String, email: String, via: { type: String, default: 'user' } },
+  submittedAt: { type: Date, default: null },
+  approvedBy:  { id: String, name: String, email: String, via: String },
+  approvedAt:  { type: Date, default: null },
+  reviewNote:  { type: String, default: '', maxlength: 1000 },
+  history:     { type: [{ _id: false, at: Date, by: String, action: String, note: String }], default: [] },
+  createdAt:   { type: Date, default: Date.now },
+  updatedAt:   { type: Date, default: Date.now }
+});
+socialPostSchema.index({ status: 1, scheduledAt: 1 });
+socialPostSchema.index({ 'targets.metaId': 1 });
+socialPostSchema.index({ batchId: 1 });
+// SocialTemplate: caption templates, saved replies and hashtag sets.
+const socialTemplateSchema = new mongoose.Schema({
+  kind:      { type: String, enum: ['caption', 'reply', 'hashtags'], required: true },
+  name:      { type: String, required: true, maxlength: 120 },
+  text:      { type: String, default: '', maxlength: 5000 },
+  pageId:    { type: String, default: '' },   // '' = every Page
+  topic:     { type: String, default: '', maxlength: 60 },
+  createdBy: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+});
+socialTemplateSchema.index({ kind: 1, name: 1 });
+// SocialItem: one comment or message on a Page or its Instagram account (the
+// inbox). threadKey groups a conversation (messages) or a comment thread.
+const socialItemSchema = new mongoose.Schema({
+  kind:      { type: String, required: true },  // fb_comment | ig_comment | messenger | ig_dm
+  metaId:    { type: String, required: true },  // comment id or message mid
+  threadKey: { type: String, required: true },
+  pageId:    { type: String, default: '' },
+  igId:      { type: String, default: '' },
+  postId:    { type: String, default: '' },     // post / media the comment is on
+  parentId:  { type: String, default: '' },
+  fromId:    { type: String, default: '' },
+  fromName:  { type: String, default: '', maxlength: 200 },
+  own:       { type: Boolean, default: false }, // written by the Page itself
+  text:      { type: String, default: '', maxlength: 4000 },
+  link:      { type: String, default: '' },
+  hidden:    { type: Boolean, default: false },
+  deleted:   { type: Boolean, default: false },
+  at:        { type: Date, default: Date.now }
+});
+socialItemSchema.index({ metaId: 1 }, { unique: true });
+socialItemSchema.index({ threadKey: 1, at: 1 });
+// SocialThread: one row per conversation / top-level comment, for the inbox
+// list: last inbound time (the 24-hour window and the unanswered flag), tags,
+// who it is assigned to.
+const socialThreadSchema = new mongoose.Schema({
+  key:           { type: String, required: true },
+  kind:          { type: String, required: true },
+  pageId:        { type: String, default: '' },
+  igId:          { type: String, default: '' },
+  userId:        { type: String, default: '' },  // the person (message threads)
+  name:          { type: String, default: '', maxlength: 200 },
+  snippet:       { type: String, default: '', maxlength: 300 },
+  postId:        { type: String, default: '' },
+  link:          { type: String, default: '' },
+  lastAt:        { type: Date, default: null },
+  lastInboundAt: { type: Date, default: null },
+  lastOwnAt:     { type: Date, default: null },
+  firstInboundAt:{ type: Date, default: null },
+  firstReplyAt:  { type: Date, default: null },
+  status:        { type: String, default: 'open' },  // open | done
+  tags:          { type: [String], default: [] },
+  autoTags:      { type: [String], default: [] },
+  sentiment:     { type: String, default: '' },      // positive | neutral | negative
+  assignedTo:    { id: String, name: String },
+  updatedAt:     { type: Date, default: Date.now }
+});
+socialThreadSchema.index({ key: 1 }, { unique: true });
+socialThreadSchema.index({ pageId: 1, lastAt: -1 });
+// SocialAction: an inbox action waiting for approval (reply, hide, unhide, delete).
+const socialActionSchema = new mongoose.Schema({
+  kind:       { type: String, enum: ['reply', 'hide', 'unhide', 'delete'], required: true },
+  itemId:     { type: String, default: '' },  // SocialItem _id
+  threadKey:  { type: String, default: '' },
+  pageId:     { type: String, default: '' },
+  network:    { type: String, default: '' },
+  text:       { type: String, default: '', maxlength: 2000 },
+  status:     { type: String, default: 'pending' },  // pending | done | failed | rejected
+  createdBy:  { id: String, name: String, email: String, via: { type: String, default: 'user' } },
+  approvedBy: { id: String, name: String, email: String, via: String },
+  metaId:     { type: String, default: '' },
+  error:      { type: String, default: '', maxlength: 600 },
+  note:       { type: String, default: '', maxlength: 600 },
+  createdAt:  { type: Date, default: Date.now },
+  doneAt:     { type: Date, default: null }
+});
+socialActionSchema.index({ status: 1, createdAt: -1 });
+// SocialLog: every action GLRA Social takes (who, what, which Page, Meta's id).
+const socialLogSchema = new mongoose.Schema({
+  at:       { type: Date, default: Date.now },
+  actor:    { type: String, default: '' },
+  actorName:{ type: String, default: '' },
+  via:      { type: String, default: 'user' },  // user | review_key | email_link | system
+  action:   { type: String, required: true },   // drafted | submitted | approved | rejected | published | failed | replied | hidden | ...
+  pageId:   { type: String, default: '' },
+  network:  { type: String, default: '' },
+  target:   { type: String, default: '' },      // post | action | thread | template | media | key | settings
+  targetId: { type: String, default: '' },
+  metaId:   { type: String, default: '' },
+  summary:  { type: String, default: '', maxlength: 500 },
+  ok:       { type: Boolean, default: true }
+});
+socialLogSchema.index({ at: -1 });
+socialLogSchema.index({ action: 1, at: -1 });
+// SocialMedia: the media library (Cloudinary uploads and registered links).
+const socialMediaSchema = new mongoose.Schema({
+  url:       { type: String, required: true, maxlength: 1000 },
+  publicId:  { type: String, default: '' },
+  type:      { type: String, default: 'image' },   // image | video
+  width:     { type: Number, default: 0 },
+  height:    { type: Number, default: 0 },
+  bytes:     { type: Number, default: 0 },
+  format:    { type: String, default: '' },
+  name:      { type: String, default: '', maxlength: 200 },
+  tags:      { type: [String], default: [] },
+  createdBy: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now }
+});
+socialMediaSchema.index({ createdAt: -1 });
+// SocialRecurring: a repeating post ("Listing of the week"). Each run makes a
+// post that waits for approval like any other.
+const socialRecurringSchema = new mongoose.Schema({
+  name:      { type: String, required: true, maxlength: 120 },
+  mode:      { type: String, default: 'text' },   // text | listing (rotates through live listings)
+  caption:   { type: String, default: '', maxlength: 5000 },
+  media:     { type: [{ _id: false, url: String, type: { type: String, default: 'image' }, width: Number, height: Number }], default: [] },
+  link:      { type: String, default: '' },
+  targets:   { type: [{ _id: false, network: String, pageId: String }], default: [] },
+  weekday:   { type: Number, default: 1 },        // 0 Sunday .. 6 Saturday (Manila)
+  time:      { type: String, default: '19:00' },  // HH:MM Manila
+  leadDays:  { type: Number, default: 2 },        // the draft is made this many days before
+  active:    { type: Boolean, default: true },
+  lastRunFor:{ type: String, default: '' },       // YYYY-MM-DD of the last occurrence drafted
+  usedListings: { type: [String], default: [] },
+  createdBy: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now }
+});
+// SocialDaily: one row per day, Page and surface (fb | ig): the insights snapshot.
+const socialDailySchema = new mongoose.Schema({
+  date:    { type: String, required: true },
+  pageId:  { type: String, required: true },
+  surface: { type: String, required: true },
+  metrics: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+  updatedAt: { type: Date, default: Date.now }
+});
+socialDailySchema.index({ date: 1, pageId: 1, surface: 1 }, { unique: true });
+// SocialPostStat: every published post on the Pages / Instagram accounts (made
+// here or not) with its engagement, for top posts, best time and the review feed.
+const socialPostStatSchema = new mongoose.Schema({
+  metaId:    { type: String, required: true },
+  pageId:    { type: String, default: '' },
+  network:   { type: String, default: 'fb' },
+  at:        { type: Date, default: null },
+  text:      { type: String, default: '', maxlength: 2200 },
+  permalink: { type: String, default: '' },
+  mediaType: { type: String, default: '' },
+  thumb:     { type: String, default: '' },
+  reactions: { type: Number, default: 0 },
+  comments:  { type: Number, default: 0 },
+  shares:    { type: Number, default: 0 },
+  saves:     { type: Number, default: 0 },
+  reach:     { type: Number, default: null },
+  views:     { type: Number, default: null },
+  engagement:{ type: Number, default: 0 },
+  postRef:   { type: String, default: '' },  // SocialPost _id when it was made here
+  fetchedAt: { type: Date, default: Date.now }
+});
+socialPostStatSchema.index({ metaId: 1 }, { unique: true });
+socialPostStatSchema.index({ pageId: 1, at: -1 });
+// SocialLinkToken: one-time approve / reject links emailed to approvers.
+// Only the SHA-256 of the token is stored.
+const socialLinkTokenSchema = new mongoose.Schema({
+  hash:      { type: String, required: true },
+  kind:      { type: String, enum: ['post', 'action'], required: true },
+  ref:       { type: String, required: true },
+  accountId: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+  usedAt:    { type: Date, default: null },
+  createdAt: { type: Date, default: Date.now, expires: 30 * 24 * 3600 }
+});
+socialLinkTokenSchema.index({ hash: 1 }, { unique: true });
+
 // ============================================================================
 // COMPILED MODELS
 // ============================================================================
@@ -1672,6 +1900,17 @@ const ListingView       = mongoose.model('ListingView',       listingViewSchema)
 const MetaEvent         = mongoose.model('MetaEvent',         metaEventSchema);
 const MetaLog           = mongoose.model('MetaLog',           metaLogSchema);
 const MetaDaily         = mongoose.model('MetaDaily',         metaDailySchema);
+const SocialPost        = mongoose.model('SocialPost',        socialPostSchema);
+const SocialTemplate    = mongoose.model('SocialTemplate',    socialTemplateSchema);
+const SocialItem        = mongoose.model('SocialItem',        socialItemSchema);
+const SocialThread      = mongoose.model('SocialThread',      socialThreadSchema);
+const SocialAction      = mongoose.model('SocialAction',      socialActionSchema);
+const SocialLog         = mongoose.model('SocialLog',         socialLogSchema);
+const SocialMedia       = mongoose.model('SocialMedia',       socialMediaSchema);
+const SocialRecurring   = mongoose.model('SocialRecurring',   socialRecurringSchema);
+const SocialDaily       = mongoose.model('SocialDaily',       socialDailySchema);
+const SocialPostStat    = mongoose.model('SocialPostStat',    socialPostStatSchema);
+const SocialLinkToken   = mongoose.model('SocialLinkToken',   socialLinkTokenSchema);
 
 module.exports = {
   // models
@@ -1713,6 +1952,8 @@ module.exports = {
   MetaEvent,
   MetaLog,
   MetaDaily,
+  SocialPost, SocialTemplate, SocialItem, SocialThread, SocialAction, SocialLog, SocialMedia,
+  SocialRecurring, SocialDaily, SocialPostStat, SocialLinkToken,
   LEAD_STAGES,
   LEAD_TYPES,
   AGENT_LEAD_STAGES,

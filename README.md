@@ -108,3 +108,45 @@ Other settings: `META_APP_ID`, `META_APP_SECRET`, `META_VERIFY_TOKEN`,
   local server pointed at a stub Graph API (`META_GRAPH_BASE` and
   `TELEGRAM_API_BASE` are honoured only for a localhost address). Read the
   top of that file for how to run it.
+
+## GLRA Social (Facebook and Instagram Page manager)
+
+`public/social.html` (+ `public/js/social.js`, `public/css/social.css`) is a
+private page for the three Facebook Pages and their Instagram accounts. It
+opens from the admin menu ("Social", new tab) and uses the same admin sign-in
+and the same Glass / Bold, dark / light look. Server: `server/social.js`
+(routes, approvals, publisher clock, inbox, insights), `server/social-ai.js`
+(AI drafts), `server/social-report.js` (weekly email + PDF). The Graph client
+shared with `server/meta.js` lives in `server/meta-graph.js`.
+
+- **Switch:** `SOCIAL_ENABLED=1` in Render, plus `META_PAGE_IDS` (comma
+  separated). Off = every route 404 and no timers. Tokens stay in the
+  environment (`META_SYSTEM_TOKEN`); Page tokens are fetched and kept in memory.
+- **Permissions (Accounts):** `social_view` (open it), `social_draft` (write
+  posts, replies, templates), `social_approve` (publish, schedule, send, hide,
+  delete). All off for a new staff account. The server refuses anything that
+  reaches a Page without `social_approve`; approvals and deletions also go to
+  the Audit Log, everything to the Social activity log (`SocialLog`).
+- **Publishing:** Facebook scheduled posts use Facebook's own scheduler (10
+  minutes to 75 days ahead). Instagram has no API scheduler: a per-minute
+  clock in the server publishes it (keep the server awake: Render Starter).
+  Links to glrarealty.com get `utm_*` tags naming the post and Page, so leads
+  are credited to the post.
+- **Inbox:** comments and messages arrive through the same signed webhook
+  (`/api/meta/webhook`, forwarded to Social while it is on) and a 10-minute
+  check. Replies to messages only within 24 hours of the person's last
+  message.
+- **Extras:** listing studio, AI drafts (Gemini / Groq keys of the website
+  chat; always a draft), best time to post, hashtag sets, media library with
+  Instagram ratio checks, recurring posts, CSV bulk scheduling (approve a
+  batch in one click), one-time approve links by email
+  (`social-approve.html`), weekly report email + PDF.
+- **Claude review key:** made / revoked by an admin in Settings, stored as a
+  hash. `GET /api/social/review/summary|posts|insights|inbox` (masked: names
+  as initials, phones and emails removed) and `POST /api/social/review/drafts`
+  / `reply-drafts` (always waiting for approval). Header `x-glra-review-key`.
+  Every call is logged.
+- **Ads are read-only.** No code creates, edits or pauses ads or budgets.
+- **Testing locally:** `scripts/test-social.js` (stub Graph API + stub AI on
+  localhost; read the top of the file). Run it on a freshly started stack;
+  `--off` checks a stack started without `SOCIAL_ENABLED`.

@@ -232,7 +232,7 @@ app.use((req, res, next) => {
 });
 // Signed-in dashboards return clients', tenants' and leads' details: nothing
 // in between (a shared computer's cache, a proxy) may keep a copy.
-app.use(['/api/admin', '/api/agent', '/api/staff-bot'], (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+app.use(['/api/admin', '/api/agent', '/api/staff-bot', '/api/social'], (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 // Helmet — sensible default security headers.
 // CSP is configured separately below rather than here, so keep it off in the
@@ -317,7 +317,9 @@ app.use(helmet.contentSecurityPolicy({
     'img-src': ["'self'", 'data:', 'blob:',
       'https://res.cloudinary.com',
       'https://*.clarity.ms', 'https://c.bing.com',
-      'https://*.tile.openstreetmap.org', 'https://tile.openstreetmap.org'],  // properties.html map view
+      'https://*.tile.openstreetmap.org', 'https://tile.openstreetmap.org',  // properties.html map view
+      // social.html: Page pictures, post and Instagram thumbnails served by Meta's CDNs.
+      'https://*.fbcdn.net', 'https://*.cdninstagram.com', 'https://platform-lookaside.fbsbx.com'],
     // Clarity's beacon host is region-sharded — a.clarity.ms through
     // z.clarity.ms. The live page uses n.clarity.ms, which was on none of the
     // three lists above, so every visit logged a violation and the policy
@@ -337,7 +339,8 @@ app.use(helmet.contentSecurityPolicy({
       // 3D view (js/glra-maps.js): OpenFreeMap's style, tiles, fonts and icons.
       'https://tiles.openfreemap.org'],
     'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
-    'media-src': ["'self'"],
+    // social.html previews a video uploaded to Cloudinary before it is posted.
+    'media-src': ["'self'", 'https://res.cloudinary.com'],
     // Without this, manifest-src falls back to default-src. That happens to be
     // 'self' and so happens to work - but the day this policy is enforced is
     // not the day to find out by having every home-screen icon stop working.
@@ -515,7 +518,7 @@ const COUNTABLE_PAGES = (() => {
   const set = new Set(['home', 'property-detail']);
   try {
     fs.readdirSync(path.join(__dirname, 'public'))
-      .filter(f => f.endsWith('.html') && f !== 'admin.html' && f !== '404.html')
+      .filter(f => f.endsWith('.html') && !['admin.html', '404.html', 'social.html', 'social-approve.html'].includes(f))
       .forEach(f => set.add(f.replace(/\.html$/, '')));
   } catch (e) { /* fall back to the two defaults */ }
   return set;
@@ -676,7 +679,7 @@ app.use(express.static('public', {
       // The two private portals say noindex in their <head> already; saying it
       // in the header too means the instruction survives a fetch that never
       // parses the HTML.
-      if (/(admin|agent)\.html$/i.test(path)) {
+      if (/(admin|agent|social|social-approve)\.html$/i.test(path)) {
         res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
       } else if (NOINDEX_HTML.has(String(path).split(/[\\/]/).pop().toLowerCase())) {
         res.setHeader('X-Robots-Tag', 'noindex');
@@ -1242,7 +1245,7 @@ const PAGE_IMAGES = (() => {
   const map = {};
   try {
     const dir = path.join(__dirname, 'public');
-    fs.readdirSync(dir).filter(f => f.endsWith('.html') && !['admin.html', 'agent.html', '404.html'].includes(f))
+    fs.readdirSync(dir).filter(f => f.endsWith('.html') && !['admin.html', 'agent.html', '404.html', 'social.html', 'social-approve.html'].includes(f))
       .forEach(f => {
         const html = fs.readFileSync(path.join(dir, f), 'utf8');
         const seen = new Set();
@@ -3573,6 +3576,13 @@ require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
 const { registerMetaRoutes, startMetaTick } = require('./server/meta');
 registerMetaRoutes(app, { sendEmail, esc });
 startMetaTick({ sendEmail, esc });
+// ============ GLRA SOCIAL (Facebook / Instagram Page manager) ============
+// social.html: posting, scheduling, approvals, inbox, insights, activity log
+// for the Pages in META_PAGE_IDS. Off unless SOCIAL_ENABLED=1 (routes 404).
+// Staff draft; only social_approve publishes, sends, hides or deletes.
+const { registerSocialRoutes, startSocialTick } = require('./server/social');
+registerSocialRoutes(app, { sendEmail, esc, cloudinary });
+startSocialTick({ sendEmail, esc, cloudinary });
 // One-time notes for the staff member's desk (listing problems found on 30 Sept).
 setTimeout(() => require('./server/staff-memo').deliverStaffMemos(), 60e3);
 

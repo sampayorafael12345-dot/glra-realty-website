@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>GLRA Social</title>
+<!-- The admin's look (Glass / Bold, dark / light) is set before anything paints,
+     from the same localStorage keys the admin uses. Classic has no social
+     design, so it shows as Glass here. -->
+<script>(function(){var l='glass',d=false;try{l=localStorage.getItem('glra.admin.look')||'glass';d=localStorage.getItem('darkMode')==='true'}catch(e){}if(l!=='glass'&&l!=='bold')l='glass';var h=document.documentElement;h.setAttribute('data-glra-look',l);h.setAttribute('data-glra-mode',d?'dark':'light')})();</script>
+<link rel="icon" href="/img/favicon.ico.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="/css/admin-looks.css?v=5">
+<link rel="stylesheet" href="/css/social.css?v=1">
+<meta name="theme-color" content="#140d09">
+</head>
+<body class="so">
+<div class="so-bg" aria-hidden="true"></div>
+<header class="so-top">
+  <div class="so-top-in">
+    <a class="so-brand" href="/social.html"><img src="/img/hero-logo-384.png" alt="" width="32" height="32"><span>GLRA Social<small>Facebook &amp; Instagram</small></span></a>
+    <select class="so-pagesel" id="pageSel" aria-label="Which Page"><option value="">All Pages</option></select>
+    <span class="so-spacer"></span>
+    <div class="so-seg" role="group" aria-label="Look">
+      <button type="button" data-look="glass" aria-pressed="false">Glass</button>
+      <button type="button" data-look="bold" aria-pressed="false">Bold</button>
+    </div>
+    <button type="button" class="so-iconbtn" id="modeBtn" aria-label="Dark or light"><i class="fas fa-moon"></i></button>
+    <span class="so-user" id="whoami"></span>
+    <a class="so-iconbtn" href="/admin.html" title="Back to the admin"><i class="fas fa-arrow-left"></i><span class="so-looklabel">Admin</span></a>
+  </div>
+  <nav class="so-tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+</header>
+<main class="so-main" id="view"><div class="so-center"><div class="so-spin" role="status" aria-label="Loading"></div></div></main>
+<div class="so-toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/js/social.js?v=1"></script>
+</body>
+</html>
