@@ -174,7 +174,13 @@ function mapLeadFields(d) {
   }
   const human = k => k.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/[?:]+$/, '').replace(/^./, c => c.toUpperCase());
   const interest = extra.find(([k]) => /property|interested|service/.test(k));
-  const optIn = extra.some(([k, v]) => /marketing|updates|newsletter|similar listings|consent|contact me about/.test(k) && /^(yes|true|oo|agree|i agree|opo)\b/i.test(v));
+  // Marketing consent only from a question that is plainly about marketing.
+  // A bare "consent" field is usually Meta's privacy-policy / data-processing
+  // tick, which agrees to THIS enquiry being handled, not to listing emails
+  // (RA 10173: consent must be specific). Keys are compared with _ and - as spaces.
+  const MARKETING_KEY = /\b(marketing|newsletters?|promotions?|promotional|similar listings|new listings|other listings|listing updates|property updates|email updates|receive updates|send me updates|contact me about (other|new|similar))\b/;
+  const NOT_MARKETING = /\b(privacy|terms|data processing|data privacy|policy)\b/;
+  const optIn = extra.some(([k, v]) => { const kk = k.replace(/[_-]+/g, ' '); return MARKETING_KEY.test(kk) && !NOT_MARKETING.test(kk) && /^(yes|true|oo|agree|i agree|opo)\b/i.test(v); });
   const platform = String(d.platform || '').toLowerCase();
   const ig = platform === 'ig' || platform === 'instagram';
   const where = ig ? 'Instagram' : 'Facebook';

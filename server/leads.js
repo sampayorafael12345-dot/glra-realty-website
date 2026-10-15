@@ -25,6 +25,8 @@ const { Lead, ListingView, CalcUsage, Property, Inquiry, PropertySubmission, Sav
 const { verifyToken, requirePermission, logAudit } = require('./auth');
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 const { applyWebsiteCover } = require('./cover');
+const { findListingsLite, toObjectId } = require('./listing-lite');
+const crypto = require('crypto');
 
 const SITE_URL = 'https://glrarealty.com';
 const BROKER_INBOX = 'glrarealty@gmail.com';
@@ -402,7 +404,8 @@ function matchListings(lead, listings, limit) {
 let _liveCache = { at: 0, rows: null };
 async function liveListings() {
   if (_liveCache.rows && Date.now() - _liveCache.at < 5 * 60e3) return _liveCache.rows;
-  const rows = (await Property.find({ status: 'available' }).select('title location listingType price monthlyRental propertyType bedrooms mainImage gallery coverImage createdAt').lean()).map(applyWebsiteCover);
+  // Through findListingsLite: a base64 photo stays in the database as a stub.
+  const rows = (await findListingsLite({ status: 'available' }, ['title', 'location', 'listingType', 'price', 'monthlyRental', 'propertyType', 'bedrooms', 'createdAt'])).map(applyWebsiteCover);
   _liveCache = { at: Date.now(), rows };
   return rows;
 }
@@ -479,7 +482,30 @@ function leadStats(leads) {
 
 // ── EMAILS ───────────────────────────────────────────────────
 function peso(n) { n = Number(n) || 0; return '₱' + n.toLocaleString('en-US', { maximumFractionDigits: 0 }); }
-function listingsEmail(lead, props, note, esc, senderName) {
+// The personal unsubscribe link, signed exactly like unsubUrl() in server.js
+// (same secret, same 'unsub:' prefix), so it opens the same /unsubscribe page.
+// server.js may pass its own unsubUrl to registerLeadRoutes; this is the
+// stand-in when it does not.
+function leadUnsubUrl(email) {
+  const e = String(email || '').toLowerCase().trim();
+  const secret = process.env.LINK_SECRET || process.env.JWT_SECRET || '';
+  const t = crypto.createHmac('sha256', secret).update('unsub:' + e).digest('hex').slice(0, 32);
+  return `${SITE_URL}/unsubscribe?e=${encodeURIComponent(e)}&t=${t}`;
+}
+// Has this person themselves asked for listings? An enquiry or a viewing
+// request is a question we are answering. A saved search or price alert only
+// counts once its confirmation link was clicked; older price alerts made
+// before confirmation existed read back as confirmed (see priceAlertSchema).
+async function hasAskedForListings(lead) {
+  const src = lead.sources || [];
+  if (src.some(s => ['inquiry', 'viewing'].includes(s.kind))) return true;
+  const ids = kind => src.filter(s => s.kind === kind && /^[a-f0-9]{24}$/i.test(String(s.refId || ''))).map(s => String(s.refId));
+  const alertIds = ids('price_alert'), searchIds = ids('saved_search');
+  if (alertIds.length && await PriceAlert.exists({ _id: { $in: alertIds }, confirmed: { $ne: false } })) return true;
+  if (searchIds.length && await SavedSearch.exists({ _id: { $in: searchIds }, confirmed: true })) return true;
+  return false;
+}
+function listingsEmail(lead, props, note, esc, senderName, unsubLink) {
   const first = String(lead.name || '').trim().split(/\s+/)[0] || 'there';
   const cards = props.map(p => {
     const rent = isLeaseListing(p) || (String(p.listingType || '').toUpperCase() === 'SALE AND LEASE' && lead.intent && lead.intent.deal === 'rent');
@@ -501,12 +527,12 @@ function listingsEmail(lead, props, note, esc, senderName) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:18px 0">${cards}</table>
     <p style="color:#0a0a0a;line-height:1.6;font-size:14px">Just reply to this email, or message us on WhatsApp at +63 917 177 4572, and I will arrange a viewing.</p>
     <p style="color:#0a0a0a;line-height:1.6;font-size:14px;margin-top:22px">${esc(senderName || 'Catherine')}<br><strong>GLRA Realty</strong></p>
-    <p style="color:#777;font-size:11px;line-height:1.5;margin-top:22px">You are receiving this because you contacted GLRA Realty about a property. If you would rather not get listings from us, reply "stop" and we will not send any more.</p>
+    <p style="color:#777;font-size:11px;line-height:1.5;margin-top:22px">You are receiving this because you contacted GLRA Realty about a property. ${unsubLink ? `<a href="${esc(unsubLink)}" style="color:#777;text-decoration:underline">Unsubscribe</a> and we will not send you listings again, or reply "stop".` : 'If you would rather not get listings from us, reply "stop" and we will not send any more.'}</p>
   ` + getEmailFooter();
 }
 
 // ── ROUTES ───────────────────────────────────────────────────
-function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
+function registerLeadRoutes(app, { sendEmail, esc, handleValidation, unsubUrl: unsubUrlIn }) {
   const view = [verifyToken, requirePermission('leads_view')];
   const manage = [verifyToken, requirePermission('leads_manage')];
   const del = [verifyToken, requirePermission('leads_delete')];
@@ -715,15 +741,19 @@ function registerLeadRoutes(app, { sendEmail, esc, handleValidation }) {
       if (await Subscriber.exists({ email: to, isActive: false })) return res.status(400).json({ error: 'This person used an unsubscribe link, so GLRA does not email them listings.' });
       // Replying about homes to someone who asked us for homes is answering
       // their request. Anyone else needs a recorded marketing consent first.
-      const asked = (lead.sources || []).some(s => ['inquiry', 'viewing', 'saved_search', 'price_alert', 'wishlist'].includes(s.kind));
-      if (!asked && !(lead.consent && lead.consent.marketing)) return res.status(400).json({ error: 'This person has not asked us about a property and has not agreed to receive listings. Record their consent first.' });
+      // A price alert or saved search counts only once its email link was
+      // clicked (double opt-in): anyone can type a stranger's address into
+      // those forms. A wishlist save is not a request to be emailed at all.
+      if (!(await hasAskedForListings(lead)) && !(lead.consent && lead.consent.marketing)) return res.status(400).json({ error: 'This person has not asked us about a property and has not agreed to receive listings. Record their consent first.' });
       const ids = (Array.isArray(b.propertyIds) ? b.propertyIds : []).map(String).filter(x => /^[a-f0-9]{24}$/i.test(x)).slice(0, 8);
       if (!ids.length) return res.status(400).json({ error: 'Pick at least one listing.' });
-      const props = (await Property.find({ _id: { $in: ids }, status: 'available' }).select('title location listingType price monthlyRental mainImage gallery coverImage').lean()).map(applyWebsiteCover);
+      const props = (await findListingsLite({ _id: { $in: ids.map(toObjectId) }, status: 'available' }, ['title', 'location', 'listingType', 'price', 'monthlyRental'])).map(applyWebsiteCover);
       if (!props.length) return res.status(400).json({ error: 'Those listings are no longer live.' });
       const w = who(req);
-      const html = listingsEmail(lead.toObject(), props, cleanText(b.note, 1500), esc, cleanText(b.senderName, 80) || 'Catherine');
-      const r = await sendEmail(to, cleanText(b.subject, 140) || `${props.length === 1 ? 'A listing' : props.length + ' listings'} picked for you - GLRA Realty`, html, 'GLRA Realty', { email: BROKER_INBOX, name: 'GLRA Realty' });
+      const unsub = (typeof unsubUrlIn === 'function' ? unsubUrlIn : leadUnsubUrl)(to);
+      const html = listingsEmail(lead.toObject(), props, cleanText(b.note, 1500), esc, cleanText(b.senderName, 80) || 'Catherine', unsub);
+      const r = await sendEmail(to, cleanText(b.subject, 140) || `${props.length === 1 ? 'A listing' : props.length + ' listings'} picked for you - GLRA Realty`, html, 'GLRA Realty', { email: BROKER_INBOX, name: 'GLRA Realty' }, null,
+        { 'List-Unsubscribe': `<${unsub}>, <mailto:${BROKER_INBOX}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' });
       if (!r || !r.success) return res.status(502).json({ error: 'The email could not be sent. Try again in a minute.' });
       pushActivity(lead, { type: 'listings_sent', text: `Emailed ${props.length} listing${props.length === 1 ? '' : 's'}: ${props.map(p => p.title).join('; ').slice(0, 900)}`, at: new Date(), ...w });
       lead.updatedAt = new Date();

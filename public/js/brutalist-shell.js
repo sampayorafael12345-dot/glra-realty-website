@@ -109,7 +109,8 @@
         +   '<a>Guides ▾</a>'
         +   '<div class="nav-dropdown-menu">'
         +     '<a href="/guide.html">// Doc Guide</a>'
-        +     '<a href="/blog.html">// Journal</a>'
+        +     '<a href="/faq.html">// FAQ</a>'
+        +     '<a href="/blog.html">// Blog</a>'
         +     '<a href="/neighborhoods.html">// Neighborhoods</a>'
         +     '<a href="/testimonials.html">// Testimonials</a>'
         +     '<a href="/list-property.html">// List Your Property</a>'
@@ -162,6 +163,7 @@
         + '<a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>'
         + '<a href="/blog.html" onclick="closeMobileMenu()">Blog</a>'
         + '<a href="/guide.html" onclick="closeMobileMenu()">Doc Guide</a>'
+        + '<a href="/faq.html" onclick="closeMobileMenu()">FAQ</a>'
         + '<a href="/#contact-form" onclick="closeMobileMenu()">Contact</a>';
       try {
         var mpath = window.location.pathname.replace(/\/$/, '') || '/';

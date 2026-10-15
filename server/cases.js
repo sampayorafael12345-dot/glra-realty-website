@@ -34,6 +34,7 @@ const { Case, Setting, Counter, CASE_STAGES } = require('./db');
 const { verifyToken, requireAdmin, requirePermission, logAudit } = require('./auth');
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 const pdf = require('./case-pdf');
+const { checkUpload } = require('./file-sniff');
 
 const FIRM_INBOX = 'glrarealty@gmail.com';
 
@@ -431,7 +432,20 @@ async function nextRef(prefix, year) {
 // stage is deliberately NOT accepted on edit: it only moves through /stage,
 // so the history entry and the side effects always happen.
 const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
-const num = v => { const n = Number(v); return isNaN(n) ? 0 : n; };
+// Money, hours and rates: a finite number from 0 up to a sane ceiling. Number()
+// alone let "-1" and "Infinity" through, which printed receipts reading
+// "-1.00 (One peso)" and "P∞". MONEY_MAX is ten billion pesos.
+const MONEY_MAX = 1e10;
+const num = v => { const n = Number(String(v == null ? '' : v).replace(/,/g, '')); return Number.isFinite(n) && n > 0 ? Math.min(n, MONEY_MAX) : 0; };
+// The same, but says what is wrong instead of quietly using 0.
+const moneyError = (v, what) => {
+  if (v === undefined || v === null || v === '') return '';
+  const n = Number(String(v).replace(/,/g, ''));
+  if (!Number.isFinite(n)) return `${what} must be a number`;
+  if (n < 0) return `${what} cannot be negative`;
+  if (n > MONEY_MAX) return `${what} is too large`;
+  return '';
+};
 const dateOrNull = v => { const k = dk(v); return k ? new Date(k + 'T00:00:00.000Z') : null; };
 
 // Field name -> how to clean it. Anything not listed here can never be written
@@ -978,17 +992,26 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       date: dateOrNull(b.date), mode: str(b.mode, 60), by: str(b.by, 200), notes: str(b.notes, 3000) };
   }, 'Filing');
 
-  subRoutes('charges', 'charges', b => ({
-    kind: str(b.kind, 40) || 'misc', label: str(b.label, 300),
-    amount: num(b.amount), date: dateOrNull(b.date) || new Date(manilaToday() + 'T00:00:00.000Z'),
-    reimbursable: !!b.reimbursable, notes: str(b.notes, 1000)
-  }), 'Charge');
+  subRoutes('charges', 'charges', b => {
+    const bad = moneyError(b.amount, 'The amount');
+    if (bad) return { error: bad };
+    return {
+      kind: str(b.kind, 40) || 'misc', label: str(b.label, 300),
+      amount: num(b.amount), date: dateOrNull(b.date) || new Date(manilaToday() + 'T00:00:00.000Z'),
+      reimbursable: !!b.reimbursable, notes: str(b.notes, 1000)
+    };
+  }, 'Charge');
 
-  subRoutes('time', 'timeEntries', (b, req) => ({
-    date: dateOrNull(b.date) || new Date(manilaToday() + 'T00:00:00.000Z'),
-    description: str(b.description, 500), hours: num(b.hours), rate: num(b.rate),
-    billable: b.billable !== false, billed: false, by: str(b.by, 200) || byName(req)
-  }), 'Time entry');
+  subRoutes('time', 'timeEntries', (b, req) => {
+    const bad = moneyError(b.hours, 'Hours') || moneyError(b.rate, 'The rate');
+    if (bad) return { error: bad };
+    if (num(b.hours) > 1000) return { error: 'Hours must be under 1,000' };
+    return {
+      date: dateOrNull(b.date) || new Date(manilaToday() + 'T00:00:00.000Z'),
+      description: str(b.description, 500), hours: num(b.hours), rate: num(b.rate),
+      billable: b.billable !== false, billed: false, by: str(b.by, 200) || byName(req)
+    };
+  }, 'Time entry');
 
   subRoutes('notes', 'notes', (b, req) => ({
     body: str(b.body, 8000), byName: byName(req), at: new Date()
@@ -1073,6 +1096,8 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
     try {
       const doc = await findCase(req, res); if (!doc) return;
       const b = req.body || {};
+      const badAmt = moneyError(b.amount, 'The amount');
+      if (badAmt) return res.status(400).json({ error: badAmt });
       const amount = num(b.amount);
       if (amount <= 0) return res.status(400).json({ error: 'Enter an amount' });
       const year = manilaToday().slice(0, 4);
@@ -1095,7 +1120,13 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
       if (!p) return res.status(404).json({ error: 'Payment not found' });
       const b = req.body || {};
       if ('date' in b) p.date = dateOrNull(b.date);
-      if ('amount' in b) p.amount = num(b.amount);
+      if ('amount' in b) {
+        // Same rule as recording a payment: a positive, finite amount.
+        const badAmt = moneyError(b.amount, 'The amount');
+        if (badAmt) return res.status(400).json({ error: badAmt });
+        if (num(b.amount) <= 0) return res.status(400).json({ error: 'Enter an amount' });
+        p.amount = num(b.amount);
+      }
       if ('mode' in b) p.mode = str(b.mode, 40);
       if ('reference' in b) p.reference = str(b.reference, 120);
       if ('label' in b) p.label = str(b.label, 200);
@@ -1125,6 +1156,8 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
     const cleanup = () => { if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {} };
     try {
       if (!req.file) return res.status(400).json({ error: 'No file provided' });
+      const bad = checkUpload(req.file);
+      if (bad) { cleanup(); return res.status(400).json({ error: bad }); }
       const doc = await Case.findById(req.params.id);
       if (!doc) { cleanup(); return res.status(404).json({ error: 'Case not found' }); }
       let result;
@@ -1305,9 +1338,27 @@ function registerCaseRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary 
 //   * one digest a morning, only if something actually needs doing
 // Each message is keyed in case.reminderKeys so it goes out exactly once. A
 // failed send is recorded too, so a dead mailbox is not retried forever.
+// Claims today's court diary BEFORE building it, in one atomic update that
+// only matches while lastDigestKey is another day. Writing the key after the
+// send (and writing the whole settings snapshot back) could mail it twice and
+// undo a settings change made while the tick ran.
+async function claimDigest(today) {
+  await Setting.updateOne({ key: 'cases' }, { $setOnInsert: { value: { ...DEFAULT_SETTINGS } } }, { upsert: true });
+  const won = await Setting.findOneAndUpdate(
+    { key: 'cases', 'value.lastDigestKey': { $ne: today } },
+    { $set: { 'value.lastDigestKey': today } },
+    { new: true });
+  return !!won;
+}
+
 function startCasesTick({ sendEmail, esc }) {
   const TICK = 30 * 60 * 1000;
+  // One tick at a time: a slow run that overlapped the next would read the
+  // same reminderKeys and send every hearing reminder twice.
+  let running = false;
   async function tick() {
+    if (running) return;
+    running = true;
     try {
       const settings = await getSettings();
       const today = manilaToday();
@@ -1387,7 +1438,7 @@ function startCasesTick({ sendEmail, esc }) {
       }
 
       // ── one morning digest ──
-      if (settings.digestEnabled && hour >= settings.digestHour && settings.lastDigestKey !== today) {
+      if (settings.digestEnabled && hour >= settings.digestHour && settings.lastDigestKey !== today && await claimDigest(today)) {
         const all = await Case.find({ stage: { $in: WATCH_STAGES } }).lean();
         const hearings = [], deadlines = [], prescriptions = [], idle = [];
         all.forEach(c => {
@@ -1426,9 +1477,9 @@ function startCasesTick({ sendEmail, esc }) {
           await sendEmail(settings.notifyEmail || FIRM_INBOX,
             `Court diary \u2014 ${today}`, html, settings.firmName || 'GLRA Realty');
         }
-        await saveSettings({ ...settings, lastDigestKey: today });
       }
     } catch (err) { console.error('cases tick error:', err.message); }
+    finally { running = false; }
   }
   setTimeout(tick, 45 * 1000);
   setInterval(tick, TICK);

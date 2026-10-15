@@ -611,6 +611,10 @@
      brighter on that row only. */
   #bellPanel .nrow.unread .t{ color:var(--gray); }
 
+  /* ══ SKIP LINK ══ a11y.js adds it; off screen until a keyboard user tabs to it */
+  .skip-to-content{ position:absolute; left:-9999px; top:0; z-index:2147483647; background:#000; color:#fff; padding:10px 16px; font-size:14px; text-decoration:none; }
+  .skip-to-content:focus{ left:8px; top:8px; }
+
   /* ══ MODALS ══ */
   .overlay{ display:none; position:fixed; inset:0; z-index:80; background:rgba(18,20,24,.5); padding:14px; overflow-y:auto; }
   [data-theme="dark"] .overlay{ background:rgba(4,6,10,.72); }
@@ -746,10 +750,10 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 
     <div id="signupForm" style="display:none">
       <h2>Request agent access</h2>
-      <p class="note" style="margin-bottom:14px">Your request goes to the broker for approval. You'll get an email once you're in.</p>
+      <p class="note" style="margin-bottom:14px">We email you a link to confirm the request. Once you confirm it, it goes to the broker for approval, and you get an email when you're in.</p>
       <div class="field"><label>Full name</label><input type="text" id="suName" autocomplete="name"></div>
       <div class="field"><label>Email</label><input type="email" id="suEmail" autocomplete="email" inputmode="email"></div>
-      <div class="field"><label>Password (min 8 characters)</label><input type="password" id="suPass" autocomplete="new-password"></div>
+      <div class="field"><label>Password (min 10 characters)</label><input type="password" id="suPass" autocomplete="new-password"></div>
       <div class="field"><label>Repeat password</label><input type="password" id="suPass2" autocomplete="new-password"></div>
       <button class="btn" style="width:100%" id="suBtn" onclick="doSignup()">Send request</button>
       <div class="authswap">Already approved? <a onclick="swapAuth(false)">Sign in</a></div>
@@ -999,8 +1003,21 @@ async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   const tk = localStorage.getItem(TK);
   if (tk) headers.Authorization = 'Bearer ' + tk;
-  const res = await fetch(path, { ...opts, headers });
-  if (res.status === 401) { signOut(true); throw new Error('Signed out'); }
+  const { __retried, ...fetchOpts } = opts;
+  const res = await fetch(path, { ...fetchOpts, headers });
+  // Sliding sign-in: under 2 hours left, the server hands back a fresh token.
+  try { const nt = res.headers.get('X-Renewed-Token'); if (nt && localStorage.getItem(TK) && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(nt)) localStorage.setItem(TK, nt); } catch (e) {}
+  if (res.status === 401) {
+    // A save (or anything while a form or the sign-in box is open) that finds
+    // the sign-in over: ask for the password and send it again, keeping the work.
+    const method = String(opts.method || 'GET').toUpperCase();
+    const formOpen = !!document.querySelector('.overlay.open');
+    if (tk && ME && !__retried && (method !== 'GET' || formOpen)) {
+      if (await reauthPrompt()) return api(path, { ...opts, __retried: true });
+      throw new Error('Not saved: your sign-in has ended. Sign in again to save.');
+    }
+    signOut(true); throw new Error('Signed out');
+  }
   // A 403 that says the account is switched off or still pending ends the
   // sign-in too; any other 403 is left to the caller.
   if (res.status === 403) {
@@ -1100,15 +1117,16 @@ async function doSignup() {
   const name = $('suName').value.trim(), email = $('suEmail').value.trim(), p1 = $('suPass').value, p2 = $('suPass2').value;
   if (name.length < 2) return authMsg('Please enter your full name.', 'bad');
   if (!email) return authMsg('Please enter your email.', 'bad');
-  if (p1.length < 8) return authMsg('Password must be at least 8 characters.', 'bad');
+  if (p1.length < 10) return authMsg('Password must be at least 10 characters.', 'bad');
   if (p1 !== p2) return authMsg('The two passwords do not match.', 'bad');
   const b = $('suBtn'); b.disabled = true; b.textContent = 'Sending';
   try {
     const res = await fetch('/api/admin/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password: p1, requestedRole: 'agent' }) });
     const d = await res.json();
-    if (!res.ok) return authMsg(d.error || 'Request failed.', 'bad');
+    if (!res.ok) return authMsg((d.details && d.details[0] && d.details[0].msg) || d.error || 'Request failed.', 'bad');
     swapAuth(false);
-    authMsg('Request sent. The broker has been notified. You will get an email once your account is approved.', 'ok');
+    // The request only reaches the broker after the emailed link is opened (audit F10).
+    authMsg(d.message || 'Almost done: check your email and open the link to confirm your request. The broker is told once you confirm.', 'ok');
   } catch (e) { authMsg('Network problem. Please try again.', 'bad'); }
   finally { b.disabled = false; b.textContent = 'Send request'; }
 }
@@ -1123,6 +1141,13 @@ async function forgotPass() {
 }
 
 function signOut(expired, msg) {
+  // Signing out on purpose drops kept form typing; an ended sign-in keeps it
+  // (for the same person only) so it can be put back after signing in.
+  if (expired !== true) { try { DRAFT_FORMS.forEach(draftDel); } catch (e) {} }
+  // Signing out on purpose ends this token at the server too (it is revoked,
+  // not just forgotten here). keepalive lets it finish during the reload.
+  const tok = localStorage.getItem(TK);
+  if (tok && expired !== true) { try { fetch('/api/admin/logout', { method: 'POST', keepalive: true, headers: { 'Authorization': 'Bearer ' + tok } }).catch(() => {}); } catch (e) {} }
   localStorage.removeItem(TK);
   $('appView').classList.remove('on');
   $('authView').style.display = 'flex';
@@ -1141,6 +1166,173 @@ async function signOutEverywhere() {
   } catch (e) { if (e.message !== 'Signed out') toast('Could not reach the server. Try again.', true); return; }
   signOut(false, 'You are signed out on every device.');
 }
+
+// ═════════ change my password (audit L6) ═════════
+function openChangePass() {
+  let o = $('cpOverlay');
+  if (!o) {
+    o = document.createElement('div'); o.className = 'overlay'; o.id = 'cpOverlay'; o.style.zIndex = '94';
+    o.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+      <div class="mhead"><h3 id="cpTitle">Change my password</h3></div>
+      <form class="mbody" id="cpForm">
+        <input type="email" id="cpUser" autocomplete="username" style="display:none" readonly>
+        <div class="field"><label for="cpCur">Current password</label><input id="cpCur" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="cpNew">New password (min 10 characters)</label><input id="cpNew" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="cpNew2">New password again</label><input id="cpNew2" type="password" autocomplete="new-password"></div>
+        <p class="note" id="cpErr" role="alert" style="display:none;color:#c81e1e;margin-bottom:10px"></p>
+        <div class="mfoot">
+          <button type="button" class="btn alt" id="cpNo">Cancel</button>
+          <button type="submit" class="btn" id="cpGo">Change password</button>
+        </div>
+      </form>
+    </div>`;
+    document.body.appendChild(o);
+    $('cpForm').addEventListener('submit', e => { e.preventDefault(); submitChangePass(); });
+    $('cpNo').addEventListener('click', () => o.classList.remove('open'));
+    o.addEventListener('keydown', e => { if (e.key === 'Escape') o.classList.remove('open'); });
+  }
+  ['cpCur', 'cpNew', 'cpNew2'].forEach(id => { $(id).value = ''; });
+  $('cpUser').value = (ME && ME.email) || '';
+  $('cpErr').style.display = 'none';
+  o.classList.add('open');
+  setTimeout(() => $('cpCur').focus(), 60);
+}
+async function submitChangePass() {
+  const cur = $('cpCur').value, n1 = $('cpNew').value, n2 = $('cpNew2').value, err = $('cpErr'), b = $('cpGo');
+  const show = m => { err.textContent = m; err.style.display = 'block'; };
+  if (!cur) return show('Enter your current password.');
+  if (n1.length < 10) return show('The new password must be at least 10 characters.');
+  if (n1 !== n2) return show('The two new passwords do not match.');
+  b.disabled = true;
+  try {
+    const res = await fetch('/api/account/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem(TK) || '') }, body: JSON.stringify({ currentPassword: cur, newPassword: n1 }) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.token) return show((d.details && d.details[0] && d.details[0].msg) || d.error || 'Could not change the password.');
+    localStorage.setItem(TK, d.token);   // every other sign-in ended; this token is the one that works now
+    $('cpOverlay').classList.remove('open');
+    toast(d.message || 'Password changed. Other devices were signed out.');
+  } catch (e) { show('Could not reach the server. Try again.'); }
+  finally { b.disabled = false; }
+}
+
+// ═════════ "sign in again to save" ═════════
+// A save that meets an ended sign-in opens this instead of reloading the page,
+// so the lead or email being written is not lost. Every waiting save shares it.
+let reauthWait = null;
+function reauthPrompt() {
+  if (reauthWait) return reauthWait.promise;
+  let resolve; const promise = new Promise(r => { resolve = r; });
+  reauthWait = { promise, resolve, back: document.activeElement };
+  let o = $('reauthOverlay');
+  if (!o) {
+    o = document.createElement('div'); o.className = 'overlay'; o.id = 'reauthOverlay'; o.style.zIndex = '95';
+    o.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="reauthTitle">
+      <div class="mhead"><h3 id="reauthTitle">Sign in again to save</h3></div>
+      <form class="mbody" id="reauthForm">
+        <p class="note" style="margin-bottom:14px">Your sign-in has ended. Enter your password and what you were saving goes through. Nothing you typed has been lost.</p>
+        <div class="field"><label for="reauthEmail">Email</label><input id="reauthEmail" type="email" autocomplete="username" readonly></div>
+        <div class="field"><label for="reauthPass">Password</label><input id="reauthPass" type="password" autocomplete="current-password"></div>
+        <p class="note" id="reauthErr" role="alert" style="display:none;color:#c81e1e;margin-bottom:10px"></p>
+        <div class="mfoot">
+          <button type="button" class="btn alt" id="reauthNo">Not now</button>
+          <button type="submit" class="btn" id="reauthGo">Sign in and save</button>
+        </div>
+      </form>
+    </div>`;
+    document.body.appendChild(o);
+    $('reauthForm').addEventListener('submit', e => { e.preventDefault(); reauthSubmit(); });
+    $('reauthNo').addEventListener('click', () => reauthDone(false));
+    // Keep Tab inside the box while it is up.
+    o.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const f = [...o.querySelectorAll('input:not([readonly]),button')].filter(n => n.offsetParent !== null);
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    });
+  }
+  $('reauthEmail').value = (ME && ME.email) || '';
+  $('reauthPass').value = ''; $('reauthErr').style.display = 'none';
+  o.classList.add('open');
+  setTimeout(() => $('reauthPass').focus(), 60);
+  return promise;
+}
+function reauthDone(ok) {
+  const o = $('reauthOverlay'); if (o) o.classList.remove('open');
+  const w = reauthWait; reauthWait = null;
+  if (!ok) toast('Not saved. Your work is still on screen: save again to sign in.', true);
+  if (w) { try { if (w.back && document.contains(w.back)) w.back.focus(); } catch (e) {} w.resolve(!!ok); }
+}
+async function reauthSubmit() {
+  const pass = $('reauthPass').value, err = $('reauthErr'), b = $('reauthGo');
+  const show = m => { err.textContent = m; err.style.display = 'block'; };
+  if (!pass) return show('Enter your password.');
+  b.disabled = true;
+  try {
+    const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: (ME && ME.email) || '', password: pass }) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.token) return show(d.error || 'That did not work. Check the password and try again.');
+    if (!ME || String(d.email || '').toLowerCase() !== String(ME.email || '').toLowerCase()) return show('That is a different account. Sign in as ' + ((ME && ME.email) || 'the same person') + '.');
+    localStorage.setItem(TK, d.token);
+    reauthDone(true);
+    toast('Signed in again');
+  } catch (e) { show('Could not reach the server. Try again.'); }
+  finally { b.disabled = false; }
+}
+
+// ═════════ kept typing (lead and email forms) ═════════
+// What is typed in the lead and email forms is copied to sessionStorage (this
+// tab only). If the page is lost with the form open, opening it again offers
+// to put the typing back. Closing the form on purpose drops the copy.
+const DRAFT_FORMS = ['leadOverlay', 'mailOverlay'];
+const draftKey = id => 'glraAgentDraft:' + id;
+const draftGet = id => { try { return JSON.parse(sessionStorage.getItem(draftKey(id)) || 'null'); } catch (e) { return null; } };
+const draftDel = id => { try { sessionStorage.removeItem(draftKey(id)); } catch (e) {} };
+const draftFields = o => [...o.querySelectorAll('input[id],select[id],textarea[id]')].filter(f => !/^(password|file|hidden)$/i.test(f.type || '') && !f.readOnly);
+function draftSave(o) {
+  if (!ME || !o.classList.contains('open')) return;
+  const fields = {}; let any = false, first = '';
+  draftFields(o).forEach(f => { fields[f.id] = f.value; if (String(f.value).trim()) { any = true; if (!first && f.tagName !== 'SELECT' && f.type !== 'date') first = String(f.value).trim().slice(0, 60); } });
+  if (!any) return;
+  try { sessionStorage.setItem(draftKey(o.id), JSON.stringify({ owner: ME.email, at: Date.now(), lead: o.id === 'leadOverlay' ? (editLeadId || '') : '', first, fields })); } catch (e) {}
+}
+const draftT = {};
+['input', 'change'].forEach(ev => document.addEventListener(ev, e => {
+  const o = e.target && e.target.closest && e.target.closest('#' + DRAFT_FORMS.join(',#'));
+  if (!o || e.target.closest('.draft-bar')) return;
+  clearTimeout(draftT[o.id]); draftT[o.id] = setTimeout(() => draftSave(o), 400);
+}, true));
+DRAFT_FORMS.forEach(id => {
+  const o = $(id); if (!o) return;
+  let was = o.classList.contains('open');
+  new MutationObserver(() => {
+    const now = o.classList.contains('open'); if (now === was) return; was = now;
+    const old = o.querySelector('.draft-bar'); if (old) old.remove();
+    if (!now) { clearTimeout(draftT[id]); draftDel(id); return; }
+    const d = draftGet(id);
+    if (!d || !ME || d.owner !== ME.email || Date.now() - d.at > 24 * 3600e3) return;
+    // The lead form: only offer the copy on the same lead (or on a new one if it was new).
+    if (id === 'leadOverlay' && (d.lead || '') !== (editLeadId || '')) return;
+    setTimeout(() => {
+      if (!o.classList.contains('open') || o.querySelector('.draft-bar')) return;
+      const head = o.querySelector('.mhead'); if (!head) return;
+      const bar = document.createElement('div'); bar.className = 'draft-bar'; bar.setAttribute('role', 'status');
+      bar.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 17px;background:#fff7e6;color:#5c3b00;border-bottom:1px solid #f0d9a8;font-size:13px;line-height:1.45';
+      bar.innerHTML = `<span style="flex:1 1 220px">Unsaved typing from ${esc(new Date(d.at).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' }))} was kept${d.first ? ': <b>' + esc(d.first) + '</b>' : ''}.</span><button type="button" class="btn sm" data-dr="y">Put it back</button><button type="button" class="btn sm alt" data-dr="n">Discard</button>`;
+      bar.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-dr]'); if (!b) return;
+        if (b.dataset.dr === 'y') {
+          const list = draftFields(o).filter(f => f.id in d.fields);
+          list.forEach(f => { f.value = d.fields[f.id]; f.dispatchEvent(new Event('input', { bubbles: true })); f.dispatchEvent(new Event('change', { bubbles: true })); });
+          list.forEach(f => { f.value = d.fields[f.id]; });
+          draftSave(o); toast('Your typing is back. Check it, then save.');
+        } else draftDel(id);
+        bar.remove();
+      });
+      head.insertAdjacentElement('afterend', bar);
+    }, 500);
+  }).observe(o, { attributes: true, attributeFilter: ['class'] });
+});
 
 // ═════════ app boot ═════════
 function buildChrome() {
@@ -2103,6 +2295,10 @@ function renderProfile() {
         <button class="btn sm alt" onclick="signOut()">Sign out</button>
       </div>
       <div class="swrow">
+        <div class="sl"><b>Change my password</b><span>At least 10 characters. Every other device is signed out; this one stays in.</span></div>
+        <button class="btn sm alt" onclick="openChangePass()">Change</button>
+      </div>
+      <div class="swrow">
         <div class="sl"><b>Sign out of every device</b><span>For a lost phone or a shared computer. Every device, this one included, will need to sign in again.</span></div>
         <button class="btn sm alt" onclick="signOutEverywhere()">Sign out all</button>
       </div>
@@ -2215,13 +2411,16 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('authView').style.display !== 'none') {
     if ($('loginForm').style.display !== 'none' && (e.target.id === 'liEmail' || e.target.id === 'liPass')) doLogin();
   }
-  if (e.key === 'Escape') { closeLead(); closeMail(); closeEv(); closeSync(); }
+  if (e.key === 'Escape') {
+    if ($('reauthOverlay') && $('reauthOverlay').classList.contains('open')) { reauthDone(false); return; }
+    closeLead(); closeMail(); closeEv(); closeSync();
+  }
 });
 buildChrome();
 applyTheme(currentTheme());
 try { const n = sessionStorage.getItem('glraAgentNote'); if (n) { sessionStorage.removeItem('glraAgentNote'); authMsg(n, /every device/.test(n) ? 'ok' : 'bad'); } } catch (e) {}
 if (localStorage.getItem(TK)) enterApp();
 </script>
-<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
 </body>
 </html>

@@ -16,6 +16,7 @@ const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 const { Setting, Task, DeletedTask, StaffDay, StaffPosting, StaffMessage, StaffReport, Property, Account, AuditLog, Lead } = require('./db');
 const rules = require('./staff-rules');
+const { findListingsLite } = require('./listing-lite');
 const { verifyToken, requireAdmin, logAudit } = require('./auth');
 const staff = require('./staff');
 
@@ -223,8 +224,8 @@ function registerStaffBot(app, { sendEmail, esc, cloudFileLink }) {
       }
 
       // Listings, with where and when each was last posted (real posts only).
-      const props = await Property.find({ status: 'available' })
-        .select('title location listingType propertyType price monthlyRental sqm landArea bedrooms bathrooms gallery description createdAt editedAt reviewedAt priceUpdatedAt geo.status').lean();
+      // listing-lite: only the photo COUNT is needed, so base64 photos stay in Atlas.
+      const props = await findListingsLite({ status: 'available' }, ['title', 'location', 'listingType', 'propertyType', 'price', 'monthlyRental', 'sqm', 'landArea', 'bedrooms', 'bathrooms', 'description', 'createdAt', 'editedAt', 'reviewedAt', 'priceUpdatedAt', 'geo.status']);
       const last = {};
       allPostings.forEach(p => { const k = String(p.property) + '|' + p.channel; if (!last[k] || p.postedAt > last[k]) last[k] = p.postedAt; });
       const listings = props.map(p => ({

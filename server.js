@@ -68,10 +68,29 @@ process.on('unhandledRejection', (reason) => {
 // looks up while nothing works. Log it, then exit so Render starts a fresh
 // one. (Proved in testing: a port clash was swallowed here and the process
 // stayed "alive" for minutes with no listener attached.)
+// Before exiting it tries, for at most 3 seconds, to email the office: a crash
+// used to be noticed only when someone found the site down (audit F24).
+let _crashing = false;
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err && err.stack ? err.stack : err);
-  setTimeout(() => process.exit(1), 250).unref();
+  if (_crashing) return;
+  _crashing = true;
+  setTimeout(() => process.exit(1), 3000).unref();
+  try {
+    const when = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' });
+    const stack = String(err && err.stack ? err.stack : err).slice(0, 4000);
+    Promise.resolve(sendEmail('glrarealty@gmail.com', 'GLRA website crashed and is restarting',
+      `<p>The website server stopped on an unexpected error at ${esc(when)} (Manila) and is restarting by itself.</p>` +
+      `<p>If the site is still down in five minutes, check Render.</p><pre style="font-size:11px;white-space:pre-wrap">${esc(stack)}</pre>`))
+      .catch(() => {}).finally(() => process.exit(1));
+  } catch (e) { process.exit(1); }
 });
+// Memory in the log once an hour, so a slow leak shows before Render kills
+// the process for it.
+setInterval(() => {
+  const m = process.memoryUsage();
+  console.log(`Memory: rss ${Math.round(m.rss / 1048576)} MB, heap ${Math.round(m.heapUsed / 1048576)}/${Math.round(m.heapTotal / 1048576)} MB`);
+}, 60 * 60 * 1000).unref();
 
 // ============ HTML ESCAPE HELPER (used in email templates) ============
 function esc(value) {
@@ -114,6 +133,11 @@ function initBrevo() {
 // database when a copy is skipped. A day-wide ceiling of 250 protects the quota.
 // Catherine's own alert copies ("admin:" keys) count against a SEPARATE ceiling,
 // so a burst of visitor confirmations can never stop her hearing about a lead.
+// "YYYY-MM-DD" of the day in Manila (UTC+8, no daylight saving). The server
+// runs on UTC, so its own calendar day starts at 8 AM Manila time.
+function manilaDayKey(d = new Date()) {
+  return new Date(new Date(d).getTime() + 8 * 3600e3).toISOString().slice(0, 10);
+}
 const _visitorMail = new Map();
 let _visitorMailDay = { d: '', n: 0, admin: 0 };
 function visitorMailOk(key, perHour = 3, perDay = 8) {
@@ -223,16 +247,34 @@ app.set('trust proxy', [
 
 // Render's own address (glra-realty.onrender.com) served a full copy of the
 // site, which Google can index as a duplicate. Page visits there move to the
-// real domain; the health check and the API are left alone.
+// real domain. The API answered there too, which let anyone go around
+// Cloudflare's protection (audit 15 Oct, SEC-IN-12 / MI-45): now only the
+// health and readiness checks answer on that address (for Render and any
+// uptime monitor pointed at it); every other /api call is refused.
+// The raw Host header is checked too: req.hostname prefers X-Forwarded-Host,
+// which a visitor can type. (Fully closing the origin needs a Cloudflare-side
+// secret header or authenticated origin pulls: see section 4 of the audit.)
 app.use((req, res, next) => {
-  if ((req.method === 'GET' || req.method === 'HEAD') && /\.onrender\.com$/i.test(req.hostname || '') && !req.path.startsWith('/api/')) {
-    return res.redirect(301, 'https://glrarealty.com' + req.originalUrl);
+  const onRender = /\.onrender\.com(:\d+)?$/i;
+  if (!onRender.test(req.hostname || '') && !onRender.test(String(req.headers.host || ''))) return next();
+  const read = req.method === 'GET' || req.method === 'HEAD';
+  if (req.path.startsWith('/api/')) {
+    if (read && (req.path === '/api/health' || req.path === '/api/ready')) return next();
+    return res.status(403).json({ error: 'Please use https://glrarealty.com' });
   }
-  next();
+  if (read) return res.redirect(301, 'https://glrarealty.com' + req.originalUrl);
+  return res.status(403).json({ error: 'Please use https://glrarealty.com' });
 });
 // Signed-in dashboards return clients', tenants' and leads' details: nothing
 // in between (a shared computer's cache, a proxy) may keep a copy.
 app.use(['/api/admin', '/api/agent', '/api/staff-bot', '/api/social'], (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+// The API is data for the site's own pages, not pages: /api/properties could
+// be indexed as raw JSON (audit L50). The listing photos served from the API
+// stay indexable for Google Images.
+app.use('/api', (req, res, next) => {
+  if (!/^\/(property-image|hero-image)\//.test(req.path)) res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // Helmet — sensible default security headers.
 // CSP is configured separately below rather than here, so keep it off in the
@@ -244,7 +286,26 @@ app.use(helmet({
   // site's own form posts, which the CORS check below refuses, and it also
   // blanks the referrer behind the dashboard's traffic-sources chart.
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // One year with preload (helmet's default was 180 days, no preload), the
+  // minimum hstspreload.org accepts. Every subdomain must be HTTPS-only.
+  strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
+
+// security.txt (RFC 9116): where to report a security problem with the site.
+// Expires is computed so the file never goes stale.
+app.get(['/.well-known/security.txt', '/security.txt'], (req, res) => {
+  const expires = new Date(Date.now() + 180 * 864e5);
+  expires.setUTCHours(0, 0, 0, 0);
+  res.type('text/plain; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.send([
+    'Contact: mailto:glrarealty@gmail.com',
+    'Expires: ' + expires.toISOString(),
+    'Preferred-Languages: en, fil',
+    'Canonical: https://glrarealty.com/.well-known/security.txt',
+    ''
+  ].join('\n'));
+});
 
 // Nothing on this site uses the camera, microphone or payment APIs, and only
 // our own pages may ask for the visitor's location (the Properties page's
@@ -257,100 +318,130 @@ app.use((req, res, next) => {
 });
 
 // ── CONTENT SECURITY POLICY ─────────────────────────────────
-// Split in two on purpose.
+// ENFORCED since 29 Sept 2026; tightened 16 Oct 2026 (audit L3). Every host
+// in the codebase was inventoried and every page crawled in a real browser
+// with it on, with zero violations. A new outside host (a new map, font or
+// widget) must be added here or the browser will refuse it.
 //
-// 1. ENFORCED: only directives that cannot plausibly break this site. None of
-//    the pages use <object>/<embed>, none set a <base> tag, and no <form> has
-//    an external action, so locking those down costs nothing and shuts off
-//    clickjacking, base-tag hijacking and form exfiltration today.
-//
-// 2. REPORT-ONLY: the full policy, including script/style/img sources. The
-//    pages are full of inline <script> and style="" so this still needs
-//    'unsafe-inline' to be useful, but it does stop a successful injection
-//    from loading or phoning home to an attacker-controlled domain. It runs in
-//    report-only first so a missed origin shows up as a console warning instead
-//    of a blank page. Once the console is clean across every page, move these
-//    directives into CSP_ENFORCED.
-const CSP_BASELINE = {
+// Two policies:
+// - STAFF pages (admin, agent workspace, social, social approval) hold the
+//   customer database, so they get the narrow one: no outside script at all,
+//   no outside connections, and they can never be framed.
+// - PUBLIC pages get the wider one, with each CDN pinned to the exact library
+//   and version folder the site loads (a bare cdnjs or jsDelivr host would let
+//   an injected tag load any of the hundreds of thousands of packages there).
+// Both still need 'unsafe-inline' (inline <script> blocks and onclick=""
+// handlers throughout); nonces are the long-term step.
+// Violations are reported to /api/csp-report, which only logs a short line.
+const CSP_REPORT_PATH = '/api/csp-report';
+const CDN = {
+  fontAwesome: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/',
+  leaflet: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',              // js/glra-maps.js, properties.html map view
+  markerCluster: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/',
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/',                  // js/main.js PDF downloads
+  qrcode: 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/',              // printable brochure
+  protomaps: 'https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/',             // flood hazard layer
+  maplibre: 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/',                    // 3D view
+  currencyApi: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/'   // properties.html currency switcher
+};
+// Page pictures, post and Instagram thumbnails served by Meta's CDNs (social.html, Leads).
+const META_IMG = ['https://*.fbcdn.net', 'https://*.cdninstagram.com', 'https://platform-lookaside.fbsbx.com'];
+const CSP_PUBLIC = {
+  'default-src': ["'self'"],
+  // clarity.ms = Microsoft Clarity, loaded by js/main.js on public pages only.
+  // It bootstraps from www.clarity.ms/tag/<id>, pulls its payload from
+  // scripts.clarity.ms and beacons to a region-sharded <letter>.clarity.ms.
+  'script-src': ["'self'", "'unsafe-inline'", CDN.leaflet, CDN.markerCluster, CDN.jspdf, CDN.qrcode,
+    CDN.protomaps, CDN.maplibre, 'https://*.clarity.ms'],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', CDN.fontAwesome, CDN.leaflet,
+    CDN.markerCluster, CDN.maplibre],
+  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', CDN.fontAwesome],
+  // Listing photos come from Cloudinary; data:/blob: cover inline SVG
+  // placeholders and local image previews before upload.
+  'img-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com',
+    'https://*.clarity.ms', 'https://c.bing.com',
+    'https://*.tile.openstreetmap.org', 'https://tile.openstreetmap.org', ...META_IMG],
+  // The currency switcher reads live rates from jsDelivr with a Cloudflare
+  // Pages mirror as fallback; the flood layer reads UP NOAH PMTiles on
+  // Hugging Face (redirected to its CDN); the 3D view reads OpenFreeMap.
+  'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com',
+    CDN.currencyApi, 'https://latest.currency-api.pages.dev',
+    'https://huggingface.co', 'https://*.hf.co', 'https://tiles.openfreemap.org'],
+  'frame-src': ["'self'", 'https://www.google.com/maps'],   // listing and building map embeds
+  'media-src': ["'self'", 'blob:', 'https://res.cloudinary.com'],
+  'manifest-src': ["'self'"],
+  // 'self': the service worker. blob:: the 3D map's tile workers.
+  'worker-src': ["'self'", 'blob:'],
   'frame-ancestors': ["'self'"],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"]
 };
+const CSP_STAFF = {
+  'default-src': ["'self'"],
+  'script-src': ["'self'", "'unsafe-inline'"],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', CDN.fontAwesome],
+  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', CDN.fontAwesome],
+  'img-src': ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com', ...META_IMG],
+  'connect-src': ["'self'"],
+  // The email previews are srcdoc frames; blob: for a PDF opened in place.
+  'frame-src': ["'self'", 'blob:'],
+  // social.html previews a video before and after it is uploaded.
+  'media-src': ["'self'", 'blob:', 'https://res.cloudinary.com'],
+  'manifest-src': ["'self'"],
+  'worker-src': ["'self'"],
+  'frame-ancestors': ["'none'"],
+  'object-src': ["'none'"],
+  'base-uri': ["'self'"],
+  'form-action': ["'self'"]
+};
+const STAFF_PAGE_RE = /^\/(admin|agent|social|social-approve)(\.html)?\/?$/i;
+function cspHeader(directives, upgrade) {
+  const parts = Object.entries(directives).map(([k, v]) => `${k} ${v.join(' ')}`);
+  // Any http:// link left in a page or a listing (a photo, an old embed) is
+  // fetched over https instead of being blocked as mixed content. Not on a
+  // local http://localhost test server, where there is no https to upgrade to.
+  if (upgrade) parts.push('upgrade-insecure-requests');
+  parts.push(`report-uri ${CSP_REPORT_PATH}`, 'report-to csp');
+  return parts.join('; ');
+}
+const CSP_HEADERS = {
+  public: cspHeader(CSP_PUBLIC, true), publicLocal: cspHeader(CSP_PUBLIC, false),
+  staff: cspHeader(CSP_STAFF, true), staffLocal: cspHeader(CSP_STAFF, false)
+};
+function isLocalHost(req) {
+  return /^(localhost|127\.0\.0\.1|\[::1\]|::1)$/i.test(String(req.hostname || ''));
+}
+app.use((req, res, next) => {
+  const local = isLocalHost(req);
+  const staff = STAFF_PAGE_RE.test(req.path);
+  res.setHeader('Content-Security-Policy', CSP_HEADERS[(staff ? 'staff' : 'public') + (local ? 'Local' : '')]);
+  res.setHeader('Reporting-Endpoints', `csp="${CSP_REPORT_PATH}"`);
+  next();
+});
 
-app.use(helmet.contentSecurityPolicy({
-  useDefaults: false,
-  directives: {
-    // This policy deliberately restricts only the four directives above; it is
-    // not trying to control where resources load from (that is the report-only
-    // policy's job). Helmet refuses a policy with no default-src unless you say
-    // so explicitly, hence the alarming-looking constant.
-    'default-src': helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
-    ...CSP_BASELINE
-  }
-}));
-
-// ENFORCED since 29 Sept 2026: every host in the codebase was inventoried and
-// every public page, the admin and the agent workspace crawled with it on,
-// with zero violations. A new outside host (a new map, font or widget) must
-// be added here or the browser will refuse it.
-app.use(helmet.contentSecurityPolicy({
-  useDefaults: false,
-  reportOnly: false,
-  directives: {
-    'default-src': ["'self'"],
-    // cdn.jsdelivr.net = Swiper (home page hero slider).
-    // clarity.ms = Microsoft Clarity, loaded by js/main.js on every public page
-    // (NOT on admin.html, which main.js skips). Clarity bootstraps from
-    // www.clarity.ms/tag/<id> but the tag then pulls its real payload from
-    // scripts.clarity.ms and beacons to b.clarity.ms / c.bing.com — all four
-    // hosts have to be listed or the console fills with violations and the
-    // policy can never be promoted out of report-only.
-    'script-src': ["'self'", "'unsafe-inline'",
-      'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com',
-      'https://*.clarity.ms'],
-    'style-src': ["'self'", "'unsafe-inline'",
-      'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
-    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
-    // Listing photos come from Cloudinary; data:/blob: cover inline SVG
-    // placeholders and the admin's local image previews before upload.
-    'img-src': ["'self'", 'data:', 'blob:',
-      'https://res.cloudinary.com',
-      'https://*.clarity.ms', 'https://c.bing.com',
-      'https://*.tile.openstreetmap.org', 'https://tile.openstreetmap.org',  // properties.html map view
-      // social.html: Page pictures, post and Instagram thumbnails served by Meta's CDNs.
-      'https://*.fbcdn.net', 'https://*.cdninstagram.com', 'https://platform-lookaside.fbsbx.com'],
-    // Clarity's beacon host is region-sharded — a.clarity.ms through
-    // z.clarity.ms. The live page uses n.clarity.ms, which was on none of the
-    // three lists above, so every visit logged a violation and the policy
-    // could never be promoted out of report-only. Naming them one at a time
-    // cannot work; a visitor in Singapore gets a different letter.
-    // The currency switcher on properties.html fetches live exchange rates from
-    // jsDelivr, with a Cloudflare Pages mirror as its documented fallback.
-    // Neither was listed, so enforcing this policy today would have silently
-    // frozen every price in USD/AED/SGD at whatever the fallback rate is. This
-    // is exactly what report-only is for, and exactly why it was worth
-    // inventorying every external host in the codebase before promoting it.
-    'connect-src': ["'self'", 'https://*.clarity.ms', 'https://api.cloudinary.com',
-      'https://cdn.jsdelivr.net', 'https://latest.currency-api.pages.dev',
-      // Flood hazard layer (js/glra-maps.js): UP NOAH PMTiles on Hugging Face,
-      // which answers with a redirect to its CDN.
-      'https://huggingface.co', 'https://*.hf.co',
-      // 3D view (js/glra-maps.js): OpenFreeMap's style, tiles, fonts and icons.
-      'https://tiles.openfreemap.org'],
-    'frame-src': ["'self'", 'https://www.google.com'],  // property-page map embed
-    // social.html previews a video uploaded to Cloudinary before it is posted.
-    'media-src': ["'self'", 'https://res.cloudinary.com'],
-    // Without this, manifest-src falls back to default-src. That happens to be
-    // 'self' and so happens to work - but the day this policy is enforced is
-    // not the day to find out by having every home-screen icon stop working.
-    'manifest-src': ["'self'"],
-    // 'self': the service worker. blob:: the 3D map's tile workers, which
-    // MapLibre builds from its own bundle.
-    'worker-src': ["'self'", 'blob:'],
-    ...CSP_BASELINE
-  }
-}));
+// Where the browser reports a refused resource. It only logs, and at most 30
+// lines a minute, so a broken page or a hostile sender cannot flood the logs.
+// Both formats: the older report-uri JSON and the Reporting API's list.
+let _cspLogWindow = 0, _cspLogCount = 0;
+app.post(CSP_REPORT_PATH,
+  express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '16kb' }),
+  (req, res) => {
+    try {
+      const now = Date.now();
+      if (now - _cspLogWindow > 60000) { _cspLogWindow = now; _cspLogCount = 0; }
+      const list = Array.isArray(req.body) ? req.body.map(r => r && r.body) : [req.body && req.body['csp-report']];
+      for (const r of list.slice(0, 5)) {
+        if (!r || typeof r !== 'object' || ++_cspLogCount > 30) continue;
+        const clip = v => String(v == null ? '' : v).replace(/[\r\n\t]+/g, ' ').slice(0, 200);
+        const page = clip(r.documentURL || r['document-uri']).replace(/[?#].*$/, '');
+        console.warn(`CSP refused: ${clip(r.effectiveDirective || r['effective-directive'] || r['violated-directive'])} ` +
+          `${clip(r.blockedURL || r['blocked-uri'])} on ${page}` +
+          (r.sourceFile || r['source-file'] ? ` (${clip(r.sourceFile || r['source-file']).replace(/[?#].*$/, '')}:${clip(r.lineNumber || r['line-number'])})` : ''));
+      }
+    } catch (e) { /* a malformed report is just ignored */ }
+    res.status(204).end();
+  });
 
 // CORS — strict allowlist
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
@@ -370,17 +461,27 @@ if (!allowedOrigins.length) {
   console.warn('⚠️ ALLOWED_ORIGINS not set — defaulting CORS to ' + corsAllowlist.join(', '));
 }
 
+function corsOriginAllowed(origin) {
+  // No Origin header = same-origin navigation, curl, or a server-to-server
+  // call. Browsers always send Origin on cross-site requests, so this is safe.
+  if (!origin) return true;
+  if (corsAllowlist.includes(origin)) return true;
+  // localhost on any port, for local development only.
+  return process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/.test(origin);
+}
+// A foreign Origin may still READ (GET/HEAD: static files, /api/health); the
+// answer just carries no CORS headers, so a foreign page's script cannot see
+// it. It used to be a 400 for everything (audit 15 Oct, FUNC-CORS-1). Writes
+// from a foreign page (a cross-site form post to an enquiry or subscribe
+// route) are still refused here, before any route runs.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin || req.method === 'GET' || req.method === 'HEAD' || corsOriginAllowed(origin)) return next();
+  return res.status(403).json({ error: 'Cross-site request refused' });
+});
 app.use(cors({
   origin: function (origin, callback) {
-    // No Origin header = same-origin navigation, curl, or a server-to-server
-    // call. Browsers always send Origin on cross-site requests, so this is safe.
-    if (!origin) return callback(null, true);
-    if (corsAllowlist.includes(origin)) return callback(null, true);
-    // localhost on any port, for local development only.
-    if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('CORS: origin not allowed'));
+    return callback(null, corsOriginAllowed(origin));
   },
   credentials: true,
 }));
@@ -413,6 +514,16 @@ app.use(express.urlencoded({ limit: '1mb', extended: true, depth: 8, parameterLi
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object' && req.body.email !== undefined && typeof req.body.email !== 'string') {
     return res.status(400).json({ error: 'Invalid email' });
+  }
+  // isEmail() accepts a quoted local part, so '"<img src=x onerror=..>"@x.com'
+  // passed every form (audit 15 Oct, SEC-IN-4). No real address needs these
+  // characters: refuse them in any top-level *email field, on every route.
+  if (req.body && typeof req.body === 'object' && !Array.isArray(req.body)) {
+    for (const k of Object.keys(req.body)) {
+      if (/email$/i.test(k) && typeof req.body[k] === 'string' && /["<>()`\\;\[\]]/.test(req.body[k])) {
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+    }
   }
   next();
 });
@@ -562,8 +673,8 @@ app.use((req, res, next) => {
       // Counting it would quietly inflate every number on the dashboard.
       const speculative = /prefetch|prerender/i.test(req.headers['sec-purpose'] || req.headers['purpose'] || '');
       if (isPage && isPublic && !speculative && accept.includes('text/html')) {
-        const now = new Date();
-        const day = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        // Manila's day: the server's own (UTC) day began at 8 AM (audit L58).
+        const day = manilaDayKey();
         const inc = { views: 1 };
         const slug = pageSlug(p);
         if (slug) inc['pages.' + slug] = 1;
@@ -605,9 +716,11 @@ function heroPhotoUrl(u, w) {
 // The Properties page gets the same treatment: the list rides along.
 app.get('/properties.html', async (req, res, next) => {
   try {
-    const body = await publicListBody();
-    const html = pageTemplate('properties.html').replace('<!--GLRA_LIST-->',
-      '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>');
+    const body = await publicListBodyWithin(8000);
+    // A function as the replacement: a "$`" or "$'" in listing text would
+    // otherwise be read as a replace() pattern and splice the page into itself.
+    const inline = '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>';
+    const html = pageTemplate('properties.html').replace('<!--GLRA_LIST-->', () => inline);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(html);
   } catch (e) {
@@ -616,8 +729,8 @@ app.get('/properties.html', async (req, res, next) => {
 });
 app.get(['/', '/index.html'], async (req, res, next) => {
   try {
-    const body = await publicListBody();
-    const list = (_publicListCache.list || JSON.parse(body)).filter(p => p.status === 'available');
+    const body = await publicListBodyWithin(8000);
+    const list = (_publicListCache.body === body && _publicListCache.list ? _publicListCache.list : JSON.parse(body)).filter(p => p.status === 'available');
     let html = pageTemplate('index.html');
     // Same first photo as GLRA_HERO_BUILDINGS in index.html, so the photo the
     // server sends is the one the slider keeps.
@@ -627,17 +740,17 @@ app.get(['/', '/index.html'], async (req, res, next) => {
       const heroHi = heroUrl.replace('@1280.webp', '@1920.webp');
       const u1 = esc(heroUrl), u2 = esc(heroHi);
       html = html.replace(/<div class="swiper-slide is-on" data-glra-first-slide[^>]*><\/div>/,
-        `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${u1}');background-image:-webkit-image-set(url('${u1}') 1x,url('${u2}') 2x);background-image:image-set(url('${u1}') 1x,url('${u2}') 2x)"></div>`);
-      html = html.replace('</title>', `</title>\n<link rel="preload" as="image" href="${u1}" imagesrcset="${u1} 1x, ${u2} 2x" fetchpriority="high">`);
+        () => `<div class="swiper-slide is-on" data-glra-first-slide style="background-image:url('${u1}');background-image:-webkit-image-set(url('${u1}') 1x,url('${u2}') 2x);background-image:image-set(url('${u1}') 1x,url('${u2}') 2x)"></div>`);
+      html = html.replace('</title>', () => `</title>\n<link rel="preload" as="image" href="${u1}" imagesrcset="${u1} 1x, ${u2} 2x" fetchpriority="high">`);
     }
     const n = String(list.length);
     html = html.replace('<span id="topCount">24</span> <span id="topCountWord">listings</span>',
-      `<span id="topCount">${n}</span> <span id="topCountWord">${list.length === 1 ? 'listing' : 'listings'}</span>`);
-    html = html.replace('<span id="statProperties">0</span>', `<span id="statProperties">${n}</span>`);
-    html = html.replace('<b id="heroCount">all</b>', `<b id="heroCount">${n}</b>`);
+      () => `<span id="topCount">${n}</span> <span id="topCountWord">${list.length === 1 ? 'listing' : 'listings'}</span>`);
+    html = html.replace('<span id="statProperties">0</span>', () => `<span id="statProperties">${n}</span>`);
+    html = html.replace('<b id="heroCount">all</b>', () => `<b id="heroCount">${n}</b>`);
     // JSON inside a <script>: "<" is escaped so no listing text can close it.
     const inline = '<script>window.__GLRA_LIST=' + body.replace(/</g, '\\u003c') + ';</script>';
-    html = html.replace('<!--GLRA_LIST-->', inline);
+    html = html.replace('<!--GLRA_LIST-->', () => inline); // function: a "$`" in listing text stays literal
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(html);
   } catch (e) {
@@ -724,6 +837,9 @@ app.use(express.static('public', {
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
+  // Only failures count: the office shares one IP, and ten good sign-ins in a
+  // quarter hour used to lock everyone there out (audit 15 Oct, ADM-LOGIN-1).
+  skipSuccessfulRequests: true,
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -875,6 +991,17 @@ function cloudFileLink(f, seconds = 300) {
 function destroyCloudFile(f) {
   return cloudinary.uploader.destroy(f.publicId, { resource_type: f.resourceType || 'image', ...(isPrivateCloudFile(f) ? { type: 'authenticated', invalidate: true } : {}) });
 }
+// Runs right after multer on the staff upload routes: the declared type is
+// whatever the sender typed, so the saved file's first bytes must agree with
+// it (audit 15 Oct, SEC-IN-7). Same check the Cases and Leasing modules use.
+const { checkUpload } = require('./server/file-sniff');
+function uploadContentCheck(req, res, next) {
+  if (!req.file) return next();                          // the route answers "no file" itself
+  const problem = checkUpload(req.file);
+  if (!problem) return next();
+  try { fs.unlinkSync(req.file.path); } catch {}
+  return res.status(400).json({ error: problem });
+}
 const uploadAttachment = multer({
   defParamCharset: 'utf8',   // file names like "Peña.pdf" arrive intact, not "PeÃ±a.pdf"
   storage: storage,
@@ -897,8 +1024,8 @@ const { applyWebsiteCover } = require('./server/cover');
 const {
   Property, Inquiry, HeroImage, Subscriber, PriceAlert, SavedSearch, Wishlist,
   AlertLog, AuditLog, Account, Task, DeletedTask, PropertySubmission, ScheduledEmail, BulkSendLog,
-  TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage, ListingView,
-  PERMISSION_KEYS, defaultPermissionsForRole
+  TitlingCase, NotarialJob, CashEntry, SiteStat, CalcUsage, ListingView, Setting,
+  PERMISSION_KEYS, RETIRED_PERMISSION_KEYS, defaultPermissionsForRole, passwordProblem
 } = db;
 
 
@@ -910,8 +1037,123 @@ mongoose.connect(MONGODB_URI, {
   .then(async () => {
     console.log('✅ MongoDB connected successfully!');
     await seedDefaultAdmin();
+    await runAccountHousekeeping();
+    // Not awaited: the listing clean-ups never hold up the start.
+    setTimeout(() => { runListingHousekeeping().catch(e => console.error('Listing housekeeping failed:', e.message)); }, 15000).unref();
   })
   .catch(err => { console.error('❌ MongoDB connection error:', err); scheduleDbReconnect(); });
+
+// Idempotent clean-ups run on every boot (each is a no-op once done):
+//  - retired notarial permission keys stored as true are switched off;
+//  - old account-update audit rows lose the copied sign-in history (IP
+//    addresses and devices) and token version (audit 15 Oct, SEC-AUTH-8);
+//  - self-service requests whose email was never confirmed within 7 days go.
+async function runAccountHousekeeping() {
+  try {
+    const off = {}; const anyOn = [];
+    RETIRED_PERMISSION_KEYS.forEach(k => { off['permissions.' + k] = false; anyOn.push({ ['permissions.' + k]: true }); });
+    const r1 = await Account.updateMany({ role: { $ne: 'admin' }, $or: anyOn }, { $set: off });
+    const r2 = await AuditLog.updateMany(
+      { target: 'Account', $or: [{ 'changes.before.loginHistory': { $exists: true } }, { 'changes.before.tokenVersion': { $exists: true } }] },
+      { $unset: { 'changes.before.loginHistory': '', 'changes.before.tokenVersion': '' } });
+    const r3 = await Account.deleteMany({ status: 'pending', emailConfirmed: false, createdAt: { $lt: new Date(Date.now() - 7 * 864e5) } });
+    if (r1.modifiedCount || r2.modifiedCount || r3.deletedCount) {
+      console.log(`Account housekeeping: ${r1.modifiedCount} retired grants off, ${r2.modifiedCount} audit rows redacted, ${r3.deletedCount} unconfirmed requests removed`);
+    }
+  } catch (e) { console.error('Account housekeeping failed:', e.message); }
+}
+
+// Listing clean-ups, also idempotent and run on every boot (in the background):
+//  - a price drop saved before 15 Oct 2026 never recorded its date (F4), so the
+//    "Reduced" badge could not show: the date of the listing's last edit is
+//    the best record of it there is;
+//  - photos stored inline as base64 "data:" strings are moved to Cloudinary
+//    (F3). One 2.4 MB PNG made its listing, photo and brochure take 34 s.
+let _listingHousekeepingRunning = false;
+async function runListingHousekeeping() {
+  if (_listingHousekeepingRunning) return;
+  _listingHousekeepingRunning = true;
+  try {
+    const r = await Property.collection.updateMany(
+      { priceUpdatedAt: null, price: { $gt: 0 }, $expr: { $gt: ['$previousPrice', '$price'] } },
+      [{ $set: { priceUpdatedAt: { $ifNull: ['$editedAt', '$createdAt'] } } }]);
+    if (r.modifiedCount) {
+      console.log(`Listing housekeeping: dated ${r.modifiedCount} earlier price drop(s) from their last edit`);
+      invalidatePublicListingsCache();
+    }
+    await moveInlinePhotosToCloudinary();
+  } finally {
+    _listingHousekeepingRunning = false;
+  }
+}
+
+function cloudinaryConfigured() {
+  return !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+}
+// Uploads one base64 photo; null when it is not an image type the site serves
+// or the upload fails (it is then simply tried again on the next boot).
+async function uploadInlinePhoto(dataUri, folder, transformation) {
+  const m = /^data:([\w.+/-]+);base64,/.exec(dataUri.slice(0, 120));
+  if (!m || !SAFE_IMAGE_TYPES.has(m[1].toLowerCase())) return null;
+  try {
+    const result = await cloudinary.uploader.upload(dataUri, { folder, transformation });
+    return result && /^https:\/\//.test(result.secure_url || '') ? result.secure_url : null;
+  } catch (e) {
+    console.warn('Inline photo upload failed:', e.message || e);
+    return null;
+  }
+}
+async function moveInlinePhotosToCloudinary() {
+  const inline = { $regex: '^data:' };
+  // Ids only first: the photos are read one listing at a time.
+  const propIds = (await Property.find({ $or: [{ mainImage: inline }, { coverImage: inline }, { floorPlan: inline }, { gallery: inline }] })
+    .select('_id').lean()).map(d => d._id);
+  const heroIds = (await HeroImage.find({ url: inline }).select('_id').lean()).map(d => d._id);
+  if (!propIds.length && !heroIds.length) return;
+  if (!cloudinaryConfigured()) {
+    console.warn(`Inline photos: ${propIds.length} listing(s) and ${heroIds.length} hero photo(s) are still base64, but Cloudinary is not configured; left as they are.`);
+    return;
+  }
+  let moved = 0, failed = 0;
+  const PROP_TX = [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }];
+  for (const id of propIds) {
+    const p = await Property.findById(id).select('title mainImage coverImage floorPlan gallery').lean();
+    if (!p) continue;
+    const done = new Map();   // the same photo as cover and main is uploaded once
+    const urlFor = async v => {
+      if (!done.has(v)) done.set(v, await uploadInlinePhoto(v, 'glra_realty/properties', PROP_TX));
+      return done.get(v);
+    };
+    // Each field is written only if it still holds the photo that was read,
+    // so an edit saved meanwhile is never overwritten.
+    const slots = [];
+    ['mainImage', 'coverImage', 'floorPlan'].forEach(k => { if (isDataUri(p[k])) slots.push([k, p[k]]); });
+    (Array.isArray(p.gallery) ? p.gallery : []).forEach((g, i) => { if (isDataUri(g)) slots.push(['gallery.' + i, g]); });
+    for (const [path, value] of slots) {
+      const url = await urlFor(value);
+      if (!url) { failed++; continue; }
+      const w = await Property.collection.updateOne({ _id: id, [path]: value }, { $set: { [path]: url } });
+      if (w.modifiedCount) moved++;
+    }
+    console.log(`Inline photos: "${String(p.title || id).slice(0, 60)}" ${slots.length} photo(s) checked`);
+  }
+  const HERO_TX = [{ width: 1920, height: 1080, crop: 'fill' }, { quality: 'auto' }];
+  for (const id of heroIds) {
+    const h = await HeroImage.findById(id).select('url').lean();
+    if (!h || !isDataUri(h.url)) continue;
+    const url = await uploadInlinePhoto(h.url, 'glra_realty/hero', HERO_TX);
+    if (!url) { failed++; continue; }
+    const w = await HeroImage.collection.updateOne({ _id: id, url: h.url }, { $set: { url } });
+    if (w.modifiedCount) moved++;
+  }
+  console.log(`Inline photos: ${moved} moved to Cloudinary, ${failed} not moved (${propIds.length} listing(s), ${heroIds.length} hero photo(s))`);
+  if (moved) {
+    invalidatePublicListingsCache();
+    invalidateChatListingsCache();
+    invalidateAreaCache();
+    invalidateHeroCache();
+  }
+}
 
 // One pending reconnect at a time. Mongoose already retries a live connection;
 // this only covers a first connect that failed or a driver that gave up, and it
@@ -938,9 +1180,38 @@ mongoose.connection.on('disconnected', () => {
 // Token signing/verifying, permission middleware, audit-log writer, and the
 // one-time admin seeder all live in ./server/auth.js.
 const {
-  signToken, verifyToken, requireAdmin, requirePermission,
+  signToken, revokeToken, verifyToken, requireAdmin, requirePermission, userHasPermission,
   logAudit, seedDefaultAdmin, invalidateAccountState, loadAccountState
 } = require('./server/auth');
+
+// A staff member's effective permissions: the role's defaults with their own
+// stored choices on top, and the retired keys always off (audit 15 Oct,
+// ADM-PERM-1: a stale `true` the Accounts screen no longer shows).
+function effectivePermissions(role, stored) {
+  if (role === 'admin') return defaultPermissionsForRole('admin');
+  const out = { ...defaultPermissionsForRole(role || 'employee'), ...(stored || {}) };
+  RETIRED_PERMISSION_KEYS.forEach(k => { out[k] = false; });
+  return out;
+}
+// Passes when the signed-in account holds ANY of the keys (admins always pass).
+// For read routes that serve several tabs, so no tab loses its data.
+function requireAnyPermission(...keys) {
+  return async (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+    if (req.user.role === 'admin') return next();
+    try {
+      const st = await loadAccountState(req.user.sub);
+      if (!st.exists || !st.isActive || st.status === 'pending') return res.status(403).json({ error: 'Account is inactive' });
+      if (st.role === 'admin') return next();
+      const perms = effectivePermissions(st.role, st.permissions);
+      if (keys.some(k => perms[k] === true)) return next();
+      return res.status(403).json({ error: `You don't have permission to perform this action (${keys.join(' or ')}).` });
+    } catch (e) {
+      console.error('Permission check error:', e.message);
+      res.status(500).json({ error: 'Permission check failed' });
+    }
+  };
+}
 
 // ── FIELD AGENTS ARE NOT OFFICE STAFF ──────────────────────
 // Agents sign in through agent.html, but the sign-in route is the shared
@@ -1024,6 +1295,50 @@ const PUBLIC_PROPERTY_FIELDS = [
   'geo'
 ].join(' ');
 
+// A photo stored inline is replaced by a short stub on the database side, so
+// the 2.5 MB of base64 never crosses the wire just to be swapped for a URL.
+const dataStub = f => ({ $cond: [{ $eq: [{ $substrCP: [{ $convert: { input: f, to: 'string', onError: '', onNull: '' } }, 0, 5] }, 'data:'] }, 'data:', f] });
+// An aggregation $project for a listing's fields with every photo field
+// stubbed. A base64 photo arrives as the bare string 'data:' and
+// externalizeInlineImages() turns it into its /api/property-image URL. Reading
+// the listings with find() pulled the A.C.T. Tower's 2.4 MB PNG out of Atlas
+// on every refresh, and the first visitor after each edit waited 33 s for it
+// (audit 15 Oct, F2/F3). _coverRef says which stored photo an inline cover is
+// (-1 the main photo, n the gallery index), worked out in the database, because
+// the stubs themselves can no longer be compared.
+function stubbedProjection(fields) {
+  const proj = {};
+  String(fields).split(/\s+/).filter(Boolean).forEach(f => { proj[f] = 1; });
+  if (proj.mainImage) proj.mainImage = dataStub('$mainImage');
+  if (proj.floorPlan) proj.floorPlan = dataStub('$floorPlan');
+  if (proj.gallery) proj.gallery = { $map: { input: { $ifNull: ['$gallery', []] }, as: 'g', in: dataStub('$$g') } };
+  if (proj.coverImage) {
+    proj.coverImage = dataStub('$coverImage');
+    proj._coverRef = { $cond: [
+      { $eq: [{ $substrCP: [{ $convert: { input: '$coverImage', to: 'string', onError: '', onNull: '' } }, 0, 5] }, 'data:'] },
+      { $cond: [{ $eq: ['$coverImage', '$mainImage'] }, -1,
+        { $let: { vars: { gi: { $indexOfArray: [{ $ifNull: ['$gallery', []] }, '$coverImage'] } },
+          in: { $cond: [{ $gte: ['$$gi', 0] }, '$$gi', -2] } } }] },
+      '$$REMOVE'] };
+  }
+  return proj;
+}
+// Listings read for the public site, photos stubbed (see above). Plain objects,
+// like .lean().
+function findListingsStubbed(match, fields, opts = {}) {
+  const pipe = [{ $match: match || {} }];
+  if (opts.sort) pipe.push({ $sort: opts.sort });
+  if (opts.limit) pipe.push({ $limit: opts.limit });
+  pipe.push({ $project: stubbedProjection(fields) });
+  return Property.aggregate(pipe);
+}
+// One listing by id, photos stubbed. null for a malformed or unknown id.
+async function findListingByIdStubbed(id, fields) {
+  if (!/^[a-f0-9]{24}$/i.test(String(id || ''))) return null;
+  const rows = await findListingsStubbed({ _id: new mongoose.Types.ObjectId(String(id)) }, fields, { limit: 1 });
+  return rows[0] || null;
+}
+
 // ── THE PUBLIC LISTINGS FEED ────────────────────────────────
 // Every visitor to the home page and the properties page waits on this before
 // a single card can be drawn, and it is the same answer for all of them.
@@ -1038,32 +1353,60 @@ const PUBLIC_PROPERTY_FIELDS = [
 // the same five places that already refresh the chatbot's copy - so Catherine
 // never has to wait out a timer to see her own edit.
 const PUBLIC_LIST_TTL_MS = 60 * 1000;
-let _publicListCache = { at: 0, body: null };
-let _publicListGen = 0, _publicListInflight = null;
-function invalidatePublicListingsCache() { _publicListGen++; _publicListCache = { at: 0, body: null, list: null }; _sitemapCache.at = 0; }
+let _publicListCache = { at: 0, body: null, list: null, gen: 0 };
+let _publicListGen = 0, _publicListInflight = null, _publicListInflightGen = -1;
+// An edit no longer throws the answer away: it is marked out of date (its gen
+// falls behind) and the next visitor waits at most PUBLIC_LIST_EDIT_WAIT_MS for
+// the fresh copy, then is given the previous one while the refresh finishes.
+// Dropping it outright meant the first visitor after every edit waited for the
+// whole database read (33 s while one listing held a base64 photo).
+const PUBLIC_LIST_EDIT_WAIT_MS = 3000;
+function invalidatePublicListingsCache() { _publicListGen++; _publicListCache = { ..._publicListCache, at: 0 }; _sitemapCache.at = 0; }
 // One refresh at a time. A visitor never waits for the database once there is
 // an answer to show: a stale one is sent at once and replaced in the background.
-// (An edit still drops the answer outright, so Catherine sees her own change.)
 function publicListRefresh() {
-  if (_publicListInflight) return _publicListInflight;
+  // A refresh started before the latest edit would bring back the old data.
+  if (_publicListInflight && _publicListInflightGen === _publicListGen) return _publicListInflight;
   const gen = _publicListGen;
-  _publicListInflight = (async () => {
-    const properties = await Property.find({ status: 'available' })
-      .select(PUBLIC_PROPERTY_FIELDS).sort({ createdAt: -1 }).lean();
+  const run = (async () => {
+    // Photos stubbed in the database: see stubbedProjection().
+    const properties = await findListingsStubbed({ status: 'available' }, PUBLIC_PROPERTY_FIELDS, { sort: { createdAt: -1 } });
     properties.forEach(optimizePropertyImages);
-    const next = { at: Date.now(), body: JSON.stringify(properties), list: properties };
-    if (gen === _publicListGen) _publicListCache = next;   // an edit landed meanwhile: do not store the old copy
+    const next = { at: Date.now(), body: JSON.stringify(properties), list: properties, gen };
+    // Never replace a newer copy with an older one.
+    if (gen >= (_publicListCache.gen || 0)) _publicListCache = next;
     return next.body;
-  })().finally(() => { _publicListInflight = null; });
-  return _publicListInflight;
+  })().finally(() => { if (_publicListInflight === run) _publicListInflight = null; });
+  _publicListInflight = run;
+  _publicListInflightGen = gen;
+  return run;
 }
 async function publicListBody() {
   const c = _publicListCache;
   if (c.body) {
+    if (c.gen !== _publicListGen) {
+      // An edit since this copy: give the refresh a moment, then fall back.
+      const fresh = publicListRefresh();
+      fresh.catch(() => {});
+      let timer;
+      const late = new Promise(resolve => { timer = setTimeout(() => resolve(null), PUBLIC_LIST_EDIT_WAIT_MS); });
+      const body = await Promise.race([fresh.catch(() => null), late]);
+      clearTimeout(timer);
+      return body || _publicListCache.body || c.body;
+    }
     if (Date.now() - c.at >= PUBLIC_LIST_TTL_MS) publicListRefresh().catch(() => {});
     return c.body;
   }
   return publicListRefresh();
+}
+// For the home and properties pages: with no copy at all (a cold start), give
+// up after a few seconds and let the plain static page load the list itself.
+function publicListBodyWithin(ms) {
+  let timer;
+  return Promise.race([
+    publicListBody(),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('listings slow')), ms); })
+  ]).finally(() => clearTimeout(timer));
 }
 // Keep the answer warm so even the first visitor after a quiet spell gets it at once.
 setInterval(() => { if (mongoose.connection.readyState === 1) publicListBody().catch(() => {}); }, 45 * 1000).unref();
@@ -1086,10 +1429,24 @@ app.get('/api/properties', async (req, res) => {
 const SAFE_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
 app.get('/api/property-image/:id/:key', async (req, res) => {
   try {
-    const p = await Property.findById(req.params.id, { mainImage: 1, gallery: 1 }).lean();
-    if (!p) return res.status(404).end();
+    // Only the one photo asked for leaves the database: reading mainImage and
+    // the whole gallery pulled every inline photo of the listing for each one.
     const key = req.params.key;
-    const raw = key === 'main' ? p.mainImage : (p.gallery || [])[Number(key)];
+    if (!/^[a-f0-9]{24}$/i.test(req.params.id) || !/^(main|floorplan|\d{1,3})$/.test(key)) return res.status(404).end();
+    const pick = key === 'main' ? '$mainImage' : key === 'floorplan' ? '$floorPlan'
+      : { $arrayElemAt: [{ $ifNull: ['$gallery', []] }, Number(key)] };
+    const rows = await Property.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
+      { $project: { _id: 0, v: pick } }
+    ]);
+    if (!rows.length) return res.status(404).end();
+    const raw = rows[0].v;
+    // Moved to Cloudinary since this URL was handed out (pages, Google Images,
+    // the admin's copy): send the visitor on to it rather than a broken photo.
+    if (typeof raw === 'string' && /^https:\/\/res\.cloudinary\.com\//.test(raw)) {
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.redirect(302, optimizeCloudinary(raw));
+    }
     const m = isDataUri(raw) && raw.match(/^data:([\w.+/-]+);base64,(.+)$/);
     if (!m) return res.status(404).end();
     // Served as an image or not at all. The type used to be whatever the
@@ -1111,7 +1468,8 @@ app.get('/api/property-image/:id/:key', async (req, res) => {
 // Single property as JSON (handy for clients / future use).
 app.get('/api/properties/:id', async (req, res) => {
   try {
-    const p = await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS).lean();
+    if (!/^[a-f0-9]{24}$/i.test(req.params.id)) return res.status(400).json({ error: 'Invalid id' });
+    const p = await findListingByIdStubbed(req.params.id, PUBLIC_PROPERTY_FIELDS);
     // Same visibility rule as the /property/:id page: a listing that is sold,
     // reserved or hidden behind an active lease is not served publicly.
     if (!p || p.status !== 'available') return res.status(404).json({ error: 'Not found' });
@@ -1126,9 +1484,21 @@ app.get('/api/properties/:id', async (req, res) => {
 // Its own looser bucket: it fires once per listing opened, and sharing the
 // 30-per-10-minutes form budget meant a buyer who browsed 30 listings got a
 // 429 on the enquiry they then sent.
+// One view per visitor (address + browser) per listing per Manila day, and
+// only on a live listing: a script could inflate the counter by reloading,
+// and hidden listings were counted too (audit L14). Held in memory and
+// emptied each day; a restart forgets it, which costs at most one extra view.
+let _viewSeen = { day: '', keys: new Set() };
 app.post('/api/properties/:id/view', trackLimiter, async (req, res) => {
   try {
-    await Property.updateOne({ _id: req.params.id }, { $inc: { views: 1 } });
+    if (!/^[a-f0-9]{24}$/i.test(req.params.id)) return res.status(204).end();
+    const day = manilaDayKey();
+    if (_viewSeen.day !== day || _viewSeen.keys.size > 50000) _viewSeen = { day, keys: new Set() };
+    const who = crypto.createHash('sha256').update(String(req.ip) + '|' + String(req.get('user-agent') || '')).digest('base64').slice(0, 16);
+    const key = who + '|' + req.params.id.toLowerCase();
+    if (_viewSeen.keys.has(key)) return res.status(204).end();
+    _viewSeen.keys.add(key);
+    await Property.updateOne({ _id: req.params.id, status: 'available' }, { $inc: { views: 1 } });
     res.status(204).end();
   } catch (err) {
     res.status(204).end(); // never bother the visitor about this
@@ -1225,13 +1595,31 @@ function isStockPhoto(v) { return typeof v === 'string' && STOCK_PHOTO_HOSTS.tes
 
 function externalizeInlineImages(p) {
   if (!p || !p._id) return p;
+  inlinePhotoUrls(p);
   if (isStockPhoto(p.mainImage)) p.mainImage = '';
   if (Array.isArray(p.gallery)) p.gallery = p.gallery.filter(g => !isStockPhoto(g));
+  return p;
+}
+// Every inline (base64) photo on a listing swapped for its image URL.
+function inlinePhotoUrls(p) {
+  if (!p || !p._id) return p;
   const id = String(p._id);
-  if (isDataUri(p.mainImage)) p.mainImage = `/api/property-image/${id}/main`;
-  if (Array.isArray(p.gallery)) {
-    p.gallery = p.gallery.map((g, i) => isDataUri(g) ? `/api/property-image/${id}/${i}` : g);
+  const imgUrl = k => `/api/property-image/${id}/${k}`;
+  // The URLs carry the photo's STORED place (gallery index), so they are made
+  // before anything is filtered out. Filtering the stock photos first shifted
+  // every index after one, and the URL then served a different photo.
+  if (isDataUri(p.coverImage)) {
+    let ref = p._coverRef;   // set by stubbedProjection(); worked out here for a full document
+    if (ref === undefined || ref === null) {
+      const gi = Array.isArray(p.gallery) ? p.gallery.indexOf(p.coverImage) : -1;
+      ref = p.coverImage === p.mainImage ? -1 : gi >= 0 ? gi : -2;
+    }
+    p.coverImage = ref === -1 ? imgUrl('main') : ref >= 0 ? imgUrl(ref) : '';
   }
+  delete p._coverRef;
+  if (isDataUri(p.mainImage)) p.mainImage = imgUrl('main');
+  if (Array.isArray(p.gallery)) p.gallery = p.gallery.map((g, i) => isDataUri(g) ? imgUrl(i) : g);
+  if (isDataUri(p.floorPlan)) p.floorPlan = imgUrl('floorplan');
   return p;
 }
 
@@ -1334,7 +1722,7 @@ async function areaListings(area) {
 // the array was not stored.
 async function publicListRows() {
   const body = await publicListBody();
-  return _publicListCache.list || JSON.parse(body || '[]');
+  return (_publicListCache.body === body && _publicListCache.list) || JSON.parse(body || '[]');
 }
 
 // How many listings each area has right now, for the sitemap and for the
@@ -1406,6 +1794,38 @@ app.get('/properties/:slug', async (req, res, next) => {
 
 function peso(n) { return '\u20b1' + Number(n || 0).toLocaleString('en-PH'); }
 
+// \u2500\u2500 THE SHARED MENU OF THE SERVER-BUILT PAGES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// The listing and area pages are built here, not from the public/*.html
+// files, and had a cut-down menu: no About or Guides, and nothing at all on a
+// phone (audit L46, FUNC-NAV-1). One list, used by both, plus a menu button
+// that works without JavaScript (<details>) on narrow screens.
+const SITE_NAV_ITEMS = [
+  ['/properties.html', 'Properties'], ['/about.html', 'About'], ['/neighborhoods.html', 'Guides'],
+  ['/tools.html', 'Tools'], ['/faq.html', 'FAQ'], ['/list-property.html', 'List property']
+];
+const SITE_NAV_MENU_EXTRA = [['/valuation.html', 'Property value'], ['/#contact', 'Contact'], ['/privacy.html', 'Privacy']];   // 10 in all: even rows of two
+function siteNavLinksHtml(linkClass) {
+  return SITE_NAV_ITEMS.map(([h, t]) => `<a href="${h}" class="${linkClass}">${t}</a>`).join('\n    ');
+}
+function siteNavMenuHtml() {
+  return `<details class="gn-menu"><summary aria-label="Open the site menu"><i class="fas fa-bars" aria-hidden="true"></i><span>Menu</span></summary>
+    <div class="gn-panel"><a href="/">Home</a>${SITE_NAV_ITEMS.concat(SITE_NAV_MENU_EXTRA).map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>
+  </details>`;
+}
+const SITE_NAV_CSS = `.gn-menu{display:none;position:static}
+.pg-nav,.ar-nav{position:relative}
+.gn-menu summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:2px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.gn-menu summary::-webkit-details-marker{display:none}
+.gn-menu[open] summary{background:var(--ink);color:var(--paper)}
+.gn-panel{position:absolute;left:var(--glra-gut);right:var(--glra-gut);top:calc(100% + 6px);z-index:1001;background:var(--paper);border:2px solid var(--line);box-shadow:6px 6px 0 rgba(0,0,0,.18);display:grid;grid-template-columns:1fr 1fr}
+.gn-panel a{display:flex !important;align-items:center;justify-content:flex-start !important;min-height:48px;padding:0 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px;text-align:left}
+.gn-panel a:nth-child(odd){border-right:1px solid var(--line)}
+@media(max-width:380px){.gn-panel{grid-template-columns:1fr}.gn-panel a:nth-child(odd){border-right:0}}
+.gn-panel a:nth-last-child(-n+2){border-bottom:0}
+.gn-panel a:hover{color:var(--hot-text)}
+@media(max-width:560px){.gn-menu{display:block;margin-left:auto}}`;
+const SITE_FOOTER_LINKS_HTML = `<a href="/about.html">About</a> &middot; <a href="/properties.html">Properties</a> &middot; <a href="/neighborhoods.html">Guides</a> &middot; <a href="/faq.html">FAQ</a> &middot; <a href="/tools.html">Tools</a> &middot; <a href="/list-property.html">List your property</a> &middot; <a href="/privacy.html">Privacy</a>`;
+
 function buildAreaPageHtml(area, rows, counts) {
   const [slug, name, , guide] = area;
   // slug 'all' is the plain list of every listing (/properties/all).
@@ -1442,6 +1862,16 @@ function buildAreaPageHtml(area, rows, counts) {
     + (salePrices.length ? `, from ${peso(salePrices[0])}` : '')
     + `. Handled directly by a PRC-licensed broker.`;
 
+  // The share card: the first listing with a hosted photo, cropped by
+  // Cloudinary to the 1200x630 JPG that Facebook and Messenger show large
+  // (a square or WebP cover came out small or not at all, audit L48), or the
+  // site's own 1200x630 card.
+  const ogRow = rows.find(p => /^https:\/\/res\.cloudinary\.com\//.test(p.mainImage || ''));
+  const ogImg = ogRow
+    ? ogRow.mainImage.replace('/upload/f_auto,q_auto/', '/upload/').replace('/upload/', '/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/')
+    : SITE_URL + '/img/social-card.png';
+  const ogAlt = ogRow ? glraDisplayTitle(ogRow.title || 'Property') + (isAll ? '' : ', ' + name) : 'GLRA Realty';
+
   // section is 'sale' or 'lease': a sale-and-lease unit in the lease grid
   // shows its monthly rent, not its sale price with no "/mo".
   const card = (p, section) => {
@@ -1454,7 +1884,8 @@ function buildAreaPageHtml(area, rows, counts) {
       : (p.price || (/SALE/i.test(lt) ? 0 : p.monthlyRental));
     const shownTitle = glraDisplayTitle(p.title || 'Property');
     const img = p.mainImage ? absUrl(cloudinaryThumb(p.mainImage, 640, 400)) : '';
-    const specs = [p.bedrooms ? p.bedrooms + ' BR' : '', p.bathrooms ? p.bathrooms + ' BA' : '',
+    const kindC = listingKind(p);
+    const specs = [kindC.studio ? 'Studio' : (p.bedrooms && !kindC.commercial && !kindC.lot ? p.bedrooms + ' BR' : ''), p.bathrooms ? p.bathrooms + ' BA' : '',
                    p.sqm ? p.sqm + ' sqm' : ''].filter(Boolean).join(' \u00b7 ');
     return `<a class="ar-card" href="/property/${String(p._id)}">
       ${img ? `<img src="${esc(img)}" alt="${esc(shownTitle)}" loading="lazy" width="320" height="200">`
@@ -1518,9 +1949,17 @@ function buildAreaPageHtml(area, rows, counts) {
 <meta property="og:type" content="website">
 <meta property="og:title" content="Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty">
 <meta property="og:description" content="${esc(metaDesc)}">
-<meta property="og:image" content="${esc(rows[0] && rows[0].mainImage ? absUrl(optimizeCloudinary(rows[0].mainImage)) : SITE_URL + '/img/social-card.png')}">
+<meta property="og:image" content="${esc(ogImg)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(ogAlt)}">
 <meta property="og:url" content="${esc(canonical)}">
+<meta property="og:site_name" content="GLRA Realty">
+<meta property="og:locale" content="en_PH">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Property for Sale &amp; Lease in ${esc(name)} | GLRA Realty">
+<meta name="twitter:description" content="${esc(metaDesc)}">
+<meta name="twitter:image" content="${esc(ogImg)}">
 <link rel="icon" type="image/png" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/icon-180.png">
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
@@ -1543,6 +1982,11 @@ a{color:inherit;text-decoration:none}
 .ar-nav img{height:50px;width:auto}
 .ar-back{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border:2px solid var(--line);padding:9px 16px}
 .ar-back:hover{background:var(--hot);color:#fff;border-color:var(--hot)}
+.ar-links{display:flex;align-items:center;gap:2px;margin-left:auto;margin-right:10px;flex-wrap:wrap;justify-content:flex-end}
+.ar-navlink{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:9px 10px}
+.ar-navlink:hover{color:var(--hot-text)}
+${SITE_NAV_CSS}
+@media(max-width:1100px){.ar-links{display:none}.gn-menu{display:block;margin-left:auto;margin-right:10px}}
 .ar-wrap{max-width:calc(var(--glra-max) + 2 * var(--glra-gut));margin:0 auto;padding:26px var(--glra-gut) 60px}
 .ar-crumbs{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ar-crumbs a:hover{color:var(--hot-text)}
@@ -1556,10 +2000,10 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 .ar-card:hover{border-color:var(--hot)}
 .ar-card img{width:100%;height:190px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:12px}
 .ar-noph{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;height:190px;padding:16px;margin-bottom:12px;border-bottom:2px solid var(--line);background:var(--paper);font-weight:800;font-size:17px;line-height:1.2}
-.ar-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray)}
-.ar-badge{position:absolute;top:10px;left:10px;background:var(--hot);color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.4px;font-weight:700;padding:5px 9px}
+.ar-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray)}
+.ar-badge{position:absolute;top:10px;left:10px;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.4px;font-weight:700;padding:5px 9px}
 .ar-t{display:block;padding:0 14px;font-size:15px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:5px}
-.ar-l{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:7px}
+.ar-l{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:7px}
 .ar-s{display:block;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--gray);margin-bottom:7px}
 .ar-p{display:block;padding:0 14px;font-size:17px;font-weight:900;color:var(--hot-text);letter-spacing:-.4px}
 .ar-others{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
@@ -1597,11 +2041,15 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
 }
 @media(max-width:560px){.ar-wrap{padding:20px var(--glra-gut) 46px}.ar-nav{padding:14px var(--glra-gut)}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
-<nav class="ar-nav">
+<nav class="ar-nav" aria-label="Main">
   <a href="/" aria-label="GLRA Realty home"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" data-logo-auto></a>
+  <div class="ar-links">
+    ${siteNavLinksHtml('ar-navlink')}
+  </div>
+  ${siteNavMenuHtml()}
   <a href="/properties.html" class="ar-back">\u2190 All listings</a>
 </nav>
 <main class="ar-wrap" id="main" tabindex="-1">
@@ -1628,10 +2076,11 @@ h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;letter-spacing:-1.8px;text-t
   </div>
 </main>
 <footer class="ar-foot">
-  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a>
+  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a><br>
+  ${SITE_FOOTER_LINKS_HTML}
 </footer>
 <script>(function(){try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}})();</script>
-<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
 </body>
 </html>`;
 }
@@ -1945,6 +2394,10 @@ function priceStripHtml(c, esc) {
   };
   const money = v => v >= 1e6 ? '₱' + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M' : v >= 1e4 ? '₱' + Math.round(v / 1e3).toLocaleString('en-US') + 'k' : '₱' + Math.round(v).toLocaleString('en-US');
   const unit = c.sale ? '/sqm' : '/sqm a month';
+  // A label centred on a dot near either end stuck out past the page by a few
+  // pixels and let the whole page wobble sideways on a phone (audit L41): near
+  // an end it runs inwards from the dot instead.
+  const edge = x => (Number(x) < 18 ? ' is-l' : Number(x) > 82 ? ' is-r' : '');
   const diff = (c.mine - mid) / mid;
   const words = COMP_WORDS[c.grp] || ['listing', 'listings'];
   const kind = `${c.others.length} other ${words[1]} ${c.sale ? 'for sale' : 'for lease'} in ${c.city}`;
@@ -1958,15 +2411,132 @@ function priceStripHtml(c, esc) {
       <div class="pg-cmp-strip" aria-hidden="true">
         <span class="pg-cmp-axis"></span>
         ${sorted.map(v => `<span class="pg-cmp-dot" style="left:${pos(v)}%" title="${esc(money(v) + unit)}"></span>`).join('')}
-        <span class="pg-cmp-mid" style="left:${pos(mid)}%"><em>Typical ${esc(money(mid))}</em></span>
-        <span class="pg-cmp-dot is-me" style="left:${pos(c.mine)}%"><em>This listing</em></span>
+        <span class="pg-cmp-mid${edge(pos(mid))}" style="left:${pos(mid)}%"><em>Typical ${esc(money(mid))}</em></span>
+        <span class="pg-cmp-dot is-me${edge(pos(c.mine))}" style="left:${pos(c.mine)}%"><em>This listing</em></span>
       </div>
       <div class="pg-cmp-scale" aria-hidden="true"><span>${esc(money(lo) + unit)}</span><span>${esc(money(hi) + unit)}</span></div>
       <p class="pg-near-note">Each dot is one live listing. Asking prices, not what homes sold for; per square metre of ${c.grp === 'lot' ? 'lot' : 'floor'} area. Typical means the middle of the others.</p>
     </section>`;
 }
 
-function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
+// ── WHAT KIND OF LISTING ─────────────────────────────────────
+// The words a buyer searches with: "studio condo", "office space", "lot".
+// The data alone is not enough: 14 studios are filed with 1 bedroom (the
+// import's default), and the A.C.T. Tower office floor is filed as a
+// Condominium. The description and title settle it (audit F21).
+const STUDIO_TEXT = /\bstudio\s+(unit|condo|condominium|layout|type|apartment)\b|\b(furnished|modern|condominium|designed|spacious|cozy|efficient)\s+studio\b|condominium\s*[-–]\s*studio/i;
+function isCommercialListing(p) {
+  return /commercial space|office/i.test(String(p.propertyType || ''))
+    || /\b(commercial|office)\s+(space|unit|floor|condo)\b/i.test(String(p.title || ''));
+}
+function isStudioListing(p) {
+  const type = String(p.propertyType || '').toLowerCase();
+  if (Number(p.bedrooms) > 1) return false;
+  if (/studio/.test(type)) return true;
+  if (!/condo|apartment/.test(type) || isCommercialListing(p)) return false;
+  if (/\bstudio\b/i.test(String(p.title || ''))) return true;
+  if (STUDIO_TEXT.test(String(p.description || '').slice(0, 4000))) return true;
+  return Number(p.bedrooms) === 0 && Number(p.sqm) > 0 && Number(p.sqm) <= 40;
+}
+// { word: 'Studio Condo' (for titles), text: 'studio condo' (for sentences),
+//   rooms: bedrooms worth printing (0 for studios, lots, offices),
+//   studio, commercial, lot, inBuilding (a unit in a building: no lot) }
+function listingKind(p) {
+  const type = String(p.propertyType || '').trim().toLowerCase();
+  const beds = Number(p.bedrooms) || 0;
+  const k = { studio: false, commercial: false, lot: false, inBuilding: false, rooms: 0, word: '', text: '' };
+  if (isCommercialListing(p) && !/\blot\b/.test(type)) {
+    const office = /office/i.test(type + ' ' + String(p.title || ''));
+    Object.assign(k, { commercial: true, inBuilding: true, word: office ? 'Office Space' : 'Commercial Space' });
+  } else if (isStudioListing(p)) {
+    Object.assign(k, { studio: true, inBuilding: true, word: 'Studio Condo' });
+  } else if (/condo|apartment/.test(type)) {
+    // Filed as a condo but only a lot area and no rooms: not called a condo.
+    const lotOnly = !(Number(p.sqm) > 0) && Number(p.landArea) > 0 && beds === 0;
+    Object.assign(k, { inBuilding: !lotOnly, word: lotOnly ? 'Property' : 'Condo', rooms: lotOnly ? 0 : beds });
+  } else if (/townhouse/.test(type)) {
+    Object.assign(k, { word: 'Townhouse', rooms: beds });
+  } else if (/house/.test(type)) {
+    Object.assign(k, { word: 'House and Lot', rooms: beds });
+  } else if (/\blot\b|land|farm/.test(type)) {
+    k.lot = true;
+    k.word = /commercial/.test(type) ? 'Commercial Lot' : /agri|farm/.test(type) ? 'Farm Lot' : 'Lot';
+  } else {
+    k.word = type ? glraDisplayTitle(type.split(/\s+[-–]\s+/)[0]).replace(/^\w/, c => c.toUpperCase()) : 'Property';
+  }
+  k.text = k.word === 'Property' ? 'property' : k.word.toLowerCase();
+  return k;
+}
+
+// The listing's <title>, at most 60 characters, the cut-off Google shows:
+// "Name | 2BR Condo for Sale in Area, ₱24M | GLRA Realty". Built from the
+// display title cut at its first comma (the trailing "(City)" part), dropping
+// in turn the brand, the price, the area, the dash part of the name and finally
+// words, until it fits. Words the name already says (a room count, "condo",
+// "for lease", the city) are not said twice. Two live listings with the same
+// name get their floor or size added so the titles differ (audit F20).
+function listingSeoTitle(p, displayTitle, ownArea, twin) {
+  const MAX = 60;
+  const lt = String(p.listingType || 'FOR SALE').toUpperCase();
+  const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
+  const saleP = Number(p.price) || 0, leaseP = Number(p.monthlyRental) || 0;
+  const short = n => n >= 1e6 ? '₱' + (Math.round(n / 1e4) / 100) + 'M'
+    : n >= 1e4 ? '₱' + (Math.round(n / 100) / 10) + 'K' : '₱' + Number(n).toLocaleString('en-PH');
+  const price = saleP > 0 && lt !== 'FOR LEASE' ? short(saleP) : (leaseP || saleP) > 0 ? short(leaseP || saleP) + '/mo' : '';
+  let full = String(displayTitle || 'Property').replace(/\s+/g, ' ').trim();
+  let name = full.split(/,\s/)[0].trim() || full;
+  const nameShort = name.split(/\s+-\s+/)[0].trim() || name;
+  const k = listingKind(p);
+  const low = s => String(s).toLowerCase();
+  const says = (s, re) => re.test(low(s));
+  const where = ownArea ? ({ bgc: 'BGC', alabang: 'Alabang' }[ownArea[0]] || ownArea[1])
+    : glraDisplayTitle(String(p.location || '').split(',')[0].trim());
+  const fl = String(p.floor || '').trim().slice(0, 12);
+  const twinBit = !twin ? ''
+    : fl ? (/^\d+(st|nd|rd|th)$/i.test(fl) ? fl.toLowerCase() + ' Floor' : /floor|flr/i.test(fl) ? fl : 'Floor ' + fl)
+    : Number(p.sqm) > 0 ? `${Number(p.sqm).toLocaleString('en-US', { maximumFractionDigits: 1 })} sqm`
+    : Number(p.landArea) > 0 ? `${Number(p.landArea).toLocaleString('en-US', { maximumFractionDigits: 1 })} sqm` : '';
+  const build = (nm, o) => {
+    const rooms = k.rooms > 0 && !says(nm, /\b\d+\s*(br|bedrooms?|bed)\b/) ? `${k.rooms}BR ` : '';
+    // The kind is left out when the name already says all of it ("Commercial
+    // Space for Lease - ..."), and a studio named as one only adds "Condo".
+    const has = w => says(nm, new RegExp('\\b' + (w === 'farm' ? '(farm|agri)' : w)));
+    let kindTxt = k.word.toLowerCase().split(' ').filter(w => w !== 'and').every(has) ? '' : k.word;
+    if (k.studio && has('studio')) kindTxt = has('condo') ? '' : 'Condo';
+    const kind = (rooms + kindTxt).trim();
+    const deal = says(nm, /\bfor\s+(sale|lease|rent)\b/) ? ''
+      : lt === 'SALE AND LEASE' ? 'for Sale or Rent' : isLease ? 'for Rent' : 'for Sale';
+    const whereSaid = !where || says(nm, new RegExp('\\b' + low(where).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'))
+      || (ownArea && ownArea[2].test(low(nm)));
+    let tail = [kind, deal].filter(Boolean).join(' ');
+    if (o.where && !whereSaid) tail += (tail ? ' in ' : 'In ') + where;
+    if (o.twin && twinBit) tail += (tail ? ', ' : '') + twinBit;
+    if (o.price && price) tail += (tail ? ', ' : '') + price;
+    const core = tail ? `${nm} | ${tail}` : nm;
+    return o.brand ? core + ' | GLRA Realty' : core;
+  };
+  // The price is what people scan a result for, so the dash part of the
+  // name ("- Tower B") goes before the price does.
+  const tries = [];
+  [name, nameShort].forEach(nm => {
+    tries.push(build(nm, { where: true, price: true, twin: true, brand: true }));
+    tries.push(build(nm, { where: true, price: true, twin: true }));
+    tries.push(build(nm, { where: false, price: true, twin: true }));
+  });
+  [name, nameShort].forEach(nm => {
+    tries.push(build(nm, { where: true, price: false, twin: true }));
+    tries.push(build(nm, { where: false, price: false, twin: true }));
+  });
+  const fit = tries.find(t => t.length <= MAX);
+  if (fit) return fit;
+  // Still too long: the name itself is, so it is cut at a word.
+  const tail = build('', { where: false, price: false, twin: true }).replace(/^ \| /, '');
+  const room = Math.max(20, MAX - (tail ? tail.length + 3 : 0));
+  const cut = nameShort.length <= room ? nameShort : nameShort.slice(0, room - 1).replace(/\s+\S*$/, '').replace(/[\s,.;:\-–]+$/, '') + '…';
+  return (tail ? `${cut} | ${tail}` : cut).slice(0, MAX + 10);
+}
+
+function buildPropertyPageHtml(p, related, comps, areaCountsNow, pageOpts) {
   const id = String(p._id);
   // Turn any base64 photo into a real image URL first, so the og:image, the
   // gallery and the <img> tags below all point at something fetchable rather
@@ -1979,6 +2549,7 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
   const rawTitle = p.title || 'Property';
   const title = glraDisplayTitle(rawTitle) || 'Property';
   const loc = p.location || '';
+  const lk0 = listingKind(p);   // studio / commercial / lot, for the labels and schema
   const lt = String(p.listingType || 'FOR SALE').toUpperCase();
   const isLease = lt === 'FOR LEASE' || lt === 'SALE AND LEASE';
   const saleP = p.price || 0, leaseP = p.monthlyRental || 0;
@@ -2036,20 +2607,19 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     const mWhere = mArea ? ({ bgc: 'BGC', alabang: 'Alabang' }[mArea[0]] || mArea[1])
       : glraDisplayTitle(String(loc).split(',')[0].trim());
     const mWhereInTitle = (mArea && mArea[2].test(String(title).toLowerCase())) || (!!mWhere && String(title).toLowerCase().includes(String(mWhere).toLowerCase()));
-    const typeRaw = String(p.propertyType || '').trim();
-    const typeLow = typeRaw.toLowerCase();
-    let kind = /studio/.test(typeLow) ? 'studio condo'
-      : /condo/.test(typeLow) ? 'condo'
-      : typeLow.split(/\s+[-–]\s+/)[0] || 'property';
-    // Filed as a condo but only a lot area given: say "property" rather than
-    // call a lot a condo in Google's snippet.
-    if (/condo/.test(kind) && !(Number(p.sqm) > 0) && Number(p.landArea) > 0) kind = 'property';
-    if (Number(p.bedrooms) > 0 && !/studio|lot$|^lot|commercial|office|warehouse|^property$/.test(kind)) kind = `${p.bedrooms}-bedroom ${kind}`;
+    // "Studio condo", "2-bedroom condo", "commercial space", "lot": a studio
+    // filed with 1 bedroom was a "1-bedroom condo" and the A.C.T. Tower office
+    // floor a "condo" (audit F21). See listingKind().
+    const lk = listingKind(p);
+    const kind = lk.rooms ? `${lk.rooms}-bedroom ${lk.text}` : lk.text;
     const deal = lt === 'SALE AND LEASE' ? 'for sale or lease' : isLease ? 'for lease' : 'for sale';
     const shortMoney = n => n >= 1e6 ? '₱' + (Math.round(n / 1e4) / 100).toString() + 'M' : '₱' + Number(n).toLocaleString('en-PH');
     const money = (lt === 'SALE AND LEASE' && saleP && leaseP) ? `${shortMoney(saleP)} or ${shortMoney(leaseP)}/month`
       : priceNum ? shortMoney(priceNum) + (isLease ? '/month' : '') : 'price on request';
-    const sizes = [Number(p.sqm) > 0 ? `${p.sqm} sqm` : '', Number(p.landArea) > 0 ? `${p.landArea} sqm lot` : ''].filter(Boolean).join(', ');
+    // A unit in a building has no lot: a land area typed on one is its floor
+    // area in the wrong box, so it is never called a lot.
+    const sizes = [Number(p.sqm) > 0 ? `${p.sqm} sqm` : '',
+      Number(p.landArea) > 0 ? (lk.inBuilding ? (Number(p.sqm) > 0 ? '' : `${p.landArea} sqm`) : `${p.landArea} sqm lot`) : ''].filter(Boolean).join(', ');
     const lead = `${kind.charAt(0).toUpperCase() + kind.slice(1)} ${deal} in ${title}${mWhere && !mWhereInTitle ? ', ' + mWhere : ''}. ${sizes ? sizes + ', ' : ''}${money}.`;
     // Words typed in capitals go to sentence case, keeping the names that are
     // in the title or address and the usual initialisms (BGC, SMDC...)
@@ -2103,7 +2673,10 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
   const residence = {
     // Matched on the words: no listing is typed plain "Lot", so every vacant
     // lot, farm and office used to be described to Google as an "Apartment".
-    '@type': /house|townhouse/i.test(p.propertyType || '') ? 'SingleFamilyResidence'
+    // An office or shop floor filed under "Condominium" is not a home: Place,
+    // never Apartment (audit F21, the A.C.T. Tower).
+    '@type': lk0.commercial ? 'Place'
+      : /house|townhouse/i.test(p.propertyType || '') ? 'SingleFamilyResidence'
       : /^\s*(condominium|apartment|studio)/i.test(p.propertyType || '') ? 'Apartment' : 'Place',
     '@id': canonical + '#home',
     name: title,
@@ -2124,7 +2697,8 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     if (_noLot) { if (!residence.floorSize) residence.floorSize = _area; }
     else residence.lotSize = _area;
   }
-  if (p.bedrooms) residence.numberOfRooms = Number(p.bedrooms);
+  if (lk0.studio) { residence.numberOfRooms = 1; residence.numberOfBedrooms = 0; }
+  else if (p.bedrooms && !lk0.commercial && !lk0.lot) residence.numberOfRooms = Number(p.bedrooms);
   if (p.bathrooms) residence.numberOfBathroomsTotal = Number(p.bathrooms);
   // Found to at least district level by the location worker. Rounded to about
   // 100 m, the same precision the public API gives.
@@ -2146,7 +2720,11 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
   }
 
   const listedOn = new Date(p.createdAt || Date.now()).toISOString();
-  const updatedOn = new Date(p.priceUpdatedAt || p.createdAt || Date.now()).toISOString();
+  // The latest of the last edit, the last price change and the listing date:
+  // the same rule as the sitemap's <lastmod>, which 16 listings disagreed with
+  // when only the price date counted (audit L47).
+  const updatedOn = new Date(Math.max(...[p.editedAt, p.priceUpdatedAt, p.createdAt]
+    .map(d => (d ? new Date(d).getTime() : 0)).filter(Number.isFinite), 0) || Date.now()).toISOString();
 
   const jsonld = JSON.stringify({
     '@context': 'https://schema.org',
@@ -2233,29 +2811,14 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
     ? `<div class="pg-reduced">Reduced from ₱${Number(p.previousPrice).toLocaleString('en-PH')}${p.priceUpdatedAt ? ' on ' + new Date(p.priceUpdatedAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric', month: 'long', year: 'numeric' }) : ''}</div>`
     : '';
 
-  // "BELLAGIO TOWER 3 | 2BR For Sale in BGC, P24M | GLRA Realty". The old
-  // title was the name plus the whole raw address (up to 165 characters) and
-  // never said sale or rent, bedrooms, place or price: the words people type.
-  const shortPeso = n => n >= 1e6 ? '₱' + (Math.round(n / 1e4) / 100).toString() + 'M' : '₱' + Number(n).toLocaleString('en-PH');
-  const dealWord = lt === 'SALE AND LEASE' ? 'For Sale or Rent' : isLease ? 'For Rent' : 'For Sale';
-  // Google cuts a title at about 60 characters and these ran 68 to 104. The
-  // city is left out when the name already has it, written in normal case
-  // (the first part of the address is often typed in capitals), and the brand
-  // suffix goes only when there is room for it.
-  const where = ownArea ? ({ bgc: 'BGC', alabang: 'Alabang' }[ownArea[0]] || ownArea[1])
-    : glraDisplayTitle(String(loc).split(',')[0].trim());
-  const whereInTitle = (ownArea && ownArea[2].test(title.toLowerCase()))
-    || (!!where && title.toLowerCase().includes(String(where).toLowerCase()));
-  const rooms = Number(p.bedrooms) > 0 ? `${p.bedrooms}BR ` : '';
-  const pricePart = saleP > 0 && lt !== 'FOR LEASE' ? shortPeso(saleP) : (leaseP || saleP) > 0 ? shortPeso(leaseP || saleP) + '/mo' : '';
-  const seoCore = `${title.replace(/\s+/g, ' ').trim()} | ${rooms}${dealWord}${where && !whereInTitle ? ' in ' + where : ''}${pricePart ? ', ' + pricePart : ''}`;
-  const seoTitle = seoCore.length + ' | GLRA Realty'.length <= 62 ? seoCore + ' | GLRA Realty' : seoCore;
+  // "Bellagio Tower 3 | 2BR Condo for Sale in BGC, ₱24M": see listingSeoTitle().
+  const seoTitle = listingSeoTitle(p, title, ownArea, pageOpts && pageOpts.twin);
 
   const waHref = 'https://wa.me/639171774572?text=' + encodeURIComponent(
     `Hi Catherine, I'm interested in ${title.replace(/\s+/g, ' ').trim()}${priceText && priceText !== 'Price on request' ? ' (' + priceText.replace(/\s+/g, ' ') + ')' : ''}. ${canonical}`);
 
   const specRows = [['Type', String(p.propertyType || '—').trim()]]
-    .concat(p.bedrooms ? [['Bedrooms', p.bedrooms]] : [])
+    .concat(lk0.studio ? [['Bedrooms', 'Studio']] : p.bedrooms && !lk0.commercial && !lk0.lot ? [['Bedrooms', p.bedrooms]] : [])
     .concat(p.bathrooms ? [['Bathrooms', p.bathrooms]] : [])
     .concat(p.sqm ? [['Floor area', p.sqm + ' sqm']] : [])
     // A vacant lot, a farm or a house-and-lot: the lot is the material number,
@@ -2293,8 +2856,9 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
   const nBed = Number(p.bedrooms) || 0, nBath = Number(p.bathrooms) || 0;
   const nSqm = Number(p.sqm) || 0, nLot = Number(p.landArea) || 0;
   const keyFacts = [];
-  if (nBed > 0) keyFacts.push(['fa-bed', nBed + (nBed === 1 ? ' Bedroom' : ' Bedrooms')]);
-  else if (/studio/i.test(typeTxt)) keyFacts.push(['fa-bed', 'Studio']);
+  // A studio filed with 1 bedroom is still a studio (audit F21).
+  if (lk0.studio) keyFacts.push(['fa-bed', 'Studio']);
+  else if (nBed > 0 && !lk0.commercial && !lk0.lot) keyFacts.push(['fa-bed', nBed + (nBed === 1 ? ' Bedroom' : ' Bedrooms')]);
   if (nBath > 0) keyFacts.push(['fa-bath', nBath + (nBath === 1 ? ' Bath' : ' Baths')]);
   if (nSqm > 0) keyFacts.push(['fa-ruler-combined', fmtSqm(nSqm) + ' sqm' + (nLot > 0 && !noLot ? ' floor' : '')]);
   if (nLot > 0 && !noLot) keyFacts.push(['fa-vector-square', fmtSqm(nLot) + ' sqm lot']);
@@ -2423,6 +2987,8 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow) {
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">` : ''}
 <meta property="og:url" content="${esc(canonical)}">
+<meta property="og:site_name" content="GLRA Realty">
+<meta property="og:locale" content="en_PH">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(seoTitle)}">
 <meta name="twitter:description" content="${esc(metaDesc)}">
@@ -2469,9 +3035,12 @@ html body .pg-nav .pg-links ~ button.glra-theme-toggle.is-boxed{margin-left:8px 
 .pg-navlink{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:9px 12px;border:2px solid transparent}
 .pg-navlink:hover{color:var(--hot)}
 @media(max-width:560px){.pg-navlink{display:none !important}}
+${SITE_NAV_CSS}
+/* Six links fit from 1100px; below that the menu button holds them (audit L46). */
+@media(max-width:1100px){.pg-links{display:none}.gn-menu{display:block;margin-left:auto;margin-right:10px}}
 /* Same 1400px column as the rest of the site (brutalist-theme.css, ONE COLUMN). */
 .pg-wrap{max-width:calc(var(--glra-max) + 2 * var(--glra-gut));margin:0 auto;padding:26px var(--glra-gut) 60px}
-.pg-badge{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
+.pg-badge{display:inline-block;background:var(--hot-btn);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;padding:6px 12px;margin-bottom:14px}
 .pg-head{margin-bottom:20px}
 /* Title case now (see glraDisplayTitle), so no forced capitals. */
 .pg-title{font-size:clamp(28px,3.6vw,44px);font-weight:900;letter-spacing:-1.2px;line-height:1.06;margin-bottom:10px;overflow-wrap:break-word}
@@ -2518,9 +3087,9 @@ a.pg-hero:hover .pg-hero-count,a.pg-hero:focus-visible .pg-hero-count{background
   .pg-thumb[data-more]::after{content:attr(data-more);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.62);color:#fff;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;letter-spacing:1px}
 }
 .pg-card{border:2px solid var(--line);background:var(--paper2);padding:22px;box-shadow:6px 6px 0 var(--shadow)}
-.pg-card-deal{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;font-weight:700;padding:5px 10px;margin-bottom:14px}
+.pg-card-deal{display:inline-block;background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;font-weight:700;padding:5px 10px;margin-bottom:14px}
 .pg-card-row{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;margin-bottom:12px;border-bottom:2px solid var(--line)}
-.pg-card-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--gray);font-weight:700}
+.pg-card-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--gray);font-weight:700}
 .pg-card-price{font-size:28px;font-weight:900;color:var(--hot-text);letter-spacing:-.8px;line-height:1.15;overflow-wrap:anywhere}
 .pg-card-price small{font-size:14px;font-weight:800;color:var(--gray);margin-left:3px;letter-spacing:0}
 .pg-card .pg-reduced{margin:-2px 0 12px}
@@ -2620,7 +3189,7 @@ body.dark-mode .pg-hz-list li{border-top-color:var(--line)}
 .pg-sz-key{display:inline-block;width:14px;height:14px;flex:0 0 14px}
 .pg-sz-key-u{background:rgba(255,61,0,.22);border:2px solid #ff3d00}
 .pg-sz-key-r{background:rgba(31,95,191,.12);border:2px solid #1f5fbf}
-.pg-cmp{margin-bottom:36px}
+.pg-cmp{margin-bottom:36px;overflow-x:clip}
 .pg-cmp-lead{font-size:15px;line-height:1.5;margin-bottom:26px;max-width:78ch}
 .pg-cmp-strip{position:relative;height:46px;margin:0 6px}
 .pg-cmp-axis{position:absolute;left:0;right:0;top:22px;height:2px;background:var(--line)}
@@ -2630,6 +3199,8 @@ body.dark-mode .pg-hz-list li{border-top-color:var(--line)}
 .pg-cmp-dot.is-me em{bottom:calc(100% + 6px);color:var(--hot-text)}
 .pg-cmp-mid{position:absolute;top:8px;height:30px;width:0;border-left:2px dashed var(--gray)}
 .pg-cmp-mid em{top:calc(100% + 6px);color:var(--gray)}
+.pg-cmp-dot.is-l em,.pg-cmp-mid.is-l em{left:-2px;transform:none}
+.pg-cmp-dot.is-r em,.pg-cmp-mid.is-r em{left:auto;right:-2px;transform:none}
 .pg-cmp-scale{display:flex;justify-content:space-between;font:700 10.5px/1 'JetBrains Mono',monospace;color:var(--gray);margin-top:22px;letter-spacing:.5px}
 .pg-near-map .leaflet-tile-pane{filter:grayscale(.85) contrast(1.04) brightness(1.03)}
 body.dark-mode .pg-near-map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.9) brightness(.82) contrast(.92)}
@@ -2656,7 +3227,7 @@ h2.pg-section-label{font-weight:700}
 .pg-brochure{display:inline-flex;align-items:center;gap:8px;margin:-10px 0 26px;padding:11px 14px;border:2px solid var(--ink,#0a0a0a);color:inherit;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .pg-brochure:hover,.pg-brochure:focus-visible{background:#ff3d00;border-color:#ff3d00;color:#fff}
 @media(min-width:1024px){.pg-brochure{display:none}}
-.pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
+.pg-specs div{border:2px solid var(--line);padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);min-width:0}
 .pg-specs b{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.3px;color:var(--ink);text-transform:none;overflow-wrap:break-word}
 .pg-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px}
 .pg-desc{font-size:16px;line-height:1.7;white-space:pre-wrap;margin-bottom:36px;max-width:78ch}
@@ -2678,9 +3249,9 @@ h2.pg-section-label{font-weight:700}
 .pg-rel:hover{border-color:var(--hot)}
 .pg-rel img{width:100%;height:140px;object-fit:cover;border-bottom:2px solid var(--line);margin-bottom:10px;background:var(--paper2)}
 .pg-rel-noph{display:flex;flex-direction:column;justify-content:flex-end;gap:3px;height:140px;padding:12px;margin-bottom:10px;border-bottom:2px solid var(--line);background:var(--paper);font-weight:800;font-size:14px;line-height:1.2}
-.pg-rel-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gray)}
+.pg-rel-noph small{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gray)}
 .pg-rel-t{display:block;padding:0 12px;font-size:14px;font-weight:800;line-height:1.25;letter-spacing:-.2px;margin-bottom:4px}
-.pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
+.pg-rel-l{display:block;padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:6px}
 .pg-rel-p{display:block;padding:0 12px;font-size:15px;font-weight:900;color:var(--hot-text);letter-spacing:-.3px}
 .pg-form{border:2px solid var(--line);padding:26px;background:var(--paper2)}
 .pg-form h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:16px}
@@ -2728,17 +3299,17 @@ h2.pg-section-label{font-weight:700}
 .pg-opt{text-transform:none;letter-spacing:0}
 .pg-foot{--hot-text:#ff3d00}
 .pg-foot a{color:var(--hot-text)}
-@media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}}
+@media(max-width:600px){.pg-wrap{padding:18px var(--glra-gut) 46px}.pg-title{font-size:27px;letter-spacing:-.8px}.pg-price{font-size:26px}.pg-crumbs{margin-bottom:12px}.pg-crumbs a{min-height:44px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <nav class="pg-nav" aria-label="Main">
   <a href="/" aria-label="GLRA Realty home"><img src="/img/logo-384.png" alt="GLRA Realty" width="384" height="384" data-logo-auto></a>
   <div class="pg-links">
-    <a href="/tools.html" class="pg-navlink">Tools</a>
-    <a href="/list-property.html" class="pg-navlink">List property</a>
+    ${siteNavLinksHtml('pg-navlink')}
   </div>
+  ${siteNavMenuHtml()}
   <a href="/properties.html" class="pg-back">← All listings</a>
 </nav>
 <main class="pg-wrap" id="main" tabindex="-1">
@@ -2793,7 +3364,8 @@ h2.pg-section-label{font-weight:700}
   ${relatedHtml}
 </main>
 <footer class="pg-foot">
-  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a>
+  GLRA REALTY &middot; <a href="tel:+639171774572">+63 917 177 4572</a> &middot; <a href="mailto:glrarealty@gmail.com">glrarealty@gmail.com</a> &middot; <a href="https://glrarealty.com">glrarealty.com</a><br>
+  ${SITE_FOOTER_LINKS_HTML}
 </footer>
 <!-- On a phone the enquiry form is several screens down and the only other
      way to reach Catherine was one button hiding a menu. This bar stays in
@@ -2880,10 +3452,10 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=146"></script>
-<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/main.js?v=149"></script>
+<script src="/js/a11y.js?v=149" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
-${geoOk ? '<script src="/js/glra-maps.js?v=117" defer></script>' : ''}
+${geoOk ? '<script src="/js/glra-maps.js?v=148" defer></script>' : ''}
 </body>
 </html>`;
 }
@@ -2917,7 +3489,9 @@ function buildBrochureHtml(p) {
   const fmtSqm = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' sqm';
   const facts = [];
   if (typeTxt) facts.push(['Type', typeTxt]);
-  if (Number(p.bedrooms) > 0) facts.push(['Bedrooms', String(p.bedrooms)]);
+  const kindB = listingKind(p);
+  if (kindB.studio) facts.push(['Bedrooms', 'Studio']);
+  else if (Number(p.bedrooms) > 0 && !kindB.commercial && !kindB.lot) facts.push(['Bedrooms', String(p.bedrooms)]);
   if (Number(p.bathrooms) > 0) facts.push(['Bathrooms', String(p.bathrooms)]);
   if (Number(p.sqm) > 0) facts.push(['Floor area', fmtSqm(p.sqm)]);
   if (Number(p.landArea) > 0 && !(noLot && Number(p.sqm) > 0)) facts.push([noLot ? 'Floor area' : 'Lot area', fmtSqm(p.landArea)]);
@@ -3062,7 +3636,7 @@ td:last-child{font-weight:700;text-align:right}
     <div class="b-qr"><span>Scan for photos<br>and the latest price</span><div id="bQr" data-url="${esc(url)}"></div></div>
   </footer>
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 (function(){
   var box=document.getElementById('bQr');
@@ -3078,7 +3652,7 @@ td:last-child{font-weight:700;text-align:right}
 app.get('/property/:id/brochure', async (req, res) => {
   try {
     const p = /^[a-f0-9]{24}$/i.test(req.params.id)
-      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby hazard').lean()
+      ? await findListingByIdStubbed(req.params.id, PUBLIC_PROPERTY_FIELDS + ' nearby hazard editedAt')
       : null;
     if (!p || p.status !== 'available') return res.redirect(302, '/property/' + encodeURIComponent(req.params.id));
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -3095,7 +3669,7 @@ app.get('/property/:id', async (req, res) => {
     // contact details in `notes` have no business being loaded into a page
     // renderer, even one that does not print them.
     const p = /^[a-f0-9]{24}$/i.test(req.params.id)
-      ? await Property.findById(req.params.id).select(PUBLIC_PROPERTY_FIELDS + ' nearby hazard').lean()
+      ? await findListingByIdStubbed(req.params.id, PUBLIC_PROPERTY_FIELDS + ' nearby hazard editedAt')
       : null;
     // A 302 to the listings page looked to Google like a disguised "not
     // found" it had to keep re-checking. Gone (410) for a listing that existed
@@ -3108,9 +3682,14 @@ app.get('/property/:id', async (req, res) => {
     // Neighbours to link to. Preference order: same area, then same kind of
     // property, then simply the newest - so the block is never empty and a
     // crawler always has somewhere to go from here.
-    const [related, comps, counts] = await Promise.all([findRelatedListings(p), findPriceComparables(p), areaCounts()]);
+    const [related, comps, counts, rows] = await Promise.all([findRelatedListings(p), findPriceComparables(p), areaCounts(),
+      publicListRows().catch(() => [])]);
+    // Another live listing with the very same name: its title needs the
+    // floor or size to tell the two apart in a search result (audit F20).
+    const nameKey = t => String(t || '').replace(/\p{Extended_Pictographic}|️/gu, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const twin = rows.some(r => String(r._id) !== String(p._id) && nameKey(r.title) === nameKey(p.title));
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(buildPropertyPageHtml(p, related, comps, counts));
+    res.send(buildPropertyPageHtml(p, related, comps, counts, { twin }));
   } catch (err) {
     return res.redirect(302, '/properties.html');
   }
@@ -3269,6 +3848,7 @@ async function buildSitemapRaw(req, res) {
       ['/lease-escalation.html', 'monthly', '0.75'],
       ['/principal-residence.html', 'monthly', '0.75'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
+      ['/faq.html', 'monthly', '0.6'],   // Oct 2026: the FAQ hub (audit SEO-G-16)
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
       ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5'],
       ['/privacy.html', 'yearly', '0.3'],
@@ -3280,12 +3860,9 @@ async function buildSitemapRaw(req, res) {
       ['/liv.html', 'monthly', '0.8'], ['/una.html', 'monthly', '0.8'],
       ['/lucima.html', 'monthly', '0.8']
     ];
-    const props = await Property.aggregate([
-      { $match: { status: 'available' } },
-      { $project: { _id: 1, createdAt: 1, priceUpdatedAt: 1, editedAt: 1, title: 1, location: 1, mainImage: dataStub('$mainImage'), coverImage: dataStub('$coverImage'),
-          gallery: { $map: { input: { $ifNull: ['$gallery', []] }, as: 'g', in: dataStub('$$g') } } } },
-      { $sort: { createdAt: -1 } }, { $limit: 5000 }
-    ]);
+    const props = await findListingsStubbed({ status: 'available' },
+      '_id createdAt priceUpdatedAt editedAt title location mainImage coverImage gallery',
+      { sort: { createdAt: -1 }, limit: 5000 });
     // A base64 photo is not a fetchable image URL — without this it would be
     // pasted into <image:loc> and balloon the sitemap to megabytes.
     props.forEach(pr => applyWebsiteCover(externalizeInlineImages(pr)));
@@ -3357,6 +3934,10 @@ async function buildSitemapRaw(req, res) {
 app.get('/api/hero-image/:id', async (req, res) => {
   try {
     const h = await HeroImage.findById(req.params.id, { url: 1 }).lean();
+    if (h && typeof h.url === 'string' && /^https:\/\/res\.cloudinary\.com\//.test(h.url)) {
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.redirect(302, optimizeCloudinary(h.url));   // moved to Cloudinary since
+    }
     const m = h && isDataUri(h.url) && h.url.match(/^data:([\w.+/-]+);base64,(.+)$/);
     if (!m) return res.status(404).end();
     // Served as an image or not at all. The type used to be whatever the
@@ -3386,9 +3967,8 @@ function externalizeHeroImage(h) {
   return h;
 }
 
-// A photo stored inline is replaced by a short stub on the database side, so
-// the 2.5 MB of base64 never crosses the wire just to be swapped for a URL.
-const dataStub = f => ({ $cond: [{ $eq: [{ $substrCP: [{ $convert: { input: f, to: 'string', onError: '', onNull: '' } }, 0, 5] }, 'data:'] }, 'data:', f] });
+// (dataStub, the database-side swap of an inline photo for a stub, is defined
+// with PUBLIC_PROPERTY_FIELDS.)
 let _heroCache = { at: 0, body: null }, _heroInflight = null;
 function invalidateHeroCache() { _heroCache = { at: 0, body: null }; }
 function heroRefresh() {
@@ -3512,6 +4092,24 @@ app.get('/api/health', async (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+// Readiness: the database must actually answer. /api/health says "ok" while
+// the database is down (by design, so Render does not restart a process that
+// is only waiting for Atlas); an uptime monitor wants this one instead.
+app.get('/api/ready', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const started = Date.now();
+  let timer;
+  try {
+    if (mongoose.connection.readyState !== 1) throw new Error('not connected');
+    await Promise.race([
+      mongoose.connection.db.admin().ping(),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), 3000); })
+    ]);
+    res.json({ status: 'ready', mongodb: 'connected', ms: Date.now() - started });
+  } catch (e) {
+    res.status(503).json({ status: 'unavailable', mongodb: e.message === 'timeout' ? 'timeout' : 'down', ms: Date.now() - started });
+  } finally { clearTimeout(timer); }
+});
 // ============ CHATBOT ============
 // All chatbot logic (Gemini + Groq, scoring, action builders, /api/chat
 // route) lives in ./server/chatbot.js. server.js just registers the route
@@ -3537,7 +4135,7 @@ startAgentTick({ sendEmail, esc });
 // One record per person across every form on the site, scored and worked in
 // the admin "Leads" tab. ingestLead() is called by each form handler below.
 const { registerLeadRoutes, startLeadsTick, ingestLead, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib } = require('./server/leads');
-registerLeadRoutes(app, { sendEmail, esc, handleValidation });
+registerLeadRoutes(app, { sendEmail, esc, handleValidation, unsubUrl });
 startLeadsTick({ sendEmail, esc });
 
 const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
@@ -3580,7 +4178,7 @@ startMetaTick({ sendEmail, esc });
 // social.html: posting, scheduling, approvals, inbox, insights, activity log
 // for the Pages in META_PAGE_IDS. Off unless SOCIAL_ENABLED=1 (routes 404).
 // Staff draft; only social_approve publishes, sends, hides or deletes.
-const { registerSocialRoutes, startSocialTick } = require('./server/social');
+const { registerSocialRoutes, startSocialTick, voidLinksForAccount: voidSocialLinksForAccount } = require('./server/social');
 registerSocialRoutes(app, { sendEmail, esc, cloudinary });
 startSocialTick({ sendEmail, esc, cloudinary });
 // One-time notes for the staff member's desk (listing problems found on 30 Sept).
@@ -3697,8 +4295,7 @@ app.post('/api/track/calculator',
       // Already a known browser? Attribute on the spot.
       const known = await Subscriber.findOne({ vids: vid }).select('email').lean();
 
-      const now = new Date();
-      const day = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      const day = manilaDayKey();   // Manila's day, like the visitor counter
 
       await CalcUsage.create({
         vid,
@@ -3751,17 +4348,34 @@ app.post('/api/track/view',
 // mail account to put their own words in front of a stranger.
 async function listingForVisitorEmail(propertyId) {
   if (!/^[a-f0-9]{24}$/i.test(String(propertyId || ''))) return null;
-  const p = await Property.findOne({ _id: propertyId, status: 'available' }).select('title location price monthlyRental listingType mainImage').lean().catch(() => null);
+  const p = await findListingByIdStubbed(propertyId, 'title location price monthlyRental listingType mainImage status')
+    .then(r => (r && r.status === 'available' ? r : null)).catch(() => null);
   if (!p) return null;
   const lease = isLeaseOnlyType(p.listingType);
   return { title: p.title || '', location: p.location || '', price: lease ? (Number(p.monthlyRental) || Number(p.price) || 0) : (Number(p.price) || 0),
-    image: /^https:\/\//.test(p.mainImage || '') ? p.mainImage : '', raw: p };
+    image: /^https:\/\//.test(p.mainImage || '') ? p.mainImage : '', raw: p, lease };
+}
+// How a visitor email states the listing's price: a rental's is a monthly
+// rent and says so (audit L28: lease alerts printed a bare peso amount).
+function visitorPriceText(listing) {
+  const n = Number(listing && listing.price) || 0;
+  if (!n) return 'Price on request';
+  return '₱' + n.toLocaleString('en-PH') + (listing.lease ? ' a month' : '');
 }
 // "Dear <name>" in a visitor email only when it looks like a name; otherwise a
 // 200-character "name" was another way to mail a stranger any text.
+// The name a visitor typed is echoed in mail sent from hello@glrarealty.com, so
+// it must look like a name and nothing else: "Dear Your refund is at
+// www.glra-refund.com," was deliverable before (audit 15 Oct, SEC-IN-2).
+// At most 4 words, nothing domain-like ("x.com", "www"), no call-to-action words.
+const GREET_BAD_WORDS = /(^|[\s.'\-])(www|https?|com|net|org|ph|refunds?|click|link|visit|claim|verify|login|log\s*in|password|account|bank|gcash|prize|winner|bitcoin|crypto|urgent|payment|pay|send|money|free|bonus|go\s+to)($|[\s.'\-])/iu;
 function greetName(name) {
-  const n = String(name || '').trim();
-  return /^[\p{L}][\p{L} .'\-]{0,59}$/u.test(n) ? n : '';
+  const n = String(name || '').trim().replace(/\s+/g, ' ');
+  if (!/^[\p{L}][\p{L} .'\-]{0,59}$/u.test(n)) return '';
+  if (n.split(' ').length > 4) return '';
+  if (/\p{L}{2,}\.\p{L}/u.test(n)) return '';      // a domain: "refund.com" (initials like "J.R." still pass)
+  if (GREET_BAD_WORDS.test(n)) return '';
+  return n;
 }
 
 app.post('/api/wishlist',
@@ -3807,7 +4421,7 @@ app.post('/api/wishlist',
         <div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
           <p style="margin: 0 0 8px 0; font-weight: 600; color: #0a0a0a;">${esc(propertyTitle)}</p>
           <p style="margin: 0 0 5px 0; color: #0a0a0a; font-size: 13px;">📍 ${esc(propertyLocation)}</p>
-          <p style="margin: 0; color: #ff3d00; font-weight: 600; font-size: 16px;">₱${Number(propertyPrice).toLocaleString()}</p>
+          <p style="margin: 0; color: #ff3d00; font-weight: 600; font-size: 16px;">${esc(visitorPriceText(listing))}</p>
         </div>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Catherine will keep this on file and tell you about any changes to it. You can browse more listings on our <a href="https://glrarealty.com/properties.html" style="color: #ff3d00;">properties page</a>.</p>
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px; margin-top: 25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
@@ -3820,7 +4434,7 @@ app.post('/api/wishlist',
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Customer</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(email)}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(propertyTitle)}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Location</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(propertyLocation)}</td></tr>
-          <tr><td style="padding: 8px 0; font-weight: 600;">Price</td><td style="padding: 8px 0;">₱${Number(propertyPrice).toLocaleString()}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: 600;">${listing.lease ? 'Rent' : 'Price'}</td><td style="padding: 8px 0;">${esc(visitorPriceText(listing))}</td></tr>
         </table>
       ` + getEmailFooter();
       if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Wishlist Alert: ${propertyTitle}`, adminWishlistHtml);
@@ -3893,7 +4507,7 @@ app.post('/api/price-alert',
         <p style="color: #0a0a0a; line-height: 1.6; font-size: 14px;">Someone (we hope you) asked to be told if the price drops on this property:</p>
         <div style="background-color: #e8e4dd; border-left: 3px solid #ff3d00; padding: 18px 20px; margin: 25px 0; border-radius:0;">
           <p style="margin: 0 0 8px 0; font-weight: 600; color: #0a0a0a;">${esc(propertyTitle)}</p>
-          <p style="margin: 0; color: #ff3d00; font-weight: 600; font-size: 16px;">Current Price: ₱${Number(propertyPrice).toLocaleString()}</p>
+          <p style="margin: 0; color: #ff3d00; font-weight: 600; font-size: 16px;">Current ${listing.lease ? 'Rent' : 'Price'}: ${esc(visitorPriceText(listing))}</p>
         </div>
         <p style="margin:24px 0"><a href="${alertConfirmUrl(email, propertyId)}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Yes, alert me if the price drops</a></p>
         <p style="color:#666;line-height:1.6;font-size:13px;">If this wasn't you, ignore this email: the alert stays switched off and you will not hear from us about it.</p>
@@ -3935,7 +4549,7 @@ app.post('/api/price-alert',
         <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600; width: 100px;">Customer</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(email)}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0; font-weight: 600;">Property</td><td style="padding: 8px 0; border-bottom: 1px solid #e8e8e0;">${esc(propertyTitle)}</td></tr>
-          <tr><td style="padding: 8px 0; font-weight: 600;">Current Price</td><td style="padding: 8px 0;">₱${Number(propertyPrice).toLocaleString()}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: 600;">Current ${listing.lease ? 'Rent' : 'Price'}</td><td style="padding: 8px 0;">${esc(visitorPriceText(listing))}</td></tr>
         </table>
       ` + getEmailFooter();
       if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
@@ -4291,7 +4905,13 @@ async function runSavedSearchSweep() {
         const fresh = listings.filter(p => !sent.has(String(p._id)) && savedSearchMatches(p, s.criteria));
         if (!fresh.length) continue;
         const { subject, html } = buildSavedSearchAlertEmail(s, fresh);
-        const r = await sendEmail(s.email, subject, html);
+        // Gmail/Outlook's own one-click "Unsubscribe" button stops this one
+        // alert: it POSTs "List-Unsubscribe=One-Click" to the alert's stop
+        // route (audit L26: these alerts had no List-Unsubscribe header).
+        const r = await sendEmail(s.email, subject, html, 'GLRA Realty', null, null, {
+          'List-Unsubscribe': `<${SITE_URL}/api/saved-search/${s.token}/unsubscribe>, <mailto:glrarealty@gmail.com?subject=Stop%20my%20Property%20Finder%20alert>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+        });
         if (!r || !r.success) { stats.failed++; continue; }
         await SavedSearch.updateOne(
           { _id: s._id },
@@ -4423,21 +5043,64 @@ async function geoFetch(url, init, timeoutMs) {
 // A small answer cache on local disk. It saves the free services from a
 // repeat question after a restart (and every local test stack from re-asking
 // all 64 listings); production keeps its answers in the database regardless.
-function geoCacheRead() {
-  try { return JSON.parse(fs.readFileSync(GEO_CACHE_FILE, 'utf8')) || {}; } catch (e) { return {}; }
+// Audit L9: it used to read and rewrite the whole file synchronously on every
+// get and put, blocking the event loop, and never dropped an expired answer.
+// Now the file is read once into memory (expired entries skipped), lookups are
+// a Map hit kept in least-recently-used order with a size cap, and writes are
+// batched into one async write a few seconds after the last change.
+const GEO_CACHE_MAX = 5000;
+const GEO_CACHE_FLUSH_MS = 5000;
+let _geoMem = null;
+let _geoFlushTimer = null;
+let _geoFlushing = false;
+function geoCacheMem() {
+  if (_geoMem) return _geoMem;
+  _geoMem = new Map();
+  let disk = {};
+  try { disk = JSON.parse(fs.readFileSync(GEO_CACHE_FILE, 'utf8')) || {}; } catch (e) { disk = {}; }
+  const now = Date.now();
+  Object.entries(disk)
+    .filter(([, c]) => c && typeof c.t === 'number' && now - c.t < GEO_CACHE_TTL_MS)
+    .sort((a, b) => a[1].t - b[1].t)
+    .slice(-GEO_CACHE_MAX)
+    .forEach(([k, c]) => _geoMem.set(k, c));
+  return _geoMem;
 }
 function geoCacheGet(key) {
-  const c = geoCacheRead()[key];
-  return c && Date.now() - c.t < GEO_CACHE_TTL_MS ? c.v : undefined;
+  const m = geoCacheMem();
+  const c = m.get(key);
+  if (!c) return undefined;
+  if (Date.now() - c.t >= GEO_CACHE_TTL_MS) { m.delete(key); return undefined; }
+  m.delete(key); m.set(key, c);   // most recently used goes to the end
+  return c.v;
 }
 function geoCachePut(key, v) {
+  const m = geoCacheMem();
+  m.delete(key);
+  m.set(key, { t: Date.now(), v });
+  while (m.size > GEO_CACHE_MAX) m.delete(m.keys().next().value);
+  if (!_geoFlushTimer) {
+    _geoFlushTimer = setTimeout(geoCacheFlush, GEO_CACHE_FLUSH_MS);
+    if (_geoFlushTimer.unref) _geoFlushTimer.unref();
+  }
+}
+async function geoCacheFlush() {
+  _geoFlushTimer = null;
+  if (_geoFlushing) {   // a write is still running: try again shortly
+    _geoFlushTimer = setTimeout(geoCacheFlush, GEO_CACHE_FLUSH_MS);
+    if (_geoFlushTimer.unref) _geoFlushTimer.unref();
+    return;
+  }
+  _geoFlushing = true;
   try {
-    const c = geoCacheRead();
-    c[key] = { t: Date.now(), v };
+    const now = Date.now();
+    const out = {};
+    for (const [k, c] of geoCacheMem()) if (now - c.t < GEO_CACHE_TTL_MS) out[k] = c;
     const tmp = GEO_CACHE_FILE + '.' + process.pid;
-    fs.writeFileSync(tmp, JSON.stringify(c));
-    fs.renameSync(tmp, GEO_CACHE_FILE);
+    await fs.promises.writeFile(tmp, JSON.stringify(out));
+    await fs.promises.rename(tmp, GEO_CACHE_FILE);
   } catch (e) { /* a cache that cannot be written is only a slower cache */ }
+  finally { _geoFlushing = false; }
 }
 // One worker per machine: two processes on one host (a restart overlap, or
 // several local test servers) would otherwise double the request rate.
@@ -5224,6 +5887,19 @@ app.post('/api/saved-search/:token/unsubscribe', publicWriteLimiter, async (req,
   }
 });
 
+// Every place a new password is chosen uses the same rule (passwordProblem in
+// server/db.js): 10+ characters, not a common one, 72 bytes at most (bcrypt
+// silently ignored the rest). Audit 15 Oct, SEC-AUTH-10.
+function strongPassword(field, optional) {
+  let chain = body(field);
+  if (optional) chain = chain.optional();
+  return chain.isString().isLength({ max: 200 }).custom((v, { req }) => {
+    const p = passwordProblem(v, req.body && req.body.email);
+    if (p) throw new Error(p);
+    return true;
+  });
+}
+
 // ============ ADMIN LOGIN ============
 
 // Wrong passwords are limited per account AND visitor: 8 per 15 minutes from
@@ -5240,15 +5916,35 @@ const accountLoginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
-const accountLoginCeiling = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 60,
-  skipSuccessfulRequests: true,
-  keyGenerator: req => 'loginall:' + String((req.body && req.body.email) || '').toLowerCase(),
-  message: { error: 'Too many wrong passwords for this account. Try again later, or use "Forgot password".' },
-  standardHeaders: true,
-  legacyHeaders: false
-});
+// The account-wide ceiling (60 wrong passwords an hour, from everywhere) used
+// to run BEFORE the password check, so two addresses typing wrong passwords
+// kept the owner locked out even with the right one (audit 15 Oct,
+// SEC-AUTH-2). Now the password is checked first and only failures count; once
+// the ceiling is reached, the right password still works from a device and
+// address this account has signed in from before. A new device has to wait,
+// or use "Forgot password" (which also clears the count).
+const LOGIN_CEILING = 60, LOGIN_CEILING_MS = 60 * 60 * 1000;
+const _loginFails = new Map();          // email -> [failure times], newest last
+function loginFailCount(email) {
+  const list = _loginFails.get(email);
+  if (!list) return 0;
+  const since = Date.now() - LOGIN_CEILING_MS;
+  while (list.length && list[0] < since) list.shift();
+  if (!list.length) { _loginFails.delete(email); return 0; }
+  return list.length;
+}
+function noteLoginFail(email) {
+  if (!_loginFails.has(email) && _loginFails.size >= 5000) {      // bounded memory
+    const since = Date.now() - LOGIN_CEILING_MS;
+    for (const [k, v] of _loginFails) if (!v.length || v[v.length - 1] < since) _loginFails.delete(k);
+    if (_loginFails.size >= 5000) _loginFails.delete(_loginFails.keys().next().value);
+  }
+  const list = _loginFails.get(email) || [];
+  list.push(Date.now());
+  if (list.length > LOGIN_CEILING * 2) list.splice(0, list.length - LOGIN_CEILING * 2);
+  _loginFails.set(email, list);
+}
+function clearLoginFails(email) { _loginFails.delete(String(email || '').toLowerCase()); }
 // Checked against when the email has no account, so a wrong email takes as
 // long as a wrong password and the timing does not reveal who has an account.
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password-' + crypto.randomBytes(8).toString('hex'), 12);
@@ -5259,35 +5955,47 @@ app.post('/api/admin/login',
   body('password').isString().isLength({ min: 1, max: 200 }),
   handleValidation,
   accountLoginLimiter,
-  accountLoginCeiling,
   async (req, res) => {
     const { email, password } = req.body;
+    const key = String(email || '').toLowerCase();
+    const ceilingHit = loginFailCount(key) >= LOGIN_CEILING;
+    const tooMany = () => res.status(429).json({ error: 'Too many wrong passwords for this account. Try again later from a device you have used before, or use "Forgot password".' });
     try {
       const account = await Account.findOne({ email, isActive: true });
       if (!account) {
         await bcrypt.compare(String(password), DUMMY_HASH);
-        return res.status(401).json({ error: 'Invalid credentials' });
+        noteLoginFail(key);
+        return ceilingHit ? tooMany() : res.status(401).json({ error: 'Invalid credentials' });
       }
       const ok = await account.comparePassword(password);
       if (!ok) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        noteLoginFail(key);
+        return ceilingHit ? tooMany() : res.status(401).json({ error: 'Invalid credentials' });
       }
-      // Self-service signups sit in the approval queue until an admin lets them in.
+      const ip = req.ip || req.connection?.remoteAddress || '';
+      const ua = String(req.headers['user-agent'] || '').slice(0, 300);
+      const history = Array.isArray(account.loginHistory) ? account.loginHistory : [];
+      const known = history.some(h => h.ip === ip && h.ua === ua);
+      // Right password while the ceiling is tripped: only a known device gets in.
+      if (ceilingHit && !known && !history.some(h => h.ip === ip)) return tooMany();
+      // Self-service signups sit in the approval queue until an admin lets them
+      // in. One whose email was never confirmed answers like a wrong password,
+      // so nobody can learn that a request was filed under someone's address.
       if (account.status === 'pending') {
+        if (account.emailConfirmed === false) return res.status(401).json({ error: 'Invalid credentials' });
         return res.status(403).json({ error: 'Your account is waiting for admin approval. You\'ll be able to sign in once it\'s approved.' });
       }
+
+      // Every role keeps its last few sign-in devices (the "known device" test
+      // above); admins also get an email for a new one.
+      const firstLogin = history.length === 0;
+      account.loginHistory = [{ ip, ua, at: new Date() }, ...history.filter(h => !(h.ip === ip && h.ua === ua))].slice(0, 10);
 
       // ── Login alert (admin accounts only) ─────────────────────────────
       // If this ip+device combo isn't in the account's recent login history,
       // email the account owner. First-ever login just seeds the history.
       if (account.role === 'admin') {
         try {
-          const ip = req.ip || req.connection?.remoteAddress || '';
-          const ua = String(req.headers['user-agent'] || '').slice(0, 300);
-          const history = Array.isArray(account.loginHistory) ? account.loginHistory : [];
-          const known = history.some(h => h.ip === ip && h.ua === ua);
-          const firstLogin = history.length === 0;
-          account.loginHistory = [{ ip, ua, at: new Date() }, ...history.filter(h => !(h.ip === ip && h.ua === ua))].slice(0, 10);
           if (!known && !firstLogin) {
             const when = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'full', timeStyle: 'short' });
             sendEmail(account.email, '🔐 New sign-in to your GLRA admin account',
@@ -5320,9 +6028,7 @@ app.post('/api/admin/login',
       // key added AFTER the account was created falls back to its sensible
       // default instead of reading as undefined/false. (Agents' defaults are
       // all-false — their access is the /api/agent/* routes, not permissions.)
-      const effectivePerms = account.role === 'admin'
-        ? defaultPermissionsForRole('admin')
-        : { ...defaultPermissionsForRole(account.role), ...(account.permissions || {}) };
+      const effectivePerms = effectivePermissions(account.role, account.permissions);
 
       res.json({
         success: true,
@@ -5349,7 +6055,7 @@ app.post('/api/admin/signup',
   signupLimiter,
   body('name').isString().trim().isLength({ min: 2, max: 200 }).withMessage('Please enter your full name'),
   body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email'),
-  body('password').isString().isLength({ min: 8, max: 200 }).withMessage('Password must be at least 8 characters'),
+  strongPassword('password'),
   // Where the request came from: 'agent' when it's the Agent Workspace signup.
   // Informational only — the account is still created as a zero-permission
   // pending employee; the admin picks the real role on the approval screen.
@@ -5358,47 +6064,123 @@ app.post('/api/admin/signup',
   async (req, res) => {
     const { name, email, password } = req.body;
     const requestedRole = req.body.requestedRole === 'agent' ? 'agent' : 'employee';
+    // The same answer whatever happened, so nobody learns which addresses
+    // have accounts. The real owner of the address learns everything by email.
+    const generic = { success: true, confirmEmail: true,
+      message: 'Almost done: we sent an email to that address. Open the link in it to confirm, and your request then goes to the admin for approval.' };
+    const ip = req.ip || '';
+    const ua = String(req.headers['user-agent'] || '').slice(0, 300);
     try {
-      const existing = await Account.findOne({ email }).lean();
-      if (existing) {
-        // Never reveal that an account exists: answer exactly as for a new request
-        // and create nothing.
-        return res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
+      const existing = await Account.findOne({ email });
+      // An address that already has an account (or a confirmed request): change
+      // nothing, and tell the real owner someone tried (audit 15 Oct, SEC-AUTH-3).
+      if (existing && !(existing.status === 'pending' && existing.emailConfirmed === false)) {
+        if (visitorMailOk('signup-dup:' + email, 2, 4)) {
+          sendEmail(email, 'Someone asked for a GLRA account with your email',
+            getEmailHeader() + `
+            <h2 style="color:#0a1628;">Account request for your address</h2>
+            <p>Someone just asked for a GLRA ${requestedRole === 'agent' ? 'Agent Workspace' : 'staff'} account using <strong>${esc(email)}</strong>, but ${existing.status === 'pending' ? 'a request for this address is already waiting for the admin' : 'this address already has an account'}. Nothing was changed.</p>
+            <p>If this was you, ${existing.status === 'pending' ? 'please wait for the approval email' : `sign in at <a href="${SITE_URL}/${requestedRole === 'agent' ? 'agent' : 'admin'}.html">${SITE_URL.replace('https://', '')}</a>, or use "Forgot password" there`}. If it was not you, you can ignore this email.</p>
+            <p style="font-size:13px;color:#666">Request made ${esc(new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }))} (Philippine time) from address ${esc(ip) || 'unknown'}.</p>
+          ` + getEmailFooter()).catch(e => console.error('Duplicate-signup email failed:', e.message));
+        }
+        return res.json(generic);
       }
-      // Zero permissions until approval — the admin picks them on the approval screen.
-      const noPerms = {};
-      PERMISSION_KEYS.forEach(k => { noPerms[k] = false; });
-      const account = await Account.create({
-        email, password, name,
-        role: 'employee',
-        requestedRole,
-        status: 'pending',
-        permissions: noPerms
-      });
+      const token = crypto.randomBytes(32).toString('hex');
+      const confirm = {
+        emailConfirmed: false,
+        confirmTokenHash: crypto.createHash('sha256').update(token).digest('hex'),
+        confirmTokenExpires: new Date(Date.now() + 48 * 3600e3),
+        signupIp: ip, signupUa: ua
+      };
+      let account;
+      if (existing) {
+        // An unconfirmed request is only a claim nobody has proven: a new one
+        // replaces it (and its link), so a stranger cannot squat the address
+        // of a new hire before she signs up herself.
+        Object.assign(existing, confirm, { password, name, requestedRole, createdAt: new Date() });
+        account = await existing.save();
+      } else {
+        // Zero permissions until approval — the admin picks them on the approval screen.
+        const noPerms = {};
+        PERMISSION_KEYS.forEach(k => { noPerms[k] = false; });
+        account = await Account.create({
+          email, password, name,
+          role: 'employee',
+          requestedRole,
+          status: 'pending',
+          permissions: noPerms,
+          ...confirm
+        });
+      }
       req.user = { email: account.email, name: account.name, role: 'employee' };
-      await logAudit(req, 'SIGNUP', 'Account', account._id, email, { status: 'pending', requestedRole });
+      await logAudit(req, 'SIGNUP', 'Account', account._id, email, { status: 'pending', requestedRole, emailConfirmed: false });
 
-      // Best-effort heads-up to the admin inbox — signup still succeeds if email fails.
-      try {
-        await sendEmail('glrarealty@gmail.com', `New ${requestedRole === 'agent' ? 'AGENT' : 'account'} request: ${name}`,
+      if (visitorMailOk('signup:' + email, 3, 6)) {
+        const link = `${SITE_URL}/confirm-signup?t=${token}`;
+        sendEmail(email, 'Confirm your GLRA account request',
           getEmailHeader() + `
-          <h2 style="color:#0a1628;">New ${requestedRole === 'agent' ? 'Agent' : 'Account'} Request</h2>
-          <!-- esc(): name is free text from a public, unauthenticated signup form.
-               Unescaped it renders as HTML in the admin's inbox, which is a
-               ready-made phishing surface (a fake "Approve" link). -->
-          <p><strong>${esc(name)}</strong> (${esc(email)}) has requested access to the ${requestedRole === 'agent' ? 'GLRA <strong>Agent Workspace</strong>' : 'GLRA admin portal'}.</p>
-          <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline${requestedRole === 'agent' ? ' — choose the <strong>Agent</strong> role when approving' : ', and to choose exactly what they can access'}.</p>
-        ` + getEmailFooter());
-      } catch (e) { console.error('Signup notification email failed:', e.message); }
-
-      res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
+          <h2 style="color:#0a1628;">Confirm your email</h2>
+          <p>Hi ${esc(greetName(name)) || 'there'},</p>
+          <p>Someone (hopefully you) asked for a GLRA ${requestedRole === 'agent' ? 'Agent Workspace' : 'staff'} account with this address. Confirm it and the request goes to the admin for approval:</p>
+          <p style="margin:24px 0"><a href="${link}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Confirm my email</a></p>
+          <p style="font-size:13px;color:#666">The link works for 48 hours. If you did not ask for an account, ignore this email and nothing happens.</p>
+        ` + getEmailFooter()).catch(e => console.error('Signup confirmation email failed:', e.message));
+      }
+      res.json(generic);
     } catch (e) {
-      if (e.code === 11000) return res.json({ success: true, message: 'Request sent! You\'ll be able to sign in once the admin approves your account.' });
+      if (e.code === 11000) return res.json(generic);
       console.error('Signup error:', e);
       res.status(500).json({ error: 'Server error' });
     }
   }
 );
+
+// The link in the confirmation email. GET only shows a button: mail scanners
+// open links on their own, and that must not confirm anything. The POST does it,
+// and only then is the admin told about the request.
+function signupConfirmHash(q) {
+  const t = String((q && q.t) || '');
+  return /^[a-f0-9]{64}$/.test(t) ? crypto.createHash('sha256').update(t).digest('hex') : null;
+}
+app.get('/confirm-signup', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Robots-Tag', 'noindex');
+  const h = signupConfirmHash(req.query);
+  const acc = h && await Account.findOne({ confirmTokenHash: h, confirmTokenExpires: { $gt: new Date() }, status: 'pending' }).select('email').lean().catch(() => null);
+  if (!acc) return res.status(400).send(unsubPage('Link not valid', '<h1>This link has expired or was already used</h1><p>If you already confirmed, your request is with the admin. Otherwise, send the request again from the sign-up form.</p>'));
+  res.send(unsubPage('Confirm your email', `<h1>Confirm your email</h1><p>Confirm that <strong>${esc(acc.email)}</strong> is yours, and your account request goes to the GLRA admin for approval.</p>
+    <form method="post" action="/confirm-signup?t=${esc(String(req.query.t))}"><button type="submit">Confirm my email</button></form>`));
+});
+app.post('/confirm-signup', resetLimiter, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const h = signupConfirmHash(req.query);
+  try {
+    const account = h && await Account.findOneAndUpdate(
+      { confirmTokenHash: h, confirmTokenExpires: { $gt: new Date() }, status: 'pending' },
+      { $set: { emailConfirmed: true, confirmedAt: new Date(), confirmTokenHash: null, confirmTokenExpires: null } },
+      { new: true });
+    if (!account) return res.status(400).send(unsubPage('Link not valid', '<h1>This link has expired or was already used</h1><p>If you already confirmed, your request is with the admin. Otherwise, send the request again from the sign-up form.</p>'));
+    req.user = { email: account.email, name: account.name, role: 'employee' };
+    await logAudit(req, 'SIGNUP_CONFIRMED', 'Account', account._id, account.email, null);
+    const isAgent = account.requestedRole === 'agent';
+    const when = new Date(account.createdAt || Date.now()).toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
+    sendEmail('glrarealty@gmail.com', `New ${isAgent ? 'AGENT' : 'account'} request: ${String(account.name || '').slice(0, 80)}`,
+      getEmailHeader() + `
+      <h2 style="color:#0a1628;">New ${isAgent ? 'Agent' : 'Account'} Request</h2>
+      <!-- esc(): name is free text from a public, unauthenticated signup form.
+           Unescaped it renders as HTML in the admin's inbox, which is a
+           ready-made phishing surface (a fake "Approve" link). -->
+      <p><strong>${esc(account.name)}</strong> (${esc(account.email)}) has requested access to the ${isAgent ? 'GLRA <strong>Agent Workspace</strong>' : 'GLRA admin portal'}. The email address is confirmed.</p>
+      <p style="font-size:13px;color:#666">Requested ${esc(when)} (Philippine time) from address ${esc(account.signupIp || 'unknown')}.</p>
+      <p>They cannot log in until you approve them. Open the <strong>Admin Portal → Accounts</strong> tab to approve or decline${isAgent ? ' — choose the <strong>Agent</strong> role when approving' : ', and to choose exactly what they can access'}.</p>
+    ` + getEmailFooter()).catch(e => console.error('Signup notification email failed:', e.message));
+    res.send(unsubPage('Email confirmed', `<h1>Email confirmed</h1><p>Thank you. Your request is now with the GLRA admin. You will get an email once your account is approved.</p>`));
+  } catch (e) {
+    console.error('Signup confirm error:', e.message);
+    res.status(500).send(unsubPage('Something went wrong', '<h1>Something went wrong</h1><p>Please try the link again in a minute.</p>'));
+  }
+});
 
 // ============ FORGOT / RESET PASSWORD (public, rate-limited) ============
 // Standard token flow: we email a one-time link containing a random token,
@@ -5449,7 +6231,7 @@ app.post('/api/admin/forgot-password',
 app.post('/api/admin/reset-password',
   resetLimiter,
   body('token').isString().isLength({ min: 32, max: 128 }),
-  body('password').isString().isLength({ min: 8, max: 200 }),
+  strongPassword('password'),
   handleValidation,
   async (req, res) => {
     try {
@@ -5468,6 +6250,7 @@ app.post('/api/admin/reset-password',
       account.tokenVersion = (account.tokenVersion || 0) + 1;   // sign out every device that had the old password
       await account.save();
       invalidateAccountState(account._id);
+      clearLoginFails(account.email);   // the owner proved the mailbox: the wrong-password ceiling starts again
 
       req.user = { email: account.email, name: account.name, role: account.role };
       await logAudit(req, 'PASSWORD_RESET', 'Account', account._id, account.email, null);
@@ -5499,25 +6282,80 @@ app.get('/api/admin/me', verifyToken, async (req, res) => {
     if (!account || account.isActive === false || account.status === 'pending') {
       return res.status(401).json({ error: 'Account inactive' });
     }
-    const effectivePerms = account.role === 'admin'
-      ? defaultPermissionsForRole('admin')
-      : { ...defaultPermissionsForRole('employee'), ...(account.permissions || {}) };
+    const effectivePerms = effectivePermissions(account.role, account.permissions);
+    // Which optional modules are switched on in this deployment, so the
+    // dashboard hides (and never calls) Social and the Meta parts that are off
+    // (audit 15 Oct, ADM-NOISE-1). Same switches the modules read themselves.
+    const { flag } = require('./server/meta-graph');
     res.json({
       id: String(account._id),
       email: account.email,
       name: account.name,
       role: account.role,
-      permissions: effectivePerms
+      permissions: effectivePerms,
+      features: {
+        social: flag('SOCIAL_ENABLED'),
+        metaLeads: flag('META_LEADS_ENABLED'),
+        metaInbox: flag('META_INBOX_ENABLED'),
+        metaInsights: flag('META_INSIGHTS_ENABLED')
+      }
     });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
+// Sign out ends THIS token on the server too (its id goes on the signed-out
+// list until it would have expired), not just in the browser: a copied token
+// used to keep working for up to 8 hours (audit 15 Oct, SEC-AUTH-6).
 app.post('/api/admin/logout', verifyToken, async (req, res) => {
+  await revokeToken(req.user);
   await logAudit(req, 'LOGOUT', 'Session', '', '', null);
   res.json({ success: true });
 });
+
+// "Change my password" for whoever is signed in (staff and agents alike, so
+// outside /api/admin). Needs the current password; every other sign-in of the
+// account ends, and this browser gets a fresh token so it stays signed in.
+app.post('/api/account/change-password',
+  verifyToken,
+  loginLimiter,
+  body('currentPassword').isString().isLength({ min: 1, max: 200 }),
+  body('newPassword').isString().isLength({ max: 200 }).custom((v, { req }) => {
+    const p = passwordProblem(v, req.user && req.user.email);
+    if (p) throw new Error(p);
+    if (v === req.body.currentPassword) throw new Error('The new password must be different from the current one.');
+    return true;
+  }),
+  handleValidation,
+  async (req, res) => {
+    try {
+      const account = await Account.findById(req.user.sub);
+      if (!account || account.isActive === false) return res.status(404).json({ error: 'Account not found' });
+      if (!(await account.comparePassword(req.body.currentPassword))) {
+        return res.status(400).json({ error: 'Your current password is not right.' });
+      }
+      account.password = req.body.newPassword;            // hashed by the pre-save hook
+      account.tokenVersion = (account.tokenVersion || 0) + 1;
+      account.resetTokenHash = null;
+      account.resetTokenExpires = null;
+      await account.save();
+      invalidateAccountState(account._id);
+      clearLoginFails(account.email);
+      await logAudit(req, 'PASSWORD_CHANGE', 'Account', account._id, account.email, null);
+      sendEmail(account.email, 'Your GLRA password was changed',
+        getEmailHeader() + `
+        <h2 style="color:#0a1628;">Password Changed</h2>
+        <p>The password for <strong>${esc(account.email)}</strong> was just changed while signed in. Every other device was signed out.</p>
+        <p>If this wasn't you, use "Forgot password" on the sign-in page at once and tell the admin.</p>
+      ` + getEmailFooter()).catch(e => console.error('Password-change email failed:', e.message));
+      res.json({ success: true, token: signToken(account), message: 'Password changed. Other devices were signed out.' });
+    } catch (e) {
+      console.error('Change-password error:', e.message);
+      res.status(500).json({ error: 'Server error' });
+    }
+  }
+);
 
 // "Sign out everywhere": a plain logout only forgets the token in this
 // browser; a copy elsewhere (a lost phone, a shared PC) kept working for up to
@@ -5539,8 +6377,10 @@ app.get('/api/admin/accounts', verifyToken, requireAdmin, async (req, res) => {
     // loginHistory is a list of colleagues' IP addresses and devices. None of
     // the three is shown anywhere in the dashboard, so none should leave the
     // server.
-    const accounts = await Account.find({},
-      { password: 0, resetTokenHash: 0, resetTokenExpires: 0, loginHistory: 0 })
+    // A self-service request appears only once its email is confirmed; it
+    // carries signupIp / signupUa / createdAt for the approval screen.
+    const accounts = await Account.find({ $nor: [{ status: 'pending', emailConfirmed: false }] },
+      { password: 0, resetTokenHash: 0, resetTokenExpires: 0, loginHistory: 0, confirmTokenHash: 0, confirmTokenExpires: 0 })
       .sort({ createdAt: 1 });
     res.json(accounts);
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
@@ -5553,13 +6393,14 @@ function sanitizePermissions(input) {
   PERMISSION_KEYS.forEach(k => {
     if (k in input) out[k] = input[k] === true;
   });
+  RETIRED_PERMISSION_KEYS.forEach(k => { out[k] = false; });   // never granted again
   return out;
 }
 
 app.post('/api/admin/accounts',
   verifyToken, requireAdmin,
   body('email').isEmail().normalizeEmail(),
-  body('password').isString().isLength({ min: 8, max: 200 }),
+  strongPassword('password'),
   body('name').optional().isString().trim().isLength({ max: 200 }),
   body('role').optional().isIn(['admin', 'employee', 'agent']),
   body('permissions').optional().isObject(),
@@ -5589,7 +6430,7 @@ app.post('/api/admin/accounts',
 app.put('/api/admin/accounts/:id',
   verifyToken, requireAdmin,
   body('email').optional().isEmail().normalizeEmail(),
-  body('password').optional().isString().isLength({ min: 8, max: 200 }),
+  strongPassword('password', true),
   body('name').optional().isString().trim().isLength({ max: 200 }),
   body('role').optional().isIn(['admin', 'employee', 'agent']),
   body('isActive').optional().isBoolean(),
@@ -5598,7 +6439,10 @@ app.put('/api/admin/accounts/:id',
   async (req, res) => {
     const { email, password, name, role, isActive, permissions } = req.body;
     try {
-      const before = await Account.findById(req.params.id, { password: 0, resetTokenHash: 0, resetTokenExpires: 0 });
+      // Sign-in history (colleagues' IPs and devices) and the token version are
+      // not account settings; they were copied into every audit row (SEC-AUTH-8).
+      const ACCOUNT_SECRET_FIELDS = { password: 0, resetTokenHash: 0, resetTokenExpires: 0, confirmTokenHash: 0, confirmTokenExpires: 0, loginHistory: 0, tokenVersion: 0 };
+      const before = await Account.findById(req.params.id, ACCOUNT_SECRET_FIELDS);
       if (!before) return res.status(404).json({ error: 'Account not found' });
       if (before.role === 'admin' && ((role && role !== 'admin') || isActive === false)) {
         const others = await Account.countDocuments({ _id: { $ne: before._id }, role: 'admin', isActive: true, status: { $ne: 'pending' } });
@@ -5609,9 +6453,13 @@ app.put('/api/admin/accounts/:id',
       }
 
       const update = {};
+      // A changed sign-in email ends every session and any reset link of the
+      // old address, and the old address is told (audit 15 Oct, SEC-AUTH-7).
+      const emailChanged = !!(email && email !== before.email);
       if (email) update.email = email;
-      if (password) { update.password = password; update.$inc = { tokenVersion: 1 }; } // hashed by pre-update hook; old sign-ins end
-      if (password || isActive === false) { update.resetTokenHash = null; update.resetTokenExpires = null; }   // an unused reset link stops working too
+      if (password || emailChanged) update.$inc = { tokenVersion: 1 };                     // old sign-ins end
+      if (password) update.password = password;                                           // hashed by pre-update hook
+      if (password || emailChanged || isActive === false) { update.resetTokenHash = null; update.resetTokenExpires = null; }   // an unused reset link stops working too
       if (name) update.name = name;
       if (role) update.role = role;
       if (isActive !== undefined) update.isActive = isActive;
@@ -5621,12 +6469,31 @@ app.put('/api/admin/accounts/:id',
       }
       if ((role || before.role) === 'agent') update.permissions = defaultPermissionsForRole('agent');   // agents hold no admin permissions
 
-      const account = await Account.findByIdAndUpdate(req.params.id, update, { new: true, select: '-password' });
+      const account = await Account.findByIdAndUpdate(req.params.id, update, { new: true, projection: ACCOUNT_SECRET_FIELDS });
       invalidateAccountState(req.params.id);   // a deactivation or password change applies to the very next request
+      // Emailed GLRA Social approval links die with the right to approve: on a
+      // deactivation, a role change, or losing social_approve (SEC-AUTH-4).
+      const couldApprove = before.role === 'admin' || !!(before.permissions && before.permissions.social_approve);
+      const canApprove = account.isActive !== false && account.status !== 'pending' &&
+        (account.role === 'admin' || !!(account.permissions && account.permissions.social_approve));
+      if (isActive === false || (role && role !== before.role) || (couldApprove && !canApprove)) {
+        voidSocialLinksForAccount(req.params.id).catch(e => console.error('Void social links failed:', e.message));
+      }
+      const { $inc, ...shown } = update;
       await logAudit(req, 'UPDATE', 'Account', req.params.id, account.email, {
         before,
-        after: { ...update, password: password ? '[REDACTED]' : undefined }
+        after: { ...shown, password: password ? '[REDACTED]' : undefined }
       });
+      if (emailChanged) {
+        await logAudit(req, 'EMAIL_CHANGE', 'Account', req.params.id, account.email, { from: before.email, to: account.email });
+        clearLoginFails(before.email);
+        sendEmail(before.email, 'The sign-in email of your GLRA account was changed',
+          getEmailHeader() + `
+          <h2 style="color:#0a1628;">Sign-in email changed</h2>
+          <p>The GLRA account that used <strong>${esc(before.email)}</strong> now signs in with <strong>${esc(account.email)}</strong>. The change was made by ${esc(req.user.name || req.user.email || 'an admin')}, and every device signed in to the account was signed out.</p>
+          <p>If you did not expect this, contact the GLRA admin at once.</p>
+        ` + getEmailFooter()).catch(e => console.error('Email-change notice failed:', e.message));
+      }
       res.json({ success: true, account });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
   }
@@ -5643,6 +6510,7 @@ app.delete('/api/admin/accounts/:id', verifyToken, requireAdmin, async (req, res
     const account = await Account.findByIdAndDelete(req.params.id);
     if (!account) return res.status(404).json({ error: 'Account not found' });
     invalidateAccountState(req.params.id);   // a deleted account stops working on the very next request
+    voidSocialLinksForAccount(req.params.id).catch(e => console.error('Void social links failed:', e.message));
     await logAudit(req, 'DELETE', 'Account', req.params.id, account.email, null);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Server error' }); }
@@ -5660,6 +6528,7 @@ app.post('/api/admin/accounts/:id/approve',
       const account = await Account.findById(req.params.id);
       if (!account) return res.status(404).json({ error: 'Account not found' });
       if (account.status !== 'pending') return res.status(400).json({ error: 'This account is not pending approval.' });
+      if (account.emailConfirmed === false) return res.status(400).json({ error: 'This request\'s email address has not been confirmed yet.' });
 
       const finalRole = req.body.role || 'employee';
       // What the admin ticked on the approval screen wins; anything they left out falls back to role defaults.
@@ -5910,13 +6779,16 @@ app.get('/api/admin/audit-stats', verifyToken, requirePermission('audit_view'), 
   }
 });
 
-app.get('/api/admin/stats', verifyToken, async (req, res) => {
+app.get('/api/admin/stats', verifyToken, requirePermission('dashboard_view'), async (req, res) => {
   try {
     // Seven independent counts: ask for all of them at once (they used to run one after another,
     // so the dashboard waited for seven database round trips in a row).
     const [totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts, wishlistCount] = await Promise.all([
       Property.countDocuments(), Property.countDocuments({ status: 'available' }), Inquiry.countDocuments(), HeroImage.countDocuments(),
-      Subscriber.countDocuments({ isActive: true }), PriceAlert.countDocuments({ isNotified: false }), Wishlist.countDocuments()
+      // Confirmed, still-subscribed people only (audit L28): a sign-up that never
+      // clicked the confirmation link gets no email, so it is not a subscriber;
+      // the same goes for a price alert nobody confirmed.
+      Subscriber.countDocuments({ isActive: true, confirmed: { $ne: false } }), PriceAlert.countDocuments({ isNotified: false, confirmed: { $ne: false } }), Wishlist.countDocuments()
     ]);
 
     res.json({ totalProperties, availableProperties, totalInquiries, heroImages, subscribers, activeAlerts, wishlistCount, mail: mailHealth() });
@@ -5931,9 +6803,10 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
 app.get('/api/admin/analytics', verifyToken, requirePermission('dashboard_analytics'), async (req, res) => {
   try {
     const now = new Date();
-    const dayStr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    // Days counted in Manila time, as the counter now stores them (audit L58).
+    const dayStr = d => manilaDayKey(d);
     const days = [];
-    for (let i = 29; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); days.push(dayStr(d)); }
+    for (let i = 29; i >= 0; i--) days.push(dayStr(new Date(now.getTime() - i * 864e5)));
     const rows = await SiteStat.find({ day: { $in: days } }).lean();
     const map = {};
     rows.forEach(r => { map[r.day] = r.views || 0; });
@@ -6067,19 +6940,9 @@ app.get('/api/admin/saved-searches', verifyToken, requirePermission('customers_v
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.get('/api/admin/wishlist', verifyToken, requirePermission('customers_view'), async (req, res) => {
-  try {
-    const wishlist = await Wishlist.find().sort({ addedAt: -1 });
-    res.json(wishlist);
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
-});
-
-app.get('/api/admin/alert-logs', verifyToken, requirePermission('customers_view'), async (req, res) => {
-  try {
-    const logs = await AlertLog.find().sort({ sentAt: -1 }).limit(50);
-    res.json(logs);
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
-});
+// (GET /api/admin/wishlist and /api/admin/alert-logs were removed on 15 Oct
+// 2026: the dashboard never called them, so they were customer data exposed
+// for nothing.)
 
 // Fields on a listing that belong to the brokerage rather than to whoever is
 // signed in: what GLRA earns on the deal, and the free-text `notes` box, which
@@ -6094,12 +6957,21 @@ function propertyForStaff(property, user) {
   return out;
 }
 
-app.get('/api/admin/all-properties', verifyToken, async (req, res) => {
+// Feeds the Dashboard and the Properties tab: either permission family will do.
+app.get('/api/admin/all-properties', verifyToken,
+  requireAnyPermission('dashboard_view', 'properties_create', 'properties_edit', 'properties_delete', 'properties_upload_image'),
+  async (req, res) => {
   try {
-    const q = Property.find().sort({ createdAt: -1 });
-    if (req.user.role !== 'admin') OWNER_ONLY_PROPERTY_FIELDS.forEach(f => q.select('-' + f));
-    const properties = await q;
-    res.json(properties);
+    // Photos stubbed in the database and swapped for their image URLs, or the
+    // tab downloads every base64 photo each time it opens (audit F14). The edit
+    // form saves such a URL back unchanged; resolveOwnPhotoUrls() puts the
+    // stored photo back in its place.
+    const fields = [...new Set(Object.keys(Property.schema.paths).map(f => f.split('.')[0]))]
+      .filter(f => req.user.role === 'admin' || !OWNER_ONLY_PROPERTY_FIELDS.includes(f));
+    const rows = await findListingsStubbed({}, fields.join(' '), { sort: { createdAt: -1 } });
+    // inlinePhotoUrls only: the admin sees the stored photos, stock ones
+    // included. hydrate() fills the schema defaults find() used to give.
+    res.json(rows.map(p => Property.hydrate(inlinePhotoUrls(p)).toJSON()));
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -6167,27 +7039,96 @@ function stripPrivilegedPropertyFields(body, req) {
   return out;
 }
 
+// Audit L22: create and bulk import skipped the checks edit made, so a
+// negative price, any listingType text and a javascript: or http: photo link
+// could be saved. One check for all three routes, run on the stripped body.
+// Numbers are normalised in place ('' becomes 0); the answer is an error
+// message, or null when the listing is fine. `old` is the stored listing on an
+// edit: a value it already has (an odd old listingType, a stock or base64
+// photo not moved yet) is not new input and stays allowed.
+const LISTING_TYPES = ['FOR SALE', 'FOR LEASE', 'SALE AND LEASE'];
+const PROPERTY_NUMBER_FIELDS = {
+  price: 'The price', monthlyRental: 'The monthly rent', bedrooms: 'Bedrooms', bathrooms: 'Bathrooms',
+  sqm: 'The floor area', landArea: 'The lot area', parking: 'Parking', parkingPrice: 'The parking price',
+  commission: 'The commission', fixedAmount: 'The fixed amount', totalCommission: 'The total commission'
+};
+const CLOUDINARY_PHOTO = /^https:\/\/res\.cloudinary\.com\/[^\s"'<>]+$/;
+function propertyInputProblem(data, old) {
+  for (const [k, label] of Object.entries(PROPERTY_NUMBER_FIELDS)) {
+    if (data[k] === undefined) continue;
+    if (data[k] === '' || data[k] === null) { data[k] = 0; continue; }
+    const n = typeof data[k] === 'boolean' ? NaN : Number(data[k]);
+    if (!Number.isFinite(n) || n < 0 || n > 1e11) return `${label} must be a number of 0 or more (no letters or peso signs).`;
+    data[k] = n;
+  }
+  if (data.listingType !== undefined) {
+    const lt = String(data.listingType || '').trim().toUpperCase();
+    if (LISTING_TYPES.includes(lt)) data.listingType = lt;
+    else if (!(old && data.listingType === old.listingType)) return `Listing type must be one of: ${LISTING_TYPES.join(', ')}.`;
+  }
+  const stored = new Set(old ? [old.mainImage, old.coverImage, old.floorPlan].concat(old.gallery || []).filter(Boolean) : []);
+  const photoOk = v => v === '' || stored.has(v) || (typeof v === 'string' && v.length <= 2000 && CLOUDINARY_PHOTO.test(v));
+  if (data.mainImage !== undefined) {
+    if (data.mainImage === null) data.mainImage = '';
+    if (!photoOk(data.mainImage)) return 'The main photo must be uploaded with the photo button (a Cloudinary link).';
+  }
+  if (data.gallery !== undefined) {
+    if (!Array.isArray(data.gallery)) return 'The gallery must be a list of photos.';
+    if (data.gallery.length > 150) return 'At most 150 gallery photos.';
+    if (!data.gallery.every(photoOk)) return 'Every gallery photo must be uploaded with the photo button (a Cloudinary link).';
+  }
+  return null;
+}
+
 // A photo pasted in as a base64 "data:" string is stored inside the listing
 // itself, and every page, the chat and the related-listing blocks that read
-// it slowed to 35 s. New ones are refused; one the listing already holds is
-// let through unchanged, so an old listing can still be edited until its
-// photo is re-uploaded.
+// it slowed to 35 s. Any "data:" photo in a save is refused (audit F3). The
+// admin never holds one any more: /api/admin/all-properties hands it the
+// photo's /api/property-image URL, and resolveOwnPhotoUrls() swaps that URL
+// back for whatever the listing stores, so an old listing whose photo has not
+// been moved to Cloudinary yet can still be edited without losing it.
 const INLINE_PHOTO_ERROR = 'This photo is pasted in as text (a "data:" image). Please upload it with the photo button instead, so it is stored on Cloudinary.';
-function hasNewInlinePhoto(data, old) {
+const PHOTO_FIELDS = ['mainImage', 'coverImage', 'floorPlan'];
+function hasInlinePhoto(data) {
   if (!data || typeof data !== 'object') return false;
-  const known = new Set();
-  if (old) {
-    if (isDataUri(old.mainImage)) known.add(old.mainImage);
-    (Array.isArray(old.gallery) ? old.gallery : []).forEach(g => { if (isDataUri(g)) known.add(g); });
-  }
-  const vals = [data.mainImage].concat(Array.isArray(data.gallery) ? data.gallery : []);
-  return vals.some(v => isDataUri(v) && !known.has(v));
+  const vals = PHOTO_FIELDS.map(k => data[k]).concat(Array.isArray(data.gallery) ? data.gallery : []);
+  return vals.some(isDataUri);
+}
+const OWN_PHOTO_URL = /^\/api\/property-image\/([a-f0-9]{24})\/(main|floorplan|\d{1,3})$/i;
+function storedPhotoAt(doc, key) {
+  return key === 'main' ? doc.mainImage : key === 'floorplan' ? doc.floorPlan : (Array.isArray(doc.gallery) ? doc.gallery[Number(key)] : undefined);
+}
+// Returns the body with this listing's own image URLs resolved, plus the
+// inline cover / floor plan values (already stored, so not new) to put back
+// after stripPrivilegedPropertyFields, which only lets Cloudinary links through.
+function resolveOwnPhotoUrls(body, old) {
+  const out = { ...(body && typeof body === 'object' ? body : {}) };
+  const keepInline = {};
+  if (!old) return { out, keepInline };
+  const id = String(old._id).toLowerCase();
+  const map = v => {
+    const m = typeof v === 'string' && v.match(OWN_PHOTO_URL);
+    if (!m || m[1].toLowerCase() !== id) return v;
+    const s = storedPhotoAt(old, m[2].toLowerCase());
+    return typeof s === 'string' && s ? s : v;
+  };
+  if (out.mainImage !== undefined) out.mainImage = map(out.mainImage);
+  if (Array.isArray(out.gallery)) out.gallery = out.gallery.map(map);
+  ['coverImage', 'floorPlan'].forEach(k => {
+    if (out[k] === undefined) return;
+    out[k] = map(out[k]);
+    if (isDataUri(out[k])) keepInline[k] = out[k];
+  });
+  return { out, keepInline };
 }
 
 app.post('/api/admin/properties', verifyToken, requirePermission('properties_create'), async (req, res) => {
   try {
-    if (hasNewInlinePhoto(req.body, null)) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
-    const property = new Property(stripPrivilegedPropertyFields(req.body, req));
+    if (hasInlinePhoto(req.body)) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
+    const clean = stripPrivilegedPropertyFields(req.body, req);
+    const bad = propertyInputProblem(clean, null);
+    if (bad) return res.status(400).json({ error: bad });
+    const property = new Property(clean);
     await property.save();
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
     invalidateChatListingsCache();
@@ -6211,34 +7152,28 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
   try {
     const oldProperty = await Property.findById(req.params.id);
     if (!oldProperty) return res.status(404).json({ error: 'Property not found' });
-    const updatedData = stripPrivilegedPropertyFields(req.body, req);
-    if (hasNewInlinePhoto(updatedData, oldProperty)) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
+    if (hasInlinePhoto(req.body)) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
+    const { out: resolvedBody, keepInline } = resolveOwnPhotoUrls(req.body, oldProperty);
+    const updatedData = Object.assign(stripPrivilegedPropertyFields(resolvedBody, req), keepInline);
     updatedData.editedAt = new Date();
 
     // A price must be a real non-negative number. A blank box or "10.5M" used
     // to arrive as 0 or 10.5 and was treated as a price DROP: every watcher was
-    // emailed "New Price: P0" and then never alerted again.
-    if (updatedData.price !== undefined) {
-      const n = Number(updatedData.price);
-      if (!Number.isFinite(n) || n < 0) return res.status(400).json({ error: 'The price must be a number (no letters or peso signs).' });
-      updatedData.price = n;
-    }
+    // emailed "New Price: P0" and then never alerted again. The same check
+    // (prices, sizes, listing type, photo links) runs on create and bulk import.
+    const bad = propertyInputProblem(updatedData, oldProperty);
+    if (bad) return res.status(400).json({ error: bad });
     let dropAlerts = null;
     // A rental's price lives in monthlyRental (price is usually blank), so a
     // price alert on a FOR LEASE listing watches the rent. Watching the sale
     // price meant a rent drop never alerted anyone.
-    if (updatedData.monthlyRental !== undefined) {
-      const r = Number(updatedData.monthlyRental);
-      if (!Number.isFinite(r) || r < 0) return res.status(400).json({ error: 'The monthly rent must be a number (no letters or peso signs).' });
-      updatedData.monthlyRental = r;
-    }
     const leaseOnly = isLeaseOnlyType(updatedData.listingType !== undefined ? updatedData.listingType : oldProperty.listingType);
     const watchField = leaseOnly ? 'monthlyRental' : 'price';
     const oldWatch = Number(oldProperty[watchField]) || 0;
     const newWatch = updatedData[watchField];
     if (newWatch !== undefined && newWatch > 0 && newWatch < oldWatch) {
       if (!leaseOnly) updatedData.previousPrice = oldWatch;
-      newWatchUpdatedAt = new Date();
+      updatedData.priceUpdatedAt = new Date();   // was a stray global, so the "Reduced" badge never showed (audit F4)
       console.log(`💰 Price drop: ${oldProperty.title}: ₱${oldWatch.toLocaleString()} → ₱${newWatch.toLocaleString()}`);
 
       // Everyone watching at a price above the new one: a watcher alerted at an
@@ -6321,12 +7256,24 @@ app.post('/api/admin/properties/:id/reviewed', verifyToken, requirePermission('p
 
 app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properties_delete'), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Property not found' });
     const property = await Property.findByIdAndDelete(req.params.id);
-    if (property) await logAudit(req, 'DELETE', 'Property', req.params.id, property.title, null);
+    // A missing id used to answer success (audit L23).
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+    // Price alerts and wishlist rows for a listing that no longer exists only
+    // send dead links and inflate the dashboard counts. The sent-alert log and
+    // the view history are records, so they stay.
+    const id = String(property._id);
+    const [alerts, saved] = await Promise.all([
+      PriceAlert.deleteMany({ propertyId: id }),
+      Wishlist.deleteMany({ propertyId: id })
+    ]);
+    await logAudit(req, 'DELETE', 'Property', req.params.id, property.title,
+      { removedPriceAlerts: alerts.deletedCount || 0, removedWishlistRows: saved.deletedCount || 0 });
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
-    res.json({ success: true });
+    res.json({ success: true, removedPriceAlerts: alerts.deletedCount || 0, removedWishlistRows: saved.deletedCount || 0 });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -6339,6 +7286,41 @@ app.delete('/api/admin/inquiries/:id', verifyToken, requirePermission('inquiries
 });
 
 // ── TITLING CASES (land-title transfer / processing tracker) ──
+// Audit L21: Number('Infinity') passed the old '!isNaN(n) && n >= 0' check and
+// printed P∞ on a bill. Every peso amount the office types must be a finite
+// number from 0 up to MONEY_MAX; moneyIn() answers null for anything else.
+const MONEY_MAX = 1e10;
+function moneyIn(v) {
+  if (v === undefined || v === null || v === '' || typeof v === 'boolean') return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 && n <= MONEY_MAX ? Math.round(n * 100) / 100 : null;
+}
+// Route guard for the titling, notarial and cash saves: a typed amount that is
+// negative, not a number, Infinity or above MONEY_MAX is refused with a 400
+// that names the field, rather than silently dropped (or saved as P-1.00).
+const MONEY_KEYS = ['serviceFee', 'govFees', 'amountPaid', 'fee', 'amount', 'spent'];
+function moneyProblem(b) {
+  if (!b || typeof b !== 'object') return null;
+  for (const k of MONEY_KEYS) {
+    if (b[k] !== undefined && b[k] !== null && b[k] !== '' && moneyIn(b[k]) === null) return k;
+  }
+  for (const list of ['payments', 'expenses']) {
+    if (!Array.isArray(b[list])) continue;
+    for (const row of b[list]) {
+      const a = row && row.amount;
+      if (a !== undefined && a !== null && a !== '' && moneyIn(a) === null) return list + ' amount';
+    }
+  }
+  return null;
+}
+function moneyGuard(req, res, next) {
+  const items = Array.isArray(req.body) ? req.body : [req.body];
+  for (const it of items) {
+    const bad = moneyProblem(it);
+    if (bad) return res.status(400).json({ error: `Amount (${bad}) must be a number from 0 to ${MONEY_MAX.toLocaleString('en-US')}.` });
+  }
+  next();
+}
 const TITLING_STATUSES = ['documents', 'bir', 'transfer_tax', 'registry', 'tax_dec', 'completed', 'on_hold', 'lra'];
 
 // Validate + clamp an incoming titling payload. Only known fields pass through.
@@ -6377,22 +7359,22 @@ function sanitizeTitlingBody(b) {
   // liquidation line items
   if (Array.isArray(b.payments)) {
     out.payments = b.payments.slice(0, 100).map(p => {
-      const row = { label: str(p && p.label, 200), amount: Math.max(0, Number(p && p.amount) || 0), date: null };
+      const row = { label: str(p && p.label, 200), amount: moneyIn(p && p.amount) || 0, date: null };
       if (p && p.date) { const d = new Date(p.date); if (!isNaN(d.getTime())) row.date = d; }
       return row;
     }).filter(p => p.label || p.amount || p.date);
   }
   if (Array.isArray(b.expenses)) {
     out.expenses = b.expenses.slice(0, 200).map(e => {
-      const row = { category: str(e && e.category, 120), payee: str(e && e.payee, 200), amount: Math.max(0, Number(e && e.amount) || 0), date: null };
+      const row = { category: str(e && e.category, 120), payee: str(e && e.payee, 200), amount: moneyIn(e && e.amount) || 0, date: null };
       if (e && e.date) { const d = new Date(e.date); if (!isNaN(d.getTime())) row.date = d; }
       return row;
     }).filter(e => e.category || e.payee || e.amount || e.date);
   }
   ['serviceFee', 'govFees', 'amountPaid'].forEach(k => {
     if (b[k] !== undefined && b[k] !== null && b[k] !== '') {
-      const n = Number(b[k]);
-      if (!isNaN(n) && n >= 0) out[k] = n;
+      const n = moneyIn(b[k]);
+      if (n !== null) out[k] = n;
     }
   });
   if (b.notes !== undefined) out.notes = String(b.notes || '').slice(0, 5000);
@@ -6406,7 +7388,7 @@ app.get('/api/admin/titling', verifyToken, requirePermission('titling_view'), as
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.post('/api/admin/titling', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.post('/api/admin/titling', verifyToken, requirePermission('titling_manage'), moneyGuard, async (req, res) => {
   try {
     const data = sanitizeTitlingBody(req.body || {});
     if (!data.clientName) return res.status(400).json({ error: 'Client name is required' });
@@ -6418,7 +7400,7 @@ app.post('/api/admin/titling', verifyToken, requirePermission('titling_manage'),
   } catch (err) { console.error('titling create error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
-app.put('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.put('/api/admin/titling/:id', verifyToken, requirePermission('titling_manage'), moneyGuard, async (req, res) => {
   try {
     const data = sanitizeTitlingBody(req.body || {});
     if (data.clientName !== undefined && !data.clientName) return res.status(400).json({ error: 'Client name is required' });
@@ -6457,10 +7439,12 @@ app.get('/api/admin/titling-payment', verifyToken, requirePermission('titling_vi
     });
   } catch (err) { console.error('titling payment get error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.get('/api/admin/titling-payment/:id/qr', verifyToken, requirePermission('titling_view'), async (req, res) => {
+// :mid, not :id — a method id is 12 hex characters, and the shared :id guard
+// (24-hex database ids only) answered 404 for every QR picture.
+app.get('/api/admin/titling-payment/:mid/qr', verifyToken, requirePermission('titling_view'), async (req, res) => {
   try {
     const info = await loadPaymentInfo();
-    const m = info.methods.find(x => x.id === req.params.id);
+    const m = info.methods.find(x => x.id === String(req.params.mid));
     const buf = m && payQrBuffer(m.qr);
     if (!buf) return res.status(404).end();
     res.set('Content-Type', /^data:image\/png/.test(m.qr) ? 'image/png' : 'image/jpeg');
@@ -6469,7 +7453,9 @@ app.get('/api/admin/titling-payment/:id/qr', verifyToken, requirePermission('tit
     res.end(buf);
   } catch (err) { res.status(404).end(); }
 });
-app.put('/api/admin/titling-payment', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+// Where clients send money is the owner's call alone (same rule as the notify
+// address): staff with titling_manage can still read and print, not change it.
+app.put('/api/admin/titling-payment', verifyToken, requireAdmin, async (req, res) => {
   try {
     const body = req.body || {};
     if (!Array.isArray(body.methods)) return res.status(400).json({ error: 'Expected a list of payment methods' });
@@ -6493,7 +7479,21 @@ app.put('/api/admin/titling-payment', verifyToken, requirePermission('titling_ma
     }
     const next = { methods, note: clip(body.note, 300) };
     await Setting.updateOne({ key: PAY_KEY }, { $set: { value: next, updatedAt: new Date() } }, { upsert: true });
-    await logAudit(req, 'UPDATE', 'TitlingPaymentInfo', '', `${methods.length} payment method${methods.length === 1 ? '' : 's'}`, null);
+    // Record what the accounts were and became, so a swapped bank or GCash
+    // number can always be traced (the QR picture itself is left out).
+    const brief = list => list.map(m => ({ method: m.method || '', accountName: m.accountName || '', accountNumber: m.accountNumber || '', hasQr: !!m.qr }));
+    const before = brief(old.methods), after = brief(methods);
+    const changed = JSON.stringify(before) !== JSON.stringify(after) || old.note !== next.note;
+    await logAudit(req, 'UPDATE', 'TitlingPaymentInfo', '', `${methods.length} payment method${methods.length === 1 ? '' : 's'}`,
+      { before: { methods: before, note: old.note }, after: { methods: after, note: next.note } });
+    if (changed) {
+      const row = m => `<tr><td>${esc(m.method)}</td><td>${esc(m.accountName)}</td><td>${esc(m.accountNumber)}</td><td>${m.hasQr ? 'QR' : ''}</td></tr>`;
+      const table = list => list.length ? `<table border="1" cellpadding="4" style="border-collapse:collapse">${list.map(row).join('')}</table>` : '<p>(none)</p>';
+      sendEmail('glrarealty@gmail.com', 'Titling payment details were changed',
+        `<p>The payment details printed on titling bills were changed by ${esc((req.user && (req.user.name || req.user.email)) || 'unknown')} from ${esc(req.ip || '')} at ${esc(new Date().toISOString())}.</p>` +
+        `<p><b>Before</b></p>${table(before)}<p><b>After</b></p>${table(after)}<p>If you did not expect this, check Titling &gt; Payment details now.</p>`)
+        .catch(() => {});
+    }
     res.json({ success: true, methods: methods.map(m => ({ id: m.id, method: m.method, accountName: m.accountName, accountNumber: m.accountNumber, hasQr: !!m.qr })), note: next.note });
   } catch (err) { console.error('titling payment save error:', err); res.status(500).json({ error: 'Server error' }); }
 });
@@ -6524,7 +7524,7 @@ app.delete('/api/admin/titling/:id', verifyToken, requirePermission('titling_man
 
 // Bulk import (from the broker's ACTIVE ACCOUNTS spreadsheet). Skips exact
 // duplicates (same client + title no. + location) so re-importing is safe.
-app.post('/api/admin/titling/bulk', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.post('/api/admin/titling/bulk', verifyToken, requirePermission('titling_manage'), moneyGuard, async (req, res) => {
   try {
     const items = req.body;
     if (!Array.isArray(items)) return res.status(400).json({ error: 'Expected an array' });
@@ -6549,6 +7549,8 @@ app.post('/api/admin/titling/bulk', verifyToken, requirePermission('titling_mana
 });
 
 // ── NOTARIAL JOBS (Lucena notarial business — documents & clients) ──
+// The board's stages (the kanban columns); audit L24: any other text was saved.
+const NOTARIAL_STATUSES = ['received', 'notarized', 'released', 'billed', 'paid', 'on_hold'];
 function sanitizeNotarialBody(b) {
   const out = {};
   const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
@@ -6557,7 +7559,7 @@ function sanitizeNotarialBody(b) {
   if (b.clientEmail !== undefined) out.clientEmail = str(b.clientEmail, 120).toLowerCase();
   if (b.clientType !== undefined) { const allowed = ['', 'walkin', 'retainer', 'monthly_billing']; out.clientType = allowed.includes(b.clientType) ? b.clientType : ''; }
   if (b.account !== undefined) out.account = str(b.account, 200);
-  if (b.status !== undefined) out.status = str(b.status, 40);
+  if (typeof b.status === 'string' && NOTARIAL_STATUSES.includes(b.status)) out.status = b.status;
   if (b.documentType !== undefined) out.documentType = str(b.documentType, 120);
   if (b.documentTypeOther !== undefined) out.documentTypeOther = str(b.documentTypeOther, 120);
   if (b.docNo !== undefined) out.docNo = str(b.docNo, 40);
@@ -6571,10 +7573,10 @@ function sanitizeNotarialBody(b) {
     else { const d = new Date(b.dateNotarized); if (!isNaN(d.getTime())) out.dateNotarized = d; }
   }
   if (b.copies !== undefined) { const n = parseInt(b.copies, 10); if (!isNaN(n) && n >= 0) out.copies = n; }
-  if (b.fee !== undefined && b.fee !== null && b.fee !== '') { const n = Number(b.fee); if (!isNaN(n) && n >= 0) out.fee = n; }
+  if (b.fee !== undefined && b.fee !== null && b.fee !== '') { const n = moneyIn(b.fee); if (n !== null) out.fee = n; }
   if (Array.isArray(b.payments)) {
     out.payments = b.payments.slice(0, 100).map(p => {
-      const row = { amount: Math.max(0, Number(p && p.amount) || 0), mode: str(p && p.mode, 40) || 'Cash', label: str(p && p.label, 200), date: null };
+      const row = { amount: moneyIn(p && p.amount) || 0, mode: str(p && p.mode, 40) || 'Cash', label: str(p && p.label, 200), date: null };
       if (p && p.date) { const d = new Date(p.date); if (!isNaN(d.getTime())) row.date = d; }
       return row;
     }).filter(p => p.amount || p.label || p.date);
@@ -6582,13 +7584,13 @@ function sanitizeNotarialBody(b) {
   return out;
 }
 
-app.get('/api/admin/notarial', verifyToken, requirePermission('notarial_view'), async (req, res) => {
+app.get('/api/admin/notarial', verifyToken, requireAdmin, async (req, res) => {
   try {
     const jobs = await NotarialJob.find().sort({ createdAt: -1 }).lean();
     res.json(jobs);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/notarial', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.post('/api/admin/notarial', verifyToken, requireAdmin, moneyGuard, async (req, res) => {
   try {
     const data = sanitizeNotarialBody(req.body || {});
     if (!data.clientName) return res.status(400).json({ error: 'Client name is required' });
@@ -6599,7 +7601,7 @@ app.post('/api/admin/notarial', verifyToken, requirePermission('notarial_manage'
     res.json(doc);
   } catch (err) { console.error('notarial create error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.put('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.put('/api/admin/notarial/:id', verifyToken, requireAdmin, moneyGuard, async (req, res) => {
   try {
     const data = sanitizeNotarialBody(req.body || {});
     if (data.clientName !== undefined && !data.clientName) return res.status(400).json({ error: 'Client name is required' });
@@ -6609,7 +7611,7 @@ app.put('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_mana
     res.json(doc);
   } catch (err) { console.error('notarial update error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.delete('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.delete('/api/admin/notarial/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const doc = await NotarialJob.findByIdAndDelete(req.params.id);
     if (doc) await logAudit(req, 'DELETE', 'NotarialJob', String(doc._id), doc.clientName, null);
@@ -6620,29 +7622,42 @@ app.delete('/api/admin/notarial/:id', verifyToken, requirePermission('notarial_m
 // Bulk stage change / mark-as-paid for several notarial jobs at once (the employee's
 // "mark as paid nang hindi iisa-isahin" request — pick many, settle them in one click).
 // markPaid moves each to the "paid" stage AND records a settling payment for any balance.
-app.post('/api/admin/notarial/bulk-status', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.post('/api/admin/notarial/bulk-status', verifyToken, requireAdmin, async (req, res) => {
   try {
     const { ids, status, markPaid } = req.body || {};
     if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No records selected' });
-    const stage = status ? String(status).slice(0, 40) : null;
-    let updated = 0;
-    for (const id of ids.slice(0, 500)) {
-      const job = await NotarialJob.findById(id);
-      if (!job) continue;
-      if (markPaid) {
-        job.status = 'paid';
-        const fee = Number(job.fee) || 0;
-        const paid = (job.payments || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-        const bal = fee - paid;
-        if (fee > 0 && bal > 0.005) job.payments.push({ date: new Date(), amount: bal, mode: 'Bank transfer', label: 'Settled (bulk)' });
-      } else if (stage) {
-        job.status = stage;
+    // Audit L24: any text was accepted as a stage, one bad id threw a
+    // CastError half-way through (some saved, no audit row), and a failure
+    // left no trace. Now: known stages only, bad ids skipped and counted, and
+    // the audit row is written whatever happens.
+    const stage = (typeof status === 'string' && status) ? status : null;
+    if (!markPaid && !stage) return res.status(400).json({ error: 'Choose a stage or "mark as paid"' });
+    if (!markPaid && !NOTARIAL_STATUSES.includes(stage)) return res.status(400).json({ error: `Unknown stage. Use one of: ${NOTARIAL_STATUSES.join(', ')}` });
+    let updated = 0, skipped = 0, failed = 0;
+    try {
+      for (const id of ids.slice(0, 500)) {
+        if (!mongoose.isValidObjectId(id)) { skipped++; continue; }
+        try {
+          const job = await NotarialJob.findById(id);
+          if (!job) { skipped++; continue; }
+          if (markPaid) {
+            job.status = 'paid';
+            const fee = Number(job.fee) || 0;
+            const paid = (job.payments || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+            const bal = fee - paid;
+            if (fee > 0 && bal > 0.005) job.payments.push({ date: new Date(), amount: bal, mode: 'Bank transfer', label: 'Settled (bulk)' });
+          } else {
+            job.status = stage;
+          }
+          await job.save();
+          updated++;
+        } catch (e) { failed++; console.error('notarial bulk: one record failed:', id, e.message); }
       }
-      await job.save();
-      updated++;
+    } finally {
+      await logAudit(req, 'BULK_UPDATE', 'NotarialJob', '', `${updated} updated`,
+        Object.assign(markPaid ? { markPaid: true } : { status: stage }, { skipped, failed })).catch(() => {});
     }
-    await logAudit(req, 'BULK_UPDATE', 'NotarialJob', '', `${updated} updated`, markPaid ? { markPaid: true } : { status: stage });
-    res.json({ success: true, updated });
+    res.json({ success: true, updated, skipped, failed });
   } catch (err) { console.error('notarial bulk error:', err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -6663,7 +7678,7 @@ function sanitizeCashBody(b) {
     else { const d = new Date(b.date); if (!isNaN(d.getTime())) out.date = d; }
   }
   ['amount', 'spent'].forEach(k => {
-    if (b[k] !== undefined && b[k] !== null && b[k] !== '') { const n = Number(b[k]); if (!isNaN(n) && n >= 0) out[k] = n; }
+    if (b[k] !== undefined && b[k] !== null && b[k] !== '') { const n = moneyIn(b[k]); if (n !== null) out[k] = n; }
   });
   if (b.titlingId !== undefined) {
     out.titlingId = (typeof b.titlingId === 'string' && /^[a-f\d]{24}$/i.test(b.titlingId)) ? b.titlingId : null;
@@ -6671,13 +7686,13 @@ function sanitizeCashBody(b) {
   return out;
 }
 
-app.get('/api/admin/cash', verifyToken, requirePermission('notarial_view'), async (req, res) => {
+app.get('/api/admin/cash', verifyToken, requireAdmin, async (req, res) => {
   try {
     const list = await CashEntry.find({ business: 'notarial' }).sort({ date: -1, createdAt: -1 }).lean();
     res.json(list);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/cash', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.post('/api/admin/cash', verifyToken, requireAdmin, moneyGuard, async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
     if (!data.kind) return res.status(400).json({ error: 'Entry type is required' });
@@ -6689,7 +7704,7 @@ app.post('/api/admin/cash', verifyToken, requirePermission('notarial_manage'), a
     res.json(doc);
   } catch (err) { console.error('cash create error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.put('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.put('/api/admin/cash/:id', verifyToken, requireAdmin, moneyGuard, async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
     delete data.business;
@@ -6699,7 +7714,7 @@ app.put('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage')
     res.json(doc);
   } catch (err) { console.error('cash update error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.delete('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.delete('/api/admin/cash/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const doc = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     if (doc) {
@@ -6713,7 +7728,7 @@ app.delete('/api/admin/cash/:id', verifyToken, requirePermission('notarial_manag
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 // Attach a proof image/PDF — uploaded to Cloudinary, only the link is stored.
-app.post('/api/admin/cash/:id/proof', verifyToken, requirePermission('notarial_manage'), uploadAttachment.single('file'), async (req, res) => {
+app.post('/api/admin/cash/:id/proof', verifyToken, requireAdmin, uploadAttachment.single('file'), uploadContentCheck, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
     const entry = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
@@ -6738,7 +7753,7 @@ app.post('/api/admin/cash/:id/proof', verifyToken, requirePermission('notarial_m
     res.status(500).json({ error: 'Upload failed' });
   }
 });
-app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission('notarial_manage'), async (req, res) => {
+app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requireAdmin, async (req, res) => {
   try {
     const entry = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     if (!entry) return res.status(404).json({ error: 'Not found' });
@@ -6752,7 +7767,7 @@ app.delete('/api/admin/cash/:id/proof/:proofId', verifyToken, requirePermission(
 });
 
 // A 5-minute signed link to one proof (private files cannot be opened by URL).
-app.get('/api/admin/cash/:id/proof/:proofId/link', verifyToken, requirePermission('notarial_view'), async (req, res) => {
+app.get('/api/admin/cash/:id/proof/:proofId/link', verifyToken, requireAdmin, async (req, res) => {
   try {
     const entry = await CashEntry.findOne({ _id: req.params.id, business: 'notarial' });
     const p = entry && entry.proof.id(req.params.proofId);
@@ -6773,7 +7788,7 @@ app.get('/api/admin/titling-cash', verifyToken, requirePermission('titling_view'
     res.json(list);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/titling-cash', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.post('/api/admin/titling-cash', verifyToken, requirePermission('titling_manage'), moneyGuard, async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
     if (!data.kind) return res.status(400).json({ error: 'Entry type is required' });
@@ -6785,7 +7800,7 @@ app.post('/api/admin/titling-cash', verifyToken, requirePermission('titling_mana
     res.json(doc);
   } catch (err) { console.error('titling cash create error:', err); res.status(500).json({ error: 'Server error' }); }
 });
-app.put('/api/admin/titling-cash/:id', verifyToken, requirePermission('titling_manage'), async (req, res) => {
+app.put('/api/admin/titling-cash/:id', verifyToken, requirePermission('titling_manage'), moneyGuard, async (req, res) => {
   try {
     const data = sanitizeCashBody(req.body || {});
     const doc = await CashEntry.findOneAndUpdate({ _id: req.params.id, business: 'titling' }, data, { new: true });
@@ -6806,7 +7821,7 @@ app.delete('/api/admin/titling-cash/:id', verifyToken, requirePermission('titlin
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
-app.post('/api/admin/titling-cash/:id/proof', verifyToken, requirePermission('titling_manage'), uploadAttachment.single('file'), async (req, res) => {
+app.post('/api/admin/titling-cash/:id/proof', verifyToken, requirePermission('titling_manage'), uploadAttachment.single('file'), uploadContentCheck, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
     const entry = await CashEntry.findOne({ _id: req.params.id, business: 'titling' });
@@ -6952,7 +7967,7 @@ function unsubUrl(email) {
 }
 function withUnsubFooter(html, email) {
   const foot = `<p style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#8a8a8a;text-align:center;margin:28px 0 8px">You are receiving this because you subscribed to or contacted GLRA Realty.<br><a href="${unsubUrl(email)}" style="color:#8a8a8a;text-decoration:underline">Unsubscribe</a> and you will not get these emails again.</p>`;
-  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, foot + '</body>') : html + foot;
+  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, () => foot + '</body>') : html + foot;
 }
 function unsubPage(title, body) {
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} | GLRA Realty</title>
@@ -7079,7 +8094,11 @@ app.post('/confirm-subscription', publicWriteLimiter, async (req, res) => {
         <p style="color:#0a0a0a;line-height:1.6;font-size:14px;">You're confirmed. You will receive new property listings, price drops, and real estate market insights.</p>
         <p style="color:#0a0a0a;line-height:1.6;font-size:14px;margin-top:25px;">Sincerely,<br><strong>GLRA Realty Team</strong></p>
       ` + getEmailFooter();
-      sendEmail(e, 'Welcome to GLRA Realty', welcomeHtml).catch(() => {});
+      // The first newsletter email carries the unsubscribe link too (audit L26).
+      sendEmail(e, 'Welcome to GLRA Realty', withUnsubFooter(welcomeHtml, e), 'GLRA Realty', null, null, {
+        'List-Unsubscribe': `<${unsubUrl(e)}>, <mailto:glrarealty@gmail.com?subject=Unsubscribe>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      }).catch(() => {});
       sendEmail('glrarealty@gmail.com', 'New Subscriber - GLRA Realty', getEmailHeader() + `
         <h2 style="color:#ff3d00;font-family:Inter,Helvetica,Arial,sans-serif;font-size:20px;margin:0 0 15px 0;">New Subscriber (confirmed)</h2>
         <p style="font-size:14px;line-height:1.6">${esc(e)}${before.name ? ' · ' + esc(before.name) : ''} · from ${esc(before.source || 'footer')}</p>` + getEmailFooter()).catch(() => {});
@@ -7387,13 +8406,21 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     const properties = req.body;
     if (!Array.isArray(properties)) return res.status(400).json({ error: 'Expected an array' });
     if (properties.length > 500) return res.status(400).json({ error: 'Import at most 500 listings at a time.' });
-    if (properties.some(pr => hasNewInlinePhoto(pr, null))) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
+    if (properties.some(pr => hasInlinePhoto(pr))) return res.status(400).json({ error: INLINE_PHOTO_ERROR });
+    // Check every row before saving any, so a bad row 40 does not leave rows
+    // 1-39 imported and the rest not (audit L22: same rules as create and edit).
+    const cleaned = [];
+    for (let i = 0; i < properties.length; i++) {
+      const clean = stripPrivilegedPropertyFields(properties[i], req);
+      delete clean.geo; delete clean.nearby; delete clean.hazard; // written only by the location worker
+      const bad = propertyInputProblem(clean, null);
+      if (bad) return res.status(400).json({ error: `Row ${i + 1}${clean.title ? ' (' + String(clean.title).slice(0, 80) + ')' : ''}: ${bad}` });
+      cleaned.push(clean);
+    }
     let added = 0;
-    for (const prop of properties) {
-      const existing = await Property.findOne({ title: prop.title, location: prop.location });
+    for (const clean of cleaned) {
+      const existing = await Property.findOne({ title: String(clean.title || ''), location: String(clean.location || '') });
       if (!existing) {
-        const clean = stripPrivilegedPropertyFields(prop, req);
-        delete clean.geo; delete clean.nearby; delete clean.hazard; // written only by the location worker
         await new Property(clean).save();
         added++;
       }
@@ -7405,11 +8432,16 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     scheduleSavedSearchSweep();
     scheduleGeoPass();
     res.json({ success: true, added });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    const why = schemaProblem(err);
+    if (why) return res.status(400).json({ error: why });
+    console.error('Bulk property import error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Property image upload — gated by properties_upload_image permission
-app.post('/api/admin/upload-property-image', verifyToken, requirePermission('properties_upload_image'), upload.single('image'), async (req, res) => {
+app.post('/api/admin/upload-property-image', verifyToken, requirePermission('properties_upload_image'), upload.single('image'), uploadContentCheck, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image file provided' });
 
@@ -7435,17 +8467,21 @@ app.post('/api/admin/upload-property-image', verifyToken, requirePermission('pro
 });
 
 // Hero images
-app.get('/api/admin/hero-images', verifyToken, async (req, res) => {
+app.get('/api/admin/hero-images', verifyToken,
+  requireAnyPermission('dashboard_view', 'hero_upload', 'hero_edit', 'hero_delete'),
+  async (req, res) => {
   try {
     // .lean() + the same swap, or the Hero tab downloads 2.5 MB of base64
     // every time Catherine opens it, just to draw four thumbnails.
-    const images = await HeroImage.find().sort({ order: 1 }).lean();
+    // Stubbed in the database, like the public list: .lean() alone still read
+    // every base64 photo out of Atlas just to replace it with a URL.
+    const images = await HeroImage.aggregate([{ $sort: { order: 1 } }, { $project: { url: dataStub('$url'), order: 1, createdAt: 1 } }]);
     images.forEach(externalizeHeroImage);
     res.json(images);
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-app.post('/api/admin/hero-images/upload', verifyToken, requirePermission('hero_upload'), upload.single('image'), async (req, res) => {
+app.post('/api/admin/hero-images/upload', verifyToken, requirePermission('hero_upload'), upload.single('image'), uploadContentCheck, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image file provided' });
 
@@ -7471,31 +8507,24 @@ app.post('/api/admin/hero-images/upload', verifyToken, requirePermission('hero_u
   }
 });
 
-app.post('/api/admin/hero-images/reorder', verifyToken, requirePermission('hero_edit'), async (req, res) => {
-  try {
-    const { images } = req.body;
-    if (!Array.isArray(images)) return res.status(400).json({ error: 'Expected images array' });
-    for (const img of images) {
-      await HeroImage.findByIdAndUpdate(img._id, { order: img.order });
-    }
-    invalidateHeroCache();
-    await logAudit(req, 'REORDER', 'HeroImage', '', `${images.length} images`, null);
-    res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
-});
+// (A bulk "reorder" route was here; the dashboard never called it, so it was
+// removed on 15 Oct 2026. hero_edit still guards "set as default" below.)
 
 app.put('/api/admin/hero-images/:id/default', verifyToken, requirePermission('hero_edit'), async (req, res) => {
   try {
-    const images = await HeroImage.find().sort({ order: 1 });
+    // Only the order is read and written: the whole documents carried any
+    // base64 photo along with them.
+    const images = await HeroImage.find().select('_id order').sort({ order: 1 }).lean();
     let newOrder = 0;
     for (const img of images) {
+      let order;
       if (img._id.toString() === req.params.id) {
-        img.order = 0;
+        order = 0;
       } else {
-        img.order = newOrder + 1;
+        order = newOrder + 1;
         newOrder++;
       }
-      await img.save();
+      await HeroImage.updateOne({ _id: img._id }, { $set: { order } });
     }
     invalidateHeroCache();
     await logAudit(req, 'SET_DEFAULT', 'HeroImage', req.params.id, '', null);
@@ -7554,30 +8583,6 @@ app.get('/api/admin/tasks', verifyToken, requirePermission('tasks_view'), async 
   }
 });
 
-// Stats for the dashboard cards (open / overdue / by status / by assignee)
-app.get('/api/admin/tasks-stats', verifyToken, requirePermission('tasks_view'), async (req, res) => {
-  try {
-    const visibility = await buildTaskVisibilityFilter(req.user);
-    const all = await Task.find(visibility).select('status assignedTo dueDate').lean();
-    const now = new Date();
-    const counts = { total: all.length, todo: 0, in_progress: 0, stuck: 0, done: 0, overdue: 0 };
-    const byAssignee = {};
-    all.forEach(t => {
-      counts[t.status] = (counts[t.status] || 0) + 1;
-      if (t.status !== 'done' && t.dueDate && new Date(t.dueDate) < now) counts.overdue++;
-      (t.assignedTo || []).forEach(aid => {
-        const k = aid.toString();
-        if (!byAssignee[k]) byAssignee[k] = { todo: 0, in_progress: 0, stuck: 0, done: 0 };
-        byAssignee[k][t.status] = (byAssignee[k][t.status] || 0) + 1;
-      });
-    });
-    res.json({ ...counts, byAssignee });
-  } catch (err) {
-    console.error('Tasks stats error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
 // Distinct categories — for autocomplete
 app.get('/api/admin/tasks-categories', verifyToken, requirePermission('tasks_view'), async (req, res) => {
   try {
@@ -7614,10 +8619,12 @@ app.get('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
 app.post('/api/admin/tasks', verifyToken, requirePermission('tasks_create'), async (req, res) => {
   try {
     const { title, description, category, status, priority, assignedTo, dueDate, reference } = req.body;
-    if (!title || !String(title).trim()) return res.status(400).json({ error: 'Title is required' });
+    // Text only (audit L25): an object used to be saved as "[object Object]".
+    if (typeof title !== 'string' || !title.trim()) return res.status(400).json({ error: 'Title is required' });
+    if (description != null && typeof description === 'object') return res.status(400).json({ error: 'Description must be text' });
     const task = await Task.create({
-      title: String(title).trim(),
-      description: description ? String(description) : '',
+      title: title.trim().slice(0, 200),
+      description: description ? String(description).slice(0, 5000) : '',
       category: category ? String(category).trim() : '',
       status: ['todo','in_progress','stuck','done'].includes(status) ? status : 'todo',
       priority: ['low','medium','high','critical'].includes(priority) ? priority : 'medium',
@@ -7656,6 +8663,13 @@ app.put('/api/admin/tasks/:id', verifyToken, requirePermission('tasks_view'), as
     allowed.forEach(k => {
       if (req.body[k] !== undefined) update[k] = req.body[k];
     });
+    // Text fields must be text, and a title cannot be emptied (audit L25).
+    for (const k of ['title', 'description', 'category', 'reference']) {
+      if (update[k] != null && typeof update[k] === 'object') return res.status(400).json({ error: `${k} must be text` });
+    }
+    if (hasEdit && update.title !== undefined && (typeof update.title !== 'string' || !update.title.trim())) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
     if (update.status && !['todo','in_progress','stuck','done'].includes(update.status)) delete update.status;
     if (update.priority && !['low','medium','high','critical'].includes(update.priority)) delete update.priority;
     // Non-managers cannot reassign or rename
@@ -7787,7 +8801,7 @@ app.delete('/api/admin/tasks/:id/updates/:updateId', verifyToken, requirePermiss
 });
 
 // Upload an attachment (PDF, Word, image, etc.)
-app.post('/api/admin/tasks/:id/attachments', verifyToken, requirePermission('tasks_view'), uploadAttachment.single('file'), async (req, res) => {
+app.post('/api/admin/tasks/:id/attachments', verifyToken, requirePermission('tasks_view'), uploadAttachment.single('file'), uploadContentCheck, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
     const visibility = await buildTaskVisibilityFilter(req.user);
@@ -7918,8 +8932,144 @@ function sniffFileKind(p) {
   return '';
 }
 
+// ── Public upload budget and orphan sweep (audit F9) ──────────
+// The per-address limit (25 an hour) does not stop many addresses, so both
+// public upload routes also share a site-wide daily allowance, counted in the
+// database per Manila day (a restart does not reset it). The check runs before
+// the file is even read. A real owner uploads 5-30 photos and a few documents.
+const SUBMISSION_UPLOADS_PER_DAY = {
+  image: Math.max(1, Number(process.env.SUBMISSION_IMAGE_UPLOADS_PER_DAY) || 400),
+  document: Math.max(1, Number(process.env.SUBMISSION_DOC_UPLOADS_PER_DAY) || 150)
+};
+function submissionDailyCap(kind) {
+  return async (req, res, next) => {
+    try {
+      const key = `subupload:${kind}:${manilaDayKey()}`;
+      const row = await db.Counter.findOneAndUpdate({ key }, { $inc: { seq: 1 } }, { upsert: true, new: true }).lean();
+      if (row && row.seq > SUBMISSION_UPLOADS_PER_DAY[kind]) {
+        if (row.seq === SUBMISSION_UPLOADS_PER_DAY[kind] + 1) {
+          console.warn(`Public ${kind} uploads reached today's limit (${SUBMISSION_UPLOADS_PER_DAY[kind]}); refusing more until midnight Manila time.`);
+        }
+        return res.status(429).json({ error: 'We have received a lot of uploads today. Please try again tomorrow, or email the photos to glrarealty@gmail.com.' });
+      }
+      next();
+    } catch (e) {
+      // A database hiccup must not open the gate: refuse rather than upload uncounted.
+      console.error('Upload allowance check failed:', e.message);
+      res.status(503).json({ error: 'Uploads are paused for a moment. Please try again shortly.' });
+    }
+  };
+}
+
+// Files uploaded by someone who then never sent the form stay on Cloudinary
+// for good. Once a night this lists the two public upload folders and removes
+// every file older than 48 hours that no submission (and, for photos, no live
+// listing: import copies the URLs) refers to. It never runs without
+// Cloudinary, never deletes when the reference lookup fails, and removes at
+// most SWEEP_MAX files a run.
+const SUBMISSION_ORPHAN_AGE_MS = 48 * 3600 * 1000;
+const SUBMISSION_SWEEP_MAX = 1000;
+const SUB_PHOTO_PREFIX = 'glra_realty/submissions/';
+const SUB_DOC_PREFIX = 'glra_realty/submission_docs/';
+function submissionPhotoIdOf(url) {
+  const m = typeof url === 'string' && url.match(/\/(glra_realty\/submissions\/[^/.?#]+)/);
+  return m ? m[1] : '';
+}
+async function listCloudinaryFolder(prefix, type, resourceType) {
+  const out = [];
+  let cursor;
+  for (let page = 0; page < 40; page++) {
+    const r = await cloudinary.api.resources({ type, prefix, resource_type: resourceType, max_results: 500, ...(cursor ? { next_cursor: cursor } : {}) });
+    (r.resources || []).forEach(x => { if (String(x.public_id || '').startsWith(prefix)) out.push(x); });
+    cursor = r.next_cursor;
+    if (!cursor) break;
+  }
+  return out;
+}
+let _submissionSweepRunning = false;
+async function sweepSubmissionOrphans() {
+  if (_submissionSweepRunning) return { skipped: 'already running' };
+  if (!cloudinaryConfigured()) return { skipped: 'Cloudinary not configured' };
+  if (mongoose.connection.readyState !== 1) return { skipped: 'database not connected' };
+  if (process.env.SUBMISSION_SWEEP === 'off') return { skipped: 'switched off' };
+  _submissionSweepRunning = true;
+  const stats = { photos: 0, docs: 0, kept: 0, failed: 0 };
+  try {
+    // What is still in use. If this throws, nothing is deleted.
+    const [subs, props] = await Promise.all([
+      PropertySubmission.find({}, { mainImage: 1, gallery: 1, 'documents.publicId': 1 }).lean(),
+      Property.find({ $or: [
+        { mainImage: /glra_realty\/submissions\// }, { gallery: /glra_realty\/submissions\// },
+        { coverImage: /glra_realty\/submissions\// }, { floorPlan: /glra_realty\/submissions\// }] },
+        { mainImage: 1, gallery: 1, coverImage: 1, floorPlan: 1 }).lean()
+    ]);
+    const used = new Set();
+    subs.forEach(s => {
+      [s.mainImage, ...(s.gallery || [])].forEach(u => { const id = submissionPhotoIdOf(u); if (id) used.add(id); });
+      (s.documents || []).forEach(d => { if (d && d.publicId) used.add(String(d.publicId)); });
+    });
+    props.forEach(p => [p.mainImage, p.coverImage, p.floorPlan, ...(p.gallery || [])]
+      .forEach(u => { const id = submissionPhotoIdOf(u); if (id) used.add(id); }));
+
+    const cutoff = Date.now() - SUBMISSION_ORPHAN_AGE_MS;
+    const groups = [
+      { prefix: SUB_PHOTO_PREFIX, type: 'upload', resourceType: 'image', stat: 'photos' },
+      { prefix: SUB_DOC_PREFIX, type: 'authenticated', resourceType: 'image', stat: 'docs' },
+      { prefix: SUB_DOC_PREFIX, type: 'authenticated', resourceType: 'raw', stat: 'docs' }
+    ];
+    let budget = SUBMISSION_SWEEP_MAX;
+    for (const g of groups) {
+      if (budget <= 0) break;
+      const files = await listCloudinaryFolder(g.prefix, g.type, g.resourceType);
+      const doomed = [];
+      for (const f of files) {
+        const made = new Date(f.created_at).getTime();
+        if (!Number.isFinite(made) || made > cutoff || used.has(f.public_id)) { stats.kept++; continue; }
+        if (doomed.length < budget) doomed.push(f.public_id);
+      }
+      budget -= doomed.length;
+      for (let i = 0; i < doomed.length; i += 100) {
+        const batch = doomed.slice(i, i + 100);
+        try {
+          await cloudinary.api.delete_resources(batch, { type: g.type, resource_type: g.resourceType, invalidate: true });
+          stats[g.stat] += batch.length;
+        } catch (e) { stats.failed += batch.length; console.warn('Submission orphan sweep: delete failed:', e.message); }
+      }
+    }
+    if (stats.photos || stats.docs || stats.failed) {
+      console.log(`Submission orphan sweep: removed ${stats.photos} photo(s) and ${stats.docs} document(s) nobody sent a form for; ${stats.failed} not removed.`);
+    }
+    return stats;
+  } catch (e) {
+    console.error('Submission orphan sweep failed (nothing more removed):', e.message);
+    return { error: e.message, ...stats };
+  } finally {
+    _submissionSweepRunning = false;
+  }
+}
+// 03:00 Manila time every night (and never during the first minutes after a
+// deploy, when the database may still be warming up).
+function scheduleSubmissionSweep() {
+  const now = new Date();
+  const manila = new Date(now.getTime() + 8 * 3600e3);              // UTC+8, no daylight saving
+  const next = new Date(Date.UTC(manila.getUTCFullYear(), manila.getUTCMonth(), manila.getUTCDate(), 3, 0, 0) - 8 * 3600e3);
+  if (next.getTime() - now.getTime() < 10 * 60e3) next.setTime(next.getTime() + 24 * 3600e3);
+  const t = setTimeout(() => {
+    sweepSubmissionOrphans().catch(() => {}).finally(scheduleSubmissionSweep);
+  }, next.getTime() - now.getTime());
+  if (t.unref) t.unref();
+}
+scheduleSubmissionSweep();
+// Run the sweep now (owner only), e.g. after a burst of junk uploads.
+app.post('/api/admin/submission-uploads/sweep', verifyToken, requireAdmin, async (req, res) => {
+  const r = await sweepSubmissionOrphans();
+  await logAudit(req, 'SWEEP', 'SubmissionUploads', '', 'orphan upload sweep', r);
+  res.json(r);
+});
+
 app.post('/api/property-submissions/upload-image',
   submissionUploadLimiter,
+  submissionDailyCap('image'),
   upload.single('image'),
   async (req, res) => {
     try {
@@ -7961,6 +9111,7 @@ const uploadOwnerDoc = multer({
 
 app.post('/api/property-submissions/upload-document',
   submissionUploadLimiter,
+  submissionDailyCap('document'),
   uploadOwnerDoc.single('document'),
   async (req, res) => {
     const tmp = req.file && req.file.path;
@@ -8005,6 +9156,18 @@ function isSubmittedPhotoUrl(u) {
     u.startsWith('https://res.cloudinary.com/' + cloud + '/image/upload/') &&
     u.includes('/glra_realty/submissions/') &&
     /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/upload\/[^\s"'<>`\\]+$/.test(u);
+}
+
+// The price line of the new-submission email, by listing type (audit L28: a
+// sale printed "Rental: P0/mo" and a lease "Price: P0").
+function submissionPriceLine(sub) {
+  const lt = String((sub && sub.listingType) || '').toUpperCase();
+  const peso = n => '₱' + Number(n || 0).toLocaleString('en-PH');
+  const price = Number(sub && sub.price) || 0, rent = Number(sub && sub.monthlyRental) || 0;
+  const parts = [];
+  if (/SALE/.test(lt) || (!/LEASE/.test(lt) && price)) parts.push('Asking price: ' + (price ? peso(price) : 'not given'));
+  if (/LEASE/.test(lt) || (!/SALE/.test(lt) && rent)) parts.push('Monthly rent: ' + (rent ? peso(rent) + '/month' : 'not given'));
+  return esc(parts.join(' · ') || 'Price: not given');
 }
 
 app.post('/api/property-submissions',
@@ -8058,13 +9221,16 @@ app.post('/api/property-submissions',
       const sub = await PropertySubmission.create({
         submitterName: b.submitterName,
         submitterEmail: b.submitterEmail,
-        submitterPhone: b.submitterPhone || '',
-        submitterMessage: String(b.submitterMessage || '').slice(0, 5000),
+        // Every text field is cut to the schema's own maximum here, so a long
+        // value is trimmed instead of failing schema validation as a 500
+        // (audit 15 Oct, SEC-IN-6). The caps match server/db.js.
+        submitterPhone: String(b.submitterPhone || '').slice(0, 30),
+        submitterMessage: String(b.submitterMessage || '').slice(0, 1000),
         title: b.title,
-        description: b.description || '',
+        description: String(b.description || '').slice(0, 5000),
         location: b.location,
-        mapLocation: b.mapLocation || '',
-        propertyType: b.propertyType || 'Condominium',
+        mapLocation: String(b.mapLocation || '').slice(0, 200),
+        propertyType: String(b.propertyType || 'Condominium').slice(0, 60),
         listingType: b.listingType || 'FOR SALE',
         price: num(b.price),
         monthlyRental: num(b.monthlyRental),
@@ -8073,7 +9239,7 @@ app.post('/api/property-submissions',
         sqm: num(b.sqm),
         landArea: num(b.landArea),
         parking: int(b.parking),
-        developer: b.developer || '',
+        developer: String(b.developer || '').slice(0, 120),
         mainImage: b.mainImage || (Array.isArray(b.gallery) && b.gallery[0]) || '',
         gallery: Array.isArray(b.gallery) ? b.gallery.slice(0, 20) : [],
 
@@ -8146,7 +9312,7 @@ app.post('/api/property-submissions',
           <h2 style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px;text-transform:uppercase;color:#0a0a0a;margin:0 0 12px;padding-bottom:10px;border-bottom:2px solid #ff3d00">New Property Submission</h2>
           <p style="margin:0 0 8px;font-size:16px"><strong>${safeTitle}</strong> · ${safeLoc}</p>
           <p style="margin:0 0 8px">Listing type: <strong>${esc(b.listingType || '')}</strong> · Property type: ${esc(b.propertyType || '')}</p>
-          <p style="margin:0 0 14px">Price: ₱${(sub.price||0).toLocaleString()} · Rental: ₱${(sub.monthlyRental||0).toLocaleString()}/mo</p>
+          <p style="margin:0 0 14px">${submissionPriceLine(sub)}</p>
           <div style="border-top:1px solid #0a0a0a;padding-top:14px;margin-top:14px">
             <p style="margin:0 0 6px">Submitted by: <strong>${safeName}</strong></p>
             <p style="margin:0 0 6px">Email: <a href="mailto:${safeEmail}" style="color:#ff3d00">${safeEmail}</a></p>
@@ -8194,7 +9360,14 @@ app.post('/api/property-submissions',
         attrib: b.src }).catch(() => {});
       res.json({ success: true, id: sub._id });
     } catch (err) {
-      console.error('Submission create error:', err);
+      // A schema rejection is the form's problem (400), and only the field
+      // names are logged: the error itself carries the owner's typed values.
+      if (err && err.name === 'ValidationError') {
+        const fields = Object.keys(err.errors || {});
+        console.warn('Submission refused by schema, fields:', fields.join(', '));
+        return res.status(400).json({ error: 'Please check these fields: ' + fields.map(f => f.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()).join(', ') + '.' });
+      }
+      console.error('Submission create error:', err && err.name, err && err.code != null ? err.code : '');
       res.status(500).json({ error: 'Could not save submission. Please try again.' });
     }
   }
@@ -8283,10 +9456,21 @@ app.get('/api/admin/property-submissions/:id/document/:idx',
 // Admin: update notes / status (without importing — e.g. mark rejected, save notes)
 app.put('/api/admin/property-submissions/:id', verifyToken, requirePermission('submissions_view'), async (req, res) => {
   try {
-    const allowed = ['adminNotes', 'status'];
+    // Audit L25: a non-text note (an object or array) threw a 500, and anyone
+    // who could only VIEW submissions could mark them imported or rejected.
+    const b = req.body || {};
     const update = {};
-    allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
-    if (update.status && !['pending','imported','rejected'].includes(update.status)) delete update.status;
+    if (b.adminNotes !== undefined) {
+      if (b.adminNotes !== null && typeof b.adminNotes === 'object') return res.status(400).json({ error: 'Notes must be text' });
+      update.adminNotes = String(b.adminNotes == null ? '' : b.adminNotes).slice(0, 5000);
+    }
+    if (b.status !== undefined) {
+      if (typeof b.status !== 'string' || !['pending', 'imported', 'rejected'].includes(b.status)) return res.status(400).json({ error: 'Status must be pending, imported or rejected' });
+      if (!(await userHasPermission(req.user, 'submissions_import'))) {
+        return res.status(403).json({ error: "You don't have permission to change a submission's status (submissions_import)." });
+      }
+      update.status = b.status;
+    }
     if (update.status && update.status !== 'pending') {
       update.reviewedBy = req.user.email || '';
       update.reviewedAt = new Date();

@@ -36,7 +36,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="image" href="/img/arthaland/sondris/28-dusk-address@800.webp" imagesrcset="/img/arthaland/sondris/28-dusk-address@800.webp 800w, /img/arthaland/sondris/28-dusk-address@1280.webp 1280w, /img/arthaland/sondris/28-dusk-address@1920.webp 1920w, /img/arthaland/sondris/28-dusk-address.webp 2560w" imagesizes="(max-width:900px) 100vw, 62vw" fetchpriority="high">
 <!-- Archivo is the family's shared text face and this page's display face too. -->
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <!-- The five display faces, one per building, subset with `text=` to the
      sixteen letters those five names actually use. Five families for a few
      kilobytes. They must never be applied to anything but the names, or the
@@ -44,8 +44,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    ARTHALAND — the hub
@@ -191,10 +191,10 @@
 :root[data-arth] #navbar a.contact-btn-nav:hover{background:#fff !important;border-color:#fff !important}
 [data-arth] .scroll-progress{background:var(--bone) !important}
 [data-arth] footer{background:var(--pitch) !important}
-/* The theme paints these from `html body.dark-mode footer .footer-col h4`
+/* The theme paints these from `html body.dark-mode footer .footer-col :is(h2,h4)`
    with !important, specificity (0,2,4). A plain [data-arth] prefix is only
    (0,1,2) and loses, so match its depth and add the attribute. */
-:root[data-arth] body.dark-mode footer .footer-col h4{color:var(--bone) !important}
+:root[data-arth] body.dark-mode footer .footer-col :is(h2,h4){color:var(--bone) !important}
 :root[data-arth] body.dark-mode footer .footer-col i{color:var(--ash) !important}
 [data-arth] #floatingDarkModeToggle{display:none !important}
 
@@ -618,7 +618,7 @@
   :root[data-arth] .cert-list li:nth-last-child(-n+2){border-bottom:0}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body class="dark-mode">
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -641,6 +641,7 @@
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -656,7 +657,7 @@
     <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
     <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
     <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees Calculator</a>
     <a href="/about.html" onclick="closeMobileMenu()">About</a>
     <a href="/#contact" onclick="closeMobileMenu()">Contact</a>
   </div>
@@ -986,26 +987,26 @@
 
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+    <div class="footer-col"><h2 class="footer-h">GLRA Realty</h2><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
         <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
-    <div class="footer-col"><h4>Arthaland</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Arthaland</h2><ul>
       <li><a href="/sondris.html">Sondris</a></li>
       <li><a href="/eluria.html">Eluria</a></li>
       <li><a href="/liv.html">Liv</a></li>
       <li><a href="/una.html">Una Apartments</a></li>
       <li><a href="/lucima.html">Lucima</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Neighborhoods</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Neighborhoods</h2><ul>
       <li><a href="/living-in-bgc.html">BGC</a></li>
       <li><a href="/living-in-makati.html">Makati</a></li>
       <li><a href="/living-in-alabang.html">Alabang</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Contact</h4>
+    <div class="footer-col"><h2 class="footer-h">Contact</h2>
       <p><i class="fas fa-phone-alt" style="margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
@@ -1054,7 +1055,7 @@
 })();
 </script>
 
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
 <script>
 /* Dark-locked page: main.js applies a saved light preference on load, which
    would half-light the chrome here. Re-assert dark for the shell without
@@ -1064,7 +1065,7 @@ document.body.classList.add('dark-mode');
 document.documentElement.classList.add('dark-mode-pre');
 if (typeof syncLogos === 'function') syncLogos();
 </script>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
 </body>
 </html>

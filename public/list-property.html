@@ -34,16 +34,16 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 
 <style>
 .list-hero{padding:120px 5% 60px;background:var(--navy);color:#fff;text-align:center;background-image:radial-gradient(ellipse at 20% 50%,rgba(255,61,0,.12) 0%,transparent 60%)}
-.list-hero .eyebrow{font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:14px;font-weight:600}
+.list-hero .eyebrow{font-size:11px;color:#ff3d00;letter-spacing:3px;text-transform:uppercase;display:block;margin-bottom:14px;font-weight:600}
 .list-hero h1{font-family:'Inter',serif;font-size:46px;font-weight:600;margin-bottom:14px;line-height:1.15}
 .list-hero p{font-size:15px;color:rgba(255,255,255,.7);max-width:680px;margin:0 auto;line-height:1.7}
 @media(max-width:600px){.list-hero h1{font-size:32px}.list-hero{padding:100px 5% 44px}}
@@ -52,7 +52,7 @@
 @media(max-width:768px){.steps-strip{grid-template-columns:1fr;margin-top:-30px}}
 .step-card{background:var(--card-bg);border:1px solid var(--border-color);padding:22px 22px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--shadow-md)}
 .step-num{width:36px;height:36px;flex-shrink:0;background:var(--gold-light);color:var(--ab-hot-text,#c02e00);display:flex;align-items:center;justify-content:center;font-family:'Inter',serif;font-size:20px;font-weight:600;border-radius:50%}
-.step-card h4{font-family:'Inter',serif;font-size:18px;color:var(--text-color);margin-bottom:4px;font-weight:600}
+.step-card :is(h2,h4){font-family:'Inter',serif;font-size:18px;color:var(--text-color);margin-bottom:4px;font-weight:600}
 .step-card p{font-size:12.5px;color:var(--gray);line-height:1.6}
 
 .list-form-wrap{max-width:880px;margin:60px auto;padding:0 5%}
@@ -71,7 +71,8 @@
 
 .lf-field{display:flex;flex-direction:column;gap:7px}
 .lf-field label{font-size:11px;font-weight:600;color:var(--ab-hot-text,#c02e00);text-transform:uppercase;letter-spacing:1.5px;display:flex;justify-content:space-between;align-items:center}
-.lf-field label .req{color:#ef4444;margin-left:4px;text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
+.lf-field label .req{color:#c81e1e;margin-left:4px;text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
+body.dark-mode .lf-field label .req{color:#ff8a80}
 .lf-field label .opt{color:var(--gray);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px}
 .lf-field input[type=text],.lf-field input[type=email],.lf-field input[type=tel],.lf-field input[type=number],.lf-field select,.lf-field textarea{padding:13px 14px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:var(--transition);border-radius:0;width:100%}
 .lf-field input:focus,.lf-field select:focus,.lf-field textarea:focus{border-color:var(--gold);background:var(--card-bg)}
@@ -285,7 +286,7 @@
 .why-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
 .why-item{text-align:center;padding:8px}
 .why-item i{font-size:32px;color:var(--ab-hot-text,#c02e00);margin-bottom:14px;display:block}
-.why-item h4{font-family:'Inter',serif;font-size:20px;color:var(--text-color);margin-bottom:8px;font-weight:600}
+.why-item :is(h3,h4){font-family:'Inter',serif;font-size:20px;color:var(--text-color);margin-bottom:8px;font-weight:600}
 .why-item p{font-size:13px;color:var(--gray);line-height:1.6}
 
 .lf-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#b91c1c;padding:12px 16px;font-size:13px;margin:0 36px 18px;display:none}
@@ -299,7 +300,7 @@ body.dark-mode .lf-error{color:#fca5a5}
   html body .listing-toggle .lt-sub,html body .doc-head,html body .doc-head .ct,html body .legal-note .hd{font-size:11px !important}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -322,6 +323,7 @@ body.dark-mode .lf-error{color:#fca5a5}
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -336,7 +338,7 @@ body.dark-mode .lf-error{color:#fca5a5}
     <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
     <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
     <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees Calculator</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
     <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
     <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
@@ -364,15 +366,15 @@ body.dark-mode .lf-error{color:#fca5a5}
 <div class="steps-strip">
   <div class="step-card">
     <div class="step-num">1</div>
-    <div><h4>Tell us about it</h4><p>Fill in property details, pricing, and upload photos — takes about 10 minutes.</p></div>
+    <div><h2 class="as-h4">Tell us about it</h2><p>Fill in property details, pricing, and upload photos — takes about 10 minutes.</p></div>
   </div>
   <div class="step-card">
     <div class="step-num">2</div>
-    <div><h4>We review &amp; refine</h4><p>Our broker reviews your listing within 1–2 business days and may suggest improvements.</p></div>
+    <div><h2 class="as-h4">We review &amp; refine</h2><p>Our broker reviews your listing within 1–2 business days and may suggest improvements.</p></div>
   </div>
   <div class="step-card">
     <div class="step-num">3</div>
-    <div><h4>Goes live to buyers</h4><p>Once approved, your listing appears on glrarealty.com and we start matching qualified prospects.</p></div>
+    <div><h2 class="as-h4">Goes live to buyers</h2><p>Once approved, your listing appears on glrarealty.com and we start matching qualified prospects.</p></div>
   </div>
 </div>
 
@@ -707,10 +709,10 @@ body.dark-mode .lf-error{color:#fca5a5}
 <!-- WHY LIST WITH US (only shown before submission) -->
 <section class="why-strip" id="whyStrip">
   <div class="why-grid">
-    <div class="why-item"><i class="fas fa-shield-alt"></i><h4>Licensed broker</h4><p>PRC-licensed real estate broker handles every listing personally — no algorithms, no auto-matches.</p></div>
-    <div class="why-item"><i class="fas fa-money-bill-wave"></i><h4>No upfront fees</h4><p>Standard broker commission only on successful transactions. No listing fees, no hidden charges.</p></div>
-    <div class="why-item"><i class="fas fa-eye"></i><h4>Qualified buyers</h4><p>Every inquiry is pre-screened. We send you serious prospects, not casual browsers.</p></div>
-    <div class="why-item"><i class="fas fa-handshake"></i><h4>Full-service support</h4><p>We help with documentation, BIR/LRA registration, and closing — start to finish.</p></div>
+    <div class="why-item"><i class="fas fa-shield-alt"></i><h3 class="as-h4">Licensed broker</h3><p>PRC-licensed real estate broker handles every listing personally — no algorithms, no auto-matches.</p></div>
+    <div class="why-item"><i class="fas fa-money-bill-wave"></i><h3 class="as-h4">No upfront fees</h3><p>Standard broker commission only on successful transactions. No listing fees, no hidden charges.</p></div>
+    <div class="why-item"><i class="fas fa-eye"></i><h3 class="as-h4">Qualified buyers</h3><p>Every inquiry is pre-screened. We send you serious prospects, not casual browsers.</p></div>
+    <div class="why-item"><i class="fas fa-handshake"></i><h3 class="as-h4">Full-service support</h3><p>We help with documentation, BIR/LRA registration, and closing — start to finish.</p></div>
   </div>
 </section>
 
@@ -718,7 +720,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 <footer>
   <div class="footer-content">
     <div class="footer-col">
-      <h4>GLRA Realty</h4>
+      <h2 class="footer-h">GLRA Realty</h2>
       <p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -727,7 +729,7 @@ body.dark-mode .lf-error{color:#fca5a5}
       </div>
     </div>
     <div class="footer-col">
-      <h4>Properties</h4>
+      <h2 class="footer-h">Properties</h2>
       <ul>
         <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
         <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
@@ -736,7 +738,7 @@ body.dark-mode .lf-error{color:#fca5a5}
       </ul>
     </div>
     <div class="footer-col">
-      <h4>Resources</h4>
+      <h2 class="footer-h">Resources</h2>
       <ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li>
         <li><a href="/guide.html">Documentation Guide</a></li>
         <li><a href="/calculator.html">Closing Fees Calculator</a></li>
@@ -745,7 +747,7 @@ body.dark-mode .lf-error{color:#fca5a5}
       </ul>
     </div>
     <div class="footer-col">
-      <h4>Contact</h4>
+      <h2 class="footer-h">Contact</h2>
       <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
       <p><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>17F, 252 Sen. Gil J. Puyat Ave., Makati</p>
@@ -772,7 +774,7 @@ body.dark-mode .lf-error{color:#fca5a5}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
 <script>
 // ── State ──
 const uploadedImages = []; // [{url, name, size, status:'uploaded'|'uploading'|'failed', tempId}]
@@ -945,18 +947,21 @@ const dz = document.getElementById('dropZone');
 ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
 dz.addEventListener('drop', e => { handleImageUpload(e.dataTransfer.files); });
 
+// File names come from the visitor's own disk, so they are escaped before
+// they go into innerHTML (a file named <img onerror=...> must stay text).
+function escName(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderImages(){
   const grid = document.getElementById('imageGrid');
   if(uploadedImages.length === 0){ grid.innerHTML = ''; return; }
   grid.innerHTML = uploadedImages.map((img, i) => {
     if(img.status === 'uploading'){
-      return `<div class="image-thumb"><div class="img-bar"><i class="fas fa-spinner fa-spin"></i><small>${img.name||'uploading...'}</small><progress max="100" value="${img.progress||0}"></progress></div></div>`;
+      return `<div class="image-thumb"><div class="img-bar"><i class="fas fa-spinner fa-spin"></i><small>${escName(img.name||'uploading...')}</small><progress max="100" value="${img.progress||0}"></progress></div></div>`;
     }
     if(img.status === 'failed'){
-      return `<div class="image-thumb"><div class="img-bar" style="background:rgba(239,68,68,.85)"><i class="fas fa-exclamation-triangle"></i><small>${img.name||'failed'}</small><button onclick="removeImage(${i})" style="position:static;background:#fff;color:#000">Remove</button></div></div>`;
+      return `<div class="image-thumb"><div class="img-bar" style="background:rgba(239,68,68,.85)"><i class="fas fa-exclamation-triangle"></i><small>${escName(img.name||'failed')}</small><button onclick="removeImage(${i})" style="position:static;background:#fff;color:#000">Remove</button></div></div>`;
     }
     return `<div class="image-thumb">
-      <img src="${img.url}" alt="" loading="lazy" decoding="async">
+      <img src="${escName(img.url)}" alt="" loading="lazy" decoding="async">
       ${i===0?'<span class="img-cover">Main</span>':''}
       <button type="button" onclick="removeImage(${i})" aria-label="Remove"><i class="fas fa-times"></i></button>
     </div>`;
@@ -1167,8 +1172,8 @@ async function submitListing(){
   }
 }
 </script>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

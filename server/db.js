@@ -754,7 +754,9 @@ const PERMISSION_KEYS = [
   'titling_view',        // see the Titling tab
   'titling_manage',      // add / edit / delete titling jobs
   // The Notarial tab was replaced by Cases in September 2026. The two keys are
-  // kept so existing staff accounts keep loading, but nothing reads them now.
+  // kept so existing staff accounts keep loading, but they are RETIRED: always
+  // false for staff (see RETIRED_PERMISSION_KEYS), and the old notarial and
+  // cash routes are admin-only.
   'notarial_view',
   'notarial_manage',
   'cases_view',          // see the Cases tab (a law-firm matter is privileged)
@@ -775,6 +777,37 @@ const PERMISSION_KEYS = [
   // NOTE: the Agents tab has no permission key on purpose — it is strictly
   // admin-role-only (requireAdmin on the server, .admin-only in the UI).
 ];
+
+// Keys no staff account may hold any more. The Accounts screen no longer shows
+// them, so a stale `true` stored on an old account was an invisible grant
+// (audit 15 Oct, ADM-PERM-1). sanitizePermissions and the effective-permission
+// merges force them to false; admins bypass checks anyway.
+const RETIRED_PERMISSION_KEYS = ['notarial_view', 'notarial_manage'];
+
+// Password rules for every place a password is chosen (signup, reset, admin
+// create/edit, change-password). bcrypt only reads the first 72 bytes, so a
+// longer one would silently be cut; refuse it instead of pretending.
+const COMMON_PASSWORDS = new Set([
+  'password', 'password1', 'password12', 'password123', 'password1234', 'passw0rd', 'p@ssw0rd', 'p@ssword',
+  '1234567890', '12345678910', '0123456789', '1234512345', '1111111111', '0000000000', '1234567890a',
+  'qwertyuiop', 'qwerty1234', 'qwerty12345', 'qwerty123456', 'asdfghjkl1', 'asdfghjkl;', '1q2w3e4r5t', 'zaq12wsxcde',
+  'iloveyou12', 'iloveyou123', 'princess12', 'sunshine12', 'football12', 'baseball12', 'superman12', 'batman1234',
+  'welcome123', 'welcome1234', 'letmein123', 'admin12345', 'administrator', 'adminadmin', 'changeme123', 'trustno1234',
+  'abcdefghij', 'abcd123456', 'abc1234567', 'abcdef1234', 'monkey1234', 'dragon1234', 'master1234', 'shadow1234',
+  'michael123', 'jennifer12', 'computer12', 'starwars12', 'whatever12', 'pokemon123', 'basketball', 'basketball1',
+  'manila1234', 'makati1234', 'philippines', 'philippines1', 'pilipinas1', 'mahalkita1', 'mahalkita123', 'iloveyou1234',
+  'glrarealty', 'glrarealty1', 'glrarealty123', 'glra123456', 'realestate', 'realestate1', 'realty1234'
+]);
+function passwordProblem(pw, email) {
+  const s = String(pw == null ? '' : pw);
+  if (s.length < 10) return 'Password must be at least 10 characters.';
+  if (Buffer.byteLength(s, 'utf8') > 72) return 'Password is too long (72 bytes at most; fewer if it uses emoji or accented letters).';
+  const low = s.toLowerCase();
+  if (COMMON_PASSWORDS.has(low) || /^(.)\1+$/.test(s) || /^(0123456789|1234567890|9876543210)+$/.test(s)) return 'That password is too common. Pick something harder to guess.';
+  const local = String(email || '').toLowerCase().split('@')[0];
+  if (local && local.length >= 4 && low.includes(local)) return 'Password must not contain your email name.';
+  return '';
+}
 
 // Sensible defaults per role.
 function defaultPermissionsForRole(role) {
@@ -879,8 +912,20 @@ const accountSchema = new mongoose.Schema({
   // (never the token itself) so a database leak can't be used to reset passwords.
   resetTokenHash: { type: String, default: null },
   resetTokenExpires: { type: Date, default: null },
-  // Login-alert history (admins only): last few { ip, ua, at } combos we've seen.
-  // A sign-in from an ip+device not in this list triggers an alert email.
+  // Self-service signup must prove the email (audit 15 Oct, SEC-AUTH-1): the
+  // request reaches the approval queue only after the emailed link is opened.
+  // Only an explicit false means "not proven yet"; older accounts have no value.
+  emailConfirmed: { type: Boolean },
+  confirmTokenHash: { type: String, default: null },
+  confirmTokenExpires: { type: Date, default: null },
+  // Where a self-service request came from, shown on the approval screen.
+  signupIp: { type: String, default: '' },
+  signupUa: { type: String, default: '' },
+  confirmedAt: { type: Date, default: null },
+  // Last few { ip, ua, at } sign-ins. For admins a sign-in from an ip+device not
+  // in this list triggers an alert email; for everyone it marks a "known
+  // device" that may sign in even while the account-wide wrong-password
+  // ceiling is tripped.
   loginHistory: { type: [{ ip: String, ua: String, at: Date }], default: [], _id: false }
 });
 
@@ -1475,6 +1520,16 @@ const settingSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// ── SIGNED-OUT TOKENS ──────────────────────────────────────
+// "Sign out" used to only forget the token in that browser; a copied token
+// kept working for 8 hours (audit 15 Oct, SEC-AUTH-6). Each sign-in token
+// carries an id (jti); signing out stores it here until the token would have
+// expired anyway, and the TTL index then deletes the row by itself.
+const revokedTokenSchema = new mongoose.Schema({
+  jti: { type: String, required: true, unique: true },
+  exp: { type: Date, required: true, expires: 0 }
+});
+
 // ── COUNTERS ───────────────────────────────────────────────
 // Atomic sequence numbers (receipt numbers). findOneAndUpdate + $inc is
 // atomic in MongoDB, so two payments saved at the same second still get
@@ -1894,6 +1949,7 @@ const AgentNotification = mongoose.model('AgentNotification', agentNotificationS
 const Lease             = mongoose.model('Lease',             leaseSchema);
 const Setting           = mongoose.model('Setting',           settingSchema);
 const Counter           = mongoose.model('Counter',           counterSchema);
+const RevokedToken      = mongoose.model('RevokedToken',      revokedTokenSchema);
 const Case              = mongoose.model('Case',              caseSchema);
 const Lead              = mongoose.model('Lead',              leadSchema);
 const ListingView       = mongoose.model('ListingView',       listingViewSchema);
@@ -1946,6 +2002,7 @@ module.exports = {
   Lease,
   Setting,
   Counter,
+  RevokedToken,
   Case,
   Lead,
   ListingView,
@@ -1961,5 +2018,7 @@ module.exports = {
   CASE_STAGES,
   // permissions
   PERMISSION_KEYS,
-  defaultPermissionsForRole
+  RETIRED_PERMISSION_KEYS,
+  defaultPermissionsForRole,
+  passwordProblem
 };

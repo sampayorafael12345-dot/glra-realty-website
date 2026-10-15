@@ -1034,11 +1034,17 @@ if (typeof window !== 'undefined') window.glraDisplayTitle = glraDisplayTitle;
   var sizer = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
     var recs = [];
     for (var i = 0; i < entries.length; i++) {
+      // Oct 15: only images near the screen. The first report covers every
+      // image on the page, and reading a far-off listing card's parent size
+      // made the browser lay out cards it was skipping (content-visibility),
+      // ~0.7 s of a slow phone's start-up. Off-screen images are handled as
+      // they come close, which is before anyone can see them.
+      if (!entries[i].isIntersecting) continue;
       sizer.unobserve(entries[i].target);
       if (entries[i].target.isConnected) { var r = measure(entries[i].target, entries[i].boundingClientRect); if (r) recs.push(r); }
     }
     for (var k = 0; k < recs.length; k++) apply(recs[k]);
-  }) : null;
+  }, { rootMargin: '300px 0px' }) : null;
   function enqueue(img) {
     if (img.__glraImg || img.__glraQ) return;
     img.__glraQ = 1;
@@ -2094,7 +2100,11 @@ window.glraOpenPrintGate = function (label, collectFn) {
       var y = document.getElementsByTagName('script')[0]; y.parentNode.insertBefore(t, y);
     }
     ['pointerdown','keydown','scroll','touchstart'].forEach(function(ev){ window.addEventListener(ev, startClarity, { capture: true, passive: true, once: true }); });
-    function whenIdle(){ (window.requestIdleCallback || function(f){ setTimeout(f, 1500); })(startClarity, { timeout: 4000 }); }
+    /* Oct 15: plus a 5 s wait after load. Started at the first idle moment it
+       still landed inside the page's busy start-up (a 550 ms task on the
+       Properties page, ~25% of its blocking time on a slow phone). A visitor
+       who taps or scrolls starts it at once, as before. */
+    function whenIdle(){ setTimeout(function(){ (window.requestIdleCallback || function(f){ setTimeout(f, 1500); })(startClarity, { timeout: 4000 }); }, 5000); }
     if (document.readyState === 'complete') whenIdle(); else window.addEventListener('load', whenIdle, { once: true });
   })();
 
@@ -2234,6 +2244,101 @@ window.glraOpenPrintGate = function (label, collectFn) {
   }
 })();
 /* RECENTLY-VIEWED-END */
+
+/* SHARED-FOOTER-START (Oct 15)
+   The footer was hand-coded on every page in 21 slightly different versions:
+   some had no Tools or Areas links, the year was typed in. The links now live
+   here once. Each page keeps its own footer in the HTML as the fallback (for
+   crawlers that do not run scripts, and if this file fails to load); this
+   rebuilds it straight away, before the first paint, with the same classes so
+   every page's own footer styles still apply. Only the standard footer
+   (`body > footer` holding `.footer-content`) is touched: the listing and
+   area pages the server builds have footers of their own. Column headings are
+   <h2>: the old <h4> skipped two levels after the page's last <h2>. A page
+   keeps its own short blurb under the name. */
+(function glraSharedFooter(){
+  if (/\/(admin|agent|social|social-approve)\.html$/i.test(location.pathname)) return;
+  var COLS = [
+    ['Listings', [
+      ['/properties.html?category=FOR SALE', 'For Sale'],
+      ['/properties.html?category=FOR LEASE', 'For Lease'],
+      ['/properties/all', 'Every Listing'],
+      ['/arthaland.html', 'Arthaland Projects'],
+      ['/list-property.html', 'List Your Property']]],
+    ['Areas', [
+      ['/properties/makati', 'Makati'],
+      ['/properties/bgc', 'BGC'],
+      ['/properties/taguig', 'Taguig'],
+      ['/properties/pasig', 'Pasig'],
+      ['/properties/quezon-city', 'Quezon City'],
+      ['/neighborhoods.html', 'Neighborhood Guides']]],
+    ['Tools', [
+      ['/valuation.html', 'Property Valuation'],
+      ['/calculator.html', 'Closing Fees'],
+      ['/rent-vs-buy.html', 'Rent vs Buy'],
+      ['/amortization.html#compare', 'Loan Comparison'],
+      ['/zonal.html', 'Zonal Values'],
+      ['/bir-deadlines.html', 'BIR Deadlines'],
+      ['/tools.html', 'All Tools →']]],
+    ['Company', [
+      ['/about.html', 'About Us'],
+      ['/testimonials.html', 'Testimonials'],
+      ['/blog.html', 'Blog'],
+      ['/guide.html', 'Buying Guide'],
+      ['/faq.html', 'FAQ'],
+      ['/#contact', 'Contact']]]
+  ];
+  var BLURB = 'Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines';
+  function esc(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function build(){
+    var f = document.querySelector('body > footer');
+    if (!f || f.dataset.glraFooter || !f.querySelector(':scope > .footer-content')) return;
+    // The page's own blurb is static markup from its HTML file, never visitor input.
+    var oldBrand = f.querySelector('.footer-content > .footer-col:first-child > p, .footer-brand > p');
+    var blurb = oldBrand ? oldBrand.innerHTML : BLURB;
+    var home = /^\/(index\.html)?$/.test(location.pathname);
+    var h = '<div class="footer-content">' +
+      '<div class="footer-col footer-brand">' +
+        '<h2 class="footer-h">' + (home ? '<em>GLRA</em> Realty' : 'GLRA Realty') + '</h2>' +
+        '<p>' + blurb + '</p>' +
+        '<p class="footer-contact"><a href="tel:+639171774572"><i class="fas fa-phone-alt" aria-hidden="true"></i>0917 177 4572</a></p>' +
+        '<p class="footer-contact"><a href="mailto:glrarealty@gmail.com"><i class="fas fa-envelope" aria-hidden="true"></i>glrarealty@gmail.com</a></p>' +
+        '<p class="footer-contact"><i class="fas fa-map-marker-alt" aria-hidden="true"></i>17F, 252 Sen. Gil Puyat Ave., Makati</p>' +
+        '<div class="footer-social social-links">' +
+          '<a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="GLRA Realty on Instagram"><i class="fab fa-instagram"></i></a>' +
+          '<a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Message GLRA Realty on Messenger"><i class="fab fa-facebook-messenger"></i></a>' +
+          '<a href="tel:+639171774572" aria-label="Call GLRA Realty on 0917 177 4572"><i class="fas fa-phone-alt"></i></a>' +
+        '</div>' +
+      '</div>';
+    COLS.forEach(function (c) {
+      h += '<div class="footer-col"><h2 class="footer-h">' + esc(c[0]) + '</h2><ul>';
+      c[1].forEach(function (l) { h += '<li><a href="' + esc(l[0]) + '">' + esc(l[1]) + '</a></li>'; });
+      h += '</ul></div>';
+    });
+    h += '</div>' +
+      '<div class="footer-bottom">' +
+        '<p>&copy; ' + new Date().getFullYear() + ' GLRA Realty Group. All rights reserved.</p>' +
+        '<div class="footer-bottom-links footer-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div>' +
+      '</div>';
+    f.innerHTML = h;
+    f.dataset.glraFooter = '1';
+    if (!f.hasAttribute('aria-label')) f.setAttribute('aria-label', 'Site footer');
+  }
+  if (!document.getElementById('glraFooterCss')) {
+    var st = document.createElement('style');
+    st.id = 'glraFooterCss';
+    st.textContent =
+      'footer .footer-contact{margin:6px 0 0}' +
+      'footer .footer-contact{display:flex;align-items:center;gap:8px}footer .footer-contact a{display:inline-flex;align-items:center;gap:8px}' +
+      'footer .footer-contact i{color:#ff3d00;width:14px;text-align:center}' +
+      'footer .footer-brand .footer-social{margin-top:16px;display:flex}' +
+      'footer .footer-h{margin-top:0}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  build();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+})();
+/* SHARED-FOOTER-END */
 
 /* TABLE-SCROLL-START
    On a phone a four-column table was squeezed until words broke mid-word
@@ -2438,15 +2543,56 @@ window.glraOpenPrintGate = function (label, collectFn) {
     else for (var n = el.firstChild; n; n = n.nextSibling) { if (n.nodeType === 3 && /\S/.test(n.nodeValue)) { own = true; break; } }
     return own;
   }
-  function run(root) {
-    var list = [], all = root.querySelectorAll ? root.querySelectorAll('*') : [], i, el, cs, hit = [];
-    if (root.nodeType === 1) list.push(root);
-    for (i = 0; i < all.length; i++) list.push(all[i]);
-    for (i = 0; i < list.length; i++) { el = list[i]; if (el.nodeType === 1 && wanted(el)) hit.push(el); }
+  // Oct 15: takes a list of roots and does ONE read pass, then ONE write pass
+  // over all of them. It used to run root by root, so every root's reads came
+  // after the previous root's writes and forced a fresh style pass each time
+  // (~0.9 s of a slow phone's time as the 60 listing cards arrived). An element
+  // with text and a box is judged once (`done`); empty or hidden ones are
+  // looked at again later, since their text may arrive or they may show.
+  // Listing cards use `content-visibility:auto`: the browser skips styling a
+  // card until it nears the screen. Reading the style of anything inside a
+  // skipped card forces it to style that card there and then (~1 ms each on a
+  // slow phone, ~0.85 s for the Properties page), which undoes the saving. So
+  // text inside a skipped card waits until the card is about to show.
+  var done = window.WeakSet ? new WeakSet() : null;
+  var CV = '.prop-card', cvOk = 'ContentVisibilityAutoStateChangeEvent' in window, cvWait = cvOk ? new WeakSet() : null;
+  function skippedCard(e) {
+    var c = e.closest(CV);
+    if (!c || c === e || !c.firstElementChild || !c.firstElementChild.checkVisibility) return null;
+    return c.firstElementChild.checkVisibility({ contentVisibilityAuto: true }) ? null : c;
+  }
+  function later(card) {
+    if (cvWait.has(card)) return;
+    cvWait.add(card);
+    card.addEventListener('contentvisibilityautostatechange', function h(ev) {
+      if (ev.skipped) return;
+      card.removeEventListener('contentvisibilityautostatechange', h);
+      cvWait.delete(card);
+      run([card]);
+    });
+  }
+  function run(roots) {
+    if (!Array.isArray(roots)) roots = [roots];
+    var hit = [], i, j, el, cs, all, seen = window.Set ? new Set() : null;
+    function take(e) {
+      if (e.nodeType !== 1 || (done && done.has(e)) || (seen && seen.has(e))) return;
+      if (seen) seen.add(e);
+      if (!wanted(e)) return;
+      if (cvOk) { var c = skippedCard(e); if (c) { later(c); return; } }
+      hit.push(e);
+    }
+    for (j = 0; j < roots.length; j++) {
+      var root = roots[j];
+      if (!root || !root.isConnected) continue;
+      take(root);
+      all = root.querySelectorAll ? root.querySelectorAll('*') : [];
+      for (i = 0; i < all.length; i++) take(all[i]);
+    }
     var mark = [];
     for (i = 0; i < hit.length; i++) {
       cs = getComputedStyle(hit[i]);
       if (cs.display === 'none') continue;
+      if (done) done.add(hit[i]);
       if (parseInt(cs.fontWeight, 10) >= 600) continue;
       if (cs.textTransform === 'uppercase') continue;
       if (KEEP.test(cs.fontFamily)) continue;
@@ -2459,7 +2605,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
     var q = [], t = 0;
     new MutationObserver(function (ms) {
       ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) q.push(n); }); });
-      if (!t && q.length) t = setTimeout(function () { var b = q; q = []; t = 0; b.forEach(function (n) { if (n.isConnected) run(n); }); }, 120);
+      if (!t && q.length) t = setTimeout(function () { var b = q; q = []; t = 0; run(b); }, 120);
     }).observe(document.body, { childList: true, subtree: true });
     window.addEventListener('load', function () { setTimeout(function () { run(document.body); }, 400); });
   }

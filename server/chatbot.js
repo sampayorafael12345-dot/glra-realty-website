@@ -16,6 +16,42 @@ const { body } = require('express-validator');
 const { Property } = require('./db');
 const { applyWebsiteCover } = require('./cover');
 
+// Every AI call gives up after 20 s: a provider that hangs must not hold the
+// visitor's request (and a server socket) open for minutes.
+const AI_TIMEOUT_MS = 20000;
+
+// ── DAILY AI CAP ─────────────────────────────────────────────
+// The per-IP limiter stops one visitor; this stops the total. Past the cap
+// (CHAT_DAILY_AI_CAP, default 1000 model calls per Manila day) the chat
+// answers with the "message Catherine" card instead of calling a model, so a
+// bot farm cannot run up a bill or burn the free quota for real visitors.
+// Kept in memory: a restart resets it, which only ever errs on the side of
+// answering. Cached replies do not count.
+const CHAT_DAILY_AI_CAP = Math.max(0, parseInt(process.env.CHAT_DAILY_AI_CAP || '1000', 10) || 0);
+let _aiDay = { key: '', n: 0 };
+function manilaDayKey() { return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10); }
+function takeAiCall() {
+  const k = manilaDayKey();
+  if (_aiDay.key !== k) _aiDay = { key: k, n: 0 };
+  if (CHAT_DAILY_AI_CAP && _aiDay.n >= CHAT_DAILY_AI_CAP) return false;
+  _aiDay.n++;
+  return true;
+}
+
+// What a visitor sees when the assistant cannot answer (no AI key set, or the
+// daily cap reached): a normal chat reply with the ways to reach a person.
+function offlinePayload(reason) {
+  return {
+    reply: "The chat assistant is resting right now, but Catherine and the team can help you directly. Message us on Messenger, WhatsApp or Viber, or call +63 917 177 4572.",
+    properties: [], search: null, suggestions: [], offline: true, reason: reason || 'offline',
+    actions: [
+      { label: 'Message on Messenger', url: 'https://m.me/glrarealty', kind: 'contact' },
+      { label: 'WhatsApp', url: 'https://wa.me/639171774572', kind: 'contact' },
+      { label: 'Call +63 917 177 4572', url: 'tel:+639171774572', kind: 'contact' }
+    ]
+  };
+}
+
 // ── LLM PROVIDER HELPERS ─────────────────────────────────────
 // Each takes the same { apiKey, systemPrompt, history, message } and returns
 // { text, finish, provider } on success or throws an Error with .status (HTTP
@@ -47,7 +83,7 @@ async function resolveGeminiModel(apiKey) {
   if (geminiModelCache.name && Date.now() < geminiModelCache.until) return geminiModelCache.name;
   let choice = configured;
   try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': apiKey } });
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': apiKey }, signal: AbortSignal.timeout(10000) });
     if (r.ok) {
       const data = await r.json();
       const names = (data.models || [])
@@ -115,14 +151,14 @@ async function callGemini({ apiKey, systemPrompt, history, message }) {
 
   let r = await fetch(url, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body), signal: AbortSignal.timeout(AI_TIMEOUT_MS),
   });
   // Auto-retry once without thinkingConfig if 2.5 rejected it
   if (!r.ok && body.generationConfig.thinkingConfig) {
     delete body.generationConfig.thinkingConfig;
     r = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body), signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
   }
   if (!r.ok) {
@@ -170,6 +206,7 @@ async function callGroq({ apiKey, systemPrompt, history, message }) {
       max_tokens: 1024,
       top_p: 0.9,
     }),
+    signal: AbortSignal.timeout(AI_TIMEOUT_MS),
   });
   if (!r.ok) {
     const errText = await r.text().catch(() => '');
@@ -682,7 +719,7 @@ const SITE_MAP = `
 SITE MAP & SERVICES (route the user to the right page):
 - /properties.html   → Browse all listings (use filters: location, type, BR, price)
 - /list-property.html → Owner wants to LIST/SELL/LEASE their property (lead form)
-- /about.html        → About Catherine SB Sampayo (PRC #0026736, 10+ yrs)
+- /about.html        → About Catherine SB Sampayo (PRC-licensed broker, 10+ yrs)
 - /testimonials.html → Client reviews
 - /blog.html         → Journal / market updates
 - /guide.html        → Buying & documentation guide (CCT/TCT, deeds, taxes)
@@ -754,7 +791,7 @@ function registerChatbot(app, { handleValidation }) {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey && !process.env.GROQ_API_KEY) {
           console.error('No LLM provider configured (set GEMINI_API_KEY and/or GROQ_API_KEY)');
-          return res.status(503).json({ error: 'Chat is not configured' });
+          return res.json(offlinePayload('not_configured'));
         }
 
         const { message, history = [] } = req.body;
@@ -908,6 +945,10 @@ TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}.
 ${SITE_MAP}${listingContext}`;
 
         // ── Provider call: try Gemini, fall back to Groq on quota errors ──
+        if (!takeAiCall()) {
+          if (_aiDay.n === CHAT_DAILY_AI_CAP) { _aiDay.n++; console.warn(`[chat] daily AI cap of ${CHAT_DAILY_AI_CAP} reached; answering with the contact card until midnight Manila`); }
+          return res.json(offlinePayload('daily_cap'));
+        }
         let llmResult;
         let llmError;
         const hasGemini = !!apiKey;
@@ -928,7 +969,7 @@ ${SITE_MAP}${listingContext}`;
             break;
           } catch (e) {
             llmError = e;
-            const fallbackable = e.status === 429 || e.status === 503 ||
+            const fallbackable = e.status === 429 || e.status === 503 || e.name === 'TimeoutError' || e.name === 'AbortError' ||
                                  /quota|rate|exceed|unavailable/i.test(e.message || '');
             console.warn(`[chat] ${provider} failed (${e.status || '?'}): ${(e.message || '').slice(0, 200)}` +
                          (fallbackable && order.length > 1 ? ' — falling back' : ''));
@@ -992,4 +1033,4 @@ ${SITE_MAP}${listingContext}`;
   );
 }
 
-module.exports = { registerChatbot, invalidateChatListingsCache, callGemini, callGroq };
+module.exports = { registerChatbot, invalidateChatListingsCache, callGemini, callGroq, _test: { takeAiCall, offlinePayload, CHAT_DAILY_AI_CAP } };

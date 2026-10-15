@@ -515,20 +515,8 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       } catch (e) { console.error('agent/email-prefs error:', e); res.status(500).json({ error: 'Server error' }); }
     });
 
-  // ── TEAM ROSTER — fills the broker / agent picker on a lead ──
-  // Names and roles only. An agent has no business reading colleagues' emails,
-  // so they are not in the response.
-  app.get('/api/agent/team', verifyToken, requireAgentRole, async (req, res) => {
-    try {
-      const people = await Account.find({ role: { $in: ['agent', 'admin'] }, isActive: true, status: 'active' })
-        .select('name email role').lean();
-      const team = people
-        .map(p => ({ name: (p.name || p.email || '').trim(), role: p.role }))
-        .filter(p => p.name)
-        .sort((a, b) => a.name.localeCompare(b.name));
-      res.json({ team });
-    } catch (e) { console.error('agent/team error:', e); res.status(500).json({ error: 'Server error' }); }
-  });
+  // (GET /api/agent/team, a roster for a broker/agent picker that was never
+  // built, was removed in the 15 Oct audit: nothing called it.)
 
   // ── ACCOMPLISHMENT REPORT ──
   app.get('/api/agent/report', verifyToken, requireAgentRole, async (req, res) => {
@@ -615,7 +603,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
       : body('name').optional().isString().trim().isLength({ min: 1, max: 200 }),
     body('contactNo').optional().isString().isLength({ max: 60 }),
     body('email').optional({ values: 'falsy' }).isString().isLength({ max: 200 }),
-    body('birthday').optional({ values: 'falsy' }).isISO8601(),
+    body('birthday').optional({ values: 'falsy' }).isISO8601({ strict: true }).withMessage('Enter a real date for the birthday'),
     // Free text: the picker offers Owner / Buyer / Tenant / Broker / Agent and
     // an "Other" box, so a category we never listed is still recordable.
     body('category').optional().isString().trim().isLength({ min: 1, max: 60 }).withMessage('Type the category'),
@@ -625,8 +613,8 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
     body('brokerAgent').optional().isString().isLength({ max: 160 }),
     body('stage').optional().isIn(AGENT_LEAD_STAGES),
     body('reasonLost').optional().isString().isLength({ max: 300 }),
-    body('nextFollowUp').optional({ values: 'falsy' }).isISO8601(),
-    body('closingDate').optional({ values: 'falsy' }).isISO8601(),
+    body('nextFollowUp').optional({ values: 'falsy' }).isISO8601({ strict: true }).withMessage('Enter a real follow-up date'),
+    body('closingDate').optional({ values: 'falsy' }).isISO8601({ strict: true }).withMessage('Enter a real closing date'),
     body('commissionEarned').optional().isFloat({ min: 0, max: 1e9 }).withMessage('Enter the commission as a number'),
     body('remarks').optional().isString().isLength({ max: 1000 })
   ];
@@ -771,7 +759,7 @@ function registerAgentRoutes(app, { sendEmail, esc, handleValidation }) {
   app.post('/api/agent/events',
     verifyToken, requireAgentRole,
     body('title').isString().trim().isLength({ min: 1, max: 200 }),
-    body('date').isISO8601(),
+    body('date').isISO8601({ strict: true }),
     body('time').optional({ values: 'falsy' }).matches(/^\d{2}:\d{2}$/),
     body('type').optional().isIn(['viewing', 'appointment', 'other']),
     body('leadName').optional().isString().isLength({ max: 200 }),
@@ -1099,7 +1087,11 @@ function startAgentTick({ sendEmail, esc }) {
     return state;
   }
 
+  // One run at a time: a slow pass over many agents must not overlap the next.
+  let running = false;
   async function tick() {
+    if (running) return;
+    running = true;
     try {
       const now = manilaNow();
       const hour = now.getUTCHours();
@@ -1116,8 +1108,17 @@ function startAgentTick({ sendEmail, esc }) {
         try {
           const profile = await AgentProfile.findOne({ account: agent._id });
           if (!profile) continue;
-          const morningDue = isMorning && profile.lastDigestKey !== todayKey;
-          const nudgeDue = isAfternoon && profile.lastNudgeKey !== todayKey;
+          // Each pass is CLAIMED before anything is sent: one atomic update
+          // that only matches while the key is still another day. Saving the
+          // key after the emails let an overlapping run (or a second instance
+          // during a deploy) send the agenda twice.
+          const claim = async field => {
+            if (profile[field] === todayKey) return false;
+            const r = await AgentProfile.updateOne({ _id: profile._id, [field]: { $ne: todayKey } }, { $set: { [field]: todayKey } });
+            return (r.modifiedCount || r.nModified || 0) === 1;
+          };
+          const morningDue = isMorning && await claim('lastDigestKey');
+          const nudgeDue = isAfternoon && await claim('lastNudgeKey');
           if (!morningDue && !nudgeDue) continue;
 
           const notify = async (dedupeKey, type, message, leadId) => {
@@ -1204,6 +1205,7 @@ function startAgentTick({ sendEmail, esc }) {
         } catch (e) { console.error(`agent tick failed for ${agent.email}:`, e.message); }
       }
     } catch (e) { console.error('agent tick error:', e.message); }
+    finally { running = false; }
   }
   // First run 45s after boot (lets Mongo connect), then every 10 minutes.
   setTimeout(() => { tick(); setInterval(tick, 10 * 60 * 1000); }, 45 * 1000);

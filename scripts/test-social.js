@@ -616,7 +616,9 @@ async function onMode() {
     await req('PUT', '/api/admin/accounts/' + cath.id, { token: admin, body: { permissions: { social_approve: false } } });
     const cathMail = revMails && revMails.map(h => (h.match(/#t=([A-Za-z0-9_-]+)/) || [])[1]).find(t => cathTok.some(x => x.hash === crypto.createHash('sha256').update(t).digest('hex')));
     r = await req('POST', '/api/social/link/decide', { body: { t: cathMail, decision: 'approve' } });
-    check('a link stops working when its approver loses social_approve', r.status === 403, r.status);
+    // 410: server.js voids the person's links the moment social_approve is
+    // removed; 403: linkLookup's live permission check (defence in depth).
+    check('a link stops working when its approver loses social_approve', r.status === 403 || r.status === 410, r.status);
 
     // ── 18. Claude review key ──
     r = await req('GET', '/api/social/review/summary');

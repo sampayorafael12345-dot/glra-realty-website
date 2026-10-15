@@ -33,12 +33,12 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 <style>
 :root{--orange:#ff3d00;--orange-dark:#a8894e;--orange-light:rgba(255,61,0,0.12)}
 /* ── PAGE-SPECIFIC ── */
@@ -59,7 +59,7 @@
 .summary-item{flex:1;min-width:140px;padding:24px 20px;text-align:center}
 .summary-item h4{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 .summary-item .amount{font-family:'Inter',serif;font-size:26px;font-weight:600;color:var(--ab-hot-text,#c02e00)}
-.summary-item .percent{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
+.summary-item .percent{font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px}
 .summary-divider{width:1px;background:rgba(255,61,0,0.2)}
 /* ---- INPUT CARDS ---- */
 .inputs-wrapper{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px}
@@ -82,6 +82,9 @@ body.dark-mode .radio-option{background:#0e0e0c;border-color:#3a3a36}
 .radio-option small{font-size:11px;color:var(--gray)}
 /* ---- COMMISSION BUTTONS ---- */
 .commission-buttons{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+/* VAT-registered broker toggle (the theme's blanket label rule is display:block). */
+html body .calc-vat-toggle{display:flex !important;align-items:flex-start;gap:8px;text-transform:none !important;letter-spacing:0 !important;font-size:12.5px !important;line-height:1.45;cursor:pointer;margin:6px 0 0 !important}
+.calc-vat-toggle input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0;accent-color:#ff3d00}
 .comm-btn{padding:8px 14px;border:1px solid var(--border-color);background:var(--white);cursor:pointer;font-size:13px;font-weight:600;transition:var(--transition);font-family:'Inter',sans-serif;color:var(--text-color)}
 body.dark-mode .comm-btn{background:#1a1a17;border-color:#3a3a36;color:#e8edf2}
 .comm-btn:hover{border-color:var(--gold);color:var(--ab-hot-text,#c02e00)}
@@ -183,7 +186,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
   .summary-banner{flex-direction:column}.summary-divider{width:100%;height:1px}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -205,6 +208,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -218,7 +222,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
     <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
     <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
     <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees Calculator</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
     <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
     <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
@@ -352,7 +356,8 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
         <button class="comm-btn" data-rate="7" onclick="setCommission(7)">7%</button>
       </div>
       <input type="hidden" id="commissionRate" value="5">
-      <div class="input-hint" style="margin-top:6px"><i class="fas fa-info-circle"></i> Commission + 12% VAT is shouldered by the seller. Total effective cost shown in results.</div>
+      <label class="calc-vat-toggle" for="brokerVat"><input type="checkbox" id="brokerVat" onchange="calculateAll()"> <span>Broker is VAT-registered (adds 12% VAT on top of the commission)</span></label>
+      <div class="input-hint" style="margin-top:6px"><i class="fas fa-info-circle"></i> The commission is paid by the seller. A VAT-registered broker adds 12% VAT to it; tick the box above if yours does.</div>
       
       <label style="margin-top: 12px;">Property Location for Transfer Tax</label>
       
@@ -441,7 +446,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
           <span class="fee-value" id="netBeforeCommission">₱0</span>
         </div>
         <div class="fee-row">
-          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%)</span>
+          <span class="fee-label">Broker Commission (<span id="commissionDisplay">5</span>%<span id="commissionVatNote"></span>)</span>
           <span class="fee-value" id="brokerCommission">₱0</span>
         </div>
         <div class="total-row">
@@ -533,10 +538,10 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
 </main>
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p><div class="footer-social"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="GLRA Realty on Instagram"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Message GLRA Realty on Messenger"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572" aria-label="Call GLRA Realty on 0917 177 4572"><i class="fas fa-phone-alt"></i></a></div></div>
-    <div class="footer-col"><h4>Properties</h4><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li></ul></div>
-    <div class="footer-col"><h4>Resources</h4><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li><li><a href="/zonal.html">Zonal Value Lookup</a></li><li><a href="/guide.html">Documentation Guide</a></li><li><a href="/blog.html">Real Estate Blog</a></li></ul></div>
-    <div class="footer-col"><h4>Contact</h4><p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p><p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p></div>
+    <div class="footer-col"><h2 class="footer-h">GLRA Realty</h2><p>Licensed Real Estate Broker<br>Metro Manila & Luzon</p><div class="footer-social"><a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="GLRA Realty on Instagram"><i class="fab fa-instagram"></i></a><a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Message GLRA Realty on Messenger"><i class="fab fa-facebook-messenger"></i></a><a href="tel:+639171774572" aria-label="Call GLRA Realty on 0917 177 4572"><i class="fas fa-phone-alt"></i></a></div></div>
+    <div class="footer-col"><h2 class="footer-h">Properties</h2><ul><li><a href="/properties.html?category=FOR SALE">For Sale</a></li><li><a href="/properties.html?category=FOR LEASE">For Lease</a></li></ul></div>
+    <div class="footer-col"><h2 class="footer-h">Resources</h2><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li><li><a href="/zonal.html">Zonal Value Lookup</a></li><li><a href="/guide.html">Documentation Guide</a></li><li><a href="/blog.html">Real Estate Blog</a></li></ul></div>
+    <div class="footer-col"><h2 class="footer-h">Contact</h2><p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p><p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p></div>
   </div>
   <hr class="footer-divider">
   <div class="footer-bottom"><p>&copy; 2026 GLRA Realty Group. All rights reserved.</p><div class="footer-bottom-links"><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/sitemap.xml">Sitemap</a></div></div>
@@ -550,7 +555,7 @@ body.dark-mode .schedule-card{background:#1a1a17;border-color:#3a3a36}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
 <script>
 function goHome(){location.href='/';}
 
@@ -791,6 +796,12 @@ let currentAssetType = 'capital';
 let currentCommission = 5;
 let isReversing = false;
 
+// 1.12 when the broker charges 12% VAT on the commission, otherwise 1.
+function commissionVatFactor() {
+  const box = document.getElementById('brokerVat');
+  return box && box.checked ? 1.12 : 1;
+}
+
 function selectAssetType(type) {
   currentAssetType = type;
   const options = document.querySelectorAll('.radio-option');
@@ -843,7 +854,7 @@ function calculateAll() {
   }
   
   const netBeforeCommission = sellingPrice - sellerTax;
-  const brokerCommission = sellingPrice * (commissionRate / 100);
+  const brokerCommission = sellingPrice * (commissionRate / 100) * commissionVatFactor();
   const netProceed = netBeforeCommission - brokerCommission;
   
   const dstTax = taxBasis * 0.015;
@@ -869,7 +880,7 @@ function calculateAll() {
   document.getElementById('sellerTax').innerHTML = formatCurrency(sellerTax);
   document.getElementById('netBeforeCommission').innerHTML = formatCurrency(netBeforeCommission);
   document.getElementById('commissionDisplay').innerHTML = commissionRate;
-  document.getElementById('commissionDisplay').innerHTML = commissionRate;
+  document.getElementById('commissionVatNote').textContent = commissionVatFactor() > 1 ? ' + 12% VAT' : '';
   document.getElementById('brokerCommission').innerHTML = formatCurrency(brokerCommission);
   document.getElementById('netProceedDetail').innerHTML = formatCurrency(netProceed);
   
@@ -897,7 +908,7 @@ function calculateFromDesiredProceed() {
     const totalAssessed = totalZv + improvements;
     const taxBasis = Math.max(sellingPrice, totalAssessed);
     let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : taxBasis * 0.18;
-    const brokerCommission = sellingPrice * (currentCommission / 100);
+    const brokerCommission = sellingPrice * (currentCommission / 100) * commissionVatFactor();
     const netProceed = sellingPrice - sellerTax - brokerCommission;
     if (Math.abs(netProceed - desiredNet) < 100) break;
     if (netProceed < desiredNet) {
@@ -967,7 +978,7 @@ function glraClosingFeesData() {
   if (val('propertyValue')) info.push(['Gross Selling Price', money(val('propertyValue'))]);
   if (val('zonalValuePerSqm')) info.push(['BIR Zonal Value (per sqm)', money(val('zonalValuePerSqm'))]);
   if (val('improvementsValue')) info.push(['Improvements (FMV)', money(val('improvementsValue'))]);
-  if (val('commissionRate')) info.push(['Broker Commission', val('commissionRate') + '%']);
+  if (val('commissionRate')) info.push(['Broker Commission', val('commissionRate') + '%' + (commissionVatFactor() > 1 ? ' + 12% VAT' : '')]);
   const city = txt(document.getElementById('selectedCity'));
   if (city && !/select city/i.test(city)) info.push(['Property Location (Transfer Tax)', city]);
 
@@ -1011,8 +1022,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

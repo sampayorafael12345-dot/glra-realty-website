@@ -33,12 +33,12 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -99,7 +99,7 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
   .headline-total .value{font-size:34px}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -123,6 +123,7 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -208,12 +209,12 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
         <label for="rate">Interest Rate (% per year)</label>
         <select id="rate" onchange="recalc()">
           <option value="6">6.00%</option>
+          <option value="6.25" data-glra-rate="pagibig" data-glra-label="{r2}% — Pag-IBIG ({fix})">6.25% — Pag-IBIG (3-yr fixed)</option>
           <option value="6.5">6.50%</option>
           <option value="7">7.00%</option>
           <option value="7.5" selected>7.50%</option>
           <option value="8">8.00%</option>
           <option value="9">9.00%</option>
-          <option value="11">11.00% Pag-IBIG</option>
         </select>
       </div>
 
@@ -334,19 +335,19 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
 </main>
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+    <div class="footer-col"><h2 class="footer-h">GLRA Realty</h2><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
         <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
-    <div class="footer-col"><h4>Properties</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Properties</h2><ul>
       <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
       <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
       <li><a href="/properties.html">All Listings</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Tools</h4><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li>
+    <div class="footer-col"><h2 class="footer-h">Tools</h2><ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li>
       <li><a href="/calculator.html">Closing Fees</a></li>
       <li><a href="/affordability.html">Affordability</a></li>
       <li><a href="/cost-of-ownership.html">Cost of Ownership</a></li>
@@ -355,14 +356,15 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
       <li><a href="/ercf.html">Registration Fee</a></li>
       <li><a href="/zonal.html">Zonal Value</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Company</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Company</h2><ul>
       <li><a href="/about.html">About Us</a></li>
       <li><a href="/testimonials.html">Testimonials</a></li>
       <li><a href="/blog.html">Blog</a></li>
       <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/faq.html">FAQ</a></li>
       <li><a href="/#contact">Contact</a></li>
     </ul>
-      <h4 style="margin-top:18px">Contact</h4>
+      <h2 class="footer-h" style="margin-top:18px">Contact</h2>
       <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
@@ -384,7 +386,8 @@ body.dark-mode .breakdown-table th{background:#0e0e0c}
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
+<script src="/js/ph-rates.js?v=1"></script>
 <script>
 function formatNum(input){
   const cursor = input.selectionStart;
@@ -460,8 +463,8 @@ function recalc(){
 document.addEventListener('DOMContentLoaded', recalc);
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

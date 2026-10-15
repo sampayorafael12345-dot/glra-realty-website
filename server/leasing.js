@@ -28,6 +28,7 @@ const { Lease, Setting, Counter, Property, Inquiry, LEASE_STAGES } = require('./
 const { verifyToken, requireAdmin, requirePermission, logAudit } = require('./auth');
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 const pdf = require('./lease-pdf');
+const { checkUpload } = require('./file-sniff');
 
 const SITE_URL = 'https://glrarealty.com';
 const BROKER_INBOX = 'glrarealty@gmail.com';
@@ -366,6 +367,17 @@ function sanitizeLeaseBody(b, opts = {}) {
   return out;
 }
 
+// A lease that ends before it starts builds an empty (or negative) schedule
+// and quietly drops the tenant from every reminder, so it is refused outright.
+// Same for a move-out before the move-in. Returns the message, or '' if fine.
+function dateOrderError(l) {
+  const s = dk(l.startDate), e = dk(l.endDate);
+  if (s && e && e < s) return 'The lease end date is before the start date';
+  const mi = dk(l.moveInDate), mo = dk(l.moveOutDate);
+  if (mi && mo && mo < mi) return 'The move-out date is before the move-in date';
+  return '';
+}
+
 // Fill the figures a person would otherwise type twice: end date from start +
 // term, deposit/advance amounts from months × rent. Only fills blanks.
 function deriveTerms(doc) {
@@ -450,7 +462,9 @@ function buildEmail(kind, { lease, computed, settings, payment, esc, subject, me
         subject: `Statement of account — ${l.propertyTitle || 'your lease'} (${fmtDate(c.today)})`,
         html: emailShell(esc, `Hi ${first}, here is your statement`, `
           <p style="font-size:15px">Attached is your statement of account as of ${fmtDate(c.today)}.</p>
-          ${factsTable(esc, [['Unit', unitLine(l)], ['Balance', c.balance > 0 ? `${peso(c.balance)} due` : c.balance < 0 ? `${peso(-c.balance)} credit` : 'Fully paid'], ['Next payment', c.nextDue ? `${peso(c.nextDue.remaining)} on ${fmtDate(c.nextDue.due)}` : 'None'], ['Security deposit held', peso(c.deposit.held)]])}
+          ${factsTable(esc, [['Unit', unitLine(l)], ['Balance', c.balance > 0 ? `${peso(c.balance)} due` : c.balance < 0 ? `${peso(-c.balance)} credit` : 'Fully paid'], c.nextDue && c.nextDue.status === 'overdue'
+            ? ['Overdue since', `${fmtDate(c.nextDue.due)} · ${peso(c.nextDue.remaining)}${c.nextDue.daysLate ? ` (${c.nextDue.daysLate} days late)` : ''}`]
+            : ['Next payment', c.nextDue ? `${peso(c.nextDue.remaining)} on ${fmtDate(c.nextDue.due)}` : 'None'], ['Security deposit held', peso(c.deposit.held)]])}
           ${pay}${closing}`)
       };
     case 'renewal': {
@@ -572,9 +586,34 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       int('defaultDueDay', 1, 31); int('defaultGraceDays', 0, 60); int('defaultDepositMonths', 0, 24); int('defaultAdvanceMonths', 0, 24);
       if (Array.isArray(b.expiryDays)) patch.expiryDays = [...new Set(b.expiryDays.map(x => parseInt(x, 10)).filter(n => n > 0 && n <= 365))].sort((x, y) => y - x).slice(0, 6);
       if (b.notifyEmail !== undefined && req.user && req.user.role === 'admin') { const e = String(b.notifyEmail || '').trim().toLowerCase(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) patch.notifyEmail = e; }
-      if (b.paymentInstructions !== undefined) patch.paymentInstructions = String(b.paymentInstructions || '').slice(0, 1500);
+      // The bank / GCash details tenants pay into are admin-only too: a staff
+      // member with leasing_manage could otherwise swap in their own account.
+      // A non-admin's copy is ignored (the form re-sends it unchanged on every
+      // save); a real change by an admin is logged with the old and new text
+      // and the broker inbox is told, so a swap can never go unnoticed.
+      const before = await getSettings();
+      let payChange = null;
+      if (b.paymentInstructions !== undefined) {
+        const nextPay = String(b.paymentInstructions || '').slice(0, 1500);
+        const oldPay = String(before.paymentInstructions || '');
+        if (nextPay !== oldPay) {
+          if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Only an admin can change the payment details tenants pay into.' });
+          patch.paymentInstructions = nextPay;
+          payChange = { old: oldPay, new: nextPay };
+        }
+      }
       const next = await saveSettings(patch);
-      await logAudit(req, 'UPDATE', 'LeasingSettings', 'leasing', 'Leasing settings', patch);
+      const details = { ...patch };
+      if (payChange) details.paymentInstructions = { old: payChange.old, new: payChange.new };
+      await logAudit(req, 'UPDATE', 'LeasingSettings', 'leasing', payChange ? 'Leasing settings (payment details changed)' : 'Leasing settings', details);
+      if (payChange) {
+        const who = esc((req.user && (req.user.name || req.user.email)) || 'an admin');
+        const block = t => t ? esc(t).replace(/\n/g, '<br>') : '<em>(empty)</em>';
+        const html = `${getEmailHeader()}<div style="padding:24px;font-family:Arial,sans-serif;font-size:14px;line-height:1.6"><p>The bank / GCash details printed on tenant reminders were changed by <strong>${who}</strong> on ${esc(new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }))}.</p><p style="margin:14px 0 4px;font-weight:700">Before</p><div style="padding:10px;border:1px solid #ccc">${block(payChange.old)}</div><p style="margin:14px 0 4px;font-weight:700">After</p><div style="padding:10px;border:1px solid #ccc">${block(payChange.new)}</div><p style="margin-top:16px">If you did not expect this, change it back in Admin &gt; Leasing &gt; Settings and check who has admin access.</p></div>${getEmailFooter()}`;
+        [...new Set([BROKER_INBOX, before.notifyEmail, next.notifyEmail].filter(Boolean))].forEach(to =>
+          Promise.resolve(sendEmail(to, 'Leasing payment details were changed', html, 'GLRA Realty'))
+            .catch(e => console.error('payment-change alert failed:', e && e.message)));
+      }
       res.json(publicSettings(next, req.user));
     } catch (err) { console.error('leasing settings error:', err); res.status(500).json({ error: 'Server error' }); }
   });
@@ -625,6 +664,8 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
     try {
       const data = sanitizeLeaseBody(req.body || {}, { allowStage: true });
       if (!data.tenantName && !data.propertyTitle) return res.status(400).json({ error: 'Give the lease a tenant name or a property' });
+      const badDates = dateOrderError(data);
+      if (badDates) return res.status(400).json({ error: badDates });
       deriveTerms(data);
       data.createdBy = req.user?.email || ''; data.createdByName = byName(req);
       data.stageHistory = [{ stage: data.stage || 'prospect', at: new Date(), byName: byName(req) }];
@@ -646,7 +687,8 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       if (existing) return res.json({ existing: true, lease: withComputed(existing) });
       const data = { stage: 'prospect', tenantName: String(inq.name || '').slice(0, 200), tenantEmail: String(inq.email || '').toLowerCase().slice(0, 120), tenantPhone: String(inq.phone || '').slice(0, 50), source: `inquiry:${inq._id}` };
       if (inq.propertyId && /^[a-f0-9]{24}$/i.test(String(inq.propertyId))) {
-        const p = await Property.findById(inq.propertyId).lean();
+        // Only these few fields: a whole listing can carry megabytes of base64 photos.
+        const p = await Property.findById(inq.propertyId).select('title location propertyType monthlyRental parking').lean();
         if (p) { data.propertyId = p._id; data.propertyTitle = p.title || inq.propertyTitle || ''; data.address = p.location || ''; data.propertyType = p.propertyType || ''; data.monthlyRent = Number(p.monthlyRental) || 0; data.parkingSlots = Number(p.parking) || 0; }
       }
       if (!data.propertyTitle && inq.propertyTitle) data.propertyTitle = String(inq.propertyTitle).slice(0, 200);
@@ -673,6 +715,8 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
       const doc = await findLease(req, res); if (!doc) return;
       const data = sanitizeLeaseBody(req.body || {});
       if (data.tenantName !== undefined && !data.tenantName && !(data.propertyTitle ?? doc.propertyTitle)) return res.status(400).json({ error: 'Give the lease a tenant name or a property' });
+      const badDates = dateOrderError({ ...doc.toObject(), ...data });
+      if (badDates) return res.status(400).json({ error: badDates });
       Object.assign(doc, data);
       deriveTerms(doc);
       await doc.save();
@@ -835,6 +879,8 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
     const cleanup = () => { if (tmp && fs.existsSync(tmp)) try { fs.unlinkSync(tmp); } catch {} };
     try {
       if (!req.file) return res.status(400).json({ error: 'No file provided' });
+      const bad = checkUpload(req.file);
+      if (bad) { cleanup(); return res.status(400).json({ error: bad }); }
       const doc = await Lease.findById(req.params.id);
       if (!doc) { cleanup(); return res.status(404).json({ error: 'Lease not found' }); }
       const result = await cloudinary.uploader.upload(tmp, { folder: 'glra_realty/leases', resource_type: 'auto', type: 'authenticated', ...shrinkOnUpload(req.file && req.file.mimetype) });
@@ -944,8 +990,27 @@ function registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudina
 // Runs every 30 minutes. Everything is idempotent: each reminder has a key in
 // lease.reminderKeys and is sent at most once, so a restart mid-day can never
 // double-email a tenant. Tenant-facing mail only goes out 08:00-20:00 Manila.
+// Claims today's digest BEFORE it is built and sent: one atomic update that
+// only succeeds while lastDigestKey is still some other day. Saving the key
+// after sending let a slow send (or a second instance during a deploy) mail
+// the broker twice.
+async function claimDigest(key, today) {
+  await Setting.updateOne({ key }, { $setOnInsert: { value: key === 'leasing' ? { ...DEFAULT_SETTINGS } : {}, updatedAt: new Date() } }, { upsert: true });
+  const won = await Setting.findOneAndUpdate(
+    { key, 'value.lastDigestKey': { $ne: today } },
+    { $set: { 'value.lastDigestKey': today, updatedAt: new Date() } },
+    { new: true });
+  return !!won;
+}
+
 function startLeasingTick({ sendEmail, esc }) {
+  // A tick that runs past the next interval (slow mail, slow database) must
+  // not overlap itself: the second copy would read the same reminderKeys and
+  // send every reminder twice.
+  let running = false;
   async function tick() {
+    if (running) return;
+    running = true;
     try {
       const hour = manilaHour();
       if (hour < 7 || hour >= 21) return;
@@ -1011,7 +1076,7 @@ function startLeasingTick({ sendEmail, esc }) {
       }
 
       // Morning digest for the broker — only when something needs a decision.
-      if (settings.digestEnabled && hour >= settings.digestHour && settings.lastDigestKey !== today) {
+      if (settings.digestEnabled && hour >= settings.digestHour && settings.lastDigestKey !== today && await claimDigest('leasing', today)) {
         const items = digest.overdue.length + digest.expiring.length + digest.depositsUnpaid.length + digest.dueSoon.length;
         if (items && settings.notifyEmail) {
           const li = arr => `<ul style="margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.7">${arr.map(s => `<li>${s}</li>`).join('')}</ul>`;
@@ -1025,9 +1090,9 @@ function startLeasingTick({ sendEmail, esc }) {
           sendEmail(settings.notifyEmail, `Leasing this morning: ${digest.overdue.length} overdue · ${digest.expiring.length} ending soon`,
             emailShell(esc, 'Good morning, here is the rent roll', body + link)).catch(err => console.error('leasing digest failed:', err.message));
         }
-        await saveSettings({ lastDigestKey: today });
       }
     } catch (e) { console.error('leasing tick error:', e.message); }
+    finally { running = false; }
   }
   setTimeout(() => { tick(); setInterval(tick, 30 * 60 * 1000); }, 60 * 1000);
 }

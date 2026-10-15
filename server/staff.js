@@ -23,6 +23,7 @@
 const mongoose = require('mongoose');
 const { Task, DeletedTask, StaffDay, StaffPosting, StaffMessage, AuditLog, Setting, Account, Lead, Inquiry, PropertySubmission, Property } = require('./db');
 const rules = require('./staff-rules');
+const { findListingsLite } = require('./listing-lite');
 const { verifyToken, requirePermission, logAudit } = require('./auth');
 
 const KINDS = ['lead', 'followup', 'email', 'facebook', 'social', 'portal', 'upload', 'photos',
@@ -476,8 +477,8 @@ const isLot = p => { const s = String(p.propertyType || '').trim() || String(p.t
 const minPhotos = p => (isLot(p) ? 3 : 5);
 const normTitle = t => String(t || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]+/g, ' ').replace(/\b(for|sale|lease|rent|unit|the)\b/g, ' ').replace(/\s+/g, ' ').trim();
 async function listingProblems() {
-  const props = await Property.find({ status: 'available' })
-    .select('title location listingType propertyType price monthlyRental sqm landArea mainImage gallery description geo.status createdAt').lean();
+  // listing-lite: a base64 photo is counted, not downloaded from Atlas.
+  const props = await findListingsLite({ status: 'available' }, ['title', 'location', 'listingType', 'propertyType', 'price', 'monthlyRental', 'sqm', 'landArea', 'description', 'geo.status', 'createdAt']);
   const out = [];
   const groups = {};
   props.forEach(p => { const k = normTitle(p.title); if (k) (groups[k] = groups[k] || []).push(p); });

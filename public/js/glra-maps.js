@@ -820,7 +820,7 @@
     box.className = 'glra-3d';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-label', '3D view of the neighbourhood');
+    box.setAttribute('aria-label', '3D view of the neighborhood');
     box.innerHTML = '<div class="glra-3d-bar"><span>3D view' + (title ? ': ' + esc(title) : '') + '</span>' +
       '<button type="button" class="glra-3d-spin" aria-pressed="false"><i class="fas fa-rotate" aria-hidden="true"></i><b>Rotate</b></button>' +
       '<button type="button" class="glra-3d-close"><i class="fas fa-times" aria-hidden="true"></i><b>Close</b></button></div>' +

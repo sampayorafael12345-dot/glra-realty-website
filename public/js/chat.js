@@ -326,12 +326,27 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
 
     function formatBot(text) {
       var html = escapeHtml(text);
-      html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      // Markdown links FIRST, parked as placeholders: autolinking bare URLs
+      // used to run first and wrap the URL inside "[label](url)" in its own
+      // <a>, leaving the label as plain text and a stray ")" on screen.
       // "/page" only, never "//other-site.com" (which browsers treat as another website).
+      var links = [];
       html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[^\s)]*)\)/g, function (_, label, url) {
-        return '<a href="' + url + '" target="_self">' + label + '</a>';
+        var ext = /^https?:/.test(url);
+        links.push('<a href="' + url + '"' + (ext ? ' target="_blank" rel="noopener"' : ' target="_self"') + '>' + label + '</a>');
+        return '\u0000' + (links.length - 1) + '\u0000';
       });
+      // Bare URLs, minus trailing punctuation that belongs to the sentence.
+      html = html.replace(/https?:\/\/[^\s<\u0000]+/g, function (u) {
+        var tail = (u.match(/[.,;:!?)\]]+$/) || [''])[0];
+        var url = tail ? u.slice(0, -tail.length) : u;
+        return '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + tail;
+      });
+      html = html.replace(/\u0000(\d+)\u0000/g, function (_, i) { return links[+i] || ''; });
       html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      // *italic*: one asterisk hugging text on both sides. A bullet ("* item")
+      // has a space after its asterisk, so the bullet rule below still gets it.
+      html = html.replace(/(^|[^*\w])\*([^\s*](?:[^*\n]*[^\s*])?)\*(?![*\w])/g, '$1<em>$2</em>');
       html = html.replace(/\n/g, '<br>');
       // Bullet conversion must run AFTER newlines become <br>, otherwise only
       // a bullet on the very first line would be converted to "•".
@@ -434,6 +449,20 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
       if (t) t.remove();
     }
 
+    var CONTACT_ACTIONS = [
+      { label: 'Message on Messenger', url: 'https://m.me/glrarealty', kind: 'contact' },
+      { label: 'WhatsApp', url: 'https://wa.me/639171774572', kind: 'contact' },
+      { label: 'Call +63 917 177 4572', url: 'tel:+639171774572', kind: 'contact' }
+    ];
+    function offlineTurn(lead) {
+      return {
+        role: 'assistant',
+        text: (lead ? lead + '\n\n' : "The chat assistant can't answer right now. ") +
+          'Catherine and the team can help you directly on Messenger, WhatsApp or Viber, or call +63 917 177 4572.',
+        actions: CONTACT_ACTIONS
+      };
+    }
+
     var DEFAULT_SUGGESTIONS = [
       'Properties in Makati',
       'Condos for lease in BGC',
@@ -467,10 +496,32 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
       try { sessionStorage.setItem(GREETED_KEY, '1'); } catch (e) {}
     }
 
+    // On a phone the panel covers the whole screen, so it behaves as a modal
+    // dialog there: aria-modal, and Tab / Shift+Tab wrap inside it instead of
+    // walking into the hidden page behind. On wider screens it is a side panel
+    // and the page stays reachable.
+    var PHONE = window.matchMedia ? window.matchMedia('(max-width:560px)') : { matches: false };
+    function syncModal() {
+      if (panel.classList.contains('open') && PHONE.matches) panel.setAttribute('aria-modal', 'true');
+      else panel.removeAttribute('aria-modal');
+    }
+    if (PHONE.addEventListener) PHONE.addEventListener('change', syncModal);
+    else if (PHONE.addListener) PHONE.addListener(syncModal);
+    panel.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab' || !PHONE.matches || !panel.classList.contains('open')) return;
+      var f = Array.prototype.filter.call(panel.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])'), function (el) { return el.offsetParent !== null; });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
     var returnFocus = null;
     function open(opts) {
       if (opts && opts.returnFocus) returnFocus = opts.returnFocus;
+      else if (!returnFocus && document.activeElement && document.activeElement !== document.body && !panel.contains(document.activeElement)) returnFocus = document.activeElement;
       panel.classList.add('open');
+      syncModal();
       // main.js hides the contact button (and back-to-top) while this is up.
       document.documentElement.classList.add('glra-chat-open');
       try { sessionStorage.setItem(OPEN_KEY, '1'); } catch (e) {}
@@ -486,13 +537,17 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
       setTimeout(function () { input.focus(); }, 100);
     }
     function close() {
+      // Read before hiding: once the panel is display:none its focused button
+      // drops focus to <body>, which is where keyboard users got lost.
+      var hadFocus = panel.contains(document.activeElement) || document.activeElement === document.body || !document.activeElement;
       panel.classList.remove('open');
+      syncModal();
       document.documentElement.classList.remove('glra-chat-open');
       try { sessionStorage.setItem(OPEN_KEY, '0'); } catch (e) {}
       // Back to whatever opened it; failing that, the contact button.
       var back = (returnFocus && document.contains(returnFocus)) ? returnFocus : document.getElementById('glraContactFab');
       returnFocus = null;
-      if (back && panel.contains(document.activeElement)) back.focus();
+      if (back && hadFocus) { try { back.focus(); } catch (e) {} }
     }
     api.open = open;
     api.close = close;
@@ -549,14 +604,19 @@ button.glra-chat-iconbtn:focus-visible,button.glra-chat-close:focus-visible{outl
             suggestions: Array.isArray(data.suggestions) ? data.suggestions : null,
           });
           renderSuggest(data.suggestions);
+        } else if (r.status >= 500 || !data.error) {
+          // Any server-side failure (the model is down, a deploy is restarting,
+          // an error page that is not JSON) gets the same offline card: the
+          // ways to reach a person, never a bare technical message.
+          pushTurn(offlineTurn());
+          renderSuggest(DEFAULT_SUGGESTIONS);
         } else {
-          var err = (data && data.error) || "Hmm, I couldn't reach the server. Please try again, or message Catherine directly: [m.me/glrarealty](https://m.me/glrarealty)";
-          pushTurn({ role: 'assistant', text: err });
+          pushTurn({ role: 'assistant', text: data.error, actions: CONTACT_ACTIONS });
           renderSuggest(DEFAULT_SUGGESTIONS);
         }
       } catch (e) {
         removeTyping();
-        pushTurn({ role: 'assistant', text: "Network error. Please try again, or message Catherine directly: [m.me/glrarealty](https://m.me/glrarealty)" });
+        pushTurn(offlineTurn("I couldn't reach the server just now. Please try again in a moment."));
         renderSuggest(DEFAULT_SUGGESTIONS);
       } finally {
         input.disabled = false;

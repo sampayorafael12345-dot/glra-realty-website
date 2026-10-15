@@ -262,7 +262,7 @@ footer{background:var(--ab-ink) !important;color:var(--ab-paper) !important;padd
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important;gap:36px !important;
   padding-bottom:32px !important;border-bottom:1px solid rgba(241,238,233,.2) !important;
 }
-.footer-col h4{
+.footer-col :is(h2,h4){
   font-family:'JetBrains Mono',monospace !important;color:var(--ab-hot-text,#c02e00) !important;
   font-size:11px !important;letter-spacing:2px !important;text-transform:uppercase !important;
   font-weight:700 !important;margin-bottom:14px !important;
@@ -900,14 +900,14 @@ body.dark-mode .navbar .logo img{content:url("/img/hero-logo-384.png")}
    ════════════════════════════════════════════════════════════ */
 .ab-top-strip,.ab-top-strip *{color:#f1eee9 !important}
 footer,footer p,footer .footer-col p,footer .footer-col a,footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
-footer .footer-col h4{color:var(--ab-hot-text,#c02e00) !important}
+footer .footer-col :is(h2,h4){color:var(--ab-hot-text,#c02e00) !important}
 footer .footer-bottom,footer .footer-bottom p,footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 footer .footer-social a{color:#f1eee9 !important}
 
 /* Dark-mode footer override (was using var(--ab-paper) which inverts to dark) */
 html body.dark-mode footer{background:#000 !important;color:#f1eee9 !important}
 html body.dark-mode footer *{color:#f1eee9 !important}
-html body.dark-mode footer .footer-col h4{color:var(--ab-hot-text,#c02e00) !important}
+html body.dark-mode footer .footer-col :is(h2,h4){color:var(--ab-hot-text,#c02e00) !important}
 html body.dark-mode footer .footer-col a,html body.dark-mode footer .footer-col p,html body.dark-mode footer .footer-col ul li a{color:rgba(241,238,233,.85) !important}
 html body.dark-mode footer .footer-bottom,html body.dark-mode footer .footer-bottom p,html body.dark-mode footer .footer-bottom-links a{color:rgba(241,238,233,.68) !important}
 
@@ -1132,7 +1132,7 @@ html body .listing-toggle .lt-sub{display:block !important;margin-top:3px !impor
 
 /* 11) list-property hero title — was black-on-black (invisible) in light mode. */
 html body .list-hero h1{color:#f1eee9 !important}
-html body .list-hero .eyebrow{color:var(--ab-hot-text,#c02e00) !important}
+html body .list-hero .eyebrow{color:#ff3d00 !important}  /* the hero is always ink: #c02e00 there was 3.4:1 */
 
 /* 12) Navbar — keep the logo + links in their "scrolled" inset position at ALL
        times (was sitting at the screen edges at the top, then jumping inward on
@@ -1849,7 +1849,7 @@ body.dark-mode td.minus,body.dark-mode span.minus{color:#10b981}
 
 /* The footer is an ink slab, so the orange headings in it keep the bright
    value. The token on `footer` alone was being out-specified by the pages'
-   own `.footer-col h4` rules. */
+   own `.footer-col :is(h2,h4)` rules. */
 html body footer,html body footer *,html body .footer,html body .footer *{--ab-hot-text:#ff3d00}
 
 /* The home page's closing invitation is white-at-92% on an orange band at
@@ -1961,6 +1961,10 @@ html body.dark-mode .nav-links > a.gl-active:not(.contact-btn-nav){
 html body.dark-mode .nav-links a:hover *,
 html body.dark-mode .nav-links a.active *,
 html body.dark-mode .nav-links a.gl-active *{color:var(--ab-paper) !important}
+/* Light mode, the current page's link is an ink pill, and styles.css paints
+   it --ab-hot-text (#c02e00): 3.4:1 on the ink. The bright orange is 5.6:1
+   there (Oct 15 audit, A11Y-CON). */
+html body:not(.dark-mode) .nav-links > a.active.gl-active:not(.contact-btn-nav){color:#ff3d00 !important}
 
 /* The toast is a floating slab over whatever is behind it, so it is pinned to
    ink-and-cream in BOTH modes rather than taking the swapping tokens. On
@@ -2043,3 +2047,7 @@ html body.dark-mode .nav-links > .nav-dropdown:hover > a,
 html body.dark-mode .nav-links > .nav-dropdown.ab-open > a{background:var(--ab-hot-btn,#df3500) !important;color:#fff !important}
 html body.dark-mode .nav-links a:not(.contact-btn-nav):hover *,
 html body.dark-mode .nav-links > .nav-dropdown:hover > a *{color:#fff !important}
+
+/* Oct 15 (A11Y-HEAD-1): a few card headings moved from <h4> to the level the
+   page outline needs (<h2>/<h3>) and keep the look they had as an h4. */
+html body .as-h4{font-size:18px !important;letter-spacing:-.2px !important;line-height:1.18 !important}

@@ -385,3 +385,28 @@ html body.dark-mode .section .listings-tabs.category-tabs .listings-tab.active{b
 html body .view-all-wrapper .view-all-btn{border:2px solid var(--ab-ink,#0a0a0a) !important;box-shadow:5px 5px 0 var(--ab-hot,#ff3d00) !important;padding:16px 30px !important}
 html body.dark-mode .view-all-wrapper .view-all-btn{border-color:#f1eee9 !important;box-shadow:5px 5px 0 var(--ab-hot,#ff3d00) !important}
 html body .view-all-wrapper .view-all-btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ab-ink,#0a0a0a) !important}
+
+/* ── Oct 15 audit: text floor and tap targets on a phone (A11Y-TXT-1, A11Y-TAP-1) ──
+   A few labels were still set at 9-10.5 px. On a phone nothing reads below
+   11 px, and the labels over a calculator's results read at 12 px. */
+@media(max-width:640px){
+  html body :is(.tool-tag,.asc-tag,.nx-kicker,.disc,.print-btn,.reset-filters-btn,.presets button,.preset-btn,.chip-btn,
+    .ref-table th,.schedule-table th,.brackets-table th,.doc-table th,.num span,.blog-card-tag,.nh-tags span,.mu-tag,
+    .bar-legend,.day-hour,.day-strip span,.legal-note .hd,.filter-group label,.mortgage-control label,
+    .modal-mortgage-control label,.loan-panel .field label,.popular-chips .chips-label,.input-hint,.share-btn,
+    .comm-btn,.loan-panel h3 .badge,.arr-tag,.pv-kicker,.nf-key,[data-eluria] .ex .eyebrow){font-size:11px !important}
+  html body :is(.schedule-table th,.factors-table th,.breakdown-table th,.brackets-table th,.factors-table tr td:first-child,
+    .breakdown-table tr.total td,.breakdown-table tr.total-row td){font-size:11px !important}
+  html body :is(.metric-mini .label,.result-mini .label,.result-item .label,.result-block .big .lbl,.qs-card .label,
+    .summary-item h4,.est-mid .label,.est-headline .label,.desired-result .label,.mortgage-result .lbl,
+    .modal-mortgage-result .label,.rc-stat-label,.nh-stat-label,.rating-box .label,.range-bar .label){font-size:12px !important}
+}
+/* "On this page" jump links were 17 px tall. */
+html body .page-jump a{display:inline-flex;align-items:center;min-height:44px}
+html body .page-jump{row-gap:0 !important}
+/* Map zoom and control buttons: Leaflet draws them 30 px square; 40 px here. */
+html body .leaflet-touch .leaflet-bar a,html body .leaflet-bar a{width:40px !important;height:40px !important;line-height:40px !important}
+/* The home page's footer icons are 36 px squares; give them the same 46 px
+   hit area the inner pages' footer icons have. */
+html body footer .social-links a{position:relative}
+html body footer .social-links a::after{content:'';position:absolute;inset:-5px}

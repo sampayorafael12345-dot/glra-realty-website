@@ -33,12 +33,12 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -104,7 +104,7 @@
 @media(max-width:900px){.calc-container{grid-template-columns:1fr}}
 @media(max-width:768px){.verdict .value{font-size:24px}}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -129,6 +129,7 @@
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -201,7 +202,7 @@
         <div class="section-divider">If You Buy</div>
         <div class="input-group">
           <label for="price">Property Price (₱)</label>
-          <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);recalc()">
+          <input type="text" id="price" value="5,000,000" oninput="formatPrice(this);syncClosing();recalc()">
         </div>
         <div class="two-col">
           <div class="input-group">
@@ -210,7 +211,8 @@
           </div>
           <div class="input-group">
             <label for="closing">Closing Costs (₱)</label>
-            <input type="text" id="closing" value="350,000" oninput="formatPrice(this);recalc()">
+            <input type="text" id="closing" value="300,000" oninput="this.dataset.touched='1';formatPrice(this);recalc()">
+            <div class="input-hint">Pre-filled at <span class="js-closing-pct">6</span>% of the price until you change it.</div>
           </div>
         </div>
         <div class="two-col">
@@ -232,6 +234,11 @@
             <label for="carry">Monthly Dues + Amilyar (₱)</label>
             <input type="text" id="carry" value="6,000" oninput="formatPrice(this);recalc()">
           </div>
+        </div>
+        <div class="input-group">
+          <label for="bSellCost">Selling Costs When You Sell (% of price)</label>
+          <input type="number" id="bSellCost" value="11" min="0" max="20" step="0.5" oninput="recalc()">
+          <div class="input-hint">Taken off the future value, so equity is what you would actually walk away with. CGT 6% + broker's commission.</div>
         </div>
       </div>
 
@@ -335,33 +342,34 @@
 </main>
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+    <div class="footer-col"><h2 class="footer-h">GLRA Realty</h2><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
         <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
-    <div class="footer-col"><h4>Properties</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Properties</h2><ul>
       <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
       <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
       <li><a href="/list-property.html">Sell Your Property</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Tools</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Tools</h2><ul>
       <li><a href="/valuation.html">Property Valuation</a></li>
       <li><a href="/rent-vs-buy.html">Rent vs Buy</a></li>
       <li><a href="/amortization.html#compare">Loan Comparison</a></li>
       <li><a href="/rental-yield.html">Rental Yield</a></li>
       <li><a href="/tools.html">All Tools</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Company</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Company</h2><ul>
       <li><a href="/about.html">About Us</a></li>
       <li><a href="/testimonials.html">Testimonials</a></li>
       <li><a href="/blog.html">Blog</a></li>
       <li><a href="/guide.html">Documentation</a></li>
+      <li><a href="/faq.html">FAQ</a></li>
       <li><a href="/#contact">Contact</a></li>
     </ul>
-      <h4 style="margin-top:18px">Contact</h4>
+      <h2 class="footer-h" style="margin-top:18px">Contact</h2>
       <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
@@ -383,7 +391,7 @@
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
 <script>
 function formatPrice(input){
   const cursor = input.selectionStart;
@@ -400,6 +408,19 @@ function formatPrice(input){
 function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
 function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
 function fmtPeso(n){ return (n<0?'−₱':'₱') + Math.abs(Math.round(n)).toLocaleString('en-US'); }
+
+// One set of cost assumptions for this page. Buyer closing costs (DST,
+// transfer tax, registration, notarial and incidentals) are the same 6% the
+// Savings Goal tool uses; seller costs are CGT 6% + a 5% commission, the
+// Closing Fees calculator's defaults. The buy verdict and the sell mode both
+// read their own input box, which starts at these values.
+const BUYER_CLOSING_PCT = 6;
+const SELLER_COST_PCT = 11;
+function syncClosing(){
+  const box = document.getElementById('closing');
+  if (!box || box.dataset.touched) return;
+  box.value = Math.round(getRaw('price') * BUYER_CLOSING_PCT / 100).toLocaleString('en-US');
+}
 
 let mode = 'buy';
 function setMode(m){
@@ -470,10 +491,11 @@ function recalcBuy(years){
   // Value & equity at end
   const endValue = price*Math.pow(1+appr, years);
   const endBalance = balanceAfter(loan, rate, term, monthsPaid);
-  // Selling is not free: capital gains tax, documentary stamp, transfer and broker
-  // fees take roughly 8% of the price. Leaving that out made buying look better.
-  const SELL_COST = 0.08;
-  const endEquity = endValue*(1-SELL_COST) - endBalance;
+  // Selling is not free: capital gains tax and the broker's commission come off
+  // the price. Leaving that out made buying look better. Reads the box, which
+  // starts at SELLER_COST_PCT, the same figure the sell mode uses.
+  const sellCost = Math.min(0.5, Math.max(0, num('bSellCost')/100));
+  const endEquity = endValue*(1-sellCost) - endBalance;
 
   // Net cost of buying = money spent − equity you'd get back on sale
   const netBuyCost = cashOut - endEquity;
@@ -503,6 +525,7 @@ function recalcBuy(years){
     ['Total paid into mortgage', fmtPeso(mortgagePaid)],
     ['Cash out (all-in)', fmtPeso(cashOut)],
     ['Property value in ' + years + ' yrs', fmtPeso(endValue)],
+    ['Selling costs at the end', fmtPeso(endValue*sellCost)],
     ['Equity you keep', fmtPeso(endEquity)]
   ]);
 }
@@ -559,11 +582,16 @@ function recalcSell(years){
   ]);
 }
 
-document.addEventListener('DOMContentLoaded', ()=>setMode('buy'));
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.js-closing-pct').forEach(el => { el.textContent = BUYER_CLOSING_PCT; });
+  ['bSellCost','sCost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = SELLER_COST_PCT; });
+  syncClosing();
+  setMode('buy');
+});
 </script>
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — not financial advice.</div>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

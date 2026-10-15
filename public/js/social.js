@@ -38,7 +38,8 @@
   function manilaLocal(d) { var x = new Date(d.getTime() + 8 * 3600e3); return x.toISOString().slice(0, 16); }
   function todayKey() { return dayKey(new Date()); }
   function addDays(k, nn) { var d = new Date(k + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + nn); return d.toISOString().slice(0, 10); }
-  function pageOf(id) { for (var i = 0; i < S.pages.length; i++) if (S.pages[i].id === String(id)) return S.pages[i]; return { id: id, name: 'Page ' + id, color: '#999' }; }
+  // No id at all (no Page connected yet) reads "Your Page", never "Page undefined".
+  function pageOf(id) { if (id == null || id === '') return { id: '', name: 'Your Page', color: '#999', placeholder: true }; for (var i = 0; i < S.pages.length; i++) if (S.pages[i].id === String(id)) return S.pages[i]; return { id: id, name: 'Page ' + id, color: '#999' }; }
   function initials(s) { return String(s || '?').replace(/[^\p{L}\p{N} ]/gu, '').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || '?'; }
   // A picture that does not load (an expired Meta CDN link) falls back to the initials;
   // any other broken image just leaves its grey tile.
@@ -68,6 +69,10 @@
     var body = opt.body;
     if (body && !(body instanceof FormData)) { h['content-type'] = 'application/json'; body = JSON.stringify(body); }
     return fetch(path.charAt(0) === '/' && path.indexOf('/api/') === 0 ? path : API + path, { method: opt.method || 'GET', headers: h, body: body }).then(function (r) {
+      // Sliding sign-in: in its last 2 hours the server hands back a fresh
+      // token, shared with the admin tab through the same storage key.
+      var fresh = r.headers.get('X-Renewed-Token');
+      if (fresh && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(fresh)) { try { localStorage.setItem(TOKEN_KEY, fresh); } catch (e) {} }
       var ct = r.headers.get('content-type') || '';
       return (ct.indexOf('json') >= 0 ? r.json() : r.blob()).then(function (j) {
         if (r.status === 401) { signedOut('Your sign-in has ended. Sign in again on the admin.'); throw new Error('Signed out'); }
@@ -352,7 +357,7 @@
     var p = pageOf(pid), net = C.previewNet;
     var text = textFor(net, pid).replace(/\{page\}/g, p.name);
     var pages = uniq(tg.map(function (t) { return t.pageId; }));
-    var bar = '<div class="so-between" style="margin-bottom:10px"><div class="so-seg" role="group" aria-label="Preview"><button data-act="cPrev" data-v="fb" aria-pressed="' + (net === 'fb') + '"><i class="fab fa-facebook"></i> Feed</button><button data-act="cPrev" data-v="ig" aria-pressed="' + (net === 'ig') + '"><i class="fab fa-instagram"></i> Instagram</button></div>' +
+    var bar = (p.placeholder ? '<p class="so-small so-muted" style="margin:0 0 8px"><i class="fas fa-circle-info"></i> Connect a Page first (Overview, "Connect another Page"). Until then the preview shows a stand-in name.</p>' : '') + '<div class="so-between" style="margin-bottom:10px"><div class="so-seg" role="group" aria-label="Preview"><button data-act="cPrev" data-v="fb" aria-pressed="' + (net === 'fb') + '"><i class="fab fa-facebook"></i> Feed</button><button data-act="cPrev" data-v="ig" aria-pressed="' + (net === 'ig') + '"><i class="fab fa-instagram"></i> Instagram</button></div>' +
       (pages.length > 1 ? '<select data-ch="cPrevPage" aria-label="Preview which Page" style="max-width:170px">' + pages.map(function (id) { return '<option value="' + id + '"' + (id === pid ? ' selected' : '') + '>' + esc(pageOf(id).name) + '</option>'; }).join('') + '</select>' : '') + '</div>';
     var now = new Date().toLocaleTimeString('en-PH', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).replace(/\s?[AP]M/i, '');
     var screen;
@@ -538,7 +543,7 @@
       if (can('draft')) btns.push('<button class="so-btn" data-act="pDup" data-id="' + p._id + '"><i class="far fa-copy"></i>Duplicate</button>');
       if (['draft', 'changes'].indexOf(p.status) >= 0 && can('draft')) btns.push('<button class="so-btn pri" data-act="pSubmit" data-id="' + p._id + '"><i class="fas fa-paper-plane"></i>Submit</button>');
       if (p.targets.some(function (t) { return t.status === 'failed'; }) && can('draft')) btns.push('<button class="so-btn" data-act="pRetry" data-id="' + p._id + '"><i class="fas fa-rotate-right"></i>Retry (needs approval)</button>');
-      if (a && p.status === 'pending') { btns.push('<button class="so-btn bad" data-act="pReject" data-id="' + p._id + '"><i class="fas fa-reply"></i>Send back</button>'); btns.push('<button class="so-btn pri" data-act="pApprove" data-id="' + p._id + '"><i class="fas fa-circle-check"></i>Approve</button>'); }
+      if (a && p.status === 'pending') { btns.push('<button class="so-btn bad" data-act="pReject" data-id="' + p._id + '"><i class="fas fa-reply"></i>Send back</button>'); btns.push('<button class="so-btn pri" data-act="pApprove" data-id="' + p._id + '" data-rev="' + esc(p.rev || '') + '"><i class="fas fa-circle-check"></i>Approve</button>'); }
       if (a && p.targets.some(function (t) { return t.status === 'scheduled' || t.status === 'waiting'; })) btns.push('<button class="so-btn bad" data-act="pCancel" data-id="' + p._id + '"><i class="fas fa-ban"></i>Cancel</button>');
       if (['draft', 'changes', 'pending', 'failed', 'cancelled'].indexOf(p.status) >= 0 && can('draft') && !p.targets.some(function (t) { return t.metaId && t.status !== 'cancelled'; })) btns.push('<button class="so-btn bad" data-act="pDiscard" data-id="' + p._id + '"><i class="far fa-trash-can"></i>Discard</button>');
       modal(p.title || 'Post', body, btns.length ? '<div class="so-bar">' + btns.join('') + '</div>' : '', true);
@@ -550,7 +555,9 @@
   ACT.pDup = function (el) { api('/posts/' + el.getAttribute('data-id') + '/duplicate', { method: 'POST' }).then(function (r) { editPost(r.post); toast('Copied into the composer'); }).catch(fail); };
   ACT.pSubmit = function (el) { api('/posts/' + el.getAttribute('data-id') + '/submit', { method: 'POST' }).then(after('Sent for approval')).catch(fail); };
   ACT.pRetry = function (el) { api('/posts/' + el.getAttribute('data-id') + '/retry', { method: 'POST' }).then(function (r) { if (r.warning) toast(r.warning, true); after('Back in Approvals')(); }).catch(fail); };
-  ACT.pApprove = function (el) { el.disabled = true; api('/posts/' + el.getAttribute('data-id') + '/approve', { method: 'POST' }).then(function (r) { (r.warnings || []).forEach(function (w) { toast(w); }); after(r.post.status === 'published' ? 'Published' : r.post.status === 'scheduled' ? 'Approved and scheduled' : r.post.status === 'failed' ? 'Approved, but Meta refused it: see the post' : 'Approved')(); }).catch(function (e) { fail(e); el.disabled = false; }); };
+  // rev = the version on screen: if the post was edited since, the server refuses
+  // and the view reloads so the approver reads the new words first.
+  ACT.pApprove = function (el) { el.disabled = true; api('/posts/' + el.getAttribute('data-id') + '/approve', { method: 'POST', body: { rev: el.getAttribute('data-rev') || '' } }).then(function (r) { (r.warnings || []).forEach(function (w) { toast(w); }); after(r.post.status === 'published' ? 'Published' : r.post.status === 'scheduled' ? 'Approved and scheduled' : r.post.status === 'failed' ? 'Approved, but Meta refused it: see the post' : 'Approved')(); }).catch(function (e) { fail(e); if (e && e.data && e.data.changed) { route(true); return; } el.disabled = false; }); };
   ACT.pReject = function (el) {
     var id = el.getAttribute('data-id');
     modal('Send back with a note', '<label class="so-field"><span>What should change?</span><textarea id="rjNote" rows="4" placeholder="e.g. Use the photo of the living room first; price is 12.5M now"></textarea></label>', '<div class="so-bar"><button class="so-btn" data-act="closeModal">Cancel</button><button class="so-btn pri" data-act="pRejectGo" data-id="' + id + '">Send back</button></div>');
@@ -684,6 +691,9 @@
     loading();
     Promise.all([api('/approvals'), api('/posts?status=changes&limit=30')]).then(function (r) {
       var A = r[0], back = r[1].posts, a = can('approve');
+      // The versions shown here: a batch approval sends them back, so a post
+      // edited after this list loaded is refused rather than approved unseen.
+      S.approvalRevs = {}; (A.posts || []).forEach(function (p) { S.approvalRevs[p._id] = p.rev || ''; });
       var html = head('Approvals', a ? 'Nothing goes out until you approve it. Approving publishes now or at the scheduled time.' : 'These wait for an approver. You can still edit your own.',
         a && A.batches.length ? A.batches.map(function (b) { return '<button class="so-btn pri" data-act="batchGo" data-id="' + esc(b.id) + '"><i class="fas fa-check-double"></i>Approve all ' + b.n + ' (' + (b.id.indexOf('csv') === 0 ? 'CSV' : 'recurring') + ')</button>'; }).join('') : '');
       html += '<div class="so-grid so-g2"><div class="so-col"><div class="so-card"><div class="so-card-head"><h2><i class="fas fa-newspaper"></i>Posts</h2>' + pill(A.posts.length + ' waiting', A.posts.length ? 'warn' : '') + '</div>' +
@@ -692,7 +702,7 @@
             '<div class="so-small so-muted" style="margin:3px 0">' + uniq(p.targets.map(function (t) { return t.network; })).map(netIcon).join(' ') + ' ' + uniq(p.targets.map(function (t) { return t.pageName; })).map(esc).join(', ') + '</div>' +
             '<div class="so-small">' + (p.scheduledAt ? '<i class="far fa-clock"></i> ' + esc(fmt(p.scheduledAt)) : 'Publishes when approved') + ' · by ' + esc((p.createdBy || {}).name || '') + ((p.createdBy || {}).via === 'review_key' ? ' ' + pill('Claude', 'info') : '') + '</div>' +
             (p.check && p.check.errors.length ? '<div class="so-small" style="color:var(--lk-bad);margin-top:4px"><i class="fas fa-circle-xmark"></i> ' + esc(p.check.errors[0]) + '</div>' : '') +
-            '<div class="so-btns" style="margin-top:8px"><button class="so-btn xs" data-act="openPost" data-id="' + p._id + '">Open</button>' + (a ? '<button class="so-btn xs bad" data-act="pReject" data-id="' + p._id + '">Send back</button><button class="so-btn xs pri" data-act="pApprove" data-id="' + p._id + '"' + (p.check && p.check.errors.length ? ' disabled title="Fix the problem first"' : '') + '>Approve</button>' : '') + '</div></div></div>';
+            '<div class="so-btns" style="margin-top:8px"><button class="so-btn xs" data-act="openPost" data-id="' + p._id + '">Open</button>' + (a ? '<button class="so-btn xs bad" data-act="pReject" data-id="' + p._id + '">Send back</button><button class="so-btn xs pri" data-act="pApprove" data-id="' + p._id + '" data-rev="' + esc(p.rev || '') + '"' + (p.check && p.check.errors.length ? ' disabled title="Fix the problem first"' : '') + '>Approve</button>' : '') + '</div></div></div>';
         }).join('') + '</div>' : empty('fa-circle-check', 'No posts waiting.')) + '</div>' +
         (back.length ? '<div class="so-card"><h2><i class="fas fa-reply"></i>Sent back for changes</h2><div class="so-list">' + back.map(postRow).join('') + '</div></div>' : '') + '</div>';
       html += '<div class="so-card"><div class="so-card-head"><h2><i class="fas fa-comments"></i>Replies and moderation</h2>' + pill(A.actions.length + ' waiting', A.actions.length ? 'warn' : '') + '</div>' +
@@ -706,7 +716,7 @@
       setView(html);
     }).catch(fail);
   };
-  ACT.batchGo = function (el) { if (!confirm('Approve every post in this batch? Each is checked and published or scheduled.')) return; el.disabled = true; api('/posts/approve-batch', { method: 'POST', body: { batchId: el.getAttribute('data-id') } }).then(function (r) { var ok = r.results.filter(function (x) { return x.ok; }).length; toast('Approved ' + ok + ' of ' + r.results.length + (ok < r.results.length ? ': open the rest to see why' : '')); refreshBadge(); VIEWS.approvals(); }).catch(fail); };
+  ACT.batchGo = function (el) { if (!confirm('Approve every post in this batch? Each is checked and published or scheduled.')) return; el.disabled = true; api('/posts/approve-batch', { method: 'POST', body: { batchId: el.getAttribute('data-id'), revs: S.approvalRevs || {} } }).then(function (r) { var ok = r.results.filter(function (x) { return x.ok; }).length; toast('Approved ' + ok + ' of ' + r.results.length + (ok < r.results.length ? ': open the rest to see why' : '')); refreshBadge(); VIEWS.approvals(); }).catch(fail); };
   ACT.aApprove = function (el) { el.disabled = true; api('/actions/' + el.getAttribute('data-id') + '/approve', { method: 'POST' }).then(function () { toast('Done'); refreshBadge(); route(true); }).catch(function (e) { fail(e); route(true); }); };
   ACT.aReject = function (el) { api('/actions/' + el.getAttribute('data-id') + '/reject', { method: 'POST', body: {} }).then(function () { toast('Not sent'); refreshBadge(); route(true); }).catch(fail); };
 

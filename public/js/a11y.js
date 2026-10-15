@@ -147,8 +147,16 @@
 
       function setOpen(open) {
         dd.classList.toggle('ab-open', open);
+        if (open) dd.classList.remove('ab-dismissed');
         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       }
+      // The menu also shows on :hover and :focus-within, which a class cannot
+      // switch off: Escape adds .ab-dismissed (hidden by the rule injected
+      // below) until the pointer or the keyboard leaves the group.
+      function shownNow() {
+        return dd.classList.contains('ab-open') || (menu.offsetWidth > 0 || menu.offsetHeight > 0);
+      }
+      dd.addEventListener('mouseleave', function () { dd.classList.remove('ab-dismissed'); });
 
       trigger.addEventListener('click', function (e) {
         e.preventDefault();
@@ -169,18 +177,28 @@
       // Escape anywhere in the group closes it and hands focus back.
       dd.addEventListener('keydown', function (e) {
         if (!isEscape(e)) return;
-        if (!dd.classList.contains('ab-open')) return;
+        if (!shownNow()) return;
         e.stopPropagation();
         setOpen(false);
+        dd.classList.add('ab-dismissed');
         trigger.focus();
       });
       // Tabbing out of the last item closes it, so the menu never lingers.
       dd.addEventListener('focusout', function () {
         setTimeout(function () {
-          if (!dd.contains(document.activeElement)) setOpen(false);
+          if (!dd.contains(document.activeElement)) { setOpen(false); dd.classList.remove('ab-dismissed'); }
         }, 0);
       });
     });
+    if (document.querySelector('.nav-dropdown, .ab-nav-dropdown') && !document.getElementById('glra-a11y-dd')) {
+      var st = document.createElement('style');
+      st.id = 'glra-a11y-dd';
+      // Doubled class: must outrank main.js's mega menu rule
+      // (html body .glra-mega-host:focus-within > .glra-mega {display:grid !important}).
+      st.textContent = 'html body .nav-dropdown.ab-dismissed.ab-dismissed .nav-dropdown-menu,' +
+        'html body .ab-nav-dropdown.ab-dismissed.ab-dismissed .ab-nav-dropdown-menu{display:none !important}';
+      document.head.appendChild(st);
+    }
     document.addEventListener('click', function (e) {
       if (e.target && e.target.closest && e.target.closest('.nav-dropdown, .ab-nav-dropdown')) return;
       closeAllDropdowns(null);
@@ -221,21 +239,55 @@
         for (var i = 0; i < OPEN_CLASSES.length; i++) overlay.classList.remove(OPEN_CLASSES[i]);
       }
 
+      // While the menu is up, everything else on the page is inert, so neither
+      // Tab nor a screen reader's own cursor can wander into the page behind it.
+      // Each element made inert here is remembered and only those are released.
+      var madeInert = [];
+      function inertOthers(on) {
+        if (!on) {
+          madeInert.forEach(function (el) { el.inert = false; });
+          madeInert = [];
+          return;
+        }
+        for (var node = overlay; node && node !== document.body; node = node.parentElement) {
+          var parent = node.parentElement; if (!parent) break;
+          Array.prototype.forEach.call(parent.children, function (sib) {
+            if (sib === node || sib.inert || /^(SCRIPT|STYLE|LINK|META|TEMPLATE)$/.test(sib.tagName)) return;
+            sib.inert = true; madeInert.push(sib);
+          });
+        }
+      }
+      var wasOpen = isOpen();
       // openMobileMenu()/closeMobileMenu() live in main.js and in inline page
       // scripts. Watching the class means this works with every one of them
       // without patching any.
       new MutationObserver(function () {
         var open = isOpen();
+        if (open === wasOpen) return;     // some other class changed
+        wasOpen = open;
         if (opener) opener.setAttribute('aria-expanded', open ? 'true' : 'false');
         overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
         // A hidden menu must not be reachable with Tab either.
         overlay.inert = !open;
         if (open) {
           lastFocus = document.activeElement;
-          var f = focusables(overlay);
-          if (f.length) f[0].focus();
-        } else if (lastFocus && document.contains(lastFocus)) {
-          lastFocus.focus();
+          inertOthers(true);
+          // Focus once the browser has applied inert=false and the overlay's
+          // own visibility: focusing in the same tick was silently refused and
+          // focus stayed on the hamburger. A second try covers a slow transition.
+          var tries = 0;
+          var moveIn = function () {
+            if (!isOpen() || overlay.contains(document.activeElement)) return;
+            var f = focusables(overlay);
+            if (f.length) { try { f[0].focus({ preventScroll: true }); } catch (e) { f[0].focus(); } }
+            if (!overlay.contains(document.activeElement) && tries++ < 6) setTimeout(moveIn, 60);
+          };
+          requestAnimationFrame(moveIn);
+        } else {
+          inertOthers(false);
+          if (lastFocus && document.contains(lastFocus)) {
+            try { lastFocus.focus({ preventScroll: true }); } catch (e) { lastFocus.focus(); }
+          }
           lastFocus = null;
         }
       }).observe(overlay, { attributes: true, attributeFilter: ['class'] });

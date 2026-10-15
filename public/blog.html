@@ -33,16 +33,16 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 
 <style>
 /* ── PAGE-SPECIFIC ── */
-.blog-grid{max-width:1100px;margin:50px auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:26px}
+.blog-grid{max-width:1100px;margin:50px auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(310px,100%),1fr));gap:26px}
 .blog-card{color:inherit;text-decoration:none;background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;transition:var(--transition);display:flex;flex-direction:column}
 .blog-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md);transform:translateY(-4px)}
 .blog-card-image{height:170px;background:linear-gradient(135deg,var(--navy),var(--navy-mid));display:flex;align-items:center;justify-content:center;color:var(--ab-hot-text,#c02e00);font-size:46px;border-bottom:1px solid var(--border-color)}
@@ -69,7 +69,7 @@
   .newsletter h2{font-size:26px}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -92,6 +92,7 @@
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -105,7 +106,7 @@
     <a href="/list-property.html" onclick="closeMobileMenu()">List Your Property</a>
     <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
     <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees Calculator</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
     <a href="/about.html" onclick="closeMobileMenu()">About Us</a>
     <a href="/testimonials.html" onclick="closeMobileMenu()">Testimonials</a>
@@ -161,7 +162,7 @@
     <div class="blog-card-body">
       <span class="blog-card-tag">Area Guide</span>
       <h3>Where to Live in Metro Manila</h3>
-      <p>Compare the neighbourhoods side by side to find the right area to live in or invest in.</p>
+      <p>Compare the neighborhoods side by side to find the right area to live in or invest in.</p>
       <div class="blog-card-meta"><span class="read-more">Read the guide <i class="fas fa-arrow-right"></i></span></div>
     </div>
   </a>
@@ -190,7 +191,7 @@
 <footer>
   <div class="footer-content">
     <div class="footer-col">
-      <h4>GLRA Realty</h4>
+      <h2 class="footer-h">GLRA Realty</h2>
       <p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -199,7 +200,7 @@
       </div>
     </div>
     <div class="footer-col">
-      <h4>Properties</h4>
+      <h2 class="footer-h">Properties</h2>
       <ul>
         <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
         <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
@@ -207,7 +208,7 @@
       </ul>
     </div>
     <div class="footer-col">
-      <h4>Resources</h4>
+      <h2 class="footer-h">Resources</h2>
       <ul><li><a href="/valuation.html">Property Valuation</a></li><li><a href="/tools.html">All Tools &amp; Calculators</a></li>
         <li><a href="/guide.html">Documentation Guide</a></li>
         <li><a href="/calculator.html">Closing Fees Calculator</a></li>
@@ -216,13 +217,13 @@
       </ul>
     </div>
     <div class="footer-col">
-      <h4>Company</h4>
+      <h2 class="footer-h">Company</h2>
       <ul>
         <li><a href="/about.html">About Us</a></li>
         <li><a href="/testimonials.html">Testimonials</a></li>
         <li><a href="/#contact">Contact</a></li>
       </ul>
-      <h4 style="margin-top:18px">Contact</h4>
+      <h2 class="footer-h" style="margin-top:18px">Contact</h2>
       <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
       <p><i class="fas fa-map-marker-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>17F, 252 Sen. Gil J. Puyat Ave., Makati</p>
@@ -247,7 +248,7 @@
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/main.js?v=146"></script>
+<script src="/js/main.js?v=149"></script>
 <script>
 async function subscribeNewsletter(){
   const email=document.getElementById('newsletterEmail').value;
@@ -263,8 +264,8 @@ async function subscribeNewsletter(){
 }
 
 </script>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

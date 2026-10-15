@@ -9,19 +9,73 @@
 // by the time anything here runs.
 // =============================================================================
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
-const { Account, AuditLog, defaultPermissionsForRole } = require('./db');
+const { Account, AuditLog, RevokedToken, RETIRED_PERMISSION_KEYS, defaultPermissionsForRole } = require('./db');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 // ── TOKEN HELPERS ──────────────────────────────────────────
+// Every token carries its own id (jti) so one sign-in can be ended on its own
+// ("Sign out") without ending the account's other devices.
 function signToken(account) {
   return jwt.sign(
     { sub: account._id.toString(), email: account.email, role: account.role, name: account.name, tv: account.tokenVersion || 0 },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN, jwtid: crypto.randomBytes(12).toString('hex') }
   );
+}
+
+// ── SLIDING RENEWAL (audit 15 Oct, ADM-SESS-1) ─────────────
+// A 9:00 sign-in used to expire at 17:00 in the middle of the workday and the
+// dashboard reloaded, throwing away unsaved work. Any authenticated request
+// made while the token has less than RENEW_WINDOW_MS left gets a fresh token
+// (same claims, a new full lifetime) in the X-Renewed-Token response header;
+// admin.html / agent.html swap it in. Someone who stops using the dashboard
+// still drops out when the token runs out.
+const RENEW_WINDOW_MS = 2 * 60 * 60 * 1000;
+function renewedToken(payload) {
+  return jwt.sign(
+    { sub: payload.sub, email: payload.email, role: payload.role, name: payload.name, tv: payload.tv || 0 },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN, jwtid: crypto.randomBytes(12).toString('hex') }
+  );
+}
+
+// ── SIGNED-OUT TOKENS ──────────────────────────────────────
+// jti -> expiry (ms). Loaded once from the RevokedToken collection (so a
+// restart does not bring a signed-out token back to life) and kept in memory,
+// so the check costs nothing per request. Expired entries are dropped.
+const _revoked = new Map();
+let _revokedLoaded = null;
+function loadRevoked() {
+  if (_revokedLoaded) return _revokedLoaded;
+  _revokedLoaded = RevokedToken.find({ exp: { $gt: new Date() } }).select('jti exp').lean()
+    .then(rows => { rows.forEach(r => _revoked.set(r.jti, new Date(r.exp).getTime())); })
+    .catch(e => { _revokedLoaded = null; console.warn('Revoked-token list not loaded yet:', e.message); });
+  return _revokedLoaded;
+}
+function isRevoked(jti) {
+  if (!jti) return false;
+  const exp = _revoked.get(jti);
+  if (exp === undefined) return false;
+  if (exp < Date.now()) { _revoked.delete(jti); return false; }
+  return true;
+}
+// End one sign-in. payload is the verified JWT payload (req.user).
+async function revokeToken(payload) {
+  if (!payload || !payload.jti) return false;
+  const expMs = (payload.exp ? payload.exp * 1000 : Date.now() + 8 * 3600e3);
+  _revoked.set(payload.jti, expMs);
+  if (_revoked.size > 20000) {                     // bounded: drop the expired ones
+    const now = Date.now();
+    for (const [k, v] of _revoked) if (v < now) _revoked.delete(k);
+  }
+  try {
+    await RevokedToken.updateOne({ jti: payload.jti }, { $set: { jti: payload.jti, exp: new Date(expMs) } }, { upsert: true });
+  } catch (e) { console.error('Could not store signed-out token:', e.message); }
+  return true;
 }
 
 // In-memory throttle for lastSeen writes: { userId: lastWriteMs }. Avoids a DB
@@ -84,6 +138,10 @@ async function verifyToken(req, res, next) {
   if (!payload || !mongoose.isValidObjectId(String(payload.sub || ''))) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
+  if (mongoose.connection.readyState === 1) await loadRevoked();
+  if (isRevoked(payload.jti)) {
+    return res.status(401).json({ error: 'You signed out. Please sign in again.' });
+  }
   try {
     const state = await loadAccountState(payload.sub);
     if (!state.exists) return res.status(401).json({ error: 'Account no longer exists' });
@@ -110,6 +168,13 @@ async function verifyToken(req, res, next) {
 
   req.user = payload;
   touchLastSeen(payload.sub); // best-effort presence tracking
+  // Sliding renewal: a token in its last 2 hours is replaced on this response.
+  if (payload.exp && payload.exp * 1000 - Date.now() < RENEW_WINDOW_MS) {
+    try {
+      res.set('X-Renewed-Token', renewedToken(payload));
+      res.set('Access-Control-Expose-Headers', 'X-Renewed-Token');
+    } catch (e) { console.error('Token renewal failed:', e.message); }
+  }
   next();
 }
 
@@ -140,6 +205,11 @@ function requirePermission(key) {
         return res.status(403).json({ error: 'Account is awaiting admin approval' });
       }
       if (account.role === 'admin') return next();
+      // Retired keys (the old Notarial tab) are never granted to staff, even
+      // when an old account still has `true` stored for them.
+      if (RETIRED_PERMISSION_KEYS.includes(key)) {
+        return res.status(403).json({ error: `You don't have permission to perform this action (${key}).` });
+      }
       // A key the account has never had set (a permission added after the
       // account was made) follows the role's default, which is also what
       // /api/admin/me reports to the dashboard, so the two never disagree.
@@ -154,6 +224,20 @@ function requirePermission(key) {
       res.status(500).json({ error: 'Permission check failed' });
     }
   };
+}
+
+// The same rule as requirePermission, as a yes/no for a route that needs a
+// second permission only for part of what it does (e.g. a submission's notes
+// need submissions_view, changing its status needs submissions_import).
+async function userHasPermission(user, key) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  const st = await loadAccountState(user.sub);
+  if (!st.exists || st.isActive === false || st.status === 'pending') return false;
+  if (st.role === 'admin') return true;
+  if (RETIRED_PERMISSION_KEYS.includes(key)) return false;
+  const own = st.permissions ? st.permissions[key] : undefined;
+  return own === undefined ? defaultPermissionsForRole(st.role || 'employee')[key] === true : own === true;
 }
 
 // ── AUDIT LOG WRITER ───────────────────────────────────────
@@ -213,11 +297,13 @@ async function seedDefaultAdmin() {
 
 module.exports = {
   signToken,
+  revokeToken,
   verifyToken,
   invalidateAccountState,
   loadAccountState,
   requireAdmin,
   requirePermission,
+  userHasPermission,
   logAudit,
   seedDefaultAdmin
 };

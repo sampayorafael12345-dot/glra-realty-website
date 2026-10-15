@@ -1692,8 +1692,38 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
 .sb-section.has-grp::after{content:"\25BE";font-size:11px;transition:transform .15s}
 .sb-section.has-grp.collapsed::after{transform:rotate(-90deg)}
 .nav-item.grp-hide,.nav-item.find-hide,.sb-section.find-hide{display:none !important}
+/* A heading hidden by permissions (inline display:none) stays hidden: the
+   !important flex above used to beat the inline style and show every heading. */
+.sb-section.has-grp[style*="display: none"],.sb-section.has-grp[style*="display:none"]{display:none !important}
 .sb-empty{padding:10px 20px;color:#a39d92;font-size:12px;display:none}
 @media(min-width:900px){.sb-find input{font-size:13px}}
+/* Classic look, contrast pass (Oct 2026 audit L37). Only colours change, and
+   only where text fell under 4.5:1. Glass and Bold have their own rules. */
+html[data-glra-look="classic"][data-glra-mode="light"] .sidebar .nav-item.active,
+html[data-glra-look="classic"][data-glra-mode="light"] .sidebar .user-rl{color:#ff3d00 !important}
+html[data-glra-look="classic"] .sidebar .sb-btn.danger{color:#ef4444 !important;border-color:#ef4444 !important}
+html[data-glra-look="classic"] .fbtn.primary,
+html[data-glra-look="classic"] .cs-view.on,
+html[data-glra-look="classic"] .cs-ag-btn.is-hot,
+html[data-glra-look="classic"] .tasks-view-toggle button.active,
+html[data-glra-look="classic"] body .ld-chip.on{background:#df3500 !important;border-color:#df3500 !important}
+html[data-glra-look="classic"] .ld-score{background-image:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)) !important}
+html[data-glra-look="classic"][data-glra-mode="light"] .ld-tag.warn{color:#92400e}
+html[data-glra-look="classic"][data-glra-mode="light"] .ld-tag.info{color:#1d4ed8}
+html[data-glra-look="classic"][data-glra-mode="dark"] .ld-tag.warn{color:#f59e0b}
+html[data-glra-look="classic"][data-glra-mode="dark"] .ld-tag.info{color:#60a5fa}
+html[data-glra-look="classic"][data-glra-mode="light"] .admin-shell th > span[style*="--ab-hot-text"]{color:#ff3d00 !important}
+html[data-glra-look="classic"][data-glra-mode="light"] #titlingSummary [style*="color:#c8a96e"]{color:#8a6d32 !important}
+html[data-glra-look="classic"][data-glra-mode="light"] #titlingSummary [style*="color:#d98324"]{color:#a85f12 !important}
+html[data-glra-look="classic"][data-glra-mode="light"] #titlingSummary [style*="color:#0ea5e9"]{color:#0369a1 !important}
+html[data-glra-look="classic"][data-glra-mode="light"] #titlingSummary [style*="color:#10b981"]{color:#047857 !important}
+html[data-glra-look="classic"] .fbtn.primary:hover{background:#cc2f00 !important}
+html[data-glra-look="classic"] .cs-ag-btn.is-hot:hover{background:#c02e00 !important}
+html[data-glra-look="classic"] .ls-pill{background-image:linear-gradient(rgba(0,0,0,.36),rgba(0,0,0,.36)) !important}
+html[data-glra-look="classic"][data-glra-mode="light"] .cs-ag-pr{color:#92400e}
+html[data-glra-look="classic"][data-glra-mode="dark"] .cs-ag-pr{color:#f59e0b}
+html[data-glra-look="classic"][data-glra-mode="dark"] .admin-shell [style*="color:#bf2121"]{color:#f87171 !important}
+html[data-glra-look="classic"][data-glra-mode="dark"] .admin-shell [style*="color:#0f8a5f"]{color:#34d399 !important}
 </style>
 <link rel="stylesheet" href="/css/admin-looks.css?v=5">
 </head>
@@ -1738,7 +1768,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
     <div class="login-title" style="text-align:center">Choose a New Password</div>
     <div class="login-sub" style="text-align:center">Almost done — pick a new password for your account.</div>
     <div id="rpForm">
-      <div class="login-field"><label for="rpPass">New Password</label><input type="password" id="rpPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')resetPassword()"></div>
+      <div class="login-field"><label for="rpPass">New Password</label><input type="password" id="rpPass" placeholder="Minimum 10 characters" onkeydown="if(event.key==='Enter')resetPassword()"></div>
       <div class="login-field"><label for="rpPass2">Confirm New Password</label><input type="password" id="rpPass2" placeholder="Repeat your new password" onkeydown="if(event.key==='Enter')resetPassword()"></div>
       <button class="login-btn" id="rpBtn" onclick="resetPassword()"><i class="fas fa-key"></i> Set New Password</button>
       <div class="login-error" id="rpErr"></div>
@@ -1758,15 +1788,15 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
     <div id="suForm">
       <div class="login-field"><label for="suName">Full Name</label><input type="text" id="suName" placeholder="e.g. Juan dela Cruz" onkeydown="if(event.key==='Enter')signup()"></div>
       <div class="login-field"><label for="suEmail">Email Address</label><input type="email" id="suEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signup()"></div>
-      <div class="login-field"><label for="suPass">Password</label><input type="password" id="suPass" placeholder="Minimum 8 characters" onkeydown="if(event.key==='Enter')signup()"></div>
+      <div class="login-field"><label for="suPass">Password</label><input type="password" id="suPass" placeholder="Minimum 10 characters" onkeydown="if(event.key==='Enter')signup()"></div>
       <div class="login-field"><label for="suPass2">Confirm Password</label><input type="password" id="suPass2" placeholder="Repeat your password" onkeydown="if(event.key==='Enter')signup()"></div>
       <button class="login-btn" id="suBtn" onclick="signup()"><i class="fas fa-user-plus"></i> Send Request</button>
       <div class="login-error" id="suErr"></div>
     </div>
     <div id="suDone" style="display:none;text-align:center;padding:16px 0">
       <div style="font-size:40px;color:var(--ab-hot-text,#c02e00);margin-bottom:12px"><i class="fas fa-paper-plane"></i></div>
-      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Request Sent!</div>
-      <div style="font-size:13px;color:var(--gray);line-height:1.6">The administrator has been notified. You'll be able to sign in as soon as your account is approved.</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Check your email</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.6" id="suDoneMsg">Check your email and open the link to confirm your request. The administrator is told only after you confirm, and you can sign in once the account is approved.</div>
     </div>
     <div class="login-switch">Already approved? <a onclick="showSignup(false)">Back to sign in</a></div>
   </div>
@@ -1784,16 +1814,16 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
       <div class="sb-section">Overview</div>
       <a class="nav-item active" data-perm="dashboard_view" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</a>
       <div class="sb-section" style="margin-top:6px">Listings</div>
-      <a class="nav-item" onclick="switchTab('properties')"><i class="fas fa-home"></i> Properties</a>
-      <a class="nav-item" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
+      <a class="nav-item" data-perm="dashboard_view properties_create properties_edit properties_delete properties_upload_image" onclick="switchTab('properties')"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" data-perm="dashboard_view hero_upload hero_edit hero_delete" onclick="switchTab('hero')"><i class="fas fa-images"></i> Hero Images</a>
       <div class="sb-section" style="margin-top:6px">CRM</div>
       <a class="nav-item" data-perm="leads_view" onclick="switchTab('leads')" style="display:none"><i class="fas fa-bullseye"></i> Leads <span class="nav-badge" id="leadsBadge" style="display:none">0</span></a>
       <a class="nav-item" data-perm="inquiries_view" onclick="switchTab('inquiries')"><i class="fas fa-envelope"></i> Inquiries <span class="nav-badge" id="inqBadge" style="display:none">0</span></a>
       <a class="nav-item" data-perm="customers_view" onclick="switchTab('subscribers')"><i class="fas fa-users"></i> Subscribers</a>
       <a class="nav-item" data-perm="customers_view" onclick="switchTab('alerts')"><i class="fas fa-bell"></i> Price Alerts</a>
       <a class="nav-item" data-perm="submissions_view" onclick="switchTab('submissions')" style="display:none"><i class="fas fa-inbox"></i> Submissions <span class="nav-badge" id="subBadge" style="display:none">0</span></a>
-      <a class="nav-item" data-perm="meta_view" onclick="switchTab('meta')" style="display:none"><i class="fab fa-facebook"></i> Meta <span class="nav-badge" id="metaBadge" style="display:none">!</span></a>
-      <a class="nav-item" data-perm="social_view" href="/social.html" target="_blank" rel="noopener" style="display:none"><i class="fas fa-share-nodes"></i> Social <span class="nav-badge" id="socialBadge" style="display:none">0</span> <i class="fas fa-external-link-alt" style="font-size:9px;margin-left:auto"></i></a>
+      <a class="nav-item" data-perm="meta_view" data-feature="meta" onclick="switchTab('meta')" style="display:none"><i class="fab fa-facebook"></i> Meta <span class="nav-badge" id="metaBadge" style="display:none">!</span></a>
+      <a class="nav-item" data-perm="social_view" data-feature="social" href="/social.html" target="_blank" rel="noopener" style="display:none"><i class="fas fa-share-nodes"></i> Social <span class="nav-badge" id="socialBadge" style="display:none">0</span> <i class="fas fa-external-link-alt" style="font-size:9px;margin-left:auto"></i></a>
       <div class="sb-section" data-perm="tasks_view" style="margin-top:6px;display:none">Workspace</div>
       <a class="nav-item" data-perm="tasks_view" onclick="switchTab('tasks')" style="display:none"><i class="fas fa-clipboard-check"></i> Tasks <span class="nav-badge" id="tasksBadge" style="display:none">0</span></a>
       <a class="nav-item" id="navStaff" data-perm="tasks_view" onclick="switchTab('staff')" style="display:none"><i class="fas fa-user-check"></i> <span id="navStaffLbl">Staff</span> <span class="nav-badge" id="staffBadge" style="display:none">0</span></a>
@@ -1823,6 +1853,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
         <button class="sb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
       <button type="button" class="sb-btn glra-look-sb" id="glraLookSb" style="width:100%;margin-top:8px" aria-label="Look: Classic. Tap to change"><i class="fas fa-palette"></i> <span>Look: Classic</span></button>
+      <button class="sb-btn" onclick="openChangePassword()" style="width:100%;margin-top:8px" title="Change the password of this account"><i class="fas fa-key"></i> Change my password</button>
       <button class="sb-btn" onclick="logoutEverywhere()" style="width:100%;margin-top:8px" title="End this account's sign-in on every computer and phone"><i class="fas fa-power-off"></i> Sign out all devices</button>
     </div>
   </aside>
@@ -3989,7 +4020,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="datetime-local"]::-w
       <div class="form-grid">
         <div class="fg full"><label for="accName">Full Name</label><input type="text" id="accName" placeholder="e.g. Juan dela Cruz"></div>
         <div class="fg full"><label for="accEmail">Email Address *</label><input type="email" id="accEmail" placeholder="staff@glrarealty.com"></div>
-        <div class="fg full"><label for="accPass">Password *</label><input type="password" id="accPass" placeholder="Minimum 8 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
+        <div class="fg full"><label for="accPass">Password *</label><input type="password" id="accPass" placeholder="Minimum 10 characters"><div class="field-hint" id="accPassHelp">Leave blank when editing to keep existing password.</div></div>
         <div class="fg full"><label for="accRole">Role</label><select id="accRole" onchange="onRoleChange()"><option value="employee">Employee (Staff)</option><option value="agent">Agent (Agent Workspace only)</option><option value="admin">Admin (Full Access)</option></select><div class="field-hint">Admins automatically get every permission. Employees use the checkboxes below. Agents get no admin access; they work in the Agent Workspace (agent.html).</div></div>
         <div class="fg full"><label>Status</label><div class="sw-row"><label class="sw"><input type="checkbox" id="accActive" checked><div class="sw-sl"></div></label><span class="sw-lbl">Account is active</span></div></div>
         <!-- Granular permissions (only relevant for employees; ignored for admins) -->
@@ -4345,12 +4376,38 @@ function hasPerm(key){
   return !!(CU.permissions && CU.permissions[key]);
 }
 
+// Which optional modules are switched on at the server (GET /api/admin/me
+// sends features: { social, metaLeads, metaInbox, metaInsights }). A module
+// that is off gets no menu item and no calls, so the console stays free of
+// 404s. Before the server says (or an older server says nothing), assume on.
+let FEATURES = null;
+function featureOn(key){
+  if(!FEATURES || typeof FEATURES !== 'object') return true;
+  if(key === 'meta') return !!(FEATURES.metaLeads || FEATURES.metaInbox || FEATURES.metaInsights);
+  return !!FEATURES[key];
+}
+async function loadFeatures(){
+  try{
+    const r = await apiFetch('/api/admin/me');
+    if(r.ok){ const d = await r.json(); if(d && d.features && typeof d.features === 'object') FEATURES = d.features; }
+  }catch(e){}
+}
+
 // ── AUTH TOKEN MANAGEMENT ─────────────────────────────────
 const TOKEN_KEY = 'glra_admin_token';
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function setToken(t){ if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }
 
-// Auth-aware fetch wrapper. Auto-attaches Bearer token, handles 401 by logging out.
+// Sliding sign-in: when a sign-in has under 2 hours left, the server answers
+// any request with a fresh token in X-Renewed-Token (same account, a new 8 h).
+// Taking it here means a full working day never runs into the 8-hour wall.
+function takeRenewedToken(res){
+  try{ const t = res && res.headers && res.headers.get('X-Renewed-Token'); if(t && getToken() && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(t)) setToken(t); }catch(e){}
+}
+
+// Auth-aware fetch wrapper. Auto-attaches Bearer token. A save that finds the
+// sign-in over asks for the password and sends the same save again (F13), so
+// typed work is never thrown away; anything else that hits a 401 signs out.
 async function apiFetch(url, opts = {}){
   const token = getToken();
   const headers = new Headers(opts.headers || {});
@@ -4359,7 +4416,9 @@ async function apiFetch(url, opts = {}){
   if(opts.body && typeof opts.body === 'string' && !headers.has('Content-Type')){
     headers.set('Content-Type', 'application/json');
   }
-  const res = await fetch(url, { ...opts, headers });
+  const { __retried, ...fetchOpts } = opts;
+  const res = await fetch(url, { ...fetchOpts, headers });
+  takeRenewedToken(res);
   // A 401, or a 403 that says the account itself is switched off or still
   // pending, means this sign-in is over: say so and sign out. Other 403s are
   // ordinary "no permission for this" answers and are left to the caller.
@@ -4368,12 +4427,88 @@ async function apiFetch(url, opts = {}){
     try{ const j = await res.clone().json(); ended = /inactive|awaiting admin approval/i.test(j && j.error || ''); }catch(e){}
   }
   if(ended && token){
+    // An expired sign-in during a save (or while a form is open, or while the
+    // sign-in box is already up): keep the page, ask for the password, retry.
+    const method = String(opts.method || 'GET').toUpperCase();
+    const isSave = method !== 'GET' && method !== 'HEAD';
+    if(res.status === 401 && CU && !__retried && !/\/api\/admin\/logout$/.test(url) &&
+       (isSave || reauthIsOpen() || (typeof window.__anyDialogOpen === 'function' && window.__anyDialogOpen()))){
+      const ok = await reauthPrompt();
+      if(ok) return apiFetch(url, { ...opts, __retried: true });
+      const e = new Error('Not saved: your sign-in has ended. Sign in again to save.'); e.reauthCancelled = true; throw e;
+    }
     setToken(null);
     CU = null;
     if(typeof logout === 'function') logout('Your session ended. Please sign in again.');
     throw new Error('Session expired. Please log in again.');
   }
   return res;
+}
+
+// ── "SIGN IN AGAIN TO SAVE" ───────────────────────────────
+// One dialog for every save that meets an ended sign-in. Every request waiting
+// on it shares the same answer, and the work on screen stays where it is.
+let __reauthWait = null;
+function reauthIsOpen(){ const d = document.getElementById('reauthDlg'); return !!(d && d.classList.contains('open')); }
+function reauthPrompt(){
+  if(__reauthWait) return __reauthWait.promise;
+  let resolve; const promise = new Promise(r => { resolve = r; });
+  __reauthWait = { promise, resolve };
+  let d = document.getElementById('reauthDlg');
+  if(!d){
+    d = document.createElement('div');
+    d.id = 'reauthDlg'; d.className = 'modal-ov'; d.dataset.noClickOut = '1';
+    d.style.zIndex = '6000';   // above the "Processing..." veil (5000) and every other popup
+    d.innerHTML = `
+      <div class="modal-box" style="max-width:420px" role="dialog" aria-modal="true" aria-labelledby="reauthTitle" aria-describedby="reauthMsg">
+        <div class="modal-hd"><div class="modal-title" id="reauthTitle">Sign in again to save</div></div>
+        <form class="modal-body" id="reauthForm" autocomplete="on">
+          <p id="reauthMsg" style="font-size:13.5px;line-height:1.6;margin:0 0 14px">Your sign-in has ended. Enter your password and what you were saving goes through. Nothing you typed has been lost.</p>
+          <div class="fg full" style="margin-bottom:12px"><label for="reauthEmail">Email</label><input type="email" id="reauthEmail" class="finput" autocomplete="username" readonly></div>
+          <div class="fg full"><label for="reauthPass">Password</label><input type="password" id="reauthPass" class="finput" autocomplete="current-password" required></div>
+          <div id="reauthErr" role="alert" style="display:none;color:#c81e1e;font-size:13px;margin:4px 0 10px"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px">
+            <button type="button" class="fbtn secondary" id="reauthNo">Not now</button>
+            <button type="submit" class="fbtn primary" id="reauthGo"><i class="fas fa-sign-in-alt"></i> Sign in and save</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(d);
+    document.getElementById('reauthForm').addEventListener('submit', e => { e.preventDefault(); reauthSubmit(); });
+    document.getElementById('reauthNo').addEventListener('click', () => reauthDone(false));
+  }
+  document.getElementById('reauthEmail').value = (CU && CU.email) || '';
+  document.getElementById('reauthPass').value = '';
+  document.getElementById('reauthErr').style.display = 'none';
+  d.classList.add('open');
+  setTimeout(() => { const p = document.getElementById('reauthPass'); if(p) p.focus(); }, 60);
+  return promise;
+}
+function reauthDone(ok){
+  const d = document.getElementById('reauthDlg'); if(d) d.classList.remove('open');
+  const w = __reauthWait; __reauthWait = null;
+  if(!ok) showToast('Not saved. Your work is still on screen: save again to sign in.', true);
+  if(w) w.resolve(!!ok);
+}
+// The dialog manager's Escape lands here.
+function reauthCancel(){ reauthDone(false); }
+async function reauthSubmit(){
+  const pass = document.getElementById('reauthPass').value, err = document.getElementById('reauthErr'), btn = document.getElementById('reauthGo');
+  const show = m => { err.textContent = m; err.style.display = 'block'; };
+  if(!pass){ show('Enter your password.'); return; }
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/admin/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email: (CU && CU.email) || '', password: pass }) });
+    let d = {}; try{ d = await res.json(); }catch(e){}
+    if(!res.ok || !d.token){ show(d.error || 'That did not work. Check the password and try again.'); return; }
+    // Only the same person may pick the work up: a different account signs out instead.
+    if(!CU || String(d.email || '').toLowerCase() !== String(CU.email || '').toLowerCase()){ show('That is a different account. Sign in as ' + ((CU && CU.email) || 'the same person') + '.'); return; }
+    setToken(d.token);
+    if(d.permissions) CU.permissions = d.permissions;
+    reauthDone(true);
+    showToast('Signed in again');
+  }catch(e){ show('Could not reach the server. Try again.'); }
+  finally{ btn.disabled = false; }
 }
 
 // GET a JSON list/object for a loader. Throws on an error answer (or, with
@@ -4403,6 +4538,11 @@ const jsArg = s => esc(JSON.stringify(String(s == null ? '' : s)));
 // would otherwise run when staff clicked it.
 const safeUrl = u => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '#';
 const fmt = n => '₱'+(n||0).toLocaleString('en-PH');
+// A listing's asking figure: rentals usually carry only monthlyRental (price 0),
+// which the Properties table used to print as ₱0.
+const fmtListPrice = p => (p && p.listingType === 'FOR LEASE' && Number(p.monthlyRental) > 0) ? fmt(Number(p.monthlyRental)) + '/mo'
+  : (p && Number(p.price) > 0) ? fmt(Number(p.price))
+  : (p && Number(p.monthlyRental) > 0) ? fmt(Number(p.monthlyRental)) + '/mo' : '—';
 const fmtDate = d => d?new Date(d).toLocaleString('en-PH',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 const fmtDateShort = d => d?new Date(d).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}):'—';
 const isAdmin = () => CU?.role === 'admin';
@@ -4468,9 +4608,31 @@ function applyRoleUI(){
     const allowed = keys.length === 0 || keys.some(k => hasPerm(k));
     el.style.display = allowed ? '' : 'none';
   });
+  // A module switched off at the server (data-feature="social" / "meta") is
+  // hidden for everyone, whatever their permissions.
+  document.querySelectorAll('[data-feature]').forEach(el=>{
+    if(!featureOn(el.getAttribute('data-feature'))) el.style.display = 'none';
+  });
   // Reset the add property button (switchTab controls the actual visibility)
   const addBtn = document.getElementById('addPropBtn');
   if(addBtn) addBtn.style.display = 'none';
+  hideEmptyMenuSections();
+}
+
+// A menu heading whose pages are all hidden for this person (permissions or a
+// switched-off module) is hidden too: low-permission staff used to see a stack
+// of headings with nothing under them.
+function hideEmptyMenuSections(){
+  const nav = document.querySelector('.sb-nav'); if(!nav) return;
+  // Headings with no rule of their own start visible again on every pass.
+  nav.querySelectorAll('.sb-section:not([data-perm]):not(.admin-only)').forEach(h => { h.style.display = ''; });
+  let head = null, any = false;
+  const close = () => { if(head && !any) head.style.display = 'none'; };
+  Array.from(nav.children).forEach(el => {
+    if(el.classList.contains('sb-section')){ close(); head = el; any = false; }
+    else if(head && el.classList.contains('nav-item') && el.style.display !== 'none') any = true;
+  });
+  close();
 }
 
 // ── PERMISSION CHECKBOX GRID (account modal + approval modal) ───────────
@@ -4561,10 +4723,12 @@ async function login(){
       document.getElementById('userAv').textContent=(d.name||email)[0].toUpperCase();
       window.__greeting = `Welcome back, ${(d.name||'').split(' ')[0]||email}`;
       document.getElementById('pageSub').textContent = window.__greeting;
+      await loadFeatures(); // which optional modules are on (Social, Meta)
       applyRoleUI(); // Apply role restrictions BEFORE loading data
       loadAll();
       landOnAllowedTab();
       showToast(`Welcome, ${(d.name||'').split(' ')[0]||'Admin'}!`);
+      if(window.__draftsNotice) window.__draftsNotice();
     }else{err.style.display='block';err.textContent=d.error||'Invalid credentials.'}
   }catch{err.style.display='block';err.textContent='Connection error. Try again.'}
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In'}
@@ -4630,7 +4794,7 @@ async function resetPassword(){
   const show=m=>{err.style.display='block';err.textContent=m};
   err.style.display='none';
   if(!resetToken){show('This reset link is missing its code. Please open the link from your email again.');return}
-  if(pass.length<8){show('Password must be at least 8 characters.');return}
+  if(pass.length<10){show('Password must be at least 10 characters.');return}
   if(pass!==pass2){show('Passwords do not match.');return}
   const btn=document.getElementById('rpBtn');
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
@@ -4668,7 +4832,7 @@ async function signup(){
   err.style.display='none';
   if(name.length<2){show('Please enter your full name.');return}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){show('Please enter a valid email address.');return}
-  if(pass.length<8){show('Password must be at least 8 characters.');return}
+  if(pass.length<10){show('Password must be at least 10 characters.');return}
   if(pass!==pass2){show('Passwords do not match.');return}
   const btn=document.getElementById('suBtn');
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
@@ -4678,6 +4842,7 @@ async function signup(){
     if(res.ok&&d.success){
       document.getElementById('suForm').style.display='none';
       document.getElementById('suDone').style.display='block';
+      if(d.message) document.getElementById('suDoneMsg').textContent = d.message;
       document.getElementById('suPass').value='';document.getElementById('suPass2').value='';
     }else show((d.details&&d.details[0]&&d.details[0].msg)||d.error||'Could not send request. Please try again.');
   }catch{show('Connection error. Please try again.')}
@@ -4691,6 +4856,9 @@ function logout(reason){
   if(getToken()){
     apiFetch('/api/admin/logout', { method: 'POST', keepalive: true }).catch(()=>{});
   }
+  // Signing out on purpose drops any kept form typing; an ended sign-in keeps
+  // it (for the same person only) so the work can be put back after signing in.
+  if(!reason && window.__draftsClearAll) window.__draftsClearAll();
   CU=null;
   setToken(null);
   // Apply role UI BEFORE anything else to hide admin-only elements
@@ -4713,12 +4881,67 @@ function logout(reason){
 
 // "Sign out everywhere": ends every sign-in of this account (a lost phone, a
 // shared PC), not just this browser's.
+// "Change my password" (audit L6). The server checks the current password,
+// signs every other device out and hands back a fresh token for this one.
+function openChangePassword(){
+  let d = document.getElementById('cpDlg');
+  if(!d){
+    d = document.createElement('div');
+    d.id = 'cpDlg'; d.className = 'modal-ov';
+    d.innerHTML = `
+      <div class="modal-box" style="max-width:440px" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+        <div class="modal-hd"><div class="modal-title" id="cpTitle">Change my password</div><button type="button" class="modal-close" aria-label="Close" onclick="closeChangePassword()"><i class="fas fa-times"></i></button></div>
+        <form class="modal-body" id="cpForm" autocomplete="on">
+          <input type="email" id="cpUser" autocomplete="username" style="display:none" readonly>
+          <div class="fg full" style="margin-bottom:12px"><label for="cpCur">Current password</label><input type="password" id="cpCur" class="finput" autocomplete="current-password" required></div>
+          <div class="fg full" style="margin-bottom:12px"><label for="cpNew">New password</label><input type="password" id="cpNew" class="finput" autocomplete="new-password" placeholder="Minimum 10 characters" required></div>
+          <div class="fg full"><label for="cpNew2">New password again</label><input type="password" id="cpNew2" class="finput" autocomplete="new-password" required></div>
+          <p style="font-size:12.5px;line-height:1.6;margin:10px 0 0;color:var(--gray)">Every other computer and phone signed in to this account will be signed out. This one stays signed in.</p>
+          <div id="cpErr" role="alert" style="display:none;color:#c81e1e;font-size:13px;margin:8px 0 0"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">
+            <button type="button" class="fbtn secondary" onclick="closeChangePassword()">Cancel</button>
+            <button type="submit" class="fbtn primary" id="cpGo"><i class="fas fa-key"></i> Change password</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(d);
+    document.getElementById('cpForm').addEventListener('submit', e => { e.preventDefault(); submitChangePassword(); });
+  }
+  ['cpCur','cpNew','cpNew2'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('cpUser').value = (CU && CU.email) || '';
+  document.getElementById('cpErr').style.display = 'none';
+  d.classList.add('open');
+  setTimeout(() => document.getElementById('cpCur').focus(), 60);
+}
+function closeChangePassword(){ const d = document.getElementById('cpDlg'); if(d) d.classList.remove('open'); }
+async function submitChangePassword(){
+  const cur = document.getElementById('cpCur').value, nw = document.getElementById('cpNew').value, nw2 = document.getElementById('cpNew2').value;
+  const err = document.getElementById('cpErr'), btn = document.getElementById('cpGo');
+  const show = m => { err.textContent = m; err.style.display = 'block'; };
+  err.style.display = 'none';
+  if(!cur){ show('Enter your current password.'); return; }
+  if(nw.length < 10){ show('The new password must be at least 10 characters.'); return; }
+  if(nw !== nw2){ show('The two new passwords do not match.'); return; }
+  btn.disabled = true;
+  try{
+    // Plain fetch: a 401/400 here is an answer to show, not an ended sign-in.
+    const res = await fetch('/api/account/change-password', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + getToken() }, body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+    let d = {}; try{ d = await res.json(); }catch(e){}
+    if(!res.ok || !d.token){ show((d.details && d.details[0] && d.details[0].msg) || d.error || 'Could not change the password.'); return; }
+    setToken(d.token);   // every other session ended; this token is the only one that still works
+    closeChangePassword();
+    showToast(d.message || 'Password changed. Other devices were signed out.');
+  }catch(e){ show('Could not reach the server. Try again.'); }
+  finally{ btn.disabled = false; }
+}
+
 async function logoutEverywhere(){
   if(!confirm('Sign out on every device?\n\nEvery computer and phone signed in to this account, including this one, will need to sign in again.')) return;
   try{
     const res = await apiFetch('/api/account/logout-everywhere', { method: 'POST' });
     if(!res.ok){ showToast('Could not sign out everywhere. Try again.', true); return; }
   }catch(e){ showToast('Could not reach the server. Try again.', true); return; }
+  if(window.__draftsClearAll) window.__draftsClearAll();
   setToken(null);
   logout('You are signed out on every device.');
 }
@@ -4744,7 +4967,8 @@ function loadQueue(jobs, width){
 window.addEventListener('unhandledrejection',e=>{ const r=e.reason; if(r && typeof r==='object' && r.httpError) e.preventDefault(); });
 function loadAll(){
   // First screen: the numbers, the property list and the dashboard feeds.
-  loadStats();loadAllProps();
+  if(hasPerm('dashboard_view')) loadStats();
+  if(canSeeProps()) loadAllProps();
   if(hasPerm('dashboard_analytics')){ loadAnalytics(); loadPresence(); }
   if(hasPerm('inquiries_view')) loadInquiries();
   if(hasPerm('tasks_view')){ const l=document.getElementById('navStaffLbl'); if(l) l.textContent=hasPerm('tasks_create')?'Staff':'My Desk'; }
@@ -4755,8 +4979,8 @@ function loadAll(){
   const add=(key,fn)=>jobs.push(()=>{ markLoaded(key); return fn(); });
   if(hasPerm('tasks_view')){ add('tasks',loadTasksData); add('staff',sfLoad); }
   if(hasPerm('leads_view')) add('leads',loadLeads);
-  if(hasPerm('meta_view')) add('meta',loadMeta);
-  if(hasPerm('social_view')) jobs.push(loadSocialBadge);
+  if(hasPerm('meta_view') && featureOn('meta')) add('meta',loadMeta);
+  if(hasPerm('social_view') && featureOn('social')) jobs.push(loadSocialBadge);
   if(hasPerm('titling_view')) add('titling',loadTitling);
   if(hasPerm('cases_view')) add('cases',loadCases);
   if(hasPerm('leasing_view')) add('leasing',loadLeasing);
@@ -4766,9 +4990,14 @@ function loadAll(){
   setTimeout(()=>loadQueue(jobs,3), 400);
   if(!window.__tabRestored){ window.__tabRestored=true; if(window.__restoreTab) setTimeout(window.__restoreTab,0); }
 }
-function refreshAll(){ for(const k in __loadedAt) delete __loadedAt[k]; loadAll(); loadHeroImages(); showToast('Data refreshed')}
+function refreshAll(){ for(const k in __loadedAt) delete __loadedAt[k]; loadAll(); if(canSeeHero()) loadHeroImages(); showToast('Data refreshed')}
+// The same any-of rules the server uses for /api/admin/all-properties and
+// /api/admin/hero-images, so a staff member without them makes no doomed calls.
+function canSeeProps(){ return ['dashboard_view','properties_create','properties_edit','properties_delete','properties_upload_image'].some(hasPerm); }
+function canSeeHero(){ return ['dashboard_view','hero_upload','hero_edit','hero_delete'].some(hasPerm); }
 
 async function loadStats(){
+  if(!hasPerm('dashboard_view')) return;
   try{
     const s=await apiJson('/api/admin/stats');
     // One listing should read "1 Property", not "1 Properties".
@@ -4796,6 +5025,7 @@ async function loadStats(){
 }
 
 async function loadAllProps(){
+  if(!canSeeProps()) return;
   try{
     allProps=await apiJson('/api/admin/all-properties', true);
     renderProps(allProps);
@@ -5298,7 +5528,7 @@ function renderProps(props){
     <td><div style="font-weight:600;font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.title)}">${esc(p.title)}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(p.location)}</div>${p.featured?'<span class="badge b-feat" style="margin-top:4px"><i class="fas fa-star"></i> Featured</span>':''}</td>
     <td style="font-size:12px;color:var(--gray)">${esc(p.propertyType||'—')}</td>
     <td><span class="badge ${p.listingType==='FOR SALE'?'b-sale':'b-lease'}">${esc(p.listingType||'—')}</span></td>
-    <td style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--ab-hot-text,#c02e00);font-weight:600">${fmt(p.price)}</td>
+    <td style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--ab-hot-text,#c02e00);font-weight:600">${fmtListPrice(p)}</td>
     <td style="font-size:12px;color:var(--gray)"><i class="far fa-eye" style="color:var(--ab-hot-text,#c02e00);margin-right:4px"></i>${(p.views||0).toLocaleString()}</td>
     <td><span class="badge ${p.status==='available'?'b-avail':'b-sold'}">${esc(p.status||'available')}</span></td>
     <td><div class="act-btns">
@@ -6160,7 +6390,15 @@ function openApprove(id){
   document.getElementById('apAv').textContent = (a.name||a.email)[0].toUpperCase();
   document.getElementById('apName').textContent = a.name || '—';
   document.getElementById('apEmail').textContent = a.email;
-  document.getElementById('apDate').textContent = 'Requested ' + fmtDate(a.createdAt);
+  // Who asked, from where: the request time, the confirmed email and the
+  // address and browser it came from (audit F10), so a fake request stands out.
+  const apWhen = v => v ? new Date(v).toLocaleString('en-PH', { timeZone:'Asia/Manila', dateStyle:'medium', timeStyle:'short' }) : '';
+  const apBits = ['Requested ' + apWhen(a.createdAt)];
+  if(a.confirmedAt) apBits.push('Email confirmed ' + apWhen(a.confirmedAt));
+  if(a.signupIp) apBits.push('From ' + a.signupIp);
+  if(a.signupUa) apBits.push(String(a.signupUa).slice(0, 160));
+  const apD = document.getElementById('apDate');
+  apD.textContent = apBits.join(String.fromCharCode(10)); apD.style.whiteSpace = 'pre-line'; apD.style.wordBreak = 'break-word';
   // Pre-select what they asked to be (agent signups come from agent.html).
   document.getElementById('apRole').value = a.requestedRole === 'agent' ? 'agent' : 'employee';
   // Start from the typical-employee defaults so approving is one click for the common case.
@@ -6673,6 +6911,7 @@ async function restoreSession(attempt){
     const d = await res.json();
     lgNote('');
     CU = { email: d.email, name: d.name, role: d.role, id: d.id, permissions: d.permissions || {} };
+    if(d.features && typeof d.features === 'object') FEATURES = d.features;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminShell').classList.add('visible');
     document.getElementById('userName').textContent = d.name || d.email;
@@ -6683,6 +6922,7 @@ async function restoreSession(attempt){
     applyRoleUI();
     loadAll();
     landOnAllowedTab();
+    if(window.__draftsNotice) window.__draftsNotice();
     return true;
   }catch(e){
     if(!getToken()) return false;   // the session ended (apiFetch already signed out)
@@ -7920,10 +8160,7 @@ async function uploadAttachment(input){
   fd.append('file', file, file.name);
   showLoad('Uploading...');
   try{
-    const token = getToken();
-    const res = await fetch('/api/admin/tasks/'+activeTaskId+'/attachments', {
-      method:'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd
-    });
+    const res = await apiFetch('/api/admin/tasks/'+activeTaskId+'/attachments', { method:'POST', body: fd });
     if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.error || 'Upload failed'); }
     const fresh = await res.json();
     const idx = allTasks.findIndex(x => x._id === activeTaskId);
@@ -8848,7 +9085,7 @@ function bmRenderPropPicker(){
       <img src="${esc(img)}" onerror="this.src='/img/logo-384.png'" alt="">
       <div>
         <div class="bm-prop-title">${esc(p.title||'Untitled')}</div>
-        <div class="bm-prop-meta">${esc(p.location||'')}${p.price?' · '+fmt(p.price):''}</div>
+        <div class="bm-prop-meta">${esc(p.location||'')}${fmtListPrice(p)!=='—'?' · '+fmtListPrice(p):''}</div>
       </div>
     </label>`;
   }).join('');
@@ -9937,7 +10174,7 @@ function tlPayClose(){
   document.getElementById('tlPayModal').style.display = 'none';
 }
 async function tlPayOpen(){
-  if(!hasPerm('titling_manage')){ showToast('You don\'t have permission to change payment details', true); return; }
+  if(!isAdmin()){ showToast('Only an admin can change the payment details clients pay into.', true); return; }
   document.getElementById('tlPayModal').style.display = 'flex';
   document.getElementById('tlPayList').innerHTML = '<div class="ls-note">Loading…</div>';
   tlPayState = [];
@@ -10316,8 +10553,7 @@ async function uploadCashProof(input){
   const fd=new FormData(); fd.append('file', file, file.name);
   showToast('Uploading proof…');
   try{
-    const token=getToken();
-    const res=await fetch(cashCtx.base+'/'+id+'/proof',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const res=await apiFetch(cashCtx.base+'/'+id+'/proof',{method:'POST',body:fd});
     if(!res.ok){ const er=await res.json().catch(()=>({})); throw new Error(er.error||'Upload failed'); }
     const fresh=await res.json();
     cashCurrent=fresh;
@@ -10492,7 +10728,8 @@ function switchTab(name){
   const addTitlingBtn=document.getElementById('addTitlingBtn');
   if(addTitlingBtn)addTitlingBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   const tlPayBtn=document.getElementById('tlPayBtn');
-  if(tlPayBtn)tlPayBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
+  // Payment details are the owner's to change (audit F5: the server takes them from admins only).
+  if(tlPayBtn)tlPayBtn.style.display=(name==='titling'&&isAdmin())?'':'none';
   const tlImportBtn=document.getElementById('tlImportBtn');
   if(tlImportBtn)tlImportBtn.style.display=(name==='titling'&&hasPerm('titling_manage'))?'':'none';
   // New lease button — gated by leasing_manage, only on the leasing tab
@@ -10508,7 +10745,7 @@ function switchTab(name){
     if(cb) cb.checked = false;
   }
   // Refresh tasks on tab visit
-  if(name==='hero' && due('hero')) loadHeroImages();
+  if(name==='hero' && canSeeHero() && due('hero')) loadHeroImages();
   if((name==='subscribers'||name==='alerts') && hasPerm('customers_view') && due(name)){ if(name==='subscribers'){loadCalcStats();loadSubscribers();} else loadAlerts(); }
   if(name==='tasks' && hasPerm('tasks_view') && due('tasks')){
     loadTasksData();
@@ -10800,6 +11037,16 @@ function renderLeasingSettings(){
   const c2 = document.getElementById('lsSetDigest'); if(c2) c2.checked = s.digestEnabled !== false;
   const can = hasPerm('leasing_manage');
   document.querySelectorAll('#lsSettingsWrap input, #lsSettingsWrap textarea').forEach(el => { el.disabled = !can; });
+  // The account tenants pay into is the owner's to change (audit F5): staff see
+  // it, read-only, and the server refuses a change from anyone but an admin.
+  const pi = document.getElementById('lsSetPayInstructions');
+  if(pi){
+    pi.readOnly = !isAdmin();
+    pi.title = isAdmin() ? '' : 'Only an admin can change the payment details tenants pay into.';
+    let n = document.getElementById('lsPayAdminNote');
+    if(!isAdmin() && !n){ n = document.createElement('div'); n.id = 'lsPayAdminNote'; n.className = 'ls-note'; n.textContent = 'Only an admin can change the payment details tenants pay into.'; pi.insertAdjacentElement('afterend', n); }
+    if(n) n.style.display = isAdmin() ? 'none' : '';
+  }
   const sb = document.getElementById('lsSetSaveBtn'); if(sb) sb.style.display = can ? '' : 'none';
   const cal = document.getElementById('lsCalFeed');
   if(cal){
@@ -10812,6 +11059,7 @@ async function saveLeasingSettings(){
   if(!hasPerm('leasing_manage')) return;
   const g = id => document.getElementById(id)?.value;
   const body = { reminderDays: g('lsSetReminderDays'), digestHour: g('lsSetDigestHour'), notifyEmail: g('lsSetNotifyEmail'), expiryDays: String(g('lsSetExpiryDays') || '').split(/[,\s]+/).filter(Boolean), paymentInstructions: g('lsSetPayInstructions'), defaultDueDay: g('lsSetDueDay'), defaultGraceDays: g('lsSetGraceDays'), defaultDepositMonths: g('lsSetDepositMonths'), defaultAdvanceMonths: g('lsSetAdvanceMonths'), overdueNotice: !!document.getElementById('lsSetOverdue')?.checked, digestEnabled: !!document.getElementById('lsSetDigest')?.checked };
+  if(!isAdmin()) delete body.paymentInstructions;   // admin-only field: leave it out so staff can still save the rest
   try{ const r = await apiFetch('/api/admin/leasing/settings', { method: 'PUT', body: JSON.stringify(body) }); const d = await r.json(); if(!r.ok){ showToast(d.error || 'Save failed', true); return; } lsMeta.settings = d; renderLeasingSettings(); showToast('Leasing settings saved'); }
   catch(e){ showToast('Error saving settings', true); }
 }
@@ -12782,6 +13030,16 @@ function caSend(q, file){
     x.upload.onprogress = e => { if(e.lengthComputable){ q.pct = Math.min(99, Math.round(e.loaded / e.total * 100)); caPaintQueue(); } };
     x.onload = () => {
       let d = {}; try{ d = JSON.parse(x.responseText); }catch(e){}
+      try{ const rt = x.getResponseHeader('X-Renewed-Token'); if(rt && getToken() && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(rt)) setToken(rt); }catch(e){}
+      // An ended sign-in: ask for the password and send the same file again.
+      if(x.status === 401 && CU && getToken() && !q.reauthed){
+        q.reauthed = true;
+        reauthPrompt().then(ok => {
+          if(ok){ q.state = 'up'; caPaintQueue(); caSend(q, file).then(done); }
+          else { q.state = 'err'; q.error = 'Not uploaded: sign in again, then add the file again.'; done(); }
+        });
+        return;
+      }
       if(x.status >= 200 && x.status < 300 && d._id){
         q.state = 'done'; q.doneAt = Date.now();
         csUpsert(d);
@@ -13024,7 +13282,11 @@ function renderLeasingPanel(){
     impModal: 'impClose', tlImpModal: 'tlImpClose', bulkAssignModal: 'closeBulkAssignModal',
     csHearDlg: 'closeCsHearDlg', csLightbox: 'closeCsLightbox',
     leadModal: 'closeLeadModal', leadAddModal: 'closeLeadAdd', leadImpModal: 'closeLeadImport',
-    sfTaskModal: 'sfTaskClose', sfDlg: 'sfDlgClose'
+    sfTaskModal: 'sfTaskClose', sfDlg: 'sfDlgClose',
+    // Built at runtime the first time they open (qrModal, asgModal, reauthDlg):
+    // the body watcher below picks them up the moment they are added.
+    qrModal: 'closeInqReply', asgModal: 'closeAssign', tlPayModal: 'tlPayClose',
+    reauthDlg: 'reauthCancel', cpDlg: 'closeChangePassword'
   };
   // Slide-over panels already have Escape handling of their own; they are
   // listed so the manager knows they count as "something is open".
@@ -13081,6 +13343,7 @@ function renderLeasingPanel(){
   document.addEventListener('click', e => {
     const el = e.target;
     if (!el || !el.id || !CLOSERS[el.id]) return;   // panels are not click-out
+    if (el.dataset.noClickOut) return;              // the sign-in box: only its buttons close it
     if (downOn !== el) return;
     if (!shown(el)) return;
     closeById(el.id);
@@ -13118,7 +13381,9 @@ function renderLeasingPanel(){
         const target = items.find(n => !/close|times/i.test(n.className + ' ' + (n.getAttribute('onclick') || ''))) || items[0];
         if (target) { try { target.focus({ preventScroll: true }); } catch (e) { target.focus(); } }
       }, 60);
+      if (window.__draftOpened) window.__draftOpened(el);
     } else {
+      if (window.__draftClosed) window.__draftClosed(el);
       el.removeAttribute('aria-modal');
       const back = returnTo.get(el);
       if (back && document.body.contains(back)) { try { back.focus({ preventScroll: true }); } catch (e) {} }
@@ -13133,7 +13398,9 @@ function renderLeasingPanel(){
       const el = document.getElementById(id);
       if (!el || el.dataset.dlgWatched) return;
       el.dataset.dlgWatched = '1';
-      let state = shown(el);
+      // A popup built and opened in the same moment (Quick reply, Assign) is
+      // already open by the time it is first seen: give it the opening steps now.
+      let state = shown(el) ? sync(el, false) : false;
       new MutationObserver(() => { state = sync(el, state); })
         .observe(el, { attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
     });
@@ -13142,8 +13409,120 @@ function renderLeasingPanel(){
   else watch();
   // Modals are static markup, but re-run once after boot in case a tab injects one.
   setTimeout(watch, 1500);
+  // Some popups are created on first use and appended to <body>: watch them as they arrive.
+  const bodyWatch = () => new MutationObserver(recs => {
+    for (const r of recs) for (const n of r.addedNodes) if (n.nodeType === 1 && n.id && CLOSERS[n.id]) { watch(); return; }
+  }).observe(document.body, { childList: true });
+  if (document.body) bodyWatch(); else document.addEventListener('DOMContentLoaded', bodyWatch);
   window.__closeTopDialog = () => { const o = openOnes(); if (o.length) closeById(o[0].id); };
   window.__anyDialogOpen = () => openOnes().length > 0;
+})();
+
+// ══ FORM DRAFTS (F13) ═════════════════════════════════════════════════════
+// The long forms keep a copy of what has been typed in sessionStorage (this tab
+// only, gone when the tab closes). If the page is lost with a form open (the
+// sign-in ended, a crash, an accidental reload), opening that form again offers
+// to put the typing back. Closing the form on purpose (Save, X, Escape) drops
+// the copy. A copy only ever comes back for the same signed-in person.
+(function () {
+  const FORMS = ['propModal', 'taskModal', 'titlingModal', 'leaseModal', 'caseModal', 'leadModal', 'leadAddModal', 'sfTaskModal', 'csHearDlg'];
+  const KEY = id => 'glraDraft:' + id;
+  const MAX_AGE = 24 * 3600e3;
+  // Which record a form is open on, so a copy typed on one listing (or case,
+  // lease, lead) is never offered on another. '' is a new record.
+  const REC = {
+    propModal: () => editPropId,
+    titlingModal: () => document.getElementById('tlId').value,
+    leaseModal: () => lsCurrent && lsCurrent._id,
+    caseModal: () => csCurrent && csCurrent._id,
+    leadModal: () => LD.cur,
+    csHearDlg: () => csHear.id
+  };
+  const recOf = el => { try { return String((REC[el.id] && REC[el.id]()) || ''); } catch (e) { return ''; } };
+  const ss = {
+    get(k){ try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } },
+    set(k, v){ try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del(k){ try { sessionStorage.removeItem(k); } catch (e) {} }
+  };
+  const isOpen = el => el && (el.classList.contains('open') || getComputedStyle(el).display !== 'none');
+  const fieldsOf = el => [...el.querySelectorAll('input[id],select[id],textarea[id]')]
+    .filter(f => !/^(password|file|hidden|button|submit|reset|image)$/i.test(f.type || '') && !f.closest('.draft-bar'));
+  function headerText(el){
+    const box = el.firstElementChild; const h = box && box.firstElementChild;
+    return h ? (h.innerText || h.textContent || '').trim().split('\n')[0].slice(0, 60) : '';
+  }
+  function save(el){
+    if (!CU || !el || !isOpen(el)) return;
+    const fields = {}; let any = false, first = '';
+    fieldsOf(el).forEach(f => {
+      if (f.type === 'checkbox' || f.type === 'radio') fields[f.id] = { c: !!f.checked };
+      else { fields[f.id] = { v: f.value }; if (String(f.value).trim()) { any = true; if (!first && f.tagName !== 'SELECT' && f.type !== 'date') first = String(f.value).trim().slice(0, 60); } }
+    });
+    if (!any) return;
+    ss.set(KEY(el.id), { owner: CU.email, at: Date.now(), rec: recOf(el), title: headerText(el), first, fields });
+  }
+  const timers = {};
+  function onEdit(e){
+    const t = e.target; if (!t || !t.closest) return;
+    const el = t.closest(FORMS.map(id => '#' + id).join(','));
+    if (!el || t.closest('.draft-bar')) return;
+    clearTimeout(timers[el.id]); timers[el.id] = setTimeout(() => save(el), 400);
+  }
+  document.addEventListener('input', onEdit, true);
+  document.addEventListener('change', onEdit, true);
+  function restore(el, d){
+    const list = fieldsOf(el).filter(f => d.fields[f.id]);
+    const put = (f, fire) => { const s = d.fields[f.id]; if ('c' in s) f.checked = s.c; else f.value = s.v; if (fire) { f.dispatchEvent(new Event('input', { bubbles: true })); f.dispatchEvent(new Event('change', { bubbles: true })); } };
+    // Selects first (their change handlers may show or reset other boxes), then the rest twice.
+    list.filter(f => f.tagName === 'SELECT').forEach(f => put(f, true));
+    list.filter(f => f.tagName !== 'SELECT').forEach(f => put(f, true));
+    list.filter(f => f.tagName !== 'SELECT').forEach(f => put(f, false));
+    save(el);
+  }
+  const openRec = {};
+  window.__draftOpened = function (el) {
+    if (!el || FORMS.indexOf(el.id) < 0) return;
+    openRec[el.id] = recOf(el);
+    const old = el.querySelector('.draft-bar'); if (old) old.remove();
+    const d = ss.get(KEY(el.id));
+    if (!d || !CU || d.owner !== CU.email || Date.now() - d.at > MAX_AGE) { if (d && (!CU || d.owner !== CU.email || Date.now() - d.at > MAX_AGE)) ss.del(KEY(el.id)); return; }
+    // Wait for the form's own opener to fill it, then offer the copy.
+    setTimeout(() => {
+      if (!isOpen(el) || el.querySelector('.draft-bar')) return;
+      if ((d.rec || '') !== recOf(el)) return;   // typed on a different record
+      const box = el.firstElementChild, head = box && box.firstElementChild; if (!head) return;
+      const bar = document.createElement('div');
+      bar.className = 'draft-bar'; bar.setAttribute('role', 'status');
+      bar.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;background:#fff7e6;color:#5c3b00;border-bottom:1px solid #f0d9a8;font-size:13px;line-height:1.45';
+      const when = new Date(d.at).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+      bar.innerHTML = `<span style="flex:1 1 240px"><i class="fas fa-life-ring" aria-hidden="true"></i> Unsaved typing from ${esc(when)} was kept${d.first ? `: <b>${esc(d.first)}</b>` : ''}${d.title ? ` (${esc(d.title)})` : ''}. Photos and files are not kept.</span>
+        <button type="button" class="fbtn primary" data-dr="y" style="padding:7px 14px">Put it back</button>
+        <button type="button" class="fbtn secondary" data-dr="n" style="padding:7px 14px">Discard</button>`;
+      bar.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-dr]'); if (!b) return;
+        if (b.dataset.dr === 'y') { restore(el, d); showToast('Your typing is back. Check it, then save.'); }
+        else ss.del(KEY(el.id));
+        bar.remove();
+      });
+      head.insertAdjacentElement('afterend', bar);
+    }, 700);
+  };
+  window.__draftClosed = function (el) {
+    if (!el || FORMS.indexOf(el.id) < 0) return;
+    clearTimeout(timers[el.id]);
+    // Drop the copy only when this form was open on the record it belongs to:
+    // opening and closing some other listing must not lose it.
+    const d = ss.get(KEY(el.id));
+    if (d && (d.rec || '') === (openRec[el.id] || '')) ss.del(KEY(el.id));
+    const bar = el.querySelector('.draft-bar'); if (bar) bar.remove();
+  };
+  window.__draftsClearAll = function () { FORMS.forEach(id => ss.del(KEY(id))); };
+  // After signing in: say which forms have typing waiting.
+  window.__draftsNotice = function () {
+    if (!CU) return;
+    const t = FORMS.map(id => ss.get(KEY(id))).filter(d => d && d.owner === CU.email && Date.now() - d.at <= MAX_AGE).map(d => d.title || 'a form');
+    if (t.length) setTimeout(() => showToast('Unsaved typing was kept for: ' + t.join(', ') + '. Open it again to put it back.'), 1200);
+  };
 })();
 
 // ══ SIDEBAR ═══════════════════════════════════════════════════════════════
@@ -13985,8 +14364,9 @@ async function mtLoadLogs(){
 // for approval plus overdue conversations; "!" when a Page connection has a problem.
 // The module may be switched off (404): then the badge simply stays hidden.
 async function loadSocialBadge(){
+  if(!featureOn('social')) return;
   try{
-    const r=await fetch('/api/admin/social/badge',{headers:{Authorization:'Bearer '+getToken()}});
+    const r=await apiFetch('/api/admin/social/badge');
     if(!r.ok) return;
     const b=await r.json(), el=document.getElementById('socialBadge');
     if(!el) return;
@@ -13997,6 +14377,7 @@ async function loadSocialBadge(){
 }
 async function loadMeta(){
   if(!hasPerm('meta_view')) return;
+  if(!featureOn('meta')){ MT.off = true; MT.status = null; MT.loaded = true; mtBadge(); return; }
   try{
     MT.err = '';
     await mtLoadStatus();
@@ -14912,7 +15293,7 @@ function sfDone(id){
         try{
           const file = await glraShrinkImage(f.files[0]);
           const fd = new FormData(); fd.append('file', file, file.name);
-          const up = await fetch('/api/admin/tasks/'+id+'/attachments', { method:'POST', headers:{ 'Authorization':'Bearer ' + getToken() }, body:fd });
+          const up = await apiFetch('/api/admin/tasks/'+id+'/attachments', { method:'POST', body:fd });
           const fresh = await up.json().catch(() => ({}));
           const att = up.ok && (fresh.attachments||[]).slice(-1)[0];
           if(att) await apiFetch(`/api/admin/staff/tasks/${id}/act`, { method:'POST', body:JSON.stringify({ action:'shot', attachmentId: att._id }) });
@@ -15526,7 +15907,7 @@ async function sfBotMails(){
 // Keep "who's doing what" fresh while the tab is open.
 setInterval(() => { const p = document.getElementById('tab-staff'), a = document.activeElement; const typing = a && p && p.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName); if(p && p.style.display !== 'none' && !document.hidden && !typing && !window.__anyDialogOpen?.() && !document.querySelector('#tab-staff details[open]')) sfLoad(); }, 90000);
 </script>
-<script src="/js/a11y.js?v=146" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
 <script>
 // Menu helpers: type to jump, click a heading to fold its group, reopen where you left off.
 (function(){
@@ -15681,11 +16062,14 @@ setInterval(() => { const p = document.getElementById('tab-staff'), a = document
     if(act!==lastActive){ var first=lastActive===null; lastActive=act; changed=!first; if(changed){ enter(); if(window.__glraGroups) window.__glraGroups.close(); } }
     // grouped rail: the marker sits behind the group button that holds the current page
     if(on&&window.__glraGroups&&window.__glraGroups.on()) act=window.__glraGroups.active();
-    if(!on||!act||!act.offsetWidth){ mark.classList.remove('on'); nav.classList.remove('has-mark'); placed=false; ends(); return; }
+    // classList.add/remove rewrite the class attribute even when nothing changes,
+    // and the observer below hears that as a change: it re-ran place() every
+    // frame, forever. toggle(x, force) writes only when the class really changes.
+    if(!on||!act||!act.offsetWidth){ mark.classList.toggle('on',false); nav.classList.toggle('has-mark',false); placed=false; ends(); return; }
     if(!placed||still()) mark.style.transition='none';
     mark.style.width=act.offsetWidth+'px'; mark.style.height=act.offsetHeight+'px';
     mark.style.transform='translate('+act.offsetLeft+'px,'+act.offsetTop+'px)';
-    mark.classList.add('on'); nav.classList.add('has-mark');
+    mark.classList.toggle('on',true); nav.classList.toggle('has-mark',true);
     if(!placed||still()){ void mark.offsetWidth; mark.style.transition=''; }
     // a new page that is scrolled out of the rail comes into view (only when the page changes)
     var top=act.offsetTop, bot=top+act.offsetHeight;

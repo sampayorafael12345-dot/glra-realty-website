@@ -33,15 +33,15 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
-<link rel="stylesheet" href="/css/styles.css?v=116">
-<link rel="stylesheet" href="/css/brutalist-theme.css?v=146">
+<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 
 <style>
-.nh-grid{max-width:1100px;margin:50px auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:26px}
+.nh-grid{max-width:1100px;margin:50px auto;padding:0 5%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(310px,100%),1fr));gap:26px}
 .nh-card{background:var(--card-bg);border:1px solid var(--border-color);overflow:hidden;transition:var(--transition);text-decoration:none;color:var(--text-color);display:flex;flex-direction:column}
 .nh-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md);transform:translateY(-4px)}
 .nh-card-image{height:180px;background:linear-gradient(135deg,var(--navy),var(--navy-mid));position:relative;overflow:hidden;display:flex;align-items:flex-end}
@@ -99,8 +99,15 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
 .nx-lbl.is-hid{visibility:hidden}
 .nx-lbl-wrap:focus-visible .nx-lbl{outline:3px solid #ff3d00;outline-offset:2px}
 .nx-fail{padding:24px;text-align:center}
+/* Browse listings by area: crawlable links to the /properties/<area> pages. */
+.nh-areas{max-width:1100px;margin:0 auto 50px;padding:0 5%}
+.nh-areas h2{font-size:22px;font-weight:900;letter-spacing:-.4px;margin:0 0 12px}
+.nh-areas ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:640px){.nh-areas ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
+html body .nh-areas a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 12px;border:2px solid var(--ab-line,#0a0a0a);color:var(--ab-ink,#0a0a0a);font:700 11px/1.2 'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+html body .nh-areas a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=139">
+<link rel="stylesheet" href="/css/tactile.css?v=149">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -123,6 +130,7 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
         <a href="/testimonials.html">Testimonials</a>
         <a href="/blog.html">Blog &amp; Tips</a>
         <a href="/guide.html">Documentation Guide</a>
+        <a href="/faq.html">FAQ</a>
       </div>
     </div>
     <a href="/#contact" class="contact-btn-nav">CONTACT</a>
@@ -138,7 +146,7 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
     <a href="/valuation.html" onclick="closeMobileMenu()">What's My Property Worth?</a>
     <a href="/tools.html" onclick="closeMobileMenu()">All Tools &amp; Calculators</a>
     <a href="/neighborhoods.html" onclick="closeMobileMenu()">Neighborhoods</a>
-    <a href="/calculator.html" onclick="closeMobileMenu()">Calculator</a>
+    <a href="/calculator.html" onclick="closeMobileMenu()">Closing Fees Calculator</a>
     <a href="/zonal.html" onclick="closeMobileMenu()">Zonal Value</a>
     <a href="/about.html" onclick="closeMobileMenu()">About</a>
     <a href="/blog.html" onclick="closeMobileMenu()">Blog</a>
@@ -217,27 +225,41 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
 
 </section>
 
+<nav class="nh-areas" aria-labelledby="nhAreasTitle">
+  <h2 id="nhAreasTitle">Browse listings by area</h2>
+  <ul>
+    <li><a href="/properties/makati">Makati <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/bgc">BGC <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/taguig">Taguig <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/pasig">Pasig <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/mandaluyong">Mandaluyong <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/quezon-city">Quezon City <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/pasay">Pasay <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+    <li><a href="/properties/all">Every listing <i class="fas fa-arrow-right" aria-hidden="true"></i></a></li>
+  </ul>
+</nav>
+
 </main>
 <footer>
   <div class="footer-content">
-    <div class="footer-col"><h4>GLRA Realty</h4><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
+    <div class="footer-col"><h2 class="footer-h">GLRA Realty</h2><p>Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines</p>
       <div class="footer-social">
         <a href="https://instagram.com/glra_realty" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="https://m.me/glrarealty" target="_blank" rel="noopener" aria-label="Messenger"><i class="fab fa-facebook-messenger"></i></a>
         <a href="tel:+639171774572" aria-label="Call us"><i class="fas fa-phone-alt"></i></a>
       </div>
     </div>
-    <div class="footer-col"><h4>Properties</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Properties</h2><ul>
       <li><a href="/properties.html?category=FOR SALE">For Sale</a></li>
       <li><a href="/properties.html?category=FOR LEASE">For Lease</a></li>
       <li><a href="/properties.html">All Listings</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Neighborhoods</h4><ul>
+    <div class="footer-col"><h2 class="footer-h">Neighborhoods</h2><ul>
       <li><a href="/living-in-bgc.html">BGC</a></li>
       <li><a href="/living-in-makati.html">Makati</a></li>
       <li><a href="/living-in-alabang.html">Alabang</a></li>
     </ul></div>
-    <div class="footer-col"><h4>Contact</h4>
+    <div class="footer-col"><h2 class="footer-h">Contact</h2>
       <p><i class="fas fa-phone-alt" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>0917 177 4572</p>
       <p><i class="fas fa-envelope" style="color:var(--ab-hot-text,#c02e00);margin-right:6px"></i>glrarealty@gmail.com</p>
     </div>
@@ -258,7 +280,7 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
   <button class="floating-btn btn-darkmode" id="floatingDarkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
-<script src="/js/glra-maps.js?v=117" defer></script>
+<script src="/js/glra-maps.js?v=148" defer></script>
 <script>
 /* Area explorer. Circles are drawn from the list below; the numbers come
    from the live listings (/api/properties, positions rounded to ~100 m), so
@@ -270,7 +292,7 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
     { n: 'Rockwell & Poblacion', lat: 14.5646, lng: 121.0355, r: 900, guide: '/living-in-makati.html', t: 'Towers by the Power Plant Mall, and Makati\'s restaurant and nightlife quarter.' },
     { n: 'BGC', lat: 14.5507, lng: 121.0509, r: 1500, guide: '/living-in-bgc.html', t: 'Bonifacio Global City: a planned, walkable grid of offices, shops and condos.' },
     { n: 'Ortigas Center', lat: 14.5866, lng: 121.0614, r: 1300, t: 'The Pasig, Mandaluyong and Quezon City business district around the malls.' },
-    { n: 'Kapitolyo', lat: 14.5708, lng: 121.0588, r: 800, t: 'A low-rise Pasig neighbourhood known for its food streets.' },
+    { n: 'Kapitolyo', lat: 14.5708, lng: 121.0588, r: 800, t: 'A low-rise Pasig neighborhood known for its food streets.' },
     { n: 'Shaw & Mandaluyong', lat: 14.5810, lng: 121.0530, r: 1000, t: 'Mid-rise and high-rise living between Ortigas and Makati, on the MRT-3.' },
     { n: 'Greenhills', lat: 14.6010, lng: 121.0490, r: 1200, t: 'San Juan\'s shopping district and the villages around it.' },
     { n: 'Eastwood', lat: 14.6093, lng: 121.0799, r: 900, t: 'A self-contained Quezon City township of offices and condos.' },
@@ -391,9 +413,9 @@ html body .nx-links a:hover{background:#ff3d00;border-color:#ff3d00;color:#fff}
   if (document.readyState === 'complete') boot(); else window.addEventListener('load', boot);
 })();
 </script>
-<script src="/js/main.js?v=146"></script>
-<script src="/js/brutalist-shell.js?v=117" defer></script>
-<script src="/js/a11y.js?v=146" defer></script>
-<script src="/js/chat.js?v=146" defer></script>
+<script src="/js/main.js?v=149"></script>
+<script src="/js/brutalist-shell.js?v=148" defer></script>
+<script src="/js/a11y.js?v=149" defer></script>
+<script src="/js/chat.js?v=149" defer></script>
 </body>
 </html>

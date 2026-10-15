@@ -43,6 +43,8 @@ const { verifyToken, requirePermission, requireAdmin, logAudit, loadAccountState
 const { getEmailHeader, getEmailFooter } = require('./email-templates');
 const { pushActivity, getLeadSettings } = require('./leads');
 const { applyWebsiteCover } = require('./cover');
+// Listing reads go through listing-lite so a base64 photo never leaves Atlas.
+const { findListingsLite, findListingLiteById } = require('./listing-lite');
 const G = require('./meta-graph');
 const { env, flag, scrub, logMeta, metaGet, metaGetAll, metaWrite, pageTokenFor, MetaError, clean } = G;
 const AI = require('./social-ai');
@@ -135,10 +137,14 @@ function auditReq(actor, req) {
 // ══ PERMISSIONS ════════════════════════════════════════════════
 // Same rule as requirePermission (admins have everything; a key never set
 // follows the role default), for deciding inside a handler.
+// The account's CURRENT state decides, even for an admin: a deactivated admin
+// used to keep every permission here because the role alone short-circuited,
+// so their emailed approval links went on working for 72 hours.
 async function permsOf(userId, role) {
-  if (role === 'admin') return { view: true, draft: true, approve: true, admin: true };
+  const none = { view: false, draft: false, approve: false, admin: false };
+  if (!mongoose.isValidObjectId(String(userId || ''))) return role === 'admin' ? { view: true, draft: true, approve: true, admin: true } : none;
   const st = await loadAccountState(String(userId || ''));
-  if (!st.exists || !st.isActive || st.status === 'pending') return { view: false, draft: false, approve: false, admin: false };
+  if (!st.exists || !st.isActive || st.status === 'pending') return none;
   if (st.role === 'admin') return { view: true, draft: true, approve: true, admin: true };
   const own = st.permissions || {};
   const dflt = defaultPermissionsForRole(st.role || 'employee');
@@ -489,17 +495,23 @@ async function runTargets(postId, actor) {
 
 // THE approval. Only called from routes that checked social_approve (or a
 // valid one-time link of an account that still has it).
-async function approvePost(postId, actor, req) {
+// rev: the version the approver was shown (postJson's rev). When it is given
+// and the post has been edited since, the approval is refused so nobody signs
+// off on words they never read. The claim itself also pins the version that
+// was validated here, so an edit landing mid-approval cannot slip through.
+async function approvePost(postId, actor, req, rev) {
   const cur = await SocialPost.findById(postId);
   if (!cur) return { status: 404, error: 'Post not found' };
   if (cur.status !== 'pending') return { status: 409, error: `This post is "${cur.status}", not waiting for approval.` };
+  if (rev !== undefined && rev !== null && rev !== '' && String(rev) !== revOf(cur)) return { status: 409, error: 'This post was changed after you opened it. Reload it, read the new version, then approve.', changed: true };
   const v = await validatePost(cur, true);
   if (v.errors.length) return { status: 400, error: v.errors[0], errors: v.errors, warnings: v.warnings };
   const pages = await pagesState();
   // Claimed: a second approve (two tabs, a link and the page) finds nothing.
   const set = { status: 'approved', approvedBy: { id: actor.id, name: actor.name, email: actor.email, via: actor.via }, approvedAt: new Date(), updatedAt: new Date() };
-  const claimed = await SocialPost.findOneAndUpdate({ _id: postId, status: 'pending' }, { $set: set, $push: { history: { at: new Date(), by: actor.name || actor.email, action: 'approved', note: '' } } }, { new: true });
-  if (!claimed) return { status: 409, error: 'Someone else has just handled this post.' };
+  const claimed = await SocialPost.findOneAndUpdate({ _id: postId, status: 'pending', updatedAt: cur.updatedAt }, { $set: set, $push: { history: { at: new Date(), by: actor.name || actor.email, action: 'approved', note: '' } } }, { new: true });
+  if (!claimed) return { status: 409, error: 'Someone else has just handled or changed this post. Reload it and check again.' };
+  voidPostLinks(postId).catch(() => {});
   claimed.targets.forEach(t => { t.status = 'waiting'; t.error = ''; t.unknown = false; if (t.network === 'ig') t.igId = (pages.find(x => x.id === t.pageId) || {}).igId || ''; });
   await claimed.save();
   slog(actor, 'approved', { target: 'post', targetId: postId, summary: `Approved "${(claimed.title || claimed.caption || '').slice(0, 80)}"${claimed.scheduledAt ? ' for ' + new Date(claimed.scheduledAt).toISOString() : ' (publish now)'}` });
@@ -511,6 +523,8 @@ async function approvePost(postId, actor, req) {
 async function rejectPost(postId, actor, note, req) {
   const p = await SocialPost.findOneAndUpdate({ _id: postId, status: 'pending' }, { $set: { status: 'changes', reviewNote: clean(note, 1000), updatedAt: new Date() }, $push: { history: { at: new Date(), by: actor.name || actor.email, action: 'sent back', note: clean(note, 300) } } }, { new: true });
   if (!p) return { status: 409, error: 'This post is not waiting for approval.' };
+  // Sent back: the other approvers' links must not approve a later version.
+  voidPostLinks(postId).catch(() => {});
   slog(actor, 'rejected', { target: 'post', targetId: postId, summary: 'Sent back' + (note ? ': ' + clean(note, 200) : '') });
   await logAudit(auditReq(actor, req), 'SOCIAL_REJECT', 'SocialPost', String(postId), (p.title || p.caption || '').slice(0, 80), { note: clean(note, 200), via: actor.via });
   return { status: 200, post: p };
@@ -1139,7 +1153,7 @@ function nextOccurrence(rule, fromMs) {
 }
 async function pickListing(rule) {
   const used = new Set(rule.usedListings || []);
-  const props = await Property.find({ status: 'available' }).select('title location price monthlyRental bedrooms bathrooms sqm landArea parking floor listingType propertyType description webSummary mainImage gallery coverImage createdAt').sort({ createdAt: -1 }).limit(300).lean();
+  const props = await findListingsLite({ status: 'available' }, ['title', 'location', 'price', 'monthlyRental', 'bedrooms', 'bathrooms', 'sqm', 'landArea', 'parking', 'floor', 'listingType', 'propertyType', 'description', 'webSummary', 'createdAt'], { sort: { createdAt: -1 }, limit: 300 });
   const ok = props.filter(p => [p.mainImage, ...(p.gallery || [])].some(u => httpsUrl(u)));
   return ok.find(p => !used.has(String(p._id))) || ok[0] || null;
 }
@@ -1250,15 +1264,32 @@ async function notifyApprovers(posts, actions) {
   }
   return { sent };
 }
+// Outstanding one-time links are voided (marked used) when what they point at
+// changes: a post edited after it was sent for approval, or an account that is
+// deactivated or loses social_approve (server.js calls voidLinksForAccount).
+async function voidPostLinks(postId) {
+  await SocialLinkToken.updateMany({ kind: 'post', ref: String(postId), usedAt: null }, { $set: { usedAt: new Date() } });
+}
+async function voidLinksForAccount(accountId) {
+  if (!accountId) return;
+  await SocialLinkToken.updateMany({ accountId: String(accountId), usedAt: null }, { $set: { usedAt: new Date() } });
+}
+// The version an approver looked at: the post's updatedAt in milliseconds.
+// Every edit moves it, so an approval that sends back an older rev is refused.
+const revOf = p => String(p && p.updatedAt ? new Date(p.updatedAt).getTime() : 0);
+
 async function linkLookup(t) {
   if (!/^[A-Za-z0-9_-]{20,80}$/.test(String(t || ''))) return { error: 'This link is not valid.', status: 400 };
   const row = await SocialLinkToken.findOne({ hash: sha(t) }).lean();
   if (!row) return { error: 'This link is not valid.', status: 404 };
   if (row.usedAt) return { error: 'This link has already been used.', status: 410 };
   if (new Date(row.expiresAt) < new Date()) return { error: 'This link has expired (72 hours). Open GLRA Social to approve.', status: 410 };
+  // Read fresh (not the 30 s account cache): a link must die the moment its
+  // owner is deactivated, demoted or loses social_approve.
   const acc = await Account.findById(row.accountId).select('email name role permissions isActive status').lean();
-  const perms = acc ? await permsOf(String(acc._id), acc.role) : {};
-  if (!acc || !perms.approve) return { error: 'This account can no longer approve social posts.', status: 403 };
+  const live = acc && acc.isActive !== false && acc.status !== 'pending';
+  const perms = live ? await permsOf(String(acc._id), acc.role) : {};
+  if (!live || !perms.approve) return { error: 'This account can no longer approve social posts.', status: 403 };
   return { row, actor: { id: String(acc._id), name: acc.name || acc.email, email: acc.email, via: 'email_link', role: acc.role } };
 }
 
@@ -1282,7 +1313,7 @@ const maskId = id => id ? 'u_' + sha('social-review|' + id).slice(0, 10) : '';
 function postJson(p, pages, lmap) {
   const o = p.toObject ? p.toObject() : p;
   const leads = lmap && lmap[String(o._id)];
-  return { ...o, _id: String(o._id), targets: (o.targets || []).map(t => ({ ...t, _id: String(t._id), pageName: ((pages || []).find(x => x.id === t.pageId) || {}).name || t.pageId })),
+  return { ...o, _id: String(o._id), rev: revOf(o), targets: (o.targets || []).map(t => ({ ...t, _id: String(t._id), pageName: ((pages || []).find(x => x.id === t.pageId) || {}).name || t.pageId })),
     leads: leads ? { total: leads.total, byPage: leads.byPage } : { total: 0, byPage: {} } };
 }
 
@@ -1376,8 +1407,23 @@ function registerSocialRoutes(app, deps) {
     if (existing) {
       if (!['draft', 'changes', 'pending'].includes(existing.status)) return res.status(409).json({ error: `A ${existing.status} post cannot be edited. Duplicate it instead.` });
       if (!perms.approve && existing.createdBy && existing.createdBy.id && existing.createdBy.id !== actor.id) return res.status(403).json({ error: 'Only the author or an approver can edit this post.' });
+      // Edited while waiting for approval: whatever the approvers were sent is
+      // now out of date. The post goes back to draft (or straight back into the
+      // queue when this save re-submits it), the emailed links are voided, and a
+      // re-submission mails fresh links for the new words.
+      const wasPending = existing.status === 'pending';
+      // The atomic swap guards against an approval landing between our read and
+      // this save: it only matches the version we loaded.
+      const loadedAt = existing.updatedAt;
       Object.assign(existing, doc, { updatedAt: new Date() });
-      existing.history.push({ at: new Date(), by: actor.name, action: 'edited', note: '' });
+      existing.history.push({ at: new Date(), by: actor.name, action: wasPending ? 'edited after submission' : 'edited', note: '' });
+      if (wasPending) {
+        const still = await SocialPost.findOneAndUpdate({ _id: existing._id, status: 'pending', updatedAt: loadedAt }, { $set: { status: 'draft', updatedAt: existing.updatedAt } });
+        if (!still) return res.status(409).json({ error: 'This post was just approved or changed by someone else. Reload it first.' });
+        await voidPostLinks(existing._id);
+        existing.status = 'draft'; existing.approvedAt = null;
+        if (!submit) existing.history.push({ at: new Date(), by: actor.name, action: 'back to draft (changed after submission)', note: '' });
+      }
       p = existing;
     } else {
       p = new SocialPost({ ...doc, origin: ['listing', 'csv', 'compose'].includes(b.origin) ? b.origin : 'compose', createdBy: actor, history: [{ at: new Date(), by: actor.name, action: 'created', note: '' }] });
@@ -1411,6 +1457,7 @@ function registerSocialRoutes(app, deps) {
     if (v.errors.length) return res.status(400).json({ error: v.errors[0], errors: v.errors });
     p.status = 'pending'; p.submittedAt = new Date(); p.history.push({ at: new Date(), by: actorOf(req).name, action: 'submitted for approval', note: '' }); p.updatedAt = new Date();
     await p.save();
+    await voidPostLinks(p._id);   // only the links mailed below are good for this version
     slog(actorOf(req), 'submitted', { target: 'post', targetId: p._id, summary: 'Waiting for approval' });
     notifyApprovers([p]).catch(() => {});
     res.json({ post: postJson(p, await pagesState()) });
@@ -1446,14 +1493,15 @@ function registerSocialRoutes(app, deps) {
     p.status = 'pending'; p.submittedAt = new Date(); p.approvedAt = null; p.updatedAt = new Date();
     p.history.push({ at: new Date(), by: actorOf(req).name, action: 'retry requested', note: '' });
     await p.save();
+    await voidPostLinks(p._id);
     slog(actorOf(req), 'retry_requested', { target: 'post', targetId: p._id, summary: 'Failed targets sent back for approval' + (unknown ? ' (one may have reached Meta: check the Page first)' : '') });
     notifyApprovers([p]).catch(() => {});
     res.json({ post: postJson(p, await pagesState()), warning: unknown ? 'One of the failed attempts may have reached Meta. Check the Page before approving the retry.' : '' });
   }));
   app.post(B + '/posts/:id/approve', ...approve, wrap(async (req, res) => {
     if (!oid(req.params.id)) return res.status(404).json({ error: 'Not found' });
-    const r = await approvePost(req.params.id, actorOf(req), req);
-    if (r.status !== 200) return res.status(r.status).json({ error: r.error, errors: r.errors });
+    const r = await approvePost(req.params.id, actorOf(req), req, (req.body || {}).rev);
+    if (r.status !== 200) return res.status(r.status).json({ error: r.error, errors: r.errors, changed: !!r.changed });
     res.json({ post: postJson(r.post, await pagesState()), warnings: r.warnings });
   }));
   app.post(B + '/posts/:id/reject', ...approve, wrap(async (req, res) => {
@@ -1467,7 +1515,9 @@ function registerSocialRoutes(app, deps) {
     const q = b.batchId ? { batchId: clean(b.batchId, 80), status: 'pending' } : { _id: { $in: (Array.isArray(b.ids) ? b.ids : []).filter(oid).slice(0, 200) }, status: 'pending' };
     const ids = (await SocialPost.find(q).select('_id').limit(200).lean()).map(x => x._id);
     const results = [];
-    for (const id of ids) { const r = await approvePost(id, actorOf(req), req); results.push({ id: String(id), ok: r.status === 200, error: r.error || '', status: r.post ? r.post.status : '' }); }
+    // revs: { postId: rev } as shown on screen; a post changed since is refused.
+    const revs = b.revs && typeof b.revs === 'object' ? b.revs : {};
+    for (const id of ids) { const r = await approvePost(id, actorOf(req), req, revs[String(id)]); results.push({ id: String(id), ok: r.status === 200, error: r.error || '', status: r.post ? r.post.status : '' }); }
     slog(actorOf(req), 'batch_approved', { target: 'post', targetId: b.batchId || '', summary: `Approved ${results.filter(r => r.ok).length} of ${results.length} in one click` });
     res.json({ results });
   }));
@@ -1571,13 +1621,13 @@ function registerSocialRoutes(app, deps) {
     const q = { status: 'available' };
     const s = clean(req.query.q, 80);
     if (s) q.$or = [{ title: new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }, { location: new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }];
-    const rows = (await Property.find(q).select('title location price monthlyRental listingType propertyType mainImage gallery coverImage createdAt').sort({ createdAt: -1 }).limit(60).lean()).map(applyWebsiteCover);
+    const rows = (await findListingsLite(q, ['title', 'location', 'price', 'monthlyRental', 'listingType', 'propertyType', 'createdAt'], { sort: { createdAt: -1 }, limit: 60 })).map(applyWebsiteCover);
     res.json({ listings: rows.map(p => ({ id: String(p._id), title: p.title, location: p.location, price: /lease|rent/i.test(p.listingType || '') ? (p.monthlyRental ? peso(p.monthlyRental) + '/mo' : '') : (p.price ? peso(p.price) : ''), type: p.propertyType, listingType: p.listingType,
       thumb: httpsUrl(p.mainImage) ? p.mainImage : '', photos: [p.mainImage, ...(p.gallery || [])].filter(httpsUrl).length })) });
   }));
   app.get(B + '/listings/:id/studio', ...draft, wrap(async (req, res) => {
     if (!oid(req.params.id)) return res.status(404).json({ error: 'Not found' });
-    const p = await Property.findById(req.params.id).lean();
+    const p = await findListingLiteById(req.params.id);
     if (!p) return res.status(404).json({ error: 'Not found' });
     const pages = await pagesState();
     const want = String(req.query.pageId || '').split(',').filter(Boolean);
@@ -1589,7 +1639,7 @@ function registerSocialRoutes(app, deps) {
   app.post(B + '/ai/caption', ...draft, aiLimiter, wrap(async (req, res) => {
     const b = req.body || {};
     let facts = clean(b.facts, 2500);
-    if (oid(b.propertyId)) { const p = await Property.findById(b.propertyId).lean(); if (p) { const f = listingFacts(applyWebsiteCover({ ...p })); facts = [`Title: ${f.title}`, f.area && `Location: ${f.area}`, f.type && `Type: ${f.type}`, f.price && `Price: ${f.price}`, f.bits.join(', '), f.summary, `Link: ${SITE_URL}/property/${p._id}`].filter(Boolean).join('\n'); } }
+    if (oid(b.propertyId)) { const p = await findListingLiteById(b.propertyId); if (p) { const f = listingFacts(applyWebsiteCover({ ...p })); facts = [`Title: ${f.title}`, f.area && `Location: ${f.area}`, f.type && `Type: ${f.type}`, f.price && `Price: ${f.price}`, f.bits.join(', '), f.summary, `Link: ${SITE_URL}/property/${p._id}`].filter(Boolean).join('\n'); } }
     const pg = await pageById(b.pageId);
     try {
       const r = await AI.writeCaption({ brief: b.brief, tone: b.tone, facts, pageName: pg && pg.name });
@@ -1673,15 +1723,26 @@ function registerSocialRoutes(app, deps) {
     slog(actorOf(req), 'recurring_saved', { target: 'recurring', targetId: r._id, summary: `${name}: every ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][wd]} ${doc.time}` });
     res.json({ rule: r });
   }
+  // A drafter may change or delete only their own rules; approvers any rule.
+  // (A rule drafts posts on a timer, so someone else's rule is not theirs to rewrite.)
+  async function mayTouchRule(req, rule) {
+    const perms = await permsOf(req.user.sub, req.user.role);
+    if (perms.approve) return true;
+    return !!rule.createdBy && String(rule.createdBy).toLowerCase() === String(req.user.email || '').toLowerCase();
+  }
   app.post(B + '/recurring', ...draft, wrap((req, res) => saveRule(req, res, null)));
   app.put(B + '/recurring/:id', ...draft, wrap(async (req, res) => {
     if (!oid(req.params.id)) return res.status(404).json({ error: 'Not found' });
     const r = await SocialRecurring.findById(req.params.id);
     if (!r) return res.status(404).json({ error: 'Not found' });
+    if (!(await mayTouchRule(req, r))) return res.status(403).json({ error: 'Only the person who made this rule, or an approver, can change it.' });
     return saveRule(req, res, r);
   }));
   app.delete(B + '/recurring/:id', ...draft, wrap(async (req, res) => {
     if (!oid(req.params.id)) return res.status(404).json({ error: 'Not found' });
+    const cur = await SocialRecurring.findById(req.params.id).lean();
+    if (!cur) return res.json({ success: true });
+    if (!(await mayTouchRule(req, cur))) return res.status(403).json({ error: 'Only the person who made this rule, or an approver, can delete it.' });
     const r = await SocialRecurring.findByIdAndDelete(req.params.id);
     if (r) slog(actorOf(req), 'recurring_deleted', { target: 'recurring', targetId: r._id, summary: r.name });
     res.json({ success: true });
@@ -2064,7 +2125,7 @@ function registerSocialRoutes(app, deps) {
     const used = await SocialLinkToken.findOneAndUpdate({ _id: L.row._id, usedAt: null }, { $set: { usedAt: new Date() } });
     if (!used) return res.status(410).json({ error: 'This link has already been used.' });
     const r = L.row.kind === 'post'
-      ? (b.decision === 'approve' ? await approvePost(L.row.ref, L.actor, req) : await rejectPost(L.row.ref, L.actor, b.note, req))
+      ? (b.decision === 'approve' ? await approvePost(L.row.ref, L.actor, req, b.rev) : await rejectPost(L.row.ref, L.actor, b.note, req))
       : (b.decision === 'approve' ? await executeAction(L.row.ref, L.actor, req) : await rejectAction(L.row.ref, L.actor, b.note, req));
     if (r.status !== 200) {
       // A refusal (a post no longer pending, a validation error) gives the link back, unless Meta was reached.
@@ -2163,6 +2224,6 @@ function startSocialTick(deps) {
 }
 
 module.exports = {
-  registerSocialRoutes, startSocialTick, ingestWebhook,
+  registerSocialRoutes, startSocialTick, ingestWebhook, voidLinksForAccount,
   _test: { maskName, maskText, igRatio, parseCsv, rollup, windowOf, autoTagsOf, sentimentOf, tagUrl, heatmap, studioFromListing, nextOccurrence, publisherTick, syncInbox, discoverPages, checkTokens }
 };

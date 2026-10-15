@@ -4,12 +4,21 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v147';
+const CACHE_VERSION = 'glra-cache-v148';
+// Photos live in a cache of their own, capped (Oct 2026): they used to pile up
+// without limit, one copy per listing photo a visitor ever scrolled past.
+const IMG_CACHE = CACHE_VERSION + '-img';
+const IMG_MAX = 150;              // newest photos kept; the oldest go first
+const MAX_BYTES = 1024 * 1024;    // a file over 1 MB is never stored on the device
+// Only what every page shows. The full-size logo.png and hero-logo.png are for
+// search engines and link previews (no page displays them), favicon.ico.png is
+// for the dashboards, and the agent photo is on two pages: precaching them cost
+// every first visit ~280 KB for nothing. The runtime cache below still keeps
+// any of them once a page actually uses it.
 const STATIC_ASSETS = [
-  '/img/logo.png',
-  '/img/hero-logo.png',
-  '/img/favicon.ico.png',
-  '/img/agent-photo.jpg',
+  '/img/logo-384.png',
+  '/img/hero-logo-384.png',
+  '/img/favicon-64.png',
   '/manifest.json'
 ];
 
@@ -28,7 +37,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(names =>
-      Promise.all(names.map(n => n !== CACHE_VERSION ? caches.delete(n) : null))
+      Promise.all(names.map(n => (n !== CACHE_VERSION && n !== IMG_CACHE) ? caches.delete(n) : null))
     ).then(() => self.clients.claim())
   );
 });
@@ -138,15 +147,43 @@ self.addEventListener('fetch', event => {
   }
 
   // CACHE-FIRST for everything else (images, fonts, etc.)
+  const image = isImage(req, url);
   event.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;
       return fetch(req).then(res => {
         if (!res || res.status !== 200 || res.type !== 'basic' || !storable(res)) return res;
+        const len = parseInt(res.headers.get('Content-Length') || '', 10);
+        if (len > MAX_BYTES) return res;
         const clone = res.clone();
-        caches.open(CACHE_VERSION).then(c => c.put(req, clone)).catch(()=>{});
+        event.waitUntil(keep(image ? IMG_CACHE : CACHE_VERSION, req, clone, !len, image));
         return res;
       });
     })
   );
 });
+
+function isImage(req, url){
+  if (req.destination === 'image') return true;
+  return /\.(png|jpe?g|webp|avif|gif|svg|ico)$/i.test(url.pathname) ||
+    url.pathname.startsWith('/api/property-image/') || url.pathname.startsWith('/api/hero-image/');
+}
+// Stores one response. With no Content-Length (a compressed or streamed reply)
+// the size is only known once the body is read, so it is read first and
+// dropped if it turns out to be over the limit. Photos are then trimmed to the
+// newest IMG_MAX (cache.keys() lists them oldest first).
+async function keep(name, req, res, sizeUnknown, image){
+  try {
+    if (sizeUnknown) {
+      const body = await res.blob();
+      if (body.size > MAX_BYTES) return;
+      res = new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+    }
+    const c = await caches.open(name);
+    await c.put(req, res);
+    if (image) {
+      const keys = await c.keys();
+      for (let i = 0; i < keys.length - IMG_MAX; i++) await c.delete(keys[i]);
+    }
+  } catch (_) {}
+}

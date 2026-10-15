@@ -25,11 +25,12 @@
   var box = document.getElementById('ap');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmt(d) { return d ? new Date(d).toLocaleString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''; }
-  function post(path, body) { return fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Error ' + r.status); return j; }); }); }
+  function post(path, body) { return fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Error ' + r.status); e.status = r.status; e.changed = !!j.changed; throw e; } return j; }); }); }
   function done(icon, title, text) { box.innerHTML = '<div class="so-center"><div class="so-card"><h2 style="justify-content:center"><i class="fas ' + icon + '"></i> ' + esc(title) + '</h2><p class="so-muted">' + esc(text) + '</p><a class="so-btn" href="/social.html#approvals">Open GLRA Social</a></div></div>'; }
   if (!t) return done('fa-link-slash', 'No link', 'Open the button from the email again.');
+  function load(notice) {
   post('/api/social/link/view', { t: t }).then(function (d) {
-    var html = '<div class="so-row" style="margin-bottom:14px"><img src="/img/hero-logo-384.png" alt="" width="34" height="34" style="border-radius:10px;background:#0a0a0a"><div><div style="font-weight:800">GLRA Social</div><div class="so-small so-muted">Signed link for ' + esc(d.approver) + ' · works once</div></div></div>';
+    var html = (notice ? '<div class="so-banner info" style="margin:0 0 12px"><i class="fas fa-circle-info"></i><div class="so-small">' + esc(notice) + '</div></div>' : '') + '<div class="so-row" style="margin-bottom:14px"><img src="/img/hero-logo-384.png" alt="" width="34" height="34" style="border-radius:10px;background:#0a0a0a"><div><div style="font-weight:800">GLRA Social</div><div class="so-small so-muted">Signed link for ' + esc(d.approver) + ' · works once</div></div></div>';
     if (d.kind === 'post') {
       var p = d.post, pending = p.status === 'pending';
       html += '<div class="so-card"><h2><i class="fas fa-newspaper"></i>' + esc(p.title || 'Post') + '</h2>' +
@@ -53,12 +54,19 @@
     box.innerHTML = html;
     function decide(x) {
       document.getElementById('yes').disabled = document.getElementById('no').disabled = true;
-      post('/api/social/link/decide', { t: t, decision: x, note: (document.getElementById('note') || {}).value || '' }).then(function (r) {
+      // rev = the version shown on this screen. If the post was edited since,
+      // the server answers 409 (changed) and the new version is shown instead.
+      post('/api/social/link/decide', { t: t, decision: x, note: (document.getElementById('note') || {}).value || '', rev: d.kind === 'post' ? d.post.rev : undefined }).then(function (r) {
         done(x === 'approve' ? 'fa-circle-check' : 'fa-reply', x === 'approve' ? 'Approved' : 'Sent back', x === 'approve' ? (r.status === 'scheduled' ? 'It is scheduled.' : r.status === 'published' ? 'It is published.' : 'Done: ' + r.status + '.') : 'The author will see your note.');
-      }).catch(function (e) { done('fa-triangle-exclamation', 'Not done', e.message); });
+      }).catch(function (e) {
+        if (e.changed || e.status === 409) return load('This post was changed after the email was sent. Here is the new version: check it again.');
+        done('fa-triangle-exclamation', 'Not done', e.message);
+      });
     }
     if (open) { document.getElementById('yes').onclick = function () { decide('approve'); }; document.getElementById('no').onclick = function () { decide('reject'); }; }
   }).catch(function (e) { done('fa-link-slash', 'This link does not work', e.message); });
+  }
+  load('');
 })();
 </script>
 </body>
