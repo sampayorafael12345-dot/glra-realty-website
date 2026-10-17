@@ -291,6 +291,10 @@ app.use(helmet({
   strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
+// IndexNow key file: Bing and others fetch /<key>.txt to confirm our pings.
+const { notifyIndexNow, registerIndexNowRoutes } = require('./server/indexnow');
+registerIndexNowRoutes(app);
+
 // security.txt (RFC 9116): where to report a security problem with the site.
 // Expires is computed so the file never goes stale.
 app.get(['/.well-known/security.txt', '/security.txt'], (req, res) => {
@@ -7131,6 +7135,7 @@ app.post('/api/admin/properties', verifyToken, requirePermission('properties_cre
     const property = new Property(clean);
     await property.save();
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, null);
+    notifyIndexNow('/property/' + property._id);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
@@ -7228,6 +7233,7 @@ app.put('/api/admin/properties/:id', verifyToken, requirePermission('properties_
     // the save: one Brevo round trip per watcher used to happen in the request.
     if (dropAlerts) dropAlerts().catch(e => console.error('Price-drop alerts failed:', e.message));
     await logAudit(req, 'UPDATE', 'Property', req.params.id, property.title, null);
+    notifyIndexNow('/property/' + req.params.id);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
@@ -7270,6 +7276,7 @@ app.delete('/api/admin/properties/:id', verifyToken, requirePermission('properti
     ]);
     await logAudit(req, 'DELETE', 'Property', req.params.id, property.title,
       { removedPriceAlerts: alerts.deletedCount || 0, removedWishlistRows: saved.deletedCount || 0 });
+    notifyIndexNow('/property/' + id);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
@@ -8421,7 +8428,8 @@ app.post('/api/admin/properties/bulk', verifyToken, requirePermission('propertie
     for (const clean of cleaned) {
       const existing = await Property.findOne({ title: String(clean.title || ''), location: String(clean.location || '') });
       if (!existing) {
-        await new Property(clean).save();
+        const made = await new Property(clean).save();
+        notifyIndexNow('/property/' + made._id);
         added++;
       }
     }
@@ -9532,6 +9540,7 @@ app.post('/api/admin/property-submissions/:id/import', verifyToken, requirePermi
     await sub.save();
     await logAudit(req, 'IMPORT', 'PropertySubmission', sub._id, sub.title, { propertyId: property._id });
     await logAudit(req, 'CREATE', 'Property', property._id, property.title, { source: 'submission', submissionId: sub._id });
+    notifyIndexNow('/property/' + property._id);
     invalidateChatListingsCache();
     invalidatePublicListingsCache();
     invalidateAreaCache();
