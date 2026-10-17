@@ -2097,6 +2097,22 @@ function registerSocialRoutes(app, deps) {
     notifyApprovers([], [r.action]).catch(() => {});
     res.json({ id: String(r.action._id), status: 'pending' });
   }));
+  // The media library, so drafts can use uploaded videos and photos (read only).
+  app.get(R + '/library', ...RV, wrap(async (req, res) => {
+    const rows = await SocialMedia.find().sort({ createdAt: -1 }).limit(300).lean();
+    res.json({ media: rows.map(m => ({ id: String(m._id), url: m.url, type: m.type, width: m.width, height: m.height, name: m.name, tags: m.tags, at: m.createdAt })) });
+  }));
+  // Every post of the last N days with its status and the approver's notes, so
+  // the key's author can learn from what was approved, changed or turned down.
+  app.get(R + '/queue', ...RV, wrap(async (req, res) => {
+    const { days } = rvRange(req);
+    const since = new Date(Date.now() - days * 864e5);
+    const rows = await SocialPost.find({ $or: [{ updatedAt: { $gte: since } }, { createdAt: { $gte: since } }, { scheduledAt: { $gte: since } }] }).sort({ createdAt: -1 }).limit(300)
+      .select('title caption status scheduledAt origin targets history publishedAt createdAt updatedAt').lean();
+    res.json({ posts: rows.map(p => ({ id: String(p._id), title: p.title, status: p.status, origin: p.origin, scheduledAt: p.scheduledAt, publishedAt: p.publishedAt, createdAt: p.createdAt,
+      caption: clean(p.caption, 400), targets: (p.targets || []).map(t => ({ network: t.network, pageId: t.pageId, status: t.status, permalink: t.permalink || '' })),
+      history: (p.history || []).slice(-6).map(h => ({ at: h.at, action: h.action, note: h.note || '' })) })) });
+  }));
   // Anything else under the review path (approve, publish, delete...) does not exist.
   app.all(R + '/*', gate, (req, res) => res.status(404).json({ error: 'Not found' }));
 
