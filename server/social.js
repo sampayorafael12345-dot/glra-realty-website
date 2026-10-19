@@ -2102,6 +2102,26 @@ function registerSocialRoutes(app, deps) {
     const rows = await SocialMedia.find().sort({ createdAt: -1 }).limit(300).lean();
     res.json({ media: rows.map(m => ({ id: String(m._id), url: m.url, type: m.type, width: m.width, height: m.height, name: m.name, tags: m.tags, at: m.createdAt })) });
   }));
+  // Rafael (19 Oct 2026) let the review key add media to the library: upload
+  // only. Using a file in a post still goes through a draft and his approval.
+  app.post(R + '/library', ...RV, (req, res, next) => mediaUpload.single('file')(req, res, err => { if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Files can be at most 100 MB.' : 'Upload failed: ' + err.message }); next(); }), wrap(async (req, res) => {
+    const f = req.file;
+    if (!f) return res.status(400).json({ error: 'Send one photo or MP4/MOV video as "file".' });
+    const cleanup = () => fs.promises.unlink(f.path).catch(() => {});
+    const cl = _deps.cloudinary;
+    if (!cl || !(env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET'))) { cleanup(); return res.status(503).json({ error: 'Cloudinary is not configured.' }); }
+    const isVid = /^video\//.test(f.mimetype);
+    try {
+      const name = clean(req.body && req.body.name, 200) || clean(f.originalname, 200);
+      const dup = await SocialMedia.findOne({ name }).lean();
+      if (dup) return res.json({ media: { id: String(dup._id), url: dup.url, type: dup.type, width: dup.width, height: dup.height, name: dup.name }, existed: true });
+      const r = await cl.uploader.upload(f.path, { folder: 'glra-social', resource_type: isVid ? 'video' : 'image', ...(isVid ? {} : { transformation: [{ width: 2400, height: 2400, crop: 'limit' }, { quality: 'auto:good' }], format: 'jpg' }) });
+      const m = await SocialMedia.create({ url: r.secure_url, publicId: r.public_id, type: isVid ? 'video' : 'image', width: r.width || 0, height: r.height || 0, bytes: r.bytes || 0, format: r.format || '', name, tags: ['review_key'], createdBy: REVIEW_ACTOR.email });
+      slog(REVIEW_ACTOR, 'media_added', { target: 'media', targetId: m._id, summary: `Uploaded through the review key: ${m.name} (${m.width}x${m.height})` });
+      res.json({ media: { id: String(m._id), url: m.url, type: m.type, width: m.width, height: m.height, name: m.name } });
+    } catch (e) { res.status(502).json({ error: 'Cloudinary upload failed: ' + scrub(e.message).slice(0, 200) }); }
+    finally { cleanup(); }
+  }));
   // Every post of the last N days with its status and the approver's notes, so
   // the key's author can learn from what was approved, changed or turned down.
   app.get(R + '/queue', ...RV, wrap(async (req, res) => {
