@@ -2286,6 +2286,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
       ['/blog.html', 'Blog'],
       ['/guide.html', 'Buying Guide'],
       ['/faq.html', 'FAQ'],
+      ['/titling.html', 'Title Transfer'],
       ['/#contact', 'Contact']]]
   ];
   var BLURB = 'Licensed Real Estate Broker<br>Metro Manila &amp; Luzon, Philippines';

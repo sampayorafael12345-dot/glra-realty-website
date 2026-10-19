@@ -1807,7 +1807,7 @@ const SITE_NAV_ITEMS = [
   ['/properties.html', 'Properties'], ['/about.html', 'About'], ['/neighborhoods.html', 'Guides'],
   ['/tools.html', 'Tools'], ['/faq.html', 'FAQ'], ['/list-property.html', 'List property']
 ];
-const SITE_NAV_MENU_EXTRA = [['/valuation.html', 'Property value'], ['/#contact', 'Contact'], ['/privacy.html', 'Privacy']];   // 10 in all: even rows of two
+const SITE_NAV_MENU_EXTRA = [['/valuation.html', 'Property value'], ['/titling.html', 'Title transfer'], ['/#contact', 'Contact']];   // 10 in all: even rows of two (Privacy is in every footer)
 function siteNavLinksHtml(linkClass) {
   return SITE_NAV_ITEMS.map(([h, t]) => `<a href="${h}" class="${linkClass}">${t}</a>`).join('\n    ');
 }
@@ -1828,7 +1828,7 @@ const SITE_NAV_CSS = `.gn-menu{display:none;position:static}
 .gn-panel a:nth-last-child(-n+2){border-bottom:0}
 .gn-panel a:hover{color:var(--hot-text)}
 @media(max-width:560px){.gn-menu{display:block;margin-left:auto}}`;
-const SITE_FOOTER_LINKS_HTML = `<a href="/about.html">About</a> &middot; <a href="/properties.html">Properties</a> &middot; <a href="/neighborhoods.html">Guides</a> &middot; <a href="/faq.html">FAQ</a> &middot; <a href="/tools.html">Tools</a> &middot; <a href="/list-property.html">List your property</a> &middot; <a href="/privacy.html">Privacy</a>`;
+const SITE_FOOTER_LINKS_HTML = `<a href="/about.html">About</a> &middot; <a href="/properties.html">Properties</a> &middot; <a href="/neighborhoods.html">Guides</a> &middot; <a href="/faq.html">FAQ</a> &middot; <a href="/titling.html">Title transfer</a> &middot; <a href="/tools.html">Tools</a> &middot; <a href="/list-property.html">List your property</a> &middot; <a href="/privacy.html">Privacy</a>`;
 
 function buildAreaPageHtml(area, rows, counts) {
   const [slug, name, , guide] = area;
@@ -3456,7 +3456,7 @@ async function pgSubmit(e){
   return false;
 }
 </script>
-<script src="/js/main.js?v=149"></script>
+<script src="/js/main.js?v=150"></script>
 <script src="/js/a11y.js?v=149" defer></script>
 <script src="/js/gallery.js?v=116" defer></script>
 ${geoOk ? '<script src="/js/glra-maps.js?v=148" defer></script>' : ''}
@@ -3853,6 +3853,7 @@ async function buildSitemapRaw(req, res) {
       ['/principal-residence.html', 'monthly', '0.75'],
       ['/blog.html', 'weekly', '0.6'], ['/testimonials.html', 'monthly', '0.6'],
       ['/faq.html', 'monthly', '0.6'],   // Oct 2026: the FAQ hub (audit SEO-G-16)
+      ['/titling.html', 'monthly', '0.7'],   // Oct 2026: title transfer and estate services
       ['/neighborhoods.html', 'monthly', '0.6'], ['/living-in-makati.html', 'monthly', '0.5'],
       ['/living-in-bgc.html', 'monthly', '0.5'], ['/living-in-alabang.html', 'monthly', '0.5'],
       ['/privacy.html', 'yearly', '0.3'],
