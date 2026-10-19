@@ -2122,6 +2122,25 @@ function registerSocialRoutes(app, deps) {
     } catch (e) { res.status(502).json({ error: 'Cloudinary upload failed: ' + scrub(e.message).slice(0, 200) }); }
     finally { cleanup(); }
   }));
+  // Rafael (19 Oct 2026): "you approve them... no need for me to approve them".
+  // The key may approve or send back ONLY posts it drafted itself (origin
+  // review_key); staff posts still need a person. Logged in Activity and the
+  // admin audit log like any approval.
+  const ownDraft = async id => oid(id) && await SocialPost.exists({ _id: id, origin: 'review_key' });
+  app.post(R + '/approve', ...RV, wrap(async (req, res) => {
+    const id = String((req.body || {}).id || '');
+    if (!(await ownDraft(id))) return res.status(404).json({ error: 'Not one of the review key\'s drafts' });
+    const r = await approvePost(id, REVIEW_ACTOR, req, (req.body || {}).rev);
+    if (r.status !== 200) return res.status(r.status).json({ error: r.error, errors: r.errors });
+    res.json({ id, status: r.post ? r.post.status : '', warnings: r.warnings || [] });
+  }));
+  app.post(R + '/reject', ...RV, wrap(async (req, res) => {
+    const id = String((req.body || {}).id || '');
+    if (!(await ownDraft(id))) return res.status(404).json({ error: 'Not one of the review key\'s drafts' });
+    const r = await rejectPost(id, REVIEW_ACTOR, (req.body || {}).note, req);
+    if (r.status !== 200) return res.status(r.status).json({ error: r.error });
+    res.json({ id, status: r.post.status });
+  }));
   // Every post of the last N days with its status and the approver's notes, so
   // the key's author can learn from what was approved, changed or turned down.
   app.get(R + '/queue', ...RV, wrap(async (req, res) => {
