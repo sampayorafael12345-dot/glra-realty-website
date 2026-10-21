@@ -59,6 +59,10 @@ const LEADS_ON = () => flag('META_LEADS_ENABLED');
 const AD_ACCOUNT = () => (env('META_AD_ACCOUNT_ID').replace(/^act_/, '').match(/^\d{1,30}$/) || [''])[0];
 const IG_CAPTION_MAX = 2200, IG_HASHTAG_MAX = 30, FB_CAPTION_MAX = 5000, MAX_MEDIA = 10;
 const FB_MIN_AHEAD = 10 * 60e3, MAX_AHEAD = 75 * 864e5;
+// Facebook refuses scheduled_publish_time much past ~29 days (every post of
+// 21 Oct 2026 dated 20 Nov or later failed). Further-out posts wait here, and
+// the per-minute tick hands them to Facebook's scheduler inside this window.
+const FB_SCHED_WINDOW = 25 * 864e5;
 const PAGE_COLORS = ['#f59a5b', '#7c9cff', '#5ee69a', '#ff8a94', '#c4b5fd', '#ffbe3d'];
 const KINDS = ['fb_comment', 'ig_comment', 'messenger', 'ig_dm'];
 const TAGS = ['price', 'viewing', 'seller', 'spam', 'documents', 'other'];
@@ -444,6 +448,7 @@ async function runTargets(postId, actor) {
     if (t.status !== 'waiting' && t.status !== 'container') continue;
     const pg = pages.find(x => x.id === t.pageId) || {};
     if (t.network === 'fb') {
+      if (post.scheduledAt && new Date(post.scheduledAt).getTime() - Date.now() > FB_SCHED_WINDOW) continue;   // too far out for Facebook: the tick schedules it later
       if (t.status !== 'waiting' || !(await claimTarget(post._id, t._id, 'waiting', 'publishing'))) continue;
       try {
         const r = await publishFb(post, t);
@@ -536,6 +541,16 @@ async function publisherTick() {
   const due = await SocialPost.find({ status: { $in: ['approved', 'scheduled', 'publishing'] }, targets: { $elemMatch: { network: 'ig', status: { $in: ['waiting', 'container'] } } },
     $or: [{ scheduledAt: null }, { scheduledAt: { $lte: new Date(Date.now() + 30e3) } }, { 'targets.status': 'container' }] }).select('_id approvedBy').limit(20).lean();
   for (const p of due) await runTargets(p._id, { ...SYSTEM_ACTOR, name: 'GLRA Social (scheduled)' });
+  // Facebook posts that were held because they were too far ahead: once inside
+  // Facebook's window, hand them to its scheduler. A target that failed only
+  // because the time was too far out (before this rule existed) gets one retry.
+  const soon = new Date(Date.now() + FB_SCHED_WINDOW);
+  await SocialPost.updateMany({ status: { $in: ['scheduled', 'failed', 'partial'] }, scheduledAt: { $gt: new Date(Date.now() + 20 * 60e3), $lte: soon },
+      targets: { $not: { $elemMatch: { status: 'cancelled' } } }, $expr: { $gt: [{ $subtract: ['$scheduledAt', '$approvedAt'] }, 28 * 864e5] } },
+    { $set: { 'targets.$[t].status': 'waiting', 'targets.$[t].error': '' } },
+    { arrayFilters: [{ 't.network': 'fb', 't.status': 'failed', 't.metaId': { $in: [null, ''] }, 't.attempts': { $lte: 1 } }] });
+  const fbHeld = await SocialPost.find({ status: { $in: ['approved', 'scheduled', 'failed', 'partial'] }, scheduledAt: { $lte: soon }, targets: { $elemMatch: { network: 'fb', status: 'waiting' } } }).select('_id').limit(10).lean();
+  for (const p of fbHeld) await runTargets(p._id, { ...SYSTEM_ACTOR, name: 'GLRA Social (scheduled)' });
   // Facebook's own scheduler: once the time has passed, confirm it went out.
   const fb = await SocialPost.find({ scheduledAt: { $lte: new Date(Date.now() - 60e3) }, targets: { $elemMatch: { network: 'fb', status: 'scheduled' } } }).limit(20);
   for (const p of fb) {
@@ -2170,7 +2185,7 @@ function registerSocialRoutes(app, deps) {
     const rows = await SocialPost.find({ $or: [{ updatedAt: { $gte: since } }, { createdAt: { $gte: since } }, { scheduledAt: { $gte: since } }] }).sort({ createdAt: -1 }).limit(300)
       .select('title caption status scheduledAt origin targets history publishedAt createdAt updatedAt').lean();
     res.json({ posts: rows.map(p => ({ id: String(p._id), title: p.title, status: p.status, origin: p.origin, scheduledAt: p.scheduledAt, publishedAt: p.publishedAt, createdAt: p.createdAt,
-      caption: clean(p.caption, 400), targets: (p.targets || []).map(t => ({ network: t.network, pageId: t.pageId, status: t.status, permalink: t.permalink || '' })),
+      caption: clean(p.caption, 400), targets: (p.targets || []).map(t => ({ network: t.network, pageId: t.pageId, status: t.status, permalink: t.permalink || '', error: t.status === 'failed' ? clean(t.error, 200) : '' })),
       history: (p.history || []).slice(-6).map(h => ({ at: h.at, action: h.action, note: h.note || '' })) })) });
   }));
   // Anything else under the review path (approve, publish, delete...) does not exist.
