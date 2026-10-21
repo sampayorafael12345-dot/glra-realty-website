@@ -2234,7 +2234,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
       '.glra-recent-list li{scroll-snap-align:start}' +
       '.glra-recent-list a{display:block;color:inherit;text-decoration:none;border:2px solid #0a0a0a;background:#fff;height:100%}' +
       'body.dark-mode .glra-recent-list a{border-color:#f1eee9;background:#151513}' +
-      '.glra-recent-list a:hover,.glra-recent-list a:focus-visible{box-shadow:4px 4px 0 #ff3d00}' +
+      '.glra-recent-list a:hover,.glra-recent-list a:focus-visible{box-shadow:4px 4px 0 var(--ab-line,#0a0a0a)}' +
       '.glra-recent-img{display:block;aspect-ratio:4/3;background:#e8e4dd;overflow:hidden}' +
       '.glra-recent-img img{width:100%;height:100%;object-fit:cover;display:block}' +
       '.glra-recent-t{display:block;padding:8px 9px 2px;font-size:12px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
@@ -2497,22 +2497,8 @@ window.glraOpenPrintGate = function (label, collectFn) {
 
     if (!FINE) return;
 
-    // 3. Pointer glow on cards (a child layer, so card transforms stay untouched).
-    var GLOW = '.prop-card, .tool-card, .value-card, .calc-card, .arth-card, .resource-card, .area-card, .nh-card, .testimonial-card, .coverage-item, .blog-card, .pane, .vs-card';
-    document.addEventListener('pointerover', function (ev) {
-      var c = ev.target.closest && ev.target.closest(GLOW);
-      if (!c || c.querySelector(':scope > .gm-glow')) return;
-      if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
-      var g = document.createElement('span'); g.className = 'gm-glow'; g.setAttribute('aria-hidden', 'true');
-      c.appendChild(g);
-    }, { passive: true });
-    document.addEventListener('pointermove', function (ev) {
-      var c = ev.target.closest && ev.target.closest(GLOW);
-      if (!c) return;
-      var r = c.getBoundingClientRect();
-      c.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
-      c.style.setProperty('--my', (ev.clientY - r.top) + 'px');
-    }, { passive: true });
+    // 3. (Removed 21 Oct 2026: the orange pointer glow on cards. Rafael
+    //    does not want orange hover highlights on boxes.)
 
     // 4. Magnetic primary buttons.
     var MAG = '.cta-btn, .submit-btn, .contact-btn-nav, .glra-btn, .calculate-btn, .print-btn, .view-all-btn, .cta-primary, .ss-cta, .reset-filters-btn';

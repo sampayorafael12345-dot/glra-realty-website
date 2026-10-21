@@ -92,7 +92,7 @@ a.glra-card{
   text-decoration:none !important;transition:.15s;align-items:stretch;
 }
 body.dark-mode a.glra-card{background:#1a1a17;color:#f1eee9 !important;border-color:#3a3a36}
-a.glra-card:hover{box-shadow:4px 4px 0 #ff3d00;transform:translate(-2px,-2px)}
+a.glra-card:hover{box-shadow:4px 4px 0 var(--ab-line,#0a0a0a);transform:translate(-2px,-2px)}
 a.glra-card .glra-card-img{
   flex:0 0 84px;width:84px;height:84px;object-fit:cover;background:#ddd;
   border-right:1px solid rgba(0,0,0,.08);
@@ -131,7 +131,7 @@ a.glra-search-cta{
   letter-spacing:1.5px;text-transform:uppercase;border:1px solid #ff3d00;
   transition:.15s;
 }
-a.glra-search-cta:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
+a.glra-search-cta:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ab-line,#0a0a0a)}
 a.glra-search-cta .arr{font-size:14px}
 
 /* Action buttons (Calculate / Schedule / Message Catherine etc.)
@@ -149,7 +149,7 @@ a.glra-action{
 }
 a.glra-action .arr{font-size:14px;opacity:.7}
 a.glra-action.primary{background:#ff3d00 !important;color:#fff !important;border-color:#ff3d00}
-a.glra-action.primary:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00}
+a.glra-action.primary:hover{background:#0a0a0a !important;border-color:#0a0a0a;transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ab-line,#0a0a0a)}
 /* All non-primary actions share the same outlined style. */
 a.glra-action.secondary,
 a.glra-action.contact{
@@ -162,7 +162,7 @@ body.dark-mode a.glra-action.contact{
 a.glra-action.secondary:hover,
 a.glra-action.contact:hover{
   background:#0a0a0a !important;color:#fff !important;border-color:#0a0a0a !important;
-  transform:translate(-2px,-2px);box-shadow:4px 4px 0 #ff3d00;
+  transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ab-line,#0a0a0a);
 }
 
 /* Quick contact bar — always-visible "Talk to Catherine" channels */

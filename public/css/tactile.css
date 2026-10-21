@@ -16,7 +16,7 @@ html body input::placeholder,html body textarea::placeholder{text-transform:none
 /* ── 2. Fields answer the mouse and the keyboard ──────────────────────── */
 html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea){transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease}
 @media(hover:hover){
-  html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea):not(:focus):not(:disabled):not([readonly]):hover{border-color:var(--t-hot) !important}
+  html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea):not(:focus):not(:disabled):not([readonly]):hover{border-color:var(--ab-line,#0a0a0a) !important}
 }
 html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=hidden]):not([type=file]):not([type=color]),select,textarea):focus{border-color:var(--t-hot) !important;box-shadow:0 0 0 3px rgba(255,61,0,.28) !important;outline:none !important}
 html body :is(input[type=checkbox],input[type=radio]){accent-color:var(--t-btn)}
@@ -36,21 +36,21 @@ html body :is(button,a,[role=button],summary):focus-visible{outline:3px solid va
    a page that never answered the mouse. Only cards that go somewhere lift. */
 @media(hover:hover){
   html body :is(a.tool-card,.tool-card[onclick],a.area-card,.area-card[onclick],a.resource-card,.resource-card[onclick],a.blog-card,.blog-card[onclick],a.nh-card,.nh-card[onclick],a.arth-card,.arth-card[onclick],.qs-card[onclick],a.qs-card){transition:transform .22s var(--t-ease),box-shadow .22s var(--t-ease),background-color .2s !important}
-  html body :is(a.tool-card,.tool-card[onclick],a.area-card,.area-card[onclick],a.resource-card,.resource-card[onclick],a.blog-card,.blog-card[onclick],a.nh-card,.nh-card[onclick],a.arth-card,.arth-card[onclick],.qs-card[onclick],a.qs-card):hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--t-btn) !important;position:relative;z-index:2}
+  html body :is(a.tool-card,.tool-card[onclick],a.area-card,.area-card[onclick],a.resource-card,.resource-card[onclick],a.blog-card,.blog-card[onclick],a.nh-card,.nh-card[onclick],a.arth-card,.arth-card[onclick],.qs-card[onclick],a.qs-card):hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--ab-line,#0a0a0a) !important;position:relative;z-index:2}
   html body .section .prop-card{transition:transform .22s var(--t-ease),box-shadow .22s var(--t-ease),background-color .2s !important}
-  html body .section .prop-card:hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--t-btn) !important;position:relative;z-index:3}
+  html body .section .prop-card:hover{transform:translate(-4px,-4px) !important;box-shadow:6px 6px 0 var(--ab-line,#0a0a0a) !important;position:relative;z-index:3}
   html body .section .prop-card:hover .prop-card-image img{transform:scale(1.045) !important;transition:transform .6s var(--t-ease) !important}
   html body .prop-card .prop-card-image{overflow:hidden}
 }
 /* Cards that are only text still get a quiet edge on hover, not a jump. */
 @media(hover:hover){
   html body :is(.testimonial-card,.value-card,.step-card,.section-card){transition:box-shadow .22s var(--t-ease) !important}
-  html body :is(.testimonial-card,.value-card,.step-card,.section-card):hover{box-shadow:inset 4px 0 0 var(--t-btn) !important}
+  html body :is(.testimonial-card,.value-card,.step-card,.section-card):hover{box-shadow:inset 4px 0 0 var(--ab-line,#0a0a0a) !important}
 }
 
 /* ── 5. The FAQ answers the mouse ─────────────────────────────────────── */
 html body .faq-item summary{transition:background-color .18s,padding-left .22s var(--t-ease),color .18s !important}
-@media(hover:hover){html body .faq-item summary:hover{background:rgba(255,61,0,.06) !important;padding-left:12px !important}}
+@media(hover:hover){html body .faq-item summary:hover{background:var(--ab-paper-2,#e8e4dd) !important;padding-left:12px !important}}
 html body .faq-item[open]{box-shadow:inset 4px 0 0 var(--t-btn) !important}
 html body .faq-item[open] summary{padding-left:14px !important;color:var(--ab-hot-text,#c02e00) !important}
 html body .faq-item[open] .faq-answer{padding-left:72px !important;animation:tFaq .3s var(--t-ease) both}
@@ -237,7 +237,7 @@ html body .input-group label{color:var(--t-ink) !important;opacity:.82;font-size
 html body.dark-mode .input-group label{color:#f1eee9 !important}
 html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select){background:#fff !important;border:2px solid var(--t-ink) !important;min-height:52px;padding:13px 16px !important;font-size:16px !important;font-weight:700 !important;box-shadow:3px 3px 0 rgba(10,10,10,.14) !important;transition:transform .16s var(--t-ease),box-shadow .16s var(--t-ease),border-color .16s !important}
 html body.dark-mode .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select){background:#1a1917 !important;border-color:#4a4843 !important;box-shadow:3px 3px 0 rgba(0,0,0,.5) !important}
-@media(hover:hover){html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select):not(:focus):hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--t-btn) !important}}
+@media(hover:hover){html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select):not(:focus):hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ab-line,#0a0a0a) !important}}
 html body .input-group :is(input:not([type=range]):not([type=checkbox]):not([type=radio]),select):focus{box-shadow:5px 5px 0 var(--t-btn),0 0 0 3px rgba(255,61,0,.22) !important}
 html body .input-hint{font-family:'Inter',system-ui,sans-serif !important;font-size:12.5px !important;letter-spacing:0 !important;font-weight:500 !important;line-height:1.55 !important;margin-top:8px !important}
 html body .section-divider{display:flex !important;align-items:center;gap:10px;border-top:2px dashed var(--ab-line,#d6d1c7) !important;padding-top:22px !important;margin:28px 0 16px !important;font-weight:800 !important;font-family:'JetBrains Mono',monospace}
@@ -287,11 +287,7 @@ html.gm .gm-head.gm-in .gm-wi{transform:none}
 /* Photos unveil upward with a slow settle. */
 html.gm img.gm-img{clip-path:inset(100% 0 0 0);scale:1.08;transition:clip-path 1.1s var(--gm-ease),scale 1.6s var(--gm-ease)}
 html.gm img.gm-img.gm-in{clip-path:inset(0 0 0 0);scale:1}
-/* Pointer glow on cards. */
-.gm-glow{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .35s ease;
-  background:radial-gradient(380px circle at var(--mx,50%) var(--my,50%),rgba(255,61,0,.13),transparent 62%)}
-:hover > .gm-glow{opacity:1}
-html body.dark-mode .gm-glow{background:radial-gradient(380px circle at var(--mx,50%) var(--my,50%),rgba(255,61,0,.18),transparent 62%)}
+/* Pointer glow on cards removed 21 Oct 2026 (no orange hover highlights). */
 /* Magnetic buttons ease back when the pointer leaves. */
 :is(.cta-btn,.submit-btn,.contact-btn-nav,.glra-btn,.calculate-btn,.print-btn,.view-all-btn,.cta-primary,.ss-cta,.reset-filters-btn){transition-property:translate,transform,box-shadow,background-color,color,border-color !important;transition-duration:.25s !important}
 /* Navbar gains depth once the page scrolls. */
@@ -345,7 +341,7 @@ html body .category-tabs.category-tabs .tab-btn{display:inline-flex !important;a
   box-shadow:3px 3px 0 var(--ab-ink,#0a0a0a) !important;transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s,background-color .16s,color .16s !important}
 html body .category-tabs.category-tabs .tab-btn:first-child{padding-left:20px !important}
 html body .category-tabs.category-tabs .tab-btn i{color:#ff3d00 !important;font-size:13px !important}
-@media(hover:hover){html body .category-tabs.category-tabs .tab-btn:not(.active):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #df3500 !important;border-color:#df3500 !important}}
+@media(hover:hover){html body .category-tabs.category-tabs .tab-btn:not(.active):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ab-line,#0a0a0a) !important;border-color:var(--ab-line,#0a0a0a) !important}}
 html body .category-tabs.category-tabs .tab-btn.active{background:#df3500 !important;border-color:#0a0a0a !important;color:#fff !important;box-shadow:4px 4px 0 #0a0a0a !important}
 html body .category-tabs.category-tabs .tab-btn.active i{color:#fff !important}
 html body.dark-mode .category-tabs.category-tabs .tab-btn{background:#141412 !important;border-color:#4a4843 !important;color:#f1eee9 !important;box-shadow:3px 3px 0 #000 !important}

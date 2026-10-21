@@ -37,7 +37,7 @@
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 <style>i.fas,i.far,i.fab,i.fa,i.fa-solid,i.fa-regular,i.fa-brands{display:inline-block;min-width:1em}html body .fab,html body .fab::before{font-family:inherit!important}</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"BIR Zonal Value Lookup","description":"Look up BIR Zonal Values for any property in the Philippines","applicationCategory":"Real Estate Tool","url":"https://glrarealty.com/zonal.html","creator":{"@type":"RealEstateAgent","name":"GLRA Realty"}}</script>
-<link rel="stylesheet" href="/css/styles.css?v=149">
+<link rel="stylesheet" href="/css/styles.css?v=152">
 <link rel="stylesheet" href="/css/brutalist-theme.css?v=149">
 <style>
 /* ── PAGE-SPECIFIC ── */
@@ -52,17 +52,16 @@
 .search-box button:hover{background:var(--gold-dark)}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:6px 16px;border:1px solid rgba(255,61,0,.3);color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;transition:var(--transition);letter-spacing:.5px;border-radius:2px}
-.chip:hover{border-color:var(--gold);color:var(--ab-hot-text,#c02e00);background:rgba(255,61,0,.08)}
+.chip:hover{border-color:var(--ab-line,#0a0a0a);color:var(--ab-hot-text,#c02e00);background:var(--ab-paper-2,#e8e4dd)}
 /* REGION TABS */
 .region-tabs{max-width:960px;margin:32px auto 0;padding:0 5%;display:flex;flex-wrap:wrap;gap:8px}
-.region-tab{padding:8px 18px;border:1px solid var(--border-color);background:transparent;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;color:var(--gray);transition:var(--transition);letter-spacing:.5px}
-.region-tab:hover,.region-tab.active{border-color:var(--gold);color:var(--ab-hot-text,#c02e00);background:rgba(255,61,0,.06)}
+.region-tab{padding:8px 18px;border:1px solid var(--border-color);background:transparent;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;color:var(--gray);transition:var(--transition);letter-spacing:.5px}.region-tab.active{border-color:var(--gold);color:var(--ab-hot-text,#c02e00);background:rgba(255,61,0,.06)}.region-tab:hover{border-color:var(--ab-line,#0a0a0a);color:var(--ab-hot-text,#c02e00);background:var(--ab-paper-2,#e8e4dd)}
 /* RESULTS */
 .results-section{max-width:960px;margin:0 auto;padding:36px 5% 60px}
 .result-count{font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:20px;text-transform:uppercase}
 .result-card{background:var(--card-bg);border:1px solid var(--border-color);margin-bottom:20px;overflow:hidden;transition:var(--transition)}
 body.dark-mode .result-card{background:#1a1a17;border-color:#3a3a36}
-.result-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md)}
+.result-card:hover{border-color:var(--ab-line,#0a0a0a);box-shadow:var(--shadow-md)}
 .rc-header{background:var(--navy);padding:18px 26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:1px solid rgba(255,61,0,.2)}
 .rc-location{font-family:'Inter',serif;font-size:24px;font-weight:600;color:#fff;display:flex;align-items:center;gap:10px}
 .rc-region{font-size:11px;color:var(--ab-hot-text,#c02e00);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
@@ -78,7 +77,7 @@ body.dark-mode .result-card{background:#1a1a17;border-color:#3a3a36}
 .taxes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:14px}
 .tax-row{padding:12px 16px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;transition:var(--transition)}
 body.dark-mode .tax-row{border-color:#3a3a36}
-.tax-row:hover{border-color:var(--gold)}
+.tax-row:hover{border-color:var(--ab-line,#0a0a0a)}
 .tax-name{font-size:13px;color:var(--gray)}
 .tax-amount{font-size:14px;font-weight:600;color:var(--text-color);font-family:'Inter',serif}
 .tax-total{background:var(--navy);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,61,0,.2)}
@@ -125,7 +124,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
   .region-tabs{padding:0 5%}
 }
 </style>
-<link rel="stylesheet" href="/css/tactile.css?v=149">
+<link rel="stylesheet" href="/css/tactile.css?v=152">
 </head>
 <body>
 <div class="ab-top-strip"><span><span class="live"></span>LIVE &middot; By appointment only</span><span>MAKATI &middot; SINCE 2018</span></div>
@@ -261,7 +260,7 @@ body.dark-mode .empty-state{background:rgba(255,61,0,.03);border-color:rgba(255,
 </div>
 <a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fas fa-arrow-up"></i></a>
 
-<script src="/js/main.js?v=151"></script>
+<script src="/js/main.js?v=152"></script>
 <script>
 // Short alias for the shared escapeHtml helper
 const esc = escapeHtml;
@@ -544,6 +543,6 @@ function buildRegionTabs(){
 <div class="print-only-footer">GLRA Realty &middot; Catherine SB Sampayo &middot; Licensed Real Estate Broker &middot; Metro Manila & Luzon &middot; Generated from glrarealty.com &middot; Estimates only — verify with broker.</div>
 <script src="/js/brutalist-shell.js?v=150" defer></script>
 <script src="/js/a11y.js?v=149" defer></script>
-<script src="/js/chat.js?v=149" defer></script>
+<script src="/js/chat.js?v=152" defer></script>
 </body>
 </html>
