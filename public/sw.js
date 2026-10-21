@@ -4,7 +4,7 @@
 //     authenticated data. See isPassThrough().
 //   - HTML pages: NETWORK-FIRST (so updates show without Ctrl+F5)
 //   - Static assets (images, manifest, fonts): CACHE-FIRST (fast)
-const CACHE_VERSION = 'glra-cache-v151';
+const CACHE_VERSION = 'glra-cache-v152';
 // Photos live in a cache of their own, capped (Oct 2026): they used to pile up
 // without limit, one copy per listing photo a visitor ever scrolled past.
 const IMG_CACHE = CACHE_VERSION + '-img';

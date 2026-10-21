@@ -2234,7 +2234,7 @@ window.glraOpenPrintGate = function (label, collectFn) {
       '.glra-recent-list li{scroll-snap-align:start}' +
       '.glra-recent-list a{display:block;color:inherit;text-decoration:none;border:2px solid #0a0a0a;background:#fff;height:100%}' +
       'body.dark-mode .glra-recent-list a{border-color:#f1eee9;background:#151513}' +
-      '.glra-recent-list a:hover,.glra-recent-list a:focus-visible{box-shadow:4px 4px 0 var(--ab-line,#0a0a0a)}' +
+      '.glra-recent-list a:hover,.glra-recent-list a:focus-visible{box-shadow:4px 4px 0 #ff3d00}' +
       '.glra-recent-img{display:block;aspect-ratio:4/3;background:#e8e4dd;overflow:hidden}' +
       '.glra-recent-img img{width:100%;height:100%;object-fit:cover;display:block}' +
       '.glra-recent-t{display:block;padding:8px 9px 2px;font-size:12px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
@@ -2497,8 +2497,8 @@ window.glraOpenPrintGate = function (label, collectFn) {
 
     if (!FINE) return;
 
-    // 3. (Removed 21 Oct 2026: the orange pointer glow on cards. Rafael
-    //    does not want orange hover highlights on boxes.)
+    // 3. (Removed 21 Oct 2026: the orange pointer glow that followed the
+    //    mouse over property cards. Rafael did not like it.)
 
     // 4. Magnetic primary buttons.
     var MAG = '.cta-btn, .submit-btn, .contact-btn-nav, .glra-btn, .calculate-btn, .print-btn, .view-all-btn, .cta-primary, .ss-cta, .reset-filters-btn';
