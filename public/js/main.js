@@ -2612,3 +2612,56 @@ window.glraOpenPrintGate = function (label, collectFn) {
   }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
+
+/* ── Smooth wheel scrolling (Lenis 1.3.26, self-hosted in /js/vendor) ──
+   Desktop mouse/trackpad only: phones keep native scrolling. Skipped for
+   reduced motion and on the staff tools. Loaded after the page has
+   painted so it never delays the first view. Maps, the gallery and any
+   scrollable panel keep their own wheel handling, and it pauses while a
+   menu or popup has locked the page. */
+(function () {
+  if (!window.matchMedia || !matchMedia('(pointer:fine)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (/^\/(admin|agent|social|staff)/.test(location.pathname)) return;
+  function boot() {
+    var s = document.createElement('script');
+    s.src = '/js/vendor/lenis-1.3.26.min.js';
+    s.onload = function () {
+      if (!window.Lenis) return;
+      var st = document.createElement('style');
+      st.textContent = 'html.lenis,html.lenis body{height:auto}' +
+        '.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}' +
+        'html.lenis.lenis-smooth{scroll-behavior:auto!important}' +
+        '.lenis [data-lenis-prevent]{overscroll-behavior:contain}';
+      document.head.appendChild(st);
+      var lenis = new window.Lenis({
+        autoRaf: true,
+        lerp: 0.12,
+        wheelMultiplier: 1,
+        syncTouch: false,
+        allowNestedScroll: true,
+        anchors: { offset: -90 },
+        prevent: function (n) {
+          return !!(n.closest && n.closest('.leaflet-container,[data-lenis-prevent],dialog,.modal,.glra-chat-panel,.mobile-overlay,iframe,select,textarea'));
+        }
+      });
+      window.glraLenis = lenis;
+      // Pause while anything has locked the page (mobile menu, gallery, dialogs).
+      var de = document.documentElement, b = document.body, paused = false;
+      function check() {
+        var lock = getComputedStyle(b).overflow === 'hidden' || getComputedStyle(de).overflowY === 'hidden' ||
+          !!document.querySelector('dialog[open]');
+        if (lock && !paused) { paused = true; lenis.stop(); }
+        else if (!lock && paused) { paused = false; lenis.start(); }
+      }
+      var mo = new MutationObserver(check);
+      mo.observe(b, { attributes: true, attributeFilter: ['style', 'class'] });
+      mo.observe(de, { attributes: true, attributeFilter: ['style'] });
+      document.addEventListener('toggle', check, true);
+      check();
+    };
+    document.head.appendChild(s);
+  }
+  if (document.readyState === 'complete') setTimeout(boot, 300);
+  else window.addEventListener('load', function () { setTimeout(boot, 300); });
+})();
