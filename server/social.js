@@ -2141,6 +2141,27 @@ function registerSocialRoutes(app, deps) {
     if (r.status !== 200) return res.status(r.status).json({ error: r.error });
     res.json({ id, status: r.post.status });
   }));
+  // Cancel one of the key's own posts before it goes out (21 Oct 2026, used to
+  // replace graphics). Facebook scheduled posts are removed from Facebook's
+  // scheduler; anything already published is left alone.
+  app.post(R + '/cancel', ...RV, wrap(async (req, res) => {
+    const id = String((req.body || {}).id || '');
+    if (!(await ownDraft(id))) return res.status(404).json({ error: 'Not one of the review key\'s drafts' });
+    const p = await SocialPost.findById(id);
+    const errs = [];
+    for (const t of p.targets) {
+      if (['waiting', 'draft', 'container'].includes(t.status)) { t.status = 'cancelled'; continue; }
+      if (t.status === 'scheduled' && t.network === 'fb' && t.metaId) {
+        try { await metaWrite('DELETE', t.metaId, {}, { token: await pageTokenFor(t.pageId, { strict: true, area: 'social' }), area: 'social' }); t.status = 'cancelled'; }
+        catch (e) { errs.push(scrub(e.message).slice(0, 200)); }
+      }
+    }
+    p.status = rollup(p); if (['pending', 'draft', 'changes', 'approved', 'scheduled'].includes(p.status) && p.targets.every(t => ['cancelled', 'draft'].includes(t.status))) p.status = 'cancelled';
+    p.updatedAt = new Date(); p.history.push({ at: new Date(), by: REVIEW_ACTOR.name, action: 'cancelled', note: clean((req.body || {}).note, 200) || errs.join('; ') });
+    await p.save();
+    slog(REVIEW_ACTOR, 'cancelled', { target: 'post', targetId: p._id, summary: 'Cancelled by the review key' + (errs.length ? ' (with errors: ' + errs.join('; ') + ')' : ''), ok: !errs.length });
+    res.status(errs.length ? 502 : 200).json({ id, status: p.status, errors: errs });
+  }));
   // Every post of the last N days with its status and the approver's notes, so
   // the key's author can learn from what was approved, changed or turned down.
   app.get(R + '/queue', ...RV, wrap(async (req, res) => {
