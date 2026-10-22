@@ -2637,7 +2637,13 @@ function buildPropertyPageHtml(p, related, comps, areaCountsNow, pageOpts) {
         return names.has(low) ? low.charAt(0).toUpperCase() + low.slice(1) : low;
       })
       .replace(/(^|[.!?:]\s+)(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
-    metaDesc = cutAtWord(rest ? `${lead} ${rest}` : lead, 160);
+    // The pasted post almost always opens with the same "2-bedroom condo for
+    // sale - Building" header the lead sentence already says, so the snippet
+    // read twice over (SEO audit 23 Oct 2026). Unless the description adds
+    // something else first, close with what the page offers instead.
+    const restHead = rest.slice(0, 140).toLowerCase();
+    if (!rest || /\bfor (sale|lease|rent)\b/.test(restHead) || /^\d+\s*-?\s*bedroom|^studio/.test(restHead)) rest = 'Photos, map and flood check. Listed by a licensed broker.';
+    metaDesc = cutAtWord(`${lead} ${rest}`, 160);
   }
   // Descriptions are written as Facebook posts and imported as typed, so they
   // arrive with emoji on every line, the broker's own contact block, a markdown
