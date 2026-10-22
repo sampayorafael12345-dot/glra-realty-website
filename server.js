@@ -8118,11 +8118,18 @@ app.post('/confirm-subscription', publicWriteLimiter, async (req, res) => {
   }
 });
 
-async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5, useLedger = true }) {
-  let sent = 0, failed = 0, skipped = 0, already = 0;
+async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency = 5, useLedger = true, honourExclude = true }) {
+  let sent = 0, failed = 0, skipped = 0, already = 0, excluded = 0;
   const campaignKey = crypto.createHash('sha1').update(String(subject) + '|' + String(html)).digest('hex');
   const errors = [];
   let cursor = 0;
+  // The team's own and test addresses ("Never email" list in Email Campaigns)
+  // are dropped from every real campaign, however the list was built. A test
+  // send to yourself is not a campaign and skips this.
+  if (honourExclude) {
+    const ex = new Set((await loadBulkExclude()).map(x => x.email));
+    clean = clean.filter(e => { if (ex.has(e)) { excluded++; return false; } return true; });
+  }
   // Whoever unsubscribed is never mailed again, however the list was made.
   // ...and nor is anyone who signed up but never clicked the confirmation link.
   const off = new Set((await Subscriber.find({ email: { $in: clean }, $or: [{ isActive: false }, { confirmed: false }] }).select('email').lean()).map(s => String(s.email).toLowerCase()));
@@ -8159,8 +8166,76 @@ async function dispatchBulkEmail({ clean, subject, fromName, html, concurrency =
   }
   const workers = Array.from({ length: Math.min(concurrency, clean.length) }, () => worker());
   await Promise.all(workers);
-  return { sent, failed, errors, skipped, already };
+  return { sent, failed, errors, skipped, already, excluded };
 }
+
+// ── EMAIL CAMPAIGNS: shared saved lists + "never email" list ──────────
+// Both used to live in each person's browser (localStorage), so a list saved
+// on one account was invisible to everyone else. Now one Setting row each,
+// shared by every account with bulkmail_send.
+const BM_LISTS_KEY = 'bulkmail_lists', BM_EXCL_KEY = 'bulkmail_exclude';
+const BM_LIST_MAX = 60, BM_LIST_EMAILS_MAX = 5000, BM_EXCL_MAX = 500;
+async function loadBulkLists() { const d = await Setting.findOne({ key: BM_LISTS_KEY }).lean(); return Array.isArray(d && d.value && d.value.lists) ? d.value.lists : []; }
+async function loadBulkExclude() { const d = await Setting.findOne({ key: BM_EXCL_KEY }).lean(); return Array.isArray(d && d.value && d.value.emails) ? d.value.emails : []; }
+const bmWho = req => String((req.user && (req.user.name || req.user.email)) || 'Admin').slice(0, 80);
+const bmName = n => String(n || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 80);
+
+app.get('/api/admin/bulkmail/lists', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); res.json({ lists: (await loadBulkLists()).map(l => ({ name: l.name, emails: l.emails || [], updatedAt: l.updatedAt, updatedBy: l.updatedBy || '' })) }); }
+  catch (e) { res.status(500).json({ error: 'Could not load saved lists' }); }
+});
+app.put('/api/admin/bulkmail/lists', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try {
+    const name = bmName(req.body && req.body.name);
+    if (!name) return res.status(400).json({ error: 'Give the list a name' });
+    const emails = cleanBulkRecipients(Array.isArray(req.body.emails) ? req.body.emails : []).slice(0, BM_LIST_EMAILS_MAX);
+    if (!emails.length) return res.status(400).json({ error: 'The list has no valid email addresses' });
+    const lists = (await loadBulkLists()).filter(l => l.name.toLowerCase() !== name.toLowerCase());
+    if (lists.length >= BM_LIST_MAX) return res.status(400).json({ error: `At most ${BM_LIST_MAX} saved lists. Delete an old one first.` });
+    lists.push({ name, emails, updatedAt: new Date(), updatedBy: bmWho(req) });
+    await Setting.updateOne({ key: BM_LISTS_KEY }, { $set: { value: { lists }, updatedAt: new Date() } }, { upsert: true });
+    await logAudit(req, 'UPDATE', 'EmailList', '', name, { emails: emails.length });
+    res.json({ success: true, name, count: emails.length });
+  } catch (e) { res.status(500).json({ error: 'Could not save the list' }); }
+});
+app.delete('/api/admin/bulkmail/lists', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try {
+    const name = bmName(req.query.name);
+    const lists = await loadBulkLists(), left = lists.filter(l => l.name !== name);
+    if (left.length === lists.length) return res.status(404).json({ error: 'That list no longer exists' });
+    await Setting.updateOne({ key: BM_LISTS_KEY }, { $set: { value: { lists: left }, updatedAt: new Date() } }, { upsert: true });
+    await logAudit(req, 'DELETE', 'EmailList', '', name, null);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Could not delete the list' }); }
+});
+app.get('/api/admin/bulkmail/exclude', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); res.json({ emails: await loadBulkExclude() }); }
+  catch (e) { res.status(500).json({ error: 'Could not load the list' }); }
+});
+app.post('/api/admin/bulkmail/exclude', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try {
+    const add = cleanBulkRecipients(Array.isArray(req.body && req.body.emails) ? req.body.emails : [req.body && req.body.email]);
+    if (!add.length) return res.status(400).json({ error: 'Enter a valid email address' });
+    const note = String((req.body && req.body.note) || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 80);
+    const cur = await loadBulkExclude(), have = new Set(cur.map(x => x.email));
+    const fresh = add.filter(e => !have.has(e)).map(email => ({ email, note, addedBy: bmWho(req), at: new Date() }));
+    const next = cur.concat(fresh);
+    if (next.length > BM_EXCL_MAX) return res.status(400).json({ error: `At most ${BM_EXCL_MAX} addresses on this list.` });
+    await Setting.updateOne({ key: BM_EXCL_KEY }, { $set: { value: { emails: next }, updatedAt: new Date() } }, { upsert: true });
+    await logAudit(req, 'UPDATE', 'EmailExclude', '', fresh.map(x => x.email).join(', ').slice(0, 200), { added: fresh.length });
+    res.json({ success: true, added: fresh.length, emails: next });
+  } catch (e) { res.status(500).json({ error: 'Could not update the list' }); }
+});
+app.delete('/api/admin/bulkmail/exclude', verifyToken, requirePermission('bulkmail_send'), async (req, res) => {
+  try {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    const cur = await loadBulkExclude(), next = cur.filter(x => x.email !== email);
+    if (next.length === cur.length) return res.status(404).json({ error: 'Not on the list' });
+    await Setting.updateOne({ key: BM_EXCL_KEY }, { $set: { value: { emails: next }, updatedAt: new Date() } }, { upsert: true });
+    await logAudit(req, 'DELETE', 'EmailExclude', '', email, null);
+    res.json({ success: true, emails: next });
+  } catch (e) { res.status(500).json({ error: 'Could not update the list' }); }
+});
 
 // Send a single email body to many recipients. Validates + dedupes server-side
 // (never trust the client list), throttles concurrency so Brevo doesn't choke,
@@ -8186,7 +8261,7 @@ app.post('/api/admin/bulk-email',
       const safeFrom = String(fromName || 'GLRA Realty').slice(0, 80);
       const safeSubject = subject.slice(0, 200);
 
-      const { sent, failed, errors, skipped, already } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html, useLedger: !isTest });
+      const { sent, failed, errors, skipped, already, excluded } = await dispatchBulkEmail({ clean, subject: safeSubject, fromName: safeFrom, html, useLedger: !isTest, honourExclude: !isTest });
 
       await logAudit(req, 'BULK_EMAIL', 'BulkEmail', '', safeSubject, {
         recipients: clean.length,
@@ -8195,7 +8270,7 @@ app.post('/api/admin/bulk-email',
         isTest: !!isTest
       });
 
-      res.json({ success: true, total: clean.length, sent, failed, skipped, already, errors: errors.slice(0, 10) });
+      res.json({ success: true, total: clean.length, sent, failed, skipped, already, excluded, errors: errors.slice(0, 10) });
     } catch (err) {
       console.error('bulk-email error:', err);
       res.status(500).json({ error: 'Bulk email failed' });

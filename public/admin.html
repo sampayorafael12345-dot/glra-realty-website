@@ -2143,6 +2143,23 @@ html[data-glra-look="classic"][data-glra-mode="dark"] .admin-shell [style*="colo
                 </div>
               </div>
             </div>
+
+            <!-- NEVER EMAIL: the team's own and test addresses, shared by every account -->
+            <div class="panel" style="margin-top:18px">
+              <div class="panel-head">
+                <div class="panel-title"><i class="fas fa-user-slash"></i> Never email these</div>
+                <div class="bm-count" id="bmExclCount">0</div>
+              </div>
+              <div class="panel-body">
+                <div class="field-hint" style="margin:0 0 12px">Our own and test addresses. They are left out of every campaign, even when they are ticked, pasted or in a saved list. "Test send to me" still works.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <input type="email" id="bmExclEmail" class="finput" placeholder="name@example.com" style="flex:2;min-width:180px" aria-label="Email to never send campaigns to">
+                  <input type="text" id="bmExclNote" class="finput" placeholder="Note (e.g. Rafael, test)" style="flex:1;min-width:120px" aria-label="Note">
+                  <button class="hdr-btn primary" onclick="bmExclAdd()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <div id="bmExclList" class="bm-excl-list" style="margin-top:12px"></div>
+              </div>
+            </div>
           </div>
 
           <!-- RIGHT COLUMN: Compose + Preview + Send -->
@@ -8787,6 +8804,9 @@ const bmState = {
   source: 'subs',
   props: [],
   selectedProps: new Set(),
+  exclude: new Set(),       // "Never email these" (server, shared)
+  excludeRows: [],
+  lists: [],                // saved lists (server, shared)
   loaded: false
 };
 
@@ -8803,7 +8823,12 @@ function bmAllRecipients(){
   bmState.selectedInq.forEach(e => set.add(e));
   bmState.pasted.forEach(e => set.add(e));
   bmState.uploaded.forEach(e => set.add(e));
-  return [...set];
+  return [...set].filter(e => !bmState.exclude.has(e));
+}
+// Picked or pasted, but on the "Never email" list (shown in the count, never sent).
+function bmExcludedPicked(){
+  const set = new Set([...bmState.selectedSubs, ...bmState.selectedInq, ...bmState.pasted, ...bmState.uploaded]);
+  return [...set].filter(e => bmState.exclude.has(e)).length;
 }
 
 async function bmInit(){
@@ -8825,7 +8850,8 @@ async function bmInit(){
     bmRenderPropPicker();
     bmUpdateCount();
     bmRenderPreview();
-    bmRefreshSavedDropdown();
+    await bmLoadExclude();
+    await bmLoadLists();
     bmRefreshScheduled();
     bmInitSendAtDefault();
     bmStartScheduledPolling();
@@ -8871,11 +8897,12 @@ function bmRenderSubs(){
   }
   wrap.innerHTML = items.map(s => {
     const em = (s.email||'').toLowerCase();
-    const checked = bmState.selectedSubs.has(em) ? 'checked' : '';
-    return `<label class="bm-row">
-      <input type="checkbox" ${checked} onchange="bmToggleSub('${esc(em)}', this.checked)">
+    const off = bmState.exclude.has(em);
+    const checked = !off && bmState.selectedSubs.has(em) ? 'checked' : '';
+    return `<label class="bm-row"${off ? ' style="opacity:.55" title="On the Never email list"' : ''}>
+      <input type="checkbox" ${checked} ${off ? 'disabled' : ''} onchange="bmToggleSub('${esc(em)}', this.checked)">
       <div class="bm-row-main">
-        <div class="bm-row-email">${esc(s.email||'')}</div>
+        <div class="bm-row-email">${esc(s.email||'')}${off ? ' <span class="badge b-sold" style="margin-left:6px">Never emailed</span>' : ''}</div>
         <div class="bm-row-meta">${[esc(s.name||''), esc(s.source||''), s.subscribedAt?fmtDateShort(s.subscribedAt):''].filter(Boolean).join(' · ')}</div>
       </div>
     </label>`;
@@ -8895,11 +8922,12 @@ function bmRenderInq(){
   }
   wrap.innerHTML = items.map(s => {
     const em = (s.email||'').toLowerCase();
-    const checked = bmState.selectedInq.has(em) ? 'checked' : '';
-    return `<label class="bm-row">
-      <input type="checkbox" ${checked} onchange="bmToggleInq('${esc(em)}', this.checked)">
+    const off = bmState.exclude.has(em);
+    const checked = !off && bmState.selectedInq.has(em) ? 'checked' : '';
+    return `<label class="bm-row"${off ? ' style="opacity:.55" title="On the Never email list"' : ''}>
+      <input type="checkbox" ${checked} ${off ? 'disabled' : ''} onchange="bmToggleInq('${esc(em)}', this.checked)">
       <div class="bm-row-main">
-        <div class="bm-row-email">${esc(s.email||'')}</div>
+        <div class="bm-row-email">${esc(s.email||'')}${off ? ' <span class="badge b-sold" style="margin-left:6px">Never emailed</span>' : ''}</div>
         <div class="bm-row-meta">${[esc(s.name||''), esc(s.propertyTitle||''), s.createdAt?fmtDateShort(s.createdAt):''].filter(Boolean).join(' · ')}</div>
       </div>
     </label>`;
@@ -8922,7 +8950,7 @@ function bmToggleInq(email, on){
 function bmToggleAllSubs(){
   const q = (document.getElementById('bmSubSearch')?.value || '').toLowerCase();
   const visible = bmState.subs.filter(s => s.email && (!q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q)))
-    .map(s => s.email.toLowerCase());
+    .map(s => s.email.toLowerCase()).filter(e => !bmState.exclude.has(e));
   const allOn = visible.length && visible.every(e => bmState.selectedSubs.has(e));
   if(allOn) visible.forEach(e => bmState.selectedSubs.delete(e));
   else visible.forEach(e => bmState.selectedSubs.add(e));
@@ -8932,7 +8960,7 @@ function bmToggleAllSubs(){
 function bmToggleAllInq(){
   const q = (document.getElementById('bmInqSearch')?.value || '').toLowerCase();
   const visible = bmState.inq.filter(s => s.email && (!q || (s.email||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.propertyTitle||'').toLowerCase().includes(q)))
-    .map(s => s.email.toLowerCase());
+    .map(s => s.email.toLowerCase()).filter(e => !bmState.exclude.has(e));
   const allOn = visible.length && visible.every(e => bmState.selectedInq.has(e));
   if(allOn) visible.forEach(e => bmState.selectedInq.delete(e));
   else visible.forEach(e => bmState.selectedInq.add(e));
@@ -8946,50 +8974,78 @@ function bmClearSelection(which){
   bmUpdateCount();
 }
 
-// ── SAVED EMAIL LISTS (localStorage) ─────────────────────
+// ── SAVED EMAIL LISTS (shared on the server) ─────────────
+// They used to live in each browser (localStorage), so a list saved on one
+// account was invisible to the others. Now every account with Email
+// Campaigns sees the same lists. Lists still in this browser are moved up once.
 const BM_SAVED_KEY = 'glra_email_lists_v1';
-
-function bmReadSaved(){
-  try { return JSON.parse(localStorage.getItem(BM_SAVED_KEY) || '{}'); }
-  catch { return {}; }
+async function bmLoadLists(){
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/lists');
+    const d = await r.json();
+    bmState.lists = Array.isArray(d.lists) ? d.lists : [];
+    await bmMigrateLocalLists();
+  } catch (e) { showToast('Could not load saved lists: ' + e.message, true); }
+  bmRefreshSavedDropdown();
 }
-function bmWriteSaved(obj){
-  try { localStorage.setItem(BM_SAVED_KEY, JSON.stringify(obj)); } catch {}
+async function bmMigrateLocalLists(){
+  let local = {};
+  try { local = JSON.parse(localStorage.getItem(BM_SAVED_KEY) || '{}') || {}; } catch { return; }
+  const names = Object.keys(local);
+  if(!names.length) return;
+  let moved = 0;
+  for(const name of names){
+    const emails = (local[name] && local[name].emails) || [];
+    if(!emails.length) continue;
+    const taken = bmState.lists.some(l => l.name.toLowerCase() === name.toLowerCase());
+    const finalName = taken ? (name + ' (from this browser)').slice(0, 80) : name;
+    try {
+      const r = await apiFetch('/api/admin/bulkmail/lists', { method: 'PUT', body: JSON.stringify({ name: finalName, emails }) });
+      if(r.ok) moved++;
+    } catch {}
+  }
+  if(moved === names.length){ try { localStorage.removeItem(BM_SAVED_KEY); } catch {} }
+  if(moved){
+    const r = await apiFetch('/api/admin/bulkmail/lists'); const d = await r.json();
+    bmState.lists = Array.isArray(d.lists) ? d.lists : bmState.lists;
+    showToast(`Moved ${moved} saved list${moved===1?'':'s'} from this browser, so the whole team can see ${moved===1?'it':'them'}`);
+  }
 }
+function bmFindList(name){ return bmState.lists.find(l => l.name === name); }
 function bmRefreshSavedDropdown(){
   const sel = document.getElementById('bmSavedSel');
   if(!sel) return;
-  const saved = bmReadSaved();
-  const names = Object.keys(saved).sort((a,b) => (saved[b].updatedAt||0) - (saved[a].updatedAt||0));
+  const lists = bmState.lists.slice().sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0));
   const current = sel.value;
   sel.innerHTML = '<option value="">— Pick a saved list —</option>' +
-    names.map(n => {
-      const count = (saved[n].emails || []).length;
-      return `<option value="${esc(n)}">${esc(n)} — ${count} email${count===1?'':'s'}</option>`;
+    lists.map(l => {
+      const count = (l.emails || []).length;
+      return `<option value="${esc(l.name)}">${esc(l.name)} — ${count} email${count===1?'':'s'}${l.updatedBy ? ' · ' + esc(l.updatedBy) : ''}</option>`;
     }).join('');
-  if(names.includes(current)) sel.value = current;
+  if(lists.some(l => l.name === current)) sel.value = current;
 }
-function bmSaveCurrent(){
+async function bmSaveCurrent(){
   const nameInput = document.getElementById('bmSavedName');
   const name = (nameInput.value || '').trim();
   if(!name){ showToast('Give the list a name first', true); nameInput.focus(); return; }
   const emails = bmExtractEmails(document.getElementById('bmPaste').value || '');
   if(!emails.length){ showToast('Paste box is empty — nothing to save', true); return; }
-  const saved = bmReadSaved();
-  if(saved[name] && !confirm(`Overwrite the existing list "${name}"?`)) return;
-  saved[name] = { emails, updatedAt: Date.now() };
-  bmWriteSaved(saved);
-  nameInput.value = '';
-  bmRefreshSavedDropdown();
-  document.getElementById('bmSavedSel').value = name;
-  document.getElementById('bmSavedHint').textContent = `Saved "${name}" (${emails.length} email${emails.length===1?'':'s'}).`;
-  showToast(`Saved "${name}" — ${emails.length} emails`);
+  if(bmState.lists.some(l => l.name.toLowerCase() === name.toLowerCase()) && !confirm(`Overwrite the existing list "${name}"? Everyone on the team uses these lists.`)) return;
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/lists', { method: 'PUT', body: JSON.stringify({ name, emails }) });
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error || 'Could not save the list', true); return; }
+    await bmLoadLists();
+    nameInput.value = '';
+    document.getElementById('bmSavedSel').value = d.name || name;
+    document.getElementById('bmSavedHint').textContent = `Saved "${name}" (${d.count} email${d.count===1?'':'s'}). Everyone with Email Campaigns can use it.`;
+    showToast(`Saved "${name}" — ${d.count} emails`);
+  } catch (e) { showToast('Could not save the list: ' + e.message, true); }
 }
 function bmLoadSaved(){
   const name = document.getElementById('bmSavedSel').value;
   if(!name){ showToast('Pick a saved list first', true); return; }
-  const saved = bmReadSaved();
-  const entry = saved[name];
+  const entry = bmFindList(name);
   if(!entry){ showToast('That list no longer exists', true); bmRefreshSavedDropdown(); return; }
   document.getElementById('bmPaste').value = (entry.emails || []).join('\n');
   bmParsePasted();
@@ -8999,8 +9055,7 @@ function bmLoadSaved(){
 function bmAppendSaved(){
   const name = document.getElementById('bmSavedSel').value;
   if(!name){ showToast('Pick a saved list first', true); return; }
-  const saved = bmReadSaved();
-  const entry = saved[name];
+  const entry = bmFindList(name);
   if(!entry){ showToast('That list no longer exists', true); bmRefreshSavedDropdown(); return; }
   const ta = document.getElementById('bmPaste');
   const existing = ta.value || '';
@@ -9010,17 +9065,62 @@ function bmAppendSaved(){
   document.getElementById('bmSavedHint').textContent = `Appended "${name}" — paste box now has ${bmState.pasted.length} unique email${bmState.pasted.length===1?'':'s'}.`;
   showToast(`Appended "${name}"`);
 }
-function bmDeleteSaved(){
-  const sel = document.getElementById('bmSavedSel');
-  const name = sel.value;
+async function bmDeleteSaved(){
+  const name = document.getElementById('bmSavedSel').value;
   if(!name){ showToast('Pick a saved list first', true); return; }
-  if(!confirm(`Delete the saved list "${name}"? This cannot be undone.`)) return;
-  const saved = bmReadSaved();
-  delete saved[name];
-  bmWriteSaved(saved);
-  bmRefreshSavedDropdown();
-  document.getElementById('bmSavedHint').textContent = `Deleted "${name}".`;
-  showToast(`Deleted "${name}"`);
+  if(!confirm(`Delete the saved list "${name}" for the whole team? This cannot be undone.`)) return;
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/lists?name=' + encodeURIComponent(name), { method: 'DELETE' });
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok){ showToast(d.error || 'Could not delete', true); return; }
+    await bmLoadLists();
+    document.getElementById('bmSavedHint').textContent = `Deleted "${name}".`;
+    showToast(`Deleted "${name}"`);
+  } catch (e) { showToast('Could not delete: ' + e.message, true); }
+}
+
+// ── NEVER EMAIL (shared on the server) ───────────────────
+async function bmLoadExclude(){
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/exclude');
+    const d = await r.json();
+    bmSetExclude(Array.isArray(d.emails) ? d.emails : []);
+  } catch (e) { showToast('Could not load the Never email list: ' + e.message, true); }
+}
+function bmSetExclude(rows){
+  bmState.excludeRows = rows;
+  bmState.exclude = new Set(rows.map(x => String(x.email || '').toLowerCase()));
+  bmState.exclude.forEach(e => { bmState.selectedSubs.delete(e); bmState.selectedInq.delete(e); });
+  const c = document.getElementById('bmExclCount'); if(c) c.textContent = rows.length;
+  const box = document.getElementById('bmExclList');
+  if(box) box.innerHTML = rows.length ? rows.map(x => `<div class="bm-row" style="cursor:default">
+      <div class="bm-row-main"><div class="bm-row-email">${esc(x.email)}</div><div class="bm-row-meta">${[esc(x.note||''), x.addedBy ? 'added by ' + esc(x.addedBy) : '', x.at ? fmtDateShort(x.at) : ''].filter(Boolean).join(' · ')}</div></div>
+      <button class="hdr-btn" onclick="bmExclRemove('${esc(x.email)}')" title="Allow campaigns to this address again" aria-label="Remove ${esc(x.email)}"><i class="fas fa-times"></i> Remove</button>
+    </div>`).join('') : '<div class="field-hint">No addresses yet. Add your own and any test emails here.</div>';
+  bmRenderSubs(); bmRenderInq(); bmUpdateCount();
+}
+async function bmExclAdd(){
+  const inp = document.getElementById('bmExclEmail'), note = document.getElementById('bmExclNote');
+  const emails = bmExtractEmails(inp.value || '');
+  if(!emails.length){ showToast('Enter a valid email address', true); inp.focus(); return; }
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/exclude', { method: 'POST', body: JSON.stringify({ emails, note: (note.value || '').trim() }) });
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error || 'Could not add', true); return; }
+    inp.value = ''; note.value = '';
+    bmSetExclude(d.emails || []);
+    showToast(d.added ? `Added ${d.added}: they will never get campaigns` : 'Already on the list');
+  } catch (e) { showToast('Could not add: ' + e.message, true); }
+}
+async function bmExclRemove(email){
+  if(!confirm(`Allow campaigns to ${email} again?`)) return;
+  try {
+    const r = await apiFetch('/api/admin/bulkmail/exclude?email=' + encodeURIComponent(email), { method: 'DELETE' });
+    const d = await r.json();
+    if(!r.ok){ showToast(d.error || 'Could not remove', true); return; }
+    bmSetExclude(d.emails || []);
+    showToast('Removed from Never email');
+  } catch (e) { showToast('Could not remove: ' + e.message, true); }
 }
 
 function bmParsePasted(){
@@ -9098,9 +9198,9 @@ function bmToggleProp(id, on){
 }
 
 function bmUpdateCount(){
-  const n = bmAllRecipients().length;
+  const n = bmAllRecipients().length, x = bmExcludedPicked();
   const cnt = document.getElementById('bmCount');
-  if(cnt) cnt.textContent = n + ' recipient' + (n===1?'':'s');
+  if(cnt) cnt.textContent = n + ' recipient' + (n===1?'':'s') + (x ? ` · ${x} on Never email, left out` : '');
   const sc = document.getElementById('bmSendCount');
   if(sc) sc.textContent = n;
 }
@@ -9259,7 +9359,7 @@ async function bmSend(){
       showToast(`Sent: ${d.sent} succeeded, ${d.failed} failed`);
       const result = document.getElementById('bmResult');
       result.style.display = '';
-      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (unsubscribed or never confirmed)` : '') + (d.already ? ` · ${d.already} already received this exact email, not sent again` : '');
+      result.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;margin-right:6px"></i> ${d.sent} sent · ${d.failed} failed · ${d.total} total` + (d.skipped ? ` · ${d.skipped} skipped (unsubscribed or never confirmed)` : '') + (d.excluded ? ` · ${d.excluded} on the Never email list, not sent` : '') + (d.already ? ` · ${d.already} already received this exact email, not sent again` : '');
     } else {
       showToast(d.error || 'Send failed', true);
     }
