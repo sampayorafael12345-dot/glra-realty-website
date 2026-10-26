@@ -15649,7 +15649,37 @@ function sfRenderLog(){
     <div class="sf-card"><div class="sf-ch"><p class="sf-h">Everything recorded · ${L.events.length}</p><span class="sf-sub" style="margin:0">${L.counts.actions} dashboard actions</span></div><div class="sf-cb">
       <p class="sf-legend">Built from what the system saw: time in and out, status changes, listings edited, posts logged with links, leads contacted, enquiries answered and tasks finished. Work done outside the dashboard only shows once it is logged here (a post link, a call on the lead's card).</p>
       ${items.length ? items.map(e => `<div class="sf-ev ${e.kind}"><span class="t">${sfTime(e.at)}</span><i class="fas ${SF_EV_ICON[e.kind] || 'fa-circle'}"></i><span class="x">${esc(e.text)}${e.url ? ` <a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener">open post</a>` : ''}</span></div>`).join('') : '<div class="sf-empty">Nothing recorded this day.</div>'}
-    </div></div>`;
+    </div></div>` + (sfMgr() && acc ? `<div class="sf-card"><div class="sf-cb">
+      <p class="sf-h">Minute check</p>
+      <p class="sf-legend">Enter times from another record (for example when a camera went offline). See, minute by minute, whether this person was using the dashboard and every action they took, with the network address it came from.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="sfMcTimes" class="finput" placeholder="16:22, 16:53" style="flex:1;min-width:160px" aria-label="Times to check"><button class="hdr-btn primary" onclick="sfMinuteCheck()"><i class="fas fa-search"></i> Check these times</button></div>
+      <div id="sfMcOut"></div>
+    </div></div>` : '');
+}
+
+// ── MINUTE CHECK (bosses): match one person's dashboard minutes and actions
+// to outside times, e.g. "camera offline at 16:22". Read-only.
+async function sfMinuteCheck(){
+  const acc = SF.sel, day = SF.logDay || sfDay(Date.now());
+  const times = (document.getElementById('sfMcTimes')?.value || '').trim();
+  const out = document.getElementById('sfMcOut');
+  if(!acc){ showToast('Pick a person first', true); return; }
+  if(!times){ showToast('Enter one or more times, like 16:22, 16:53', true); return; }
+  out.innerHTML = '<div class="sf-empty">Checking…</div>';
+  try{
+    const r = await apiFetch(`/api/admin/staff/minute-check?account=${encodeURIComponent(acc)}&day=${day}&times=${encodeURIComponent(times)}&win=20`);
+    const d = await r.json(); if(!r.ok) throw new Error(d.error || 'Could not check');
+    const stCol = s => ({ break:'#c08a00', lunch:'#c08a00', field:'#2d63bb', meeting:'#2d63bb' }[s] || '');
+    const ips = Object.entries(d.ipsToday || {}).sort((a,b) => b[1]-a[1]).map(([ip,n]) => `${esc(ip)} (${n})`).join(', ') || 'none';
+    out.innerHTML = `<p class="sf-sub" style="margin:10px 0">${esc(d.account.name)} · ${esc(d.day)} · ${d.checkIn ? 'timed in ' + sfTime(d.checkIn) : 'no time-in'}${d.checkOut ? ' · out ' + sfTime(d.checkOut) : ''} · status changes: ${(d.stateLog||[]).map(x => esc(x.hm + ' ' + x.state)).join(', ') || 'none'}<br>Network addresses his actions came from today: ${ips}${d.minuteData ? '' : '<br><b style="color:var(--txt-bad)">No minute data recorded for this day.</b>'}</p>` +
+      d.windows.map(w => `<div class="sf-card" style="margin-top:12px"><div class="sf-cb">
+        <p class="sf-name">Around ${esc(w.at)} <span class="sf-sub" style="margin:0">(${esc(w.from)} to ${esc(w.to)}) · active in the dashboard ${w.activeCount} of ${w.minutes.length} minutes</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin:10px 0">${w.minutes.map(x => `<span title="${esc(x.hm)}${x.active ? ' · active' : ' · no activity'}${x.state ? ' · ' + esc(x.state) : ''}${x.timedIn ? '' : ' · not timed in'}" style="display:inline-flex;flex-direction:column;align-items:center;width:38px;font:600 10px/1.3 'JetBrains Mono',monospace;padding:4px 0;border:2px solid ${x.hm === w.at ? 'var(--ab-hot,#ff3d00)' : 'var(--ab-line,#0a0a0a)'};background:${x.active ? '#10b981' : (stCol(x.state) || 'transparent')};color:${x.active || stCol(x.state) ? '#fff' : 'inherit'}">${esc(x.hm)}<b>${x.active ? 'ON' : (x.state ? esc(x.state.slice(0,5)) : '·')}</b></span>`).join('')}</div>
+        <p class="sf-legend">Green = he was using the dashboard that minute. The orange-bordered box is the time you entered. Yellow or blue = break, lunch, field or meeting.</p>
+        ${w.actions.length ? '<table style="width:100%;font-size:13px;margin-top:6px"><tr><th style="text-align:left">Time</th><th style="text-align:left">Action</th><th style="text-align:left">Network address</th><th style="text-align:left">Device</th></tr>' + w.actions.map(a => `<tr><td>${esc(a.hm)}</td><td>${esc(a.action)} ${esc(a.target)} ${esc(a.title)}</td><td>${esc(a.ip)}</td><td style="font-size:11px">${esc(a.ua)}</td></tr>`).join('') + '</table>' : '<p class="sf-sub">No recorded actions in this window.</p>'}
+      </div></div>`).join('') +
+      `<p class="sf-legend" style="margin-top:10px">Print this page (Ctrl+P) to keep a dated copy.</p>`;
+  }catch(e){ out.innerHTML = `<div class="sf-empty">${esc(e.message)}</div>`; }
 }
 
 // ── POSTING BOARD (every live listing x every channel, with proof) ──

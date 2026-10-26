@@ -1035,6 +1035,48 @@ function registerStaffRoutes(app) {
     } catch (err) { console.error('staff activity', err); res.status(500).json({ error: 'Server error' }); }
   });
 
+  // ── Minute check (bosses only, 26 Oct 2026). For given times of one day,
+  // the minutes around each one: was the dashboard in use that minute, the
+  // person's status (break, lunch...), and every recorded action with the
+  // network address it came from. Built for matching staff activity to an
+  // outside event (e.g. a camera going offline at 16:22). Read-only.
+  app.get('/api/admin/staff/minute-check', ...view, async (req, res) => {
+    try {
+      if (!(await managerCheck(req))) return res.status(403).json({ error: 'Not allowed' });
+      const accId = String(req.query.account || '');
+      if (!mongoose.isValidObjectId(accId)) return res.status(400).json({ error: 'Pick a person' });
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) ? String(req.query.day) : manilaDay();
+      const win = Math.min(60, Math.max(5, parseInt(req.query.win, 10) || 20));
+      const times = String(req.query.times || '').split(/[,\s]+/).map(t => t.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)).filter(Boolean)
+        .map(m => +m[1] * 60 + +m[2]).filter(m => m >= 0 && m < 1440).slice(0, 8);
+      if (!times.length) return res.status(400).json({ error: 'Enter at least one time, like 16:22' });
+      const acc = await Account.findById(accId).select('name email').lean();
+      if (!acc) return res.status(404).json({ error: 'Not found' });
+      const from = dayStart(day), to = new Date(from.getTime() + 864e5);
+      const [sd, audits] = await Promise.all([
+        StaffDay.findOne({ account: accId, day }).lean(),
+        AuditLog.find({ actor: String(acc.email || '').toLowerCase(), timestamp: { $gte: from, $lt: to } })
+          .select('action target targetTitle timestamp ip userAgent').sort({ timestamp: 1 }).limit(2000).lean()
+      ]);
+      const active = new Set((sd && sd.mins) || []);
+      const log = ((sd && sd.stateLog) || []).map(x => ({ s: x.state, m: rules.manilaClock(x.at).min, at: x.at })).sort((a, b) => a.m - b.m);
+      const stateAt = m => { let s = ''; for (const x of log) { if (x.m <= m) s = x.s; else break; } return s; };
+      const inMin = sd && sd.checkIn ? rules.manilaClock(sd.checkIn).min : null, outMin = sd && sd.checkOut ? rules.manilaClock(sd.checkOut).min : null;
+      const windows = times.map(t => {
+        const a = Math.max(0, t - win), b = Math.min(1439, t + win);
+        const minutes = [];
+        for (let m = a; m <= b; m++) minutes.push({ m, hm: rules.hm(m), active: active.has(m), state: stateAt(m), timedIn: inMin != null && m >= inMin && (outMin == null || m < outMin) });
+        const actions = audits.filter(x => { const m = rules.manilaClock(x.timestamp).min; return m >= a && m <= b; })
+          .map(x => ({ at: x.timestamp, hm: rules.hm(rules.manilaClock(x.timestamp).min), action: x.action, target: x.target, title: String(x.targetTitle || '').slice(0, 80), ip: x.ip || '', ua: String(x.userAgent || '').slice(0, 140) }));
+        return { at: rules.hm(t), from: rules.hm(a), to: rules.hm(b), activeCount: minutes.filter(x => x.active).length, minutes, actions };
+      });
+      const ips = {}; audits.forEach(x => { if (x.ip) ips[x.ip] = (ips[x.ip] || 0) + 1; });
+      res.set('Cache-Control', 'no-store');
+      res.json({ account: { name: acc.name || acc.email, email: acc.email }, day, win, checkIn: sd && sd.checkIn, checkOut: sd && sd.checkOut,
+        stateLog: log.map(x => ({ state: x.s, hm: rules.hm(x.m) })), ipsToday: ips, actionsToday: audits.length, minuteData: !!(sd && sd.mins && sd.mins.length), windows });
+    } catch (err) { console.error('staff minute-check', err); res.status(500).json({ error: 'Server error' }); }
+  });
+
   // ── Messages from the boss ──
   app.get('/api/admin/staff/messages', ...view, async (req, res) => {
     try {
