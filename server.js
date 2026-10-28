@@ -4134,9 +4134,14 @@ registerChatbot(app, { handleValidation });
 // The whole agent system (GPS, actions, lead journal, pipeline, calendar,
 // notifications, morning-agenda emails) lives in ./server/agents.js — routes
 // under /api/agent/* (agents only) and /api/admin/agents* (broker view).
+// BACKGROUND_JOBS=off runs the website without any of the timed jobs below
+// (emails, reminders, social posting, saved-search alerts). For a second
+// server, e.g. while moving region, so two servers never send the same thing.
+const JOBS_OFF = process.env.BACKGROUND_JOBS === 'off';
+if (JOBS_OFF) console.log('BACKGROUND_JOBS=off: timed jobs are not running on this server');
 const { registerAgentRoutes, startAgentTick } = require('./server/agents');
 registerAgentRoutes(app, { sendEmail, esc, handleValidation });
-startAgentTick({ sendEmail, esc });
+if (!JOBS_OFF) startAgentTick({ sendEmail, esc });
 
 // ============ LEASING ============
 // Rent roll, tenant ledgers, statements/receipts as PDF, reminder emails and
@@ -4147,11 +4152,11 @@ startAgentTick({ sendEmail, esc });
 // the admin "Leads" tab. ingestLead() is called by each form handler below.
 const { registerLeadRoutes, startLeadsTick, ingestLead, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib } = require('./server/leads');
 registerLeadRoutes(app, { sendEmail, esc, handleValidation, unsubUrl });
-startLeadsTick({ sendEmail, esc });
+if (!JOBS_OFF) startLeadsTick({ sendEmail, esc });
 
 const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
 registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });
-startLeasingTick({ sendEmail, esc });
+if (!JOBS_OFF) startLeasingTick({ sendEmail, esc });
 
 // The law firm's matters — routes under /api/admin/cases* (cases_view /
 // cases_manage) plus the token-only court-diary ICS feed. This replaced the
@@ -4165,7 +4170,7 @@ const caseMail = async (to, subject, html, fromName, replyTo, attachments) => {
   return !!(r && r.success);
 };
 registerCaseRoutes(app, { sendEmail: caseMail, esc, uploadAttachment, cloudinary });
-startCasesTick({ sendEmail: caseMail, esc });
+if (!JOBS_OFF) startCasesTick({ sendEmail: caseMail, esc });
 
 // The Staff tab: scorecards, time in/out, task kinds with checklists and
 // proof, a review step, repeating tasks. Built on the Task collection.
@@ -4175,8 +4180,8 @@ registerStaffRoutes(app);
 // The cloud supervisor (a scheduled Claude agent) reads the desk, hands out
 // the day's tasks and emails reports, with its own key: server/staff-bot.js.
 require('./server/staff-bot').registerStaffBot(app, { sendEmail, esc, cloudFileLink });
-require('./server/staff-bot').startWeeklyScore({ sendEmail, esc });
-require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
+if (!JOBS_OFF) require('./server/staff-bot').startWeeklyScore({ sendEmail, esc });
+if (!JOBS_OFF) require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
 // ============ META (Facebook / Instagram) ============
 // Lead Ads webhook + hourly safety net, Page/Instagram/ad insights and the
 // Page inbox, each behind its own switch (META_LEADS_ENABLED,
@@ -4184,14 +4189,14 @@ require('./server/staff-bot').startWorkdayRounds({ sendEmail, esc });
 // towards Meta: see server/meta.js.
 const { registerMetaRoutes, startMetaTick } = require('./server/meta');
 registerMetaRoutes(app, { sendEmail, esc });
-startMetaTick({ sendEmail, esc });
+if (!JOBS_OFF) startMetaTick({ sendEmail, esc });
 // ============ GLRA SOCIAL (Facebook / Instagram Page manager) ============
 // social.html: posting, scheduling, approvals, inbox, insights, activity log
 // for the Pages in META_PAGE_IDS. Off unless SOCIAL_ENABLED=1 (routes 404).
 // Staff draft; only social_approve publishes, sends, hides or deletes.
 const { registerSocialRoutes, startSocialTick, voidLinksForAccount: voidSocialLinksForAccount } = require('./server/social');
 registerSocialRoutes(app, { sendEmail, esc, cloudinary });
-startSocialTick({ sendEmail, esc, cloudinary });
+if (!JOBS_OFF) startSocialTick({ sendEmail, esc, cloudinary });
 // One-time notes for the staff member's desk (listing problems found on 30 Sept).
 setTimeout(() => require('./server/staff-memo').deliverStaffMemos(), 60e3);
 
@@ -5464,7 +5469,7 @@ function scheduleGeoPass(delayMs) {
     console.error('scheduleGeoPass error:', e.message);
   }
 }
-if (!GEO_DISABLED) {
+if (!GEO_DISABLED && !JOBS_OFF) {
   scheduleGeoPass(60 * 1000);
   setInterval(() => scheduleGeoPass(1000), GEO_DAILY_MS).unref();
 }
@@ -5670,7 +5675,7 @@ app.get('/api/quakes', trackLimiter, async (req, res) => {
 // Safety net for listings that change some other way (a lease ending and the
 // listing going back on the market, a restart that lost a pending timer).
 // First run two minutes after boot so the database has time to connect.
-setTimeout(() => {
+if (!JOBS_OFF) setTimeout(() => {
   runSavedSearchSweep().catch(() => {});
   setInterval(() => { runSavedSearchSweep().catch(() => {}); }, SAVED_SEARCH_SAFETY_MS).unref();
 }, 2 * 60 * 1000).unref();
@@ -8485,7 +8490,7 @@ async function processDueScheduledEmails() {
 }
 
 // Run every 60 seconds. First tick after 30s so the DB has time to connect.
-setTimeout(() => {
+if (!JOBS_OFF) setTimeout(() => {
   processDueScheduledEmails();
   setInterval(processDueScheduledEmails, 60 * 1000);
 }, 30 * 1000);
