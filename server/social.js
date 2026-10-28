@@ -465,11 +465,16 @@ async function runTargets(postId, actor) {
     if (t.status === 'waiting' && !due) continue;
     const from = t.status;
     if (!(await claimTarget(post._id, t._id, from, 'publishing'))) continue;
+    // Outside the try so the "not ready yet" retry below can keep them: a
+    // single photo is created and published in one go, and when Meta answered
+    // 9007 at the publish step the retry saved 'container' WITHOUT the id, so
+    // the next minute asked Meta about an empty id ("Bad Graph path", 23 and
+    // 26 Oct 2026).
+    let containerId = t.containerId, igIdUsed = t.igId || pg.igId;
     try {
-      const igId = t.igId || pg.igId;
+      const igId = igIdUsed;
       if (!igId) throw new MetaError(`${pg.name || t.pageId} has no linked Instagram account`, { code: 'no_ig' });
       const tok = await pageTokenFor(t.pageId, { strict: true, area: 'social' });
-      let containerId = t.containerId;
       if (from === 'waiting') {
         if (await igPublishedLast24h(igId) >= 50) throw new MetaError('Instagram allows about 50 posts per 24 hours per account through the API; this one waits for a retry.', { code: 'ig_cap' });
         const c = await igCreateContainer(post, t, igId, tok);
@@ -480,6 +485,7 @@ async function runTargets(postId, actor) {
           continue;
         }
       } else {
+        if (!containerId) { await setTarget(post._id, t._id, { status: 'waiting' }); continue; }
         const st = await metaGet(containerId, { fields: 'status_code,status' }, { token: tok, area: 'social', tries: 2 });
         if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new MetaError('Instagram could not process the media: ' + clean(st.status || st.status_code, 200), { code: 'ig_container' });
         if (st.status_code !== 'FINISHED') { await setTarget(post._id, t._id, { status: 'container' }); continue; }
@@ -489,7 +495,14 @@ async function runTargets(postId, actor) {
       slog(actor, 'published', { pageId: t.pageId, network: 'ig', target: 'post', targetId: post._id, metaId: r.metaId, summary: `Published on Instagram (@${pg.igUsername || igId})` });
     } catch (e) {
       // Meta 9007 / 2207027: the media is not ready yet -> try again next minute.
-      if (Number(e.subcode) === 2207027 || Number(e.code) === 9007) { await setTarget(post._id, t._id, { status: 'container' }); continue; }
+      if (Number(e.subcode) === 2207027 || Number(e.code) === 9007) {
+        // With an id, check it again next minute; without one (the create step
+        // itself was refused), start over, and give up after a few tries.
+        if (containerId) await setTarget(post._id, t._id, { status: 'container', containerId, igId: igIdUsed || '' });
+        else if ((t.attempts || 0) < 5) await setTarget(post._id, t._id, { status: 'waiting', attempts: (t.attempts || 0) + 1 });
+        else await setTarget(post._id, t._id, { status: 'failed', error: 'Instagram kept saying the media was not ready', attempts: (t.attempts || 0) + 1 });
+        continue;
+      }
       await setTarget(post._id, t._id, { status: 'failed', error: scrub(e.message).slice(0, 500), unknown: !!e.unknown, attempts: (t.attempts || 0) + 1 });
       slog(actor, 'failed', { pageId: t.pageId, network: 'ig', target: 'post', targetId: post._id, summary: 'Instagram: ' + scrub(e.message).slice(0, 300), ok: false });
     }
