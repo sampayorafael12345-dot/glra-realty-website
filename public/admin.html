@@ -14079,6 +14079,39 @@ function ldSettings(){
     ta('first', 'First reply') + ta('viewing', 'Viewing') + ta('followup', 'Follow-up') + ta('matches', 'New matches') + ta('seller', 'Seller or landlord') +
     '<p class="ld-note full" style="margin:0">In a template, {first} becomes the lead\'s first name, {name} their full name, {property} the listing they asked about, and {about} becomes " about &lt;that listing&gt;" (or nothing when there is none).</p>' +
     '</div>' + (ldCan() ? '<div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="hdr-btn primary" onclick="ldSaveSettings()"><i class="fas fa-save"></i> Save</button></div>' : '') + '</div></div>';
+  if(isAdmin()){ el.insertAdjacentHTML('afterbegin', '<div id="apPanel" style="margin-bottom:16px"></div>'); apLoad(); }
+}
+// ── Autopilot (admin only): auto first reply, follow-ups, 6 pm report ──
+async function apLoad(){
+  var box = document.getElementById('apPanel'); if(!box) return;
+  try{
+    var r = await apiFetch('/api/admin/autopilot'); var d = await r.json(); if(!r.ok) throw new Error(d.error);
+    var s = d.settings, t = d.today || {}, h = d.health || {};
+    box.innerHTML = '<div class="panel"><div class="panel-head"><div class="panel-title"><i class="fas fa-robot"></i> Autopilot: ' + (s.enabled ? 'ON' : 'OFF') + '</div></div><div class="panel-body">' +
+      '<p class="ld-note" style="margin:0 0 10px">When ON, new leads with an email get an automatic first reply a few minutes after they ask, plus two follow-ups (day 3 and day 10) if they never answer. A 6 pm report lists the leads that need a person and the listing problems. It never posts to Facebook groups or portals.</p>' +
+      '<p class="ld-note" style="margin:0 0 10px"><strong>Today:</strong> ' + esc(String(t.replied || 0)) + ' first replies, ' + esc(String(t.followed || 0)) + ' follow-ups, ' + esc(String(t.failed || 0)) + ' failed. <strong>Need a person:</strong> ' + esc(String(d.needHuman || 0)) + '. <strong>Listing problems:</strong> ' + esc(String((h.noPrice || 0) + (h.fewPhotos || 0))) + ' (price or photos), ' + esc(String(h.stale || 0)) + ' not touched in 150+ days.</p>' +
+      '<div class="ld-g"><label class="ld-f"><span>Reply signs off as</span><input class="finput" id="apName" value="' + esc(s.senderName || 'Catherine') + '"></label>' +
+      '<label class="ld-f"><span>Send the 6 pm report to (blank = lead alerts address)</span><input class="finput" id="apMail" type="email" value="' + esc(s.reportEmail || '') + '"></label></div>' +
+      '<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
+      '<button class="hdr-btn" onclick="apReport()"><i class="fas fa-envelope"></i> Email me the report now</button>' +
+      '<button class="hdr-btn" onclick="apSave()"><i class="fas fa-save"></i> Save</button>' +
+      '<button class="hdr-btn primary" onclick="apSave(' + (s.enabled ? 'false' : 'true') + ')">' + (s.enabled ? 'Turn OFF' : 'Turn ON') + '</button></div></div></div>';
+  }catch(e){ box.innerHTML = ''; }
+}
+async function apSave(on){
+  var body = { senderName: document.getElementById('apName').value, reportEmail: document.getElementById('apMail').value };
+  if(typeof on === 'boolean') body.enabled = on;
+  try{
+    var r = await apiFetch('/api/admin/autopilot', { method: 'PUT', body: JSON.stringify(body) }); var d = await r.json();
+    if(!r.ok) throw new Error(d.error);
+    showToast(typeof on === 'boolean' ? (on ? 'Autopilot is ON' : 'Autopilot is OFF') : 'Saved'); apLoad();
+  }catch(e){ showToast('Could not save: ' + (e.message || ''), true); }
+}
+async function apReport(){
+  try{
+    var r = await apiFetch('/api/admin/autopilot/report', { method: 'POST' }); var d = await r.json();
+    showToast(d.success ? 'Report sent to ' + d.to : 'Could not send (email service is down?)', !d.success);
+  }catch(e){ showToast('Could not send', true); }
 }
 async function ldSaveSettings(){
   var tpl = {}; document.querySelectorAll('[data-ldtpl]').forEach(function(t){ tpl[t.getAttribute('data-ldtpl')] = t.value; });
