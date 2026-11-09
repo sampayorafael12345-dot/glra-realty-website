@@ -1626,6 +1626,8 @@ const leadSchema = new mongoose.Schema({
   nudgedAt:       { type: Date, default: null },     // "still waiting for a reply" alert sent
   nudgeFails:     { type: Number, default: 0 },      // reminder emails that failed (retried up to 3 times)
   archived:       { type: Boolean, default: false },
+  // server/autopilot.js bookkeeping: which ask was auto-answered, follow-ups sent.
+  autopilot:      { type: mongoose.Schema.Types.Mixed, default: undefined },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

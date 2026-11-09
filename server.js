@@ -4153,6 +4153,9 @@ if (!JOBS_OFF) startAgentTick({ sendEmail, esc });
 const { registerLeadRoutes, startLeadsTick, ingestLead, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib } = require('./server/leads');
 registerLeadRoutes(app, { sendEmail, esc, handleValidation, unsubUrl });
 if (!JOBS_OFF) startLeadsTick({ sendEmail, esc });
+const autopilot = require('./server/autopilot');
+autopilot.registerAutopilot(app, { sendEmail, esc });
+if (!JOBS_OFF) autopilot.startAutopilot({ sendEmail, esc });
 
 const { registerLeasingRoutes, startLeasingTick } = require('./server/leasing');
 registerLeasingRoutes(app, { sendEmail, esc, uploadAttachment, cloudinary });

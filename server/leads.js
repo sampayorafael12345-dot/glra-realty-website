@@ -941,5 +941,5 @@ function startLeadsTick({ sendEmail, esc }) {
 module.exports = {
   registerLeadRoutes, startLeadsTick, ingestLead, backfillLeads, stitchLeadVid, classifyInquiry, hintsFromListing, hintsFromCriteria, cleanAttrib,
   getLeadSettings, pushActivity, isWaiting, KIND_LABEL,
-  _test: { normEmail, normPhone, computeScore, matchListings, mergeIntent, baseType, areaOf, leadStats, isWaiting }
+  _test: { hasAsked: hasAskedForListings, normEmail, normPhone, computeScore, matchListings, mergeIntent, baseType, areaOf, leadStats, isWaiting }
 };
