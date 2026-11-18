@@ -168,6 +168,16 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="section-divider">The Person Who Passed Away</div>
       <div class="input-group">
+        <label for="deathEra">When did they pass away?</label>
+        <select id="deathEra" onchange="recalc()">
+          <option value="train" selected>On or after 1 January 2018</option>
+          <option value="nirc97">1 January 1998 to 31 December 2017</option>
+          <option value="old">Before 1998</option>
+        </select>
+        <div class="input-hint">The law in force on the date of death decides the tax. The 6% rate and ₱5M deduction (TRAIN law) apply only to deaths from 2018. Deaths from 1998 to 2017 use the old 5% to 20% rates with a ₱1M deduction.</div>
+      </div>
+      <div id="eraWarn" class="input-hint" style="display:none;margin:-6px 0 18px;padding:12px 14px;border-left:3px solid var(--ab-hot-text,#c02e00);background:rgba(192,46,0,.06);font-size:14px;line-height:1.5"></div>
+      <div class="input-group">
         <label for="marital">Were they married when they died?</label>
         <select id="marital" onchange="recalc()">
           <option value="single" selected>No, single or widowed</option>
@@ -194,7 +204,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
           <option value="yes">Yes — the decedent's family home</option>
           <option value="no" selected>No / not applicable</option>
         </select>
-        <div class="input-hint">The family home is deductible up to ₱10,000,000. If the couple owned it together, only half its value counts.</div>
+        <div class="input-hint" id="famHint">The family home is deductible up to ₱10,000,000. If the couple owned it together, only half its value counts.</div>
       </div>
       <div class="input-group">
         <label for="debts">Outstanding Debts &amp; Claims (₱)</label>
@@ -219,9 +229,9 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
     <div class="calc-body">
 
       <div class="est-headline">
-        <span class="label">Estimated Estate Tax (6%)</span>
+        <span class="label" id="estLabel">Estimated Estate Tax (6%)</span>
         <div class="value" id="estTax">₱0</div>
-        <div class="sub">6% of the net taxable estate (TRAIN law)</div>
+        <div class="sub" id="estSub">6% of the net taxable estate (TRAIN law)</div>
       </div>
 
       <div class="breakdown">
@@ -231,7 +241,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
         <div class="breakdown-row"><span class="k">Less: Debts &amp; claims</span><span class="v minus" id="rDebts">₱0</span></div>
         <div class="breakdown-row" id="rowSpouse" style="display:none"><span class="k">Less: Surviving spouse's half</span><span class="v minus" id="rSpouse">₱0</span></div>
         <div class="breakdown-row"><span class="k">Net taxable estate</span><span class="v" id="rNet">₱0</span></div>
-        <div class="breakdown-row total"><span class="k">Estate tax @ 6%</span><span class="v" id="rTax">₱0</span></div>
+        <div class="breakdown-row total"><span class="k" id="rTaxK">Estate tax @ 6%</span><span class="v" id="rTax">₱0</span></div>
       </div>
 
       <div class="section-divider">Title Transfer &amp; Processing (est.)</div>
@@ -273,7 +283,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>Important:</strong> This is a simplified estimate. The standard deduction (₱5M) and family-home deduction (up to ₱10M) apply to estates of residents; other rules apply to non-residents and to estates with multiple properties or businesses. Penalties and interest apply to late filing, and the BIR requires filing within one year of death (amnesty windows sometimes extend this). Transfer, registration, and notarial costs vary by LGU and Registry of Deeds. This is not legal or tax advice — GLRA Realty handles estate title transfers and can give you an exact, itemized quote. <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Talk to Catherine →</a></div>
+    <div><strong>Important:</strong> This is a simplified estimate. For deaths from 2018, the standard deduction (₱5M) and family-home deduction (up to ₱10M) apply to estates of residents, and the return is due within one year of death. For deaths from 1998 to 2017, the old rates (5% to 20% above ₱200,000), a ₱1M standard deduction and a ₱1M family-home cap apply, and the return was due within six months. Other rules apply to non-residents and to estates with several properties or businesses. Late filing adds a 25% surcharge, interest and a compromise penalty, which this estimate does not include. The last estate tax amnesty ended on 14 June 2025. Transfer, registration, and notarial costs vary by LGU and Registry of Deeds. This is not legal or tax advice — GLRA Realty handles estate title transfers and can give you an exact, itemized quote. <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Talk to Catherine →</a></div>
   </div>
 </div>
 
@@ -346,10 +356,46 @@ function formatPrice(input){
 function getRaw(id){ return parseFloat((document.getElementById(id).value||'').replace(/,/g,'')) || 0; }
 function fmtPeso(n){ return '₱' + Math.round(n).toLocaleString('en-US'); }
 
-const STD_DEDUCTION = 5000000;
-const FAM_HOME_CAP = 10000000;
+// The law on the date of death governs (RR 12-2018 for TRAIN). TRAIN, deaths
+// from 1 Jan 2018: 6% flat, P5M standard deduction, family home up to P10M.
+// NIRC 1997 (RA 8424) Sec. 84, deaths 1 Jan 1998 to 31 Dec 2017: graduated
+// 5% to 20% above P200,000, P1M standard deduction, family home up to P1M.
+// Deaths before 1998 fall under older laws (PD 69, PD 1994, RA 7499); we
+// don't estimate those. Lea caught the old reels quoting 6% and P5M for every
+// estate (18 Nov 2026).
+const ERA = {
+  train:  { std: 5000000, famCap: 10000000 },
+  nirc97: { std: 1000000, famCap: 1000000 },
+  old:    { std: 0, famCap: 0 }
+};
+function oldRateTax(net){
+  if (net <= 200000) return 0;
+  if (net <= 500000) return (net - 200000) * 0.05;
+  if (net <= 2000000) return 15000 + (net - 500000) * 0.08;
+  if (net <= 5000000) return 135000 + (net - 2000000) * 0.11;
+  if (net <= 10000000) return 465000 + (net - 5000000) * 0.15;
+  return 1215000 + (net - 10000000) * 0.20;
+}
+let STD_DEDUCTION = 5000000;
+let FAM_HOME_CAP = 10000000;
 
 function recalc(){
+  const era = document.getElementById('deathEra').value;
+  STD_DEDUCTION = ERA[era].std; FAM_HOME_CAP = ERA[era].famCap;
+  const warn = document.getElementById('eraWarn');
+  if (era === 'train') { warn.style.display = 'none'; }
+  else {
+    warn.style.display = '';
+    warn.innerHTML = era === 'nirc97'
+      ? '<strong>Old rules apply.</strong> This uses the 1998 to 2017 rates and deductions. The return was due within six months of death, so the BIR will also add a 25% surcharge, interest (20% a year until 2017, 12% a year since 2018) and a compromise penalty. These can be larger than the tax itself and are <strong>not included</strong> here. Ask us for an exact computation.'
+      : '<strong>We can’t estimate this one here.</strong> Deaths before 1998 fall under older laws with different rates and deductions, plus many years of penalties. Send us the date of death and the property details and we’ll compute it for you.';
+  }
+  document.getElementById('estLabel').textContent = era === 'train' ? 'Estimated Estate Tax (6%)' : era === 'nirc97' ? 'Estimated Estate Tax (old rates)' : 'Estimated Estate Tax';
+  document.getElementById('estSub').textContent = era === 'train' ? '6% of the net taxable estate (TRAIN law)' : era === 'nirc97' ? '5% to 20% above ₱200,000 (NIRC 1997), before penalties' : 'Ask us: older laws apply';
+  document.getElementById('rTaxK').textContent = era === 'train' ? 'Estate tax @ 6%' : era === 'nirc97' ? 'Estate tax (graduated rates)' : 'Estate tax';
+  document.getElementById('famHint').textContent = era === 'nirc97'
+    ? 'For deaths from 1998 to 2017, the family home is deductible up to ₱1,000,000. If the couple owned it together, only half its value counts.'
+    : 'The family home is deductible up to ₱10,000,000. If the couple owned it together, only half its value counts.';
   const propVal = getRaw('propVal');
   const other = getRaw('otherAssets');
   const isFamHome = document.getElementById('famHome').value === 'yes';
@@ -369,7 +415,7 @@ function recalc(){
   const famDeduction = isFamHome ? Math.min(shared ? propVal / 2 : propVal, FAM_HOME_CAP) : 0;
   const spouseShare = shared ? Math.max(0, gross - debts) / 2 : 0;
   const net = Math.max(0, gross - STD_DEDUCTION - famDeduction - debts - spouseShare);
-  const estateTax = net * 0.06;
+  const estateTax = era === 'train' ? net * 0.06 : era === 'nirc97' ? oldRateTax(net) : 0;
   // What the heirs actually inherit: the deceased's own share, never the spouse's.
   const inherited = Math.max(0, gross - debts - spouseShare);
 
@@ -401,6 +447,7 @@ function recalc(){
 
   document.getElementById('mTotal').textContent = fmtPeso(transferTotal);
   document.getElementById('mShare').textContent = fmtPeso(inherited / heirs);
+  if (era === 'old') ['estTax','rStd','rFam','rNet','rTax','tTax','tTotal','mTotal'].forEach(id => { document.getElementById(id).textContent = '—'; });
 }
 
 document.addEventListener('DOMContentLoaded', recalc);
