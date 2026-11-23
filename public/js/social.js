@@ -12,7 +12,7 @@
   var S = { me: null, pages: [], page: '', tab: 'overview', badge: { pending: 0, unanswered: 0 }, templates: null };
   var C = null;            // the composer
   var CAL = { view: 'month', cursor: new Date(), data: null };
-  var IB = { kind: '', status: 'open', tag: '', mine: false, key: '', threads: [], summary: null };
+  var IB = { kind: '', status: 'open', tag: '', lt: '', mine: false, key: '', threads: [], summary: null };
   var INS = { days: 30, from: '', to: '' };
   var TABS = [
     ['overview', 'Overview', 'fa-house'], ['compose', 'Compose', 'fa-pen-to-square'], ['calendar', 'Calendar', 'fa-calendar-days'],
@@ -724,11 +724,12 @@
   VIEWS.inbox = function () {
     var html = head('Inbox', 'Facebook and Instagram comments and messages for ' + (S.page ? esc(pageOf(S.page).name) : 'all Pages') + '. Replies, hiding and deleting go through approval.',
       can('approve') ? '<button class="so-btn" data-act="ibSync"><i class="fas fa-rotate"></i>Check now</button>' : '');
-    html += '<div id="ibSum" class="so-grid so-pages" style="margin-bottom:14px"></div>';
+    html += '<div id="ibSum" class="so-grid so-pages" style="margin-bottom:14px"></div><div id="ltCard"></div>';
     html += '<div class="so-card" style="padding:12px;margin-bottom:14px"><div class="so-row so-filters">' +
       '<div class="so-seg" role="group" aria-label="Status">' + [['open', 'Open'], ['unanswered', 'Waiting reply'], ['done', 'Done'], ['all', 'All']].map(function (s) { return '<button data-act="ibStatus" data-v="' + s[0] + '" aria-pressed="' + (IB.status === s[0]) + '">' + s[1] + '</button>'; }).join('') + '</div>' +
       '<select data-ch="ibKind" aria-label="Kind" style="max-width:200px"><option value="">Everything</option>' + Object.keys(KIND).map(function (k) { return '<option value="' + k + '"' + (IB.kind === k ? ' selected' : '') + '>' + KIND[k][0] + 's</option>'; }).join('') + '</select>' +
       '<select data-ch="ibTag" aria-label="Tag" style="max-width:170px"><option value="">Any tag</option>' + S.me.tags.map(function (t) { return '<option value="' + t + '"' + (IB.tag === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+      '<select data-ch="ibLt" aria-label="Land Title group" style="max-width:230px"><option value="">Land Title: any group</option>' + LTG.map(function (g) { return '<option value="' + g[0] + '"' + (IB.lt === g[0] ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select>' +
       '<label class="so-check so-small"><input type="checkbox" data-ch="ibMine"' + (IB.mine ? ' checked' : '') + '> Assigned to me</label></div></div>';
     html += '<div class="so-inbox' + (IB.key ? ' open' : '') + '" id="ibWrap"><div class="so-card so-threads" id="ibList"><div class="so-spin"></div></div><div class="so-card so-thread" id="ibThread">' + empty('fa-comments', 'Choose a conversation.') + '</div></div>';
     setView(html);
@@ -739,10 +740,47 @@
           (p.unanswered ? '<span class="down">' + p.unanswered + ' over ' + r.unansweredHours + ' h</span>' : '<span class="up">none overdue</span>') + (p.oldestMin != null ? ' · oldest ' + ago(p.oldestMin) : '') + (p.speed.medianMin != null ? ' · median reply ' + ago(p.speed.medianMin) : '') + '</div></div>';
       }).join('');
     }).catch(function () {});
+    ltCard();
     loadThreads();
   };
+  // ── Land Title automation (server/lt-auto.js) ──
+  var LTG = [['A', 'Ready client'], ['B', 'Started, not finished'], ['C', 'For the lawyer'], ['D', 'Outside the area'], ['E', 'Info only'], ['F', 'Not a client yet'], ['flag', 'Complained: no reply']];
+  var LTKIND = { A: 'hot', B: 'info', C: 'warn', D: '', E: '', F: '' };
+  function ltName(g) { for (var i = 0; i < LTG.length; i++) if (LTG[i][0] === g) return LTG[i][1]; return g; }
+  function ltPills(lt) { return lt && lt.group ? pill(ltName(lt.group), LTKIND[lt.group]) + (lt.flag === 'complaint' ? pill('no reply complaint', 'bad') : '') : ''; }
+  function ltCard() {
+    api('/lt-auto').then(function (r) {
+      S.lt = r;
+      var b = $('#ltCard'); if (!b) return;
+      var modeTxt = r.mode === 'live' ? 'ON: it answers people' : r.mode === 'shadow' ? 'Shadow: it sorts and records, it sends nothing' : 'Off';
+      b.innerHTML = '<div class="so-card" style="padding:12px;margin-bottom:14px"><div class="so-between" style="flex-wrap:wrap;gap:8px"><div><b><i class="fas fa-robot"></i> Land Title automation</b> ' + pill(modeTxt, r.mode === 'live' ? 'hot' : r.mode === 'shadow' ? 'info' : '') +
+        '<div class="so-small so-muted" style="margin-top:4px">' + r.sorted + ' people sorted in the last 30 days' + (r.complaints ? ' · <span class="down">' + r.complaints + ' complained about no reply</span>' : '') + '</div></div>' +
+        '<div class="so-btns"><button class="so-btn sm" data-act="ltLog"><i class="fas fa-list"></i>What it did</button><button class="so-btn sm" data-act="ltScripts"><i class="fas fa-comment-dots"></i>Scripts</button></div></div>' +
+        '<div class="so-row" style="gap:6px;margin-top:10px;flex-wrap:wrap">' + LTG.slice(0, 6).map(function (g) { return '<button class="so-chip" data-act="ltPick" data-v="' + g[0] + '" aria-pressed="' + (IB.lt === g[0]) + '">' + g[1] + ' <b>' + (r.counts[g[0]] || 0) + '</b></button>'; }).join('') + '</div></div>';
+    }).catch(function () {});
+  }
+  ACT.ltPick = function (el) { var v = el.getAttribute('data-v'); IB.lt = IB.lt === v ? '' : v; IB.key = ''; IB.status = IB.lt ? 'all' : IB.status; VIEWS.inbox(); };
+  INP.ibLt = function (el) { IB.lt = el.value; IB.key = ''; loadThreads(); ltCard(); };
+  ACT.ltLog = function () {
+    var r = S.lt; if (!r) return;
+    var rows = r.log.map(function (l) {
+      return '<tr><td class="so-small" style="white-space:nowrap">' + esc(fmt(l.at)) + '</td><td class="so-small">' + esc(l.who || 'Someone') + '<div class="so-muted">' + esc(l.kind === 'messenger' ? 'Messenger' : 'Comment') + '</div></td><td class="so-small">' + esc(l.trigger || '(reminder)') + '</td><td class="so-small">' + esc(l.rule) +
+        '</td><td class="so-small">' + (l.scripts.length ? esc(l.scripts.join(', ')) : l.hide ? 'hide comment' : '<span class="so-muted">nothing</span>') + (l.scripts.length || l.hide || l.error ? '<div class="so-muted">' + esc(l.result === 'recorded' ? 'not sent (shadow)' : l.result) + (l.error ? ': ' + esc(l.error) : '') + '</div>' : '') + '</td><td>' + pill(ltName(l.group), LTKIND[l.group]) + '</td></tr>';
+    }).join('');
+    modal('Land Title automation: what it did', '<p class="so-small so-muted">Newest first. In shadow mode nothing here was sent: the last column but one shows what it would have sent.</p><div class="so-tablewrap"><table class="so-table"><thead><tr><th>When</th><th>Who</th><th>They wrote</th><th>Rule</th><th>Reply</th><th>Group</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="6" class="so-small so-muted">Nothing yet. New messages and comments on the Land Title Page appear here.</td></tr>') + '</tbody></table></div>', '', true);
+  };
+  ACT.ltScripts = function () {
+    var r = S.lt; if (!r) return;
+    var admin = S.me && S.me.user && S.me.user.role === 'admin';
+    var body = '<p class="so-small so-muted">These are the only words the automation can ever send. Nothing goes out until the owners approve them and sending is unlocked.</p>' +
+      (admin ? '<div class="so-well so-small" style="margin-bottom:12px"><b>Mode:</b> ' + ['off', 'shadow'].map(function (m) { return '<button class="so-chip" data-act="ltMode" data-v="' + m + '" aria-pressed="' + (r.mode === m) + '">' + (m === 'off' ? 'Off' : 'Shadow (record only)') + '</button>'; }).join(' ') + ' <span class="so-muted">Sending is ' + (r.sendSwitch ? 'unlocked' : 'locked') + '.</span></div>' : '') +
+      r.scripts.map(function (x) { return '<div class="so-well" style="margin-bottom:8px"><div class="so-between"><b class="so-small">' + esc(x.id) + '</b><span>' + (x.owners ? pill('owners to confirm wording', 'warn') : '') + (x.approved ? pill('approved', 'hot') : pill('not approved', '')) + '</span></div><div class="so-small" style="white-space:pre-wrap;margin-top:6px">' + esc(x.text) + '</div>' + (x.buttons.length ? '<div class="so-row" style="gap:4px;margin-top:6px;flex-wrap:wrap">' + x.buttons.map(function (t) { return '<span class="so-pill">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</div>'; }).join('');
+    modal('Land Title automation: scripts', body, '', true);
+  };
+  ACT.ltMode = function (el) { api('/lt-auto/mode', { method: 'POST', body: { mode: el.getAttribute('data-v') } }).then(function (r) { S.lt = r; closeModal(); toast('Automation: ' + r.mode); ltCard(); }).catch(fail); };
   function loadThreads() {
-    var q = '?status=' + IB.status + '&pageId=' + encodeURIComponent(S.page) + '&kind=' + IB.kind + '&tag=' + IB.tag + (IB.mine ? '&assigned=me' : '');
+    var q = '?status=' + IB.status + '&pageId=' + encodeURIComponent(S.page) + '&kind=' + IB.kind + '&tag=' + IB.tag + '&lt=' + IB.lt + (IB.mine ? '&assigned=me' : '');
     api('/inbox' + q).then(function (r) {
       IB.threads = r.threads; IB.hours = r.unansweredHours;
       var b = $('#ibList'); if (!b) return;
@@ -751,7 +789,7 @@
         var sla = t.waiting ? '<span class="so-sla ' + (t.unanswered ? 'bad' : t.ageMin > 60 ? 'warn' : 'ok') + '">' + ago(t.ageMin) + '</span>' : '';
         var tags = uniq((t.tags || []).concat(t.autoTags || [])).slice(0, 3);
         return '<button class="so-th" data-act="ibOpen" data-k="' + esc(t.key) + '" aria-current="' + (t.key === IB.key) + '"><span class="so-net ' + k[2] + '"><i class="' + k[1] + '"></i></span><span class="bd"><span class="nm"><span>' + esc(t.name || 'Someone') + '</span>' + (t.sentiment === 'negative' ? '<i class="fas fa-face-frown" style="color:var(--lk-bad)" title="Sounds unhappy"></i>' : '') + '</span><span class="sn" style="display:block">' + esc(t.snippet || '') + '</span>' +
-          '<span class="so-row" style="gap:4px;margin-top:4px">' + tags.map(function (x) { return '<span class="so-pill ' + (x === 'spam' ? 'bad' : x === 'price' || x === 'viewing' ? 'hot' : '') + '">' + esc(x) + '</span>'; }).join('') + (t.assignedTo && t.assignedTo.name ? '<span class="so-pill info"><i class="fas fa-user"></i>' + esc(t.assignedTo.name.split(' ')[0]) + '</span>' : '') + (t.pending ? '<span class="so-pill warn">' + t.pending + ' waiting approval</span>' : '') + '</span></span>' +
+          '<span class="so-row" style="gap:4px;margin-top:4px">' + ltPills(t.lt) + tags.map(function (x) { return '<span class="so-pill ' + (x === 'spam' ? 'bad' : x === 'price' || x === 'viewing' ? 'hot' : '') + '">' + esc(x) + '</span>'; }).join('') + (t.assignedTo && t.assignedTo.name ? '<span class="so-pill info"><i class="fas fa-user"></i>' + esc(t.assignedTo.name.split(' ')[0]) + '</span>' : '') + (t.pending ? '<span class="so-pill warn">' + t.pending + ' waiting approval</span>' : '') + '</span></span>' +
           '<span class="meta"><span class="so-tiny so-muted">' + esc(fmt(t.lastAt, { weekday: undefined, hour: undefined, minute: undefined })) + '</span>' + sla + (!S.page ? '<span class="so-dot" style="background:' + esc(pageOf(t.pageId).color) + '" title="' + esc(pageOf(t.pageId).name) + '"></span>' : '') + '</span></button>';
       }).join('') : empty('fa-inbox', IB.status === 'unanswered' ? 'Nobody is waiting for a reply.' : 'Nothing here. New comments and messages arrive through the webhook, and a check runs every 10 minutes.');
       if (!IB.key && window.innerWidth > 980 && r.threads.length) { IB.key = r.threads[0].key; var first = document.querySelector('.so-th'); if (first) first.setAttribute('aria-current', 'true'); }
@@ -777,6 +815,7 @@
       if (can('draft')) html += '<div class="so-row" style="margin-bottom:12px">' + S.me.tags.map(function (t) { return '<button class="so-chip" data-act="ibTagT" data-v="' + t + '" aria-pressed="' + (tags.indexOf(t) >= 0) + '">' + t + ((th.autoTags || []).indexOf(t) >= 0 && tags.indexOf(t) < 0 ? ' <i class="fas fa-wand-magic-sparkles" title="Suggested"></i>' : '') + '</button>'; }).join('') +
         '<select data-ch="ibAssign" aria-label="Assign to" style="max-width:180px"><option value="">Unassigned</option>' + staff.map(function (s) { return '<option value="' + s.id + '"' + (th.assignedTo && th.assignedTo.id === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select>' +
         '<button class="so-btn sm" data-act="ibDone">' + (th.status === 'done' ? '<i class="fas fa-rotate-left"></i>Reopen' : '<i class="fas fa-check"></i>Mark done') + '</button></div>';
+      if (th.lt && th.lt.group) { var la = th.lt.a || {}; html += '<div class="so-well so-small" style="margin-bottom:10px"><i class="fas fa-robot"></i> ' + ltPills(th.lt) + ' ' + esc(['case: ' + (la.case || '?'), 'land: ' + (la.locText || la.loc || '?'), 'papers: ' + (la.papers || '?'), 'name on papers: ' + (la.owner || '?')].concat(la.died ? ['owner died: ' + la.died] : []).join(' · ')) + '</div>'; }
       if (th.waiting) html += '<div class="so-banner ' + (th.unanswered ? 'bad' : 'info') + '"><i class="far fa-clock"></i><div class="so-small">Waiting for a reply for <b>' + ago((Date.now() - new Date(th.lastInboundAt)) / 60000) + '</b>' + (th.unanswered ? ' (over the ' + IB.hours + '-hour target)' : '') + '. ' + (th.sentiment === 'negative' ? 'The last message sounds unhappy.' : '') + '</div></div>';
       html += '<div class="so-msgs" id="ibMsgs">' + d.items.map(function (it) {
         var reply = !isMsg && it.parentId;

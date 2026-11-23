@@ -243,7 +243,7 @@ async function onMode() {
     check('webhook subscribe is admin-only (approver who is not admin -> 403)', r.status === 403, r.status);
     r = await A('POST', '/pages/1001/subscribe', admin);
     const sub = callsTo('POST', /^1001\/subscribed_apps$/).pop();
-    check('webhook subscribe: feed, messages, echoes and leadgen kept', r.status === 200 && sub && sub.q.subscribed_fields === 'feed,messages,message_echoes,leadgen', sub && sub.q.subscribed_fields);
+    check('webhook subscribe: feed, messages, echoes, button taps and leadgen kept', r.status === 200 && sub && sub.q.subscribed_fields === 'feed,messages,message_echoes,messaging_postbacks,leadgen', sub && sub.q.subscribed_fields);
     check('writes send the token in the form body, not the address', sub && sub.inBody && !sub.inUrl);
 
     // ── 3. validation ──

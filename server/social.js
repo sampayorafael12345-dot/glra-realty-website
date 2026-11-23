@@ -48,6 +48,8 @@ const { findListingsLite, findListingLiteById } = require('./listing-lite');
 const G = require('./meta-graph');
 const { env, flag, scrub, logMeta, metaGet, metaGetAll, metaWrite, pageTokenFor, MetaError, clean } = G;
 const AI = require('./social-ai');
+const LT = require('./lt-auto');
+const { LtAutoLog } = db;
 
 const SITE_URL = 'https://glrarealty.com';
 const STATE_KEY = 'social_state';
@@ -252,7 +254,8 @@ async function checkTokens(notify) {
 // Ask Meta to send each Page's comments and messages to our webhook. Keeps
 // leadgen when the lead-ads switch is on (subscribing replaces the field list).
 async function subscribePageFields(pageId) {
-  const fields = ['feed', 'messages', 'message_echoes', ...(LEADS_ON() ? ['leadgen'] : [])];
+  // messaging_postbacks = button taps (Get started), for the Land Title automation.
+  const fields = ['feed', 'messages', 'message_echoes', 'messaging_postbacks', ...(LEADS_ON() ? ['leadgen'] : [])];
   const tok = await pageTokenFor(pageId, { strict: true, area: 'social' });
   const j = await metaWrite('POST', `${pageId}/subscribed_apps`, { subscribed_fields: fields.join(',') }, { token: tok, area: 'social' });
   if (!j || !j.success) throw new MetaError('Meta did not confirm the subscription', { code: 'no_success' });
@@ -743,6 +746,7 @@ async function upsertItem(o) {
   if (o.link && !th.link) th.link = o.link;
   th.updatedAt = new Date();
   await th.save();
+  await ltOnItem(o);
   return true;
 }
 
@@ -779,6 +783,8 @@ async function ingestWebhook(body) {
       }
     }
     for (const m of (Array.isArray(e.messaging) ? e.messaging : []).slice(0, 200)) {
+      // A button tap (Get started) has no message: read it as one.
+      if (m && !m.message && m.postback && obj === 'page') m.message = { mid: m.postback.mid || `pb:${(m.sender && m.sender.id) || ''}:${m.timestamp || ''}`, text: m.postback.title || 'Get started', quick_reply: { payload: m.postback.payload } };
       if (!m || !m.message || !m.message.mid) continue;
       const ig = obj === 'instagram';
       const sender = String((m.sender && m.sender.id) || ''), recipient = String((m.recipient && m.recipient.id) || '');
@@ -791,7 +797,8 @@ async function ingestWebhook(body) {
       if (!isOwn && !(await SocialThread.exists({ key, name: { $nin: ['', null] } }))) name = await personName(userId, ig, await pageTokenFor(pg.id, { area: 'social' }));
       await upsertItem({ kind, metaId: clean(m.message.mid, 200), threadKey: key, pageId: pg.id, igId: ig ? pg.igId : '', fromId: isOwn ? (ig ? pg.igId : pg.id) : userId, userId: isOwn ? '' : userId,
         fromName: isOwn ? pg.name : (name || (ig ? 'Instagram user' : 'Messenger user')), own: isOwn,
-        text: clean(m.message.text, 4000) || (Array.isArray(m.message.attachments) ? '[sent an attachment]' : ''), at: metaTime(m.timestamp) || new Date(), link: inboxUrl(ig, pg.id) });
+        text: clean(m.message.text, 4000) || (Array.isArray(m.message.attachments) ? '[sent an attachment]' : ''), at: metaTime(m.timestamp) || new Date(), link: inboxUrl(ig, pg.id),
+        payload: clean(m.message.quick_reply && m.message.quick_reply.payload, 100) });
       if (isOwn) await SocialThread.updateOne({ key, userId: '' }, { $set: { userId } });
     }
   }
@@ -946,6 +953,162 @@ async function executeAction(actionId, actor, req) {
     await logAudit(auditReq(actor, req), a.kind === 'delete' ? 'SOCIAL_DELETE_COMMENT' : 'SOCIAL_' + a.kind.toUpperCase(), 'SocialItem', String(item._id), clean(item.text, 80), { via: actor.via, metaId: item.metaId, success: r && r.success });
     return { status: 200 };
   } catch (e) { return fail(e.message, e.unknown); }
+}
+
+// ══ MODULE 3b: LAND TITLE AUTOMATION (the rules are in lt-auto.js) ══
+// Every NEW message or comment on the Land Title Page passes through here.
+// shadow (the default): sort it and write down what would have been sent.
+// live: send, and only when LT_AUTO_SEND=1 is set in Render AND that exact
+// script was approved. Nothing here can send in shadow mode.
+const LT_KEY = 'lt_auto';
+const LT_SEND_ON = () => flag('LT_AUTO_SEND');
+const ltPageId = () => (env('LT_PAGE_ID').match(/^\d{1,30}$/) || [LT.LT_PAGE_DEFAULT])[0];
+let _ltCfg = { at: 0, v: null };
+async function ltConfig(freshRead) {
+  if (!freshRead && _ltCfg.v && Date.now() - _ltCfg.at < 30e3) return _ltCfg.v;
+  const s = await getSetting(LT_KEY, { mode: 'shadow', approved: {}, hideSpam: false });
+  if (!['off', 'shadow', 'live'].includes(s.mode)) s.mode = 'shadow';
+  s.approved = s.approved || {};
+  _ltCfg = { at: Date.now(), v: s };
+  return s;
+}
+const ltApproved = (cfg, id) => !!LT.SCRIPTS[id] && cfg.approved[id] === LT.scriptHash(id);
+// One conversation at a time, so two events never read the same old state.
+const _ltQ = new Map();
+function ltQueue(key, fn) {
+  const run = () => Promise.resolve().then(fn).catch(e => console.error('[lt-auto]', scrub(e.message)));
+  const p = (_ltQ.get(key) || Promise.resolve()).then(run);
+  _ltQ.set(key, p);
+  p.then(() => { if (_ltQ.get(key) === p) _ltQ.delete(key); });
+  return p;
+}
+async function ltOnItem(o) {
+  try {
+    if (String(o.pageId) !== ltPageId() || !['messenger', 'fb_comment'].includes(o.kind)) return;
+    if (o.own && o.auto) return;   // our own send, saved from inside the queue
+    const cfg = await ltConfig();
+    if (cfg.mode === 'off') return;
+    await ltQueue(o.threadKey, () => ltProcess(o, cfg));
+  } catch (e) { console.error('[lt-auto]', scrub(e.message)); }
+}
+async function ltProcess(o, cfg) {
+  const th = await SocialThread.findOne({ key: o.threadKey }).lean();
+  if (!th) return;
+  const at = o.at ? new Date(o.at) : new Date();
+  const isMsg = o.kind === 'messenger';
+  let prev = th.lt || null;
+  if (o.own) {
+    // A person on the staff answered: the automation steps back.
+    if (o.auto || LT.notHuman(o.text)) return;
+    await SocialThread.updateOne({ key: th.key }, { $set: { lt: { ...LT.fresh(), ...(prev || {}), humanAt: at } } });
+    return;
+  }
+  // Someone answering our private message under a comment has seen the menu.
+  // A conversation that began before the automation: if staff are already
+  // talking to this person, it starts out quiet.
+  if (!prev && isMsg) {
+    const mine = await SocialItem.find({ threadKey: th.key, own: true, at: { $lt: at } }).sort({ at: -1 }).limit(10).select('text at').lean();
+    if (mine[0] && LT.isCommentPm(mine[0].text)) prev = { ...LT.fresh(), step: 'menu', sent: { welcome: mine[0].at } };
+    const human = mine.find(x => !LT.notHuman(x.text));
+    if (human) prev = { ...LT.fresh(), ...(prev || {}), humanAt: human.at };
+  }
+  const r = isMsg ? LT.decide(prev, { text: o.text, payload: o.payload }, at.getTime()) : LT.decideComment(prev, { text: o.text, isReply: o.threadKey !== 'c:' + o.metaId });
+  if (r.detect && r.detect.system) return;
+  let note = '';
+  if (r.sends.length || r.hide) {
+    const age = Date.now() - at.getTime();
+    if (age > (isMsg ? 23.5 * 3600e3 : 6.5 * 864e5)) note = isMsg ? 'older than 24 hours: sorted only' : 'older than 7 days: sorted only';
+    else if (isMsg) {
+      const later = await SocialItem.find({ threadKey: th.key, own: true, at: { $gt: at } }).select('text').limit(20).lean();
+      if (later.some(x => !LT.notHuman(x.text))) note = 'staff already answered after this message: sorted only';
+    }
+  }
+  await ltApply(th, o, r, cfg, isMsg, prev, note);
+}
+// Sends (live) or records (shadow), saves the person's state, writes the log.
+async function ltApply(th, o, r, cfg, isMsg, prev, note) {
+  const st = r.state;
+  let sends = note ? [] : r.sends.slice(), hide = note ? false : !!r.hide;
+  let result = 'recorded', error = '';
+  const stamp = new Date().toISOString();
+  const back = () => { st.step = (prev && prev.step) || 'new'; st.misses = (prev && prev.misses) || 0; };
+  if (note) back();
+  else if (cfg.mode === 'live') {
+    const ok = LT_SEND_ON() && sends.every(id => ltApproved(cfg, id));
+    if (!ok && (sends.length || hide)) {
+      // Not everything is approved: say nothing, leave the step where it was.
+      result = 'held'; error = !LT_SEND_ON() ? 'LT_AUTO_SEND is not set in Render' : 'script not approved: ' + sends.filter(id => !ltApproved(cfg, id)).join(', ');
+      back(); sends = []; hide = false;
+    } else if (sends.length || hide) {
+      try {
+        const tok = await pageTokenFor(th.pageId, { strict: true, area: 'social' });
+        const pg = await pageById(th.pageId) || {};
+        for (const id of sends) {
+          const m = LT.render(id, st);
+          const message = { text: m.text };
+          if (isMsg && m.quick.length) message.quick_replies = m.quick.map(q => ({ content_type: 'text', title: q.title, payload: q.payload }));
+          const body = isMsg ? { recipient: { id: th.userId }, message, messaging_type: 'RESPONSE' } : { recipient: { comment_id: o.metaId }, message };
+          const j = await metaWrite('POST', `${th.pageId}/messages`, body, { token: tok, area: 'social' });
+          st.sent[id] = stamp;
+          const mid = String((j && j.message_id) || '');
+          if (isMsg && mid) await upsertItem({ kind: 'messenger', metaId: mid, threadKey: th.key, pageId: th.pageId, fromId: th.pageId, fromName: pg.name || 'Page', own: true, auto: true, text: m.text, at: new Date(), link: th.link });
+        }
+        if (hide && cfg.hideSpam) { await metaWrite('POST', o.metaId, { is_hidden: 'true' }, { token: tok, area: 'social' }); await SocialItem.updateOne({ metaId: o.metaId }, { $set: { hidden: true } }); }
+        else hide = false;
+        result = sends.length || hide ? 'sent' : 'recorded';
+        slog(SYSTEM_ACTOR, 'lt_auto', { pageId: th.pageId, network: 'fb', target: 'thread', targetId: th.key, summary: `Land Title automation sent: ${sends.join(', ') || 'hide'} (${r.rule})` });
+      } catch (e) {
+        // Whatever did not go out is not marked as sent; staff take over.
+        result = 'failed'; error = scrub(e.message).slice(0, 300);
+        st.step = 'handoff';
+      }
+    }
+  } else for (const id of sends) st.sent[id] = stamp;   // shadow: as if sent
+  st.group = LT.groupOf(st);
+  st.updatedAt = stamp;
+  await SocialThread.updateOne({ key: th.key }, { $set: { lt: st } });
+  await LtAutoLog.create({ mode: cfg.mode, threadKey: th.key, kind: th.kind, pageId: th.pageId, itemId: clean(o.metaId, 200), trigger: clean(o.text, 400), rule: clean(r.rule + (note ? ' (' + note + ')' : ''), 200),
+    group: st.group, step: st.step, scripts: sends, hide, result, error });
+}
+// Every 10 minutes: one reminder, 20 hours after the last message, to people
+// who started the questions and stopped (inside Meta's 24-hour window).
+async function ltTick() {
+  const cfg = await ltConfig();
+  if (cfg.mode === 'off') return 0;
+  const now = Date.now();
+  const rows = await SocialThread.find({ pageId: ltPageId(), kind: 'messenger', 'lt.step': { $in: LT.ASKING }, 'lt.group': 'B', 'lt.sent.remind': { $exists: false },
+    lastInboundAt: { $gte: new Date(now - 23.5 * 3600e3), $lte: new Date(now - 20 * 3600e3) } }).select('key').limit(100).lean();
+  let n = 0;
+  for (const row of rows) {
+    await ltQueue(row.key, async () => {
+      const th = await SocialThread.findOne({ key: row.key }).lean();
+      const st = th && th.lt;
+      if (!st || (st.sent || {}).remind || !LT.ASKING.includes(st.step)) return;
+      if (st.humanAt && now - new Date(st.humanAt).getTime() < LT.QUIET_MS) return;
+      const state = JSON.parse(JSON.stringify(st));
+      state.sent = state.sent || {};
+      await ltApply(th, { metaId: '', text: '' }, { state, sends: ['remind'], rule: 'silent for 20 hours: one reminder' }, cfg, true, st, '');
+      n++;
+    });
+  }
+  return n;
+}
+async function ltOverview(masked) {
+  const cfg = await ltConfig(true);
+  const since = new Date(Date.now() - 30 * 864e5);
+  const ths = await SocialThread.find({ pageId: ltPageId(), lt: { $exists: true }, lastAt: { $gte: since } }).select('key name kind lt').lean();
+  const counts = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+  let complaints = 0;
+  for (const t of ths) { if (counts[t.lt.group] !== undefined) counts[t.lt.group]++; if (t.lt.flag === 'complaint') complaints++; }
+  const logs = await LtAutoLog.find().sort({ at: -1 }).limit(masked ? 400 : 200).lean();
+  const names = Object.fromEntries(ths.map(t => [t.key, t.name]));
+  const byScript = {}, byRule = {};
+  for (const l of logs) { for (const s of l.scripts) byScript[s] = (byScript[s] || 0) + 1; byRule[l.rule] = (byRule[l.rule] || 0) + 1; }
+  return { mode: cfg.mode, sendSwitch: LT_SEND_ON(), hideSpam: !!cfg.hideSpam, pageId: ltPageId(), groups: LT.GROUPS, counts, complaints, sorted: ths.length,
+    scripts: Object.keys(LT.SCRIPTS).map(id => ({ id, text: LT.SCRIPTS[id].text, buttons: (LT.SCRIPTS[id].quick || []).map(q => q.title), owners: !!LT.SCRIPTS[id].owners, approved: ltApproved(cfg, id) })),
+    byScript, byRule,
+    log: logs.map(l => ({ at: l.at, mode: l.mode, kind: l.kind, who: masked ? maskName(names[l.threadKey]) : names[l.threadKey] || '', key: masked ? 't_' + sha(l.threadKey).slice(0, 12) : l.threadKey,
+      trigger: masked ? maskText(l.trigger) : l.trigger, rule: l.rule, group: l.group, step: l.step, scripts: l.scripts, hide: l.hide, result: l.result, error: l.error })) };
 }
 
 async function rejectAction(actionId, actor, note, req) {
@@ -1827,6 +1990,8 @@ function registerSocialRoutes(app, deps) {
     if (KINDS.includes(req.query.kind)) q.kind = req.query.kind;
     if (TAGS.includes(req.query.tag)) q.$or = [{ tags: req.query.tag }, { autoTags: req.query.tag }];
     if (req.query.assigned === 'me') q['assignedTo.id'] = req.user.sub;
+    if (/^[A-F]$/.test(String(req.query.lt || ''))) q['lt.group'] = String(req.query.lt);
+    else if (req.query.lt === 'flag') q['lt.flag'] = 'complaint';
     if (req.query.status === 'done') q.status = 'done'; else if (req.query.status !== 'all') q.status = { $ne: 'done' };
     let rows = await SocialThread.find(q).sort({ lastAt: -1 }).limit(300).lean();
     if (req.query.status === 'unanswered') rows = rows.filter(t => waitingReply(t));
@@ -1874,6 +2039,36 @@ function registerSocialRoutes(app, deps) {
     th.updatedAt = new Date(); await th.save();
     slog(actorOf(req), 'thread_updated', { pageId: th.pageId, target: 'thread', targetId: th.key, summary: changes.join('; ') });
     res.json({ thread: th });
+  }));
+  // ── Land Title automation (lt-auto.js) ──
+  app.get(B + '/lt-auto', ...view, wrap(async (req, res) => { res.json(await ltOverview(false)); }));
+  app.post(B + '/lt-auto/mode', ...admin, wrap(async (req, res) => {
+    const mode = String((req.body || {}).mode || '');
+    if (!['off', 'shadow', 'live'].includes(mode)) return res.status(400).json({ error: 'Mode must be off, shadow or live.' });
+    const cfg = await ltConfig(true);
+    if (mode === 'live') {
+      if (!LT_SEND_ON()) return res.status(400).json({ error: 'Sending is locked. It needs LT_AUTO_SEND=1 in Render first.' });
+      const missing = ['welcome', 'ask_loc', 'ask_papers', 'ask_owner', 'close', 'handoff'].filter(id => !ltApproved(cfg, id));
+      if (missing.length) return res.status(400).json({ error: 'These scripts are not approved yet: ' + missing.join(', ') });
+      // Shadow mode advanced everyone "as if" they got the messages. Start clean.
+      if (cfg.mode !== 'live') await SocialThread.updateMany({ pageId: ltPageId(), lt: { $exists: true } }, { $unset: { lt: 1 } });
+    }
+    await patchSetting(LT_KEY, { mode }); _ltCfg.at = 0;
+    slog(actorOf(req), 'lt_auto_mode', { pageId: ltPageId(), target: 'settings', summary: 'Land Title automation set to ' + mode });
+    await logAudit(req, 'SOCIAL_LT_AUTO_MODE', 'Social', 'lt_auto', mode, { from: cfg.mode });
+    res.json(await ltOverview(false));
+  }));
+  app.post(B + '/lt-auto/approve', ...admin, wrap(async (req, res) => {
+    const b = req.body || {};
+    const ids = (Array.isArray(b.ids) ? b.ids : []).map(String).filter(id => LT.SCRIPTS[id]);
+    if (!ids.length && typeof b.hideSpam !== 'boolean') return res.status(400).json({ error: 'No script chosen.' });
+    const patch = {};
+    for (const id of ids) patch['approved.' + id] = b.approved === false ? '' : LT.scriptHash(id);
+    if (typeof b.hideSpam === 'boolean') patch.hideSpam = b.hideSpam;
+    await patchSetting(LT_KEY, patch); _ltCfg.at = 0;
+    slog(actorOf(req), 'lt_auto_scripts', { pageId: ltPageId(), target: 'settings', summary: (b.approved === false ? 'Approval withdrawn: ' : 'Scripts approved: ') + (ids.join(', ') || 'hide spam ' + b.hideSpam) });
+    await logAudit(req, 'SOCIAL_LT_AUTO_APPROVE', 'Social', 'lt_auto', ids.join(','), { approved: b.approved !== false });
+    res.json(await ltOverview(false));
   }));
   app.get(B + '/staff', ...draft, wrap(async (req, res) => {
     const accs = await Account.find({ isActive: { $ne: false }, status: { $ne: 'pending' }, role: { $in: ['admin', 'employee'] } }).select('name email role permissions').lean();
@@ -2098,6 +2293,7 @@ function registerSocialRoutes(app, deps) {
         firstInboundAt: t.firstInboundAt, firstReplyAt: t.firstReplyAt, replyMin: t.firstReplyAt && t.firstInboundAt ? Math.round((new Date(t.firstReplyAt) - new Date(t.firstInboundAt)) / 60000) : null, waiting: waitingReply(t),
         messages: items.filter(i => i.threadKey === t.key && !i.deleted).map(i => ({ at: i.at, from: i.own ? 'page' : maskName(i.fromName) || 'customer', text: maskText(i.text), hidden: i.hidden })) })) });
   }));
+  app.get(R + '/lt-auto', ...RV, wrap(async (req, res) => { res.json(await ltOverview(true)); }));
   app.post(R + '/drafts', ...RV, wrap(async (req, res) => {
     const b = req.body || {};
     const when = parseWhen(b.scheduledAt);
@@ -2311,6 +2507,7 @@ function startSocialTick(deps) {
         let st = await getState();
         if (st.tokenCheckedDay !== day) { await discoverPages().catch(() => {}); await checkTokens(true).catch(e => console.error('[social] tokens:', e.message)); st = await getState(); }
         await syncInbox().catch(e => console.error('[social] inbox:', e.message));
+        await ltTick().catch(e => console.error('[social] lt-auto:', e.message));
         for (const r of await SocialRecurring.find({ active: true }).lean()) await runRecurring(r, false).catch(e => console.error('[social] recurring:', e.message));
         if (h >= 6 && st.lastSnapshotDay !== day) await snapshotPages(st.backfilled ? 3 : 30).catch(e => console.error('[social] snapshot:', e.message));
         if (!st.lastStatsSyncAt || Date.now() - new Date(st.lastStatsSyncAt).getTime() > 6 * 3600e3) await syncPostStats().catch(e => console.error('[social] stats:', e.message));
@@ -2329,5 +2526,5 @@ function startSocialTick(deps) {
 
 module.exports = {
   registerSocialRoutes, startSocialTick, ingestWebhook, voidLinksForAccount,
-  _test: { maskName, maskText, igRatio, parseCsv, rollup, windowOf, autoTagsOf, sentimentOf, tagUrl, heatmap, studioFromListing, nextOccurrence, publisherTick, syncInbox, discoverPages, checkTokens }
+  _test: { ltTick, ltConfig, maskName, maskText, igRatio, parseCsv, rollup, windowOf, autoTagsOf, sentimentOf, tagUrl, heatmap, studioFromListing, nextOccurrence, publisherTick, syncInbox, discoverPages, checkTokens }
 };

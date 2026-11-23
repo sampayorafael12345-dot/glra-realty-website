@@ -1789,6 +1789,8 @@ const socialThreadSchema = new mongoose.Schema({
   autoTags:      { type: [String], default: [] },
   sentiment:     { type: String, default: '' },      // positive | neutral | negative
   assignedTo:    { id: String, name: String },
+  // Land Title automation (server/lt-auto.js): step, answers, group, scripts sent.
+  lt:            { type: mongoose.Schema.Types.Mixed, default: undefined },
   updatedAt:     { type: Date, default: Date.now }
 });
 socialThreadSchema.index({ key: 1 }, { unique: true });
@@ -1828,6 +1830,26 @@ const socialLogSchema = new mongoose.Schema({
 });
 socialLogSchema.index({ at: -1 });
 socialLogSchema.index({ action: 1, at: -1 });
+// LtAutoLog: every decision of the Land Title automation: the rule that fired
+// and what was sent, or in shadow mode what would have been sent. Kept 120 days.
+const ltAutoLogSchema = new mongoose.Schema({
+  at:        { type: Date, default: Date.now },
+  mode:      { type: String, default: 'shadow' },   // shadow | live
+  threadKey: { type: String, default: '' },
+  kind:      { type: String, default: '' },
+  pageId:    { type: String, default: '' },
+  itemId:    { type: String, default: '' },         // the message / comment that triggered it
+  trigger:   { type: String, default: '', maxlength: 400 },
+  rule:      { type: String, default: '', maxlength: 200 },
+  group:     { type: String, default: '' },
+  step:      { type: String, default: '' },
+  scripts:   { type: [String], default: [] },
+  hide:      { type: Boolean, default: false },
+  result:    { type: String, default: 'recorded' }, // recorded | sent | failed | held
+  error:     { type: String, default: '', maxlength: 400 }
+});
+ltAutoLogSchema.index({ at: 1 }, { expireAfterSeconds: 120 * 86400 });
+ltAutoLogSchema.index({ threadKey: 1, at: -1 });
 // SocialMedia: the media library (Cloudinary uploads and registered links).
 const socialMediaSchema = new mongoose.Schema({
   url:       { type: String, required: true, maxlength: 1000 },
@@ -1964,6 +1986,7 @@ const SocialItem        = mongoose.model('SocialItem',        socialItemSchema);
 const SocialThread      = mongoose.model('SocialThread',      socialThreadSchema);
 const SocialAction      = mongoose.model('SocialAction',      socialActionSchema);
 const SocialLog         = mongoose.model('SocialLog',         socialLogSchema);
+const LtAutoLog         = mongoose.model('LtAutoLog',         ltAutoLogSchema);
 const SocialMedia       = mongoose.model('SocialMedia',       socialMediaSchema);
 const SocialRecurring   = mongoose.model('SocialRecurring',   socialRecurringSchema);
 const SocialDaily       = mongoose.model('SocialDaily',       socialDailySchema);
@@ -2011,7 +2034,7 @@ module.exports = {
   MetaEvent,
   MetaLog,
   MetaDaily,
-  SocialPost, SocialTemplate, SocialItem, SocialThread, SocialAction, SocialLog, SocialMedia,
+  SocialPost, SocialTemplate, SocialItem, SocialThread, SocialAction, SocialLog, LtAutoLog, SocialMedia,
   SocialRecurring, SocialDaily, SocialPostStat, SocialLinkToken,
   LEAD_STAGES,
   LEAD_TYPES,
