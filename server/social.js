@@ -966,7 +966,7 @@ const ltPageId = () => (env('LT_PAGE_ID').match(/^\d{1,30}$/) || [LT.LT_PAGE_DEF
 let _ltCfg = { at: 0, v: null };
 async function ltConfig(freshRead) {
   if (!freshRead && _ltCfg.v && Date.now() - _ltCfg.at < 30e3) return _ltCfg.v;
-  const s = await getSetting(LT_KEY, { mode: 'shadow', approved: {}, hideSpam: false });
+  const s = await getSetting(LT_KEY, { mode: 'shadow', approved: {}, hideSpam: true, remind: false });
   if (!['off', 'shadow', 'live'].includes(s.mode)) s.mode = 'shadow';
   s.approved = s.approved || {};
   _ltCfg = { at: Date.now(), v: s };
@@ -1045,6 +1045,13 @@ async function ltApply(th, o, r, cfg, isMsg, prev, note) {
         const pg = await pageById(th.pageId) || {};
         for (const id of sends) {
           const m = LT.render(id, st);
+          if (id === 'comment_public') {
+            // The short public reply under the comment, after the private message.
+            const c = await metaWrite('POST', `${o.metaId}/comments`, { message: m.text }, { token: tok, area: 'social' });
+            st.sent[id] = stamp;
+            if (c && c.id) await upsertItem({ kind: 'fb_comment', metaId: String(c.id), threadKey: th.key, pageId: th.pageId, postId: th.postId, parentId: o.metaId, fromId: th.pageId, fromName: pg.name || 'Page', own: true, auto: true, text: m.text, at: new Date(), link: th.link });
+            continue;
+          }
           const message = { text: m.text };
           if (isMsg && m.quick.length) message.quick_replies = m.quick.map(q => ({ content_type: 'text', title: q.title, payload: q.payload }));
           const body = isMsg ? { recipient: { id: th.userId }, message, messaging_type: 'RESPONSE' } : { recipient: { comment_id: o.metaId }, message };
@@ -1075,6 +1082,10 @@ async function ltApply(th, o, r, cfg, isMsg, prev, note) {
 async function ltTick() {
   const cfg = await ltConfig();
   if (cfg.mode === 'off') return 0;
+  // OFF since 25 Nov 2026: the owners want the reminder 3 days after the person
+  // stops answering, and Facebook allows an automatic message only within 24
+  // hours. Those people are listed for staff instead (ltFollowUps).
+  if (!cfg.remind) return 0;
   const now = Date.now();
   const rows = await SocialThread.find({ pageId: ltPageId(), kind: 'messenger', 'lt.step': { $in: LT.ASKING }, 'lt.group': 'B', 'lt.sent.remind': { $exists: false },
     lastInboundAt: { $gte: new Date(now - 23.5 * 3600e3), $lte: new Date(now - 20 * 3600e3) } }).select('key').limit(100).lean();
@@ -1093,6 +1104,14 @@ async function ltTick() {
   }
   return n;
 }
+// People who started the questions, stopped, and have heard nothing from a
+// person for 3 to 7 days: staff follow these up by hand in Business Suite.
+async function ltFollowUps() {
+  const now = Date.now();
+  const rows = await SocialThread.find({ pageId: ltPageId(), kind: 'messenger', status: { $ne: 'done' }, 'lt.step': { $in: LT.ASKING }, 'lt.group': 'B',
+    lastInboundAt: { $gte: new Date(now - 7 * 864e5), $lte: new Date(now - 3 * 864e5) } }).select('key lt lastInboundAt').limit(500).lean();
+  return rows.filter(t => !(t.lt.humanAt && new Date(t.lt.humanAt) > new Date(t.lastInboundAt))).map(t => t.key);
+}
 async function ltOverview(masked) {
   const cfg = await ltConfig(true);
   const since = new Date(Date.now() - 30 * 864e5);
@@ -1104,7 +1123,7 @@ async function ltOverview(masked) {
   const names = Object.fromEntries(ths.map(t => [t.key, t.name]));
   const byScript = {}, byRule = {};
   for (const l of logs) { for (const s of l.scripts) byScript[s] = (byScript[s] || 0) + 1; byRule[l.rule] = (byRule[l.rule] || 0) + 1; }
-  return { mode: cfg.mode, sendSwitch: LT_SEND_ON(), hideSpam: !!cfg.hideSpam, pageId: ltPageId(), groups: LT.GROUPS, counts, complaints, sorted: ths.length,
+  return { mode: cfg.mode, sendSwitch: LT_SEND_ON(), hideSpam: !!cfg.hideSpam, pageId: ltPageId(), groups: LT.GROUPS, counts, complaints, followUp: (await ltFollowUps()).length, reminder: !!cfg.remind, sorted: ths.length,
     scripts: Object.keys(LT.SCRIPTS).map(id => ({ id, text: LT.SCRIPTS[id].text, buttons: (LT.SCRIPTS[id].quick || []).map(q => q.title), owners: !!LT.SCRIPTS[id].owners, approved: ltApproved(cfg, id) })),
     byScript, byRule,
     log: logs.map(l => ({ at: l.at, mode: l.mode, kind: l.kind, who: masked ? maskName(names[l.threadKey]) : names[l.threadKey] || '', key: masked ? 't_' + sha(l.threadKey).slice(0, 12) : l.threadKey,
@@ -1992,6 +2011,7 @@ function registerSocialRoutes(app, deps) {
     if (req.query.assigned === 'me') q['assignedTo.id'] = req.user.sub;
     if (/^[A-F]$/.test(String(req.query.lt || ''))) q['lt.group'] = String(req.query.lt);
     else if (req.query.lt === 'flag') q['lt.flag'] = 'complaint';
+    else if (req.query.lt === 'follow') q.key = { $in: await ltFollowUps() };
     if (req.query.status === 'done') q.status = 'done'; else if (req.query.status !== 'all') q.status = { $ne: 'done' };
     let rows = await SocialThread.find(q).sort({ lastAt: -1 }).limit(300).lean();
     if (req.query.status === 'unanswered') rows = rows.filter(t => waitingReply(t));
@@ -2526,5 +2546,5 @@ function startSocialTick(deps) {
 
 module.exports = {
   registerSocialRoutes, startSocialTick, ingestWebhook, voidLinksForAccount,
-  _test: { ltTick, ltConfig, maskName, maskText, igRatio, parseCsv, rollup, windowOf, autoTagsOf, sentimentOf, tagUrl, heatmap, studioFromListing, nextOccurrence, publisherTick, syncInbox, discoverPages, checkTokens }
+  _test: { ltTick, ltConfig, ltFollowUps, maskName, maskText, igRatio, parseCsv, rollup, windowOf, autoTagsOf, sentimentOf, tagUrl, heatmap, studioFromListing, nextOccurrence, publisherTick, syncInbox, discoverPages, checkTokens }
 };

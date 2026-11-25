@@ -45,19 +45,24 @@ function engine() {
   check('no script has more than 13 buttons', Object.values(LT.SCRIPTS).every(s => (s.quick || []).length <= 13));
   check('every script is under 2000 characters', Object.values(LT.SCRIPTS).every(s => s.text.length < 2000));
   check('the first message says it is automated', /automated/.test(LT.SCRIPTS.welcome.text) && /automated/i.test(LT.SCRIPTS.comment_pm.text));
-  check('no script promises a price beyond the confirmed lines', Object.entries(LT.SCRIPTS).every(([id, s]) => id === 'price' || !/₱|30,?000|50,?000|6%/.test(s.text)));
+  check('only the price and installment scripts mention money, and none gives a tax figure', Object.entries(LT.SCRIPTS).every(([id, s]) => ['price', 'hulugan'].includes(id) ? !/1,?000 |6%/.test(s.text) : !/₱|30,?000|50,?000|6%/.test(s.text)));
+  const everyWord = Object.values(LT.SCRIPTS).map(s => s.text).join('\n');
+  check('OWNERS\' RULE: no script names the lawyer, the broker or any staff member', !/atty|attorney|abogado|sampayo|\bmel\b|catherine|\blea\b|villanueva|broker/i.test(everyWord.replace(/Special Power of Attorney/g, '')));
+  check('OWNERS\' RULE: no script gives an address or a phone number', !/gomez|enriquez|r bldg|lucena city|tycoon|ortigas|makati|burgundy|\d{3}[ -]\d{3}[ -]\d{4}|09\d{2}[ -]?\d{3}[ -]?\d{4}|📞|📍/i.test(everyWord));
+  check('OWNERS\' RULE: the only contact given is the company email', (everyWord.match(/[\w.]+@[\w.]+/g) || []).every(e => e.replace(/\.$/, '') === 'glralandtransfer@gmail.com') && /glralandtransfer@gmail\.com/.test(LT.SCRIPTS.close.text));
+  check('the dropped ₱1,000 computation and "assessment" wording are gone from price', !/1,000/.test(everyWord) && /₱30,000 hanggang ₱50,000/.test(LT.SCRIPTS.price.text) && /3 hanggang 6 na buwan/.test(LT.SCRIPTS.tagal.text));
 
   let c = play([{ text: 'Get started', payload: 'GET_STARTED' }]);
   check('Get started -> welcome menu, group F', c.last.sends.join() === 'welcome' && c.st.group === 'F' && c.st.step === 'menu', c);
   c = play([{ text: 'Get started' }, { text: 'Get started' }]);
   check('Get started twice -> welcome only once', c.trail[1].sends.length === 0, c.trail);
 
-  c = play(['Get started', { text: 'Mana / namatayan', payload: 'LT_CASE_ESTATE' }, { text: 'Quezon', payload: 'LT_LOC_QUEZON' }, { text: 'May titulo', payload: 'LT_PAP_TITLE' }, { text: 'Sa magulang', payload: 'LT_OWN_PARENTS' }, { text: '2018 o pagkatapos', payload: 'LT_DIED_2018' }]);
+  c = play(['Get started', { text: 'Mana / namatayan', payload: 'LT_CASE_ESTATE' }, { text: 'Quezon', payload: 'LT_LOC_QUEZON' }, { text: 'May titulo', payload: 'LT_PAP_TITLE' }, { text: 'Sa magulang', payload: 'LT_OWN_PARENTS' }, '2019 po']);
   check('full button path: loc -> papers -> owner -> died -> close', c.trail.map(x => x.sends.join()).join('|') === 'welcome|ask_loc|ask_papers|ask_owner|ask_died|close', c.trail);
-  check('full path ends in group A, step done', c.st.group === 'A' && c.st.step === 'done' && c.st.a.died === '2018+', c.st);
+  check('full path ends in group A, step done', c.st.group === 'A' && c.st.step === 'done' && c.st.a.died === '2018+' && c.st.a.diedYear === '2019', c.st);
   check('closing message lists what was recorded', /mana, Quezon, may titulo, nakapangalan sa magulang/.test(LT.render('close', c.st).text), LT.render('close', c.st).text);
 
-  c = play(['Get started', 'Mana / namatayan', 'Laguna', 'Tax declaration lang', 'Sa lolo o lola', 'Bago 1998']);
+  c = play(['Get started', 'Mana / namatayan', 'Laguna', 'Tax declaration lang', 'Sa lolo o lola', '1985']);
   check('same path with button titles only (10-minute check has no payload)', c.st.group === 'A' && c.st.a.case === 'estate' && c.st.a.loc === 'laguna' && c.st.a.papers === 'taxdec' && c.st.a.owner === 'grand' && c.st.a.died === 'before1998', c.st);
   c = play(['hello po', '2', 'Dasmarinas Cavite po', 'titulo po', 'sa nagbenta pa po']);
   check('typed numbers and words work: sale has no death question', c.st.a.case === 'sale' && c.st.a.loc === 'cavite' && c.st.a.owner === 'seller' && c.st.step === 'done' && c.st.group === 'A', c);
@@ -112,15 +117,15 @@ function engine() {
   // comments
   const cm = (text, prev, isReply) => LT.decideComment(prev || null, { text, isReply: !!isReply });
   let k = cm('Hm po?');
-  check('comment "hm po" -> one private message with the menu', k.sends.join() === 'comment_pm' && k.state.group === 'B', k);
+  check('comment "hm po" -> one private message with the menu', k.sends.join() === 'comment_pm,comment_public' && k.state.group === 'B', k);
   k.state.sent.comment_pm = new Date().toISOString();
   check('a second comment in the same thread -> no second private message', cm('magkano nga po', k.state, true).sends.length === 0);
   k = cm('Saan po office nyo');
-  check('comment asking the office -> private message with the address', k.sends.join() === 'comment_pm_office' && k.state.group === 'E', k);
+  check('comment asking the office -> private message with the address', k.sends.join() === 'comment_pm_office,comment_public' && k.state.group === 'E', k);
   k = cm('Kinamkam po ng pinsan ko ang lupa ng tatay ko');
-  check('dispute comment -> lawyer private message, group C', k.sends.join() === 'comment_pm_lawyer' && k.state.group === 'C', k);
+  check('dispute comment -> lawyer private message, group C', k.sends.join() === 'comment_pm_lawyer,comment_public' && k.state.group === 'C', k);
   k = cm('Di rin naman sila namamansin dito');
-  check('"hindi kayo namamansin" comment -> sorry message + red flag', k.sends.join() === 'comment_pm_sorry' && k.state.flag === 'complaint', k);
+  check('"hindi kayo namamansin" comment -> sorry message + red flag', k.sends.join() === 'comment_pm_sorry,comment_public' && k.state.flag === 'complaint', k);
   k = cm('Mahal yan.');
   check('chatter comment -> nothing, group F', k.sends.length === 0 && !k.hide && k.state.group === 'F', k);
   k = cm('Pumunta kayo sa DAR sa Tacloban hahaha');
@@ -228,7 +233,7 @@ async function wiring() {
     await msg('7701', 'Lucena po'); await waitLog('7701', 3);
     await msg('7701', 'May titulo', { quick_reply: { payload: 'LT_PAP_TITLE' } }); await waitLog('7701', 4);
     await msg('7701', 'Sa magulang', { quick_reply: { payload: 'LT_OWN_PARENTS' } }); await waitLog('7701', 5);
-    await msg('7701', '2018 o pagkatapos', { quick_reply: { payload: 'LT_DIED_2018' } }); await waitLog('7701', 6);
+    await msg('7701', '2019'); await waitLog('7701', 6);
     const all = await logs({ threadKey: `messenger:${LTP}:7701` });
     check('shadow: the whole intake is recorded step by step', all.map(x => x.scripts.join()).join('|') === 'welcome|ask_loc|ask_papers|ask_owner|ask_died|close', all.map(x => x.scripts.join()));
     let th = await thread(`messenger:${LTP}:7701`);
@@ -240,8 +245,8 @@ async function wiring() {
     await until(async () => (await logs({ kind: 'fb_comment' })).length >= 4, 6000);
     const cl = await logs({ kind: 'fb_comment' });
     const by = id => cl.find(x => x.threadKey === 'c:' + id) || {};
-    check('shadow: question comment -> would send one private message', (by(c1).scripts || []).join() === 'comment_pm', by(c1));
-    check('shadow: dispute comment -> lawyer message, group C', (by(c2).scripts || []).join() === 'comment_pm_lawyer' && by(c2).group === 'C', by(c2));
+    check('shadow: question comment -> would send one private message', (by(c1).scripts || []).join() === 'comment_pm,comment_public', by(c1));
+    check('shadow: dispute comment -> lawyer message, group C', (by(c2).scripts || []).join() === 'comment_pm_lawyer,comment_public' && by(c2).group === 'C', by(c2));
     check('shadow: spam comment -> would hide, no message', by(c3).hide === true && (by(c3).scripts || []).length === 0, by(c3));
     check('shadow: chatter comment -> nothing', (by(c4).scripts || []).length === 0 && by(c4).group === 'F', by(c4));
     await msg('5501', 'magkano po', null, '1000'); await sleep(700);
@@ -306,7 +311,9 @@ async function wiring() {
       check('live: a second comment in that thread gets no second private message', sentTo().length === 4);
       const sp = await comment('Earn $500 daily crypto click here bit.ly/zz', '7812');
       await until(async () => (await logs({ threadKey: 'c:' + sp })).length >= 1, 6000);
-      check('live: spam is not hidden unless hiding was switched on', !stub.calls.some(c => c.method === 'POST' && c.q.is_hidden));
+      check('live: a spam comment is hidden automatically, with no message', stub.calls.some(c => c.method === 'POST' && c.path === sp && c.q.is_hidden === 'true') && (await logs({ threadKey: 'c:' + sp }))[0].hide === true);
+      const pub = stub.calls.filter(c => c.method === 'POST' && /\/comments$/.test(c.path));
+      check('live: one short public reply under the question comment, none under spam', pub.length === 1 && pub[0].path === pc + '/comments' && pub[0].q.message === LT.SCRIPTS.comment_public.text, pub.map(c => c.path));
       stub.failFor = '7803';
       await tap('7803', 'GET_STARTED'); await waitLog('7803', 1);
       l = await lastLog('7803');
@@ -334,10 +341,16 @@ async function wiring() {
     await db.collection('socialthreads').updateOne({ key: `messenger:${LTP}:7902` }, { $set: { lastInboundAt: new Date(Date.now() - 21 * 3600e3) } });
     const n1 = await social._test.ltTick();
     l = await lastLog('7902');
-    check('20 hours of silence -> one reminder is recorded', n1 === 1 && l.scripts.join() === 'remind', { n1, l });
-    check('the reminder is never repeated', (await social._test.ltTick()) === 0);
+    check('the automatic reminder is switched off (Facebook does not allow one after 3 days)', n1 === 0 && !l.scripts.includes('remind'), { n1, l });
+    check('21 hours quiet: not yet on the follow-up list', !(await social._test.ltFollowUps()).includes(`messenger:${LTP}:7902`));
+    await db.collection('socialthreads').updateOne({ key: `messenger:${LTP}:7902` }, { $set: { lastInboundAt: new Date(Date.now() - 3.5 * 864e5) } });
+    check('3 days quiet: listed for staff to follow up by hand', (await social._test.ltFollowUps()).includes(`messenger:${LTP}:7902`));
+    r = await A('GET', '/inbox?status=all&lt=follow', staff);
+    check('the inbox can show just the follow-up list', r.status === 200 && r.json.threads.length === 1 && r.json.threads[0].key === `messenger:${LTP}:7902`, r.json && r.json.threads.map(t => t.key));
+    r = await A('GET', '/lt-auto', staff);
+    check('the overview counts the follow-ups', r.json.followUp === 1 && r.json.reminder === false && r.json.hideSpam === true, r.json && [r.json.followUp, r.json.reminder, r.json.hideSpam]);
     await db.collection('socialthreads').updateOne({ key: `messenger:${LTP}:7701` }, { $set: { lastInboundAt: new Date(Date.now() - 21 * 3600e3) } });
-    check('no reminder for someone who is not mid-questions', (await social._test.ltTick()) === 0);
+    check('someone who finished the questions is not on the follow-up list', !(await social._test.ltFollowUps()).includes(`messenger:${LTP}:7701`));
     const audit = await db.collection('auditlogs').find({ action: /^SOCIAL_LT_AUTO/ }).toArray();
     check('mode changes and approvals are in the admin audit log', audit.length >= 3, audit.length);
   } finally { srv.close(); await mongoose.disconnect(); }

@@ -744,7 +744,7 @@
     loadThreads();
   };
   // ── Land Title automation (server/lt-auto.js) ──
-  var LTG = [['A', 'Ready client'], ['B', 'Started, not finished'], ['C', 'For the lawyer'], ['D', 'Outside the area'], ['E', 'Info only'], ['F', 'Not a client yet'], ['flag', 'Complained: no reply']];
+  var LTG = [['A', 'Ready client'], ['B', 'Started, not finished'], ['C', 'For the lawyer'], ['D', 'Outside the area'], ['E', 'Info only'], ['F', 'Not a client yet'], ['flag', 'Complained: no reply'], ['follow', 'Follow up by hand (3 days quiet)']];
   var LTKIND = { A: 'hot', B: 'info', C: 'warn', D: '', E: '', F: '' };
   function ltName(g) { for (var i = 0; i < LTG.length; i++) if (LTG[i][0] === g) return LTG[i][1]; return g; }
   function ltPills(lt) { return lt && lt.group ? pill(ltName(lt.group), LTKIND[lt.group]) + (lt.flag === 'complaint' ? pill('no reply complaint', 'bad') : '') : ''; }
@@ -754,7 +754,7 @@
       var b = $('#ltCard'); if (!b) return;
       var modeTxt = r.mode === 'live' ? 'ON: it answers people' : r.mode === 'shadow' ? 'Shadow: it sorts and records, it sends nothing' : 'Off';
       b.innerHTML = '<div class="so-card" style="padding:12px;margin-bottom:14px"><div class="so-between" style="flex-wrap:wrap;gap:8px"><div><b><i class="fas fa-robot"></i> Land Title automation</b> ' + pill(modeTxt, r.mode === 'live' ? 'hot' : r.mode === 'shadow' ? 'info' : '') +
-        '<div class="so-small so-muted" style="margin-top:4px">' + r.sorted + ' people sorted in the last 30 days' + (r.complaints ? ' · <span class="down">' + r.complaints + ' complained about no reply</span>' : '') + '</div></div>' +
+        '<div class="so-small so-muted" style="margin-top:4px">' + r.sorted + ' people sorted in the last 30 days' + (r.complaints ? ' · <span class="down">' + r.complaints + ' complained about no reply</span>' : '') + (r.followUp ? ' · <b>' + r.followUp + ' to follow up by hand</b> (quiet for 3 days)' : '') + '</div></div>' +
         '<div class="so-btns"><button class="so-btn sm" data-act="ltLog"><i class="fas fa-list"></i>What it did</button><button class="so-btn sm" data-act="ltScripts"><i class="fas fa-comment-dots"></i>Scripts</button></div></div>' +
         '<div class="so-row" style="gap:6px;margin-top:10px;flex-wrap:wrap">' + LTG.slice(0, 6).map(function (g) { return '<button class="so-chip" data-act="ltPick" data-v="' + g[0] + '" aria-pressed="' + (IB.lt === g[0]) + '">' + g[1] + ' <b>' + (r.counts[g[0]] || 0) + '</b></button>'; }).join('') + '</div></div>';
     }).catch(function () {});
@@ -815,7 +815,7 @@
       if (can('draft')) html += '<div class="so-row" style="margin-bottom:12px">' + S.me.tags.map(function (t) { return '<button class="so-chip" data-act="ibTagT" data-v="' + t + '" aria-pressed="' + (tags.indexOf(t) >= 0) + '">' + t + ((th.autoTags || []).indexOf(t) >= 0 && tags.indexOf(t) < 0 ? ' <i class="fas fa-wand-magic-sparkles" title="Suggested"></i>' : '') + '</button>'; }).join('') +
         '<select data-ch="ibAssign" aria-label="Assign to" style="max-width:180px"><option value="">Unassigned</option>' + staff.map(function (s) { return '<option value="' + s.id + '"' + (th.assignedTo && th.assignedTo.id === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select>' +
         '<button class="so-btn sm" data-act="ibDone">' + (th.status === 'done' ? '<i class="fas fa-rotate-left"></i>Reopen' : '<i class="fas fa-check"></i>Mark done') + '</button></div>';
-      if (th.lt && th.lt.group) { var la = th.lt.a || {}; html += '<div class="so-well so-small" style="margin-bottom:10px"><i class="fas fa-robot"></i> ' + ltPills(th.lt) + ' ' + esc(['case: ' + (la.case || '?'), 'land: ' + (la.locText || la.loc || '?'), 'papers: ' + (la.papers || '?'), 'name on papers: ' + (la.owner || '?')].concat(la.died ? ['owner died: ' + la.died] : []).join(' · ')) + '</div>'; }
+      if (th.lt && th.lt.group) { var la = th.lt.a || {}; html += '<div class="so-well so-small" style="margin-bottom:10px"><i class="fas fa-robot"></i> ' + ltPills(th.lt) + ' ' + esc(['case: ' + (la.case || '?'), 'land: ' + (la.locText || la.loc || '?'), 'papers: ' + (la.papers || '?'), 'name on papers: ' + (la.owner || '?')].concat(la.died ? ['owner died: ' + (la.diedYear || la.died)] : []).join(' · ')) + '</div>'; }
       if (th.waiting) html += '<div class="so-banner ' + (th.unanswered ? 'bad' : 'info') + '"><i class="far fa-clock"></i><div class="so-small">Waiting for a reply for <b>' + ago((Date.now() - new Date(th.lastInboundAt)) / 60000) + '</b>' + (th.unanswered ? ' (over the ' + IB.hours + '-hour target)' : '') + '. ' + (th.sentiment === 'negative' ? 'The last message sounds unhappy.' : '') + '</div></div>';
       html += '<div class="so-msgs" id="ibMsgs">' + d.items.map(function (it) {
         var reply = !isMsg && it.parentId;

@@ -6,7 +6,7 @@
 //
 //   A ready    case + where the land is + whose name is on the papers
 //   B started  asked price / computation / how, has not finished the questions
-//   C lawyer   a dispute: goes to Atty. Mel, no process script
+//   C lawyer   a dispute: free first consultation by email, no process script
 //   D outside  land is outside Metro Manila + CALABARZON
 //   E info     only asked for the office, hours or contact
 //   F none     only "Get started", greetings, thanks, chatter, spam
@@ -47,11 +47,15 @@ const MENU = [
 const MENU_LINES = MENU.map(m => `${m[0]} - ${m[3]}`).join('\n');
 const qr = list => list.map(([payload, title]) => ({ payload, title }));
 const MENU_QR = qr(MENU.map(m => [m[1], m[2]]));
-const OFFICE = '📍 2nd Floor, R Bldg., Gomez cor. Enriquez St., Lucena City, Quezon\n🕘 Lunes hanggang Biyernes, 8:00 AM hanggang 5:00 PM (lunch 12 hanggang 1, sarado tuwing holiday). Mag-message po muna para ma-schedule ang pagbisita.\n📞 042 373 7583 · 0967 340 0165\n📧 glralandtransfer@gmail.com';
+const EMAIL = 'glralandtransfer@gmail.com';
+const OFFICE = `Sa ngayon po, sa email at private message lang po kami tumatanggap ng inquiry: ${EMAIL}. Ang pagtawag o pagbisita sa opisina ay sa pamamagitan lamang ng appointment, kapag napagkasunduan na.`;
 
-// Every word the automation can say. Facts are the ones the staff confirmed on
-// 17 and 19 Nov 2026 (the same lines as the FAQ under every Land Title post).
-// "owners: true" marks wording that waits for the owners' answer sheet.
+// Every word the automation can say. The owners answered the question sheet on
+// 25 Nov 2026 and these are their words. THEIR STANDING RULES, for any future
+// edit: never name the lawyer, the broker or any staff member; never give an
+// office address, a telephone or a cellphone number; email and private message
+// only; the first consultation is free and by email; no ₱1,000 computation.
+// scripts/test-lt-auto.js fails if a name, address or phone number comes back.
 const SCRIPTS = {
   welcome: { text: 'Magandang araw po! Salamat sa pag-message sa GLRA Land Title. Ito po ay automated na sagot para mabilis kayong matulungan.\n\nAno po ang kailangan ninyo? Pumili po sa ibaba, o i-type ang numero:\n' + MENU_LINES, quick: MENU_QR },
   unclear: { text: 'Pasensya na po, hindi ko po nakuha. Pumili po sa ibaba, o i-type ang numero (1 hanggang 7):\n' + MENU_LINES, quick: MENU_QR },
@@ -59,22 +63,28 @@ const SCRIPTS = {
   ask_loc_other: { text: 'Saang probinsya at bayan po ang lupa? Paki-type po.' },
   ask_papers: { text: 'Ano pong papeles ang hawak ninyo para sa lupa?', quick: qr([['LT_PAP_TITLE', 'May titulo'], ['LT_PAP_TAXDEC', 'Tax declaration lang'], ['LT_PAP_UNKNOWN', 'Hindi ko alam']]) },
   ask_owner: { text: 'Kanino po nakapangalan ang titulo o tax declaration?', quick: qr([['LT_OWN_PARENTS', 'Sa magulang'], ['LT_OWN_GRAND', 'Sa lolo o lola'], ['LT_OWN_SELLER', 'Sa nagbenta'], ['LT_OWN_SELF', 'Sa akin'], ['LT_OWN_OTHER', 'Iba']]) },
-  ask_died: { text: 'Kailan po pumanaw ang may-ari?', quick: qr([['LT_DIED_2018', '2018 o pagkatapos'], ['LT_DIED_1998', '1998 hanggang 2017'], ['LT_DIED_OLD', 'Bago 1998'], ['LT_DIED_UNKNOWN', 'Hindi ko alam']]) },
-  close: { text: 'Salamat po! Naitala na namin: {summary}.\n\nLibre po ang unang assessment. Para ma-assess, paki-email po ang kopya ng titulo o tax declaration sa glralandtransfer@gmail.com (sa email lang po ang mga dokumento at ID, hindi sa Messenger).\n\nSasagutin po kayo ng aming staff sa susunod na araw ng opisina (Lunes hanggang Biyernes, 8 AM hanggang 5 PM).\n📞 042 373 7583 · 0967 340 0165' },
-  office: { text: 'Narito po ang aming opisina at contact:\n' + OFFICE },
-  price: { text: 'Libre po ang unang assessment. May ₱1,000 po ang nakasulat na computation, at ibabawas ito sa service fee kapag kami ang kinuha ninyo. Nakadepende po ang kabuuang gastos sa lupa at sa kaso, kaya kailangan muna naming makita ang papeles.' },
-  reqs: { text: 'Para ma-assess po, ihanda ang kopya ng titulo at tax declaration. Kung mana: death certificate at family tree. Ipadala po sa glralandtransfer@gmail.com.' },
-  tagal: { text: 'Karaniwang 3 hanggang 5 buwan po kapag kumpleto ang papeles. Mas matagal kung may hatian ng lote o kaso sa korte.' },
+  ask_died: { text: 'Anong taon po pumanaw ang may-ari? Paki-type lang po ang taon (halimbawa: 2015).' },
+  close: { text: `Salamat po! Naitala na namin: {summary}.\n\nLibre po ang unang konsultasyon sa email. Para ma-assess, paki-email po ang kopya ng titulo o tax declaration sa ${EMAIL} (sa email lang po ang mga dokumento at ID, hindi sa Messenger).\n\nSasagutin po kayo ng aming staff sa susunod na araw ng opisina (Lunes hanggang Biyernes, 8 AM hanggang 5 PM).` },
+  office: { text: OFFICE },
+  price: { text: `Libre po ang unang konsultasyon sa pamamagitan ng email. I-kuwento lang po ang inyong sitwasyon at ipadala sa ${EMAIL}, at sasagutin din po namin kayo sa email. Ang mga susunod na konsultasyon ay ayon sa mapagkakasunduan.\n\nAng service fee po ay mula ₱30,000 hanggang ₱50,000 para sa Metro Manila, Quezon, Batangas, Cavite, Laguna at mga karatig-bayan. Sa ibang lugar, ayon po sa mapagkakasunduan. Paalala po: service fee lamang ito. Ang buwis at filing fees ay sagot po ng kliyente.` },
+  reqs: { text: `Para ma-assess po, ihanda ang kopya ng titulo at tax declaration. Kung mana: death certificate at family tree. Ipadala po sa ${EMAIL}.` },
+  tagal: { text: 'Karaniwang 3 hanggang 6 na buwan po kapag kumpleto ang papeles. Mas matagal kung may hatian ng lote o kaso sa korte.' },
   abroad: { text: 'Pwede po kahit nasa abroad kayo, sa pamamagitan ng Special Power of Attorney. Hindi na po kailangang umuwi.' },
-  hulugan: { text: 'Pwede pong hulugan ang service fee.' },
-  lawyer: { owners: true, text: 'Salamat po sa detalye. Ang ganitong sitwasyon ay kailangan pong tingnan ng aming abogado, si Atty. Mel. Ipapasa po namin ito sa kanya at kokontakin kayo ng aming staff sa susunod na araw ng opisina (Lunes hanggang Biyernes, 8 AM hanggang 5 PM).\n📞 042 373 7583 · 0967 340 0165' },
-  outside: { owners: true, text: 'Salamat po. Metro Manila at CALABARZON po ang pangunahing sakop namin. Ipapasa ko po ang detalye ninyo sa aming staff para makumpirma kung matutulungan namin kayo sa inyong lugar.' },
-  handoff: { text: 'Salamat po. Ipapasa ko po kayo sa aming staff. Sasagutin po kayo sa susunod na araw ng opisina (Lunes hanggang Biyernes, 8 AM hanggang 5 PM).\n📞 042 373 7583 · 0967 340 0165' },
+  hulugan: { text: 'Pwede pong hulugan ang service fee: 50% down payment, at ang balanse ay babayaran kapag naibigay na ang titulo. Paalala po: ang ₱30,000 hanggang ₱50,000 ay para sa service fee lamang. Ang buwis at filing fees ay sagot po ng kliyente.' },
+  lawyer: { text: `Salamat po sa detalye. Ang ganitong sitwasyon ay kailangan pong masuri nang mabuti. Libre po ang unang konsultasyon sa email: paki-kuwento po ang buong pangyayari at ipadala, kasama ang kopya ng inyong mga papeles, sa ${EMAIL}. Sasagutin din po namin kayo sa email.` },
+  outside: { text: 'Salamat po. Metro Manila at CALABARZON po ang pangunahing sakop namin. Ipapasa ko po ang detalye ninyo sa aming staff para makumpirma kung matutulungan namin kayo sa inyong lugar.' },
+  handoff: { text: 'Salamat po. Ipapasa ko po kayo sa aming staff. Sasagutin po kayo sa susunod na araw ng opisina (Lunes hanggang Biyernes, 8 AM hanggang 5 PM).' },
+  // The owners want this 3 days after the person stops answering. Facebook lets
+  // an automatic message go out only within 24 hours of the person's last
+  // message, so it is NOT sent automatically (see ltTick in social.js): those
+  // people are listed for staff to follow up by hand.
   remind: { text: 'Kumusta po! Kung gusto pa po ninyong ituloy, sagutin lang po ang huling tanong sa itaas at tutulungan namin kayo.' },
-  comment_pm: { text: 'Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page. Ito po ay automated na mensahe para mabilis kayong matulungan.\n\nAno po ang kailangan ninyo? I-type lang po ang numero:\n' + MENU_LINES },
-  comment_pm_office: { text: 'Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page (automated na mensahe po ito). Narito po ang aming opisina at contact:\n' + OFFICE + '\n\nMay iba pa po ba kayong kailangan? I-type lang po ang numero:\n' + MENU_LINES },
-  comment_pm_lawyer: { owners: true, text: 'Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page (automated na mensahe po ito). Ang ganitong sitwasyon ay kailangan pong tingnan ng aming abogado, si Atty. Mel. Paki-reply po dito ng maikling detalye at kung saan ang lupa, at kokontakin kayo ng aming staff sa susunod na araw ng opisina.' },
-  comment_pm_sorry: { owners: true, text: 'Magandang araw po, at pasensya na po kung natagalan ang sagot namin. Automated na mensahe po ito para hindi na kayo maghintay.\n\nAno po ang kailangan ninyo? I-type lang po ang numero:\n' + MENU_LINES }
+  comment_pm: { text: `Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page. Ito po ay automated na mensahe para mabilis kayong matulungan.\n\nAno po ang kailangan ninyo? I-type lang po ang numero:\n${MENU_LINES}\n\nMaaari rin po kayong mag-email sa ${EMAIL}.` },
+  comment_pm_office: { text: 'Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page (automated na mensahe po ito). ' + OFFICE + '\n\nMay iba pa po ba kayong kailangan? I-type lang po ang numero:\n' + MENU_LINES },
+  comment_pm_lawyer: { text: `Magandang araw po! Nakita po namin ang comment ninyo sa GLRA Land Title page (automated na mensahe po ito). Ang ganitong sitwasyon ay kailangan pong masuri nang mabuti. Libre po ang unang konsultasyon sa email: paki-kuwento po ang buong pangyayari at kung saan ang lupa, at ipadala sa ${EMAIL}. Sasagutin din po namin kayo sa email.` },
+  comment_pm_sorry: { text: 'Magandang araw po, at pasensya na po kung natagalan ang sagot namin. Automated na mensahe po ito para hindi na kayo maghintay.\n\nAno po ang kailangan ninyo? I-type lang po ang numero:\n' + MENU_LINES },
+  // Posted in public under the comment, after the private message went out.
+  comment_public: { text: 'Na-message na po namin kayo.' }
 };
 const scriptHash = id => crypto.createHash('sha256').update(JSON.stringify([SCRIPTS[id].text, (SCRIPTS[id].quick || []).map(q => q.title)])).digest('hex').slice(0, 16);
 
@@ -95,7 +105,7 @@ const RE = {
   reqs: /(requirements?|rekisitos|ano (po )?(ang |mga )?(kailangan|dadalhin|ihahanda)|kailangan(g)? (papeles|dokumento|dalhin))/,
   tagal: /(gaano (po )?(ka ?tagal|katagal)|ilang (buwan|araw|linggo|taon)|how long|matagal (po )?ba|kailan matatapos)/,
   abroad: /\b(abroad|ofw|ibang bansa|overseas|nasa (dubai|saudi|canada|usa|us|america|japan|korea|qatar|kuwait|uae|italy|hongkong|hong kong|singapore|taiwan|australia|uk|europe))\b/,
-  hulugan: /(hulugan|installment|instalment|hulog|utay ?utay|paunti ?unti)/,
+  hulugan: /(hulugan|installment|instalment|hulog|utay ?utay|paunti ?unti|wala (po )?(akong|kaming|pang) ?(pera|budget|pambayad)|walang (pera|budget|pambayad)|(di|hindi) (ko|namin) (po )?kaya(ng)? (bayaran|ang bayad))/,
   estate: /(\bmana\b|minana|pamana|namatay|patay na|pumanaw|yumao|sumakabilang|\blolo\b|\blola\b|heirs?\b|tagapagmana|\bestate\b|ext?r?a ?judicial|\bejs\b|deceased|magkakapatid|mga kapatid|ninuno)/,
   untitled: /(tax ?dec|tax declaration|deklarasyon|diklarasyon|walang tit[ou]lo|wala pa(ng)? tit[ou]lo|wala (pa )?po(ng)? tit[ou]lo|untitled|unregistered|di (pa )?(naka ?)?rehistr|not registered|free patent|\bpatent\b|cenro|penro|cadastral|pa ?titulo|patitolo|rights lang|\bcloa\b)/,
   sale: /(deed of sale|nabili|binili|bumili|bomeli|bentahan|ibinenta|bininta|\bseller\b|\bbuyer\b|\bdos\b|absolute sale|nabenta)/,
@@ -127,7 +137,6 @@ const BY_PAYLOAD = {
   LT_LOC_QUEZON: { loc: 'quezon' }, LT_LOC_LAGUNA: { loc: 'laguna' }, LT_LOC_BATANGAS: { loc: 'batangas' }, LT_LOC_CAVITE: { loc: 'cavite' }, LT_LOC_RIZAL: { loc: 'rizal' }, LT_LOC_NCR: { loc: 'ncr' }, LT_LOC_OTHER: { locOther: true },
   LT_PAP_TITLE: { papers: 'title' }, LT_PAP_TAXDEC: { papers: 'taxdec' }, LT_PAP_UNKNOWN: { papers: 'unknown' },
   LT_OWN_PARENTS: { owner: 'parents' }, LT_OWN_GRAND: { owner: 'grand' }, LT_OWN_SELLER: { owner: 'seller' }, LT_OWN_SELF: { owner: 'self' }, LT_OWN_OTHER: { owner: 'other' },
-  LT_DIED_2018: { died: '2018+' }, LT_DIED_1998: { died: '1998-2017' }, LT_DIED_OLD: { died: 'before1998' }, LT_DIED_UNKNOWN: { died: 'unknown' },
   GET_STARTED: { start: true }
 };
 // A tapped button arrives through the 10-minute check as its title only.
@@ -194,6 +203,8 @@ function detect(text, payload, step) {
     if (!d.facts.owner && !d.topics.length) d.facts.owner = RE.oSelf.test(t) ? 'self' : 'other';
   } else if (step === 'died') {
     if (!d.facts.died && !d.topics.length) d.facts.died = diedBand(t) || 'unknown';
+    const yr = t.match(/\b(19[0-9]{2}|20[0-2][0-9])\b/);
+    if (yr && !d.topics.length) d.facts.diedYear = yr[1];
   }
   d.understood = !!(d.topics.length || Object.keys(d.facts).length);
   return d;
@@ -295,11 +306,11 @@ function decideComment(prev, ev) {
   if (st.humanAt) return done('the Page already replied under this comment');
   if (pmSent) return done('private message already sent for this comment');
   if (ev.isReply && !d.complaint && !d.understood) return done('reply between commenters: nothing');
-  if (d.complaint) { out.sends.push('comment_pm_sorry'); return done('complaint about no reply: private message + red flag'); }
-  if (st.a.case === 'dispute') { out.sends.push('comment_pm_lawyer'); return done('dispute comment: private message, lawyer'); }
+  if (d.complaint) { out.sends.push('comment_pm_sorry', 'comment_public'); return done('complaint about no reply: private message + red flag'); }
+  if (st.a.case === 'dispute') { out.sends.push('comment_pm_lawyer', 'comment_public'); return done('dispute comment: private message, lawyer'); }
   const onlyOffice = st.intents.length === 1 && st.intents[0] === 'office' && !st.a.case;
-  if (onlyOffice) { out.sends.push('comment_pm_office'); return done('office question: private message'); }
-  if (st.intents.length || st.a.case || st.a.papers) { out.sends.push('comment_pm'); return done('question comment: private message'); }
+  if (onlyOffice) { out.sends.push('comment_pm_office', 'comment_public'); return done('office question: private message'); }
+  if (st.intents.length || st.a.case || st.a.papers) { out.sends.push('comment_pm', 'comment_public'); return done('question comment: private message'); }
   return done('chatter: nothing', 'F');
 }
 
