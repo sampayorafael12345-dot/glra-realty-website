@@ -90,6 +90,134 @@ const scriptHash = id => crypto.createHash('sha256').update(JSON.stringify([SCRI
 
 // ── READING A MESSAGE ─────────────────────────────────────────
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').trim();
+// ── SPELLING ──────────────────────────────────────────────────
+// People type "mgkno", "titolo", "bininta", "lusena". Before the rules read a
+// message, every word is compared with the words the rules know, and a near
+// miss is read as that word. Four ways a word can match, strictest first:
+//   1. a known shortcut ("aq" = ako, "pwd" = pwede)
+//   2. it sounds the same (e/i, o/u, c/k/q, s/z, b/v, p/f, doubled letters)
+//   3. it is the word with the vowels left out ("mgkno", "ttlo")
+//   4. one letter off (6+ letters) or two letters off (10+ letters)
+// Place names match by sound only (rule 2): a wrong guess there would put the
+// land in the wrong province. Common Cebuano and Hiligaynon words are read as
+// their Tagalog meaning (yuta = lupa, tagpila = magkano, unsaon = paano).
+// Still plain rules, no AI. A word that is itself a normal word (SAFE) is
+// never changed, so "bayan" does not become "bayad".
+const SHORT = { aq: 'ako', aqo: 'ako', q: 'ko', qo: 'ko', poh: 'po', nmn: 'naman', nman: 'naman', lng: 'lang', lang: 'lang', wla: 'wala', wlang: 'walang', wlng: 'walang',
+  pwd: 'pwede', pde: 'pwede', pwde: 'pwede', pede: 'pwede', puede: 'pwede', pwdi: 'pwede', pwedi: 'pwede', panu: 'paano', pnu: 'paano', pno: 'paano', panno: 'paano', paanu: 'paano',
+  kyo: 'kayo', kau: 'kayo', kaio: 'kayo', anu: 'ano', anung: 'anong', cnu: 'sino', sken: 'sa akin', skin: 'sa akin', saken: 'sa akin', sakin: 'sa akin', akn: 'akin',
+  hm: 'hm', hmm: 'hm', mgkno: 'magkano', mgkano: 'magkano', mkano: 'magkano', magkno: 'magkano', mgknu: 'magkano', mgkanu: 'magkano', magkanu: 'magkano', mgkn: 'magkano', magkanoe: 'magkano',
+  ttlo: 'titulo', titlo: 'titulo', ttulo: 'titulo', tittle: 'title', titel: 'title', titles: 'title', taytol: 'title', taytel: 'title',
+  txdec: 'tax dec', taxdec: 'tax dec', taxdic: 'tax dec', taxdek: 'tax dec', taxdeck: 'tax dec', taxdecs: 'tax dec', taksdek: 'tax dec',
+  bkt: 'bakit', kc: 'kasi', ksi: 'kasi', nde: 'hindi', ndi: 'hindi', hnd: 'hindi', hndi: 'hindi', dko: 'di ko', dpa: 'di pa', dp: 'di pa',
+  tnx: 'thanks', thnx: 'thanks', thx: 'thanks', slmt: 'salamat', slamat: 'salamat', salamt: 'salamat', gud: 'good', gd: 'good',
+  san: 'san', saan: 'saan', sn: 'saan', ofc: 'office', ofis: 'office', opis: 'office', adress: 'address', adres: 'address', loc: 'loc',
+  req: 'requirements', reqs: 'requirements', reqts: 'requirements', requirments: 'requirements', requirment: 'requirements', rekwayrments: 'requirements',
+  mgulang: 'magulang', mglang: 'magulang', nnay: 'nanay', ttay: 'tatay', kptd: 'kapatid', kptid: 'kapatid', mgkptd: 'magkakapatid', mgkkptid: 'magkakapatid',
+  npangalan: 'nakapangalan', nkpangalan: 'nakapangalan', nkapangalan: 'nakapangalan', pngalan: 'pangalan', lpa: 'lupa', lupah: 'lupa', bhay: 'bahay',
+  yuta: 'lupa', duta: 'lupa', tagpila: 'magkano', tagpilay: 'magkano', unsaon: 'paano', unsaun: 'paano', giunsa: 'paano', unsay: 'ano ang', diin: 'saan', hain: 'saan',
+  ginikanan: 'magulang', igsoon: 'kapatid', igsuon: 'kapatid', utod: 'kapatid', manghod: 'kapatid', apohan: 'lolo', lolohon: 'lolo', kabilin: 'mana', panulondon: 'mana', panulundon: 'mana',
+  napalit: 'nabili', gipalit: 'binili', nakapalit: 'nabili', gibaligya: 'ibinenta', nabaligya: 'nabenta', tabang: 'tulong', patabang: 'patulong', balay: 'bahay', bayranan: 'babayaran', bayronon: 'bayarin',
+  walay: 'walang', naay: 'may', aduna: 'may', namatyan: 'namatay', nahanaw: 'nawala', nasunog: 'nasunog', gikuha: 'kinuha', giilog: 'inagaw', nailog: 'inagaw', kiha: 'kaso sa korte',
+  ejs: 'ejs', xtrajudicial: 'extrajudicial', xtra: 'extra', dos: 'dos', spa: 'spa' };
+// The words the rules listen for (single words; phrases are built from them).
+const VOCAB = ('magkano gastos magagastos gagastusin bayad babayaran bayarin presyo singil budget compute kwenta estimate assess assessment libre ' +
+  'location address office opisina branch contact numero tawagan landline cellphone viber ' +
+  'paano proseso process details interested inquire inquiry patulong tulong konsulta consult abogado tanong question tumatanggap ' +
+  'requirements kailangan papeles dokumento dadalhin ihahanda gaano katagal matagal buwan linggo ' +
+  'abroad overseas hulugan installment pambayad ' +
+  'mana minana pamana namatay pumanaw yumao tagapagmana estate extrajudicial judicial settlement deceased magkakapatid kapatid ninuno heirs ' +
+  'deklarasyon declaration titulo title untitled unregistered rehistro patent cadastral ' +
+  'nabili nakabili binili bumili bentahan ibinenta binenta nabenta seller buyer nagbenta binilhan ' +
+  'nawala nawawala nasunog reconstitution nasira ' +
+  'inagaw inaagaw umaagaw kinamkam pineke overlap squatter umalis pumirma pirmahan korte kinasuhan demanda umangkin inaangkin pinaalis pinapaalis pinalayas eviction demolition nilamangan niloko ' +
+  'hatian paghahati hahatiin subdivide subdivision partition portion donation donasyon ' +
+  'magulang nanay tatay parents mother father lolo lola grandparents grandfather grandmother pangalan nakapangalan sarili ' +
+  'lupa lote bahay property transfer salamat reply sumasagot sumagot').split(' ');
+// Normal words that sit one letter away from a word above. Never changed.
+const SAFE = new Set(('bayan bayaw bahay bakit banda bayag balak balik bata bago baka basa ' +
+  'mama nana mana maya mura muna mula meron mali mahal malaki maliit matanda marami ' +
+  'lote lola lolo loob lang lupa luma ' +
+  'tita tito tatay tanay taon tama tapos talaga tayo tulad tulog titser ' +
+  'kaso kasi kami kayo kahit kaya kanya kanila kanino kapag kasama kuya kapatid kailan ' +
+  'pano paano para pati pala papa pera pero pwede pirma piso patay pasok ' +
+  'saan sana sabi sila siya sino sige sagot salamat sarili ' +
+  'nasa naman nang nila niya ninyo namin natin nanay ' +
+  'gusto gaano ganun ganyan ganito gamit galing ' +
+  'hindi hanggang halos hati hatid ' +
+  'dito doon dati dating dahil dapat dalawa ' +
+  'ako akin amin atin anak asawa araw ayaw alam alin aming ating ayos ' +
+  'isang ilan ilang ito iyon iyan ibang iba ' +
+  'wala walang may meron mga yung yong ung ' +
+  'office officer process processing title titled estate state contact contract transfer transfers question questions portion position property proper location ' +
+  'father farther mother another brother other parents patent patient seller teller buyer bayer details detail budget address assess access consult result ' +
+  'about above after again also been before being could does each from have here into just like made make many more most much need only over same some such than that them then there these they this very want well were what when where which while will with would your year years month months week weeks days today sorry please thank thanks hello mister madam maam ' +
+  'natira really assist kwento buhay payment payments talagang bigyan bigay makikita barangay interest petition assessor registry plus long part katunayan tunay nagpunta napatayo pangulong sumilang malabo ' +
+  'kapit ganon ganoon nanag pinag pinasa tugas mario consuelo angelica nakita makita kinita binata dalaga pamilya kamag kamaganak pinsan tiyuhin tiyahin bayaw hipag biyenan manugang ' +
+  'solo real tall lipat lipas imos naik ' +
+  'legal local total small house lands lease loan loans bank banks court count county case cases file filed files paid paper papers price prices sale sales sell sold tax taxes land lot lots deed deeds heir heirs').split(' '));
+// How a word sounds: e/i and o/u are one letter, c is s before e or i and k
+// otherwise, q is k, z is s, v is b, f and ph are p, doubled letters are one.
+const sound = w => w.replace(/ph/g, 'p').replace(/c(?=[eiy])/g, 's').replace(/[cq]/g, 'k').replace(/x/g, 'ks').replace(/z/g, 's').replace(/v/g, 'b').replace(/f/g, 'p').replace(/e/g, 'i').replace(/u/g, 'o').replace(/(.)\1+/g, '$1');
+const bones = w => sound(w).replace(/[aeiouy]/g, '');
+const BY_SOUND = new Map(), BY_BONES = new Map(), KNOWN = new Set(VOCAB), PLACE_WORDS = new Set();
+// Two words with one sound ("inagaw", "inaagaw") are the same word to the rules: the first is kept.
+function index(map, key, w) { if (key && !map.has(key)) map.set(key, w); }
+// Typos (no transpositions needed: they are caught as two edits on 8+ letters,
+// and the common ones are in SHORT).
+function editDistance(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) cur[j] = Math.min(cur[j], prevPrev[j - 2] + 1);
+      if (cur[j] < best) best = cur[j];
+    }
+    if (best > max) return max + 1;
+    var prevPrev = prev; prev = cur;
+  }
+  return prev[b.length];
+}
+function buildSpelling(placeWords) {
+  for (const w of placeWords) if (w.length >= 4 && !KNOWN.has(w) && !SAFE.has(w)) { PLACE_WORDS.add(w); KNOWN.add(w); index(BY_SOUND, sound(w), w); }
+  for (const w of VOCAB) { index(BY_SOUND, sound(w), w); if (w.length >= 6) index(BY_BONES, bones(w), w); }
+}
+function respellWord(w) {
+  if (Object.prototype.hasOwnProperty.call(SHORT, w)) return SHORT[w];
+  if (w.length < 4 || KNOWN.has(w) || SAFE.has(w) || !/^[a-z]+$/.test(w)) return w;
+  const s = sound(w);
+  if (BY_SOUND.get(s)) return BY_SOUND.get(s);
+  // Vowels left out: at most one vowel typed, three or more consonants.
+  const b = bones(w);
+  if (b.length >= 4 && w.length - w.replace(/[aeiou]/g, '').length <= 1 && BY_BONES.get(b)) return BY_BONES.get(b);
+  // A short word with one letter left out ("nbili", "nawla"): the only word it can be.
+  if (w.length < 6) {
+    const fits = VOCAB.filter(v => v.length === w.length + 1 && v.length >= 6 && v[0] === w[0] && [...v].some((_, i) => v.slice(0, i) + v.slice(i + 1) === w));
+    return fits.length === 1 ? fits[0] : w;
+  }
+  // A typo: same first sound, one letter off (two on long words), one clear winner.
+  const max = w.length >= 10 ? 2 : 1;
+  let best = '', bestD = max + 1, tie = false;
+  for (const v of VOCAB) {
+    if (v.length < 5 || Math.abs(v.length - w.length) > max) continue;
+    const vs = sound(v);
+    if (vs[0] !== s[0]) continue;
+    const dist = editDistance(s, vs, max);
+    if (dist < bestD) { best = v; bestD = dist; tie = false; } else if (dist === bestD && vs !== sound(best)) tie = true;
+  }
+  return best && !tie ? best : w;
+}
+// The whole message, word by word. Returns the text the rules read.
+function respell(t) {
+  return String(t || '').replace(/\bta(?:x|ks)[ .-]*de(?:c|k|ck|cl)\b/g, 'tax dec')
+    // Cebuano "pila" (how much) and "asa" (where) are also Tagalog words, so only in a question shape.
+    .replace(/\bpila(?= (?:po|ang|ka|man|ba|bayad|bayran|ni|kaha|gasto|magasto|tanan)\b|[ ?]*$)/g, 'magkano')
+    .replace(/\basa(?= (?:man|inyong|inyo|ang|dapit|mo|mi)\b)/g, 'saan')
+    .replace(/[a-z]+/g, respellWord);
+}
+
 const FB_AUTO = ['thanks for messaging us', 'we are located in', 'hi, thanks for contacting us', 'salamat sa pag-message'];
 const FB_SYS = ['facebook created this chat', 'ginawa ng facebook ang chat'];
 const RE = {
@@ -108,7 +236,7 @@ const RE = {
   hulugan: /(hulugan|installment|instalment|hulog|utay ?utay|paunti ?unti|wala (po )?(akong|kaming|pang) ?(pera|budget|pambayad)|walang (pera|budget|pambayad)|(di|hindi) (ko|namin) (po )?kaya(ng)? (bayaran|ang bayad))/,
   estate: /(\bmana\b|minana|pamana|namatay|patay na|pumanaw|yumao|sumakabilang|\blolo\b|\blola\b|heirs?\b|tagapagmana|\bestate\b|ext?r?a ?judicial|\bejs\b|deceased|magkakapatid|mga kapatid|ninuno)/,
   untitled: /(tax ?dec|tax declaration|deklarasyon|diklarasyon|walang tit[ou]lo|wala pa(ng)? tit[ou]lo|wala (pa )?po(ng)? tit[ou]lo|untitled|unregistered|di (pa )?(naka ?)?rehistr|not registered|free patent|\bpatent\b|cenro|penro|cadastral|pa ?titulo|patitolo|rights lang|\bcloa\b)/,
-  sale: /(deed of sale|nabili|binili|bumili|bomeli|bentahan|ibinenta|bininta|\bseller\b|\bbuyer\b|\bdos\b|absolute sale|nabenta)/,
+  sale: /(deed of sale|nabili|nakabili|binili|binenta|bumili|bomeli|bentahan|ibinenta|bininta|\bseller\b|\bbuyer\b|\bdos\b|absolute sale|nabenta)/,
   lost: /(nawala|nawawala|nasunog|lost title|owner'?s (duplicate )?copy|reconstitut|nasira ang titulo)/,
   dispute: /(inagaw|inaagaw|umaagaw|kinamkam|kinuha (ng|ang lupa)|pineke|\bpeke\b|\bfake\b|double titl|doble titulo|overlap|encroach|squat|ayaw (umalis|pumirma|mag ?pirma|pirmahan)|nasa korte|may kaso|kinasuhan|demanda|umangkin|inaangkin|pinaalis|pinapaalis|pinalayas|eviction|demolition|land ?grab|tumir[ie]k|sa kaso\b|\bkasu\b|nahahabol|hinahabol|may habol|nakikihati|ayaw (kami )?bigyan|nilamangan|niloko)/,
   partition: /(hatian|paghahati|hahatiin|subdivide|subdivision ng lupa|partition|portion)/,
@@ -131,6 +259,7 @@ const PLACES = [
   ['rizal', 'in', /(\brizal\b|antipolo|cainta|taytay|san mateo|rodriguez|montalban|binangonan|tanay|angono|teresa|morong|baras|pililla)/],
   ['other', 'out', /(bulacan|pampanga|pangasinan|\bcebu\b|leyte|samar|davao|iloilo|bicol|camarines|albay|sorsogon|masbate|catanduanes|mindoro|palawan|marinduque|romblon|nueva ecija|nueva vizcaya|tarlac|zambales|bataan|aurora|ilocos|la union|isabela|cagayan|quirino|benguet|baguio|abra|kalinga|ifugao|apayao|mountain province|negros|bacolod|bohol|siquijor|biliran|aklan|capiz|antique|guimaras|visayas|mindanao|cotabato|zamboanga|bukidnon|misamis|surigao|agusan|lanao|maguindanao|sultan kudarat|sarangani|gensan|general santos|basilan|sulu|tawi|dinagat|camiguin|compostela|butuan|tacloban|ormoc|dumaguete|naga city|legazpi|puerto princesa|cabanatuan|olongapo|angeles|dagupan|tuguegarao|vigan|laoag|koronadal|kidapawan|iligan|ozamiz|pagadian|dipolog|tagum|digos|mati)/]
 ];
+buildSpelling(PLACES.flatMap(([, , re]) => re.source.replace(/\\[a-z.?]/g, ' ').split(/[^a-z]+/)));
 const BY_PAYLOAD = {
   LT_CASE_ESTATE: { case: 'estate' }, LT_CASE_SALE: { case: 'sale' }, LT_CASE_UNTITLED: { case: 'untitled' }, LT_CASE_LOST: { case: 'lost' }, LT_CASE_DISPUTE: { case: 'dispute' },
   LT_PRICE: { topic: 'price' }, LT_OFFICE: { topic: 'office' },
@@ -159,8 +288,10 @@ function diedBand(t) {
 // the answer to the question that was just asked.
 function detect(text, payload, step) {
   const raw = String(text || '');
-  const t = norm(raw);
+  const typed = norm(raw);
+  const t = respell(typed);
   const d = { t, empty: !t, topics: [], facts: {}, understood: false };
+  if (t !== typed) d.readAs = t;
   if (FB_SYS.some(s => t.startsWith(s))) { d.system = true; return d; }
   let p = BY_PAYLOAD[String(payload || '')] ? String(payload) : BY_TITLE[t] || '';
   if (!p && /^[1-7][.)]?$/.test(t) && (!step || step === 'new' || step === 'menu')) p = MENU[Number(t[0]) - 1][1];
@@ -328,4 +459,4 @@ function notHuman(text) {
 
 const isCommentPm = text => /nakita po namin ang comment ninyo/.test(norm(text)) || norm(text).startsWith('magandang araw po, at pasensya na po kung natagalan');
 
-module.exports = { isCommentPm, SCRIPTS, GROUPS, ASKING, MENU, LT_PAGE_DEFAULT, QUIET_MS, detect, decide, decideComment, groupOf, render, notHuman, scriptHash, norm, fresh, summaryOf };
+module.exports = { isCommentPm, SCRIPTS, GROUPS, ASKING, MENU, LT_PAGE_DEFAULT, QUIET_MS, detect, decide, decideComment, groupOf, render, notHuman, scriptHash, norm, fresh, summaryOf, respell, _respellWord: respellWord };

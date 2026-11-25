@@ -46,6 +46,30 @@ function engine() {
   check('every script is under 2000 characters', Object.values(LT.SCRIPTS).every(s => s.text.length < 2000));
   check('the first message says it is automated', /automated/.test(LT.SCRIPTS.welcome.text) && /automated/i.test(LT.SCRIPTS.comment_pm.text));
   check('only the price and installment scripts mention money, and none gives a tax figure', Object.entries(LT.SCRIPTS).every(([id, s]) => ['price', 'hulugan'].includes(id) ? !/1,?000 |6%/.test(s.text) : !/₱|30,?000|50,?000|6%/.test(s.text)));
+  // Spelling: bad spelling, text shortcuts and Visayan accents are still understood.
+  const reads = (text, f) => { const d = LT.detect(text); return f(d); };
+  for (const [text, what, f] of [
+    ['mgkno po', 'price', d => d.topics.includes('price')], ['magkanu po ba', 'price', d => d.topics.includes('price')], ['Mgkanu ang byad', 'price', d => d.topics.includes('price')],
+    ['hm po magpa transper ng titolo', 'price + title', d => d.topics.includes('price') && d.facts.papers === 'title'],
+    ['panu po ang prosiso', 'how', d => d.topics.includes('how')], ['pnu mag pa tulong', 'how', d => d.topics.includes('how')],
+    ['anu po reqirements', 'requirements', d => d.topics.includes('reqs')], ['ano mga rekwayrments', 'requirements', d => d.topics.includes('reqs')],
+    ['san po opis nyo', 'office', d => d.topics.includes('office')], ['saan po ofice nyo', 'office', d => d.topics.includes('office')],
+    ['pwd po ba hologan', 'installment', d => d.topics.includes('hulugan')], ['instalment pwde', 'installment', d => d.topics.includes('hulugan')],
+    ['mana po sa lolo nmn, nmatay na', 'inheritance', d => d.facts.case === 'estate'], ['minana namin sa mglang', 'inheritance, parents', d => d.facts.case === 'estate' && d.facts.owner === 'parents'],
+    ['extra judisyal setlement', 'inheritance', d => d.facts.case === 'estate'], ['pumanao na po tatay ko', 'inheritance', d => d.facts.case === 'estate'],
+    ['bomeli po kami ng lopa', 'sale', d => d.facts.case === 'sale'], ['benenta sa amin ang lupa', 'sale', d => d.facts.case === 'sale'], ['nbili ko po 2015', 'sale', d => d.facts.case === 'sale'],
+    ['wla po titolo, tax diklarasyon lng', 'tax declaration only', d => d.facts.papers === 'taxdec'], ['taxdic lang hawak', 'tax declaration only', d => d.facts.papers === 'taxdec'], ['ttlo po ang hawak', 'title', d => d.facts.papers === 'title'],
+    ['nawla po ang titulo', 'lost', d => d.facts.case === 'lost'], ['inagao ng kapitbahay ang lupa', 'dispute', d => d.facts.case === 'dispute'], ['ayaw pomirma ng kptid ko', 'dispute', d => d.facts.case === 'dispute'],
+    ['sa lusena po', 'Lucena = Quezon', d => d.facts.loc === 'quezon'], ['kabite po ang lupa', 'Cavite', d => d.facts.loc === 'cavite'], ['batanggas', 'Batangas', d => d.facts.loc === 'batangas'], ['sa sibu po', 'Cebu = outside', d => d.facts.area === 'out'],
+    ['tagpila ang bayad', 'Cebuano: price', d => d.topics.includes('price')], ['pila ang magasto', 'Cebuano: price', d => d.topics.includes('price')], ['unsaon pag transfer sa titulo', 'Cebuano: how', d => d.topics.includes('how')],
+    ['asa man inyong opisina', 'Cebuano: office', d => d.topics.includes('office')], ['kabilin sa among ginikanan ang yuta', 'Cebuano: inheritance, parents', d => d.facts.case === 'estate' && d.facts.owner === 'parents'],
+    ['napalit namo ang yuta', 'Cebuano: sale', d => d.facts.case === 'sale'], ['walay titulo ang duta', 'Visayan: no title', d => d.facts.papers === 'taxdec'], ['giilog ang among yuta', 'Cebuano: dispute', d => d.facts.case === 'dispute']
+  ]) check('spelling: "' + text + '" is read as ' + what, reads(text, f), LT.detect(text));
+  const sameWords = 'bayan bahay buhay barangay bigyan makikita natira talagang tunay payments really assist kwento mama nana tanay kapit malabo petition interest nagpunta gusto kaso pirma lote papa pera'.split(' ');
+  check('spelling: normal words are left alone', sameWords.every(w => LT.respell(w) === w), sameWords.filter(w => LT.respell(w) !== w).map(w => w + '>' + LT.respell(w)));
+  check('spelling: a normal sentence is not changed', LT.respell('magandang araw po, may tanong lang ako tungkol sa lupa ng nanay ko sa barangay namin') === 'magandang araw po, may tanong lang ako tungkol sa lupa ng nanay ko sa barangay namin');
+  check('spelling: "pila" in line and "asa" as hope stay Tagalog', LT.respell('mahaba ang pila sa munisipyo') === 'mahaba ang pila sa munisipyo' && LT.respell('wag na umasa, asa pa') === 'wag na umasa, asa pa');
+  check('spelling: person names are not turned into places', ['mario', 'consuelo', 'angelica', 'laoang'].every(w => !LT.detect('si ' + w + ' po').facts.loc));
   const everyWord = Object.values(LT.SCRIPTS).map(s => s.text).join('\n');
   check('OWNERS\' RULE: no script names the lawyer, the broker or any staff member', !/atty|attorney|abogado|sampayo|\bmel\b|catherine|\blea\b|villanueva|broker/i.test(everyWord.replace(/Special Power of Attorney/g, '')));
   check('OWNERS\' RULE: no script gives an address or a phone number', !/gomez|enriquez|r bldg|lucena city|tycoon|ortigas|makati|burgundy|\d{3}[ -]\d{3}[ -]\d{4}|09\d{2}[ -]?\d{3}[ -]?\d{4}|📞|📍/i.test(everyWord));
