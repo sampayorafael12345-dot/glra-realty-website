@@ -1722,6 +1722,10 @@ const socialPostSchema = new mongoose.Schema({
   batchId:     { type: String, default: '' },
   recurringId: { type: String, default: '' },
   origin:      { type: String, default: 'compose' }, // compose | listing | csv | recurring | review_key
+  // A corrected copy of a post that is already scheduled: approving this one
+  // cancels that one first, so the two never both go out.
+  replaces:    { type: String, default: '' },
+  replacesTitle: { type: String, default: '', maxlength: 200 },
   createdBy:   { id: String, name: String, email: String, via: { type: String, default: 'user' } },
   submittedAt: { type: Date, default: null },
   approvedBy:  { id: String, name: String, email: String, via: String },

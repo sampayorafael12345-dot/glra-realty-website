@@ -650,6 +650,28 @@ async function onMode() {
     r = await req('POST', `/api/admin/social/posts/${cd.id}/approve`, { headers: K, body: {} });
     check('review key on the admin approve route -> 401', r.status === 401);
     check('the review key\'s draft is still waiting', (await db.collection('socialposts').findOne({ _id: oidOf(cd.id) })).status === 'pending');
+    // A corrected copy of a post that is already scheduled.
+    const in3 = new Date(Date.now() + 3 * 864e5).toISOString();
+    r = await req('POST', '/api/social/review/drafts', { headers: K, body: { title: 'Old wording', caption: 'Call 042 373 7583 ' + 'x'.repeat(500), targets: [{ network: 'fb', pageId: '1000' }], scheduledAt: in3 } });
+    const oldId = r.json.id;
+    r = await A('POST', `/posts/${oldId}/approve`, admin, {});
+    const oldDoc = await db.collection('socialposts').findOne({ _id: oidOf(oldId) });
+    const oldMeta = oldDoc.targets[0].metaId;
+    check('replace: the original is scheduled on Facebook', r.status === 200 && oldDoc.status === 'scheduled' && !!oldMeta, [r.status, oldDoc.status]);
+    r = await req('GET', `/api/social/review/post/${oldId}`, { headers: K });
+    check('review key reads one post in full (caption not cut short)', r.status === 200 && r.json.caption.length > 500 && r.json.targets.length === 1, r.status);
+    r = await req('POST', '/api/social/review/drafts', { headers: K, body: { replaces: oldId, caption: 'Email us instead' } });
+    const newId = r.json.id;
+    const newDoc = await db.collection('socialposts').findOne({ _id: oidOf(newId) });
+    check('replace: the corrected copy waits for approval and copies the time, Page and title', r.status === 200 && newDoc.status === 'pending' && newDoc.replaces === oldId && newDoc.title === 'Old wording' && newDoc.targets[0].pageId === '1000' && +newDoc.scheduledAt === +oldDoc.scheduledAt, newDoc);
+    check('replace: nothing is cancelled until someone approves', (await db.collection('socialposts').findOne({ _id: oidOf(oldId) })).status === 'scheduled' && !callsTo('DELETE', new RegExp('^' + oldMeta + '$')).length);
+    r = await req('POST', '/api/social/review/drafts', { headers: K, body: { replaces: oldId, caption: 'A second copy' } });
+    check('replace: a second replacement for the same post is refused', r.status === 409, r.status);
+    r = await req('POST', '/api/social/review/drafts', { headers: K, body: { replaces: cd.id, caption: 'x' } });
+    check('replace: a post that is not scheduled cannot be replaced', r.status === 409, r.status);
+    r = await A('POST', `/posts/${newId}/approve`, admin, {});
+    const oldAfter = await db.collection('socialposts').findOne({ _id: oidOf(oldId) }), newAfter = await db.collection('socialposts').findOne({ _id: oidOf(newId) });
+    check('replace: approving cancels the old post on Facebook and schedules the corrected one', r.status === 200 && oldAfter.status === 'cancelled' && callsTo('DELETE', new RegExp('^' + oldMeta + '$')).length === 1 && newAfter.status === 'scheduled' && newAfter.targets[0].metaId && newAfter.targets[0].metaId !== oldMeta, [r.status, oldAfter.status, newAfter.status]);
     const rvCalls = await db.collection('sociallogs').countDocuments({ via: 'review_key' });
     check('every review-key call is in the activity log', rvCalls >= 6, rvCalls + ' rows');
     r = await A('DELETE', '/review-key', admin);
@@ -669,7 +691,7 @@ async function onMode() {
     check('settings are approver-only', r.status === 403);
     check('every Graph call carried a correct appsecret_proof', stub.proofBad.length === 0, stub.proofBad.slice(0, 4).join(', '));
     check('no write to any ads / campaign / ad set / budget endpoint', !stub.calls.some(c => c.method !== 'GET' && /act_|campaign|adset|budget|\/ads\b/.test(c.path)));
-    check('the only DELETEs were a comment, a scheduled post and a published post', callsTo('DELETE', /./).length === 3);
+    check('the only DELETEs were a comment, two scheduled posts (one cancelled, one replaced) and a published post', callsTo('DELETE', /./).length === 4);
     const logs = JSON.stringify(await db.collection('sociallogs').find().toArray()) + JSON.stringify(await db.collection('metalogs').find().toArray());
     check('no token in the activity log or the Meta log', !/sys-test-token|page-tok-|glra_sr_/.test(logs));
     r = await req('GET', '/social.html');

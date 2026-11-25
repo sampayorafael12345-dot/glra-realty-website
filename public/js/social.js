@@ -525,6 +525,7 @@
     api('/posts/' + id).then(function (r) {
       var p = r.post, a = can('approve');
       var body = '<div class="so-row" style="margin-bottom:12px">' + statusPill(p.status) + (p.scheduledAt ? '<span class="so-small so-muted"><i class="far fa-clock"></i> ' + esc(fmt(p.scheduledAt)) + '</span>' : '') + (p.origin && p.origin !== 'compose' ? pill(p.origin.replace('_', ' ')) : '') + (p.leads.total ? pill(p.leads.total + ' lead' + (p.leads.total > 1 ? 's' : ''), 'hot', 'fas fa-bullseye') : '') + '</div>' +
+        (p.replaces && p.status === 'pending' ? '<div class="so-banner warn"><i class="fas fa-right-left"></i><div><b>Corrected copy.</b> Approving this cancels the scheduled post it replaces: ' + esc(p.replacesTitle || '') + '</div></div>' : '') +
         (p.reviewNote && p.status === 'changes' ? '<div class="so-banner warn"><i class="fas fa-reply"></i><div><b>Sent back:</b> ' + esc(p.reviewNote) + '</div></div>' : '') +
         (p.media.length ? '<div class="so-media" style="margin-bottom:12px">' + p.media.map(function (m) { return '<div class="so-mi">' + (m.type === 'video' ? '<video src="' + esc(m.url) + '#t=0.5" controls muted></video>' : '<img src="' + esc(m.url) + '" alt="">') + '</div>'; }).join('') + '</div>' : '') +
         '<div class="so-well so-small" style="white-space:pre-wrap;max-height:220px;overflow:auto">' + esc(p.caption || '(no text)') + '</div>' + (p.link ? '<p class="so-small"><i class="fas fa-link"></i> ' + esc(p.link) + '</p>' : '') +

@@ -520,6 +520,24 @@ async function runTargets(postId, actor) {
 // and the post has been edited since, the approval is refused so nobody signs
 // off on words they never read. The claim itself also pins the version that
 // was validated here, so an edit landing mid-approval cannot slip through.
+// Cancel a post that is not out yet: Facebook's scheduled copies are deleted
+// from Facebook's scheduler. Returns the errors (empty = fully cancelled).
+async function cancelPostCore(p, actor, note) {
+  const errs = [];
+  for (const t of p.targets) {
+    if (t.status === 'waiting' || t.status === 'draft') { t.status = 'cancelled'; continue; }
+    if (t.status === 'scheduled' && t.network === 'fb' && t.metaId) {
+      try { await metaWrite('DELETE', t.metaId, {}, { token: await pageTokenFor(t.pageId, { strict: true, area: 'social' }), area: 'social' }); t.status = 'cancelled'; }
+      catch (e) { errs.push(scrub(e.message).slice(0, 200)); }
+    }
+  }
+  p.status = rollup(p); if (['pending', 'draft', 'changes', 'approved'].includes(p.status) && p.targets.every(t => ['cancelled', 'draft'].includes(t.status))) p.status = 'cancelled';
+  p.updatedAt = new Date(); p.history.push({ at: new Date(), by: actor.name, action: 'cancelled', note: [note || '', errs.join('; ')].filter(Boolean).join(' ') });
+  await p.save();
+  slog(actor, 'cancelled', { target: 'post', targetId: p._id, summary: 'Cancelled' + (note ? ' (' + note + ')' : '') + (errs.length ? ' (with errors: ' + errs.join('; ') + ')' : ''), ok: !errs.length });
+  return errs;
+}
+
 async function approvePost(postId, actor, req, rev) {
   const cur = await SocialPost.findById(postId);
   if (!cur) return { status: 404, error: 'Post not found' };
@@ -528,6 +546,17 @@ async function approvePost(postId, actor, req, rev) {
   const v = await validatePost(cur, true);
   if (v.errors.length) return { status: 400, error: v.errors[0], errors: v.errors, warnings: v.warnings };
   const pages = await pagesState();
+  // A corrected copy: the old post is cancelled FIRST. If any part of it has
+  // already gone out, or Facebook refuses the cancel, nothing is approved, so
+  // the same post can never appear twice.
+  if (cur.replaces) {
+    const old = await SocialPost.findById(cur.replaces);
+    if (old && !['cancelled', 'draft', 'changes', 'rejected'].includes(old.status)) {
+      if (old.targets.some(t => ['published', 'publishing', 'container'].includes(t.status))) return { status: 409, error: 'The post this one replaces has already gone out (or is going out now). Cancel this copy instead.' };
+      const errs = await cancelPostCore(old, actor, 'replaced by a corrected copy');
+      if (errs.length) return { status: 502, error: 'Could not cancel the old post on Facebook, so the corrected copy was not approved: ' + errs[0] };
+    }
+  }
   // Claimed: a second approve (two tabs, a link and the page) finds nothing.
   const set = { status: 'approved', approvedBy: { id: actor.id, name: actor.name, email: actor.email, via: actor.via }, approvedAt: new Date(), updatedAt: new Date() };
   const claimed = await SocialPost.findOneAndUpdate({ _id: postId, status: 'pending', updatedAt: cur.updatedAt }, { $set: set, $push: { history: { at: new Date(), by: actor.name || actor.email, action: 'approved', note: '' } } }, { new: true });
@@ -1736,18 +1765,7 @@ function registerSocialRoutes(app, deps) {
     if (!oid(req.params.id)) return res.status(404).json({ error: 'Not found' });
     const p = await SocialPost.findById(req.params.id);
     if (!p) return res.status(404).json({ error: 'Not found' });
-    const errs = [];
-    for (const t of p.targets) {
-      if (t.status === 'waiting' || t.status === 'draft') { t.status = 'cancelled'; continue; }
-      if (t.status === 'scheduled' && t.network === 'fb' && t.metaId) {
-        try { await metaWrite('DELETE', t.metaId, {}, { token: await pageTokenFor(t.pageId, { strict: true, area: 'social' }), area: 'social' }); t.status = 'cancelled'; }
-        catch (e) { errs.push(scrub(e.message).slice(0, 200)); }
-      }
-    }
-    p.status = rollup(p); if (['pending', 'draft', 'changes', 'approved'].includes(p.status) && p.targets.every(t => ['cancelled', 'draft'].includes(t.status))) p.status = 'cancelled';
-    p.updatedAt = new Date(); p.history.push({ at: new Date(), by: actorOf(req).name, action: 'cancelled', note: errs.join('; ') });
-    await p.save();
-    slog(actorOf(req), 'cancelled', { target: 'post', targetId: p._id, summary: 'Cancelled' + (errs.length ? ' (with errors: ' + errs.join('; ') + ')' : ''), ok: !errs.length });
+    const errs = await cancelPostCore(p, actorOf(req), '');
     await logAudit(req, 'SOCIAL_CANCEL', 'SocialPost', String(p._id), (p.title || p.caption || '').slice(0, 80), { errors: errs });
     res.status(errs.length ? 502 : 200).json({ post: postJson(p, await pagesState()), errors: errs });
   }));
@@ -2232,7 +2250,7 @@ function registerSocialRoutes(app, deps) {
   app.get(B + '/review-key', ...admin, wrap(async (req, res) => {
     const s = await getSetting(REVIEW_KEY, {});
     res.json({ hasKey: !!s.keyHash, enabled: s.enabled !== false && !!s.keyHash, keyHint: s.keyHint || '', madeAt: s.madeAt || null, lastUsedAt: s.lastUsedAt || null,
-      calls: await SocialLog.countDocuments({ via: 'review_key' }), endpoints: ['GET /api/social/review/summary', 'GET /api/social/review/posts', 'GET /api/social/review/insights', 'GET /api/social/review/inbox', 'POST /api/social/review/drafts', 'POST /api/social/review/reply-drafts'] });
+      calls: await SocialLog.countDocuments({ via: 'review_key' }), endpoints: ['GET /api/social/review/summary', 'GET /api/social/review/posts', 'GET /api/social/review/insights', 'GET /api/social/review/inbox', 'GET /api/social/review/post/:id', 'POST /api/social/review/drafts', 'POST /api/social/review/reply-drafts'] });
   }));
   app.post(B + '/review-key', ...admin, wrap(async (req, res) => {
     const key = 'glra_sr_' + crypto.randomBytes(32).toString('hex');
@@ -2314,15 +2332,39 @@ function registerSocialRoutes(app, deps) {
         messages: items.filter(i => i.threadKey === t.key && !i.deleted).map(i => ({ at: i.at, from: i.own ? 'page' : maskName(i.fromName) || 'customer', text: maskText(i.text), hidden: i.hidden })) })) });
   }));
   app.get(R + '/lt-auto', ...RV, wrap(async (req, res) => { res.json(await ltOverview(true)); }));
+  // One post in full (the lists cut captions short), so a correction can be
+  // written from the exact text.
+  app.get(R + '/post/:id', ...RV, wrap(async (req, res) => {
+    const p = oid(req.params.id) ? await SocialPost.findById(req.params.id).lean() : null;
+    if (!p) return res.status(404).json({ error: 'Not found' });
+    res.json({ id: String(p._id), title: p.title, status: p.status, origin: p.origin, scheduledAt: p.scheduledAt, caption: p.caption, link: p.link,
+      media: (p.media || []).map(m => ({ url: m.url, type: m.type, width: m.width, height: m.height })),
+      targets: (p.targets || []).map(t => ({ network: t.network, pageId: t.pageId, caption: t.caption || '', status: t.status })) });
+  }));
   app.post(R + '/drafts', ...RV, wrap(async (req, res) => {
     const b = req.body || {};
+    // "replaces": a corrected copy of a post that is scheduled but not out.
+    // What the draft leaves out is taken from that post. Still only a draft:
+    // the old post is cancelled when (and only when) an approver approves this.
+    let old = null;
+    if (b.replaces) {
+      old = oid(b.replaces) ? await SocialPost.findById(b.replaces).lean() : null;
+      if (!old) return res.status(404).json({ error: 'The post to replace was not found' });
+      if (!['scheduled', 'approved'].includes(old.status) || old.targets.some(t => ['published', 'publishing', 'container'].includes(t.status))) return res.status(409).json({ error: `That post is "${old.status}": only a scheduled post that is not out yet can be replaced` });
+      if (await SocialPost.exists({ replaces: String(old._id), status: 'pending' })) return res.status(409).json({ error: 'A replacement for that post is already waiting for approval' });
+      if (b.title === undefined) b.title = old.title;
+      if (b.link === undefined) b.link = old.link;
+      if (b.media === undefined) b.media = old.media;
+      if (b.targets === undefined) b.targets = old.targets.filter(t => t.status !== 'cancelled').map(t => ({ network: t.network, pageId: t.pageId, caption: t.caption || '' }));
+      if (b.scheduledAt === undefined) b.scheduledAt = old.scheduledAt ? new Date(old.scheduledAt).toISOString() : null;
+    }
     const when = parseWhen(b.scheduledAt);
     if (when === undefined) return res.status(400).json({ error: 'scheduledAt could not be read' });
     const doc = { title: clean(b.title, 200) || 'Draft from Claude', caption: clean(b.caption, FB_CAPTION_MAX), link: clean(b.link, 1000), media: cleanMedia(b.media), targets: cleanTargets(b.targets).map(t => ({ ...t, status: 'draft' })), scheduledAt: when || null };
     const v = await validatePost(doc, false);
     if (v.errors.length) return res.status(400).json({ error: v.errors[0], errors: v.errors });
     // Always "waiting for approval": the key has no way to approve.
-    const p = await SocialPost.create({ ...doc, status: 'pending', submittedAt: new Date(), origin: 'review_key', createdBy: REVIEW_ACTOR, history: [{ at: new Date(), by: REVIEW_ACTOR.name, action: 'drafted through the review key', note: clean(b.note, 300) }] });
+    const p = await SocialPost.create({ ...doc, ...(old ? { replaces: String(old._id), replacesTitle: clean(old.title || old.caption, 200) } : {}), status: 'pending', submittedAt: new Date(), origin: 'review_key', createdBy: REVIEW_ACTOR, history: [{ at: new Date(), by: REVIEW_ACTOR.name, action: 'drafted through the review key', note: clean(b.note, 300) }] });
     slog(REVIEW_ACTOR, 'drafted', { target: 'post', targetId: p._id, summary: 'Draft from the review key, waiting for approval: ' + clean(doc.caption, 100) });
     notifyApprovers([p]).catch(() => {});
     res.json({ id: String(p._id), status: p.status, warnings: v.warnings });
