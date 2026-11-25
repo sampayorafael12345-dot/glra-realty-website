@@ -173,6 +173,9 @@ function mailHealth() {
   return { failures24h: recent.length, lastFailAt: last ? new Date(last.at).toISOString() : null, lastFailReason: last ? last.reason : '' };
 }
 
+// What a visitor is told when a confirmation link could not be sent.
+const MAIL_DOWN_MSG = 'Saved, but our email system could not send the confirmation link just now. Please try again in a while, or message us on Messenger or WhatsApp and we will switch it on for you.';
+
 async function sendEmail(to, subject, htmlContent, fromName = 'GLRA Realty', replyTo = null, attachments = null, headers = null) {
   if (!brevoApiInstance) {
     const initialized = initBrevo();
@@ -561,6 +564,13 @@ function queryOf(req) {
   const i = req.originalUrl.indexOf('?');
   return i === -1 ? '' : req.originalUrl.slice(i);
 }
+// Addresses people type or that older posts and the company profile point to.
+app.get(['/land-title.html', '/land-title', '/landtitle', '/title-transfer'], (req, res) => {
+  res.redirect(301, '/titling.html' + queryOf(req));
+});
+app.get(['/contact.html', '/contact'], (req, res) => {
+  res.redirect(301, '/' + queryOf(req) + '#contact');
+});
 app.get(['/loan-comparison.html', '/loan-comparison'], (req, res) => {
   res.redirect(301, '/amortization.html' + queryOf(req) + '#compare');
 });
@@ -4238,7 +4248,15 @@ app.post('/api/subscribe',
         if (!quietSrc && !recently) {
           doc.confirmSentAt = new Date();
           await doc.save();
-          await sendEmail(email, 'Please confirm your GLRA Realty subscription', confirmEmailHtml(email, name));
+          const sent = await sendEmail(email, 'Please confirm your GLRA Realty subscription', confirmEmailHtml(email, name));
+          if (!sent || !sent.success) {
+            // The link never left: do not hold the visitor to the 15-minute
+            // wait, and do not tell them an email is on its way.
+            doc.confirmSentAt = undefined;
+            await doc.save();
+            await stitchCalcIdentity(vid, email);
+            return res.json({ success: true, needsConfirm: true, emailSent: false, message: MAIL_DOWN_MSG });
+          }
         } else {
           await doc.save();
         }
@@ -4546,7 +4564,13 @@ app.post('/api/price-alert',
         }
         existing.confirmSentAt = new Date();
         await existing.save();
-        if (visitorMailOk(email)) await sendEmail(email, `Confirm your price alert: ${propertyTitle}`, userAlertHtml());
+        if (visitorMailOk(email)) {
+          const sentAgain = await sendEmail(email, `Confirm your price alert: ${propertyTitle}`, userAlertHtml());
+          if (!sentAgain || !sentAgain.success) {
+            await PriceAlert.updateOne({ _id: existing._id }, { $set: { confirmSentAt: new Date(0) } });   // epoch = "never sent": the wait falls back to createdAt when the stamp is missing
+            return res.json({ success: true, emailSent: false, message: MAIL_DOWN_MSG });
+          }
+        }
         return res.json({ success: true, message: 'We sent the confirmation link again. Click it in the email to start the alert.' });
       }
 
@@ -4561,7 +4585,14 @@ app.post('/api/price-alert',
       }
       await stitchCalcIdentity(vid, email);
 
-      if (visitorMailOk(email)) await sendEmail(email, `Confirm your price alert: ${propertyTitle}`, userAlertHtml());
+      let alertMailFailed = false;
+      if (visitorMailOk(email)) {
+        const sentFirst = await sendEmail(email, `Confirm your price alert: ${propertyTitle}`, userAlertHtml());
+        if (!sentFirst || !sentFirst.success) {
+          alertMailFailed = true;
+          await PriceAlert.updateOne({ _id: alert._id }, { $set: { confirmSentAt: new Date(0) } });   // epoch = "never sent" (see the resend branch)
+        }
+      }
 
       const adminAlertHtml = getEmailHeader() + `
         <h2 style="color: #ff3d00; font-family: Inter,Helvetica,Arial,sans-serif; font-size: 20px; margin: 0 0 15px 0;">New Price Alert Request</h2>
@@ -4573,6 +4604,7 @@ app.post('/api/price-alert',
       ` + getEmailFooter();
       if (visitorMailOk('admin:' + email, 6, 15)) await sendEmail('glrarealty@gmail.com', `Price Alert Request: ${propertyTitle}`, adminAlertHtml);
 
+      if (alertMailFailed) return res.json({ success: true, emailSent: false, message: MAIL_DOWN_MSG });
       res.json({ success: true, message: 'Check your email and click the confirmation link to start the alert.' });
     } catch (err) {
       console.error('Price alert error:', err);
@@ -5748,6 +5780,7 @@ app.post('/api/saved-search',
         const { subject, html } = buildSavedSearchConfirmEmail(same, currentMatches);
         const r = visitorMailOk(email) ? await sendEmail(email, subject, html) : null;
         const ok = !!(r && r.success);
+        if (r && !r.success) await SavedSearch.updateOne({ _id: same._id }, { $unset: { confirmSentAt: 1 } });
         return res.json({
           success: true, resent: true, emailSent: ok, currentMatches,
           message: ok
@@ -5787,6 +5820,15 @@ app.post('/api/saved-search',
       const { subject, html } = buildSavedSearchConfirmEmail(search, currentMatches);
       const r = visitorMailOk(email) ? await sendEmail(email, subject, html) : null;
       const ok = !!(r && r.success);
+      if (r && !r.success) {
+        // The link never left, so the visitor cannot confirm. Let them retry at
+        // once, and put the request in front of staff: until now a search whose
+        // email failed was invisible to everyone.
+        await SavedSearch.updateOne({ _id: search._id }, { $unset: { confirmSentAt: 1 } });
+        ingestLead({ kind: 'saved_search', refId: search._id, email, vid: search.vid,
+          label: 'Property Finder alert requested, confirmation email FAILED: ' + (search.summary || ''),
+          hints: hintsFromCriteria(search.criteria), consent: '', attrib: search.attrib }).catch(() => {});
+      }
       res.json({
         success: true, emailSent: ok, currentMatches,
         message: ok
@@ -6137,14 +6179,20 @@ app.post('/api/admin/signup',
 
       if (visitorMailOk('signup:' + email, 3, 6)) {
         const link = `${SITE_URL}/confirm-signup?t=${token}`;
-        sendEmail(email, 'Confirm your GLRA account request',
+        const sentConfirm = await sendEmail(email, 'Confirm your GLRA account request',
           getEmailHeader() + `
           <h2 style="color:#0a1628;">Confirm your email</h2>
           <p>Hi ${esc(greetName(name)) || 'there'},</p>
           <p>Someone (hopefully you) asked for a GLRA ${requestedRole === 'agent' ? 'Agent Workspace' : 'staff'} account with this address. Confirm it and the request goes to the admin for approval:</p>
           <p style="margin:24px 0"><a href="${link}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Confirm my email</a></p>
           <p style="font-size:13px;color:#666">The link works for 48 hours. If you did not ask for an account, ignore this email and nothing happens.</p>
-        ` + getEmailFooter()).catch(e => console.error('Signup confirmation email failed:', e.message));
+        ` + getEmailFooter());
+        // sendEmail never throws: it reports failure. Saying "we sent an email"
+        // when nothing left the server kept new staff waiting for a link that
+        // did not exist, with the request hidden from the admin.
+        if (!sentConfirm || !sentConfirm.success) {
+          return res.status(503).json({ error: 'We could not send the confirmation email just now, so the request cannot be completed. Please try again later, or ask the administrator to create your account directly.' });
+        }
       }
       res.json(generic);
     } catch (e) {
@@ -6229,7 +6277,7 @@ app.post('/api/admin/forgot-password',
 
       const link = `${SITE_URL}/admin.html?reset=${token}`;
       try {
-        await sendEmail(account.email, 'Reset your GLRA admin password',
+        const sentReset = await sendEmail(account.email, 'Reset your GLRA admin password',
           getEmailHeader() + `
           <h2 style="color:#0a1628;">Password Reset</h2>
           <p>Hi ${esc(account.name) || 'there'},</p>
@@ -6237,6 +6285,13 @@ app.post('/api/admin/forgot-password',
           <p style="margin:24px 0"><a href="${link}" style="background-color:#ff3d00;color:#ffffff;padding:12px 24px;text-decoration:none;display:inline-block;font-weight:600">Choose a New Password</a></p>
           <p style="font-size:13px;color:#666">This link works for <strong>30 minutes</strong> and can be used once. If you didn't ask for this, you can safely ignore this email — your password stays the same.</p>
         ` + getEmailFooter());
+        if (!sentReset || !sentReset.success) {
+          // The link never left: forget it, so the next request is not refused
+          // by the one-link-per-5-minutes rule for a link nobody received.
+          account.resetTokenHash = undefined;
+          account.resetTokenExpires = undefined;
+          await account.save();
+        }
       } catch (e) { console.error('Reset email failed:', e.message); }
 
       req.user = { email: account.email, name: account.name, role: account.role };

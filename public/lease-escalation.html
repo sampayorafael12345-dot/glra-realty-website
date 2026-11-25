@@ -546,7 +546,7 @@ function recalc(){
   setT('vFirst', free > 0 ? 'Free \u2014 ' + free + (free === 1 ? ' month' : ' months') : fmtPeso(firstPaid));
   setT('kLast', 'Rent a month in year ' + years);
   setT('vLast', fmtPeso(lastRent));
-  setT('vRent', fmtPeso(rentTotal));
+  setT('vRent', fmtPeso(rentTotal + (free > 0 ? freeValue : 0)));
   setT('vCusa', fmtPeso(cusaTotal));
   document.getElementById('rowFree').style.display = free > 0 ? '' : 'none';
   setT('vFree', '- ' + fmtPeso(freeValue));

@@ -707,18 +707,18 @@ document.addEventListener('click', function(e) {
 const zonalDatabaseForCalc = [
   { location: "Makati City", region: "Metro Manila", avg: 150000 },
   { location: "BGC, Taguig", region: "Metro Manila", avg: 180000 },
-  { location: "Taguig City", region: "Metro Manila", avg: 100000 },
-  { location: "Quezon City", region: "Metro Manila", avg: 60000 },
+  { location: "Taguig City", region: "Metro Manila", avg: 95000 },
+  { location: "Quezon City", region: "Metro Manila", avg: 58000 },
   { location: "Pasig City", region: "Metro Manila", avg: 70000 },
-  { location: "Mandaluyong City", region: "Metro Manila", avg: 65000 },
+  { location: "Mandaluyong City", region: "Metro Manila", avg: 62000 },
   { location: "Manila City", region: "Metro Manila", avg: 60000 },
   { location: "Parañaque City", region: "Metro Manila", avg: 50000 },
-  { location: "Pasay City", region: "Metro Manila", avg: 60000 },
-  { location: "Muntinlupa City", region: "Metro Manila", avg: 65000 },
+  { location: "Pasay City", region: "Metro Manila", avg: 58000 },
+  { location: "Muntinlupa City", region: "Metro Manila", avg: 62000 },
   { location: "Alabang", region: "Metro Manila", avg: 80000 },
   { location: "Las Piñas City", region: "Metro Manila", avg: 35000 },
   { location: "Marikina City", region: "Metro Manila", avg: 40000 },
-  { location: "San Juan City", region: "Metro Manila", avg: 55000 },
+  { location: "San Juan City", region: "Metro Manila", avg: 52000 },
   { location: "Caloocan City", region: "Metro Manila", avg: 30000 },
   { location: "Valenzuela City", region: "Metro Manila", avg: 25000 },
   { location: "Malabon City", region: "Metro Manila", avg: 22000 },
@@ -899,26 +899,24 @@ function calculateFromDesiredProceed() {
     return;
   }
   isReversing = true;
-  let low = desiredNet, high = desiredNet * 3;
-  let sellingPrice = desiredNet;
-  let iterations = 0;
-  while (iterations < 50) {
-    const totalZv = calculateTotalZonalValue();
-    const improvements = getRawValue('improvementsValue');
-    const totalAssessed = totalZv + improvements;
-    const taxBasis = Math.max(sellingPrice, totalAssessed);
-    let sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : taxBasis * 0.18;
-    const brokerCommission = sellingPrice * (currentCommission / 100) * commissionVatFactor();
-    const netProceed = sellingPrice - sellerTax - brokerCommission;
-    if (Math.abs(netProceed - desiredNet) < 100) break;
-    if (netProceed < desiredNet) {
-      low = sellingPrice;
-      sellingPrice = sellingPrice * 1.1;
-    } else {
-      high = sellingPrice;
-      sellingPrice = (low + high) / 2;
-    }
-    iterations++;
+  // Net proceeds for a given price. It only ever rises with the price, so
+  // the answer is found by halving a range that is known to contain it. (The
+  // old search multiplied by 1.1 on every low guess, even after it had the
+  // range, and from about 15M up it stopped 5% too high.)
+  const totalAssessed = calculateTotalZonalValue() + getRawValue('improvementsValue');
+  const netAt = (price) => {
+    const taxBasis = Math.max(price, totalAssessed);
+    const sellerTax = currentAssetType === 'capital' ? taxBasis * 0.06 : taxBasis * 0.18;
+    return price - sellerTax - price * (currentCommission / 100) * commissionVatFactor();
+  };
+  let low = desiredNet, high = desiredNet * 2;
+  for (let i = 0; i < 60 && netAt(high) < desiredNet; i++) high *= 2;
+  let sellingPrice = high;
+  for (let i = 0; i < 100; i++) {
+    sellingPrice = (low + high) / 2;
+    const net = netAt(sellingPrice);
+    if (Math.abs(net - desiredNet) < 1) break;
+    if (net < desiredNet) low = sellingPrice; else high = sellingPrice;
   }
   isReversing = false;
   document.getElementById('propertyValue').value = addCommasToNumber(Math.round(sellingPrice).toString());

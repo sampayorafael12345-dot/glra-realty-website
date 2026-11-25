@@ -268,11 +268,11 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 
       <div class="metric-grid">
         <div class="metric-mini gold">
-          <span class="label">Annual Cash Flow</span>
+          <span class="label">Annual Net Income (before loan payments)</span>
           <div class="value" id="cashFlow">₱0</div>
         </div>
         <div class="metric-mini gold">
-          <span class="label">Cash-on-Cash Return</span>
+          <span class="label">Cash-on-Cash Return (no loan payments counted)</span>
           <div class="value" id="coc">0.0%</div>
         </div>
         <div class="metric-mini">
@@ -312,7 +312,7 @@ body.dark-mode .metric-mini{background:#0e0e0c;border-color:#3a3a36}
 <div class="disclaimer-box">
   <div class="disclaimer">
     <i class="fas fa-info-circle"></i>
-    <div><strong>How to read these numbers:</strong> In the Philippines, gross yields of <strong>5–7%</strong> are typical for residential rentals; <strong>8%+</strong> is excellent. Net yield is what really matters — it accounts for vacancy and all expenses. Cash-on-cash return measures how fast your invested cash is recovered through rental cash flow. This calculator does not factor in property appreciation, mortgage interest, or income tax on rentals (5–32% depending on bracket). Always consult <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Catherine</a> before purchasing an investment property.</div>
+    <div><strong>How to read these numbers:</strong> In the Philippines, gross yields of <strong>5–7%</strong> are typical for residential rentals; <strong>8%+</strong> is excellent. Net yield is what really matters — it accounts for vacancy and all expenses. Cash-on-cash return measures how fast your invested cash is recovered through rental cash flow. This calculator does not factor in property appreciation, loan payments, or income tax on rentals (0–35% depending on bracket, or the 8% option). If you are borrowing, take your yearly loan payments off the net income to see your real cash flow. Always consult <a href="/#contact" style="color:var(--ab-hot-text,#c02e00)">Catherine</a> before purchasing an investment property.</div>
   </div>
 </div>
 
@@ -432,6 +432,7 @@ function recalc(){
   else if(netYield >= 4){ stars = 3; text = 'Average — typical for prime locations; banks on appreciation.'; }
   else if(netYield >= 2){ stars = 2; text = 'Below average — review expenses or rent assumptions.'; }
   else if(netYield > 0){ stars = 1; text = 'Weak — barely cash-flowing.'; }
+  else if(price <= 0){ stars = 0; text = 'Enter the property price to rate it.'; }
   else { stars = 0; text = 'Negative — losing money on operations.'; }
   let starsHtml = '';
   for(let i = 0; i < 5; i++){

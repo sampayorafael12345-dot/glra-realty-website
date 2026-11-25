@@ -479,15 +479,28 @@ function recalc(){
   }
 
   // CGT: thirty days from the notarization itself.
-  const cgtDue = addDays(notar, 30);
+  // A deadline that lands on a Saturday, Sunday or holiday moves to the next
+  // working day. Only the holidays with a fixed date are known here; the
+  // movable ones (Holy Week, Eid, National Heroes Day, proclaimed days) are not.
+  const FIXED_HOLIDAYS = ['1-1','4-9','5-1','6-12','8-21','11-1','11-30','12-8','12-25','12-30','12-31'];
+  function nextWorkday(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    for(let i = 0; i < 14; i++){
+      const wd = x.getDay();
+      if(wd !== 0 && wd !== 6 && FIXED_HOLIDAYS.indexOf((x.getMonth() + 1) + '-' + x.getDate()) < 0) break;
+      x.setDate(x.getDate() + 1);
+    }
+    return x;
+  }
+  const cgtDue = nextWorkday(addDays(notar, 30));
   // DST: five days after the close of the month the deed was notarized.
   // Date(y, month+1, 5) is five days past the last day of that month.
-  const dstDue = new Date(notar.getFullYear(), notar.getMonth() + 1, 5);
+  const dstDue = nextWorkday(new Date(notar.getFullYear(), notar.getMonth() + 1, 5));
   // Local transfer tax: sixty days from the deed (Local Government Code s.135).
-  const xferDue = addDays(notar, 60);
+  const xferDue = nextWorkday(addDays(notar, 60));
 
   const cgtLeft = setAlarm('cgtBox','cgtT','cgtD', 'Capital gains tax', cgtDue, asOf,
-    'BIR Form 1706, counted 30 days from notarization.');
+    'BIR Form 1706, counted 30 days from notarization (moved to the next working day if that is a weekend or holiday).');
   const dstLeft = setAlarm('dstBox','dstT','dstD', 'Documentary stamp tax', dstDue, asOf,
     'BIR Form 2000-OT, counted from the end of ' + notar.toLocaleDateString('en-PH',{month:'long'}) + ', not from the deed.');
   setAlarm('xferBox','xferT','xferD', 'Local transfer tax', xferDue, asOf,

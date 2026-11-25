@@ -353,11 +353,11 @@ document.querySelectorAll('.js-closing-pct').forEach(el => { el.textContent = BU
 
 function recalc(){
   const price = getRaw('price');
-  const dpPct = num('dp')/100;
+  const dpPct = Math.min(100, Math.max(0, num('dp') || 0))/100;
   const incClosing = document.getElementById('incClosing').checked;
-  const months = Math.max(1, num('months'));
+  const months = Math.min(600, Math.max(1, num('months') || 1));
   const current = getRaw('current');
-  const rate = num('rate')/100;
+  const rate = Math.min(15, Math.max(0, num('rate') || 0))/100;   // the box's own limits
 
   const downPayment = price*dpPct;
   const closing = incClosing ? price*BUYER_CLOSING_PCT/100 : 0;

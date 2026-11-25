@@ -257,7 +257,7 @@ async function subscribeNewsletter(){
   try{
     const r=await fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,source:'blog_newsletter'})});
     const d=await r.json();
-    if(d.success){document.getElementById('newsletterEmail').value='';showToast(d.message||"If you're not already on our list, a confirmation email is on its way.")}
+    if(d.success){document.getElementById('newsletterEmail').value='';showToast(d.message||"If you're not already on our list, a confirmation email is on its way.",d.emailSent===false)}
     else showToast('Something went wrong. Please try again.',true)
   }catch{showToast('Network error. Please try again.',true)}
   finally{btn.textContent=orig;btn.disabled=false}

@@ -464,9 +464,9 @@ function recalc(){
   const value  = getRaw('value');
   const income = getRaw('income');
   const oblig  = getRaw('oblig');
-  const age    = num('age');
-  const want   = num('years');
-  const rate   = num('rate');
+  const age    = Math.max(0, num('age') || 0);
+  const want   = Math.max(0, num('years') || 0);
+  const rate   = Math.min(30, Math.max(0, num('rate') || 0));
   const ceil   = getRaw('ceiling');
   const capPct = num('capPct');
   const ltvLow = num('ltvLow');
@@ -475,7 +475,7 @@ function recalc(){
   // Age decides the term before anything else: the loan must be fully paid by
   // 70, so a 52-year-old cannot have 30 years however much they earn.
   const ageYears = Math.max(0, 70 - age);
-  const years    = Math.max(0, Math.min(want, 30, ageYears));
+  const years    = age > 65 ? 0 : Math.max(0, Math.min(want, 30, ageYears));
   const n = Math.round(years * 12);
   const i = rate / 100 / 12;
 
@@ -521,7 +521,11 @@ function recalc(){
   box.className = 'alarm ok'; ico.className = 'fas fa-circle-check';
   let t = 'You are inside the age rules';
   let d = 'You are ' + age + ', under the limit of 65 at application, and a ' + years + '-year term is fully paid by age ' + (age + years) + '.';
-  if(age > 65){
+  if(age < 18){
+    box.className = 'alarm soon'; ico.className = 'fas fa-triangle-exclamation';
+    t = 'Enter your age';
+    d = 'The term Pag-IBIG allows depends on your age, so the figures below are not reliable until it is filled in.';
+  } else if(age > 65){
     box.className = 'alarm late'; ico.className = 'fas fa-circle-xmark';
     t = 'Over the age limit';
     d = 'Pag-IBIG will not take an application from anyone older than 65. A younger co-borrower — a spouse or a child already earning — is the usual way round this, and the loan is then measured against their age and income.';
@@ -529,6 +533,10 @@ function recalc(){
     box.className = 'alarm soon'; ico.className = 'fas fa-triangle-exclamation';
     t = 'Your term is shortened to ' + years + ' years';
     d = 'You asked for ' + want + ', but the loan has to be fully paid by 70 and you are ' + age + '. A shorter term means a higher monthly payment, which is why the amount you can borrow drops as well.';
+  } else if(income <= 0){
+    box.className = 'alarm soon'; ico.className = 'fas fa-triangle-exclamation';
+    t = 'Enter your monthly income';
+    d = 'The amount you can borrow is measured against your income, so nothing can be worked out without it.';
   } else if(allow <= 0){
     box.className = 'alarm late'; ico.className = 'fas fa-circle-xmark';
     t = 'Your other loan payments use up the whole allowance';

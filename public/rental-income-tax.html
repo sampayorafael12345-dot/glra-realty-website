@@ -551,13 +551,16 @@ function recalc(){
   // Income tax, graduated route.
   const deduction = method === 'osd' ? gross * osdRate / 100 : Math.min(expenses, gross);
   const netRent   = Math.max(0, gross - deduction);
-  const gradInc   = gradTax(netRent + salary);
+  // Tax the employer already withholds on the salary. The rent is charged at
+  // the rates that sit on top of it, so only the extra is owed here.
+  const salTax    = gradTax(salary);
+  const gradInc   = gradTax(netRent + salary) - salTax;
   const gradAll   = gradInc + bizTax;
 
   // Income tax, 8% route. Closed once VAT registration is required.
   const flatOpen  = !mustVat && gross <= vatThr;
   const flatBase  = kind === 'mixed' ? gross : Math.max(0, gross - 250000);
-  const flatInc   = flatBase * 0.08 + (kind === 'mixed' ? gradTax(salary) : 0);
+  const flatInc   = flatBase * 0.08;
   const flatAll   = flatInc;   // 8% stands in for the percentage tax as well
 
   const useFlat = flatOpen && flatAll < gradAll;
@@ -622,7 +625,7 @@ function recalc(){
   setT('vEwt', '- ' + fmtPeso(ewt));
   setT('vDue', fmtPeso(due));
 
-  const cash = gross - (method === 'itemised' ? expenses : 0) - owed;
+  const cash = gross - (method === 'itemised' ? Math.min(expenses, gross) : 0) - owed;
   setT('mNet', fmtPeso(cash));
   setT('mRate', gross > 0 ? (owed / gross * 100).toFixed(1) + '%' : '0%');
 

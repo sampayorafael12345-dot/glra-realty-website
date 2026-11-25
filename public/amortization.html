@@ -622,7 +622,7 @@ function cmpMonthlyPayment(principal, annualRate, years){
 function cmpComputeSide(side, amount){
   // Held to the boxes' own limits: a pasted 1e21 turned every figure into NaN.
   const rate = Math.min(100, Math.max(0, cmpNum('cmp'+side+'Rate')));
-  const term = Math.min(40, Math.max(1, cmpNum('cmp'+side+'Term')));
+  const term = Math.min(30, Math.max(1, cmpNum('cmp'+side+'Term')));
   const monthly = cmpMonthlyPayment(amount, rate, term);
   const total = monthly * term * 12;
   const interest = total - amount;
@@ -649,7 +649,9 @@ function cmpRecalc(){
   const totalDiff   = Math.abs(p.total - b.total);
 
   let msg = `<strong>${cheaperMonthly}</strong> has the lower monthly payment (by ${fmtPeso(monthlyDiff)}/mo). `;
-  if(cheaperTotal === cheaperMonthly){
+  if(monthlyDiff < 1 && totalDiff < 1){
+    msg = 'Both loans cost the same with these numbers. ';
+  } else if(cheaperTotal === cheaperMonthly){
     msg += `It's also cheaper overall — you'd pay <strong>${fmtPeso(totalDiff)} less in total</strong>.`;
   } else {
     msg += `But <strong>${cheaperTotal}</strong> costs less in total interest (by ${fmtPeso(totalDiff)}) — usually because of the shorter term.`;
@@ -664,6 +666,18 @@ function cmpRecalc(){
     } else {
       msg += `<br><span style="color:#10b981">The lower payment is about ${(ratio*100).toFixed(0)}% of your income — within the typical comfortable range.</span>`;
     }
+  }
+  // The age box was only ever printed in the PDF. Both lenders want the loan
+  // fully paid by about 70, and Pag-IBIG lends at most 10 million.
+  const age = cmpNum('cmpAge');
+  if(age >= 18){
+    const longest = Math.max(p.term, b.term);
+    if(age + longest > 70){
+      msg += `<br><span style="color:#ff7a5c">At ${age}, a ${longest}-year term ends at age ${age + longest}. Lenders usually want the loan fully paid by 70, so expect a term of about ${Math.max(0, 70 - age)} years at most, and a higher monthly payment.</span>`;
+    }
+  }
+  if(amount > 10000000){
+    msg += `<br><span style="color:#ff7a5c">Pag-IBIG lends up to ₱10,000,000. For ${fmtPeso(amount)} the Pag-IBIG side is for comparison only.</span>`;
   }
   el.innerHTML = msg;
 }

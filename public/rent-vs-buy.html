@@ -471,8 +471,8 @@ function recalcBuy(years){
   const price = getRaw('price');
   const down = getRaw('down');
   const closing = getRaw('closing');
-  const rate = num('rate');
-  const term = Math.max(1, num('term'));
+  const rate = Math.min(30, Math.max(0, num('rate') || 0));   // the boxes' own limits; a huge number gave NaN
+  const term = Math.min(40, Math.max(1, num('term') || 1));
   const appr = num('appr')/100;
   const carry = getRaw('carry');
 
@@ -503,7 +503,7 @@ function recalcBuy(years){
   const buyWins = netBuyCost < totalRent;
   const diff = Math.abs(totalRent - netBuyCost);
 
-  document.getElementById('outSub').textContent = 'After ' + years + ' years.';
+  document.getElementById('outSub').textContent = 'After ' + years + ' years. Cash paid only: what your down payment could have earned if invested instead is not counted.';
   document.getElementById('vLabel').textContent = 'Recommendation';
   document.getElementById('vHeadline').textContent = buyWins ? 'Buying wins' : 'Renting wins';
   document.getElementById('vSub').innerHTML = buyWins
@@ -552,12 +552,14 @@ function recalcSell(years){
     rentWealth = rentWealth*(1+reinv) + netAnnual;
     m *= (1+rentInc);
   }
-  const rentOutTotal = endValue + rentWealth;
+  // Counted net of the same selling cost as "sell now", so both sides are
+  // money in hand. Before, the kept property was counted at full value.
+  const rentOutTotal = endValue*(1-sCost) + rentWealth;
 
   const rentWins = rentOutTotal > sellWealth;
   const diff = Math.abs(rentOutTotal - sellWealth);
 
-  document.getElementById('outSub').textContent = 'Projected wealth after ' + years + ' years.';
+  document.getElementById('outSub').textContent = 'Projected wealth after ' + years + ' years, both sides net of the cost of selling.';
   document.getElementById('vLabel').textContent = 'Recommendation';
   document.getElementById('vHeadline').textContent = rentWins ? 'Renting it out wins' : 'Selling now wins';
   document.getElementById('vSub').innerHTML = rentWins

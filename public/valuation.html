@@ -318,7 +318,7 @@ body.dark-mode .lead-note{background:#0e0e0c}
       <div class="success-view" id="successView">
         <i class="fas fa-check-circle"></i>
         <h3>Request sent!</h3>
-        <p>Thank you — Catherine has received your details and will get back to you shortly with a proper valuation. A confirmation is on its way to your email.</p>
+        <p>Thank you — Catherine has received your details and will get back to you shortly with a proper valuation.</p>
       </div>
 
     </div>
@@ -433,8 +433,8 @@ function recalc(){
   const type = document.getElementById('ptype').value;
   const locMult = parseFloat(document.getElementById('loc').value) || 1;
   const cond = parseFloat(document.getElementById('cond').value) || 1;
-  const floor = getRaw('floor');
-  const land = getRaw('land');
+  const floor = Math.min(100000, Math.max(0, getRaw('floor') || 0));     // a minus sign or a pasted 1e12 gave nonsense
+  const land = Math.min(10000000, Math.max(0, getRaw('land') || 0));
   const bed = parseInt(document.getElementById('bed').value) || 0;
   const park = parseInt(document.getElementById('park').value) || 0;
 

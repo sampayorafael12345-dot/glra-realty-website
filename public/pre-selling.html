@@ -416,14 +416,16 @@ function amort(principal, annualRate, years){
 
 function recalc(){
   const tcp      = getRaw('tcp');
-  const discPct  = num('disc');
-  const reserve  = getRaw('reserve');
-  const dpPct    = num('dpPct');
-  const dpMonths = Math.max(1, Math.round(num('dpMonths')));
-  const dpRate   = num('dpRate');
-  const loanRate = num('loanRate');
-  const loanYears= Math.max(1, num('loanYears'));
-  const otherPct = num('otherPct');
+  const lim = (v, lo, hi) => Math.min(hi, Math.max(lo, v || 0));   // the boxes' own limits
+  const discPct  = lim(num('disc'), 0, 100);
+  const dpPct    = lim(num('dpPct'), 0, 100);
+  // A reservation fee larger than the whole down payment is a slip of the finger.
+  const reserve  = Math.min(getRaw('reserve'), Math.max(0, tcp * (1 - discPct / 100)) * dpPct / 100);
+  const dpMonths = lim(Math.round(num('dpMonths')), 1, 120);
+  const dpRate   = lim(num('dpRate'), 0, 30);
+  const loanRate = lim(num('loanRate'), 0, 30);
+  const loanYears= lim(num('loanYears'), 1, 40);
+  const otherPct = lim(num('otherPct'), 0, 30);
 
   const discount = tcp * discPct / 100;
   const net      = Math.max(0, tcp - discount);
